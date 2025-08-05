@@ -1,4 +1,5 @@
-<!DOCTYPE html><html lang="en">
+<!DOCTYPE html>
+<html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -57,10 +58,6 @@
       background-color: #6c757d;
       color: white;
     }
-    .lead-buttons .settings {
-      background-color: #343a40;
-      color: white;
-    }
     .lead-card {
       background: #fff;
       padding: 15px;
@@ -68,6 +65,11 @@
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
       margin: 0 auto 15px;
       max-width: 500px;
+    }
+    .lead-card a {
+      color: #007BFF;
+      font-weight: bold;
+      text-decoration: none;
     }
     .lead-card button {
       background-color: #28a745;
@@ -77,19 +79,6 @@
       border-radius: 4px;
       font-size: 14px;
       margin-top: 10px;
-      cursor: pointer;
-    }
-    .next-lead-wrapper {
-      display: flex;
-      justify-content: center;
-      margin-bottom: 10px;
-    }
-    .next-lead-wrapper button {
-      font-size: 16px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: 2px solid #ccc;
-      background: #fff;
       cursor: pointer;
     }
     iframe.map {
@@ -144,58 +133,59 @@
   <script src="leads.js"></script>
   <script>
     const rep = "Alfred O";
-    let index = 0;function showLead(lead) {
-  const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
-  const url = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
+    let index = 0;
 
-  document.getElementById("leadCard").innerHTML = `
-    <div class="lead-buttons">
-      <button class="call" onclick="initiateCall('${lead.contacts[0].phone}')">📞 Call</button>
-      <button class="drive" onclick="alert('Driving directions coming soon')">🚗 Drive</button>
-      <button class="settings" onclick="alert('Call settings coming soon')">⚙️ Settings</button>
-    </div>
-    <div class="lead-card">
-      <strong>${lead.contacts[0].name}</strong><br>
-      ${lead.address}<br>
-      <button onclick="openModal('${url}')">📝 Update Lead Notes</button>
-    </div>
-  `;
-}
+    function showLead(lead) {
+      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+      const url = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
 
-function initiateCall(phone) {
-  navigator.clipboard.writeText(phone).then(() => {
-    window.open("https://www.textnow.com/messaging", "_blank");
-  });
-}
+      document.getElementById("leadCard").innerHTML = `
+        <div class="lead-buttons">
+          <button class="call" onclick="copyToClipboard('${lead.contacts[0].phone}')">📞 Call</button>
+          <button class="drive" onclick="alert('Driving directions coming soon')">🚗 Drive</button>
+        </div>
+        <div class="lead-card">
+          <strong>${lead.contacts[0].name}</strong><br>
+          ${lead.address}<br>
+          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
+          <button onclick="openModal('${url}')">📝 Update Lead Notes</button>
+        </div>
+      `;
+    }
 
-function nextLead() {
-  index++;
-  if (index >= leads.length) index = 0;
-  showLead(leads[index]);
-}
+    function nextLead() {
+      index++;
+      if (index >= leads.length) index = 0;
+      showLead(leads[index]);
+    }
 
-function openModal(url) {
-  const modal = document.getElementById("formModal");
-  const iframe = document.getElementById("formIframe");
-  iframe.src = url;
-  modal.style.display = "flex";
-}
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Copied number: " + text);
+      });
+    }
 
-function closeModal() {
-  const modal = document.getElementById("formModal");
-  const iframe = document.getElementById("formIframe");
-  iframe.src = "";
-  modal.style.display = "none";
-}
+    function openModal(url) {
+      const modal = document.getElementById("formModal");
+      const iframe = document.getElementById("formIframe");
+      iframe.src = url;
+      modal.style.display = "flex";
+    }
 
-window.onload = function () {
-  if (typeof leads !== "undefined" && leads.length > 0) {
-    showLead(leads[index]);
-  } else {
-    document.getElementById("leadCard").innerHTML = `<div class="lead-card">No leads loaded. Check leads.js.</div>`;
-  }
-};
+    function closeModal() {
+      const modal = document.getElementById("formModal");
+      const iframe = document.getElementById("formIframe");
+      iframe.src = "";
+      modal.style.display = "none";
+    }
 
+    window.onload = function () {
+      if (typeof leads !== "undefined" && leads.length > 0) {
+        showLead(leads[index]);
+      } else {
+        document.getElementById("leadCard").innerHTML = `<div class="lead-card">No leads loaded. Check leads.js.</div>`;
+      }
+    };
   </script>
 </head>
 <body>
@@ -203,9 +193,7 @@ window.onload = function () {
   <div class="container">
     <div class="lead-section">
       <div id="leadCard"></div>
-      <div class="next-lead-wrapper">
-        <button onclick="nextLead()">⏭️ Next Lead</button>
-      </div>
+      <button onclick="nextLead()">⏭️ Next Lead</button>
     </div>
     <div class="map-section">
       <iframe
