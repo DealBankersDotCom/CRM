@@ -97,42 +97,23 @@
       cursor: pointer;
     }
   </style>
-  <script>
-    const leads = [
-      {
-        name: "ADRIAN MEJIA, MIREYA MEJIA",
-        address: "8119 Comanche Pass, Converse, TX",
-        phone: "2106636283"
-      },
-      {
-        name: "HARWINDER KAUR KANG, GURJIT SINGH BAJWA",
-        address: "7438 Bluebonnet Bay, San Antonio, TX 78218",
-        phone: "2104295130"
-      },
-      {
-        name: "SCOTT STEPHAN",
-        address: "7535 Perseus Sound, San Antonio, TX 78252",
-        phone: "2102607618"
-      },
-      {
-        name: "DAVID A. WATTS",
-        address: "10527 Big Mesa St, Converse, TX 78109",
-        phone: "2108187899"
-      }
-    ];
 
+  <!-- ✅ Import leads from leads.js instead of hardcoding -->
+  <script src="leads.js"></script>
+
+  <script>
     const rep = "Alfred O";
     let index = 0;
 
     function showLead(lead) {
       const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
-      const url = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
+      const url = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
 
       document.getElementById("leadCard").innerHTML = `
         <div class="lead-card">
-          <strong>${lead.name}</strong><br>
+          <strong>${lead.contacts[0].name}</strong><br>
           ${lead.address}<br>
-          <a href="https://www.textnow.com/messaging" onclick="copyToClipboard('${lead.phone}')" target="_blank">📞 Call ${lead.phone}</a><br>
+          <a href="https://www.textnow.com/messaging" onclick="copyToClipboard('${lead.contacts[0].phone}')" target="_blank">📞 Call ${lead.contacts[0].phone}</a><br>
           <button onclick="openModal('${url}')">📝 Update Lead Notes</button>
         </div>
       `;
@@ -164,11 +145,16 @@
       modal.style.display = "none";
     }
 
-    window.onload = function() {
-      showLead(leads[index]);
-    }
+    window.onload = function () {
+      if (typeof leads !== "undefined" && leads.length > 0) {
+        showLead(leads[index]);
+      } else {
+        document.getElementById("leadCard").innerHTML = `<div class="lead-card">No leads loaded. Check leads.js.</div>`;
+      }
+    };
   </script>
 </head>
+
 <body>
   <header>Deal Bankers Lead CRM</header>
   <div class="container">
