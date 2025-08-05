@@ -19,29 +19,52 @@
     }
     .container {
       display: flex;
-      height: calc(100vh - 60px);
-    }
-    .left-column {
-      flex: 2;
-      padding: 10px;
-    }
-    .right-column {
-      flex: 3;
-      padding: 10px;
-      display: flex;
       flex-direction: column;
-      overflow-y: auto;
     }
-    iframe {
-      width: 100%;
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+        height: calc(100vh - 60px);
+      }
+    }
+    .lead-section, .map-section {
+      padding: 10px;
+    }
+    .lead-section {
+      flex: 1;
+    }
+    .map-section {
+      flex: 1;
+    }
+    .lead-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      margin-bottom: 10px;
+      flex-wrap: wrap;
+    }
+    .lead-buttons button {
+      padding: 10px 15px;
+      font-size: 16px;
       border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    .lead-buttons .call {
+      background-color: #007BFF;
+      color: white;
+    }
+    .lead-buttons .drive {
+      background-color: #6c757d;
+      color: white;
     }
     .lead-card {
       background: #fff;
       padding: 15px;
       border-radius: 8px;
       box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-      margin-bottom: 15px;
+      margin: 0 auto 15px;
+      max-width: 500px;
     }
     .lead-card a {
       color: #007BFF;
@@ -57,6 +80,16 @@
       font-size: 14px;
       margin-top: 10px;
       cursor: pointer;
+    }
+    iframe.map {
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+    @media (min-width: 768px) {
+      iframe.map {
+        height: 100%;
+      }
     }
     .modal {
       display: none;
@@ -97,10 +130,7 @@
       cursor: pointer;
     }
   </style>
-
-  <!-- ✅ Import leads from leads.js instead of hardcoding -->
   <script src="leads.js"></script>
-
   <script>
     const rep = "Alfred O";
     let index = 0;
@@ -110,10 +140,14 @@
       const url = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
 
       document.getElementById("leadCard").innerHTML = `
+        <div class="lead-buttons">
+          <button class="call" onclick="copyToClipboard('${lead.contacts[0].phone}')">📞 Call</button>
+          <button class="drive" onclick="alert('Driving directions coming soon')">🚗 Drive</button>
+        </div>
         <div class="lead-card">
           <strong>${lead.contacts[0].name}</strong><br>
           ${lead.address}<br>
-          <a href="https://www.textnow.com/messaging" onclick="copyToClipboard('${lead.contacts[0].phone}')" target="_blank">📞 Call ${lead.contacts[0].phone}</a><br>
+          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
           <button onclick="openModal('${url}')">📝 Update Lead Notes</button>
         </div>
       `;
@@ -154,24 +188,21 @@
     };
   </script>
 </head>
-
 <body>
   <header>Deal Bankers Lead CRM</header>
   <div class="container">
-    <div class="left-column">
-      <iframe
-        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
-        allowfullscreen
-        style="height: 100%;"
-      ></iframe>
-    </div>
-
-    <div class="right-column">
+    <div class="lead-section">
       <div id="leadCard"></div>
       <button onclick="nextLead()">⏭️ Next Lead</button>
     </div>
+    <div class="map-section">
+      <iframe
+        class="map"
+        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
+        allowfullscreen
+      ></iframe>
+    </div>
   </div>
-
   <div id="formModal" class="modal">
     <div class="modal-content">
       <button class="close-btn" onclick="closeModal()">×</button>
