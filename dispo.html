@@ -13,9 +13,35 @@
     header {
       background-color: #111;
       color: #fff;
-      padding: 15px;
-      text-align: center;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 20px;
+    }
+    .menu {
+      cursor: pointer;
       font-size: 24px;
+    }
+    .menu-content {
+      display: none;
+      position: absolute;
+      top: 60px;
+      right: 15px;
+      background-color: #fff;
+      border: 1px solid #ccc;
+      border-radius: 8px;
+      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+      z-index: 1000;
+    }
+    .menu-content a {
+      display: block;
+      padding: 10px 20px;
+      text-decoration: none;
+      color: #333;
+    }
+    .menu-content a:hover {
+      background-color: #f2f2f2;
     }
     .container {
       display: flex;
@@ -52,18 +78,10 @@
       padding: 8px 12px;
       color: white;
     }
-    .lead-buttons .call {
-      background-color: #007BFF;
-    }
-    .lead-buttons .drive {
-      background-color: #6c757d;
-    }
-    .lead-buttons .settings {
-      background-color: #343a40;
-    }
-    .lead-buttons .chat {
-      background-color: #17a2b8;
-    }
+    .call { background-color: #007BFF; }
+    .drive { background-color: #6c757d; }
+    .settings { background-color: #343a40; }
+    .chat { background-color: #17a2b8; }
     .lead-card {
       background: #fff;
       padding: 15px;
@@ -85,6 +103,17 @@
       border-radius: 4px;
       font-size: 14px;
       margin-top: 10px;
+      cursor: pointer;
+    }
+    .next-btn {
+      display: block;
+      margin: 15px auto;
+      padding: 10px 20px;
+      font-size: 18px;
+      background-color: #111;
+      color: white;
+      border: none;
+      border-radius: 6px;
       cursor: pointer;
     }
     iframe.map {
@@ -161,6 +190,7 @@
       const name = lead.contacts[0]?.name || "Unknown";
       const phone = lead.contacts[0]?.phone || "N/A";
       const notes = lead.notes ? lead.notes.replace(/\n/g, "<br>") : "No deal notes available.";
+      const url = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=Dispo&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
 
       document.getElementById("leadCard").innerHTML = `
         <div class="lead-buttons">
@@ -173,7 +203,7 @@
           <strong>${name}</strong><br>
           ${lead.address}<br>
           <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
-          <button onclick="openModal('https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=Dispo&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(lead.address)}')">📝 Update Notes</button>
+          <button onclick="openModal('${url}')">📝 Update Notes</button>
           <details class="accordion">
             <summary>📊 Deal Details</summary>
             <div>${notes}</div>
@@ -202,10 +232,13 @@
     }
 
     function closeModal() {
-      const modal = document.getElementById("formModal");
-      const iframe = document.getElementById("formIframe");
-      iframe.src = "";
-      modal.style.display = "none";
+      document.getElementById("formModal").style.display = "none";
+      document.getElementById("formIframe").src = "";
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById("menuContent");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
     }
 
     window.onload = function () {
@@ -218,11 +251,17 @@
   </script>
 </head>
 <body>
-  <header>Deal Bankers Dispo CRM</header>
+  <header>
+    Deal Bankers Dispo CRM
+    <div class="menu" onclick="toggleMenu()">☰</div>
+    <div class="menu-content" id="menuContent">
+      <a href="https://www.dealbankers.com/wholesaler.html">Go to Acquisition Page</a>
+    </div>
+  </header>
   <div class="container">
     <div class="lead-section">
       <div id="leadCard"></div>
-      <button onclick="nextLead()">⏭️ Next Deal</button>
+      <button class="next-btn" onclick="nextLead()">⏭️ Next Deal</button>
     </div>
     <div class="map-section">
       <iframe
