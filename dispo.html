@@ -1,23 +1,151 @@
-const leads = [
-  {
-    address: "1510 Blanco Rd, San Antonio, TX 78212",
-    contacts: [
-      { name: "Investor Group A", phone: "2105551234" }
-    ],
-    notes: "Vacant duplex, zoned RM-4, 80K rehab, comps at 230K/unit. Cash offers only."
-  },
-  {
-    address: "8903 Vista West Dr, San Antonio, TX 78245",
-    contacts: [
-      { name: "Chris Flipper", phone: "2107776543" }
-    ],
-    notes: "Turnkey 3/2 rental, rented at $1450/mo. New HVAC and roof. $185K ask."
-  },
-  {
-    address: "4444 Eisenhauer Rd, San Antonio, TX 78218",
-    contacts: [
-      { name: "Luna Ventures", phone: "2108881122" }
-    ],
-    notes: "5-plex, full occupancy. Gross rents $4,200/mo. Seller finance terms available."
-  },
-];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Dispo Deals - Deal Bankers</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+    }
+    header {
+      background-color: #222;
+      color: #fff;
+      padding: 15px;
+      text-align: center;
+      font-size: 24px;
+    }
+    .container {
+      display: flex;
+      flex-direction: column;
+      padding: 10px;
+    }
+    @media (min-width: 768px) {
+      .container {
+        flex-direction: row;
+        height: calc(100vh - 60px);
+      }
+    }
+    .lead-section, .map-section {
+      flex: 1;
+      padding: 10px;
+    }
+    .lead-card {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 20px;
+      max-width: 600px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+    .lead-card h3 {
+      margin-top: 0;
+      color: #333;
+    }
+    .lead-card a {
+      text-decoration: none;
+      color: #007bff;
+      font-weight: bold;
+    }
+    .lead-buttons {
+      display: flex;
+      justify-content: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-bottom: 15px;
+    }
+    .lead-buttons button {
+      border: none;
+      border-radius: 6px;
+      padding: 8px 12px;
+      font-size: 18px;
+      cursor: pointer;
+      color: #fff;
+    }
+    .call-btn { background-color: #007BFF; }
+    .email-btn { background-color: #28a745; }
+    .info-btn { background-color: #6c757d; }
+    .next-btn {
+      display: block;
+      margin: 0 auto;
+      padding: 10px 20px;
+      font-size: 18px;
+      border: none;
+      border-radius: 6px;
+      background: #333;
+      color: #fff;
+      cursor: pointer;
+    }
+    .map-section iframe {
+      width: 100%;
+      height: 300px;
+      border: none;
+    }
+    @media (min-width: 768px) {
+      .map-section iframe {
+        height: 100%;
+      }
+    }
+  </style>
+  <script src="dispo.js"></script>
+  <script>
+    let index = 0;
+
+    function showDeal(lead) {
+      const contact = lead.contacts[0] || { name: "N/A", phone: "N/A" };
+      const cardHTML = `
+        <div class="lead-card">
+          <h3>${lead.address}</h3>
+          <p><strong>Contact:</strong> ${contact.name}<br>
+          <strong>Phone:</strong> <a href="tel:${contact.phone}">${contact.phone}</a></p>
+          <p><strong>Notes:</strong><br>${lead.notes.replace(/\n/g, "<br>")}</p>
+          <div class="lead-buttons">
+            <button class="call-btn" onclick="copyToClipboard('${contact.phone}')">📞 Copy Phone</button>
+            <button class="email-btn" onclick="alert('Email function coming soon')">📧 Email Buyer</button>
+            <button class="info-btn" onclick="alert('More info coming soon')">📄 More Info</button>
+          </div>
+        </div>
+      `;
+      document.getElementById("dealCard").innerHTML = cardHTML;
+    }
+
+    function nextDeal() {
+      index = (index + 1) % leads.length;
+      showDeal(leads[index]);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => {
+        alert("Copied: " + text);
+      });
+    }
+
+    window.onload = function () {
+      if (typeof leads !== "undefined" && leads.length > 0) {
+        showDeal(leads[index]);
+      } else {
+        document.getElementById("dealCard").innerHTML = `<div class="lead-card">No dispo deals loaded.</div>`;
+      }
+    };
+  </script>
+</head>
+<body>
+  <header>Dispo Deals - Deal Bankers</header>
+  <div class="container">
+    <div class="lead-section">
+      <div id="dealCard"></div>
+      <button class="next-btn" onclick="nextDeal()">⏭️ Next Deal</button>
+    </div>
+    <div class="map-section">
+      <iframe
+        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
+        allowfullscreen
+      ></iframe>
+    </div>
+  </div>
+</body>
+</html>
