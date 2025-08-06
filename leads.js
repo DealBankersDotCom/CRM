@@ -38,4 +38,3 @@ const leads = [
     notes: "5 beds, 3 baths, 2,439 sqft; prior foreclosure; last sold $165K; likely needs cosmetic updates"
   },
 ];
-Click inside and press Ctrl+A then Ctrl+C to copy manually.
