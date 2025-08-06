@@ -3,15 +3,15 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Dispo Deals - Deal Bankers</title>
+  <title>Deal Bankers Dispo CRM</title>
   <style>
     body {
       margin: 0;
       font-family: Arial, sans-serif;
-      background: #f4f4f4;
+      background: #f2f2f2;
     }
     header {
-      background-color: #222;
+      background-color: #111;
       color: #fff;
       padding: 15px;
       text-align: center;
@@ -20,7 +20,6 @@
     .container {
       display: flex;
       flex-direction: column;
-      padding: 10px;
     }
     @media (min-width: 768px) {
       .container {
@@ -29,122 +28,214 @@
       }
     }
     .lead-section, .map-section {
-      flex: 1;
       padding: 10px;
     }
-    .lead-card {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-      margin-bottom: 20px;
-      max-width: 600px;
-      margin-left: auto;
-      margin-right: auto;
+    .lead-section {
+      flex: 1;
     }
-    .lead-card h3 {
-      margin-top: 0;
-      color: #333;
-    }
-    .lead-card a {
-      text-decoration: none;
-      color: #007bff;
-      font-weight: bold;
+    .map-section {
+      flex: 1;
     }
     .lead-buttons {
       display: flex;
       justify-content: center;
       gap: 10px;
+      margin-bottom: 10px;
       flex-wrap: wrap;
-      margin-bottom: 15px;
     }
-    .lead-buttons button {
+    .lead-buttons a, .lead-buttons button {
+      font-size: 22px;
       border: none;
-      border-radius: 6px;
+      border-radius: 8px;
+      text-decoration: none;
+      cursor: pointer;
       padding: 8px 12px;
-      font-size: 18px;
-      cursor: pointer;
-      color: #fff;
+      color: white;
     }
-    .call-btn { background-color: #007BFF; }
-    .email-btn { background-color: #28a745; }
-    .info-btn { background-color: #6c757d; }
-    .next-btn {
-      display: block;
-      margin: 0 auto;
-      padding: 10px 20px;
-      font-size: 18px;
+    .lead-buttons .call {
+      background-color: #007BFF;
+    }
+    .lead-buttons .drive {
+      background-color: #6c757d;
+    }
+    .lead-buttons .settings {
+      background-color: #343a40;
+    }
+    .lead-buttons .chat {
+      background-color: #17a2b8;
+    }
+    .lead-card {
+      background: #fff;
+      padding: 15px;
+      border-radius: 8px;
+      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
+      margin: 0 auto 15px;
+      max-width: 500px;
+    }
+    .lead-card a {
+      color: #007BFF;
+      font-weight: bold;
+      text-decoration: none;
+    }
+    .lead-card button {
+      background-color: #28a745;
+      color: white;
+      padding: 6px 10px;
       border: none;
-      border-radius: 6px;
-      background: #333;
-      color: #fff;
+      border-radius: 4px;
+      font-size: 14px;
+      margin-top: 10px;
       cursor: pointer;
     }
-    .map-section iframe {
+    iframe.map {
       width: 100%;
       height: 300px;
       border: none;
     }
     @media (min-width: 768px) {
-      .map-section iframe {
+      iframe.map {
         height: 100%;
       }
+    }
+    .modal {
+      display: none;
+      position: fixed;
+      z-index: 999;
+      left: 0;
+      top: 0;
+      width: 100vw;
+      height: 100vh;
+      background-color: rgba(0, 0, 0, 0.7);
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-content {
+      width: 90%;
+      height: 80%;
+      background: white;
+      border-radius: 10px;
+      overflow: hidden;
+      position: relative;
+    }
+    .modal iframe {
+      width: 100%;
+      height: 100%;
+      border: none;
+    }
+    .close-btn {
+      position: absolute;
+      top: 10px;
+      right: 15px;
+      font-size: 20px;
+      background: #333;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 30px;
+      height: 30px;
+      cursor: pointer;
+    }
+    .accordion {
+      margin-top: 10px;
+      border-radius: 8px;
+      overflow: hidden;
+      border: 1px solid #ccc;
+    }
+    .accordion summary {
+      background-color: #eee;
+      cursor: pointer;
+      padding: 10px;
+      font-weight: bold;
+    }
+    .accordion div {
+      padding: 10px;
+      background-color: #f9f9f9;
+      font-size: 14px;
     }
   </style>
   <script src="dispo.js"></script>
   <script>
     let index = 0;
 
-    function showDeal(lead) {
-      const contact = lead.contacts[0] || { name: "N/A", phone: "N/A" };
-      const cardHTML = `
+    function showLead(lead) {
+      const name = lead.contacts[0]?.name || "Unknown";
+      const phone = lead.contacts[0]?.phone || "N/A";
+      const notes = lead.notes ? lead.notes.replace(/\n/g, "<br>") : "No deal notes available.";
+
+      document.getElementById("leadCard").innerHTML = `
+        <div class="lead-buttons">
+          <button class="call" onclick="copyToClipboard('${phone}')">📞</button>
+          <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
+          <a class="settings" href="#">⚙️</a>
+          <a class="chat" href="https://www.dealbankers.com/chat.html" target="_blank">💬</a>
+        </div>
         <div class="lead-card">
-          <h3>${lead.address}</h3>
-          <p><strong>Contact:</strong> ${contact.name}<br>
-          <strong>Phone:</strong> <a href="tel:${contact.phone}">${contact.phone}</a></p>
-          <p><strong>Notes:</strong><br>${lead.notes.replace(/\n/g, "<br>")}</p>
-          <div class="lead-buttons">
-            <button class="call-btn" onclick="copyToClipboard('${contact.phone}')">📞 Copy Phone</button>
-            <button class="email-btn" onclick="alert('Email function coming soon')">📧 Email Buyer</button>
-            <button class="info-btn" onclick="alert('More info coming soon')">📄 More Info</button>
-          </div>
+          <strong>${name}</strong><br>
+          ${lead.address}<br>
+          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
+          <button onclick="openModal('https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=Dispo&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(lead.address)}')">📝 Update Notes</button>
+          <details class="accordion">
+            <summary>📊 Deal Details</summary>
+            <div>${notes}</div>
+          </details>
         </div>
       `;
-      document.getElementById("dealCard").innerHTML = cardHTML;
     }
 
-    function nextDeal() {
-      index = (index + 1) % leads.length;
-      showDeal(leads[index]);
+    function nextLead() {
+      index++;
+      if (index >= leads.length) index = 0;
+      showLead(leads[index]);
     }
 
     function copyToClipboard(text) {
       navigator.clipboard.writeText(text).then(() => {
-        alert("Copied: " + text);
+        alert("Copied number: " + text);
       });
+    }
+
+    function openModal(url) {
+      const modal = document.getElementById("formModal");
+      const iframe = document.getElementById("formIframe");
+      iframe.src = url;
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      const modal = document.getElementById("formModal");
+      const iframe = document.getElementById("formIframe");
+      iframe.src = "";
+      modal.style.display = "none";
     }
 
     window.onload = function () {
       if (typeof leads !== "undefined" && leads.length > 0) {
-        showDeal(leads[index]);
+        showLead(leads[index]);
       } else {
-        document.getElementById("dealCard").innerHTML = `<div class="lead-card">No dispo deals loaded.</div>`;
+        document.getElementById("leadCard").innerHTML = `<div class="lead-card">No dispo deals loaded.</div>`;
       }
     };
   </script>
 </head>
 <body>
-  <header>Dispo Deals - Deal Bankers</header>
+  <header>Deal Bankers Dispo CRM</header>
   <div class="container">
     <div class="lead-section">
-      <div id="dealCard"></div>
-      <button class="next-btn" onclick="nextDeal()">⏭️ Next Deal</button>
+      <div id="leadCard"></div>
+      <button onclick="nextLead()">⏭️ Next Deal</button>
     </div>
     <div class="map-section">
       <iframe
+        class="map"
         src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
         allowfullscreen
       ></iframe>
+    </div>
+  </div>
+  <div id="formModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <iframe id="formIframe"></iframe>
     </div>
   </div>
 </body>
