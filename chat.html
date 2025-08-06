@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Deal Bankers Chat Room</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f4;
+      margin: 0;
+      padding: 0;
+      display: flex;
+      flex-direction: column;
+      height: 100vh;
+    }
+    header {
+      background: #111;
+      color: white;
+      padding: 15px;
+      text-align: center;
+    }
+    #chat-box {
+      flex: 1;
+      padding: 10px;
+      overflow-y: scroll;
+      background: white;
+      border-top: 1px solid #ccc;
+      border-bottom: 1px solid #ccc;
+    }
+    #chat-box div {
+      margin: 5px 0;
+      padding: 5px 10px;
+      background: #e8f0fe;
+      border-radius: 5px;
+      max-width: 60%;
+    }
+    form {
+      display: flex;
+      padding: 10px;
+      background: #fff;
+    }
+    input[type="text"] {
+      flex: 1;
+      padding: 10px;
+      font-size: 16px;
+    }
+    button {
+      padding: 10px;
+      background: #007BFF;
+      color: white;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+  <header>💬 Deal Bankers Chat Room</header>
+  <div id="chat-box"></div>
+  <form id="chat-form">
+    <input type="text" id="message" placeholder="Type your message..." required />
+    <button type="submit">Send</button>
+  </form>
+
+  <!-- Firebase CDN -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <script>
+    // Your config
+    const firebaseConfig = {
+      apiKey: "AIzaSyAoid1THZwOJ_FrFXMXd_pHuAoxDJJuncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.appspot.com",
+      messagingSenderId: "458111055661",
+      appId: "1:458111055661:web:b4c33858ac58c1a2ecab70",
+      measurementId: "G-KTNXMZ14F7"
+    };
+
+    // Init Firebase
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database().ref("chat");
+
+    const chatBox = document.getElementById("chat-box");
+    const form = document.getElementById("chat-form");
+    const input = document.getElementById("message");
+
+    // Listen for messages
+    db.on("child_added", snapshot => {
+      const msg = snapshot.val();
+      const div = document.createElement("div");
+      div.textContent = msg;
+      chatBox.appendChild(div);
+      chatBox.scrollTop = chatBox.scrollHeight;
+    });
+
+    // Send messages
+    form.addEventListener("submit", e => {
+      e.preventDefault();
+      if (input.value.trim()) {
+        db.push(input.value.trim());
+        input.value = "";
+      }
+    });
+  </script>
+</body>
+</html>
