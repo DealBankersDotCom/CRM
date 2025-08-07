@@ -4,6 +4,8 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DealBankers Login</title>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
   <style>
     body {
       margin: 0;
@@ -30,8 +32,8 @@
     }
 
     input[type="text"],
-    input[type="password"],
-    input[type="email"] {
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
@@ -68,11 +70,6 @@
       cursor: pointer;
     }
 
-    .google-login {
-      margin-top: 10px;
-      background-color: #db4437;
-    }
-
     .links {
       margin: 10px 0;
       font-size: 14px;
@@ -104,20 +101,34 @@
       font-size: 14px;
       cursor: pointer;
     }
+
+    .google-btn {
+      background: none;
+      border: none;
+      margin-top: 15px;
+      cursor: pointer;
+    }
+
+    .google-btn img {
+      width: 100%;
+      max-width: 250px;
+    }
   </style>
 </head>
 <body>
   <div class="login-container">
     <h2>DealBankersDotCom Login</h2>
 
-    <input type="email" id="email" placeholder="Email" />
+    <input type="email" placeholder="Email" id="email" />
     <div class="password-wrapper">
       <input type="password" placeholder="Password" id="password" />
       <button type="button" class="toggle-password" onclick="togglePassword()">Show</button>
     </div>
+    <button class="login" onclick="loginWithEmail()">Log In</button>
 
-    <button class="login" onclick="loginWithEmail()">Login with Email</button>
-    <button class="login google-login" onclick="loginWithGoogle()">Login with Google</button>
+    <button class="google-btn" onclick="loginWithGoogle()">
+      <img src="signinwithgoogle.png" alt="Sign in with Google">
+    </button>
 
     <div class="links">
       <a onclick="alert('Sign-up form coming soon')">New User</a> |
@@ -132,18 +143,15 @@
     </div>
   </div>
 
-  <!-- Firebase SDK -->
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
   <script>
+    // Firebase config
     const firebaseConfig = {
-      apiKey: "PASTE_YOUR_API_KEY_HERE",
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
       projectId: "deal-bankers",
       storageBucket: "deal-bankers.appspot.com",
-      messagingSenderId: "PASTE_YOUR_SENDER_ID",
-      appId: "PASTE_YOUR_APP_ID",
-      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com"
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70"
     };
 
     firebase.initializeApp(firebaseConfig);
@@ -157,35 +165,29 @@
       toggleButton.textContent = type === "password" ? "Show" : "Hide";
     }
 
-    function redirectByEmail(email) {
-      if (email.includes("mitzi")) window.location.href = "mitzi.html";
-      else if (email.includes("micah")) window.location.href = "micah.html";
-      else if (email.includes("alfred")) window.location.href = "alfred.html";
-      else if (email.includes("alex")) window.location.href = "alex.html";
-      else window.location.href = "generic.html";
-    }
-
     function loginWithEmail() {
-      const email = document.getElementById("email").value.toLowerCase().trim();
+      const email = document.getElementById("email").value.trim();
       const password = document.getElementById("password").value.trim();
 
       auth.signInWithEmailAndPassword(email, password)
-        .then((userCredential) => {
-          redirectByEmail(userCredential.user.email);
+        .then(userCredential => {
+          alert("Email login successful");
+          // redirect or handle login
         })
-        .catch((error) => {
-          alert("Login failed: " + error.message);
+        .catch(error => {
+          alert("Email login error: " + error.message);
         });
     }
 
     function loginWithGoogle() {
       const provider = new firebase.auth.GoogleAuthProvider();
       auth.signInWithPopup(provider)
-        .then((result) => {
-          redirectByEmail(result.user.email);
+        .then(result => {
+          alert("Google login successful");
+          // redirect or handle login
         })
-        .catch((error) => {
-          alert("Google login failed: " + error.message);
+        .catch(error => {
+          alert("Google login error: " + error.message);
         });
     }
   </script>
