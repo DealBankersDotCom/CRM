@@ -2,93 +2,158 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>DealBankersDotCom Login</title>
-  <link rel="icon" href="https://raw.githubusercontent.com/DealBankersDotCom/CRM/main/icon%20(1).jpg" />
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.1/dist/css/bootstrap.min.css" />
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.21.0/firebase-auth.js"></script>
-  <script src="https://cdn.firebase.com/libs/firebaseui/6.0.2/firebaseui.js"></script>
-  <link rel="stylesheet" href="https://cdn.firebase.com/libs/firebaseui/6.0.2/firebaseui.css" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Roboto&display=swap">
   <style>
     body {
-      background: linear-gradient(to bottom right, #0f2027, #203a43, #2c5364);
-      height: 100vh;
       margin: 0;
-      font-family: 'Segoe UI', sans-serif;
+      font-family: 'Roboto', sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
       display: flex;
       justify-content: center;
       align-items: center;
+      height: 100vh;
     }
-    .login-container {
+    .container {
       display: flex;
       align-items: center;
-      justify-content: center;
-      gap: 2rem;
+      background-color: transparent;
+      padding: 20px;
+      gap: 50px;
+    }
+    .logo-box {
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.4);
+      border-radius: 20px;
+      overflow: hidden;
     }
     .logo-box img {
-      max-width: 300px;
-      box-shadow: 0 10px 30px rgba(0, 0, 0, 0.4);
-      border-radius: 20px;
+      display: block;
+      width: 220px;
+      height: auto;
     }
-    .form-box {
-      background: #fff;
-      padding: 2rem;
-      border-radius: 15px;
-      box-shadow: 0 5px 25px rgba(0,0,0,0.2);
-      max-width: 400px;
+    .login-box {
+      background-color: white;
+      padding: 30px;
+      border-radius: 16px;
+      box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      width: 300px;
+    }
+    .login-box h2 {
+      margin-bottom: 20px;
+    }
+    input[type="email"],
+    input[type="password"] {
       width: 100%;
+      padding: 10px;
+      margin: 6px 0;
+      border-radius: 6px;
+      border: 1px solid #ccc;
+    }
+    button {
+      width: 100%;
+      padding: 10px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      margin-top: 10px;
+      cursor: pointer;
+    }
+    .google-btn {
+      margin-top: 15px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      padding: 10px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+    .google-btn img {
+      width: 20px;
+      height: 20px;
+    }
+    .role-buttons {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 20px;
+      flex-wrap: wrap;
+      gap: 10px;
     }
     .role-buttons button {
-      margin: 0.2rem;
-    }
-    #firebaseui-auth-container {
-      margin-top: 1rem;
+      flex: 1 1 45%;
+      background-color: #007bff;
     }
   </style>
 </head>
 <body>
-  <div class="login-container">
+  <div class="container">
     <div class="logo-box">
-      <img src="https://raw.githubusercontent.com/DealBankersDotCom/CRM/main/icon%20(1).jpg" alt="DealBankers Logo" />
+      <img src="logo.png" alt="DealBankers Logo" />
     </div>
-    <div class="form-box">
-      <h4 class="text-center mb-3">DealBankersDotCom Login</h4>
-      <div id="firebaseui-auth-container"></div>
-      <div class="role-buttons text-center mt-4">
-        <button class="btn btn-primary">Contractor</button>
-        <button class="btn btn-primary">Wholesaler</button>
-        <button class="btn btn-primary">Realtor</button>
-        <button class="btn btn-primary">Investor</button>
+    <div class="login-box">
+      <h2>DealBankersDotCom Login</h2>
+      <input type="email" id="email" placeholder="Email" />
+      <input type="password" id="password" placeholder="Password" />
+      <button id="login-button">Log In</button>
+
+      <div class="google-btn" id="google-signin">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google Logo" />
+        <span>Sign in with Google</span>
+      </div>
+
+      <div class="role-buttons">
+        <button>Contractor</button>
+        <button>Wholesaler</button>
+        <button>Realtor</button>
+        <button>Investor</button>
       </div>
     </div>
   </div>
 
-  <script>
-    // ✅ Replace these with your actual Firebase project settings
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.5.0/firebase-auth.js";
+
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_PROJECT_ID.appspot.com",
-      messagingSenderId: "YOUR_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.firebasestorage.app",
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
+      measurementId: "G-KTNXZM14F7"
     };
 
-    // Initialize Firebase
-    const app = firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
 
-    // Configure FirebaseUI
-    const uiConfig = {
-      signInSuccessUrl: '/dashboard.html', // Change this to your desired redirect
-      signInOptions: [firebase.auth.GoogleAuthProvider.PROVIDER_ID],
-      tosUrl: '/tos.html',
-      privacyPolicyUrl: '/privacy.html'
-    };
+    document.getElementById("google-signin").addEventListener("click", () => {
+      signInWithPopup(auth, provider)
+        .then((result) => {
+          alert("Google login successful: " + result.user.email);
+        })
+        .catch((error) => {
+          alert("Google login error: " + error.message);
+        });
+    });
 
-    const ui = new firebaseui.auth.AuthUI(auth);
-    ui.start('#firebaseui-auth-container', uiConfig);
+    document.getElementById("login-button").addEventListener("click", () => {
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+      signInWithEmailAndPassword(auth, email, password)
+        .then((result) => {
+          alert("Login successful: " + result.user.email);
+        })
+        .catch((error) => {
+          alert("Login error: " + error.message);
+        });
+    });
   </script>
 </body>
 </html>
