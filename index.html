@@ -30,7 +30,8 @@
     }
 
     input[type="text"],
-    input[type="password"] {
+    input[type="password"],
+    input[type="email"] {
       width: 100%;
       padding: 12px;
       margin: 10px 0;
@@ -65,6 +66,11 @@
       font-size: 16px;
       margin-top: 10px;
       cursor: pointer;
+    }
+
+    .google-login {
+      margin-top: 10px;
+      background-color: #db4437;
     }
 
     .links {
@@ -103,15 +109,16 @@
 <body>
   <div class="login-container">
     <h2>DealBankersDotCom Login</h2>
-    <input type="text" placeholder="Username" id="username" />
 
+    <input type="email" id="email" placeholder="Email" />
     <div class="password-wrapper">
       <input type="password" placeholder="Password" id="password" />
       <button type="button" class="toggle-password" onclick="togglePassword()">Show</button>
     </div>
 
-    <button class="login" onclick="login()">Log In</button>
-    
+    <button class="login" onclick="loginWithEmail()">Login with Email</button>
+    <button class="login google-login" onclick="loginWithGoogle()">Login with Google</button>
+
     <div class="links">
       <a onclick="alert('Sign-up form coming soon')">New User</a> |
       <a onclick="alert('Password recovery coming soon')">Forgot Password?</a>
@@ -125,7 +132,23 @@
     </div>
   </div>
 
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.24.0/firebase-auth-compat.js"></script>
   <script>
+    const firebaseConfig = {
+      apiKey: "PASTE_YOUR_API_KEY_HERE",
+      authDomain: "deal-bankers.firebaseapp.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.appspot.com",
+      messagingSenderId: "PASTE_YOUR_SENDER_ID",
+      appId: "PASTE_YOUR_APP_ID",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
     function togglePassword() {
       const passwordField = document.getElementById("password");
       const toggleButton = document.querySelector(".toggle-password");
@@ -134,23 +157,36 @@
       toggleButton.textContent = type === "password" ? "Show" : "Hide";
     }
 
-    function login() {
-      const user = document.getElementById("username").value.toLowerCase().trim();
-      const pass = document.getElementById("password").value.trim();
+    function redirectByEmail(email) {
+      if (email.includes("mitzi")) window.location.href = "mitzi.html";
+      else if (email.includes("micah")) window.location.href = "micah.html";
+      else if (email.includes("alfred")) window.location.href = "alfred.html";
+      else if (email.includes("alex")) window.location.href = "alex.html";
+      else window.location.href = "generic.html";
+    }
 
-      // Hardcoded test users
-      const testUsers = {
-        mitzi: { password: "mitzi123", redirect: "mitzi.html" },
-        alfred: { password: "alfred123", redirect: "alfred.html" },
-        micah: { password: "micah123", redirect: "micah.html" },
-        alex: { password: "alex123", redirect: "alex.html" }
-      };
+    function loginWithEmail() {
+      const email = document.getElementById("email").value.toLowerCase().trim();
+      const password = document.getElementById("password").value.trim();
 
-      if (testUsers[user] && testUsers[user].password === pass) {
-        window.location.href = testUsers[user].redirect;
-      } else {
-        alert("Invalid credentials");
-      }
+      auth.signInWithEmailAndPassword(email, password)
+        .then((userCredential) => {
+          redirectByEmail(userCredential.user.email);
+        })
+        .catch((error) => {
+          alert("Login failed: " + error.message);
+        });
+    }
+
+    function loginWithGoogle() {
+      const provider = new firebase.auth.GoogleAuthProvider();
+      auth.signInWithPopup(provider)
+        .then((result) => {
+          redirectByEmail(result.user.email);
+        })
+        .catch((error) => {
+          alert("Google login failed: " + error.message);
+        });
     }
   </script>
 </body>
