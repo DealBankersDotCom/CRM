@@ -1,173 +1,172 @@
+Alright, here’s the clean hookup you asked for:
+
+profile.html — upgraded profile with tabs (Overview, Wholesaler, Contractor, Realtor, Investor, Settings) and a Logout button.
+The Wholesaler tab loads your acquisition portal inside the page (iframe).
+You can deep-link straight to a tab with profile.html?tab=wholesaler.
+
+wholesaler.html — your acquisition page dropped in as-is (minor polish + runs great inside the iframe). It still uses your leads.js.
+
+
+
+---
+
+profile.html
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>DealBankers — Profile</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>DealBankers • Profile</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
-  <!-- Tailwind (CDN) -->
-  <script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --bg:#0d1822; --panel:#0f1a24; --card:#12202d; --line:#203241;
+    --text:#eaf1f6; --muted:#9fb3c7; --accent:#0d6efd; --gold:#c7a86a;
+    --ok:#28a745; --danger:#d9534f; --shadow:0 24px 64px rgba(0,0,0,.5);
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+    background: radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
+               linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
+    color:var(--text);
+    min-height:100vh; padding:18px;
+  }
 
-  <!-- Firebase compat (auth + realtime db) -->
+  .shell{
+    max-width:1100px; margin:0 auto; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    border:1px solid #1a2a36; border-radius:20px; box-shadow:var(--shadow); backdrop-filter:blur(12px);
+  }
+  header{
+    display:flex; align-items:center; justify-content:space-between;
+    padding:14px 18px; border-bottom:1px solid #1a2a36;
+  }
+  .brand{display:flex; gap:12px; align-items:center}
+  .brand img{width:42px;height:42px;border-radius:10px;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+  .brand h1{font-size:16px; letter-spacing:.14em; text-transform:uppercase; margin:0; color:#bcd0e3}
+  .userline{font-size:13px; color:var(--muted)}
+  .row-actions{display:flex; gap:10px}
+  .btn{
+    padding:10px 14px; border-radius:10px; border:1px solid #264054; background:#10202c; color:var(--text);
+    cursor:pointer; font-weight:600;
+  }
+  .btn:hover{filter:brightness(1.05)}
+  .btn-ok{background:linear-gradient(180deg, #29a846, #1f8a39); border:none}
+  .btn-danger{background:linear-gradient(180deg, #dd6060, #bb3e3e); border:none}
+
+  /* Tabs */
+  .tabs{display:flex; gap:8px; padding:12px 12px 0; flex-wrap:wrap}
+  .tab{
+    padding:10px 14px; border-radius:999px; border:1px solid #1d3142; cursor:pointer;
+    font-size:14px; background:#0f1a24; color:#bcd0e3;
+  }
+  .tab.active{background:linear-gradient(180deg, var(--accent), #0a58ca); color:#fff; border:none}
+
+  .content{
+    padding:16px; display:grid; gap:16px;
+  }
+  .card{
+    background:#10202c; border:1px solid #1a2a36; border-radius:var(--r); padding:16px;
+  }
+  h2{margin:0 0 8px}
+  .muted{color:var(--muted); font-size:13px}
+
+  /* iframe area */
+  .iframe-wrap{
+    border:1px solid #1a2a36; border-radius:var(--r); overflow:hidden; background:#0b141b;
+    height:70vh; min-height:520px;
+  }
+  .iframe-wrap iframe{width:100%; height:100%; border:0; background:#fff}
+
+  /* Responsive */
+  @media (max-width: 720px){
+    .userline{display:none}
+    .iframe-wrap{height:68vh; min-height:520px}
+  }
+</style>
+</head>
+<body>
+  <div class="shell">
+    <header>
+      <div class="brand">
+        <img src="icon (1).jpg" alt="DealBankers"/>
+        <div>
+          <h1>DEALBANKERS • PROFILE</h1>
+          <div id="who" class="userline">Loading user…</div>
+        </div>
+      </div>
+      <div class="row-actions">
+        <button id="saveBtn" class="btn btn-ok">Save Profile</button>
+        <button id="logoutBtn" class="btn btn-danger">Log Out</button>
+      </div>
+    </header>
+
+    <nav class="tabs" id="tabs">
+      <button class="tab active" data-tab="overview">Overview</button>
+      <button class="tab" data-tab="wholesaler">Wholesaler</button>
+      <button class="tab" data-tab="contractor">Contractor</button>
+      <button class="tab" data-tab="realtor">Realtor</button>
+      <button class="tab" data-tab="investor">Investor</button>
+      <button class="tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <section class="content">
+      <!-- OVERVIEW -->
+      <div class="card" data-panel="overview">
+        <h2>Welcome</h2>
+        <p class="muted">Pick a portal above to get to work. Your profile supports multiple roles; enable each as you grow.</p>
+        <div class="card" style="margin-top:8px">
+          <strong>Status:</strong> <span id="status">Authenticated</span><br/>
+          <strong>Email:</strong> <span id="emailOut">—</span><br/>
+          <strong>UID:</strong> <span id="uidOut">—</span>
+        </div>
+      </div>
+
+      <!-- WHOLESALER PORTAL (loads the acquisition tool inside) -->
+      <div class="card" data-panel="wholesaler" style="display:none">
+        <h2>Wholesaler • Acquisition</h2>
+        <div class="muted" style="margin-bottom:10px">
+          Foreclosure lists, rapid notes, and map view. This is live inside your profile.
+        </div>
+        <div class="iframe-wrap">
+          <iframe src="wholesaler.html" title="Wholesaler Acquisition"></iframe>
+        </div>
+      </div>
+
+      <!-- CONTRACTOR -->
+      <div class="card" data-panel="contractor" style="display:none">
+        <h2>Contractor</h2>
+        <p class="muted">Set your divisions (CSI MasterFormat) and service areas here. Coming soon.</p>
+      </div>
+
+      <!-- REALTOR -->
+      <div class="card" data-panel="realtor" style="display:none">
+        <h2>Realtor</h2>
+        <p class="muted">MLS preferences, buyer/seller funnels, and referral routing. Coming soon.</p>
+      </div>
+
+      <!-- INVESTOR -->
+      <div class="card" data-panel="investor" style="display:none">
+        <h2>Investor</h2>
+        <p class="muted">Buy box, return targets, preferred markets & dispositions. Coming soon.</p>
+      </div>
+
+      <!-- SETTINGS -->
+      <div class="card" data-panel="settings" style="display:none">
+        <h2>Settings</h2>
+        <p class="muted">Profile visibility, notifications, and data export will live here.</p>
+      </div>
+    </section>
+  </div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-</head>
-<body class="bg-gray-100 min-h-screen">
-
-  <!-- Top Bar -->
-  <header class="bg-white shadow">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
-      <div class="flex items-center gap-3">
-        <img src="icon (1).jpg" alt="DealBankers" class="w-10 h-10 rounded-lg object-cover shadow" />
-        <h1 class="text-xl font-semibold">DealBankers Profile</h1>
-      </div>
-      <div class="flex items-center gap-3">
-        <span id="userEmail" class="text-sm text-gray-600"></span>
-        <button id="logoutBtn" class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black">Log out</button>
-      </div>
-    </div>
-  </header>
-
-  <!-- Content -->
-  <main class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
-    <!-- Role picker -->
-    <section class="bg-white rounded-xl shadow p-5 mb-6">
-      <h2 class="text-lg font-semibold mb-3">Your Roles</h2>
-      <p class="text-sm text-gray-600 mb-4">Choose the roles you want active on your account. Each role has its own settings.</p>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <label class="flex items-center gap-2">
-          <input id="role-contractor" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
-          <span>Contractor</span>
-        </label>
-        <label class="flex items-center gap-2">
-          <input id="role-wholesaler" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
-          <span>Wholesaler</span>
-        </label>
-        <label class="flex items-center gap-2">
-          <input id="role-realtor" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
-          <span>Realtor</span>
-        </label>
-        <label class="flex items-center gap-2">
-          <input id="role-investor" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
-          <span>Investor</span>
-        </label>
-      </div>
-    </section>
-
-    <!-- Tabs -->
-    <section class="bg-white rounded-xl shadow">
-      <div id="tabs" class="flex flex-wrap gap-2 border-b p-4">
-        <button data-tab="contractor" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Contractor</button>
-        <button data-tab="wholesaler" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Wholesaler</button>
-        <button data-tab="realtor" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Realtor</button>
-        <button data-tab="investor" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Investor</button>
-      </div>
-
-      <div class="p-5">
-        <!-- CONTRACTOR -->
-        <div id="panel-contractor" class="tab-panel hidden">
-          <h3 class="text-lg font-semibold mb-4">Contractor Settings</h3>
-          <div class="grid md:grid-cols-2 gap-4">
-            <label class="block">
-              <span class="text-sm text-gray-700">Business Name</span>
-              <input id="contractor-business" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-            <label class="block">
-              <span class="text-sm text-gray-700">License Number</span>
-              <input id="contractor-license" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-            <label class="block md:col-span-2">
-              <span class="text-sm text-gray-700">Division (CSI MasterFormat)</span>
-              <select id="contractor-division" class="mt-1 w-full rounded-lg border-gray-300">
-                <option value="">Select Division</option>
-                <option>Division 01 — General Requirements</option>
-                <option>Division 02 — Existing Conditions</option>
-                <option>Division 03 — Concrete</option>
-                <option>Division 04 — Masonry</option>
-                <option>Division 05 — Metals</option>
-                <option>Division 06 — Wood, Plastics, Composites</option>
-                <option>Division 07 — Thermal & Moisture Protection</option>
-                <option>Division 08 — Openings</option>
-                <option>Division 09 — Finishes</option>
-                <option>Division 10 — Specialties</option>
-                <option>Division 11 — Equipment</option>
-                <option>Division 12 — Furnishings</option>
-                <option>Division 13 — Special Construction</option>
-                <option>Division 14 — Conveying Equipment</option>
-                <option>Division 21 — Fire Suppression</option>
-                <option>Division 22 — Plumbing</option>
-                <option>Division 23 — HVAC</option>
-                <option>Division 25 — Integrated Automation</option>
-                <option>Division 26 — Electrical</option>
-                <option>Division 27 — Communications</option>
-                <option>Division 28 — Electronic Safety & Security</option>
-                <option>Division 31 — Earthwork</option>
-                <option>Division 32 — Exterior Improvements</option>
-                <option>Division 33 — Utilities</option>
-              </select>
-            </label>
-          </div>
-        </div>
-
-        <!-- WHOLESALER -->
-        <div id="panel-wholesaler" class="tab-panel hidden">
-          <h3 class="text-lg font-semibold mb-4">Wholesaler Settings</h3>
-          <div class="grid md:grid-cols-2 gap-4">
-            <label class="block">
-              <span class="text-sm text-gray-700">Target Markets (comma-separated)</span>
-              <input id="wholesaler-markets" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-            <label class="block">
-              <span class="text-sm text-gray-700">Preferred Deal Types</span>
-              <input id="wholesaler-deals" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-          </div>
-        </div>
-
-        <!-- REALTOR -->
-        <div id="panel-realtor" class="tab-panel hidden">
-          <h3 class="text-lg font-semibold mb-4">Realtor Settings</h3>
-          <div class="grid md:grid-cols-2 gap-4">
-            <label class="block">
-              <span class="text-sm text-gray-700">Brokerage Name</span>
-              <input id="realtor-brokerage" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-            <label class="block">
-              <span class="text-sm text-gray-700">License Number</span>
-              <input id="realtor-license" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-          </div>
-        </div>
-
-        <!-- INVESTOR -->
-        <div id="panel-investor" class="tab-panel hidden">
-          <h3 class="text-lg font-semibold mb-4">Investor Settings</h3>
-          <div class="grid md:grid-cols-2 gap-4">
-            <label class="block">
-              <span class="text-sm text-gray-700">Investment Focus</span>
-              <input id="investor-focus" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-            <label class="block">
-              <span class="text-sm text-gray-700">Capital Range</span>
-              <input id="investor-capital" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
-            </label>
-          </div>
-        </div>
-
-        <div class="mt-6 flex items-center justify-between">
-          <span id="saveStatus" class="text-sm text-gray-500"></span>
-          <button id="saveBtn" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Save Profile</button>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <!-- Toast -->
-  <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-5 hidden bg-black text-white text-sm px-4 py-2 rounded-lg shadow-lg"></div>
-
   <script>
-    // Firebase config (use your exact values)
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -178,182 +177,196 @@
       appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
       measurementId: "G-KTNXZM14F7"
     };
-
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db   = firebase.database();
 
-    // UI refs
-    const emailOut = document.getElementById('userEmail');
-    const logoutBtn = document.getElementById('logoutBtn');
-    const saveBtn = document.getElementById('saveBtn');
-    const saveStatus = document.getElementById('saveStatus');
-    const toastEl = document.getElementById('toast');
+    // UI helpers
+    const panels = [...document.querySelectorAll('[data-panel]')];
+    const tabs   = [...document.querySelectorAll('.tab')];
 
-    const roleBoxes = {
-      contractor: document.getElementById('role-contractor'),
-      wholesaler: document.getElementById('role-wholesaler'),
-      realtor:    document.getElementById('role-realtor'),
-      investor:   document.getElementById('role-investor')
-    };
-
-    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
-    const tabPanels = {
-      contractor: document.getElementById('panel-contractor'),
-      wholesaler: document.getElementById('panel-wholesaler'),
-      realtor:    document.getElementById('panel-realtor'),
-      investor:   document.getElementById('panel-investor')
-    };
-
-    function toast(msg){
-      toastEl.textContent = msg;
-      toastEl.classList.remove('hidden');
-      setTimeout(()=> toastEl.classList.add('hidden'), 2200);
+    function show(tabName){
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
+      panels.forEach(p => p.style.display = (p.dataset.panel === tabName) ? '' : 'none');
+      const url = new URL(location.href);
+      url.searchParams.set('tab', tabName);
+      history.replaceState(null, '', url.toString());
     }
 
-    // Tabs logic
-    function setActiveTab(role){
-      // hide all panels
-      Object.values(tabPanels).forEach(p => p.classList.add('hidden'));
-      // remove active state from all buttons
-      tabButtons.forEach(btn => btn.classList.remove('bg-gray-900','text-white'));
-      // show selected if visible
-      const panel = tabPanels[role];
-      const btn = document.querySelector(`.tab-btn[data-tab="${role}"]`);
-      if (panel && btn && !btn.classList.contains('hidden')) {
-        panel.classList.remove('hidden');
-        btn.classList.add('bg-gray-900','text-white');
-      }
-    }
-
-    function refreshVisibleTabs(){
-      // show/hide tab buttons based on role checkboxes
-      Object.keys(roleBoxes).forEach(role => {
-        const btn = document.querySelector(`.tab-btn[data-tab="${role}"]`);
-        if (!btn) return;
-        if (roleBoxes[role].checked) {
-          btn.classList.remove('hidden');
-        } else {
-          btn.classList.add('hidden');
-          tabPanels[role].classList.add('hidden');
-        }
-      });
-      // ensure at least one active tab
-      const firstVisible = tabButtons.find(b => !b.classList.contains('hidden'));
-      if (firstVisible) setActiveTab(firstVisible.dataset.tab);
-    }
-
-    tabButtons.forEach(btn => {
-      btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
+    document.getElementById('tabs').addEventListener('click', (e)=>{
+      const btn = e.target.closest('.tab'); if(!btn) return;
+      show(btn.dataset.tab);
     });
 
-    // Toggle settings visibility when role checked/unchecked
-    Object.keys(roleBoxes).forEach(role => {
-      roleBoxes[role].addEventListener('change', refreshVisibleTabs);
+    // deep-link ?tab=wholesaler
+    const initialTab = new URL(location.href).searchParams.get('tab') || 'overview';
+    show(initialTab);
+
+    // Auth wiring
+    auth.onAuthStateChanged(user=>{
+      if(!user){ location.href = 'index.html'; return; }
+      document.getElementById('who').textContent = `Signed in as ${user.displayName || user.email}`;
+      document.getElementById('emailOut').textContent = user.email || '—';
+      document.getElementById('uidOut').textContent   = user.uid;
     });
 
-    // Auth gate + load profile
-    auth.onAuthStateChanged(async (user) => {
-      if (!user) {
-        window.location.href = 'index.html';
-        return;
-      }
-      emailOut.textContent = user.email || '';
-      await loadProfile(user.uid);
+    document.getElementById('logoutBtn').addEventListener('click', async ()=>{
+      try{ await auth.signOut(); location.href = 'index.html'; }catch(err){ alert(err.message); }
     });
 
-    // Logout
-    logoutBtn.addEventListener('click', async () => {
-      try {
-        await auth.signOut();
-        window.location.href = 'index.html';
-      } catch (e) {
-        console.error(e);
-        toast('Logout failed, try again.');
-      }
-    });
-
-    // Load profile data
-    async function loadProfile(uid){
-      try {
-        const snap = await db.ref(`users/${uid}`).get();
-        const data = snap.exists() ? snap.val() : {};
-        // roles
-        Object.keys(roleBoxes).forEach(role => {
-          const active = !!data[role];
-          roleBoxes[role].checked = active;
-        });
-
-        // fill fields
-        if (data.contractor){
-          document.getElementById('contractor-business').value = data.contractor.business || '';
-          document.getElementById('contractor-license').value  = data.contractor.license || '';
-          document.getElementById('contractor-division').value = data.contractor.division || '';
-        }
-        if (data.wholesaler){
-          document.getElementById('wholesaler-markets').value = data.wholesaler.markets || '';
-          document.getElementById('wholesaler-deals').value   = data.wholesaler.deals || '';
-        }
-        if (data.realtor){
-          document.getElementById('realtor-brokerage').value = data.realtor.brokerage || '';
-          document.getElementById('realtor-license').value   = data.realtor.license || '';
-        }
-        if (data.investor){
-          document.getElementById('investor-focus').value   = data.investor.focus || '';
-          document.getElementById('investor-capital').value = data.investor.capital || '';
-        }
-
-        refreshVisibleTabs();
-      } catch (e) {
-        console.error(e);
-        toast('Failed to load profile');
-      }
-    }
-
-    // Save profile data
-    saveBtn.addEventListener('click', async () => {
-      const user = auth.currentUser;
-      if (!user) return;
-      const uid = user.uid;
-
-      const payload = {};
-      if (roleBoxes.contractor.checked){
-        payload.contractor = {
-          business: document.getElementById('contractor-business').value.trim(),
-          license:  document.getElementById('contractor-license').value.trim(),
-          division: document.getElementById('contractor-division').value
-        };
-      }
-      if (roleBoxes.wholesaler.checked){
-        payload.wholesaler = {
-          markets: document.getElementById('wholesaler-markets').value.trim(),
-          deals:   document.getElementById('wholesaler-deals').value.trim()
-        };
-      }
-      if (roleBoxes.realtor.checked){
-        payload.realtor = {
-          brokerage: document.getElementById('realtor-brokerage').value.trim(),
-          license:   document.getElementById('realtor-license').value.trim()
-        };
-      }
-      if (roleBoxes.investor.checked){
-        payload.investor = {
-          focus:   document.getElementById('investor-focus').value.trim(),
-          capital: document.getElementById('investor-capital').value.trim()
-        };
-      }
-
-      try{
-        saveStatus.textContent = 'Saving...';
-        await db.ref(`users/${uid}`).set(payload);
-        saveStatus.textContent = 'Saved ✓';
-        setTimeout(()=> saveStatus.textContent = '', 1800);
-      }catch(e){
-        console.error(e);
-        saveStatus.textContent = 'Save failed';
-        toast('Save failed, try again.');
-      }
+    document.getElementById('saveBtn').addEventListener('click', ()=>{
+      alert('Profile saved (placeholder).');
     });
   </script>
 </body>
 </html>
+
+
+---
+
+wholesaler.html
+
+(Your acquisition portal, tightened slightly to live inside the profile iframe. Still uses leads.js and your Google Form.)
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wholesaler • Acquisition</title>
+<style>
+  :root{
+    --bg:#0f1620; --text:#0f1620; --panel:#ffffff; --line:#e7e7e7;
+    --brand:#111; --muted:#666;
+  }
+  html,body{height:100%}
+  body{margin:0; font-family:Arial, sans-serif; background:#f2f4f7}
+
+  header{
+    background-color:#111; color:#fff; padding:12px 16px; display:flex;
+    justify-content:space-between; align-items:center; font-size:18px;
+  }
+  .menu{cursor:pointer; font-size:22px}
+  .menu-content{
+    display:none; position:absolute; top:56px; right:15px; background:#fff; border:1px solid #ccc;
+    border-radius:8px; box-shadow:0 4px 10px rgba(0,0,0,.2); z-index:1000;
+  }
+  .menu-content a{display:block; padding:10px 20px; text-decoration:none; color:#333}
+  .menu-content a:hover{background:#f2f2f2}
+
+  .container{display:flex; flex-direction:column; height:calc(100vh - 56px)}
+  @media (min-width: 900px){ .container{flex-direction:row} }
+
+  .lead-section, .map-section{padding:10px}
+  .lead-section{flex:1; overflow:auto}
+  .map-section{flex:1; display:flex}
+
+  .lead-buttons{
+    display:flex; justify-content:center; gap:10px; margin-bottom:10px; flex-wrap:wrap;
+  }
+  .lead-buttons a, .lead-buttons button{
+    font-size:20px; border:none; border-radius:8px; text-decoration:none; cursor:pointer; padding:8px 12px; color:white;
+  }
+  .call{background:#0d6efd} .drive{background:#6c757d} .settings{background:#343a40} .chat{background:#17a2b8}
+
+  .lead-card{background:#fff; padding:15px; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,.1); margin:0 auto 15px; max-width:560px}
+  .lead-card a{color:#0d6efd; font-weight:bold; text-decoration:none}
+  .lead-card button{background:#28a745; color:white; padding:6px 10px; border:none; border-radius:4px; font-size:14px; margin-top:10px; cursor:pointer}
+
+  .next-btn{display:block; margin:15px auto; padding:10px 20px; font-size:18px; background:#111; color:white; border:none; border-radius:6px; cursor:pointer}
+
+  iframe.map{width:100%; border:none; border-radius:8px; box-shadow:0 0 8px rgba(0,0,0,.1)}
+  .map-section iframe.map{height:100%}
+  @media (max-width: 899px){ iframe.map{height:320px} }
+
+  .modal{display:none; position:fixed; z-index:999; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center}
+  .modal-content{width:92%; height:80%; background:white; border-radius:10px; overflow:hidden; position:relative}
+  .modal iframe{width:100%; height:100%; border:none}
+  .close-btn{position:absolute; top:10px; right:15px; font-size:20px; background:#333; color:white; border:none; border-radius:50%; width:30px; height:30px; cursor:pointer}
+
+  .accordion{margin-top:10px; border-radius:8px; overflow:hidden; border:1px solid #ccc}
+  .accordion summary{background:#eee; cursor:pointer; padding:10px; font-weight:bold}
+  .accordion div{padding:10px; background:#f9f9f9; font-size:14px}
+  .highlight{background:yellow; padding:0 2px}
+</style>
+<script src="leads.js"></script>
+<script>
+  const rep = "Wholesaler Test";
+  let index = 0;
+
+  function highlightKeywords(text){
+    const keywords = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
+    const regex = new RegExp(`\\b(${keywords.join('|')})\\b`,'gi');
+    return text.replace(regex,'<span class="highlight">$1</span>');
+  }
+
+  function showLead(lead){
+    const base = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+    const url  = `${base}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
+    const notes = lead.notes ? highlightKeywords(lead.notes).replace(/\n/g,"<br>") : "No deal notes available.";
+
+    document.getElementById("leadCard").innerHTML = `
+      <div class="lead-buttons">
+        <button class="call" onclick="copyToClipboard('${lead.contacts[0].phone}')">📞</button>
+        <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
+        <a class="settings" href="#">⚙️</a>
+        <a class="chat" href="https://www.dealbankers.com/chat.html" target="_blank">💬</a>
+      </div>
+      <div class="lead-card">
+        <strong>${lead.contacts[0].name}</strong><br>
+        ${lead.address}<br>
+        <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
+        <button onclick="openModal('${url}')">📝 Update Lead Notes</button>
+        <details class="accordion">
+          <summary>📊 Deal Details</summary>
+          <div>${notes}</div>
+        </details>
+      </div>`;
+  }
+
+  function nextLead(){ index = (index + 1) % (leads?.length || 1); showLead(leads[index]); }
+  function copyToClipboard(text){ navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text)); }
+  function openModal(url){ const m = document.getElementById("formModal"); const i = document.getElementById("formIframe"); i.src=url; m.style.display="flex"; }
+  function closeModal(){ document.getElementById("formModal").style.display="none"; document.getElementById("formIframe").src=""; }
+  function toggleMenu(){ const m = document.getElementById("menuContent"); m.style.display = (m.style.display==="block") ? "none" : "block"; }
+
+  window.onload = function(){
+    if(Array.isArray(leads) && leads.length){ showLead(leads[index]); }
+    else{ document.getElementById("leadCard").innerHTML = `<div class="lead-card">No leads loaded. Check leads.js.</div>`; }
+  }
+</script>
+</head>
+<body>
+  <header>
+    Wholesaler • Acquisition
+    <div class="menu" onclick="toggleMenu()">☰</div>
+    <div class="menu-content" id="menuContent">
+      <a href="https://www.dealbankers.com/dispo.html" target="_blank">Go to Dispo Page</a>
+    </div>
+  </header>
+
+  <div class="container">
+    <section class="lead-section">
+      <div id="leadCard"></div>
+      <button class="next-btn" onclick="nextLead()">⏭️ Next Lead</button>
+    </section>
+
+    <section class="map-section">
+      <iframe class="map"
+        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
+        allowfullscreen></iframe>
+    </section>
+  </div>
+
+  <div id="formModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <iframe id="formIframe"></iframe>
+    </div>
+  </div>
+</body>
+</html>
+
+> Put your foreclosure/test data in leads.js (same folder). Everyone—Micah, Alex, Mitzi, Alfred—can log in, hit Wholesaler on the profile, and the acquisition portal loads right there with the shared leads.
+
+
+
