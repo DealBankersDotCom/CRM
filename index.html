@@ -3,132 +3,212 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DealBankers Login</title>
+  <title>DealBankers — Secure Access</title>
 
   <!-- Favicon -->
   <link rel="icon" type="image/jpeg" href="icon (1).jpg" />
 
   <style>
     :root{
-      --bg1:#0f2027; --bg2:#203a43; --bg3:#2c5364;
-      --card:#ffffff; --muted:#f1f1f1; --text:#111;
-      --primary:#28a745; --primary-pressed:#1f8a39;
-      --blue:#007bff; --blue-pressed:#0366d6;
-      --border:#dcdcdc; --shadow:0 18px 40px rgba(0,0,0,.32);
+      --bg1:#0b0f14; --bg2:#0e1a24; --bg3:#102431;
+      --card:rgba(16,24,32,.72);
+      --glass:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.12);
+      --text:#e9eef2;
+      --muted:#9fb3c7;
+      --green:#28a745;
+      --green-2:#1f8a39;
+      --blue:#0d6efd;
+      --blue-2:#0a58ca;
+      --accent:#c7a86a; /* Bond gold */
+      --shadow:0 25px 60px rgba(0,0,0,.55);
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0; font-family: "Segoe UI", Arial, sans-serif;
-      background: linear-gradient(to right, var(--bg1), var(--bg2), var(--bg3));
-      min-height:100vh; display:flex; justify-content:center; align-items:center;
+      margin:0; font-family: "Segoe UI", system-ui, -apple-system, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 80% -10%, #112b3b 0%, transparent 60%),
+        radial-gradient(1000px 600px at 10% 110%, #0c1e2a 0%, transparent 55%),
+        linear-gradient(135deg, var(--bg1), var(--bg2) 50%, var(--bg3));
+      display:flex; align-items:center; justify-content:center; overflow:hidden;
     }
+
+    /* Subtle animated vignette */
+    .vignette::before{
+      content:""; position:fixed; inset:-10%;
+      background:radial-gradient(1200px 700px at 50% -20%, rgba(199,168,106,.18), transparent 60%);
+      filter:blur(20px); animation:pulse 8s ease-in-out infinite alternate;
+      pointer-events:none; z-index:0;
+    }
+    @keyframes pulse{ from{opacity:.5; transform:translateY(0)} to{opacity:.8; transform:translateY(8px)} }
+
     .frame{
-      width:960px; max-width:92vw;
-      background:rgba(255,255,255,.08);
-      border-radius:22px; box-shadow: var(--shadow);
-      padding:28px;
+      width:1060px; max-width:92vw; padding:28px; border-radius:26px;
+      background:linear-gradient(180deg, var(--glass), rgba(255,255,255,.03));
+      border:1px solid var(--line); box-shadow: var(--shadow);
+      backdrop-filter: blur(14px); position:relative; z-index:1;
     }
+
+    .header-bar{
+      display:flex; align-items:center; justify-content:space-between; margin-bottom:18px;
+      border-bottom:1px solid var(--line); padding-bottom:14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:14px;
+    }
+    .brand img{
+      width:46px; height:46px; border-radius:10px; object-fit:cover; box-shadow:0 8px 20px rgba(0,0,0,.35);
+    }
+    .brand h1{font-size:18px; letter-spacing:.12em; text-transform:uppercase; margin:0; color:var(--muted)}
+    .badge{
+      padding:6px 10px; border-radius:999px; border:1px solid var(--line);
+      background:rgba(255,255,255,.04); font-size:12px; color:var(--muted)
+    }
+
     .main-box{
-      display:flex; background: var(--card);
-      border-radius:16px; overflow:hidden;
+      display:flex; gap:26px; min-height:480px;
     }
+
+    /* Left: cinematic panel */
     .logo-side{
-      background: var(--muted);
-      width:38%; min-width:260px;
-      display:flex; align-items:center; justify-content:center;
-      padding:26px;
+      flex:0 0 38%; min-width:280px; border-radius:18px; position:relative; overflow:hidden;
+      background:linear-gradient(180deg, rgba(0,0,0,.18), rgba(0,0,0,.4)),
+                 url('icon (1).jpg') center/cover no-repeat;
+      border:1px solid var(--line);
     }
-    .logo-side img{
-      width:220px; height:auto; border-radius:12px; display:block;
-      box-shadow: 0 10px 18px rgba(0,0,0,.18);
+    .logo-overlay{
+      position:absolute; inset:0; display:flex; flex-direction:column; justify-content:flex-end; padding:18px;
+      background:linear-gradient(180deg, transparent 40%, rgba(0,0,0,.45));
     }
+    .logo-title{font-size:22px; font-weight:700; letter-spacing:.06em}
+    .logo-sub{font-size:12px; color:var(--muted)}
+
+    /* Right: secure access card */
     .login-side{
-      flex:1; padding:36px 30px;
-      display:flex; flex-direction:column; justify-content:center; gap:14px;
+      flex:1; border-radius:18px; border:1px solid var(--line); background:var(--card);
+      padding:28px; display:flex; flex-direction:column; gap:16px; position:relative; overflow:hidden;
     }
-    h2{margin:0 0 10px; text-align:center; color:var(--text); font-weight:800}
+    .login-side::after{
+      content:""; position:absolute; inset:-30%; background:radial-gradient(700px 220px at 120% -10%, rgba(199,168,106,.12), transparent 55%);
+      transform:rotate(-8deg);
+    }
+    h2{margin:0; font-weight:800; letter-spacing:.02em}
+    .subtitle{margin:-6px 0 8px; color:var(--muted); font-size:13px}
+
+    .row{display:flex; gap:12px}
     .input{
-      width:100%; padding:12px 14px; border:1px solid var(--border);
-      border-radius:8px; font-size:16px; outline:none;
+      flex:1; padding:13px 14px; border-radius:10px; border:1px solid var(--line);
+      background:rgba(4,10,16,.55); color:var(--text); font-size:15px; outline:none;
+      transition: border-color .15s ease, box-shadow .15s ease;
     }
+    .input::placeholder{color:#8aa0b3}
+    .input:focus{border-color:var(--accent); box-shadow:0 0 0 2px rgba(199,168,106,.2)}
+
     .btn{
-      width:100%; padding:12px 14px; border:0; border-radius:8px;
-      font-size:16px; cursor:pointer; transition:transform .02s ease, filter .15s ease;
+      width:100%; padding:13px 14px; border-radius:10px; border:1px solid var(--line);
+      background:rgba(255,255,255,.06); color:var(--text); font-size:15px; cursor:pointer;
+      transition: transform .02s ease, filter .15s ease, background .15s ease;
+      backdrop-filter: blur(6px);
     }
     .btn:active{transform:translateY(1px)}
-    .btn-primary{background:var(--primary); color:#fff}
-    .btn-primary:hover{filter:brightness(.98)}
-    .btn-primary:active{background:var(--primary-pressed)}
+    .btn-primary{background:linear-gradient(180deg, var(--green), var(--green-2)); border:none}
+    .btn-primary:hover{filter:brightness(1.02)}
+    .btn-ghost:hover{background:rgba(255,255,255,.09)}
+    .btn-dark{background:linear-gradient(180deg, #0f1820, #0b141b); border:1px solid var(--line)}
+    .btn-dark:hover{filter:brightness(1.04)}
 
     .google-btn{
-      display:flex; align-items:center; justify-content:center;
-      gap:10px; background:#fff; border:1px solid var(--border); color:#222;
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      background:rgba(255,255,255,.96); color:#1b1f23; border:none;
     }
     .google-btn img{width:18px; height:18px}
 
     .roles{
-      display:flex; gap:12px; margin-top:10px; justify-content:space-between;
-      flex-wrap:nowrap;
+      display:flex; gap:12px; margin-top:4px; justify-content:space-between; flex-wrap:nowrap;
     }
     .role{
-      flex:1 1 0; text-align:center;
-      background:var(--blue); color:#fff; border-radius:8px; padding:10px 0;
-      font-size:15px; border:none; cursor:pointer;
+      flex:1 1 0; text-align:center; padding:10px 0; border-radius:10px; border:1px solid var(--line);
+      background:linear-gradient(180deg, var(--blue), var(--blue-2)); color:#fff; font-size:14px; cursor:pointer;
     }
-    .role:hover{filter:brightness(.98)}
-    .role:active{background:var(--blue-pressed)}
+    .helper{font-size:12px; color:var(--muted); text-align:center}
 
-    .helper{font-size:12px; color:#666; text-align:center}
+    .actions{display:flex; gap:10px}
+    .actions .btn{flex:1}
 
     .toast{
       position:fixed; left:50%; transform:translateX(-50%);
-      bottom:18px; background:#111; color:#fff; padding:10px 14px;
-      border-radius:8px; box-shadow: var(--shadow); font-size:14px; display:none;
-      z-index: 10;
+      bottom:18px; background:#0b0f14; color:#fff; padding:10px 14px;
+      border-radius:10px; border:1px solid var(--line); box-shadow: var(--shadow); font-size:14px; display:none;
+      z-index: 50;
     }
 
-    @media (max-width: 860px){
-      .frame{padding:18px}
+    @media (max-width: 960px){
       .main-box{flex-direction:column}
-      .logo-side{display:none}
-      .login-side{padding:26px 20px}
+      .logo-side{min-height:220px}
+    }
+    @media (max-width: 560px){
+      .actions{flex-direction:column}
       .roles{flex-wrap:wrap}
       .role{flex:1 1 calc(50% - 6px)}
     }
   </style>
 </head>
-<body>
+<body class="vignette">
   <div class="frame">
+    <div class="header-bar">
+      <div class="brand">
+        <img src="icon (1).jpg" alt="DealBankers" />
+        <h1>DealBankers • Access</h1>
+      </div>
+      <span class="badge">Secure Portal • v1</span>
+    </div>
+
     <div class="main-box">
-      <!-- LEFT: company image/logo -->
-      <div class="logo-side">
-        <img src="icon (1).jpg" alt="DealBankers Logo" />
-      </div>
-
-      <!-- RIGHT: login panel -->
-      <div class="login-side">
-        <h2>DealBankersDotCom Login</h2>
-
-        <input id="email" class="input" type="email" placeholder="Email" autocomplete="username" />
-        <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password" />
-
-        <button id="emailLogin" class="btn btn-primary">Log In</button>
-
-        <!-- Google button -->
-        <button id="googleSignIn" class="btn google-btn" aria-label="Sign in with Google">
-          <img src="https://developers.google.com/identity/images/g-logo.png" alt="" />
-          <span>Sign in with Google</span>
-        </button>
-
-        <div class="roles">
-          <button class="role" onclick="location.href='profile.html'">Contractor</button>
-          <button class="role" onclick="location.href='profile.html'">Wholesaler</button>
-          <button class="role" onclick="location.href='profile.html'">Realtor</button>
-          <button class="role" onclick="location.href='profile.html'">Investor</button>
+      <!-- LEFT: cinematic brand panel -->
+      <aside class="logo-side">
+        <div class="logo-overlay">
+          <div class="logo-title">Operational • Confidential</div>
+          <div class="logo-sub">Authenticated users only. Activity monitored.</div>
         </div>
+      </aside>
 
-        <div class="helper">By continuing, you agree to our Terms &amp; Privacy Policy.</div>
-      </div>
+      <!-- RIGHT: secure access card -->
+      <section class="login-side">
+        <div style="position:relative; z-index:1">
+          <h2>Sign In</h2>
+          <div class="subtitle">Use your email & password or your Google identity.</div>
+
+          <div class="row">
+            <input id="email" class="input" type="email" placeholder="Email" autocomplete="username" />
+            <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password" />
+          </div>
+
+          <button id="emailLogin" class="btn btn-primary">Enter</button>
+
+          <button id="googleSignIn" class="btn google-btn" aria-label="Sign in with Google">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="" />
+            <span>Sign in with Google</span>
+          </button>
+
+          <div class="actions">
+            <button id="signupBtn" class="btn btn-dark">Create Account</button>
+            <button id="resetBtn" class="btn btn-ghost">Forgot Password</button>
+          </div>
+
+          <div class="roles" style="margin-top:14px">
+            <button class="role" onclick="location.href='profile.html'">Contractor</button>
+            <button class="role" onclick="location.href='profile.html'">Wholesaler</button>
+            <button class="role" onclick="location.href='profile.html'">Realtor</button>
+            <button class="role" onclick="location.href='profile.html'">Investor</button>
+          </div>
+
+          <div class="helper" style="margin-top:10px">
+            By continuing, you agree to our Terms & Privacy Policy.
+          </div>
+        </div>
+      </section>
     </div>
   </div>
 
@@ -137,6 +217,7 @@
   <!-- Firebase (compat for static hosting) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
@@ -151,6 +232,7 @@
 
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db   = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
 
     function toast(msg){
@@ -158,14 +240,15 @@
       if (!el) return alert(msg);
       el.textContent = msg;
       el.style.display = 'block';
-      setTimeout(()=> el.style.display = 'none', 2400);
+      setTimeout(()=> el.style.display = 'none', 2200);
     }
 
-    // If already signed in, go straight to profile
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        window.location.href = 'profile.html';
-      }
+    // Auto-forward if already signed in
+    auth.onAuthStateChanged(u => { if (u) location.href = 'profile.html'; });
+
+    // Enter on Enter key
+    document.addEventListener('keydown', (e)=>{
+      if (e.key === 'Enter') document.getElementById('emailLogin')?.click();
     });
 
     document.addEventListener('DOMContentLoaded', () => {
@@ -173,35 +256,54 @@
       const passEl    = document.getElementById('password');
       const emailBtn  = document.getElementById('emailLogin');
       const googleBtn = document.getElementById('googleSignIn');
+      const signupBtn = document.getElementById('signupBtn');
+      const resetBtn  = document.getElementById('resetBtn');
 
-      if (emailBtn) {
-        emailBtn.addEventListener('click', async () => {
-          const email = (emailEl?.value || '').trim();
-          const password = passEl?.value || '';
-          if (!email || !password) return toast('Enter email & password');
-          try {
-            const cred = await auth.signInWithEmailAndPassword(email, password);
-            toast(`Welcome, ${cred.user.email}`);
-            window.location.href = 'profile.html';
-          } catch (e) {
-            console.error(e); toast(e.message.replace('Firebase: ', ''));
-          }
-        });
-      }
+      // Email/Password login
+      emailBtn?.addEventListener('click', async () => {
+        const email = (emailEl?.value || '').trim();
+        const password = passEl?.value || '';
+        if (!email || !password) return toast('Enter email & password');
+        try {
+          await auth.signInWithEmailAndPassword(email, password);
+          location.href = 'profile.html';
+        } catch (e) { console.error(e); toast(e.message.replace('Firebase: ', '')); }
+      });
 
-      if (googleBtn) {
-        googleBtn.addEventListener('click', async () => {
-          try {
-            const res = await auth.signInWithPopup(provider);
-            const u = res.user;
-            toast(`Welcome, ${u.displayName || u.email}`);
-            window.location.href = 'profile.html';
-          } catch (e) {
-            console.error(e); toast(e.message.replace('Firebase: ', ''));
-          }
-        });
-      }
+      // Google popup
+      googleBtn?.addEventListener('click', async () => {
+        try {
+          const res = await auth.signInWithPopup(provider);
+          const u = res.user;
+          // Ensure minimal user doc
+          await db.ref(`users/${u.uid}`).update({ email: u.email || '', updatedAt: Date.now() });
+          location.href = 'profile.html';
+        } catch (e) { console.error(e); toast(e.message.replace('Firebase: ', '')); }
+      });
+
+      // Create account
+      signupBtn?.addEventListener('click', async () => {
+        const email = (emailEl?.value || '').trim();
+        const password = passEl?.value || '';
+        if (!email || !password) return toast('Enter email & password to sign up');
+        try {
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          await db.ref(`users/${cred.user.uid}`).set({ email, createdAt: Date.now() });
+          location.href = 'profile.html';
+        } catch (e) { console.error(e); toast(e.message.replace('Firebase: ', '')); }
+      });
+
+      // Reset password
+      resetBtn?.addEventListener('click', async () => {
+        const email = (emailEl?.value || '').trim();
+        if (!email) return toast('Enter your email first');
+        try {
+          await auth.sendPasswordResetEmail(email);
+          toast('Reset email sent');
+        } catch (e) { console.error(e); toast(e.message.replace('Firebase: ', '')); }
+      });
     });
   </script>
 </body>
 </html>
+
