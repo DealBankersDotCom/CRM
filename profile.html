@@ -23,7 +23,7 @@
   }
 
   .shell{
-    max-width:1100px; margin:0 auto; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    max-width:1200px; margin:0 auto; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
     border:1px solid #1a2a36; border-radius:20px; box-shadow:var(--shadow); backdrop-filter:blur(12px);
   }
   header{
@@ -60,17 +60,38 @@
   h2{margin:0 0 8px}
   .muted{color:var(--muted); font-size:13px}
 
+  /* Wholesaler toolbar */
+  .toolbar{
+    display:flex; gap:8px; margin:0 0 10px; flex-wrap:wrap
+  }
+  .toolbtn{
+    padding:8px 12px; border-radius:10px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; cursor:pointer;
+    font-size:14px
+  }
+  .toolbtn:hover{filter:brightness(1.06)}
+
   /* iframe area */
   .iframe-wrap{
     border:1px solid #1a2a36; border-radius:var(--r); overflow:hidden; background:#0b141b;
-    height:70vh; min-height:520px;
+    height:78vh; min-height:560px;
   }
+  .iframe-wrap.fullheight{height:88vh}
   .iframe-wrap iframe{width:100%; height:100%; border:0; background:#fff}
 
-  /* Responsive */
-  @media (max-width: 720px){
+  /* Responsive tweaks */
+  @media (max-width: 900px){
     .userline{display:none}
-    .iframe-wrap{height:68vh; min-height:520px}
+    .tabs{gap:6px}
+    .iframe-wrap{height:86vh; min-height:640px}
+  }
+  @media (max-width: 600px){
+    body{padding:10px}
+    header{padding:12px}
+    .tabs{padding:10px 10px 0}
+    .content{padding:12px}
+    .card{padding:12px}
+    .toolbtn{flex:1 1 140px; text-align:center}
+    .iframe-wrap{height:88vh; min-height:680px}
   }
 </style>
 </head>
@@ -111,14 +132,21 @@
         </div>
       </div>
 
-      <!-- WHOLESALER PORTAL (loads the acquisition tool inside) -->
+      <!-- WHOLESALER PORTAL -->
       <div class="card" data-panel="wholesaler" style="display:none">
         <h2>Wholesaler • Acquisition</h2>
         <div class="muted" style="margin-bottom:10px">
-          Foreclosure lists, rapid notes, and map view. This is live inside your profile.
+          Foreclosure lists, rapid notes, and map view. Optimized for mobile—use the expand controls if you want even more space.
         </div>
-        <div class="iframe-wrap">
-          <iframe src="wholesaler.html" title="Wholesaler Acquisition"></iframe>
+
+        <div class="toolbar">
+          <button class="toolbtn" id="btnExpand">Toggle Tall View</button>
+          <button class="toolbtn" id="btnNewTab">Open Fullscreen in New Tab</button>
+          <button class="toolbtn" id="btnReload">Reload Portal</button>
+        </div>
+
+        <div class="iframe-wrap" id="whWrap">
+          <iframe src="wholesaler.html" id="whFrame" title="Wholesaler Acquisition"></iframe>
         </div>
       </div>
 
@@ -166,10 +194,9 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // UI helpers
+    // Tabs
     const panels = [...document.querySelectorAll('[data-panel]')];
     const tabs   = [...document.querySelectorAll('.tab')];
-
     function show(tabName){
       tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
       panels.forEach(p => p.style.display = (p.dataset.panel === tabName) ? '' : 'none');
@@ -177,17 +204,14 @@
       url.searchParams.set('tab', tabName);
       history.replaceState(null, '', url.toString());
     }
-
     document.getElementById('tabs').addEventListener('click', (e)=>{
       const btn = e.target.closest('.tab'); if(!btn) return;
       show(btn.dataset.tab);
     });
-
-    // deep-link ?tab=wholesaler
     const initialTab = new URL(location.href).searchParams.get('tab') || 'overview';
     show(initialTab);
 
-    // Auth wiring
+    // Auth
     auth.onAuthStateChanged(user=>{
       if(!user){ location.href = 'index.html'; return; }
       document.getElementById('who').textContent = `Signed in as ${user.displayName || user.email}`;
@@ -202,6 +226,20 @@
     document.getElementById('saveBtn').addEventListener('click', ()=>{
       alert('Profile saved (placeholder).');
     });
+
+    // Wholesaler controls
+    const wrap = document.getElementById('whWrap');
+    const frame = document.getElementById('whFrame');
+    document.getElementById('btnExpand').addEventListener('click', ()=>{
+      wrap.classList.toggle('fullheight');
+    });
+    document.getElementById('btnNewTab').addEventListener('click', ()=>{
+      window.open('wholesaler.html','_blank');
+    });
+    document.getElementById('btnReload').addEventListener('click', ()=>{
+      frame.contentWindow.location.reload();
+    });
   </script>
 </body>
 </html>
+
