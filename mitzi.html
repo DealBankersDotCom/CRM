@@ -3,240 +3,105 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Mitzi's CRM Portal</title>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:400,700&display=swap"/>
+  <title>DealBankers Profile</title>
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg" />
+
   <style>
     body {
-      margin: 0;
-      font-family: 'Roboto', sans-serif;
-      background-color: #f2f2f2;
+      margin:0; font-family: "Segoe UI", Arial, sans-serif;
+      background: linear-gradient(to right, #0f2027, #203a43, #2c5364);
+      color:#fff; min-height:100vh; display:flex; flex-direction:column;
     }
     header {
-      background-color: #222;
-      color: #fff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 22px;
+      display:flex; justify-content:space-between; align-items:center;
+      padding:16px; background:rgba(0,0,0,0.2);
     }
-    .menu {
-      font-size: 24px;
-      cursor: pointer;
+    header img { height:50px; border-radius:8px; }
+    header button {
+      background:#ff4b4b; border:none; padding:8px 16px; border-radius:6px;
+      color:white; font-size:14px; cursor:pointer;
     }
-    .menu-content {
-      display: none;
-      position: absolute;
-      top: 60px;
-      right: 20px;
-      background-color: white;
-      border: 1px solid #ccc;
-      border-radius: 10px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 999;
+    header button:hover { filter:brightness(.9); }
+
+    .tabs {
+      display:flex; background:rgba(0,0,0,0.25);
     }
-    .menu-content a {
-      display: block;
-      padding: 10px 20px;
-      text-decoration: none;
-      color: #222;
+    .tab {
+      flex:1; padding:12px; text-align:center; cursor:pointer;
+      background:rgba(255,255,255,0.1);
     }
-    .menu-content a:hover {
-      background-color: #f0f0f0;
+    .tab.active {
+      background:#007bff; font-weight:bold;
     }
-    .container {
-      display: flex;
-      flex-direction: column;
+    .tab:hover {
+      background:rgba(255,255,255,0.2);
     }
-    @media (min-width: 768px) {
-      .container {
-        flex-direction: row;
-        height: calc(100vh - 60px);
-      }
+
+    .tab-content {
+      flex:1; padding:20px; display:none;
     }
-    .lead-section, .map-section {
-      padding: 10px;
-    }
-    .lead-section {
-      flex: 1;
-    }
-    .map-section {
-      flex: 1;
-    }
-    .lead-card {
-      background: white;
-      padding: 20px;
-      border-radius: 10px;
-      box-shadow: 0 0 8px rgba(0,0,0,0.1);
-      max-width: 600px;
-      margin: 0 auto 20px;
-    }
-    .lead-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .lead-buttons button,
-    .lead-buttons a {
-      font-size: 20px;
-      padding: 10px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-      text-decoration: none;
-      color: white;
-    }
-    .call { background: #28a745; }
-    .drive { background: #6c757d; }
-    .settings { background: #343a40; }
-    .chat { background: #17a2b8; }
-    .next-btn {
-      display: block;
-      margin: 20px auto;
-      background: #007bff;
-      color: white;
-      font-size: 18px;
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      cursor: pointer;
-    }
-    iframe.map {
-      width: 100%;
-      height: 300px;
-      border: none;
-    }
-    @media (min-width: 768px) {
-      iframe.map {
-        height: 100%;
-      }
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0;
-      width: 100vw; height: 100vh;
-      background: rgba(0,0,0,0.7);
-      justify-content: center;
-      align-items: center;
-      z-index: 9999;
-    }
-    .modal-content {
-      width: 90%;
-      height: 80%;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      position: relative;
-    }
-    .modal-content iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      background: #dc3545;
-      color: white;
-      border: none;
-      font-size: 20px;
-      border-radius: 50%;
-      width: 32px;
-      height: 32px;
-      cursor: pointer;
-    }
+    .tab-content.active { display:block; background:rgba(0,0,0,0.2); border-radius:8px; }
   </style>
-  <script src="leads.js"></script>
-  <script>
-    const rep = "Mitzi";
-    let index = 0;
-
-    function showLead(lead) {
-      const formUrl = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
-      const notes = lead.notes ? lead.notes.replace(/\n/g, '<br>') : 'No deal notes available.';
-
-      document.getElementById("leadCard").innerHTML = `
-        <div class="lead-buttons">
-          <button class="call" onclick="copyToClipboard('${lead.contacts[0].phone}')">📞</button>
-          <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
-          <a class="settings" href="#">⚙️</a>
-          <a class="chat" href="https://www.dealbankers.com/chat.html" target="_blank">💬</a>
-        </div>
-        <div class="lead-card">
-          <strong>${lead.contacts[0].name}</strong><br>
-          ${lead.address}<br>
-          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
-          <button onclick="openModal('${formUrl}')">📝 Update Lead Notes</button>
-          <details>
-            <summary>📊 Deal Notes</summary>
-            <div>${notes}</div>
-          </details>
-        </div>
-      `;
-    }
-
-    function nextLead() {
-      index = (index + 1) % leads.length;
-      showLead(leads[index]);
-    }
-
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Copied: " + text);
-      });
-    }
-
-    function openModal(url) {
-      document.getElementById("formIframe").src = url;
-      document.getElementById("formModal").style.display = "flex";
-    }
-
-    function closeModal() {
-      document.getElementById("formModal").style.display = "none";
-      document.getElementById("formIframe").src = "";
-    }
-
-    function toggleMenu() {
-      const menu = document.getElementById("menuContent");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
-
-    window.onload = function () {
-      if (typeof leads !== "undefined" && leads.length > 0) {
-        showLead(leads[index]);
-      } else {
-        document.getElementById("leadCard").innerHTML = `<div class='lead-card'>No leads available.</div>`;
-      }
-    };
-  </script>
 </head>
 <body>
   <header>
-    Mitzi's DealBankers CRM
-    <div class="menu" onclick="toggleMenu()">☰</div>
-    <div class="menu-content" id="menuContent">
-      <a href="https://www.dealbankers.com/dispo.html">Dispo Page</a>
-      <a href="https://www.dealbankers.com/settings.html">Settings</a>
-    </div>
+    <img src="icon (1).jpg" alt="DealBankers Logo" />
+    <button id="logoutBtn">Logout</button>
   </header>
-  <div class="container">
-    <div class="lead-section">
-      <div id="leadCard"></div>
-      <button class="next-btn" onclick="nextLead()">⏭️ Next Lead</button>
-    </div>
-    <div class="map-section">
-      <iframe class="map" src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F" allowfullscreen></iframe>
-    </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="contractor">Contractor</div>
+    <div class="tab" data-tab="wholesaler">Wholesaler</div>
+    <div class="tab" data-tab="realtor">Realtor</div>
+    <div class="tab" data-tab="investor">Investor</div>
   </div>
-  <div id="formModal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <iframe id="formIframe"></iframe>
-    </div>
+
+  <div id="contractor" class="tab-content active">
+    <h2>Contractor Dashboard</h2>
+    <p>Tools, job assignments, and updates for contractors will appear here.</p>
   </div>
+  <div id="wholesaler" class="tab-content">
+    <h2>Wholesaler Dashboard</h2>
+    <p>Lead management, skip tracing, and disposition tools for wholesalers.</p>
+  </div>
+  <div id="realtor" class="tab-content">
+    <h2>Realtor Dashboard</h2>
+    <p>Client management, property listings, and CRM tools for realtors.</p>
+  </div>
+  <div id="investor" class="tab-content">
+    <h2>Investor Dashboard</h2>
+    <p>Funding opportunities, project tracking, and ROI reports for investors.</p>
+  </div>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script>
+    const firebaseConfig = {
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.firebasestorage.app",
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click', async () => {
+      await auth.signOut();
+      window.location.href = 'index.html';
+    });
+
+    // Tab switching
+    document.querySelectorAll('.tab').forEach(tab => {
+      tab.addEventListener('click', () => {
+        document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        tab.classList.add('active');
+        document.getElementById(tab.dataset.tab).classList.add('active');
+      });
+    });
+  </script>
 </body>
 </html>
