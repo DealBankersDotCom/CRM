@@ -1,209 +1,359 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Deal Bankers - User Profile</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-database.js"></script>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <meta charset="UTF-8" />
+  <title>DealBankers — Profile</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+  <!-- Tailwind (CDN) -->
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- Firebase compat (auth + realtime db) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-100 min-h-screen">
 
-  <!-- Container -->
-  <div class="max-w-4xl mx-auto p-6 bg-white shadow-lg mt-8 rounded-lg">
-    <h1 class="text-3xl font-bold mb-6 text-center">Your Profile</h1>
-    <p class="text-gray-600 mb-4 text-center">Manage your role settings and connect with other Deal Bankers</p>
+  <!-- Top Bar -->
+  <header class="bg-white shadow">
+    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <img src="icon (1).jpg" alt="DealBankers" class="w-10 h-10 rounded-lg object-cover shadow" />
+        <h1 class="text-xl font-semibold">DealBankers Profile</h1>
+      </div>
+      <div class="flex items-center gap-3">
+        <span id="userEmail" class="text-sm text-gray-600"></span>
+        <button id="logoutBtn" class="px-4 py-2 rounded-lg bg-gray-900 text-white hover:bg-black">Log out</button>
+      </div>
+    </div>
+  </header>
 
-    <!-- Role Selector -->
-    <div class="mb-6">
-      <h2 class="text-xl font-semibold mb-2">Select Your Roles</h2>
-      <div class="grid grid-cols-2 gap-4">
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" id="role-contractor" class="form-checkbox h-5 w-5 text-blue-600">
+  <!-- Content -->
+  <main class="max-w-6xl mx-auto p-4 sm:p-6 lg:p-8">
+    <!-- Role picker -->
+    <section class="bg-white rounded-xl shadow p-5 mb-6">
+      <h2 class="text-lg font-semibold mb-3">Your Roles</h2>
+      <p class="text-sm text-gray-600 mb-4">Choose the roles you want active on your account. Each role has its own settings.</p>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <label class="flex items-center gap-2">
+          <input id="role-contractor" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
           <span>Contractor</span>
         </label>
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" id="role-wholesaler" class="form-checkbox h-5 w-5 text-blue-600">
+        <label class="flex items-center gap-2">
+          <input id="role-wholesaler" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
           <span>Wholesaler</span>
         </label>
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" id="role-realtor" class="form-checkbox h-5 w-5 text-blue-600">
+        <label class="flex items-center gap-2">
+          <input id="role-realtor" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
           <span>Realtor</span>
         </label>
-        <label class="flex items-center space-x-2">
-          <input type="checkbox" id="role-investor" class="form-checkbox h-5 w-5 text-blue-600">
+        <label class="flex items-center gap-2">
+          <input id="role-investor" type="checkbox" class="h-5 w-5 text-blue-600 rounded border-gray-300" />
           <span>Investor</span>
         </label>
       </div>
-    </div>
+    </section>
 
-    <!-- Contractor Settings -->
-    <div id="contractor-settings" class="hidden mb-6 border p-4 rounded-lg bg-gray-50">
-      <h3 class="text-lg font-semibold mb-2">Contractor Profile Settings</h3>
-      <label class="block mb-2">
-        <span>Business Name</span>
-        <input type="text" id="contractor-business" class="w-full border rounded px-3 py-2">
-      </label>
-      <label class="block mb-2">
-        <span>License Number</span>
-        <input type="text" id="contractor-license" class="w-full border rounded px-3 py-2">
-      </label>
-      <label class="block mb-2">
-        <span>Division (CSI MasterFormat)</span>
-        <select id="contractor-division" class="w-full border rounded px-3 py-2">
-          <option value="">Select Division</option>
-          <option>Division 01 — General Requirements</option>
-          <option>Division 02 — Existing Conditions</option>
-          <option>Division 03 — Concrete</option>
-          <option>Division 04 — Masonry</option>
-          <option>Division 05 — Metals</option>
-          <option>Division 06 — Wood, Plastics, Composites</option>
-          <option>Division 07 — Thermal & Moisture Protection</option>
-          <option>Division 08 — Openings</option>
-          <option>Division 09 — Finishes</option>
-          <option>Division 10 — Specialties</option>
-          <option>Division 11 — Equipment</option>
-          <option>Division 12 — Furnishings</option>
-          <option>Division 13 — Special Construction</option>
-          <option>Division 14 — Conveying Equipment</option>
-          <option>Division 21 — Fire Suppression</option>
-          <option>Division 22 — Plumbing</option>
-          <option>Division 23 — HVAC</option>
-          <option>Division 25 — Integrated Automation</option>
-          <option>Division 26 — Electrical</option>
-          <option>Division 27 — Communications</option>
-          <option>Division 28 — Electronic Safety & Security</option>
-          <option>Division 31 — Earthwork</option>
-          <option>Division 32 — Exterior Improvements</option>
-          <option>Division 33 — Utilities</option>
-        </select>
-      </label>
-    </div>
+    <!-- Tabs -->
+    <section class="bg-white rounded-xl shadow">
+      <div id="tabs" class="flex flex-wrap gap-2 border-b p-4">
+        <button data-tab="contractor" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Contractor</button>
+        <button data-tab="wholesaler" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Wholesaler</button>
+        <button data-tab="realtor" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Realtor</button>
+        <button data-tab="investor" class="tab-btn hidden px-4 py-2 rounded-lg bg-gray-100 text-gray-800 hover:bg-gray-200">Investor</button>
+      </div>
 
-    <!-- Wholesaler Settings -->
-    <div id="wholesaler-settings" class="hidden mb-6 border p-4 rounded-lg bg-gray-50">
-      <h3 class="text-lg font-semibold mb-2">Wholesaler Profile Settings</h3>
-      <label class="block mb-2">
-        <span>Target Markets</span>
-        <input type="text" id="wholesaler-markets" class="w-full border rounded px-3 py-2">
-      </label>
-      <label class="block mb-2">
-        <span>Preferred Deal Types</span>
-        <input type="text" id="wholesaler-deals" class="w-full border rounded px-3 py-2">
-      </label>
-    </div>
+      <div class="p-5">
+        <!-- CONTRACTOR -->
+        <div id="panel-contractor" class="tab-panel hidden">
+          <h3 class="text-lg font-semibold mb-4">Contractor Settings</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm text-gray-700">Business Name</span>
+              <input id="contractor-business" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+            <label class="block">
+              <span class="text-sm text-gray-700">License Number</span>
+              <input id="contractor-license" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+            <label class="block md:col-span-2">
+              <span class="text-sm text-gray-700">Division (CSI MasterFormat)</span>
+              <select id="contractor-division" class="mt-1 w-full rounded-lg border-gray-300">
+                <option value="">Select Division</option>
+                <option>Division 01 — General Requirements</option>
+                <option>Division 02 — Existing Conditions</option>
+                <option>Division 03 — Concrete</option>
+                <option>Division 04 — Masonry</option>
+                <option>Division 05 — Metals</option>
+                <option>Division 06 — Wood, Plastics, Composites</option>
+                <option>Division 07 — Thermal & Moisture Protection</option>
+                <option>Division 08 — Openings</option>
+                <option>Division 09 — Finishes</option>
+                <option>Division 10 — Specialties</option>
+                <option>Division 11 — Equipment</option>
+                <option>Division 12 — Furnishings</option>
+                <option>Division 13 — Special Construction</option>
+                <option>Division 14 — Conveying Equipment</option>
+                <option>Division 21 — Fire Suppression</option>
+                <option>Division 22 — Plumbing</option>
+                <option>Division 23 — HVAC</option>
+                <option>Division 25 — Integrated Automation</option>
+                <option>Division 26 — Electrical</option>
+                <option>Division 27 — Communications</option>
+                <option>Division 28 — Electronic Safety & Security</option>
+                <option>Division 31 — Earthwork</option>
+                <option>Division 32 — Exterior Improvements</option>
+                <option>Division 33 — Utilities</option>
+              </select>
+            </label>
+          </div>
+        </div>
 
-    <!-- Realtor Settings -->
-    <div id="realtor-settings" class="hidden mb-6 border p-4 rounded-lg bg-gray-50">
-      <h3 class="text-lg font-semibold mb-2">Realtor Profile Settings</h3>
-      <label class="block mb-2">
-        <span>Brokerage Name</span>
-        <input type="text" id="realtor-brokerage" class="w-full border rounded px-3 py-2">
-      </label>
-      <label class="block mb-2">
-        <span>License Number</span>
-        <input type="text" id="realtor-license" class="w-full border rounded px-3 py-2">
-      </label>
-    </div>
+        <!-- WHOLESALER -->
+        <div id="panel-wholesaler" class="tab-panel hidden">
+          <h3 class="text-lg font-semibold mb-4">Wholesaler Settings</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm text-gray-700">Target Markets (comma-separated)</span>
+              <input id="wholesaler-markets" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+            <label class="block">
+              <span class="text-sm text-gray-700">Preferred Deal Types</span>
+              <input id="wholesaler-deals" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+          </div>
+        </div>
 
-    <!-- Investor Settings -->
-    <div id="investor-settings" class="hidden mb-6 border p-4 rounded-lg bg-gray-50">
-      <h3 class="text-lg font-semibold mb-2">Investor Profile Settings</h3>
-      <label class="block mb-2">
-        <span>Investment Focus</span>
-        <input type="text" id="investor-focus" class="w-full border rounded px-3 py-2">
-      </label>
-      <label class="block mb-2">
-        <span>Capital Range</span>
-        <input type="text" id="investor-capital" class="w-full border rounded px-3 py-2">
-      </label>
-    </div>
+        <!-- REALTOR -->
+        <div id="panel-realtor" class="tab-panel hidden">
+          <h3 class="text-lg font-semibold mb-4">Realtor Settings</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm text-gray-700">Brokerage Name</span>
+              <input id="realtor-brokerage" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+            <label class="block">
+              <span class="text-sm text-gray-700">License Number</span>
+              <input id="realtor-license" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+          </div>
+        </div>
 
-    <!-- Save Button -->
-    <div class="text-center">
-      <button id="save-profile" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg">Save Profile</button>
-    </div>
-  </div>
+        <!-- INVESTOR -->
+        <div id="panel-investor" class="tab-panel hidden">
+          <h3 class="text-lg font-semibold mb-4">Investor Settings</h3>
+          <div class="grid md:grid-cols-2 gap-4">
+            <label class="block">
+              <span class="text-sm text-gray-700">Investment Focus</span>
+              <input id="investor-focus" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+            <label class="block">
+              <span class="text-sm text-gray-700">Capital Range</span>
+              <input id="investor-capital" type="text" class="mt-1 w-full rounded-lg border-gray-300" />
+            </label>
+          </div>
+        </div>
+
+        <div class="mt-6 flex items-center justify-between">
+          <span id="saveStatus" class="text-sm text-gray-500"></span>
+          <button id="saveBtn" class="px-5 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">Save Profile</button>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Toast -->
+  <div id="toast" class="fixed left-1/2 -translate-x-1/2 bottom-5 hidden bg-black text-white text-sm px-4 py-2 rounded-lg shadow-lg"></div>
 
   <script>
-    // Firebase Config
+    // Firebase config (use your exact values)
     const firebaseConfig = {
-      apiKey: "YOUR_API_KEY",
-      authDomain: "YOUR_AUTH_DOMAIN",
-      databaseURL: "YOUR_DATABASE_URL",
-      projectId: "YOUR_PROJECT_ID",
-      storageBucket: "YOUR_STORAGE_BUCKET",
-      messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-      appId: "YOUR_APP_ID"
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.firebasestorage.app",
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
+      measurementId: "G-KTNXZM14F7"
     };
+
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db = firebase.database();
+    const db   = firebase.database();
 
-    const roleCheckboxes = {
+    // UI refs
+    const emailOut = document.getElementById('userEmail');
+    const logoutBtn = document.getElementById('logoutBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const saveStatus = document.getElementById('saveStatus');
+    const toastEl = document.getElementById('toast');
+
+    const roleBoxes = {
       contractor: document.getElementById('role-contractor'),
       wholesaler: document.getElementById('role-wholesaler'),
-      realtor: document.getElementById('role-realtor'),
-      investor: document.getElementById('role-investor')
+      realtor:    document.getElementById('role-realtor'),
+      investor:   document.getElementById('role-investor')
     };
 
-    const roleSettings = {
-      contractor: document.getElementById('contractor-settings'),
-      wholesaler: document.getElementById('wholesaler-settings'),
-      realtor: document.getElementById('realtor-settings'),
-      investor: document.getElementById('investor-settings')
+    const tabButtons = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabPanels = {
+      contractor: document.getElementById('panel-contractor'),
+      wholesaler: document.getElementById('panel-wholesaler'),
+      realtor:    document.getElementById('panel-realtor'),
+      investor:   document.getElementById('panel-investor')
     };
 
-    // Show/Hide settings when role checkbox toggled
-    Object.keys(roleCheckboxes).forEach(role => {
-      roleCheckboxes[role].addEventListener('change', () => {
-        roleSettings[role].classList.toggle('hidden', !roleCheckboxes[role].checked);
+    function toast(msg){
+      toastEl.textContent = msg;
+      toastEl.classList.remove('hidden');
+      setTimeout(()=> toastEl.classList.add('hidden'), 2200);
+    }
+
+    // Tabs logic
+    function setActiveTab(role){
+      // hide all panels
+      Object.values(tabPanels).forEach(p => p.classList.add('hidden'));
+      // remove active state from all buttons
+      tabButtons.forEach(btn => btn.classList.remove('bg-gray-900','text-white'));
+      // show selected if visible
+      const panel = tabPanels[role];
+      const btn = document.querySelector(`.tab-btn[data-tab="${role}"]`);
+      if (panel && btn && !btn.classList.contains('hidden')) {
+        panel.classList.remove('hidden');
+        btn.classList.add('bg-gray-900','text-white');
+      }
+    }
+
+    function refreshVisibleTabs(){
+      // show/hide tab buttons based on role checkboxes
+      Object.keys(roleBoxes).forEach(role => {
+        const btn = document.querySelector(`.tab-btn[data-tab="${role}"]`);
+        if (!btn) return;
+        if (roleBoxes[role].checked) {
+          btn.classList.remove('hidden');
+        } else {
+          btn.classList.add('hidden');
+          tabPanels[role].classList.add('hidden');
+        }
       });
+      // ensure at least one active tab
+      const firstVisible = tabButtons.find(b => !b.classList.contains('hidden'));
+      if (firstVisible) setActiveTab(firstVisible.dataset.tab);
+    }
+
+    tabButtons.forEach(btn => {
+      btn.addEventListener('click', () => setActiveTab(btn.dataset.tab));
     });
 
-    // Load existing user profile
-    auth.onAuthStateChanged(user => {
-      if (user) {
-        const uid = user.uid;
-        db.ref('users/' + uid).once('value').then(snapshot => {
-          const data = snapshot.val() || {};
-          Object.keys(roleCheckboxes).forEach(role => {
-            if (data[role]) {
-              roleCheckboxes[role].checked = true;
-              roleSettings[role].classList.remove('hidden');
-              Object.keys(data[role]).forEach(field => {
-                const el = document.getElementById(`${role}-${field}`);
-                if (el) el.value = data[role][field];
-              });
-            }
-          });
-        });
+    // Toggle settings visibility when role checked/unchecked
+    Object.keys(roleBoxes).forEach(role => {
+      roleBoxes[role].addEventListener('change', refreshVisibleTabs);
+    });
+
+    // Auth gate + load profile
+    auth.onAuthStateChanged(async (user) => {
+      if (!user) {
+        window.location.href = 'index.html';
+        return;
+      }
+      emailOut.textContent = user.email || '';
+      await loadProfile(user.uid);
+    });
+
+    // Logout
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        await auth.signOut();
+        window.location.href = 'index.html';
+      } catch (e) {
+        console.error(e);
+        toast('Logout failed, try again.');
       }
     });
 
-    // Save profile
-    document.getElementById('save-profile').addEventListener('click', () => {
-      const user = auth.currentUser;
-      if (!user) return alert('Not logged in');
-      const uid = user.uid;
-      const profileData = {};
-      Object.keys(roleCheckboxes).forEach(role => {
-        if (roleCheckboxes[role].checked) {
-          profileData[role] = {};
-          const fields = roleSettings[role].querySelectorAll('input, select');
-          fields.forEach(f => {
-            const id = f.id.replace(`${role}-`, '');
-            profileData[role][id] = f.value;
-          });
+    // Load profile data
+    async function loadProfile(uid){
+      try {
+        const snap = await db.ref(`users/${uid}`).get();
+        const data = snap.exists() ? snap.val() : {};
+        // roles
+        Object.keys(roleBoxes).forEach(role => {
+          const active = !!data[role];
+          roleBoxes[role].checked = active;
+        });
+
+        // fill fields
+        if (data.contractor){
+          document.getElementById('contractor-business').value = data.contractor.business || '';
+          document.getElementById('contractor-license').value  = data.contractor.license || '';
+          document.getElementById('contractor-division').value = data.contractor.division || '';
         }
-      });
-      db.ref('users/' + uid).set(profileData).then(() => {
-        alert('Profile saved!');
-      });
+        if (data.wholesaler){
+          document.getElementById('wholesaler-markets').value = data.wholesaler.markets || '';
+          document.getElementById('wholesaler-deals').value   = data.wholesaler.deals || '';
+        }
+        if (data.realtor){
+          document.getElementById('realtor-brokerage').value = data.realtor.brokerage || '';
+          document.getElementById('realtor-license').value   = data.realtor.license || '';
+        }
+        if (data.investor){
+          document.getElementById('investor-focus').value   = data.investor.focus || '';
+          document.getElementById('investor-capital').value = data.investor.capital || '';
+        }
+
+        refreshVisibleTabs();
+      } catch (e) {
+        console.error(e);
+        toast('Failed to load profile');
+      }
+    }
+
+    // Save profile data
+    saveBtn.addEventListener('click', async () => {
+      const user = auth.currentUser;
+      if (!user) return;
+      const uid = user.uid;
+
+      const payload = {};
+      if (roleBoxes.contractor.checked){
+        payload.contractor = {
+          business: document.getElementById('contractor-business').value.trim(),
+          license:  document.getElementById('contractor-license').value.trim(),
+          division: document.getElementById('contractor-division').value
+        };
+      }
+      if (roleBoxes.wholesaler.checked){
+        payload.wholesaler = {
+          markets: document.getElementById('wholesaler-markets').value.trim(),
+          deals:   document.getElementById('wholesaler-deals').value.trim()
+        };
+      }
+      if (roleBoxes.realtor.checked){
+        payload.realtor = {
+          brokerage: document.getElementById('realtor-brokerage').value.trim(),
+          license:   document.getElementById('realtor-license').value.trim()
+        };
+      }
+      if (roleBoxes.investor.checked){
+        payload.investor = {
+          focus:   document.getElementById('investor-focus').value.trim(),
+          capital: document.getElementById('investor-capital').value.trim()
+        };
+      }
+
+      try{
+        saveStatus.textContent = 'Saving...';
+        await db.ref(`users/${uid}`).set(payload);
+        saveStatus.textContent = 'Saved ✓';
+        setTimeout(()=> saveStatus.textContent = '', 1800);
+      }catch(e){
+        console.error(e);
+        saveStatus.textContent = 'Save failed';
+        toast('Save failed, try again.');
+      }
     });
   </script>
-
 </body>
 </html>
