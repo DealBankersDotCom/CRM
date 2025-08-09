@@ -3,15 +3,15 @@
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DealBankers • Profile</title>
+<title>DealBankers • Wholesaler</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
 <style>
   :root{
     --bg:#0d1822; --panel:#0f1a24; --card:#12202d; --line:#203241;
     --text:#eaf1f6; --muted:#9fb3c7; --accent:#0d6efd; --gold:#c7a86a;
-    --danger:#d9534f; --shadow:0 24px 64px rgba(0,0,0,.5);
-    --r:16px;
+    --green:#28a745; --danger:#d9534f; --shadow:0 22px 60px rgba(0,0,0,.5);
+    --r:14px;
   }
   *{box-sizing:border-box}
   body{
@@ -19,198 +19,145 @@
     background:
       radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
       linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
-    color:var(--text); min-height:100vh; padding:18px;
+    color:var(--text); min-height:100vh;
   }
 
-  .shell{
-    max-width:1200px; margin:0 auto;
-    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-    border:1px solid #1a2a36; border-radius:20px; box-shadow:var(--shadow); backdrop-filter:blur(12px);
-  }
-  header{
+  /* Shell */
+  .shell{max-width:1200px; margin:0 auto; padding:16px}
+  .bar{
     display:flex; align-items:center; justify-content:space-between;
-    padding:14px 18px; border-bottom:1px solid #1a2a36;
+    gap:10px; padding:12px 14px; border:1px solid #1a2a36; border-radius:12px;
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    box-shadow:var(--shadow); backdrop-filter:blur(10px);
   }
-  .brand{display:flex; gap:12px; align-items:center}
-  .brand img{width:42px;height:42px;border-radius:10px;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.35)}
-  .brand h1{font-size:16px; letter-spacing:.14em; text-transform:uppercase; margin:0; color:#bcd0e3}
-  .row-actions{display:flex; gap:10px}
-  .btn{
-    padding:10px 14px; border-radius:10px; border:1px solid #264054; background:#10202c; color:var(--text);
-    cursor:pointer; font-weight:600;
-  }
-  .btn:hover{filter:brightness(1.05)}
-  .btn-danger{background:linear-gradient(180deg,#dd6060,#bb3e3e); border:none}
+  .brand{display:flex; align-items:center; gap:12px}
+  .brand img{width:40px;height:40px;border-radius:9px;object-fit:cover}
+  .title{display:flex; flex-direction:column}
+  .title b{letter-spacing:.06em}
+  .title small{color:var(--muted)}
+  .bar .btn{padding:9px 12px; border-radius:10px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; cursor:pointer}
+  .btn:hover{filter:brightness(1.06)}
+  .btn-green{background:linear-gradient(180deg,#2fb557,#199a3f); border:none; color:#fff}
+  .btn-red{background:linear-gradient(180deg,#dd6060,#bb3e3e); border:none; color:#fff}
 
-  /* Top tabs */
-  .tabs{display:flex; gap:8px; padding:12px 12px 0; flex-wrap:wrap}
-  .tab{
-    padding:10px 14px; border-radius:999px; border:1px solid #1d3142; cursor:pointer;
-    font-size:14px; background:#0f1a24; color:#bcd0e3;
-  }
-  .tab[aria-disabled="true"]{opacity:.45; cursor:not-allowed}
-  .tab.active{background:linear-gradient(180deg,var(--accent),#0a58ca); color:#fff; border:none}
+  /* Tabs (Acq/Dispo) */
+  .tabs{display:flex; gap:8px; padding:14px 2px 0}
+  .tab{padding:8px 12px; border-radius:999px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; cursor:pointer; font-size:13px}
+  .tab.active{background:linear-gradient(180deg,var(--gold),#9d7d49); color:#111; border:none}
 
-  .content{padding:16px; display:grid; gap:16px}
-  .card{background:#10202c; border:1px solid #1a2a36; border-radius:var(--r); padding:16px}
-  h2{margin:0 0 8px}
-  .muted{color:var(--muted); font-size:13px}
+  /* Workspace */
+  .grid{display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px}
+  .card{background:#10202c; border:1px solid #1a2a36; border-radius:var(--r); overflow:hidden}
+  .card h3{margin:0; padding:12px 14px; background:#0c151d; border-bottom:1px solid #122432; font-size:15px}
+  .card .body{padding:12px}
 
-  /* Secondary tabs (inside Wholesaler) */
-  .subtabs{display:flex; gap:8px; margin:6px 0 12px; flex-wrap:wrap}
-  .subtab{
-    padding:8px 12px; border-radius:999px; border:1px solid #1d3142; cursor:pointer;
-    background:#0f1a24; color:#cfe2f3; font-size:13px
-  }
-  .subtab.active{background:linear-gradient(180deg,var(--gold),#9d7d49); color:#111; border:none}
+  .stack{display:flex; flex-direction:column; gap:10px}
+  .row{display:flex; gap:8px; flex-wrap:wrap}
+  .pill{padding:8px 10px; border-radius:999px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; font-size:13px}
 
-  /* Toolbar */
-  .toolbar{display:flex; gap:8px; margin:0 0 10px; flex-wrap:wrap}
-  .toolbtn{
-    padding:8px 12px; border-radius:10px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; cursor:pointer;
-    font-size:14px
+  /* Lead card */
+  .lead{
+    background:#0f1a24; border:1px solid #1d3142; border-radius:12px; padding:12px;
   }
-  .toolbtn:hover{filter:brightness(1.06)}
+  .lead b{font-size:16px}
+  .lead a{color:#6fb3ff; text-decoration:none}
+  .lead .btn{padding:8px 10px}
+  .badge{display:inline-block; padding:4px 8px; border-radius:999px; background:#0e2030; border:1px solid #1d3142; color:#9fb3c7; font-size:12px}
 
-  /* iframe area */
-  .iframe-wrap{
-    border:1px solid #1a2a36; border-radius:var(--r); overflow:hidden; background:#0b141b;
-    height:78vh; min-height:560px;
-  }
-  .iframe-wrap iframe{width:100%; height:100%; border:0; background:#fff}
+  /* Map / iframe */
+  iframe.map{width:100%; height:320px; border:0; border-radius:10px; background:#fff}
 
-  /* Gate (permission) */
-  .gate{
-    border:1px dashed #2a4256; border-radius:var(--r); padding:14px; background:#0f1a24; color:var(--muted);
-  }
+  /* Gate / empty */
+  .gate{padding:14px; border:1px dashed #2a4256; border-radius:12px; background:#0f1a24; color:var(--muted)}
+
+  /* Modal */
+  .modal{position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50}
+  .modal .box{width:90%; max-width:900px; height:80vh; background:#fff; border-radius:12px; overflow:hidden; position:relative}
+  .modal iframe{width:100%; height:100%; border:0}
+  .close{position:absolute; top:10px; right:12px; width:32px; height:32px; border-radius:50%; border:0; background:#333; color:#fff; cursor:pointer}
 
   /* Responsive */
-  @media (max-width:900px){
-    .tabs{gap:6px}
-    .iframe-wrap{height:86vh; min-height:640px}
-  }
-  @media (max-width:600px){
-    body{padding:10px}
-    header{padding:12px}
-    .tabs{padding:10px 10px 0}
-    .content{padding:12px}
-    .card{padding:12px}
-    .toolbtn{flex:1 1 150px; text-align:center}
-    .iframe-wrap{height:88vh; min-height:680px}
-  }
+  @media (max-width: 960px){ .grid{grid-template-columns: 1fr} iframe.map{height:260px} }
 </style>
 </head>
 <body>
   <div class="shell">
-    <header>
+    <!-- Top Bar -->
+    <div class="bar">
       <div class="brand">
-        <img src="icon (1).jpg" alt="DealBankers"/>
-        <div><h1>DEALBANKERS • PROFILE</h1></div>
-      </div>
-      <div class="row-actions">
-        <button id="logoutBtn" class="btn btn-danger">Log Out</button>
-      </div>
-    </header>
-
-    <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="overview">Overview</button>
-      <button class="tab" data-tab="wholesaler" id="tabWh">Wholesaler</button>
-      <button class="tab" data-tab="contractor">Contractor</button>
-      <button class="tab" data-tab="realtor">Realtor</button>
-      <button class="tab" data-tab="investor">Investor</button>
-      <button class="tab" data-tab="settings">Settings</button>
-    </nav>
-
-    <section class="content">
-      <!-- OVERVIEW -->
-      <div class="card" data-panel="overview">
-        <h2>Welcome</h2>
-        <p class="muted">Select a portal above to get to work. Your profile supports multiple roles; enable and configure what you need.</p>
-      </div>
-
-      <!-- WHOLESALER -->
-      <div class="card" data-panel="wholesaler" style="display:none">
-        <h2>Wholesaler Workspace</h2>
-        <div class="muted">Acquisition and Disposition tools live side-by-side. Use the sub-tabs to switch.</div>
-
-        <!-- Access gate -->
-        <div id="whGate" class="gate" data-wh-gate>
-          <strong id="whStatus" data-wh-status>Checking your access…</strong><br/>
-          <span class="muted">Please wait while we verify your wholesaler permissions.</span>
+        <img src="icon (1).jpg" alt="">
+        <div class="title">
+          <b>Wholesaler • Acquisition</b>
+          <small>Calls • Notes • Map • Fast nav</small>
         </div>
+      </div>
+      <div class="row">
+        <button id="btnFullscreen" class="btn btn-green">Open Fullscreen</button>
+        <button id="btnLogout" class="btn btn-red">Log Out</button>
+      </div>
+    </div>
 
-        <!-- Panel -->
-        <div id="whPanel" style="display:none" data-wh-panel>
-          <div class="subtabs" id="whSubtabs">
-            <button class="subtab active" data-sub="acq">Acquisition</button>
-            <button class="subtab" data-sub="dispo">Dispo</button>
-          </div>
+    <!-- Sub Tabs -->
+    <div class="tabs">
+      <button class="tab active" data-tab="acq">Acquisition</button>
+      <button class="tab" data-tab="dispo">Dispo</button>
+    </div>
 
-          <!-- Acquisition block -->
-          <div data-subpanel="acq">
-            <div class="toolbar">
-              <button class="toolbtn" id="btnNewTabWh">Open Fullscreen in New Tab</button>
-              <button class="toolbtn" id="btnReloadWh">Reload Portal</button>
-            </div>
-            <div class="iframe-wrap" id="whWrap">
-              <iframe src="about:blank" id="whFrame" title="Wholesaler Acquisition" data-acq-frame></iframe>
-            </div>
-          </div>
+    <!-- Acquisition Workspace -->
+    <section data-panel="acq" class="grid">
+      <!-- Lead pane -->
+      <div class="card">
+        <h3>Lead Panel</h3>
+        <div class="body">
+          <div id="feedGate" class="gate">No feed configured. Ask an admin to export leads and pass the <span class="badge">?feed=PUBLIC_SCRIPT_URL</span> into this page, or set it inside the file.</div>
 
-          <!-- Dispo block -->
-          <div data-subpanel="dispo" style="display:none">
-            <div class="toolbar">
-              <button class="toolbtn" id="btnAddDeal">Add Deal</button>
-              <button class="toolbtn" id="btnSharePacket">Share Investor Packet</button>
-              <button class="toolbtn" id="btnInvestorRoom">Open Investor Room</button>
-              <button class="toolbtn" id="btnNewTabDi">Open Fullscreen in New Tab</button>
-              <button class="toolbtn" id="btnReloadDi">Reload Portal</button>
-            </div>
-            <div class="iframe-wrap" id="diWrap">
-              <iframe src="about:blank" id="diFrame" title="Dispositions Portal"></iframe>
+          <div id="leadWrap" class="stack" style="display:none">
+            <div class="row">
+              <button id="btnPrev" class="btn">⏮ Prev</button>
+              <button id="btnNext" class="btn">⏭ Next</button>
+              <span class="pill" id="idxBadge">0 / 0</span>
             </div>
 
-            <div class="toolbar" style="margin-top:10px">
-              <button class="toolbtn" onclick="window.open('offer_packet.html','_blank')">Preview • Offering Memorandum</button>
-              <button class="toolbtn" onclick="window.open('investor_signup.html','_blank')">Preview • Investor Signup</button>
-              <button class="toolbtn" onclick="window.open('market_listing.html','_blank')">Preview • Public Listing</button>
+            <div id="leadCard" class="lead">
+              <!-- populated -->
             </div>
           </div>
         </div>
       </div>
 
-      <!-- CONTRACTOR -->
-      <div class="card" data-panel="contractor" style="display:none">
-        <h2>Contractor</h2>
-        <p class="muted">Set your divisions (CSI MasterFormat) and service areas here. Coming soon.</p>
-      </div>
-
-      <!-- REALTOR -->
-      <div class="card" data-panel="realtor" style="display:none">
-        <h2>Realtor</h2>
-        <p class="muted">MLS preferences, buyer/seller funnels, and referral routing. Coming soon.</p>
-      </div>
-
-      <!-- INVESTOR -->
-      <div class="card" data-panel="investor" style="display:none">
-        <h2>Investor</h2>
-        <p class="muted">Buy box, return targets, preferred markets & dispositions. Coming soon.</p>
-      </div>
-
-      <!-- SETTINGS -->
-      <div class="card" data-panel="settings" style="display:none">
-        <h2>Settings</h2>
-        <p class="muted">Profile visibility, notifications, and data export will live here.</p>
+      <!-- Map pane -->
+      <div class="card">
+        <h3>Map</h3>
+        <div class="body">
+          <iframe id="mapFrame" class="map" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+        </div>
       </div>
     </section>
+
+    <!-- Dispo Panel (simple links / launchers) -->
+    <section data-panel="dispo" class="card" style="display:none; margin-top:12px">
+      <h3>Dispositions Tools</h3>
+      <div class="body row">
+        <button class="btn" onclick="window.open('dispo.html?uid='+encodeURIComponent(state.uid),'_blank','noopener')">Open Dispo in New Tab</button>
+        <button class="btn" onclick="window.open('offer_packet.html','_blank','noopener')">Offering Memorandum</button>
+        <button class="btn" onclick="window.open('investor_signup.html','_blank','noopener')">Investor Signup</button>
+        <button class="btn" onclick="window.open('market_listing.html','_blank','noopener')">Public Listing</button>
+      </div>
+    </section>
+  </div>
+
+  <!-- Notes Google Form modal -->
+  <div id="modal" class="modal">
+    <div class="box">
+      <button class="close" onclick="closeModal()">×</button>
+      <iframe id="formFrame"></iframe>
+    </div>
   </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    /* --- Firebase init --- */
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -223,127 +170,137 @@
     };
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
-    const db   = firebase.database();
+  </script>
 
-    /* ---- UI helpers ---- */
+  <script>
+    /* --------- Config / State ---------- */
+    // Optional: hardcode your latest public feed here, or pass ?feed=<url>
+    const DEFAULT_FEED = ""; // e.g. "https://drive.google.com/uc?export=download&id=XXXXXXXX"
+
+    const state = {
+      uid: "",
+      leads: [],   // array from Drive script: window.leads
+      i: 0,
+      feedURL: ""
+    };
+
+    /* --------- Helpers ---------- */
+    const $ = s => document.querySelector(s);
     const panels = [...document.querySelectorAll('[data-panel]')];
     const tabs   = [...document.querySelectorAll('.tab')];
-    function show(tabName){
-      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab === tabName));
-      panels.forEach(p => p.style.display = (p.dataset.panel === tabName) ? '' : 'none');
-      const url = new URL(location.href);
-      url.searchParams.set('tab', tabName);
-      history.replaceState(null, '', url.toString());
-    }
-    document.getElementById('tabs').addEventListener('click', (e)=>{
-      const btn = e.target.closest('.tab'); if(!btn) return;
-      if (btn.getAttribute('aria-disabled') === 'true') return;
-      show(btn.dataset.tab);
-    });
-    show(new URL(location.href).searchParams.get('tab') || 'overview');
 
-    // Wholesaler subtabs
-    const whSubtabs = [...document.querySelectorAll('#whSubtabs .subtab')];
-    const whSubPanels = [...document.querySelectorAll('[data-subpanel]')];
-    function showWh(sub){
-      whSubtabs.forEach(s => s.classList.toggle('active', s.dataset.sub === sub));
-      whSubPanels.forEach(p => p.style.display = (p.dataset.subpanel === sub) ? '' : 'none');
-      const url = new URL(location.href);
-      url.searchParams.set('wh', sub);
-      history.replaceState(null, '', url.toString());
+    function showPanel(name){
+      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab===name));
+      panels.forEach(p => p.style.display = (p.dataset.panel===name) ? '' : 'none');
     }
-    document.getElementById('whSubtabs').addEventListener('click', (e)=>{
-      const b = e.target.closest('.subtab'); if(!b) return;
-      showWh(b.dataset.sub);
-    });
-    showWh(new URL(location.href).searchParams.get('wh') || 'acq');
-
-    // Logout
-    document.getElementById('logoutBtn').addEventListener('click', async ()=>{
-      try{ await auth.signOut(); location.href = 'index.html'; }catch(err){ alert(err.message); }
+    document.querySelector('.tabs').addEventListener('click', e=>{
+      const b = e.target.closest('.tab'); if(!b) return;
+      showPanel(b.dataset.tab);
     });
 
-    // Frames + controls
-    const whFrame = document.getElementById('whFrame');
-    const diFrame = document.getElementById('diFrame');
-    document.getElementById('btnReloadWh').addEventListener('click', ()=> whFrame.contentWindow?.location?.reload?.());
-    document.getElementById('btnReloadDi').addEventListener('click', ()=> diFrame.contentWindow?.location?.reload?.());
-    document.getElementById('btnAddDeal').addEventListener('click', ()=> alert('Open "Add Deal" form (placeholder).'));
-    document.getElementById('btnSharePacket').addEventListener('click', ()=> alert('Generate/share Investor Packet link (placeholder).'));
-    document.getElementById('btnInvestorRoom').addEventListener('click', ()=> window.open('investor_room.html','_blank','noopener'));
+    function qs(name){ return new URL(location.href).searchParams.get(name) || ""; }
 
-    /* ------ Access Gate for Wholesaler ------ */
-    const gateEl   = document.getElementById('whGate');
-    const panelEl  = document.getElementById('whPanel');
-    const statusEl = document.getElementById('whStatus');
-    const tabWh    = document.getElementById('tabWh');
+    function setMap(address){
+      const q = encodeURIComponent(address);
+      const src = `https://www.google.com/maps?q=${q}&output=embed`;
+      $('#mapFrame').src = src;
+    }
 
-    function showGate(msg='No wholesaler access on this account.'){
-      if (statusEl) statusEl.textContent = msg;
-      if (panelEl) panelEl.style.display = 'none';
-      if (gateEl)  gateEl.style.display  = 'block';
+    function openModal(url){
+      $('#formFrame').src = url;
+      $('#modal').style.display = 'flex';
     }
-    function showPanel(){
-      if (gateEl)  gateEl.style.display  = 'none';
-      if (panelEl) panelEl.style.display = 'block';
+    function closeModal(){
+      $('#modal').style.display = 'none';
+      $('#formFrame').src = 'about:blank';
     }
-    function loadAcq(uid){
-      if (!whFrame.src || whFrame.src === 'about:blank') whFrame.src = `acqportal.html?uid=${encodeURIComponent(uid)}`;
-      if (!diFrame.src || diFrame.src === 'about:blank') diFrame.src = `dispo.html?uid=${encodeURIComponent(uid)}`;
-      document.getElementById('btnNewTabWh').onclick = ()=> window.open(`acqportal.html?uid=${encodeURIComponent(uid)}`,'_blank','noopener');
-      document.getElementById('btnNewTabDi').onclick = ()=> window.open(`dispo.html?uid=${encodeURIComponent(uid)}`,'_blank','noopener');
+    window.closeModal = closeModal; // for button
+
+    function renderLead(){
+      if (!state.leads.length){ return; }
+      const lead = state.leads[state.i];
+      const contact = lead.contacts && lead.contacts[0] ? lead.contacts[0] : { name:"(no name)", phone:"" };
+      const addr = lead.address || "(no address)";
+      const tn  = "https://www.textnow.com/messaging";
+      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+      const formUrl = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(addr)}&entry.204=${encodeURIComponent(state.uid)}`;
+
+      $('#idxBadge').textContent = `${state.i+1} / ${state.leads.length}`;
+
+      $('#leadCard').innerHTML = `
+        <div class="row">
+          <button class="btn" onclick="navigator.clipboard.writeText('${(contact.phone||'').replace(/'/g,'')}').then(()=>alert('Number copied'))">📞 Copy</button>
+          <a class="btn" href="${tn}" target="_blank" rel="noopener">💬 TextNow</a>
+          <button class="btn" onclick="openModal('${formUrl}')">📝 Update Notes</button>
+        </div>
+        <div style="margin-top:8px">
+          <b>${contact.name}</b><br>
+          <span class="badge">${contact.phone || 'no phone'}</span>
+        </div>
+        <div style="margin-top:8px">${addr}</div>
+        ${lead.notes ? `<div style="margin-top:10px" class="badge">notes</div><div style="margin-top:6px">${String(lead.notes).replace(/\n/g,'<br>')}</div>` : ''}
+      `;
+      setMap(addr);
     }
-    async function ensureUserDoc(uid, email){
-      const base = {
-        email: email || '',
-        level: 'basic',
-        roles: { contractor:false, wholesaler:false, investor:false, realtor:false },
-        createdAt: Date.now()
+
+    function next(n){
+      if (!state.leads.length) return;
+      state.i = (state.i + n + state.leads.length) % state.leads.length;
+      renderLead();
+    }
+
+    /* --------- Feed loader ---------- */
+    function injectFeed(src){
+      if (!src) return false;
+      const s = document.createElement('script');
+      s.src = src;
+      s.onload = () => {
+        // Expect global "leads" array from feed
+        if (Array.isArray(window.leads) && window.leads.length){
+          state.leads = window.leads;
+          $('#feedGate').style.display = 'none';
+          $('#leadWrap').style.display = 'flex';
+          state.i = 0;
+          renderLead();
+        } else {
+          $('#feedGate').innerHTML = 'Feed loaded but no leads found.';
+        }
       };
-      await db.ref(`users/${uid}`).set(base);
-      return base;
-    }
-    async function fetchUserRecord(uid, email){
-      let snap = await db.ref(`users/${uid}`).get();
-      if (snap.exists()) return { key: uid, data: snap.val() };
-
-      if (email){
-        const q = await db.ref('users').orderByChild('email').equalTo(email).limitToFirst(1).get();
-        if (q.exists()){
-          const [legacyKey, legacyVal] = Object.entries(q.val())[0];
-          await db.ref(`users/${uid}`).set(legacyVal); // migrate to UID
-          return { key: uid, data: legacyVal };
-        }
-      }
-      const created = await ensureUserDoc(uid, email);
-      return { key: uid, data: created };
-    }
-    async function checkWhAccess(user){
-      try{
-        const { uid, email } = user;
-        const { data } = await fetchUserRecord(uid, email);
-        const has = data?.roles?.wholesaler === true || data?.roles?.wholesaler === 'true';
-        if (has){
-          tabWh.removeAttribute('aria-disabled');
-          showPanel();
-          loadAcq(uid);
-          console.log('Wholesaler access: GRANTED');
-        }else{
-          tabWh.setAttribute('aria-disabled','true');
-          showGate('Wholesaler access not enabled for this account.');
-          console.log('Wholesaler access: MISSING');
-        }
-      }catch(err){
-        console.error(err);
-        showGate('Error checking access. Please refresh.');
-      }
+      s.onerror = () => $('#feedGate').innerHTML = 'Failed to load feed script.';
+      document.head.appendChild(s);
+      return true;
     }
 
-    // Auth state
-    auth.onAuthStateChanged(async (u)=>{
-      if(!u){ location.href = 'index.html'; return; }
-      await checkWhAccess(u);
+    /* --------- Auth + Boot ---------- */
+    auth.onAuthStateChanged(u=>{
+      if (!u){ location.href='index.html'; return; }
+      state.uid = u.uid;
+
+      // ensure URL uid param for consistency (useful when opened directly)
+      const cur = qs('uid');
+      if (cur !== state.uid){
+        const url = new URL(location.href);
+        url.searchParams.set('uid', state.uid);
+        history.replaceState(null,'',url.toString());
+      }
+
+      // feed via ?feed=... or fallback to DEFAULT_FEED
+      state.feedURL = qs('feed') || DEFAULT_FEED;
+      if (!injectFeed(state.feedURL)){
+        // keep gate visible, user will see instructions
+      }
     });
+
+    /* --------- Wire UI ---------- */
+    $('#btnPrev').onclick = ()=> next(-1);
+    $('#btnNext').onclick = ()=> next(+1);
+    $('#btnFullscreen').onclick = ()=>{
+      const url = new URL(location.href);
+      window.open(url.toString(), '_blank','noopener');
+    };
+    $('#btnLogout').onclick = async ()=>{
+      try{ await auth.signOut(); location.href='index.html'; }catch(e){ alert(e.message); }
+    };
   </script>
 </body>
 </html>
