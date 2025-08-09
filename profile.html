@@ -16,13 +16,15 @@
   *{box-sizing:border-box}
   body{
     margin:0; font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-    background: radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
-               linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
+    background:
+      radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
+      linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
     color:var(--text); min-height:100vh; padding:18px;
   }
 
   .shell{
-    max-width:1200px; margin:0 auto; background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
+    max-width:1200px; margin:0 auto;
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
     border:1px solid #1a2a36; border-radius:20px; box-shadow:var(--shadow); backdrop-filter:blur(12px);
   }
   header{
@@ -54,7 +56,7 @@
   .muted{color:var(--muted); font-size:13px}
 
   /* Secondary tabs (inside Wholesaler) */
-  .subtabs{display:flex; gap:8px; margin:6px 0 12px}
+  .subtabs{display:flex; gap:8px; margin:6px 0 12px; flex-wrap:wrap}
   .subtab{
     padding:8px 12px; border-radius:999px; border:1px solid #1d3142; cursor:pointer;
     background:#0f1a24; color:#cfe2f3; font-size:13px
@@ -205,16 +207,32 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Redirect if not signed in + set UID into iframes
+    // Optional: hardcode a default FEED here (or leave blank to rely on query/localStorage)
+    const DEFAULT_FEED = ""; // e.g. "https://drive.google.com/uc?export=download&id=XXXX"
+
+    // Persist a feed across sessions if user opens the portal in a new tab
+    const urlFeed = new URL(location.href).searchParams.get('feed') || "";
+    if (urlFeed) localStorage.setItem('acq_feed_url', urlFeed);
+
+    // Redirect if not signed in + set UID/feed into iframes
     auth.onAuthStateChanged(user=>{
       if(!user){ location.href = 'index.html'; return; }
       const uid = encodeURIComponent(user.uid);
-      // pass uid into both portals so they scope reads/writes to /users/<uid> paths
-      document.getElementById('whFrame').src = `wholesaler.html?uid=${uid}`;
-      document.getElementById('diFrame').src = `dispo.html?uid=${uid}`;
-      // new-tab buttons use same uid
-      document.getElementById('btnNewTabWh').addEventListener('click', ()=> window.open(`wholesaler.html?uid=${uid}`,'_blank'));
-      document.getElementById('btnNewTabDi').addEventListener('click', ()=> window.open(`dispo.html?uid=${uid}`,'_blank'));
+      const feed = encodeURIComponent(urlFeed || localStorage.getItem('acq_feed_url') || DEFAULT_FEED || "");
+
+      const wh = document.getElementById('whFrame');
+      const di = document.getElementById('diFrame');
+
+      wh.src = `wholesaler.html?uid=${uid}${feed ? `&feed=${feed}` : ""}`;
+      di.src = `dispo.html?uid=${uid}`;
+
+      // Fullscreen buttons use same params
+      document.getElementById('btnNewTabWh').addEventListener('click', ()=> {
+        window.open(`wholesaler.html?uid=${uid}${feed ? `&feed=${feed}` : ""}`,'_blank');
+      });
+      document.getElementById('btnNewTabDi').addEventListener('click', ()=> {
+        window.open(`dispo.html?uid=${uid}`,'_blank');
+      });
     });
 
     // Top-level tabs
@@ -231,8 +249,7 @@
       const btn = e.target.closest('.tab'); if(!btn) return;
       show(btn.dataset.tab);
     });
-    const initialTab = new URL(location.href).searchParams.get('tab') || 'overview';
-    show(initialTab);
+    show(new URL(location.href).searchParams.get('tab') || 'overview');
 
     // Wholesaler subtabs
     const whSubtabs = [...document.querySelectorAll('#whSubtabs .subtab')];
@@ -258,8 +275,8 @@
     // Frame reloads
     const whFrame = document.getElementById('whFrame');
     const diFrame = document.getElementById('diFrame');
-    document.getElementById('btnReloadWh').addEventListener('click', ()=> whFrame.contentWindow.location.reload());
-    document.getElementById('btnReloadDi').addEventListener('click', ()=> diFrame.contentWindow.location.reload());
+    document.getElementById('btnReloadWh').addEventListener('click', ()=> whFrame.contentWindow?.location?.reload?.());
+    document.getElementById('btnReloadDi').addEventListener('click', ()=> diFrame.contentWindow?.location?.reload?.());
 
     // Dispo placeholders
     document.getElementById('btnAddDeal').addEventListener('click', ()=> alert('Open "Add Deal" form (placeholder).'));
