@@ -2,305 +2,285 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DealBankers • Wholesaler</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Wholesaler • Acquisition</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+
+<!--
+USAGE
+- Preferred: wholesaler.html?uid=<FIREBASE_UID>&feed=<GOOGLE_DRIVE_PUBLIC_SCRIPT_URL>
+  (the feed is the “PUBLIC latest” script URL your Sheet export shows)
+- Fallback: include a local leads.js that defines window.leads = [...]
+-->
 
 <style>
   :root{
-    --bg:#0d1822; --panel:#0f1a24; --card:#12202d; --line:#203241;
-    --text:#eaf1f6; --muted:#9fb3c7; --accent:#0d6efd; --gold:#c7a86a;
-    --green:#28a745; --danger:#d9534f; --shadow:0 22px 60px rgba(0,0,0,.5);
-    --r:14px;
+    --ink:#0f1620; --muted:#6b7280; --line:#e7e7e7; --bg:#f2f4f7; --panel:#ffffff;
+    --accent:#0d6efd; --ok:#28a745; --shadow:0 14px 34px rgba(0,0,0,.08);
+    --r:12px;
   }
   *{box-sizing:border-box}
-  body{
-    margin:0; font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-    background:
-      radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
-      linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
-    color:var(--text); min-height:100vh;
+  html,body{height:100%}
+  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Arial, sans-serif; background:var(--bg); color:var(--ink)}
+
+  header{
+    background:#111; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;
+    position:sticky; top:0; z-index:5;
   }
-
-  /* Shell */
-  .shell{max-width:1200px; margin:0 auto; padding:16px}
-  .bar{
-    display:flex; align-items:center; justify-content:space-between;
-    gap:10px; padding:12px 14px; border:1px solid #1a2a36; border-radius:12px;
-    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.03));
-    box-shadow:var(--shadow); backdrop-filter:blur(10px);
+  .menu{cursor:pointer; font-size:22px; user-select:none}
+  .menu-content{
+    display:none; position:absolute; top:56px; right:16px; background:#fff; border:1px solid var(--line);
+    border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.2); z-index:1000; overflow:hidden; min-width:220px;
   }
-  .brand{display:flex; align-items:center; gap:12px}
-  .brand img{width:40px;height:40px;border-radius:9px;object-fit:cover}
-  .title{display:flex; flex-direction:column}
-  .title b{letter-spacing:.06em}
-  .title small{color:var(--muted)}
-  .bar .btn{padding:9px 12px; border-radius:10px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; cursor:pointer}
-  .btn:hover{filter:brightness(1.06)}
-  .btn-green{background:linear-gradient(180deg,#2fb557,#199a3f); border:none; color:#fff}
-  .btn-red{background:linear-gradient(180deg,#dd6060,#bb3e3e); border:none; color:#fff}
+  .menu-content a{display:block; padding:12px 16px; text-decoration:none; color:#111; font-weight:600}
+  .menu-content a:hover{background:#f5f7fb}
 
-  /* Tabs (Acq/Dispo) */
-  .tabs{display:flex; gap:8px; padding:14px 2px 0}
-  .tab{padding:8px 12px; border-radius:999px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; cursor:pointer; font-size:13px}
-  .tab.active{background:linear-gradient(180deg,var(--gold),#9d7d49); color:#111; border:none}
+  .container{display:flex; flex-direction:column; height:calc(100vh - 56px)}
+  @media (min-width:900px){ .container{flex-direction:row} }
+  .lead-section,.map-section{padding:14px}
+  .lead-section{flex:1; overflow:auto}
+  .map-section{flex:1; display:flex}
 
-  /* Workspace */
-  .grid{display:grid; grid-template-columns: 1fr 1fr; gap:14px; margin-top:12px}
-  .card{background:#10202c; border:1px solid #1a2a36; border-radius:var(--r); overflow:hidden}
-  .card h3{margin:0; padding:12px 14px; background:#0c151d; border-bottom:1px solid #122432; font-size:15px}
-  .card .body{padding:12px}
-
-  .stack{display:flex; flex-direction:column; gap:10px}
-  .row{display:flex; gap:8px; flex-wrap:wrap}
-  .pill{padding:8px 10px; border-radius:999px; border:1px solid #1d3142; background:#0f1a24; color:#cfe2f3; font-size:13px}
-
-  /* Lead card */
-  .lead{
-    background:#0f1a24; border:1px solid #1d3142; border-radius:12px; padding:12px;
+  .lead-buttons{
+    display:flex; justify-content:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;
   }
-  .lead b{font-size:16px}
-  .lead a{color:#6fb3ff; text-decoration:none}
-  .lead .btn{padding:8px 10px}
-  .badge{display:inline-block; padding:4px 8px; border-radius:999px; background:#0e2030; border:1px solid #1d3142; color:#9fb3c7; font-size:12px}
+  .lead-buttons a,.lead-buttons button{
+    font-size:20px; border:none; border-radius:10px; text-decoration:none; cursor:pointer; padding:10px 12px; color:#fff;
+  }
+  .call{background:var(--accent)} .drive{background:#6c757d} .settings{background:#343a40} .chat{background:#17a2b8}
 
-  /* Map / iframe */
-  iframe.map{width:100%; height:320px; border:0; border-radius:10px; background:#fff}
+  .lead-card{
+    background:var(--panel); padding:16px; border-radius:12px; box-shadow:var(--shadow);
+    margin:0 auto 15px; max-width:640px; border:1px solid var(--line);
+  }
+  .lead-card a{color:var(--accent); font-weight:700; text-decoration:none}
+  .lead-card button{background:var(--ok); color:#fff; padding:8px 12px; border:none; border-radius:8px; font-size:14px; margin-top:10px; cursor:pointer}
 
-  /* Gate / empty */
-  .gate{padding:14px; border:1px dashed #2a4256; border-radius:12px; background:#0f1a24; color:var(--muted)}
+  .next-btn{display:block; margin:16px auto; padding:12px 20px; font-size:18px; background:#111; color:#fff; border:none; border-radius:10px; cursor:pointer}
+
+  iframe.map{width:100%; border:none; border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--line)}
+  .map-section iframe.map{height:100%}
+  @media (max-width:899px){ iframe.map{height:340px} }
+
+  /* Permission gate / notices */
+  .gate{margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px}
+  .gate h3{margin:0 0 6px} .gate p{margin:0 0 10px; color:var(--muted)}
+  .badge{display:inline-block; padding:4px 8px; border-radius:999px; background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; font-size:12px}
 
   /* Modal */
-  .modal{position:fixed; inset:0; background:rgba(0,0,0,.7); display:none; align-items:center; justify-content:center; z-index:50}
-  .modal .box{width:90%; max-width:900px; height:80vh; background:#fff; border-radius:12px; overflow:hidden; position:relative}
-  .modal iframe{width:100%; height:100%; border:0}
-  .close{position:absolute; top:10px; right:12px; width:32px; height:32px; border-radius:50%; border:0; background:#333; color:#fff; cursor:pointer}
+  .modal{display:none; position:fixed; z-index:999; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; padding:16px}
+  .modal-content{width:100%; max-width:1100px; height:80%; background:#fff; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(0,0,0,.35)}
+  .modal iframe{width:100%; height:100%; border:none}
+  .close-btn{position:absolute; top:10px; right:12px; font-size:20px; background:#333; color:#fff; border:none; border-radius:50%; width:34px; height:34px; cursor:pointer}
 
-  /* Responsive */
-  @media (max-width: 960px){ .grid{grid-template-columns: 1fr} iframe.map{height:260px} }
+  .highlight{background:yellow; padding:0 2px}
 </style>
 </head>
 <body>
-  <div class="shell">
-    <!-- Top Bar -->
-    <div class="bar">
-      <div class="brand">
-        <img src="icon (1).jpg" alt="">
-        <div class="title">
-          <b>Wholesaler • Acquisition</b>
-          <small>Calls • Notes • Map • Fast nav</small>
-        </div>
-      </div>
-      <div class="row">
-        <button id="btnFullscreen" class="btn btn-green">Open Fullscreen</button>
-        <button id="btnLogout" class="btn btn-red">Log Out</button>
-      </div>
-    </div>
-
-    <!-- Sub Tabs -->
-    <div class="tabs">
-      <button class="tab active" data-tab="acq">Acquisition</button>
-      <button class="tab" data-tab="dispo">Dispo</button>
-    </div>
-
-    <!-- Acquisition Workspace -->
-    <section data-panel="acq" class="grid">
-      <!-- Lead pane -->
-      <div class="card">
-        <h3>Lead Panel</h3>
-        <div class="body">
-          <div id="feedGate" class="gate">No feed configured. Ask an admin to export leads and pass the <span class="badge">?feed=PUBLIC_SCRIPT_URL</span> into this page, or set it inside the file.</div>
-
-          <div id="leadWrap" class="stack" style="display:none">
-            <div class="row">
-              <button id="btnPrev" class="btn">⏮ Prev</button>
-              <button id="btnNext" class="btn">⏭ Next</button>
-              <span class="pill" id="idxBadge">0 / 0</span>
-            </div>
-
-            <div id="leadCard" class="lead">
-              <!-- populated -->
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Map pane -->
-      <div class="card">
-        <h3>Map</h3>
-        <div class="body">
-          <iframe id="mapFrame" class="map" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-        </div>
-      </div>
-    </section>
-
-    <!-- Dispo Panel (simple links / launchers) -->
-    <section data-panel="dispo" class="card" style="display:none; margin-top:12px">
-      <h3>Dispositions Tools</h3>
-      <div class="body row">
-        <button class="btn" onclick="window.open('dispo.html?uid='+encodeURIComponent(state.uid),'_blank','noopener')">Open Dispo in New Tab</button>
-        <button class="btn" onclick="window.open('offer_packet.html','_blank','noopener')">Offering Memorandum</button>
-        <button class="btn" onclick="window.open('investor_signup.html','_blank','noopener')">Investor Signup</button>
-        <button class="btn" onclick="window.open('market_listing.html','_blank','noopener')">Public Listing</button>
-      </div>
-    </section>
-  </div>
-
-  <!-- Notes Google Form modal -->
-  <div id="modal" class="modal">
-    <div class="box">
-      <button class="close" onclick="closeModal()">×</button>
-      <iframe id="formFrame"></iframe>
+<header>
+  Wholesaler • Acquisition
+  <div style="position:relative">
+    <div class="menu" onclick="toggleMenu()">☰</div>
+    <div class="menu-content" id="menuContent">
+      <a href="dispo.html" target="_blank" rel="noopener">Open Dispo Page</a>
+      <a href="profile.html?tab=wholesaler&wh=acq" rel="noopener">Back to Profile</a>
     </div>
   </div>
+</header>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script>
-    const firebaseConfig = {
-      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
-      authDomain: "deal-bankers.firebaseapp.com",
-      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
-      projectId: "deal-bankers",
-      storageBucket: "deal-bankers.firebasestorage.app",
-      messagingSenderId: "485110155601",
-      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
-      measurementId: "G-KTNXZM14F7"
-    };
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-  </script>
+<!-- Notices -->
+<div id="feedNotice" class="gate" style="display:none">
+  <h3>No feed configured</h3>
+  <p>Ask an admin to export leads and pass the <span class="badge">?feed=PUBLIC_SCRIPT_URL</span> into this page, or set it inside the file.</p>
+</div>
+<div id="gate" class="gate" style="display:none">
+  <h3>Checking your access…</h3>
+  <p>Please wait a moment while we verify your wholesaler permissions.</p>
+</div>
 
-  <script>
-    /* --------- Config / State ---------- */
-    // Optional: hardcode your latest public feed here, or pass ?feed=<url>
-    const DEFAULT_FEED = ""; // e.g. "https://drive.google.com/uc?export=download&id=XXXXXXXX"
+<!-- Main workspace -->
+<div id="portal" class="container" style="display:none">
+  <section class="lead-section">
+    <div class="lead-buttons">
+      <button id="btnPrev" class="drive">⏮</button>
+      <button id="btnNext" class="drive">⏭</button>
+      <a class="chat" href="https://www.textnow.com/messaging" target="_blank" rel="noopener">TextNow</a>
+      <button id="btnNotes" class="settings">📝 Notes</button>
+      <button id="btnCopy" class="call">📞 Copy</button>
+    </div>
 
-    const state = {
-      uid: "",
-      leads: [],   // array from Drive script: window.leads
-      i: 0,
-      feedURL: ""
-    };
+    <div id="leadCard" class="lead-card">Loading…</div>
+    <button class="next-btn" onclick="next(1)">⏭️ Next Lead</button>
+  </section>
 
-    /* --------- Helpers ---------- */
-    const $ = s => document.querySelector(s);
-    const panels = [...document.querySelectorAll('[data-panel]')];
-    const tabs   = [...document.querySelectorAll('.tab')];
+  <section class="map-section">
+    <iframe id="map" class="map" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+  </section>
+</div>
 
-    function showPanel(name){
-      tabs.forEach(t => t.classList.toggle('active', t.dataset.tab===name));
-      panels.forEach(p => p.style.display = (p.dataset.panel===name) ? '' : 'none');
-    }
-    document.querySelector('.tabs').addEventListener('click', e=>{
-      const b = e.target.closest('.tab'); if(!b) return;
-      showPanel(b.dataset.tab);
-    });
+<!-- Notes modal -->
+<div id="formModal" class="modal" aria-hidden="true">
+  <div class="modal-content">
+    <button class="close-btn" onclick="closeModal()">×</button>
+    <iframe id="formIframe"></iframe>
+  </div>
+</div>
 
-    function qs(name){ return new URL(location.href).searchParams.get(name) || ""; }
+<!-- Firebase -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
-    function setMap(address){
-      const q = encodeURIComponent(address);
-      const src = `https://www.google.com/maps?q=${q}&output=embed`;
-      $('#mapFrame').src = src;
-    }
+<script>
+  // Optional hardcoded feed (leave "" to force passing ?feed=...)
+  const DEFAULT_FEED = ""; // e.g. "https://drive.google.com/uc?export=download&id=XXXXXXXX"
 
-    function openModal(url){
-      $('#formFrame').src = url;
-      $('#modal').style.display = 'flex';
-    }
-    function closeModal(){
-      $('#modal').style.display = 'none';
-      $('#formFrame').src = 'about:blank';
-    }
-    window.closeModal = closeModal; // for button
+  const firebaseConfig = {
+    apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+    authDomain: "deal-bankers.firebaseapp.com",
+    databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+    projectId: "deal-bankers",
+    storageBucket: "deal-bankers.firebasestorage.app",
+    messagingSenderId: "485110155601",
+    appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
+    measurementId: "G-KTNXZM14F7"
+  };
+  if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+  const auth = firebase.auth();
+  const db   = firebase.database();
 
-    function renderLead(){
-      if (!state.leads.length){ return; }
-      const lead = state.leads[state.i];
-      const contact = lead.contacts && lead.contacts[0] ? lead.contacts[0] : { name:"(no name)", phone:"" };
-      const addr = lead.address || "(no address)";
-      const tn  = "https://www.textnow.com/messaging";
-      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
-      const formUrl = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(addr)}&entry.204=${encodeURIComponent(state.uid)}`;
+  /* ---------- State / helpers ---------- */
+  const qs = name => new URL(location.href).searchParams.get(name) || "";
+  const $  = s => document.querySelector(s);
+  const state = { uid:"", leads:[], i:0 };
 
-      $('#idxBadge').textContent = `${state.i+1} / ${state.leads.length}`;
+  function toggleMenu(){
+    const m = $('#menuContent'); m.style.display = (m.style.display==='block') ? 'none' : 'block';
+  }
+  function setMap(address){
+    const q = encodeURIComponent(address || '');
+    $('#map').src = q ? `https://www.google.com/maps?q=${q}&output=embed` : 'about:blank';
+  }
+  function openModal(url){ $('#formIframe').src = url; $('#formModal').style.display='flex'; }
+  function closeModal(){ $('#formModal').style.display='none'; $('#formIframe').src='about:blank'; }
+  window.closeModal = closeModal;
 
-      $('#leadCard').innerHTML = `
-        <div class="row">
-          <button class="btn" onclick="navigator.clipboard.writeText('${(contact.phone||'').replace(/'/g,'')}').then(()=>alert('Number copied'))">📞 Copy</button>
-          <a class="btn" href="${tn}" target="_blank" rel="noopener">💬 TextNow</a>
-          <button class="btn" onclick="openModal('${formUrl}')">📝 Update Notes</button>
-        </div>
-        <div style="margin-top:8px">
-          <b>${contact.name}</b><br>
-          <span class="badge">${contact.phone || 'no phone'}</span>
-        </div>
-        <div style="margin-top:8px">${addr}</div>
-        ${lead.notes ? `<div style="margin-top:10px" class="badge">notes</div><div style="margin-top:6px">${String(lead.notes).replace(/\n/g,'<br>')}</div>` : ''}
-      `;
-      setMap(addr);
-    }
+  function highlightKeywords(text=''){
+    const keywords = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
+    const regex = new RegExp(`\\b(${keywords.join('|')})\\b`,'gi');
+    return text.replace(regex,'<span class="highlight">$1</span>');
+  }
 
-    function next(n){
-      if (!state.leads.length) return;
-      state.i = (state.i + n + state.leads.length) % state.leads.length;
-      renderLead();
-    }
+  function render(){
+    if(!state.leads.length){ $('#leadCard').textContent = 'No leads loaded.'; return; }
+    const L = state.leads[state.i];
+    const contact = (L.contacts && L.contacts[0]) || {name:'(no name)', phone:''};
+    const addr = L.address || '';
 
-    /* --------- Feed loader ---------- */
-    function injectFeed(src){
-      if (!src) return false;
+    const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+    const formUrl  = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(addr)}&entry.204=${encodeURIComponent(state.uid)}`;
+
+    $('#leadCard').innerHTML = `
+      <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+        <span class="badge">${state.i+1} / ${state.leads.length}</span>
+        ${addr ? `<span class="badge">Address</span>`:''}
+      </div>
+      <div style="font-weight:700; font-size:18px">${contact.name}</div>
+      <div style="margin-top:4px">${addr || '(no address)'}</div>
+      <div style="margin-top:6px"><span class="badge">${contact.phone || 'no phone'}</span></div>
+      ${L.notes ? `<details style="margin-top:10px" open>
+          <summary style="cursor:pointer; font-weight:700">📊 Deal Details</summary>
+          <div style="margin-top:6px">${highlightKeywords(String(L.notes)).replace(/\n/g,'<br>')}</div>
+        </details>` : '' }
+      <div style="margin-top:10px">
+        <a href="https://www.textnow.com/messaging" target="_blank" rel="noopener">TextNow Link</a>
+        <button style="margin-left:10px" onclick="openModal('${formUrl}')">📝 Update Lead Notes</button>
+      </div>
+    `;
+    setMap(addr);
+    // bind quick buttons
+    $('#btnCopy').onclick = ()=> navigator.clipboard.writeText(contact.phone||'').then(()=>alert('Copied: '+(contact.phone||'')));
+    $('#btnNotes').onclick = ()=> openModal(formUrl);
+  }
+
+  function next(delta){
+    if(!state.leads.length) return;
+    state.i = (state.i + delta + state.leads.length) % state.leads.length;
+    render();
+  }
+  window.next = next;
+
+  function injectScript(src){
+    return new Promise((resolve,reject)=>{
+      if(!src){ resolve(false); return; }
       const s = document.createElement('script');
       s.src = src;
-      s.onload = () => {
-        // Expect global "leads" array from feed
-        if (Array.isArray(window.leads) && window.leads.length){
-          state.leads = window.leads;
-          $('#feedGate').style.display = 'none';
-          $('#leadWrap').style.display = 'flex';
-          state.i = 0;
-          renderLead();
-        } else {
-          $('#feedGate').innerHTML = 'Feed loaded but no leads found.';
-        }
-      };
-      s.onerror = () => $('#feedGate').innerHTML = 'Failed to load feed script.';
+      s.onload = ()=>resolve(true);
+      s.onerror = ()=>reject(new Error('Feed load failed'));
       document.head.appendChild(s);
-      return true;
-    }
+    });
+  }
 
-    /* --------- Auth + Boot ---------- */
-    auth.onAuthStateChanged(u=>{
-      if (!u){ location.href='index.html'; return; }
+  /* ---------- Auth + Role + Feed ---------- */
+  (function boot(){
+    $('#gate').style.display = 'block';
+    auth.onAuthStateChanged(async (u)=>{
+      if(!u){ $('#gate').innerHTML = `<h3>Not signed in</h3><p>Please <a href="index.html">sign in</a>.</p>`; return; }
       state.uid = u.uid;
 
-      // ensure URL uid param for consistency (useful when opened directly)
-      const cur = qs('uid');
-      if (cur !== state.uid){
-        const url = new URL(location.href);
-        url.searchParams.set('uid', state.uid);
-        history.replaceState(null,'',url.toString());
+      try{
+        const snap = await db.ref(`users/${state.uid}/roles/wholesaler`).get();
+        const ok = snap.val() === true || snap.val() === 'true';
+        if(!ok){
+          $('#gate').innerHTML = `<h3>Access denied</h3><p>Your account doesn’t have wholesaler permissions.</p>`;
+          return;
+        }
+      }catch(e){
+        console.error(e);
+        $('#gate').innerHTML = `<h3>Error</h3><p>Couldn’t verify access. Refresh and try again.</p>`;
+        return;
       }
 
-      // feed via ?feed=... or fallback to DEFAULT_FEED
-      state.feedURL = qs('feed') || DEFAULT_FEED;
-      if (!injectFeed(state.feedURL)){
-        // keep gate visible, user will see instructions
+      // Try query feed, then DEFAULT_FEED, then local leads.js fallback
+      const feedURL = qs('feed') || DEFAULT_FEED;
+      let loaded = false;
+      try{
+        if(feedURL){ await injectScript(feedURL); loaded = Array.isArray(window.leads) && window.leads.length>0; }
+      }catch(e){ console.warn('Feed error', e); }
+
+      if(!loaded){
+        // try local leads.js (optional file in your repo)
+        try{
+          await injectScript('leads.js');
+          loaded = Array.isArray(window.leads) && window.leads.length>0;
+        }catch(e){ /* ignore */ }
+      }
+
+      if(!loaded){
+        $('#feedNotice').style.display = 'block';
+      }
+
+      $('#gate').style.display = 'none';
+      $('#portal').style.display = 'flex';
+
+      if(loaded){
+        state.leads = window.leads;
+        state.i = 0;
+        render();
+      }else{
+        $('#leadCard').innerHTML = `<div class="lead-card">No leads loaded. Provide a feed (?feed=) or add <code>leads.js</code>.</div>`;
       }
     });
+  })();
 
-    /* --------- Wire UI ---------- */
-    $('#btnPrev').onclick = ()=> next(-1);
-    $('#btnNext').onclick = ()=> next(+1);
-    $('#btnFullscreen').onclick = ()=>{
-      const url = new URL(location.href);
-      window.open(url.toString(), '_blank','noopener');
-    };
-    $('#btnLogout').onclick = async ()=>{
-      try{ await auth.signOut(); location.href='index.html'; }catch(e){ alert(e.message); }
-    };
-  </script>
+  /* ---------- UI wiring ---------- */
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('.menu') && !e.target.closest('.menu-content')){
+      const m = $('#menuContent'); if(m) m.style.display='none';
+    }
+  });
+  $('#btnPrev').onclick = ()=> next(-1);
+  $('#btnNext').onclick = ()=> next(1);
+</script>
 </body>
 </html>
