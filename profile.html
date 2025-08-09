@@ -10,7 +10,7 @@
   :root{
     --bg:#0d1822; --panel:#0f1a24; --card:#12202d; --line:#203241;
     --text:#eaf1f6; --muted:#9fb3c7; --accent:#0d6efd; --gold:#c7a86a;
-    --ok:#28a745; --danger:#d9534f; --shadow:0 24px 64px rgba(0,0,0,.5);
+    --danger:#d9534f; --shadow:0 24px 64px rgba(0,0,0,.5);
     --r:16px;
   }
   *{box-sizing:border-box}
@@ -38,7 +38,6 @@
     cursor:pointer; font-weight:600;
   }
   .btn:hover{filter:brightness(1.05)}
-  .btn-ok{background:linear-gradient(180deg,#29a846,#1f8a39); border:none}
   .btn-danger{background:linear-gradient(180deg,#dd6060,#bb3e3e); border:none}
 
   /* Top tabs */
@@ -75,7 +74,6 @@
     border:1px solid #1a2a36; border-radius:var(--r); overflow:hidden; background:#0b141b;
     height:78vh; min-height:560px;
   }
-  .iframe-wrap.fullheight{height:88vh}
   .iframe-wrap iframe{width:100%; height:100%; border:0; background:#fff}
 
   /* Responsive */
@@ -99,12 +97,9 @@
     <header>
       <div class="brand">
         <img src="icon (1).jpg" alt="DealBankers"/>
-        <div>
-          <h1>DEALBANKERS • PROFILE</h1>
-        </div>
+        <div><h1>DEALBANKERS • PROFILE</h1></div>
       </div>
       <div class="row-actions">
-        <button id="saveBtn" class="btn btn-ok">Save Profile</button>
         <button id="logoutBtn" class="btn btn-danger">Log Out</button>
       </div>
     </header>
@@ -119,13 +114,13 @@
     </nav>
 
     <section class="content">
-      <!-- OVERVIEW (clean – no uid/email/auth text) -->
+      <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
         <h2>Welcome</h2>
         <p class="muted">Select a portal above to get to work. Your profile supports multiple roles; enable and configure what you need.</p>
       </div>
 
-      <!-- WHOLESALER: includes ACQUISITION + DISPO sub-tabs -->
+      <!-- WHOLESALER -->
       <div class="card" data-panel="wholesaler" style="display:none">
         <h2>Wholesaler Workspace</h2>
         <div class="muted">Acquisition and Disposition tools live side-by-side. Use the sub-tabs to switch.</div>
@@ -138,31 +133,27 @@
         <!-- Acquisition block -->
         <div data-subpanel="acq">
           <div class="toolbar">
-            <button class="toolbtn" id="btnExpandWh">Toggle Tall View</button>
             <button class="toolbtn" id="btnNewTabWh">Open Fullscreen in New Tab</button>
             <button class="toolbtn" id="btnReloadWh">Reload Portal</button>
           </div>
           <div class="iframe-wrap" id="whWrap">
-            <iframe src="wholesaler.html" id="whFrame" title="Wholesaler Acquisition"></iframe>
+            <iframe src="" id="whFrame" title="Wholesaler Acquisition"></iframe>
           </div>
         </div>
 
-        <!-- Dispo block (inside Wholesaler) -->
+        <!-- Dispo block -->
         <div data-subpanel="dispo" style="display:none">
           <div class="toolbar">
             <button class="toolbtn" id="btnAddDeal">Add Deal</button>
             <button class="toolbtn" id="btnSharePacket">Share Investor Packet</button>
             <button class="toolbtn" id="btnInvestorRoom">Open Investor Room</button>
-            <button class="toolbtn" id="btnExpandDi">Toggle Tall View</button>
             <button class="toolbtn" id="btnNewTabDi">Open Fullscreen in New Tab</button>
             <button class="toolbtn" id="btnReloadDi">Reload Portal</button>
           </div>
           <div class="iframe-wrap" id="diWrap">
-            <!-- Replace dispo.html with your live dispo app when ready -->
-            <iframe src="dispo.html" id="diFrame" title="Dispositions Portal"></iframe>
+            <iframe src="" id="diFrame" title="Dispositions Portal"></iframe>
           </div>
 
-          <!-- quick previews / placeholders -->
           <div class="toolbar" style="margin-top:10px">
             <button class="toolbtn" onclick="window.open('offer_packet.html','_blank')">Preview • Offering Memorandum</button>
             <button class="toolbtn" onclick="window.open('investor_signup.html','_blank')">Preview • Investor Signup</button>
@@ -214,9 +205,16 @@
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
 
-    // Redirect if not signed in
+    // Redirect if not signed in + set UID into iframes
     auth.onAuthStateChanged(user=>{
-      if(!user){ location.href = 'index.html'; }
+      if(!user){ location.href = 'index.html'; return; }
+      const uid = encodeURIComponent(user.uid);
+      // pass uid into both portals so they scope reads/writes to /users/<uid> paths
+      document.getElementById('whFrame').src = `wholesaler.html?uid=${uid}`;
+      document.getElementById('diFrame').src = `dispo.html?uid=${uid}`;
+      // new-tab buttons use same uid
+      document.getElementById('btnNewTabWh').addEventListener('click', ()=> window.open(`wholesaler.html?uid=${uid}`,'_blank'));
+      document.getElementById('btnNewTabDi').addEventListener('click', ()=> window.open(`dispo.html?uid=${uid}`,'_blank'));
     });
 
     // Top-level tabs
@@ -252,27 +250,18 @@
     });
     showWh(new URL(location.href).searchParams.get('wh') || 'acq');
 
-    // Logout + Save
+    // Logout
     document.getElementById('logoutBtn').addEventListener('click', async ()=>{
       try{ await auth.signOut(); location.href = 'index.html'; }catch(err){ alert(err.message); }
     });
-    document.getElementById('saveBtn').addEventListener('click', ()=>{
-      alert('Profile saved (placeholder).');
-    });
 
-    // Acquisition frame controls
-    const whWrap = document.getElementById('whWrap');
+    // Frame reloads
     const whFrame = document.getElementById('whFrame');
-    document.getElementById('btnExpandWh').addEventListener('click', ()=> whWrap.classList.toggle('fullheight'));
-    document.getElementById('btnNewTabWh').addEventListener('click', ()=> window.open('wholesaler.html','_blank'));
-    document.getElementById('btnReloadWh').addEventListener('click', ()=> whFrame.contentWindow.location.reload());
-
-    // Dispo (inside wholesaler) controls
-    const diWrap = document.getElementById('diWrap');
     const diFrame = document.getElementById('diFrame');
-    document.getElementById('btnExpandDi').addEventListener('click', ()=> diWrap.classList.toggle('fullheight'));
-    document.getElementById('btnNewTabDi').addEventListener('click', ()=> window.open('dispo.html','_blank'));
+    document.getElementById('btnReloadWh').addEventListener('click', ()=> whFrame.contentWindow.location.reload());
     document.getElementById('btnReloadDi').addEventListener('click', ()=> diFrame.contentWindow.location.reload());
+
+    // Dispo placeholders
     document.getElementById('btnAddDeal').addEventListener('click', ()=> alert('Open "Add Deal" form (placeholder).'));
     document.getElementById('btnSharePacket').addEventListener('click', ()=> alert('Generate/share Investor Packet link (placeholder).'));
     document.getElementById('btnInvestorRoom').addEventListener('click', ()=> window.open('investor_room.html','_blank'));
