@@ -2,110 +2,107 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>Wholesaler • Acquisition</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+
 <style>
   :root{
-    --ink:#111; --muted:#6b7280; --line:#e7e7e7;
-    --bg:#f2f4f7; --panel:#fff; --accent:#0d6efd; --ok:#28a745;
+    --ink:#0f1620; --muted:#6b7280; --line:#e7e7e7; --bg:#f2f4f7; --panel:#fff;
+    --accent:#0d6efd; --ok:#28a745; --shadow:0 14px 34px rgba(0,0,0,.08);
   }
+  *{box-sizing:border-box}
   html,body{height:100%}
-  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Arial, sans-serif; background:var(--bg); color:#0f1620}
+  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Arial, sans-serif; background:var(--bg); color:var(--ink)}
 
   header{
-    background:var(--ink); color:#fff; padding:12px 16px; display:flex;
-    justify-content:space-between; align-items:center; font-size:18px;
+    background:#111; color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center;
     position:sticky; top:0; z-index:5;
   }
   .menu{cursor:pointer; font-size:22px; user-select:none}
   .menu-content{
-    display:none; position:absolute; top:56px; right:15px; background:#fff; border:1px solid var(--line);
+    display:none; position:absolute; top:56px; right:16px; background:#fff; border:1px solid var(--line);
     border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.2); z-index:1000; overflow:hidden; min-width:220px;
   }
   .menu-content a{display:block; padding:12px 16px; text-decoration:none; color:#111; font-weight:600}
   .menu-content a:hover{background:#f5f7fb}
 
-  /* Permission gate */
-  .gate{
-    margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px;
-  }
-  .gate h3{margin:0 0 6px}
-  .gate p{margin:0 0 12px; color:var(--muted)}
-  .gate .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0f1a24; color:#cfe2f3; cursor:pointer}
+  .badge{display:inline-block; padding:4px 8px; border-radius:999px; background:#eef2ff; border:1px solid #c7d2fe; color:#3730a3; font-size:12px}
 
   .container{display:flex; flex-direction:column; height:calc(100vh - 56px)}
   @media (min-width: 900px){ .container{flex-direction:row} }
-
-  .lead-section, .map-section{padding:14px}
+  .lead-section,.map-section{padding:14px}
   .lead-section{flex:1; overflow:auto}
   .map-section{flex:1; display:flex}
 
-  .lead-buttons{
-    display:flex; justify-content:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;
-  }
-  .lead-buttons a, .lead-buttons button{
-    font-size:20px; border:none; border-radius:10px; text-decoration:none; cursor:pointer; padding:10px 12px; color:white;
-  }
+  .lead-buttons{display:flex; justify-content:center; gap:10px; margin-bottom:12px; flex-wrap:wrap}
+  .lead-buttons a,.lead-buttons button{font-size:20px; border:none; border-radius:10px; text-decoration:none; cursor:pointer; padding:10px 12px; color:#fff}
   .call{background:var(--accent)} .drive{background:#6c757d} .settings{background:#343a40} .chat{background:#17a2b8}
 
-  .lead-card{background:var(--panel); padding:16px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); margin:0 auto 15px; max-width:620px; border:1px solid var(--line)}
+  .lead-card{background:var(--panel); padding:16px; border-radius:12px; box-shadow:var(--shadow); margin:0 auto 15px; max-width:640px; border:1px solid var(--line)}
   .lead-card a{color:var(--accent); font-weight:700; text-decoration:none}
-  .lead-card button{background:var(--ok); color:white; padding:8px 12px; border:none; border-radius:8px; font-size:14px; margin-top:10px; cursor:pointer}
+  .lead-card button{background:var(--ok); color:#fff; padding:8px 12px; border:none; border-radius:8px; font-size:14px; margin-top:10px; cursor:pointer}
 
-  .next-btn{display:block; margin:16px auto; padding:12px 20px; font-size:18px; background:#111; color:white; border:none; border-radius:10px; cursor:pointer}
+  .next-btn{display:block; margin:16px auto; padding:12px 20px; font-size:18px; background:#111; color:#fff; border:none; border-radius:10px; cursor:pointer}
 
-  iframe.map{width:100%; border:none; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); border:1px solid var(--line)}
+  iframe.map{width:100%; border:none; border-radius:12px; box-shadow:var(--shadow); border:1px solid var(--line)}
   .map-section iframe.map{height:100%}
-  @media (max-width: 899px){ iframe.map{height:340px} }
+  @media (max-width:899px){ iframe.map{height:340px} }
 
-  .modal{display:none; position:fixed; z-index:999; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; padding:16px}
-  .modal-content{width:100%; max-width:1100px; height:80%; background:white; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(0,0,0,.35)}
-  .modal iframe{width:100%; height:100%; border:none}
-  .close-btn{position:absolute; top:10px; right:12px; font-size:20px; background:#333; color:white; border:none; border-radius:50%; width:34px; height:34px; cursor:pointer}
-
-  .accordion{margin-top:10px; border-radius:10px; overflow:hidden; border:1px solid var(--line)}
-  .accordion summary{background:#f4f6fb; cursor:pointer; padding:10px 12px; font-weight:700}
-  .accordion div{padding:12px; background:#fbfcfe; font-size:14px}
-  .highlight{background:yellow; padding:0 2px}
+  /* Permission gate / notices */
+  .gate{margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px}
+  .gate h3{margin:0 0 6px} .gate p{margin:0 0 10px; color:var(--muted)}
 </style>
 </head>
 <body>
   <header>
     Wholesaler • Acquisition
-    <div class="menu" onclick="toggleMenu()">☰</div>
-    <div class="menu-content" id="menuContent">
-      <a href="dispo.html" target="_blank">Open Dispo Page</a>
-      <a href="profile.html?tab=wholesaler&wh=acq">Back to Profile</a>
+    <div style="position:relative">
+      <div class="menu" onclick="toggleMenu()">☰</div>
+      <div class="menu-content" id="menuContent">
+        <a href="dispo.html" target="_blank" rel="noopener">Open Dispo Page</a>
+        <a href="profile.html?tab=wholesaler&wh=acq" rel="noopener">Back to Profile</a>
+      </div>
     </div>
   </header>
 
+  <!-- Notices -->
+  <div id="feedNotice" class="gate" style="display:none">
+    <h3>No feed configured</h3>
+    <p>Pass the <span class="badge">?feed=PUBLIC_SCRIPT_URL</span> exported from Sheets, or add a local <code>leads.js</code>.</p>
+  </div>
+
   <!-- Permission Gate -->
-  <div id="gate" class="gate">
+  <div id="gate" class="gate" style="display:none">
     <h3>Checking your access…</h3>
     <p>Please wait a moment while we verify your wholesaler permissions.</p>
   </div>
 
-  <!-- REAL PORTAL CONTENT (hidden until authorized) -->
-  <div id="portal" style="display:none">
-    <div class="container">
-      <section class="lead-section">
-        <div id="leadCard"></div>
-        <button class="next-btn" onclick="nextLead()">⏭️ Next Lead</button>
-      </section>
+  <!-- REAL PORTAL CONTENT -->
+  <div id="portal" class="container" style="display:none">
+    <section class="lead-section">
+      <div class="lead-buttons">
+        <button id="btnPrev" class="drive">⏮</button>
+        <button id="btnNext" class="drive">⏭</button>
+        <a class="chat" href="https://www.textnow.com/messaging" target="_blank" rel="noopener">TextNow</a>
+        <button id="btnNotes" class="settings">📝 Notes</button>
+        <button id="btnCopy" class="call">📞 Copy</button>
+      </div>
 
-      <section class="map-section">
-        <iframe class="map"
-          src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
-          allowfullscreen></iframe>
-      </section>
-    </div>
+      <div id="leadCard" class="lead-card">Loading…</div>
+      <button class="next-btn" onclick="next(1)">⏭️ Next Lead</button>
+    </section>
+
+    <section class="map-section">
+      <iframe id="map" class="map" src="about:blank" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+    </section>
   </div>
 
-  <!-- Modal -->
-  <div id="formModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <iframe id="formIframe"></iframe>
+  <!-- Notes Modal -->
+  <div id="formModal" class="modal" aria-hidden="true" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,.7); justify-content:center; align-items:center; padding:16px; z-index:999">
+    <div class="modal-content" style="width:100%; max-width:1100px; height:80%; background:#fff; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(0,0,0,.35)">
+      <button class="close-btn" onclick="closeModal()" style="position:absolute; top:10px; right:12px; font-size:20px; background:#333; color:#fff; border:none; border-radius:50%; width:34px; height:34px; cursor:pointer">×</button>
+      <iframe id="formIframe" style="width:100%; height:100%; border:none"></iframe>
     </div>
   </div>
 
@@ -115,46 +112,37 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
   <script>
-    // --- UI helpers ---
-    function toggleMenu(){ const m = document.getElementById("menuContent"); m.style.display = (m.style.display==="block") ? "none" : "block"; }
-    function copyToClipboard(text){ navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text)); }
-    function openModal(url){ const m = document.getElementById("formModal"); const i = document.getElementById("formIframe"); i.src=url; m.style.display="flex"; }
-    function closeModal(){ document.getElementById("formModal").style.display="none"; document.getElementById("formIframe").src=""; }
+    /* ---------- Small helpers ---------- */
+    const $ = s => document.querySelector(s);
+    const qs = k => new URL(location.href).searchParams.get(k) || "";
 
-    // --- Rendering logic (runs only after leads.js is loaded) ---
-    const rep = "Wholesaler";
-    let index = 0;
-    function highlightKeywords(text){
+    function toggleMenu(){
+      const m = $('#menuContent'); m.style.display = (m.style.display==='block') ? 'none' : 'block';
+    }
+    function setMap(address){
+      const q = encodeURIComponent(address || '');
+      $('#map').src = q ? `https://www.google.com/maps?q=${q}&output=embed` : 'about:blank';
+    }
+    function openModal(url){ $('#formIframe').src = url; document.getElementById('formModal').style.display='flex'; }
+    function closeModal(){ document.getElementById('formModal').style.display='none'; $('#formIframe').src='about:blank'; }
+    window.closeModal = closeModal;
+
+    function highlightKeywords(text=''){
       const keywords = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
       const regex = new RegExp(`\\b(${keywords.join('|')})\\b`,'gi');
       return text.replace(regex,'<span class="highlight">$1</span>');
     }
-    function showLead(lead){
-      const base = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
-      const url  = `${base}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(lead.contacts[0].name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
-      const notes = lead.notes ? highlightKeywords(lead.notes).replace(/\n/g,"<br>") : "No deal notes available.";
 
-      document.getElementById("leadCard").innerHTML = `
-        <div class="lead-buttons">
-          <button class="call" onclick="copyToClipboard('${lead.contacts[0].phone]}')">📞</button>
-          <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
-          <a class="settings" href="#">⚙️</a>
-          <a class="chat" href="chat.html" target="_blank">💬</a>
-        </div>
-        <div class="lead-card">
-          <strong>${lead.contacts[0].name}</strong><br>
-          ${lead.address}<br>
-          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
-          <button onclick="openModal('${url}')">📝 Update Lead Notes</button>
-          <details class="accordion">
-            <summary>📊 Deal Details</summary>
-            <div>${notes}</div>
-          </details>
-        </div>`;
+    function injectScript(src){
+      return new Promise((resolve,reject)=>{
+        if(!src){ resolve(false); return; }
+        const s = document.createElement('script');
+        s.src = src; s.onload = ()=>resolve(true); s.onerror = ()=>reject(new Error('Feed load failed'));
+        document.head.appendChild(s);
+      });
     }
-    function nextLead(){ index = (index + 1) % (window.leads?.length || 1); showLead(window.leads[index]); }
 
-    // --- Firebase init + permission gate ---
+    /* ---------- Firebase ---------- */
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -165,60 +153,105 @@
       appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
       measurementId: "G-KTNXZM14F7"
     };
-    firebase.initializeApp(firebaseConfig);
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
     const db   = firebase.database();
 
-    const gateEl = document.getElementById('gate');
-    const portalEl = document.getElementById('portal');
+    /* ---------- App state ---------- */
+    const state = { uid:"", leads:[], i:0 };
+    const FEED_URL = qs('feed'); // passed from profile; optional
 
-    function loadScript(src){
-      return new Promise((resolve, reject)=>{
-        const s = document.createElement('script');
-        s.src = src; s.onload = resolve; s.onerror = reject;
-        document.head.appendChild(s);
-      });
+    function render(){
+      if(!state.leads.length){ $('#leadCard').textContent = 'No leads loaded.'; return; }
+      const L = state.leads[state.i];
+      const contact = (L.contacts && L.contacts[0]) || {name:'(no name)', phone:''};
+      const addr = L.address || '';
+
+      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+      const formUrl  = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(addr)}&entry.204=${encodeURIComponent(state.uid)}`;
+
+      $('#leadCard').innerHTML = `
+        <div style="display:flex; align-items:center; gap:8px; margin-bottom:6px">
+          <span class="badge">${state.i+1} / ${state.leads.length}</span>
+        </div>
+        <div style="font-weight:700; font-size:18px">${contact.name}</div>
+        <div style="margin-top:4px">${addr || '(no address)'}</div>
+        <div style="margin-top:6px"><span class="badge">${contact.phone || 'no phone'}</span></div>
+        ${L.notes ? `<details style="margin-top:10px" open>
+            <summary style="cursor:pointer; font-weight:700">📊 Deal Details</summary>
+            <div style="margin-top:6px">${highlightKeywords(String(L.notes)).replace(/\n/g,'<br>')}</div>
+          </details>` : '' }
+        <div style="margin-top:10px">
+          <a href="https://www.textnow.com/messaging" target="_blank" rel="noopener">TextNow Link</a>
+          <button style="margin-left:10px" onclick="openModal('${formUrl}')">📝 Update Lead Notes</button>
+        </div>
+      `;
+
+      // quick actions
+      $('#btnCopy').onclick = ()=> navigator.clipboard.writeText(contact.phone||'').then(()=>alert('Copied: '+(contact.phone||'')));
+      $('#btnNotes').onclick = ()=> openModal(formUrl);
+
+      setMap(addr);
     }
 
-    const qp = new URLSearchParams(location.search);
-    const uidFromQuery = qp.get('uid');
+    function next(delta){
+      if(!state.leads.length) return;
+      state.i = (state.i + delta + state.leads.length) % state.leads.length;
+      render();
+    }
+    window.next = next;
 
-    auth.onAuthStateChanged(async (user)=>{
-      if(!user){
-        gateEl.innerHTML = `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
-        return;
-      }
-      const uid = uidFromQuery || user.uid;
-
-      try{
-        const snap = await db.ref(`users/${uid}/roles/wholesaler`).get();
-        const allowed = snap.val() === true;
-
-        if(!allowed){
-          gateEl.innerHTML = `
-            <h3>Access denied</h3>
-            <p>You don’t have permission to view the Wholesaler Acquisition portal.</p>
-            <button class="btn" onclick="location.href='profile.html?tab=overview'">Back to Profile</button>
-          `;
-          return;
-        }
-
-        // Allowed → load leads and show portal
-        await loadScript('leads.js');      // your static leads list
-        gateEl.style.display = 'none';
-        portalEl.style.display = '';
-
-        if (Array.isArray(window.leads) && window.leads.length){
-          showLead(window.leads[index]);
-        }else{
-          document.getElementById("leadCard").innerHTML =
-            `<div class="lead-card">No leads loaded. Check <code>leads.js</code>.</div>`;
-        }
-      }catch(err){
-        console.error(err);
-        gateEl.innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
+    // UI wiring
+    document.addEventListener('click', e=>{
+      if(!e.target.closest('.menu') && !e.target.closest('.menu-content')){
+        const m = document.getElementById('menuContent'); if(m) m.style.display='none';
       }
     });
+    document.getElementById('btnPrev').onclick = ()=> next(-1);
+    document.getElementById('btnNext').onclick = ()=> next(1);
+
+    // Boot
+    (function boot(){
+      document.getElementById('gate').style.display = 'block';
+
+      auth.onAuthStateChanged(async (u)=>{
+        if(!u){ document.getElementById('gate').innerHTML = `<h3>Not signed in</h3><p>Please <a href="index.html">sign in</a>.</p>`; return; }
+        state.uid = qs('uid') || u.uid;
+
+        try{
+          const snap = await db.ref(`users/${state.uid}/roles/wholesaler`).get();
+          const ok = snap.val() === true || snap.val() === 'true';
+          if(!ok){ document.getElementById('gate').innerHTML = `<h3>Access denied</h3><p>Your account doesn’t have wholesaler permissions.</p>`; return; }
+        }catch(e){
+          console.error(e); document.getElementById('gate').innerHTML = `<h3>Error</h3><p>Couldn’t verify access. Refresh and try again.</p>`; return;
+        }
+
+        // Load feed -> fallback to local leads.js if needed
+        let loaded = false;
+        try{
+          if(FEED_URL){ await injectScript(FEED_URL); loaded = Array.isArray(window.leads) && window.leads.length>0; }
+        }catch(e){ console.warn('Feed load error', e); }
+
+        if(!loaded){
+          try{
+            await injectScript('leads.js'); // optional local file
+            loaded = Array.isArray(window.leads) && window.leads.length>0;
+          }catch(e){ /* ignore */ }
+        }
+        if(!loaded){ document.getElementById('feedNotice').style.display = 'block'; }
+
+        document.getElementById('gate').style.display = 'none';
+        document.getElementById('portal').style.display = 'flex';
+
+        if(loaded){
+          state.leads = window.leads;
+          state.i = 0;
+          render();
+        }else{
+          document.getElementById('leadCard').innerHTML = `<div class="lead-card">No leads loaded. Provide a feed (?feed=) or add <code>leads.js</code>.</div>`;
+        }
+      });
+    })();
   </script>
 </body>
 </html>
