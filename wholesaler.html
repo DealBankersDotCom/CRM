@@ -101,7 +101,7 @@
 
   <script>
     const $=s=>document.querySelector(s);
-    let idx=0, currentUser=null, debounceTimer=null;
+    let idx=0, currentUser=null, debounceTimer=null, currentKey=null, offNotes=null, lastLocalWriteTs=0, isTyping=false;
     const statusEl=$('#status');
     const uidParam=new URL(location.href).searchParams.get('uid')||'anon';
     const setStatus=t=>statusEl.textContent=t;
@@ -110,18 +110,39 @@
 
     const leadKey = addr => encodeURIComponent(String(addr||'').trim());
 
-    async function fetchSavedNotes(key){
-      try{ const snap=await db.ref(`leadNotes/acq/${key}/latest`).get(); return snap.exists() ? (snap.val().text||'') : ''; }
-      catch(e){ return ''; }
+    // Live listener attach/detach
+    function attachNotesListener(key, area, hint){
+      detachNotesListener();
+      currentKey = key;
+      const ref = db.ref(`leadNotes/acq/${key}/latest`);
+      const handler = snap=>{
+        if(!snap.exists()) return;
+        const val = snap.val() || {};
+        const text = String(val.text||'');
+        const ts   = Number(val.ts||0);
+
+        // If this update is older than our last local write or we're actively typing, don't clobber the cursor.
+        if(ts <= lastLocalWriteTs || isTyping) return;
+
+        if(area && area.value !== text){
+          area.value = text;
+          hint.textContent = `Updated • ${new Date(ts||Date.now()).toLocaleString()}`;
+        }
+      };
+      ref.on('value', handler);
+      offNotes = ()=> ref.off('value', handler);
     }
+    function detachNotesListener(){ if(offNotes){ offNotes(); offNotes=null; } }
+
     async function saveNotes(key, text){
       if(!currentUser) return;
-      const payload = { text, uid: currentUser.uid, email: currentUser.email||'', ts: Date.now() };
+      const now = Date.now();
+      lastLocalWriteTs = now;
+      const payload = { text, uid: currentUser.uid, email: currentUser.email||'', ts: now };
       const base = db.ref(`leadNotes/acq/${key}`);
       await base.child('latest').set(payload);
       await base.child('history').push(payload);
-      const d = new Date(); const hint=$('#noteHint');
-      if(hint) hint.textContent = `Saved • ${d.toLocaleString()}`;
+      return now;
     }
 
     function render(i){
@@ -174,40 +195,53 @@
       const smsHref   = phone ? `sms:${phone}` : '#';
       const mailHref  = `mailto:?subject=${encodeURIComponent(name)} — Lead&body=${encodeURIComponent(addr)}`;
       const notesForm = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(addr)}`;
-
       $('#qbCall').onclick = ()=> phone ? window.open(callHref,'_self') : toast('No phone on file');
       $('#qbSMS').onclick  = ()=> phone ? window.open(smsHref,'_self') : toast('No phone on file');
       $('#qbEmail').onclick= ()=> window.open(mailHref,'_self');
       $('#qbNotes').onclick= ()=> window.open(notesForm,'_blank','noopener');
-
       $('#qbPrev').onclick   = ()=> render(idx-1);
       $('#qbNext').onclick   = ()=> render(idx+1);
       $('#qbRandom').onclick = ()=> render(Math.floor(Math.random()*(window.leads?.length||1)));
 
-      // Load saved notes ➜ set textarea ➜ wire autosave
+      // Notes: load base + live listen + autosave
       (async ()=>{
-        const key   = leadKey(addr);
-        const saved = (await fetchSavedNotes(key)) || '';
-        const area  = $('#noteArea');
-        const hint  = $('#noteHint');
+        const key  = leadKey(addr);
+        const area = $('#noteArea');
+        const hint = $('#noteHint');
 
-        const prime = saved || fileNotes;
-        area.value = prime;
-        hint.textContent = prime ? `Loaded • ${new Date().toLocaleString()}` : 'No saved notes yet';
+        // prime text: saved note wins, else fileNotes
+        const snap = await db.ref(`leadNotes/acq/${key}/latest`).get();
+        const saved = snap.exists() ? String(snap.val().text||'') : '';
+        area.value = saved || fileNotes;
+        hint.textContent = (saved ? 'Loaded saved' : 'Loaded from file') + ` • ${new Date().toLocaleString()}`;
 
-        // debounce autosave while typing
+        // live updates from others
+        attachNotesListener(key, area, hint);
+
+        // autosave while typing (debounce)
         area.addEventListener('input', ()=>{
+          isTyping = true;
+          hint.textContent = 'Saving…';
           if(debounceTimer) clearTimeout(debounceTimer);
-          debounceTimer = setTimeout(()=> saveNotes(key, area.value.trim()), 700);
+          debounceTimer = setTimeout(async ()=>{
+            const ts = await saveNotes(key, area.value.trim());
+            hint.textContent = `Saved • ${new Date(ts||Date.now()).toLocaleString()}`;
+            isTyping = false;
+          }, 700);
         });
 
         // immediate save on blur
-        area.addEventListener('blur', ()=> saveNotes(key, area.value.trim()));
+        area.addEventListener('blur', async ()=>{
+          if(debounceTimer) clearTimeout(debounceTimer);
+          isTyping = false;
+          const ts = await saveNotes(key, area.value.trim());
+          hint.textContent = `Saved • ${new Date(ts||Date.now()).toLocaleString()}`;
+        });
 
-        // reset to file notes (does not auto-save until you blur/type)
+        // reset to file version (does not save until you type/blur)
         $('#btnResetNote').onclick = ()=>{
           area.value = fileNotes;
-          hint.textContent = 'Reset to file notes (edit to save)';
+          hint.textContent = 'Reset to file notes (edit or blur to save)';
         };
       })();
     }
@@ -224,12 +258,15 @@
       if(e.key.toLowerCase()==='r') return render(Math.floor(Math.random()*(window.leads?.length||1)));
     });
 
-    // wait for auth, then render
+    // wait for auth, then render first lead
     firebase.auth().onAuthStateChanged(u=>{
       currentUser = u || null;
       if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', ()=>render(0)); }
       else { render(0); }
     });
+
+    // clean up listener on unload
+    window.addEventListener('beforeunload', detachNotesListener);
   </script>
 </body>
 </html>
