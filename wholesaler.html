@@ -30,13 +30,14 @@
     display:inline-flex; align-items:center; gap:8px;
     padding:10px 14px; border-radius:10px; border:1px solid var(--line);
     background:#0f1a24; color:#eaf1f6; cursor:pointer; text-decoration:none; font-weight:600;
+    white-space:nowrap;
   }
   .btn:hover{filter:brightness(1.06)}
   .btn.primary{background:linear-gradient(180deg,var(--accent),var(--accent-2)); border:none}
   .btn.ok{background:linear-gradient(180deg,#2eb85c,#219a49); border:none}
   .spacer{flex:1}
 
-  /* Lead card */
+  /* Card */
   .card{
     margin-top:14px; background:var(--panel); border:1px solid var(--line);
     border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden;
@@ -51,7 +52,7 @@
   .body{padding:14px}
   .row{display:flex; gap:14px; flex-wrap:wrap}
   .col{flex:1 1 360px}
-  .lead-card{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px}
+  .panel{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px}
   .lead-name{font-weight:800; margin-bottom:4px}
   .lead-addr{color:#cfe2f3}
 
@@ -70,6 +71,11 @@
   .notes{background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px}
   textarea{width:100%; min-height:180px; border:1px solid var(--line); border-radius:10px; background:#0f1a24; color:#eaf1f6; padding:10px}
 
+  /* Shortcuts grid: tight, equal width */
+  .shortcuts{
+    display:grid; grid-template-columns:repeat(2,1fr); gap:10px;
+  }
+
   /* Tiny icons */
   .i{width:16px; height:16px; display:inline-block}
 
@@ -79,11 +85,12 @@
 <body>
   <div class="wrap">
 
-    <!-- TOP TOOLBAR (trimmed) -->
+    <!-- TOP TOOLBAR -->
     <div class="toolbar">
+      <div class="chip">Lead Map</div>
       <a class="btn" id="leadMap" href="https://www.google.com/maps/d/u/0/viewer?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g" target="_blank">
         <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z"/></svg>
-        Lead Map
+        Open Lead Map
       </a>
 
       <div class="spacer"></div>
@@ -101,6 +108,7 @@
     <!-- LEAD CARD -->
     <div class="card">
       <div class="head">
+        <strong>Acquisition</strong>
         <span id="leadCount" class="chip">Loading…</span>
         <div class="controls">
           <button id="prevBtn" class="btn">Prev</button>
@@ -122,7 +130,7 @@
         <div class="row">
           <!-- LEFT -->
           <div class="col">
-            <div class="lead-card" id="leadInfo">
+            <div class="panel">
               <div class="lead-name" id="leadName">—</div>
               <div class="lead-addr" id="leadAddr">—</div>
 
@@ -150,9 +158,9 @@
 
           <!-- RIGHT -->
           <div class="col">
-            <div class="lead-card">
+            <div class="panel">
               <div style="font-weight:700; margin-bottom:8px">Shortcuts</div>
-              <div style="display:grid; gap:10px">
+              <div class="shortcuts">
                 <a id="btnCall"  class="btn" href="#">Call</a>
                 <a id="btnSMS"   class="btn" href="#">SMS</a>
                 <a id="btnEmail" class="btn" href="#">Email</a>
@@ -168,8 +176,28 @@
     </div><!-- card -->
   </div><!-- wrap -->
 
-  <!-- Bring in the feed FIRST -->
-  <script src="leads.js"></script>
+  <script>
+    // ---------- Try to load leads.js from several places ----------
+    const CANDIDATE_PATHS = ["./leads.js", "/leads.js", "/data/leads.js"];
+    function loadScript(src){
+      return new Promise((resolve,reject)=>{
+        const s = document.createElement('script');
+        s.src = src; s.onload = ()=>resolve(src); s.onerror = ()=>reject(src);
+        document.head.appendChild(s);
+      });
+    }
+    async function ensureLeads(){
+      for(const p of CANDIDATE_PATHS){
+        try{ await loadScript(p); if (Array.isArray(window.leads)) return p; }catch(_){}
+      }
+      // Fallback: minimal sample, or paste your feed here to avoid 404s
+      window.leads = window.leads || [
+        // { address:"123 Sample St, San Antonio, TX", notes:"vacant; motivated seller", contacts:[{name:"Sample Owner", phone:"210-555-1212", email:""}] }
+      ];
+      return "fallback";
+    }
+  </script>
+
   <script>
     // DOM handles
     const $ = s => document.querySelector(s);
@@ -189,7 +217,6 @@
     const dirView    = $('#dirView');
     const notesView  = $('#notesView');
 
-    /* ---------- Lead loader (robust) ---------- */
     let L = [];
     let i = 0;
 
@@ -203,7 +230,10 @@
     const gmEmbed = addr => `https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed`;
 
     function setLead(idx){
-      if (!L.length) return;
+      if (!L.length){
+        leadCount.textContent = 'No leads found. Check leads.js path.';
+        return;
+      }
       i = (idx + L.length) % L.length;
       const lead  = L[i];
       const name  = lead?.contacts?.[0]?.name  || '—';
@@ -212,11 +242,16 @@
       const addr  = cleanText(lead?.address || '');
 
       leadName.textContent = name;
-      leadAddr.textContent = addr;
+      leadAddr.textContent = addr || '—';
       leadNotes.innerHTML  = highlight(lead?.notes);
 
-      mapFrame.src = gmEmbed(addr);
-      gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
+      if (addr) {
+        mapFrame.src = gmEmbed(addr);
+        gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
+      } else {
+        mapFrame.removeAttribute('src');
+        gmapsLink.removeAttribute('href');
+      }
 
       btnCall.href  = phone ? `tel:${phone}`  : '#';
       btnSMS.href   = phone ? `sms:${phone}`  : '#';
@@ -226,23 +261,28 @@
       $('#btnFullscreen').onclick = ()=> window.open(`${location.pathname}?uid=${encodeURIComponent(uid)}&i=${i}`,'_blank');
       $('#btnReload').onclick     = ()=> location.reload();
 
-      $('#prevBtn').onclick = ()=> setLead(i-1);
-      $('#nextBtn').onclick = ()=> setLead(i+1);
-      $('#randBtn').onclick = ()=> setLead(Math.floor(Math.random()*L.length));
+      $('#prevBtn').onclick = ()=> { setLead(i-1); updateCount(); };
+      $('#nextBtn').onclick = ()=> { setLead(i+1); updateCount(); };
+      $('#randBtn').onclick = ()=> { setLead(Math.floor(Math.random()*L.length)); updateCount(); };
+
+      updateCount();
     }
 
-    function bootLeads(){
-      if (Array.isArray(window.leads) && window.leads.length){
-        L = window.leads.slice();               // clone
-        leadCount.textContent = `Loaded ${L.length} lead(s). Showing #${(i+1)}.`;
-        const start = parseInt(params.get('i')||'0',10);
-        setLead(start);
-      }else{
-        leadCount.textContent = 'Loading leads…';
-        setTimeout(bootLeads, 400);             // retry until leads.js arrives
-      }
+    function updateCount(){
+      if (!L.length){ leadCount.textContent = 'No leads.'; return; }
+      leadCount.textContent = `Loaded ${L.length} lead(s). Showing #${(i+1)}.`;
     }
-    bootLeads();
+
+    async function boot(){
+      const src = await ensureLeads(); // tries to load leads.js
+      L = Array.isArray(window.leads) ? window.leads.slice() : [];
+      if (src !== "fallback" && !L.length){
+        leadCount.textContent = `Couldn’t read leads from ${src}.`;
+      }
+      const start = parseInt(params.get('i')||'0',10);
+      setLead(start);
+    }
+    boot();
 
     // segmented toggle
     seg.addEventListener('click', e=>{
