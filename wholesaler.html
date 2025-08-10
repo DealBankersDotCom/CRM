@@ -1,147 +1,193 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>Wholesaler Workspace</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Acquisition • DealBankers</title>
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
-<style>
-  :root{
-    --bg:#0d1822; --panel:#0f1a24; --card:#12202d; --line:#203241;
-    --text:#eaf1f6; --muted:#9fb3c7; --accent:#0d6efd; --green:#28a745; --dark:#0b141b;
-    --shadow:0 18px 42px rgba(0,0,0,.45); --r:14px;
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0; font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-    background: radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
-               linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
-    color:var(--text); min-height:100vh; padding:16px;
-  }
-  .wrap{max-width:1100px;margin:0 auto}
-  .card{background:#10202c;border:1px solid #1a2a36;border-radius:var(--r);box-shadow:var(--shadow)}
-  .head{padding:16px 18px;border-bottom:1px solid #1a2a36}
-  .head h1{margin:0;font-size:22px}
-  .muted{color:var(--muted);font-size:13px}
-  .toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:12px 12px;border-bottom:1px solid #1a2a36}
-  .btn{padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0f1a24;color:#cfe2f3;cursor:pointer}
-  .btn:hover{filter:brightness(1.06)}
-  .btn-green{background:linear-gradient(180deg,#29a84a,#1f8a39);border:none;color:#fff}
-  .grid{display:grid;grid-template-columns:1fr 340px;gap:14px;padding:14px}
-  @media (max-width:900px){.grid{grid-template-columns:1fr}}
-  .panel{background:#0f1a24;border:1px solid #1a2a36;border-radius:var(--r);overflow:hidden}
-  .panel h3{margin:0;padding:12px 14px;border-bottom:1px solid #1a2a36;font-size:16px}
-  .pad{padding:12px 14px}
+  <style>
+    :root{
+      /* 80s corporate + secure */
+      --bg1:#0b1218; --bg2:#0e1a24; --bg3:#102436;
+      --panel:#0f1a24; --card:#10202c; --line:#1a2a36;
+      --text:#eaf1f6; --muted:#9fb3c7;
+      --accent:#5de0ff;           /* neon edge */
+      --accent2:#c7a86a;          /* gold stripe */
+      --green:#2ab56a;
+      --shadow:0 22px 60px rgba(0,0,0,.55);
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0; color:var(--text);
+      font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 480px at 90% -10%, #123043 0%, transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+      padding:14px;
+    }
 
-  .lead-box{background:#0f1a24;border:1px solid #1a2a36;border-radius:12px;margin-bottom:12px;overflow:hidden}
-  .lead-title{padding:12px 14px;font-weight:700;border-bottom:1px solid #1a2a36}
-  .lead-body{padding:12px 14px}
-  details{background:#0c1620;border:1px solid #1a2a36;border-radius:10px;overflow:hidden}
-  summary{cursor:pointer;padding:10px 12px;font-weight:600}
-  .chiprow{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-  .chip{padding:6px 10px;border-radius:999px;background:#0d2230;border:1px solid #203241;font-size:12px}
-  .actions{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-  .actions .btn{flex:0 0 auto}
-  .map-embed{width:100%;height:260px;border:0;border-radius:10px;background:#fff}
-  .status{font-size:12px;color:#9fb3c7;margin:6px 0}
-</style>
+    .wrap{max-width:1100px;margin:0 auto;filter:saturate(1.03)}
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); overflow:hidden;
+    }
+
+    /* Top bar (kept minimal to avoid duplicate headings with profile.html) */
+    .top{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 14px; border-bottom:1px solid var(--line);
+      background:
+        linear-gradient(180deg, rgba(0,0,0,.15), transparent),
+        linear-gradient(90deg, rgba(93,224,255,.10), rgba(199,168,106,.10));
+    }
+    .crumbs{display:flex; gap:10px; align-items:center; font-size:13px; color:var(--muted)}
+    .crumbs .dot{width:6px;height:6px;border-radius:999px;background:var(--accent);box-shadow:0 0 12px rgba(93,224,255,.8)}
+    .status{font-size:12px;color:var(--muted)}
+
+    /* Toolbar */
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .btn{
+      padding:9px 12px; border-radius:10px; border:1px solid #1d3142; cursor:pointer;
+      background:#0f1a24; color:#dfeaf3; font-size:14px; transition:filter .15s ease, transform .02s ease;
+    }
+    .btn:hover{filter:brightness(1.06)}
+    .btn:active{transform:translateY(1px)}
+    .btn-green{background:linear-gradient(180deg,var(--green),#1c8a52); border:none; color:#fff}
+    .btn-ghost{background:rgba(255,255,255,.06)}
+    .right{margin-left:auto}
+
+    /* Layout */
+    .grid{display:grid; grid-template-columns:1fr 340px; gap:14px; padding:14px}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr} }
+
+    .panel{
+      background:var(--panel); border:1px solid var(--line); border-radius:var(--r); overflow:hidden;
+    }
+    .panel .hd{
+      padding:10px 12px; font-weight:700; font-size:14px; letter-spacing:.02em;
+      border-bottom:1px solid var(--line);
+      background:linear-gradient(90deg, rgba(93,224,255,.15), transparent 35%), linear-gradient(180deg, rgba(0,0,0,.15), transparent);
+    }
+    .pad{padding:12px 14px}
+
+    /* Lead card */
+    .lead{border:1px solid var(--line); border-radius:12px; overflow:hidden; background:#0c1822}
+    .lead .title{padding:12px 14px; font-weight:800; letter-spacing:.02em;
+      background:
+        linear-gradient(90deg, rgba(199,168,106,.18), transparent 40%),
+        linear-gradient(180deg, rgba(0,0,0,.25), transparent);
+      border-bottom:1px solid var(--line);
+    }
+    .lead .body{padding:12px 14px}
+    .chips{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0}
+    .chip{font-size:12px; padding:6px 10px; border-radius:999px; border:1px solid #203241; background:#0d2230}
+
+    details{background:#0c1620; border:1px solid #1a2a36; border-radius:10px; overflow:hidden; margin:8px 0}
+    summary{cursor:pointer; padding:10px 12px; font-weight:600}
+    .map{width:100%; height:260px; border:0; border-radius:10px; background:#fff}
+    @media (max-width: 480px){ .map{height:220px} }
+
+    /* Links inside right panel */
+    .shortcut-list{display:flex;gap:8px;flex-wrap:wrap}
+    .shortcut-list .btn{flex:0 0 auto}
+  </style>
 </head>
 <body>
   <div class="wrap">
-    <div class="card">
-      <div class="head">
-        <h1>Wholesaler Workspace</h1>
-        <div class="muted">Acquisition and Disposition tools live side-by-side. Use the main profile tabs to switch.</div>
+    <section class="card">
+      <div class="top">
+        <div class="crumbs">
+          <span>Wholesaler</span><span class="dot"></span><span>Acquisition</span>
+        </div>
+        <div class="status" id="status">Loading…</div>
       </div>
 
       <div class="toolbar">
-        <button class="btn" id="btnLeadMap">🗺️ Open Lead Map</button>
-        <button class="btn" id="btnOpenFs">⤢ Open Fullscreen</button>
+        <button class="btn" id="btnLeadMap">🗺️ Lead Map</button>
+        <button class="btn" id="btnOpenFs">⤢ Fullscreen</button>
         <button class="btn" id="btnReload">⟳ Reload</button>
-        <span class="status" id="status">Loading leads…</span>
+
+        <div class="right">
+          <button class="btn" id="btnPrev">◀ Prev</button>
+          <button class="btn" id="btnRandom">🎲 Random</button>
+          <button class="btn" id="btnNext">Next ▶</button>
+          <button class="btn" id="btnTextNow">TextNow</button>
+          <button class="btn btn-green" id="btnCopyPhone">Copy Phone</button>
+        </div>
       </div>
 
       <div class="grid">
-        <!-- LEFT: lead + notes -->
+        <!-- LEFT: Lead -->
         <div class="panel">
-          <h3 id="leadHeader">Acquisition</h3>
+          <div class="hd">Lead</div>
           <div class="pad">
-
-            <div class="actions" style="margin-bottom:6px">
-              <button class="btn" id="btnPrev">◀ Prev</button>
-              <button class="btn" id="btnRandom">🎲 Random</button>
-              <button class="btn" id="btnNext">Next ▶</button>
-              <button class="btn" id="btnTextNow">TextNow</button>
-              <button class="btn btn-green" id="btnCopyPhone">Copy Phone</button>
+            <div id="leadCard" class="lead">
+              <div class="body">Initializing…</div>
             </div>
-
-            <div class="lead-box" id="leadCard">
-              <!-- lead injected here -->
-            </div>
-
           </div>
         </div>
 
-        <!-- RIGHT: shortcuts -->
+        <!-- RIGHT: Shortcuts -->
         <div class="panel">
-          <h3>Shortcuts</h3>
+          <div class="hd">Shortcuts</div>
           <div class="pad">
-            <div class="actions">
-              <a class="btn" id="scCall" target="_blank" rel="noopener">Call</a>
-              <a class="btn" id="scSMS"  target="_blank" rel="noopener">SMS</a>
+            <div class="shortcut-list">
+              <a class="btn" id="scCall"  target="_blank" rel="noopener">Call</a>
+              <a class="btn" id="scSMS"   target="_blank" rel="noopener">SMS</a>
               <a class="btn" id="scEmail" target="_blank" rel="noopener">Email</a>
               <a class="btn" id="scNotes" target="_blank" rel="noopener">Update Lead Notes (Form)</a>
             </div>
           </div>
         </div>
       </div>
-
-    </div>
+    </section>
   </div>
 
-  <!-- Your leads file: absolute path + cache-buster -->
-  <script src="/leads.js?v=20250810"></script>
+  <!-- Load leads.js with cache-bust so manual uploads always take effect -->
   <script>
-    // Normalize to window.leads
-    window.leads = window.leads || window.leads_feed || window.leadsLatest || [];
+    (function loadLeads(){
+      const s=document.createElement('script');
+      s.src = '/leads.js?v=' + Date.now();
+      s.onload = ()=>{ window.leads = window.leads || window.leads_feed || window.leadsLatest || []; init(); };
+      s.onerror= ()=>{ document.getElementById('status').textContent='Could not load /leads.js'; };
+      document.head.appendChild(s);
+    })();
+  </script>
 
-    // Helpers
-    const $ = s => document.querySelector(s);
+  <script>
+    // -------- helpers / state
+    const $ = sel => document.querySelector(sel);
     const statusEl = $('#status');
     let idx = 0;
-
     const uid = new URL(location.href).searchParams.get('uid') || 'anon';
 
     function setStatus(t){ if(statusEl) statusEl.textContent = t; }
+    function phoneOf(lead){ return (lead?.contacts?.[0]?.phone || '').trim(); }
 
-    function phoneOf(lead){
-      const p = lead?.contacts?.[0]?.phone || '';
-      return (p || '').trim();
-    }
-
-    function renderLead(i){
-      if(!Array.isArray(window.leads) || window.leads.length===0){
+    function render(i){
+      if(!Array.isArray(window.leads) || !window.leads.length){
         setStatus('No leads found. Check /leads.js path.');
-        $('#leadCard').innerHTML =
-          '<div class="lead-body">No leads loaded. Ensure /leads.js exists and defines window.leads = [ ... ].</div>';
+        $('#leadCard').innerHTML = '<div class="body">No leads loaded. Ensure <b>/leads.js</b> defines <code>window.leads = [ ... ]</code>.</div>';
         return;
       }
-      if(i<0) i=window.leads.length-1;
-      if(i>=window.leads.length) i=0;
-      idx=i;
+      if(i<0) i = window.leads.length-1;
+      if(i>=window.leads.length) i = 0;
+      idx = i;
 
-      const lead = window.leads[idx];
-      const name = lead?.contacts?.[0]?.name || 'Unknown';
+      const lead  = window.leads[idx];
+      const name  = lead?.contacts?.[0]?.name || 'Unknown';
       const phone = phoneOf(lead);
-      const addr = lead?.address || '';
-      const notes = (lead?.notes || '').replace(/\n/g,'<br>');
+      const addr  = lead?.address || '';
+      const notes = (lead?.notes||'').replace(/\n/g,'<br>');
 
       setStatus(`Lead ${idx+1} of ${window.leads.length}`);
 
       $('#leadCard').innerHTML = `
-        <div class="lead-title">${name}</div>
-        <div class="lead-body">
+        <div class="title">${name}</div>
+        <div class="body">
           <div style="margin-bottom:8px">${addr}</div>
 
           <details>
@@ -149,36 +195,36 @@
             <div class="pad">${notes || 'No deal notes available.'}</div>
           </details>
 
-          <div class="chiprow">
+          <div class="chips">
             <div class="chip">UID: ${uid.slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
           </div>
 
-          <div class="actions">
-            <a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Directions</a>
-            <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Open in Google Maps</a>
+          <div class="chips" style="margin-top:4px">
+            <a class="btn btn-ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Directions</a>
+            <a class="btn btn-ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Open in Google Maps</a>
           </div>
 
-          <iframe class="map-embed"
+          <iframe class="map"
             src="https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed"
             loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
         </div>
       `;
 
-      // Shortcuts
+      // shortcuts
       $('#scCall').href  = phone ? `tel:${phone}` : '#';
       $('#scSMS').href   = phone ? `sms:${phone}` : '#';
       $('#scEmail').href = `mailto:?subject=${encodeURIComponent(name)} — Lead`;
       $('#scNotes').href = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(addr)}`;
     }
 
-    // Buttons
-    $('#btnPrev').onclick   = ()=> renderLead(idx-1);
-    $('#btnNext').onclick   = ()=> renderLead(idx+1);
-    $('#btnRandom').onclick = ()=> renderLead(Math.floor(Math.random()* (window.leads?.length||1)));
+    // -------- buttons
+    $('#btnPrev').onclick   = ()=> render(idx-1);
+    $('#btnNext').onclick   = ()=> render(idx+1);
+    $('#btnRandom').onclick = ()=> render(Math.floor(Math.random()*(window.leads?.length||1)));
     $('#btnTextNow').onclick= ()=> window.open('https://www.textnow.com/messaging','_blank','noopener');
     $('#btnCopyPhone').onclick = ()=>{
-      const p = phoneOf(window.leads[idx]);
+      const p = phoneOf(window.leads?.[idx]);
       if(!p) return alert('No phone on this lead.');
       navigator.clipboard.writeText(p).then(()=>alert('Copied: '+p));
     };
@@ -187,12 +233,16 @@
     $('#btnOpenFs').onclick  = ()=> window.open(location.href,'_blank','noopener');
     $('#btnReload').onclick  = ()=> location.reload();
 
-    // Initial render
-    if (document.readyState === 'loading') {
-      document.addEventListener('DOMContentLoaded', ()=> renderLead(0));
-    } else {
-      renderLead(0);
-    }
+    // -------- keyboard (← → R C)
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='ArrowLeft')  return $('#btnPrev').click();
+      if(e.key==='ArrowRight') return $('#btnNext').click();
+      if(e.key.toLowerCase()==='r') return $('#btnRandom').click();
+      if(e.key.toLowerCase()==='c') return $('#btnCopyPhone').click();
+    });
+
+    // initial render once leads are present
+    function init(){ if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded', ()=>render(0)); } else { render(0); } }
   </script>
 </body>
 </html>
