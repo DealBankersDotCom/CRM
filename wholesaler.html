@@ -31,10 +31,16 @@
     .lead .body{padding:12px 14px}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0;justify-content:center}
     .chip{font-size:12px;padding:7px 12px;border-radius:999px;border:1px solid #28506a;background:#123a53}
-    .map{width:100%;height:360px;border:0;border-radius:12px;background:#fff}
+    .map{width:100%;height:340px;border:0;border-radius:12px;background:#fff}
     @media (max-width:480px){.map{height:280px}}
-    .note-card{background:#0f334a;border:1px solid #224b63;border-radius:12px;padding:12px 14px;margin:14px auto;max-width:840px;line-height:1.5}
-    .btnrow{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0}
+    /* Notes editor */
+    .note-card{background:#0f334a;border:1px solid #224b63;border-radius:12px;padding:12px 14px;margin:14px auto;max-width:840px}
+    .note-card h3{margin:0 0 8px;font-size:14px;letter-spacing:.03em}
+    .textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid #2a5572;background:#0d2535;color:#eaf6ff;padding:10px 12px;line-height:1.45}
+    .note-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
+    .btn-ghost{background:#0f3247;color:#eaf6ff}
+    /* toast */
+    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #1a2a36;box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
   </style>
 </head>
 <body>
@@ -69,6 +75,19 @@
     </section>
   </div>
 
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Firebase (auth carries over from profile.html) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers",storageBucket:"deal-bankers.firebasestorage.app",messagingSenderId:"485110155601",appId:"1:485110155601:web:b4c38350ac58c1a2ecab70",measurementId:"G-KTNXZM14F7"};
+    firebase.initializeApp(firebaseConfig);
+    const auth=firebase.auth(), db=firebase.database();
+  </script>
+
   <!-- Load leads with cache-bust -->
   <script>
     (function(){
@@ -82,11 +101,33 @@
 
   <script>
     const $=s=>document.querySelector(s);
-    let idx=0;
+    let idx=0, currentUser=null;
     const statusEl=$('#status');
-    const uid=new URL(location.href).searchParams.get('uid')||'anon';
+    const uidParam=new URL(location.href).searchParams.get('uid')||'anon';
     const setStatus=t=>statusEl.textContent=t;
     const phoneOf=l=>(l?.contacts?.[0]?.phone||'').trim();
+    function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',1800)}
+
+    // Create a stable lead key from address
+    const leadKey = addr => encodeURIComponent(String(addr||'').trim());
+
+    // Read latest saved notes (override) for a lead
+    async function fetchSavedNotes(key){
+      try{
+        const snap = await db.ref(`leadNotes/acq/${key}/latest`).get();
+        return snap.exists() ? (snap.val().text||'') : '';
+      }catch(e){ return ''; }
+    }
+
+    // Save notes with history
+    async function saveNotes(key, text){
+      if(!currentUser){ toast('Sign in again.'); return; }
+      const payload = { text, uid: currentUser.uid, email: currentUser.email||'', ts: Date.now() };
+      const base = db.ref(`leadNotes/acq/${key}`);
+      await base.child('latest').set(payload);
+      await base.child('history').push(payload);
+      toast('Notes saved');
+    }
 
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
@@ -100,44 +141,74 @@
       const name = lead?.contacts?.[0]?.name || 'Unknown';
       const addr = lead?.address || '';
       const phone= phoneOf(lead);
-      const notes= (lead?.notes||'').trim()
-        .replace(/\r\n/g,'\n')
-        .replace(/\n{3,}/g,'\n\n')    // squeeze mega gaps
-        .replace(/\n/g,'<br>');       // show line breaks
 
       setStatus(`Lead ${idx+1} of ${window.leads.length}`);
+
+      // Base notes from file
+      const fileNotes = (lead?.notes||'').trim();
 
       $('#leadCard').innerHTML=`
         <div class="title">${addr || name}</div>
         <div class="body">
           <div class="chips">
-            <div class="chip">UID: ${uid.slice(0,8)}</div>
+            <div class="chip">UID: ${uidParam.slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
+          </div>
+
+          <!-- Editable notes ABOVE the map -->
+          <div class="note-card">
+            <h3>📊 Deal Details</h3>
+            <textarea id="noteArea" class="textarea" placeholder="Type notes…"></textarea>
+            <div class="note-actions">
+              <button id="btnResetNote" class="btn btn-ghost">Reset</button>
+              <button id="btnSaveNote"  class="btn" style="background:linear-gradient(180deg,#3b9eff,#0c63d6);border:none">Save Notes</button>
+            </div>
+            <div id="noteHint" class="muted" style="margin-top:6px"></div>
           </div>
 
           <iframe class="map"
             src="https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed"
             loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 
-          <div class="note-card">${notes || 'No deal notes available.'}</div>
-
-          <div class="btnrow">
+          <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0">
             <a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Directions</a>
             <a class="btn" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Open in Google Maps</a>
           </div>
         </div>
       `;
 
-      // Quickbar actions
+      // Wire quickbar
       const callHref  = phone ? `tel:${phone}` : '#';
       const smsHref   = phone ? `sms:${phone}` : '#';
       const mailHref  = `mailto:?subject=${encodeURIComponent(name)} — Lead&body=${encodeURIComponent(addr)}`;
-      const notesHref = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(addr)}`;
-
+      const notesForm = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(addr)}`;
       $('#qbCall').onclick = ()=> window.open(callHref,'_self');
       $('#qbSMS').onclick  = ()=> window.open(smsHref,'_self');
       $('#qbEmail').onclick= ()=> window.open(mailHref,'_self');
-      $('#qbNotes').onclick= ()=> window.open(notesHref,'_blank','noopener');
+      $('#qbNotes').onclick= ()=> window.open(notesForm,'_blank','noopener');
+
+      // Load saved notes (override) then set textarea
+      (async ()=>{
+        const key = leadKey(addr);
+        const saved = (await fetchSavedNotes(key)) || '';
+        const area  = $('#noteArea');
+        const hint  = $('#noteHint');
+
+        const setText = t => {
+          area.value = t;
+          const d = new Date();
+          hint.textContent = t ? `Loaded • ${d.toLocaleString()}` : 'No saved notes yet (showing editor with current text).';
+        };
+
+        setText(saved || fileNotes);
+
+        $('#btnResetNote').onclick = ()=> setText(fileNotes);
+        $('#btnSaveNote').onclick  = async ()=>{
+          const text = area.value.trim();
+          await saveNotes(key, text);
+          setText(text);
+        };
+      })();
     }
 
     // header buttons
@@ -152,7 +223,15 @@
       if(e.key.toLowerCase()==='r') return render(Math.floor(Math.random()*(window.leads?.length||1)));
     });
 
-    function init(){ if(document.readyState==='loading'){document.addEventListener('DOMContentLoaded',()=>render(0));} else {render(0);} }
+    // Wait for auth (so writes use the signed-in user)
+    firebase.auth().onAuthStateChanged(u=>{
+      currentUser = u || null;
+      if(document.readyState==='loading'){
+        document.addEventListener('DOMContentLoaded', ()=> render(0));
+      } else {
+        render(0);
+      }
+    });
   </script>
 </body>
 </html>
