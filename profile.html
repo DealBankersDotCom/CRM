@@ -16,8 +16,9 @@
     *{box-sizing:border-box}
     body{
       margin:0; font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-      background: radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
-                 linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
+      background:
+        radial-gradient(900px 500px at 85% -10%, #133243 0%, transparent 60%),
+        linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
       color:var(--text); min-height:100vh; padding:18px;
     }
     .shell{max-width:1200px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
@@ -26,8 +27,11 @@
     .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:42px;height:42px;border-radius:10px;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.35)}
     .brand h1{font-size:16px;letter-spacing:.14em;text-transform:uppercase;margin:0;color:#bcd0e3}
+    .head-actions{display:flex;gap:8px;flex-wrap:wrap}
     .btn{padding:10px 14px;border-radius:10px;border:1px solid #264054;background:#10202c;color:var(--text);cursor:pointer;font-weight:600}
-    .btn:hover{filter:brightness(1.05)} .btn-danger{background:linear-gradient(180deg,#dd6060,#bb3e3e);border:none}
+    .btn:hover{filter:brightness(1.05)}
+    .btn-danger{background:linear-gradient(180deg,#dd6060,#bb3e3e);border:none}
+    .btn-gold{background:linear-gradient(180deg,var(--gold),#9d7d49);color:#111;border:none}
     .tabs{display:flex;gap:8px;padding:12px 12px 0;flex-wrap:wrap}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid #1d3142;cursor:pointer;font-size:14px;background:#0f1a24;color:#bcd0e3}
     .tab.active{background:linear-gradient(180deg,var(--accent),#0a58ca);color:#fff;border:none}
@@ -42,8 +46,37 @@
     .toolbtn:hover{filter:brightness(1.06)}
     .iframe-wrap{border:1px solid #1a2a36;border-radius:var(--r);overflow:hidden;background:#0b141b;height:78vh;min-height:560px}
     .iframe-wrap iframe{width:100%;height:100%;border:0;background:#fff}
+    .list{display:grid;gap:8px;margin-top:10px}
+    .row{border:1px solid #1a2a36;border-radius:12px;padding:10px 12px;background:#0f1a24}
+
+    /* Modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60}
+    .modal.open{display:flex}
+    .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+    .sheet{position:relative;width:min(720px,94vw);max-height:86vh;overflow:auto;
+      background:#0f1a24;border:1px solid #1a2a36;border-radius:16px;padding:16px}
+    .close{position:absolute;right:12px;top:12px;border:0;background:#182632;color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .input, .select, .textarea{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0c1620;color:#eaf1f6
+    }
+    .textarea{min-height:120px;resize:vertical}
+    .hint{font-size:12px;color:var(--muted);margin-top:6px}
+
+    /* Responsive */
     @media (max-width:900px){.iframe-wrap{height:86vh;min-height:640px}}
-    @media (max-width:600px){body{padding:10px}.content{padding:12px}.card{padding:12px}.toolbtn{flex:1 1 150px}.iframe-wrap{height:88vh;min-height:680px}}
+    @media (max-width:680px){
+      body{padding:10px}
+      .content{padding:12px}
+      .card{padding:12px}
+      .toolbtn{flex:1 1 150px}
+      .iframe-wrap{height:88vh;min-height:680px}
+      .grid{grid-template-columns:1fr}
+    }
+
+    /* toast */
+    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1218;
+      color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #1a2a36;box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
   </style>
 </head>
 <body>
@@ -53,7 +86,10 @@
         <img src="icon (1).jpg" alt="DealBankers"/>
         <div><h1>DEALBANKERS • PROFILE</h1></div>
       </div>
-      <button id="logoutBtn" class="btn btn-danger">Log Out</button>
+      <div class="head-actions">
+        <button id="requestsBtn" class="btn btn-gold">Requests</button>
+        <button id="logoutBtn" class="btn btn-danger">Log Out</button>
+      </div>
     </header>
 
     <nav class="tabs" id="tabs">
@@ -66,11 +102,14 @@
     </nav>
 
     <section class="content">
+      <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
         <h2>Welcome</h2>
-        <p class="muted">Select a portal above to get to work. Your profile supports multiple roles; enable and configure what you need.</p>
+        <p class="muted">Pick a portal above to get to work. Your last requests will appear below once you submit something.</p>
+        <div id="myRequests" class="list" aria-live="polite"></div>
       </div>
 
+      <!-- WHOLESALER -->
       <div class="card" data-panel="wholesaler" style="display:none">
         <h2>Wholesaler Workspace</h2>
         <div class="muted">Acquisition and Disposition tools live side-by-side. Use the sub-tabs to switch.</div>
@@ -86,7 +125,6 @@
             <button class="toolbtn" id="btnReloadWh">Reload</button>
           </div>
           <div class="iframe-wrap">
-            <!-- Force blank, then set once after auth -->
             <iframe id="whFrame" src="about:blank" title="Wholesaler Acquisition"></iframe>
           </div>
         </div>
@@ -102,6 +140,7 @@
         </div>
       </div>
 
+      <!-- Placeholders -->
       <div class="card" data-panel="contractor" style="display:none">
         <h2>Contractor</h2><p class="muted">CSI divisions & service areas. Coming soon.</p>
       </div>
@@ -117,8 +156,60 @@
     </section>
   </div>
 
+  <!-- REQUESTS MODAL -->
+  <div id="reqModal" class="modal" aria-hidden="true" role="dialog" aria-label="Send a request">
+    <div class="backdrop" data-close></div>
+    <div class="sheet">
+      <button class="close" data-close>Close</button>
+      <h2 style="margin-top:4px">Send a Request</h2>
+      <p class="muted">Tell us what you need. We’ll follow up fast.</p>
+
+      <form id="reqForm">
+        <div class="grid">
+          <label>
+            <div class="muted">Request Type</div>
+            <select class="select" id="reqType" required>
+              <option value="Funding">Funding</option>
+              <option value="Sell a Property">Sell a Property</option>
+              <option value="Partner with Us">Partner with Us</option>
+              <option value="Contractor Services">Contractor Services</option>
+              <option value="Support / Bug">Support / Bug</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>
+            <div class="muted">Preferred Contact</div>
+            <input class="input" id="reqContact" placeholder="Phone, email, or TextNow handle"/>
+          </label>
+        </div>
+
+        <label style="display:block;margin-top:10px">
+          <div class="muted">Subject</div>
+          <input class="input" id="reqSubject" placeholder="Short subject (optional)"/>
+        </label>
+
+        <label style="display:block;margin-top:10px">
+          <div class="muted">Message</div>
+          <textarea class="textarea" id="reqMessage" placeholder="What’s up? Add property address or details if relevant." required></textarea>
+        </label>
+
+        <div class="hint">We’ll attach your account info automatically (name, email, uid).</div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="submit" class="btn btn-gold">Send Request</button>
+          <a id="mailtoFallback" class="btn" href="#">Email Instead</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast"></div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
@@ -132,8 +223,16 @@
     };
     firebase.initializeApp(firebaseConfig);
     const auth = firebase.auth();
+    const db   = firebase.database();
 
-    // Tabs
+    // ------- small helpers
+    const $ = s => document.querySelector(s);
+    function toast(msg){
+      const el = $('#toast'); el.textContent = msg; el.style.display = 'block';
+      setTimeout(()=> el.style.display = 'none', 2200);
+    }
+
+    // ------- Tabs
     const panels=[...document.querySelectorAll('[data-panel]')];
     const tabs=[...document.querySelectorAll('.tab')];
     function show(tabName){
@@ -141,12 +240,12 @@
       panels.forEach(p=>p.style.display=(p.dataset.panel===tabName)?'':'none');
       const url=new URL(location.href); url.searchParams.set('tab',tabName); history.replaceState(null,'',url);
     }
-    document.getElementById('tabs').addEventListener('click',e=>{
+    $('#tabs').addEventListener('click',e=>{
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
     show(new URL(location.href).searchParams.get('tab')||'overview');
 
-    // Subtabs (wholesaler)
+    // ------- Subtabs (wholesaler)
     const whTabs=[...document.querySelectorAll('#whSubtabs .subtab')];
     const whPanels=[...document.querySelectorAll('[data-subpanel]')];
     function showWh(sub){
@@ -159,11 +258,12 @@
     });
     showWh(new URL(location.href).searchParams.get('wh')||'acq');
 
-    // Auth + set iframes (guard against mirror)
-    let iframesSet=false;
+    // ------- Auth + set iframes (guard against mirror)
+    let iframesSet=false, currentUser=null;
     auth.onAuthStateChanged(user=>{
       if(!user){ location.href='index.html'; return; }
-      if(iframesSet) return; // guard
+      currentUser=user;
+      if(iframesSet) return;
       iframesSet=true;
 
       const uid=encodeURIComponent(user.uid);
@@ -179,10 +279,77 @@
       document.getElementById('btnNewTabDi').onclick=()=>window.open(diSrc,'_blank');
       document.getElementById('btnReloadWh').onclick=()=>wh.contentWindow?.location.reload();
       document.getElementById('btnReloadDi').onclick=()=>di.contentWindow?.location.reload();
+
+      // Populate Overview with last 10 requests from this user
+      db.ref('requests').orderByChild('uid').equalTo(user.uid).limitToLast(10).on('value',snap=>{
+        const box = document.getElementById('myRequests');
+        if(!snap.exists()){ box.innerHTML = '<div class="row muted">No requests yet.</div>'; return; }
+        const items=[];
+        snap.forEach(child=>{
+          const r = child.val();
+          const d = new Date(r.createdAt||Date.now());
+          items.unshift(`
+            <div class="row">
+              <div style="font-weight:700">${r.type||'Request'}</div>
+              <div class="muted" style="margin:2px 0 6px">${r.subject||''}</div>
+              <div style="font-size:13px;white-space:pre-wrap">${(r.message||'').slice(0,300)}</div>
+              <div class="muted" style="margin-top:6px">${d.toLocaleString()} • ${r.status||'new'}</div>
+            </div>`);
+        });
+        box.innerHTML = items.join('');
+      });
+
+      // Prefill mailto fallback with the signed-in email
+      const mailto = document.getElementById('mailtoFallback');
+      const addr = encodeURIComponent('support@dealbankers.com');
+      const subj = encodeURIComponent('DealBankers Request');
+      const body = encodeURIComponent(`From: ${user.displayName||''} <${user.email||''}>\n\nDescribe your request here...`);
+      mailto.href = `mailto:${addr}?subject=${subj}&body=${body}`;
     });
 
+    // ------- Requests modal + submit
+    const reqModal = document.getElementById('reqModal');
+    const openReq  = ()=>{ reqModal.classList.add('open'); reqModal.setAttribute('aria-hidden','false'); };
+    const closeReq = ()=>{ reqModal.classList.remove('open'); reqModal.setAttribute('aria-hidden','true'); };
+    document.getElementById('requestsBtn').addEventListener('click', openReq);
+    reqModal.addEventListener('click', e=>{ if (e.target.hasAttribute('data-close')) closeReq(); });
+
+    document.getElementById('reqForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      if(!currentUser) return toast('Sign in again.');
+      const type = document.getElementById('reqType').value;
+      const contact = document.getElementById('reqContact').value.trim();
+      const subject = document.getElementById('reqSubject').value.trim();
+      const message = document.getElementById('reqMessage').value.trim();
+      if(!message){ return toast('Please add a message'); }
+
+      const payload = {
+        uid: currentUser.uid,
+        email: currentUser.email || '',
+        name: currentUser.displayName || '',
+        type, contact, subject, message,
+        status: 'new',
+        createdAt: Date.now()
+      };
+      try{
+        await db.ref('requests').push(payload);
+        toast('Request sent');
+        (e.target).reset();
+        closeReq();
+      }catch(err){
+        console.error(err);
+        toast('Could not send. Try again.');
+      }
+    });
+
+    // ------- Logout
     document.getElementById('logoutBtn').addEventListener('click',async()=>{
       try{ await auth.signOut(); location.href='index.html'; }catch(e){ alert(e.message); }
+    });
+
+    // Optional: allow iframes to open the Requests modal via postMessage
+    window.addEventListener('message', (ev)=>{
+      if(typeof ev.data === 'object' && ev.data?.type === 'openRequests'){ openReq(); }
     });
   </script>
 </body>
