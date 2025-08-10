@@ -1,3 +1,6 @@
+<!-- =========================
+     wholesaler.html (updated)
+     ========================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,51 +8,31 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Wholesaler • Acquisition</title>
 <style>
-  :root{
-    --ink:#111; --muted:#6b7280; --line:#e7e7e7;
-    --bg:#f2f4f7; --panel:#fff; --accent:#0d6efd; --ok:#28a745;
-  }
+  :root{ --ink:#111; --muted:#6b7280; --line:#e7e7e7; --bg:#f2f4f7; --panel:#fff; --accent:#0d6efd; --ok:#28a745; }
   html,body{height:100%}
   body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Arial, sans-serif; background:var(--bg); color:#0f1620}
-
-  header{
-    background:var(--ink); color:#fff; padding:12px 16px; display:flex;
-    justify-content:space-between; align-items:center; font-size:18px;
-    position:sticky; top:0; z-index:5;
-  }
+  header{background:var(--ink); color:#fff; padding:12px 16px; display:flex; justify-content:space-between; align-items:center; font-size:18px; position:sticky; top:0; z-index:5}
   .menu{cursor:pointer; font-size:22px; user-select:none}
-  .menu-content{
-    display:none; position:absolute; top:56px; right:15px; background:#fff; border:1px solid var(--line);
-    border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.2); z-index:1000; overflow:hidden; min-width:220px;
-  }
+  .menu-content{display:none; position:absolute; top:56px; right:15px; background:#fff; border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.2); z-index:1000; overflow:hidden; min-width:220px}
   .menu-content a{display:block; padding:12px 16px; text-decoration:none; color:#111; font-weight:600}
   .menu-content a:hover{background:#f5f7fb}
 
-  /* Info banner */
   .strip{margin:14px; padding:10px 12px; border:1px solid var(--line); background:#fff; border-radius:10px; color:#555; font-size:14px}
   .strip strong{color:#111}
 
-  /* Permission gate */
-  .gate{
-    margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px;
-  }
+  .gate{margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px}
   .gate h3{margin:0 0 6px}
   .gate p{margin:0 0 12px; color:var(--muted)}
   .gate .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0f1a24; color:#cfe2f3; cursor:pointer}
 
   .container{display:flex; flex-direction:column; height:calc(100vh - 56px)}
   @media (min-width: 900px){ .container{flex-direction:row} }
-
   .lead-section, .map-section{padding:14px}
   .lead-section{flex:1; overflow:auto}
   .map-section{flex:1; display:flex}
 
-  .lead-buttons{
-    display:flex; justify-content:center; gap:10px; margin-bottom:12px; flex-wrap:wrap;
-  }
-  .lead-buttons a, .lead-buttons button{
-    font-size:20px; border:none; border-radius:10px; text-decoration:none; cursor:pointer; padding:10px 12px; color:white;
-  }
+  .lead-buttons{display:flex; justify-content:center; gap:10px; margin-bottom:12px; flex-wrap:wrap}
+  .lead-buttons a, .lead-buttons button{font-size:20px; border:none; border-radius:10px; text-decoration:none; cursor:pointer; padding:10px 12px; color:white}
   .call{background:var(--accent)} .drive{background:#6c757d} .settings{background:#343a40} .chat{background:#17a2b8}
 
   .lead-card{background:var(--panel); padding:16px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); margin:0 auto 15px; max-width:620px; border:1px solid var(--line)}
@@ -58,7 +41,6 @@
 
   .navbtns{display:flex; gap:8px; justify-content:center; margin-bottom:10px}
   .navbtns button{border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; cursor:pointer}
-  .next-btn{display:block; margin:16px auto; padding:12px 20px; font-size:18px; background:#111; color:white; border:none; border-radius:10px; cursor:pointer}
 
   iframe.map{width:100%; border:none; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); border:1px solid var(--line)}
   .map-section iframe.map{height:100%}
@@ -93,7 +75,7 @@
     <p>Please wait a moment while we verify your wholesaler permissions.</p>
   </div>
 
-  <!-- REAL PORTAL CONTENT (hidden until authorized) -->
+  <!-- Portal -->
   <div id="portal" style="display:none">
     <div class="container">
       <section class="lead-section">
@@ -103,14 +85,10 @@
           <button id="nextBtn">⏭️ Next</button>
         </div>
         <div id="leadCard"></div>
-        <button class="next-btn" id="bigNext">Next Lead</button>
       </section>
 
       <section class="map-section">
-        <iframe class="map"
-          id="gmap"
-          src="about:blank"
-          allowfullscreen></iframe>
+        <iframe class="map" id="gmap" src="about:blank" allowfullscreen></iframe>
       </section>
     </div>
   </div>
@@ -129,46 +107,19 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
   <script>
-    /* ---------- Small helpers ---------- */
+    /* Helpers */
     const $ = s => document.querySelector(s);
     const qs = k => new URL(location.href).searchParams.get(k) || "";
+    function toggleMenu(){ const m=$("#menuContent"); m.style.display=(m.style.display==='block')?'none':'block'; }
+    function copyToClipboard(text){ navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text)); }
+    function setMap(address){ const q=encodeURIComponent(address||""); $("#gmap").src = q ? `https://www.google.com/maps?q=${q}&output=embed` : 'about:blank'; }
+    function openModal(url){ const m=$("#formModal"), i=$("#formIframe"); i.src=url; m.style.display="flex"; }
+    function closeModal(){ $("#formModal").style.display="none"; $("#formIframe").src=""; }
+    function highlightKeywords(text=""){ const k=["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"]; return text.replace(new RegExp(`\\b(${k.join('|')})\\b`,'gi'),'<span class="highlight">$1</span>'); }
+    function injectScript(src){ return new Promise((resolve,reject)=>{ if(!src){resolve(false);return;} const s=document.createElement('script'); s.src=src; s.onload=()=>resolve(true); s.onerror=()=>reject(new Error('Feed load failed')); document.head.appendChild(s);}); }
+    function setStrip(msg){ const b=$("#strip"); b.textContent = msg; b.style.display='block'; }
 
-    function toggleMenu(){
-      const m = $("#menuContent");
-      m.style.display = (m.style.display==='block') ? 'none' : 'block';
-    }
-    function copyToClipboard(text){
-      navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text));
-    }
-    function setMap(address){
-      const q = encodeURIComponent(address || "");
-      $("#gmap").src = q ? `https://www.google.com/maps?q=${q}&output=embed` : 'about:blank';
-    }
-    function openModal(url){
-      const m = document.getElementById("formModal");
-      const i = document.getElementById("formIframe");
-      i.src=url; m.style.display="flex";
-    }
-    function closeModal(){
-      document.getElementById("formModal").style.display="none";
-      document.getElementById("formIframe").src="";
-    }
-    function highlightKeywords(text=""){
-      const keywords = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
-      const regex = new RegExp(`\\b(${keywords.join('|')})\\b`,'gi');
-      return text.replace(regex,'<span class="highlight">$1</span>');
-    }
-    function injectScript(src){
-      return new Promise((resolve, reject) => {
-        if(!src){ resolve(false); return; }
-        const s = document.createElement('script');
-        s.src = src; s.onload = () => resolve(true); s.onerror = () => reject(new Error('Feed load failed'));
-        document.head.appendChild(s);
-      });
-    }
-    function setStrip(msg){ const b = document.getElementById('strip'); b.textContent = msg; b.style.display='block'; }
-
-    /* ---------- Firebase ---------- */
+    /* Firebase */
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -185,11 +136,10 @@
 
     const state = { uid:'', leads:[], i:0 };
 
-    /* ---------- App ---------- */
+    /* UI */
     async function render(){
-      const card = document.getElementById('leadCard');
+      const card = $('#leadCard');
       if (!state.leads.length){ card.textContent = "No leads loaded."; return; }
-
       const L = state.leads[state.i] || {};
       const contact = (L.contacts && L.contacts[0]) || {name:'(no name)', phone:''};
       const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
@@ -199,11 +149,9 @@
         <div class="lead-buttons">
           <a class="chat" href="https://www.textnow.com/messaging" target="_blank">TextNow</a>
           <button class="call" onclick="copyToClipboard('${contact.phone||''}')">📞 Copy</button>
-          <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
-          <a class="settings" href="#">⚙️</a>
+          <button class="drive" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(L.address||'')}', '_blank')">🚗 Directions</button>
           <button class="drive" onclick="openModal('${formURL}')">📝 Notes</button>
         </div>
-
         <div class="lead-card">
           <strong>${contact.name}</strong><br/>
           ${L.address || '(no address)'}<br/>
@@ -213,58 +161,49 @@
           </details>
         </div>
       `;
-
-      setMap(L.address || '');
+      setMap(L.address||'');
       setStrip(`Loaded ${state.leads.length} lead(s). Showing #${state.i+1}.`);
     }
-
     function hookNav(){
-      document.getElementById('nextBtn').onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
-      document.getElementById('prevBtn').onclick = ()=>{ state.i = (state.i-1+state.leads.length) % state.leads.length; render(); };
-      document.getElementById('randBtn').onclick = ()=>{ state.i = Math.floor(Math.random()*state.leads.length); render(); };
-      document.getElementById('bigNext').onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
+      $('#nextBtn').onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
+      $('#prevBtn').onclick = ()=>{ state.i = (state.i-1+state.leads.length) % state.leads.length; render(); };
+      $('#randBtn').onclick = ()=>{ state.i = Math.floor(Math.random()*state.leads.length); render(); };
     }
+    function showPortal(){ $('#gate').style.display='none'; $('#portal').style.display=''; }
 
-    function showPortal(){ document.getElementById('gate').style.display='none'; document.getElementById('portal').style.display=''; }
-
+    /* Feed loader: ?feed=  -> local leads.js -> RTDB pointer (/portal/leads/latestJsUrl) */
     async function loadFeed(){
-      // 1) Prefer ?feed=...  2) Fallback to local leads.js
       const fromQuery = qs('feed');
       try{
         if (fromQuery){
           await injectScript(fromQuery);
-          if (Array.isArray(window.leads) && window.leads.length){
-            state.leads = window.leads;
-            return 'query';
-          }
+          if (Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return 'query'; }
         }
-      }catch(e){
-        console.error('Feed error:', e);
-        setStrip('Error loading feed URL. Falling back to local leads.js …');
-      }
+      }catch(e){ console.error('Feed error:', e); setStrip('Error loading feed URL. Falling back …'); }
 
       try{
         await injectScript('leads.js');
-        if (Array.isArray(window.leads) && window.leads.length){
-          state.leads = window.leads;
-          return 'local';
-        }
-      }catch(e){
-        console.error('Local leads.js error:', e);
-      }
+        if (Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return 'local'; }
+      }catch(e){}
 
-      // Nothing loaded
+      try{
+        const snap = await db.ref('portal/leads/latestJsUrl').get();
+        const url = snap.val();
+        if (url){
+          await injectScript(url);
+          if (Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return 'rtdb'; }
+        }
+      }catch(e){ console.error('Pointer read error', e); }
+
       setStrip('No feed configured. Pass ?feed=PUBLIC_SCRIPT_URL on profile/wholesaler URL, or add a local leads.js.');
       return 'none';
     }
 
-    /* ---------- Auth + permission gate ---------- */
+    /* Auth + permission */
     const uidFromQuery = qs('uid');
-
     auth.onAuthStateChanged(async (user)=>{
       if(!user){
-        document.getElementById('gate').innerHTML =
-          `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
+        $('#gate').innerHTML = `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
         return;
       }
       state.uid = uidFromQuery || user.uid;
@@ -273,9 +212,7 @@
         const snap = await db.ref(`users/${state.uid}/roles/wholesaler`).get();
         const allowed = snap.val() === true || snap.val() === 'true';
         if(!allowed){
-          document.getElementById('gate').innerHTML = `
-            <h3>Access denied</h3>
-            <p>You don’t have permission to view the Wholesaler Acquisition portal.</p>
+          $('#gate').innerHTML = `<h3>Access denied</h3><p>You don’t have permission to view the Wholesaler Acquisition portal.</p>
             <button class="btn" onclick="location.href='profile.html?tab=overview'">Back to Profile</button>`;
           return;
         }
@@ -288,7 +225,7 @@
 
       }catch(err){
         console.error(err);
-        document.getElementById('gate').innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
+        $('#gate').innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
       }
     });
   </script>
