@@ -25,6 +25,10 @@
   .menu-content a{display:block; padding:12px 16px; text-decoration:none; color:#111; font-weight:600}
   .menu-content a:hover{background:#f5f7fb}
 
+  /* Info banner */
+  .strip{margin:14px; padding:10px 12px; border:1px solid var(--line); background:#fff; border-radius:10px; color:#555; font-size:14px}
+  .strip strong{color:#111}
+
   /* Permission gate */
   .gate{
     margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px;
@@ -52,6 +56,8 @@
   .lead-card a{color:var(--accent); font-weight:700; text-decoration:none}
   .lead-card button{background:var(--ok); color:white; padding:8px 12px; border:none; border-radius:8px; font-size:14px; margin-top:10px; cursor:pointer}
 
+  .navbtns{display:flex; gap:8px; justify-content:center; margin-bottom:10px}
+  .navbtns button{border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; cursor:pointer}
   .next-btn{display:block; margin:16px auto; padding:12px 20px; font-size:18px; background:#111; color:white; border:none; border-radius:10px; cursor:pointer}
 
   iframe.map{width:100%; border:none; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); border:1px solid var(--line)}
@@ -79,6 +85,8 @@
     </div>
   </header>
 
+  <div id="strip" class="strip" style="display:none"></div>
+
   <!-- Permission Gate -->
   <div id="gate" class="gate">
     <h3>Checking your access…</h3>
@@ -89,13 +97,19 @@
   <div id="portal" style="display:none">
     <div class="container">
       <section class="lead-section">
+        <div class="navbtns">
+          <button id="prevBtn">⏮️ Prev</button>
+          <button id="randBtn">🎲 Random</button>
+          <button id="nextBtn">⏭️ Next</button>
+        </div>
         <div id="leadCard"></div>
-        <button class="next-btn" onclick="nextLead()">⏭️ Next Lead</button>
+        <button class="next-btn" id="bigNext">Next Lead</button>
       </section>
 
       <section class="map-section">
-        <iframe id="mapFrame" class="map"
-          src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
+        <iframe class="map"
+          id="gmap"
+          src="about:blank"
           allowfullscreen></iframe>
       </section>
     </div>
@@ -115,104 +129,46 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
   <script>
-    /************* Small helpers *************/
-    const $  = s => document.querySelector(s);
+    /* ---------- Small helpers ---------- */
+    const $ = s => document.querySelector(s);
     const qs = k => new URL(location.href).searchParams.get(k) || "";
 
     function toggleMenu(){
-      const m = $('#menuContent');
+      const m = $("#menuContent");
       m.style.display = (m.style.display==='block') ? 'none' : 'block';
     }
     function copyToClipboard(text){
-      navigator.clipboard.writeText(text || '').then(()=> alert("Copied: " + (text||'')));
+      navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text));
+    }
+    function setMap(address){
+      const q = encodeURIComponent(address || "");
+      $("#gmap").src = q ? `https://www.google.com/maps?q=${q}&output=embed` : 'about:blank';
     }
     function openModal(url){
-      const m = $('#formModal'); const i = $('#formIframe');
-      i.src = url; m.style.display = 'flex';
+      const m = document.getElementById("formModal");
+      const i = document.getElementById("formIframe");
+      i.src=url; m.style.display="flex";
     }
     function closeModal(){
-      $('#formModal').style.display = 'none';
-      $('#formIframe').src = '';
+      document.getElementById("formModal").style.display="none";
+      document.getElementById("formIframe").src="";
     }
-
-    /************* Lead rendering *************/
-    const rep = "Wholesaler";
-    let index = 0;
-
-    function highlightKeywords(text){
+    function highlightKeywords(text=""){
       const keywords = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
       const regex = new RegExp(`\\b(${keywords.join('|')})\\b`,'gi');
       return text.replace(regex,'<span class="highlight">$1</span>');
     }
-
-    function setMap(address){
-      if (!address) return;
-      const q = encodeURIComponent(address);
-      $('#mapFrame').src = `https://www.google.com/maps?q=${q}&output=embed`;
-    }
-
-    function showLead(lead){
-      const contact   = (lead.contacts && lead.contacts[0]) || { name:'(no name)', phone:'' };
-      const contactName  = contact.name || '(no name)';
-      const contactPhone = contact.phone || '';
-      const address  = lead.address || '(no address)';
-      const notes    = lead.notes ? highlightKeywords(lead.notes).replace(/\n/g,"<br>") : "No deal notes available.";
-
-      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
-      const formUrl  = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent(rep)}&entry.121126280=${encodeURIComponent(contactName)}&entry.1828741519=${encodeURIComponent(address)}`;
-
-      $('#leadCard').innerHTML = `
-        <div class="lead-card" style="margin-top:6px">
-          <div class="lead-buttons">
-            <button class="call"   onclick="copyToClipboard('${contactPhone}')">📞</button>
-            <button class="drive"  onclick="window.open('https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(address)}','_blank')">🚗</button>
-            <a class="settings" href="#" onclick="openModal('${formUrl}');return false;">⚙️</a>
-            <a class="chat" href="https://www.textnow.com/messaging" target="_blank">💬</a>
-          </div>
-
-          <strong>${contactName}</strong><br/>
-          ${address}<br/>
-          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br/>
-
-          <button onclick="openModal('${formUrl}')">📝 Update Lead Notes</button>
-
-          <details class="accordion" open>
-            <summary>📊 Deal Details</summary>
-            <div>${notes}</div>
-          </details>
-        </div>
-      `;
-
-      setMap(address);
-    }
-
-    function nextLead(){
-      if (!Array.isArray(window.leads) || window.leads.length === 0) return;
-      index = (index + 1) % window.leads.length;
-      showLead(window.leads[index]);
-    }
-
-    /************* Feed loader (Drive ?feed=...) *************/
     function injectScript(src){
-      return new Promise((resolve,reject)=>{
+      return new Promise((resolve, reject) => {
+        if(!src){ resolve(false); return; }
         const s = document.createElement('script');
-        s.src = src;
-        s.onload = resolve;
-        s.onerror = () => reject(new Error('Feed failed to load'));
+        s.src = src; s.onload = () => resolve(true); s.onerror = () => reject(new Error('Feed load failed'));
         document.head.appendChild(s);
       });
     }
-    function showNoLeads(msg){
-      $('#leadCard').innerHTML = `
-        <div class="lead-card">
-          <strong>No feed configured</strong>
-          <div style="margin-top:6px;color:#6b7280;font-size:14px">
-            ${msg || 'Pass the <code>?feed=PUBLIC_SCRIPT_URL</code> exported from Sheets, or add a local <code>leads.js</code>.'}
-          </div>
-        </div>`;
-    }
+    function setStrip(msg){ const b = document.getElementById('strip'); b.textContent = msg; b.style.display='block'; }
 
-    /************* Firebase + permission gate *************/
+    /* ---------- Firebase ---------- */
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -227,49 +183,112 @@
     const auth = firebase.auth();
     const db   = firebase.database();
 
-    const gateEl   = document.getElementById('gate');
-    const portalEl = document.getElementById('portal');
+    const state = { uid:'', leads:[], i:0 };
+
+    /* ---------- App ---------- */
+    async function render(){
+      const card = document.getElementById('leadCard');
+      if (!state.leads.length){ card.textContent = "No leads loaded."; return; }
+
+      const L = state.leads[state.i] || {};
+      const contact = (L.contacts && L.contacts[0]) || {name:'(no name)', phone:''};
+      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+      const formURL  = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent("Wholesaler")}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(L.address||'')}`;
+
+      card.innerHTML = `
+        <div class="lead-buttons">
+          <a class="chat" href="https://www.textnow.com/messaging" target="_blank">TextNow</a>
+          <button class="call" onclick="copyToClipboard('${contact.phone||''}')">📞 Copy</button>
+          <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
+          <a class="settings" href="#">⚙️</a>
+          <button class="drive" onclick="openModal('${formURL}')">📝 Notes</button>
+        </div>
+
+        <div class="lead-card">
+          <strong>${contact.name}</strong><br/>
+          ${L.address || '(no address)'}<br/>
+          <details class="accordion">
+            <summary>📊 Deal Details</summary>
+            <div>${highlightKeywords((L.notes||'').replace(/\n/g,'<br>')) || 'No deal notes available.'}</div>
+          </details>
+        </div>
+      `;
+
+      setMap(L.address || '');
+      setStrip(`Loaded ${state.leads.length} lead(s). Showing #${state.i+1}.`);
+    }
+
+    function hookNav(){
+      document.getElementById('nextBtn').onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
+      document.getElementById('prevBtn').onclick = ()=>{ state.i = (state.i-1+state.leads.length) % state.leads.length; render(); };
+      document.getElementById('randBtn').onclick = ()=>{ state.i = Math.floor(Math.random()*state.leads.length); render(); };
+      document.getElementById('bigNext').onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
+    }
+
+    function showPortal(){ document.getElementById('gate').style.display='none'; document.getElementById('portal').style.display=''; }
+
+    async function loadFeed(){
+      // 1) Prefer ?feed=...  2) Fallback to local leads.js
+      const fromQuery = qs('feed');
+      try{
+        if (fromQuery){
+          await injectScript(fromQuery);
+          if (Array.isArray(window.leads) && window.leads.length){
+            state.leads = window.leads;
+            return 'query';
+          }
+        }
+      }catch(e){
+        console.error('Feed error:', e);
+        setStrip('Error loading feed URL. Falling back to local leads.js …');
+      }
+
+      try{
+        await injectScript('leads.js');
+        if (Array.isArray(window.leads) && window.leads.length){
+          state.leads = window.leads;
+          return 'local';
+        }
+      }catch(e){
+        console.error('Local leads.js error:', e);
+      }
+
+      // Nothing loaded
+      setStrip('No feed configured. Pass ?feed=PUBLIC_SCRIPT_URL on profile/wholesaler URL, or add a local leads.js.');
+      return 'none';
+    }
+
+    /* ---------- Auth + permission gate ---------- */
+    const uidFromQuery = qs('uid');
 
     auth.onAuthStateChanged(async (user)=>{
       if(!user){
-        gateEl.innerHTML = `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
+        document.getElementById('gate').innerHTML =
+          `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
         return;
       }
-      const uid = qs('uid') || user.uid;
+      state.uid = uidFromQuery || user.uid;
 
       try{
-        const snap = await db.ref(`users/${uid}/roles/wholesaler`).get();
+        const snap = await db.ref(`users/${state.uid}/roles/wholesaler`).get();
         const allowed = snap.val() === true || snap.val() === 'true';
         if(!allowed){
-          gateEl.innerHTML = `
+          document.getElementById('gate').innerHTML = `
             <h3>Access denied</h3>
             <p>You don’t have permission to view the Wholesaler Acquisition portal.</p>
             <button class="btn" onclick="location.href='profile.html?tab=overview'">Back to Profile</button>`;
           return;
         }
 
-        // Allowed → load feed then render
-        const feed = qs('feed');
-        try{
-          if (feed) await injectScript(feed);
-          else      await injectScript('leads.js');
-        }catch(e){
-          console.error(e);
-          showNoLeads('Could not load feed. Check sharing or URL.');
-        }
+        showPortal();
+        hookNav();
+        const source = await loadFeed();
+        console.log('Feed source:', source, 'count:', (state.leads||[]).length);
+        render();
 
-        gateEl.style.display = 'none';
-        portalEl.style.display = '';
-
-        if (Array.isArray(window.leads) && window.leads.length){
-          index = 0;
-          showLead(window.leads[index]);
-        }else{
-          showNoLeads('No leads loaded. Provide a feed (<code>?feed=</code>) or add <code>leads.js</code>.');
-        }
       }catch(err){
         console.error(err);
-        gateEl.innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
+        document.getElementById('gate').innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
       }
     });
   </script>
