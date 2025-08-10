@@ -1,302 +1,299 @@
-<!-- =========================
-     wholesaler.html (polished)
-     ========================= -->
+```html
 <!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Wholesaler • Acquisition</title>
+
 <style>
   :root{
-    --ink:#111; --muted:#6b7280; --line:#e7e7e7;
-    --bg:#f2f4f7; --panel:#fff; --accent:#0d6efd; --ok:#28a745;
+    --bg:#0d1822; --panel:#101c26; --card:#132431; --line:#213446;
+    --text:#eaf1f6; --muted:#9fb3c7; --accent:#0d6efd; --accent-2:#0a58ca;
+    --ok:#28a745; --warn:#f0ad4e; --shadow:0 20px 50px rgba(0,0,0,.45);
+    --r:14px;
   }
-  html,body{height:100%}
-  body{margin:0; font-family:system-ui,-apple-system,Segoe UI,Arial,sans-serif; background:var(--bg); color:#0f1620}
-
-  header{
-    background:var(--ink); color:#fff; padding:12px 16px;
-    display:flex; justify-content:space-between; align-items:center;
-    font-size:18px; position:sticky; top:0; z-index:5;
+  *{box-sizing:border-box}
+  body{
+    margin:0; font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+    background:linear-gradient(135deg,#0b1218,#0e1a24 55%,#102434);
+    color:var(--text);
   }
-  .menu{cursor:pointer; font-size:22px; user-select:none}
-  .menu-content{
-    display:none; position:absolute; top:56px; right:15px; background:#fff;
-    border:1px solid var(--line); border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.2);
-    z-index:1000; overflow:hidden; min-width:220px
+
+  /* Shell */
+  .wrap{max-width:1080px; margin:0 auto; padding:16px}
+  .toolbar{
+    display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+    padding:10px 12px; box-shadow:var(--shadow);
   }
-  .menu-content a{display:block; padding:12px 16px; text-decoration:none; color:#111; font-weight:600}
-  .menu-content a:hover{background:#f5f7fb}
-
-  .strip{margin:12px; padding:10px 12px; border:1px solid var(--line); background:#fff; border-radius:10px; color:#555; font-size:14px}
-  .strip strong{color:#111}
-
-  .gate{margin:14px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px}
-  .gate h3{margin:0 0 6px}
-  .gate p{margin:0 0 12px; color:var(--muted)}
-  .gate .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0f1a24; color:#cfe2f3; cursor:pointer}
-
-  .container{display:flex; flex-direction:column; height:calc(100vh - 56px)}
-  @media (min-width: 900px){ .container{flex-direction:row} }
-  .lead-section, .map-section{padding:12px}
-  .lead-section{flex:1; overflow:auto}
-  .map-section{flex:1; display:flex}
-
-  .toolbar{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px}
-  .tbtn{
-    border:1px solid var(--line); background:#fff; color:#111; border-radius:10px; padding:8px 12px; cursor:pointer; font-weight:600
+  .btn{
+    display:inline-flex; align-items:center; gap:8px;
+    padding:10px 14px; border-radius:10px; border:1px solid var(--line);
+    background:#0f1a24; color:#eaf1f6; cursor:pointer; text-decoration:none; font-weight:600;
   }
-  .tbtn:hover{filter:brightness(0.98)}
+  .btn:hover{filter:brightness(1.06)}
+  .btn.primary{background:linear-gradient(180deg,var(--accent),var(--accent-2)); border:none}
+  .btn.ghost{background:#0f1a24}
+  .btn.ok{background:linear-gradient(180deg,#2eb85c,#219a49); border:none}
+  .spacer{flex:1}
 
-  .navbtns{display:flex; gap:8px; flex-wrap:wrap; margin:0 0 10px}
-  .navbtns button{border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; cursor:pointer}
-
-  .lead-buttons{display:flex; justify-content:center; gap:10px; margin:0 0 10px; flex-wrap:wrap}
-  .lead-buttons a, .lead-buttons button{
-    font-size:16px; border:none; border-radius:10px; text-decoration:none; cursor:pointer; padding:10px 12px; color:white
+  /* Lead body */
+  .card{
+    margin-top:14px; background:var(--panel); border:1px solid var(--line); border-radius:var(--r);
+    box-shadow:var(--shadow); overflow:hidden;
   }
-  .chat{background:#17a2b8}
-  .call{background:var(--accent)}
-  .drive{background:#6c757d}
+  .head{
+    display:flex; gap:10px; align-items:center; padding:12px 14px; border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg,#0f1a24,#0c151d);
+  }
+  .h-title{font-weight:800; letter-spacing:.02em}
+  .controls{display:flex; gap:10px; flex-wrap:wrap; margin-left:auto}
+  .chip{
+    padding:6px 10px; border-radius:999px; border:1px solid var(--line); color:#cfe2f3;
+    background:#0f1a24; font-size:12px;
+  }
 
-  .lead-card{background:var(--panel); padding:14px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); margin:0 auto 12px; max-width:620px; border:1px solid var(--line)}
-  .lead-card a{color:var(--accent); font-weight:700; text-decoration:none}
-  .lead-card button{background:var(--ok); color:white; padding:8px 12px; border:none; border-radius:8px; font-size:14px; margin-top:10px; cursor:pointer}
+  .body{padding:14px}
+  .row{display:flex; gap:14px; flex-wrap:wrap}
+  .col{flex:1 1 360px}
+  .lead-card{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:14px;
+  }
+  .lead-name{font-weight:800; margin-bottom:4px}
+  .lead-addr{color:#cfe2f3}
 
-  iframe.map{width:100%; border:none; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); border:1px solid var(--line)}
-  .map-section iframe.map{height:100%}
-  @media (max-width: 899px){ iframe.map{height:340px} }
+  .detail{
+    margin-top:12px; border:1px dashed #2b4054; border-radius:10px; padding:10px; background:#0f1b25;
+  }
+  .detail summary{cursor:pointer; color:#cfe2f3; font-weight:700}
+  .kv{font-size:14px; color:#cfe2f3}
 
-  .modal{display:none; position:fixed; z-index:999; inset:0; background:rgba(0,0,0,0.7); justify-content:center; align-items:center; padding:16px}
-  .modal-content{width:100%; max-width:1100px; height:80%; background:white; border-radius:14px; overflow:hidden; position:relative; box-shadow:0 20px 50px rgba(0,0,0,.35)}
-  .modal iframe{width:100%; height:100%; border:none}
-  .close-btn{position:absolute; top:10px; right:12px; font-size:20px; background:#333; color:white; border:none; border-radius:50%; width:34px; height:34px; cursor:pointer}
+  iframe.map{width:100%; height:320px; border:0; border-radius:12px; background:#fff}
 
-  .accordion{margin-top:8px; border-radius:10px; overflow:hidden; border:1px solid var(--line)}
-  .accordion summary{background:#f4f6fb; cursor:pointer; padding:10px 12px; font-weight:700}
-  .accordion div{padding:12px; background:#fbfcfe; font-size:14px}
-  .highlight{background:yellow; padding:0 2px}
+  /* Segmented switch */
+  .seg{
+    display:inline-flex; border:1px solid var(--line); border-radius:999px; overflow:hidden; background:#0f1a24;
+  }
+  .seg button{
+    padding:10px 16px; background:transparent; border:0; color:#cfe2f3; cursor:pointer; font-weight:600;
+  }
+  .seg button.active{background:#112433}
+
+  /* Notes area */
+  .notes{
+    background:var(--card); border:1px solid var(--line); border-radius:12px; padding:12px;
+  }
+  textarea{width:100%; min-height:180px; border:1px solid var(--line); border-radius:10px; background:#0f1a24; color:#eaf1f6; padding:10px}
+
+  /* Icon (tiny inline SVG) */
+  .i{width:16px; height:16px; display:inline-block}
+
+  /* Responsive tweaks */
+  @media (min-width:980px){
+    iframe.map{height:420px}
+  }
 </style>
 </head>
 <body>
-  <header>
-    Wholesaler • Acquisition
-    <div class="menu" onclick="toggleMenu()">☰</div>
-    <div class="menu-content" id="menuContent">
-      <a href="dispo.html" target="_top">Open Dispo Page</a>
-      <a href="#" id="openFullTop">Open Fullscreen</a>
+  <div class="wrap">
+
+    <!-- Top tools -->
+    <div class="toolbar">
+      <a id="linkDispo" class="btn ghost" href="dispo.html" target="_blank">
+        <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+        Open Dispo Page
+      </a>
+
+      <a id="linkProfile" class="btn ghost" href="profile.html">
+        <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M12 12c2.7 0 5-2.3 5-5s-2.3-5-5-5-5 2.3-5 5 2.3 5 5 5zm0 2c-3.3 0-10 1.7-10 5v3h20v-3c0-3.3-6.7-5-10-5z"/></svg>
+        Back to Profile
+      </a>
+
+      <a class="btn ghost" href="https://www.google.com/maps/d/u/0/viewer?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g" target="_blank">
+        <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5c-1.4 0-2.5-1.1-2.5-2.5S10.6 6.5 12 6.5s2.5 1.1 2.5 2.5S13.4 11.5 12 11.5z"/></svg>
+        Lead Map
+      </a>
+
+      <div class="spacer"></div>
+
+      <button class="btn" id="btnFullscreen">
+        <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm0-4h2V7h3V5H7v5zm10 9h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+        Open Fullscreen
+      </button>
+      <button class="btn" id="btnReload">
+        <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M12 6V3L8 7l4 4V8c2.8 0 5 2.2 5 5a5 5 0 11-5-5z"/></svg>
+        Reload
+      </button>
     </div>
-  </header>
 
-  <div id="strip" class="strip" style="display:none"></div>
+    <!-- Lead card -->
+    <div class="card">
+      <div class="head">
+        <div class="h-title">Wholesaler • Acquisition</div>
+        <div class="controls">
+          <span id="leadCount" class="chip">…</span>
+          <button id="prevBtn" class="btn">Prev</button>
+          <button id="randBtn" class="btn">Random</button>
+          <button id="nextBtn" class="btn">Next</button>
 
-  <!-- Permission Gate -->
-  <div id="gate" class="gate">
-    <h3>Checking your access…</h3>
-    <p>Please wait a moment while we verify your wholesaler permissions.</p>
-  </div>
+          <a id="btnTextNow" class="btn primary" href="https://www.textnow.com/messaging" target="_blank">
+            <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M4 4h16v12H5.17L4 17.17V4zM2 2v20l4-4h16c1.1 0 2-.9 2-2V2H2z"/></svg>
+            TextNow
+          </a>
+          <button id="copyBtn" class="btn ok">
+            <svg class="i" viewBox="0 0 24 24" fill="currentColor"><path d="M16 1H4c-1.1 0-2 .9-2 2v14h2V3h12V1zm3 4H8c-1.1 0-2 .9-2 2v16h13c1.1 0 2-.9 2-2V7c0-1.1-.9-2-2-2z"/></svg>
+            Copy Phone
+          </button>
+        </div>
+      </div>
 
-  <!-- Portal -->
-  <div id="portal" style="display:none">
-    <div class="container">
-      <section class="lead-section">
-        <div class="toolbar">
-          <button class="tbtn" id="openDispoTop">Open Dispo</button>
-          <button class="tbtn" id="openFullBtn">Open Fullscreen</button>
-          <button class="tbtn" id="reloadBtn">Reload</button>
+      <div class="body">
+        <div class="row">
+          <!-- Lead info + map -->
+          <div class="col">
+            <div class="lead-card" id="leadInfo">
+              <div class="lead-name" id="leadName">—</div>
+              <div class="lead-addr" id="leadAddr">—</div>
+
+              <details class="detail">
+                <summary>Deal Details</summary>
+                <div id="leadNotes" class="kv">No deal notes available.</div>
+              </details>
+
+              <div style="margin-top:12px; display:flex; align-items:center; gap:10px">
+                <div class="seg" id="seg">
+                  <button class="active" data-v="dir">Directions</button>
+                  <button data-v="notes">Notes</button>
+                </div>
+                <a id="gmapsLink" class="btn ghost" href="#" target="_blank">Open in Google Maps</a>
+              </div>
+
+              <div id="dirView" style="margin-top:12px">
+                <iframe id="mapFrame" class="map" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+              </div>
+              <div id="notesView" class="notes" style="display:none; margin-top:12px">
+                <textarea id="notesBox" placeholder="Your call notes… (saving soon)"></textarea>
+              </div>
+            </div>
+          </div>
+
+          <!-- Actions/shortcuts -->
+          <div class="col">
+            <div class="lead-card">
+              <div style="font-weight:700; margin-bottom:8px">Shortcuts</div>
+              <div style="display:grid; gap:10px">
+                <a id="btnCall" class="btn ghost" href="#">Call</a>
+                <a id="btnSMS" class="btn ghost" href="#">SMS</a>
+                <a id="btnEmail" class="btn ghost" href="#">Email</a>
+                <a class="btn ghost" target="_blank"
+                   href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform">
+                   Update Lead Notes (Form)
+                </a>
+              </div>
+            </div>
+          </div>
         </div>
 
-        <div class="navbtns">
-          <button id="prevBtn">⏮️ Prev</button>
-          <button id="randBtn">🎲 Random</button>
-          <button id="nextBtn">⏭️ Next</button>
-        </div>
-
-        <div id="leadCard"></div>
-      </section>
-
-      <section class="map-section">
-        <iframe class="map" id="gmap" src="about:blank" allowfullscreen></iframe>
-      </section>
+      </div>
     </div>
   </div>
 
-  <!-- Modal -->
-  <div id="formModal" class="modal" aria-hidden="true">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <iframe id="formIframe"></iframe>
-    </div>
-  </div>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
+  <!-- Data feed -->
+  <script src="leads.js"></script>
   <script>
-    /* ---------- Helpers ---------- */
-    const $  = s => document.querySelector(s);
-    const qs = k => new URL(location.href).searchParams.get(k) || "";
+    // helpers
+    const $ = s => document.querySelector(s);
+    const params = new URL(location.href).searchParams;
+    const uid = params.get('uid') || '';
 
-    function toggleMenu(){ const m=$("#menuContent"); m.style.display=(m.style.display==='block')?'none':'block'; }
-    function copyToClipboard(text){ navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text)); }
-    function setMap(address){
-      const q = encodeURIComponent(address || "");
-      $("#gmap").src = q ? `https://www.google.com/maps?q=${q}&output=embed` : "about:blank";
-    }
-    function openModal(url){ const m=$("#formModal"), i=$("#formIframe"); i.src=url; m.style.display="flex"; }
-    function closeModal(){ $("#formModal").style.display="none"; $("#formIframe").src=""; }
-    function highlightKeywords(text=""){
-      const k = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
-      return text.replace(new RegExp(`\\b(${k.join('|')})\\b`,'gi'),'<span class="highlight">$1</span>');
-    }
-    // Tiny loader with cache-buster so new uploads show immediately
-    function injectScript(src){
-      return new Promise((resolve,reject)=>{
-        if(!src){ resolve(false); return; }
-        const s = document.createElement('script');
-        const cb = (src.includes('?') ? '&' : '?') + 'cb=' + Date.now();
-        s.src = src + cb;
-        s.onload = () => resolve(true);
-        s.onerror = () => reject(new Error('Feed load failed'));
-        document.head.appendChild(s);
-      });
-    }
-    function setStrip(msg){ const b=$("#strip"); b.textContent = msg; b.style.display="block"; }
+    // elements
+    const leadName = $('#leadName');
+    const leadAddr = $('#leadAddr');
+    const leadNotes= $('#leadNotes');
+    const leadCount= $('#leadCount');
+    const mapFrame = $('#mapFrame');
+    const gmapsLink= $('#gmapsLink');
+    const btnCall  = $('#btnCall');
+    const btnSMS   = $('#btnSMS');
+    const btnEmail = $('#btnEmail');
+    const btnCopy  = $('#copyBtn');
+    const seg      = $('#seg');
+    const dirView  = $('#dirView');
+    const notesView= $('#notesView');
 
-    /* ---------- Firebase ---------- */
-    const firebaseConfig = {
-      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
-      authDomain: "deal-bankers.firebaseapp.com",
-      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
-      projectId: "deal-bankers",
-      storageBucket: "deal-bankers.firebasestorage.app",
-      messagingSenderId: "485110155601",
-      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
-      measurementId: "G-KTNXZM14F7"
-    };
-    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.database();
+    // state
+    let i = 0;
+    const L = (window.leads || []);
+    leadCount.textContent = L.length ? `Loaded ${L.length} lead(s).` : 'No leads loaded.';
 
-    const state = { uid:"", leads:[], i:0 };
-
-    /* ---------- UI ---------- */
-    async function render(){
-      const card = $("#leadCard");
-      if(!state.leads.length){ card.textContent = "No leads loaded."; return; }
-
-      const L = state.leads[state.i] || {};
-      const contact = (L.contacts && L.contacts[0]) || {name:"(no name)", phone:""};
-      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
-      const formURL  = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent("Wholesaler")}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(L.address||"")}`;
-
-      card.innerHTML = `
-        <div class="lead-buttons">
-          <a class="chat" href="https://www.textnow.com/messaging" target="_blank">TextNow</a>
-          <button class="call"  onclick="copyToClipboard('${contact.phone||""}')">📞 Copy</button>
-          <button class="drive" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(L.address||"")}', '_blank')">🚗 Directions</button>
-          <button class="drive" onclick="openModal('${formURL}')">📝 Notes</button>
-        </div>
-
-        <div class="lead-card">
-          <strong>${contact.name}</strong><br/>
-          ${L.address || "(no address)"}<br/>
-          <details class="accordion">
-            <summary>📊 Deal Details</summary>
-            <div>${highlightKeywords((L.notes||"").replace(/\n/g,"<br>")) || "No deal notes available."}</div>
-          </details>
-        </div>
-      `;
-      setMap(L.address || "");
-      setStrip(\`Loaded \${state.leads.length} lead(s). Showing #\${state.i+1}.\`);
+    function cleanText(t){ return (t || '').replace(/\s+/g,' ').trim(); }
+    function highlight(text){
+      if (!text) return 'No deal notes available.';
+      const keywords = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
+      const re = new RegExp(`\\b(${keywords.join('|')})\\b`,'gi');
+      return text.replace(re,'<strong style="color:#fff;background:#214; padding:0 3px; border-radius:4px">$1</strong>').replace(/\n/g,'<br>');
     }
 
-    function hookNav(){
-      $("#nextBtn").onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
-      $("#prevBtn").onclick = ()=>{ state.i = (state.i-1+state.leads.length) % state.leads.length; render(); };
-      $("#randBtn").onclick = ()=>{ state.i = Math.floor(Math.random()*state.leads.length); render(); };
-    }
-    function showPortal(){ $("#gate").style.display="none"; $("#portal").style.display=""; }
-
-    /* ---------- Feed loader ----------
-       Order: hardcoded GitHub -> ?feed= -> local leads.js -> RTDB pointer
-    --------------------------------------------------------------- */
-    const HARDCODE_FEED = "https://raw.githubusercontent.com/DealBankersDotCom/CRM/main/leads-latest.js";
-
-    async function loadFeed(){
-      try{
-        // Hardcoded GitHub path (your “leads-latest.js” routine)
-        await injectScript(HARDCODE_FEED);
-        if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "hardcoded"; }
-      }catch(e){ console.warn("Hardcoded feed failed:", e); }
-
-      const fromQuery = qs("feed");
-      try{
-        if(fromQuery){
-          await injectScript(fromQuery);
-          if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "query"; }
-        }
-      }catch(e){ console.error("Feed URL error:", e); setStrip("Error loading feed URL. Falling back …"); }
-
-      try{
-        await injectScript("leads.js");
-        if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "local"; }
-      }catch(e){ /* ignore */ }
-
-      try{
-        const snap = await db.ref("portal/leads/latestJsUrl").get();
-        const url = snap.val();
-        if(url){
-          await injectScript(url);
-          if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "rtdb"; }
-        }
-      }catch(e){ console.error("Pointer read error", e); }
-
-      setStrip("No feed configured. Add leads-latest.js in your repo (or pass ?feed=PUBLIC_SCRIPT_URL, or include a local leads.js).");
-      return "none";
+    function googleMapsEmbed(address){
+      const q = encodeURIComponent(address);
+      return `https://www.google.com/maps?q=${q}&output=embed`;
     }
 
-    /* ---------- Auth + permission ---------- */
-    const uidFromQuery = qs("uid");
+    function setLead(idx){
+      if (!L.length) return;
+      i = (idx + L.length) % L.length;
+      const lead = L[i];
+      const name = lead?.contacts?.[0]?.name || '—';
+      const phone= lead?.contacts?.[0]?.phone || '';
+      const email= lead?.contacts?.[0]?.email || '';
+      const addr = cleanText(lead?.address || '');
 
-    auth.onAuthStateChanged(async (user)=>{
-      if(!user){
-        $("#gate").innerHTML = `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
-        return;
-      }
-      state.uid = uidFromQuery || user.uid;
+      leadName.textContent = name;
+      leadAddr.textContent = addr;
+      leadNotes.innerHTML  = highlight(lead?.notes || '');
 
-      try{
-        const snap = await db.ref(`users/${state.uid}/roles/wholesaler`).get();
-        const allowed = snap.val() === true || snap.val() === "true";
-        if(!allowed){
-          $("#gate").innerHTML = `
-            <h3>Access denied</h3>
-            <p>You don’t have permission to view the Wholesaler Acquisition portal.</p>
-            <button class="btn" onclick="location.href='profile.html?tab=overview'">Back to Profile</button>`;
-          return;
-        }
+      // Map + link
+      mapFrame.src = googleMapsEmbed(addr);
+      gmapsLink.href = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
 
-        showPortal();
-        hookNav();
-        const source = await loadFeed();
-        console.log("Feed source:", source, "count:", (state.leads||[]).length);
-        render();
+      // Comms shortcuts
+      btnCall.href  = phone ? `tel:${phone}` : '#';
+      btnSMS.href   = phone ? `sms:${phone}` : '#';
+      btnEmail.href = email ? `mailto:${email}` : '#';
+      btnCopy.onclick = () => {
+        if (!phone) return alert('No phone on file.');
+        navigator.clipboard.writeText(phone).then(()=> alert('Copied: '+phone));
+      };
 
-      }catch(err){
-        console.error(err);
-        $("#gate").innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
-      }
+      // Fullscreen + reload hooks
+      const full = $('#btnFullscreen');
+      full.onclick = ()=> window.open(`${location.pathname}?uid=${encodeURIComponent(uid)}&i=${i}`,'_blank');
+      $('#btnReload').onclick = ()=> location.reload();
+
+      // Prev/Next/Random
+      $('#prevBtn').onclick = ()=> setLead(i-1);
+      $('#nextBtn').onclick = ()=> setLead(i+1);
+      $('#randBtn').onclick = ()=> setLead(Math.floor(Math.random()*L.length));
+
+      // Dispo/profile links preserve uid
+      $('#linkDispo').href = `dispo.html?uid=${encodeURIComponent(uid)}`;
+      $('#linkProfile').href = `profile.html?tab=wholesaler&wh=acq`;
+    }
+
+    // segmented view
+    seg.addEventListener('click', e=>{
+      const b = e.target.closest('button'); if (!b) return;
+      [...seg.children].forEach(x=>x.classList.toggle('active', x===b));
+      const v = b.dataset.v;
+      dirView.style.display   = (v==='dir')   ? '' : 'none';
+      notesView.style.display = (v==='notes') ? '' : 'none';
     });
 
-    /* ---------- Toolbar wiring ---------- */
-    $("#openDispoTop").onclick  = ()=> window.top ? window.top.location.assign("dispo.html") : location.assign("dispo.html");
-    $("#openFullBtn").onclick   = ()=> window.open(location.href, "_blank");
-    $("#openFullTop").onclick   = (e)=>{ e.preventDefault(); window.top ? window.top.open(location.href,"_blank") : window.open(location.href,"_blank"); };
-    $("#reloadBtn").onclick     = ()=> location.reload();
+    // initial
+    const start = parseInt(params.get('i')||'0',10);
+    if (L.length) setLead(start);
   </script>
 </body>
 </html>
+```
