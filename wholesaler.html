@@ -1,37 +1,290 @@
-<!-- Permission Gate -->
-<div id="gate" class="gate">
-  <h3>Checking your access…</h3>
-  <p>Please wait a moment while we verify your wholesaler permissions.</p>
-</div>
+<!DOCTYPE html>
 
-<!-- Portal -->
-<div id="portal" style="display:none">
-  <div class="container">
-    <section class="lead-section">
-      <div class="navbtns">
-        <button id="prevBtn">⏮️ Prev</button>
-        <button id="randBtn">🎲 Random</button>
-        <button id="nextBtn">⏭️ Next</button>
-      </div>
-      <div id="leadCard"></div>
-    </section>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Wholesaler • Acquisition</title>
+<style>
+  :root{ --ink:#111; --muted:#6b7280; --line:#e7e7e7; --bg:#f2f4f7; --panel:#fff; --accent:#0d6efd; --ok:#28a745; }
+  html,body{height:100%}
+  body{margin:0; font-family:system-ui, -apple-system, Segoe UI, Arial, sans-serif; background:var(--bg); color:#0f1620}
 
-    <section class="map-section">
-      <iframe class="map" id="gmap" src="about:blank" allowfullscreen></iframe>
-    </section>
+header{
+background\:var(--ink); color:#fff; padding:12px 16px; display\:flex;
+justify-content\:space-between; align-items\:center; font-size:18px;
+position\:sticky; top:0; z-index:5;
+}
+.menu{cursor\:pointer; font-size:22px; user-select\:none}
+.menu-content{
+display\:none; position\:absolute; top:56px; right:15px; background:#fff; border:1px solid var(--line);
+border-radius:10px; box-shadow:0 10px 24px rgba(0,0,0,.2); z-index:1000; overflow\:hidden; min-width:220px;
+}
+.menu-content a{display\:block; padding:12px 16px; text-decoration\:none; color:#111; font-weight:600}
+.menu-content a\:hover
+
+.strip{margin:14px; padding:10px 12px; border:1px solid var(--line); background:#fff; border-radius:10px; color:#555; font-size:14px}
+.strip strong{color:#111}
+
+.gate{
+margin:18px; padding:16px; border:1px solid var(--line); background:#fff; border-radius:12px;
+}
+.gate h3{margin:0 0 6px}
+.gate p{margin:0 0 12px; color\:var(--muted)}
+.gate .btn{padding:10px 14px; border-radius:10px; border:1px solid var(--line); background:#0f1a24; color:#cfe2f3; cursor\:pointer}
+
+.container{display\:flex; flex-direction\:column; height\:calc(100vh - 56px)}
+@media (min-width: 900px){ .container{flex-direction\:row} }
+
+.lead-section, .map-section{padding:14px}
+.lead-section{flex:1; overflow\:auto}
+.map-section{flex:1; display\:flex}
+
+.lead-buttons{
+display\:flex; justify-content\:center; gap:10px; margin-bottom:12px; flex-wrap\:wrap;
+}
+.lead-buttons a, .lead-buttons button{
+font-size:20px; border\:none; border-radius:10px; text-decoration\:none; cursor\:pointer; padding:10px 12px; color\:white;
+}
+.call{background\:var(--accent)} .drive{background:#6c757d} .settings{background:#343a40} .chat{background:#17a2b8}
+
+.lead-card{background\:var(--panel); padding:16px; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); margin:0 auto 15px; max-width:620px; border:1px solid var(--line)}
+.lead-card a{color\:var(--accent); font-weight:700; text-decoration\:none}
+.lead-card button{background\:var(--ok); color\:white; padding:8px 12px; border\:none; border-radius:8px; font-size:14px; margin-top:10px; cursor\:pointer}
+
+.navbtns{display\:flex; gap:8px; justify-content\:center; margin-bottom:10px}
+.navbtns button{border:1px solid var(--line); background:#fff; border-radius:10px; padding:6px 10px; cursor\:pointer}
+
+iframe.map{width:100%; border\:none; border-radius:12px; box-shadow:0 6px 20px rgba(0,0,0,.08); border:1px solid var(--line)}
+.map-section iframe.map{height:100%}
+@media (max-width: 899px){ iframe.map{height:340px} }
+
+.modal{display\:none; position\:fixed; z-index:999; inset:0; background\:rgba(0,0,0,0.7); justify-content\:center; align-items\:center; padding:16px}
+.modal-content{width:100%; max-width:1100px; height:80%; background\:white; border-radius:14px; overflow\:hidden; position\:relative; box-shadow:0 20px 50px rgba(0,0,0,.35)}
+.modal iframe{width:100%; height:100%; border\:none}
+.close-btn{position\:absolute; top:10px; right:12px; font-size:20px; background:#333; color\:white; border\:none; border-radius:50%; width:34px; height:34px; cursor\:pointer}
+
+.accordion{margin-top:10px; border-radius:10px; overflow\:hidden; border:1px solid var(--line)}
+.accordion summary{background:#f4f6fb; cursor\:pointer; padding:10px 12px; font-weight:700}
+.accordion div{padding:12px; background:#fbfcfe; font-size:14px}
+.highlight{background\:yellow; padding:0 2px} </style>
+
+</head>
+<body>
+  <header>
+    Wholesaler • Acquisition
+    <div class="menu" onclick="toggleMenu()">☰</div>
+    <div class="menu-content" id="menuContent">
+      <a href="dispo.html" target="_blank">Open Dispo Page</a>
+      <a href="profile.html?tab=wholesaler&wh=acq">Back to Profile</a>
+    </div>
+  </header>
+
+  <div id="strip" class="strip" style="display:none"></div>
+
+  <!-- Permission Gate -->
+
+  <div id="gate" class="gate">
+    <h3>Checking your access…</h3>
+    <p>Please wait a moment while we verify your wholesaler permissions.</p>
   </div>
-</div>
 
-<!-- Modal -->
-<div id="formModal" class="modal" aria-hidden="true">
-  <div class="modal-content">
-    <button class="close-btn" onclick="closeModal()">×</button>
-    <iframe id="formIframe"></iframe>
+  <!-- Portal -->
+
+  <div id="portal" style="display:none">
+    <div class="container">
+      <section class="lead-section">
+        <div class="navbtns">
+          <button id="prevBtn">⏮️ Prev</button>
+          <button id="randBtn">🎲 Random</button>
+          <button id="nextBtn">⏭️ Next</button>
+        </div>
+        <div id="leadCard"></div>
+      </section>
+
+```
+  <section class="map-section">
+    <iframe class="map" id="gmap" src="about:blank" allowfullscreen></iframe>
+  </section>
+</div>
+```
+
   </div>
-</div>
 
-<!-- Load leads data before main script -->
-<script src="https://your-github-username.github.io/your-repo-name/leads-live-20250809-185753.js"></script>
+  <!-- Modal -->
 
-<!-- Your main portal script -->
-<script src="main.js"></script>
+  <div id="formModal" class="modal" aria-hidden="true">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <iframe id="formIframe"></iframe>
+    </div>
+  </div>
+
+  <!-- Firebase -->
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <script>
+    /* ---------- Helpers ---------- */
+    const $  = s => document.querySelector(s);
+    const qs = k => new URL(location.href).searchParams.get(k) || "";
+
+    function toggleMenu(){ const m=$("#menuContent"); m.style.display=(m.style.display==="block")?"none":"block"; }
+    function copyToClipboard(text){ navigator.clipboard.writeText(text).then(()=> alert("Copied number: " + text)); }
+    function setMap(address){
+      const q = encodeURIComponent(address || "");
+      $("#gmap").src = q ? `https://www.google.com/maps?q=${q}&output=embed` : "about:blank";
+    }
+    function openModal(url){ const m=$("#formModal"), i=$("#formIframe"); i.src=url; m.style.display="flex"; }
+    function closeModal(){ $("#formModal").style.display="none"; $("#formIframe").src=""; }
+    function highlightKeywords(text=""){
+      const k = ["asbestos","vacant","fha","foreclosure","build","loan","occupied","equity","taxes","motivated","carryback"];
+      return text.replace(new RegExp(`\\b(${k.join("|")})\\b`,"gi"),'<span class="highlight">$1</span>');
+    }
+    // Tiny loader with cache-buster so new uploads show immediately
+    function injectScript(src){
+      return new Promise((resolve,reject)=>{
+        if(!src){ resolve(false); return; }
+        const s = document.createElement("script");
+        const cb = (src.includes("?") ? "&" : "?") + "cb=" + Date.now();
+        s.src = src + cb;
+        s.onload = () => resolve(true);
+        s.onerror = () => reject(new Error("Feed load failed"));
+        document.head.appendChild(s);
+      });
+    }
+    function setStrip(msg){ const b=$("#strip"); b.textContent = msg; b.style.display="block"; }
+
+    /* ---------- Firebase ---------- */
+    const firebaseConfig = {
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.firebasestorage.app",
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
+      measurementId: "G-KTNXZM14F7"
+    };
+    if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.database();
+
+    const state = { uid:"", leads:[], i:0 };
+
+    /* ---------- UI ---------- */
+    async function render(){
+      const card = $("#leadCard");
+      if(!state.leads.length){ card.textContent = "No leads loaded."; return; }
+
+      const L = state.leads[state.i] || {};
+      const contact = (L.contacts && L.contacts[0]) || {name:"(no name)", phone:""};
+      const formBase = "https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform";
+      const formURL  = `${formBase}?usp=pp_url&entry.849181096=${encodeURIComponent("Wholesaler")}&entry.121126280=${encodeURIComponent(contact.name)}&entry.1828741519=${encodeURIComponent(L.address||"")}`;
+
+      card.innerHTML = `
+        <div class="lead-buttons">
+          <a class="chat" href="https://www.textnow.com/messaging" target="_blank">TextNow</a>
+          <button class="call"  onclick="copyToClipboard('${contact.phone||""}')">📞 Copy</button>
+          <button class="drive" onclick="window.open('https://maps.google.com/?q=${encodeURIComponent(L.address||"")}', '_blank')">🚗 Directions</button>
+          <button class="drive" onclick="openModal('${formURL}')">📝 Notes</button>
+        </div>
+
+        <div class="lead-card">
+          <strong>${contact.name}</strong><br/>
+          ${L.address || "(no address)"}<br/>
+          <details class="accordion">
+            <summary>📊 Deal Details</summary>
+            <div>${highlightKeywords((L.notes||"").replace(/\n/g,"<br>")) || "No deal notes available."}</div>
+          </details>
+        </div>
+      `;
+      setMap(L.address || "");
+      setStrip(`Loaded ${state.leads.length} lead(s). Showing #${state.i+1}.`);
+    }
+
+    function hookNav(){
+      $("#nextBtn").onclick = ()=>{ state.i = (state.i+1) % state.leads.length; render(); };
+      $("#prevBtn").onclick = ()=>{ state.i = (state.i-1+state.leads.length) % state.leads.length; render(); };
+      $("#randBtn").onclick = ()=>{ state.i = Math.floor(Math.random()*state.leads.length); render(); };
+    }
+    function showPortal(){ $("#gate").style.display="none"; $("#portal").style.display=""; }
+
+    /* ---------- Feed loader ----------
+       Order: hardcoded GitHub -> ?feed= -> local leads.js -> RTDB pointer
+    --------------------------------------------------------------- */
+    const HARDCODE_FEED = "https://raw.githubusercontent.com/DealBankersDotCom/CRM/main/refs/heads/main/leads-latest.js"; // update if your repo/path differs
+
+    async function loadFeed(){
+      try{
+        // Hardcoded GitHub path (your “leads-latest.js” routine)
+        await injectScript(HARDCODE_FEED);
+        if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "hardcoded"; }
+      }catch(e){ console.warn("Hardcoded feed failed:", e); }
+
+      const fromQuery = qs("feed");
+      try{
+        if(fromQuery){
+          await injectScript(fromQuery);
+          if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "query"; }
+        }
+      }catch(e){ console.error("Feed URL error:", e); setStrip("Error loading feed URL. Falling back …"); }
+
+      try{
+        await injectScript("leads.js");
+        if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "local"; }
+      }catch(e){ /* ignore */ }
+
+      try{
+        const snap = await db.ref("portal/leads/latestJsUrl").get();
+        const url = snap.val();
+        if(url){
+          await injectScript(url);
+          if(Array.isArray(window.leads) && window.leads.length){ state.leads = window.leads; return "rtdb"; }
+        }
+      }catch(e){ console.error("Pointer read error", e); }
+
+      setStrip("No feed configured. Add leads-latest.js in your repo (or pass ?feed=PUBLIC_SCRIPT_URL, or include a local leads.js).");
+      return "none";
+    }
+
+    /* ---------- Auth + permission ---------- */
+    const uidFromQuery = qs("uid");
+
+    auth.onAuthStateChanged(async (user)=>{
+      if(!user){
+        $("#gate").innerHTML = `<h3>Not signed in</h3><p class="muted">Please <a href="index.html">sign in</a> to continue.</p>`;
+        return;
+      }
+      state.uid = uidFromQuery || user.uid;
+
+      try{
+        const snap = await db.ref(`users/${state.uid}/roles/wholesaler`).get();
+        const allowed = snap.val() === true || snap.val() === "true";
+        if(!allowed){
+          $("#gate").innerHTML = `
+            <h3>Access denied</h3>
+            <p>You don’t have permission to view the Wholesaler Acquisition portal.</p>
+            <button class="btn" onclick="location.href='profile.html?tab=overview'">Back to Profile</button>`;
+          return;
+        }
+
+        showPortal();
+        hookNav();
+        const source = await loadFeed();
+        console.log("Feed source:", source, "count:", (state.leads||[]).length);
+        render();
+
+      }catch(err){
+        console.error(err);
+        $("#gate").innerHTML = `<h3>Error</h3><p>Couldn’t verify permissions. Please refresh.</p>`;
+      }
+    });
+  </script>
+
+</body>
+</html>
