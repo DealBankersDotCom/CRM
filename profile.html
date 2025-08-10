@@ -27,11 +27,20 @@
     .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:42px;height:42px;border-radius:10px;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.35)}
     .brand h1{font-size:16px;letter-spacing:.14em;text-transform:uppercase;margin:0;color:#bcd0e3}
-    .head-actions{display:flex;gap:8px;flex-wrap:wrap}
+    .head-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
     .btn{padding:10px 14px;border-radius:10px;border:1px solid #264054;background:#10202c;color:var(--text);cursor:pointer;font-weight:600}
     .btn:hover{filter:brightness(1.05)}
     .btn-danger{background:linear-gradient(180deg,#dd6060,#bb3e3e);border:none}
-    .btn-gold{background:linear-gradient(180deg,var(--gold),#9d7d49);color:#111;border:none}
+
+    /* Red/Blue Phone */
+    .btn-phone{
+      width:44px;height:44px;border-radius:50%;font-size:20px;font-weight:bold;border:none;cursor:pointer;
+      display:flex;align-items:center;justify-content:center;color:#fff;box-shadow:0 4px 12px rgba(0,0,0,.35)
+    }
+    .btn-phone.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}
+    .btn-phone.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
+    .btn-phone:hover{filter:brightness(1.1)}
+
     .tabs{display:flex;gap:8px;padding:12px 12px 0;flex-wrap:wrap}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid #1d3142;cursor:pointer;font-size:14px;background:#0f1a24;color:#bcd0e3}
     .tab.active{background:linear-gradient(180deg,var(--accent),#0a58ca);color:#fff;border:none}
@@ -63,7 +72,6 @@
     .textarea{min-height:120px;resize:vertical}
     .hint{font-size:12px;color:var(--muted);margin-top:6px}
 
-    /* Responsive */
     @media (max-width:900px){.iframe-wrap{height:86vh;min-height:640px}}
     @media (max-width:680px){
       body{padding:10px}
@@ -74,7 +82,6 @@
       .grid{grid-template-columns:1fr}
     }
 
-    /* toast */
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #1a2a36;box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
   </style>
@@ -87,7 +94,8 @@
         <div><h1>DEALBANKERS • PROFILE</h1></div>
       </div>
       <div class="head-actions">
-        <button id="requestsBtn" class="btn btn-gold">Requests</button>
+        <button id="redPhoneBtn"  class="btn-phone red"  title="Immediate Need">☎</button>
+        <button id="bluePhoneBtn" class="btn-phone blue" title="Standard Request">☎</button>
         <button id="logoutBtn" class="btn btn-danger">Log Out</button>
       </div>
     </header>
@@ -105,6 +113,7 @@
       <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
         <h2>Welcome</h2>
+        <div id="meLine" class="muted" style="margin:4px 0 10px"></div>
         <p class="muted">Pick a portal above to get to work. Your last requests will appear below once you submit something.</p>
         <div id="myRequests" class="list" aria-live="polite"></div>
       </div>
@@ -114,28 +123,34 @@
         <h2>Wholesaler Workspace</h2>
         <div class="muted">Acquisition and Disposition tools live side-by-side. Use the sub-tabs to switch.</div>
 
-        <div class="subtabs" id="whSubtabs">
-          <button class="subtab active" data-sub="acq">Acquisition</button>
-          <button class="subtab" data-sub="dispo">Dispo</button>
+        <div id="whGate" class="row" style="display:none;margin-top:10px">
+          Access pending. If you need access now, smash the ☎ Red Phone (Immediate Need).
         </div>
 
-        <div data-subpanel="acq">
-          <div class="toolbar">
-            <button class="toolbtn" id="btnNewTabWh">Open Fullscreen</button>
-            <button class="toolbtn" id="btnReloadWh">Reload</button>
+        <div id="whReal" style="display:none">
+          <div class="subtabs" id="whSubtabs">
+            <button class="subtab active" data-sub="acq">Acquisition</button>
+            <button class="subtab" data-sub="dispo">Dispo</button>
           </div>
-          <div class="iframe-wrap">
-            <iframe id="whFrame" src="about:blank" title="Wholesaler Acquisition"></iframe>
-          </div>
-        </div>
 
-        <div data-subpanel="dispo" style="display:none">
-          <div class="toolbar">
-            <button class="toolbtn" id="btnNewTabDi">Open Fullscreen</button>
-            <button class="toolbtn" id="btnReloadDi">Reload</button>
+          <div data-subpanel="acq">
+            <div class="toolbar">
+              <button class="toolbtn" id="btnNewTabWh">Open Fullscreen</button>
+              <button class="toolbtn" id="btnReloadWh">Reload</button>
+            </div>
+            <div class="iframe-wrap">
+              <iframe id="whFrame" src="about:blank" title="Wholesaler Acquisition"></iframe>
+            </div>
           </div>
-          <div class="iframe-wrap">
-            <iframe id="diFrame" src="about:blank" title="Dispositions Portal"></iframe>
+
+          <div data-subpanel="dispo" style="display:none">
+            <div class="toolbar">
+              <button class="toolbtn" id="btnNewTabDi">Open Fullscreen</button>
+              <button class="toolbtn" id="btnReloadDi">Reload</button>
+            </div>
+            <div class="iframe-wrap">
+              <iframe id="diFrame" src="about:blank" title="Dispositions Portal"></iframe>
+            </div>
           </div>
         </div>
       </div>
@@ -169,6 +184,7 @@
           <label>
             <div class="muted">Request Type</div>
             <select class="select" id="reqType" required>
+              <option value="Immediate Need">Immediate Need</option>
               <option value="Funding">Funding</option>
               <option value="Sell a Property">Sell a Property</option>
               <option value="Partner with Us">Partner with Us</option>
@@ -196,7 +212,7 @@
         <div class="hint">We’ll attach your account info automatically (name, email, uid).</div>
 
         <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
-          <button type="submit" class="btn btn-gold">Send Request</button>
+          <button type="submit" class="btn" style="background:linear-gradient(180deg,#3b9eff,#0049b3);border:none">Send Request</button>
           <a id="mailtoFallback" class="btn" href="#">Email Instead</a>
         </div>
       </form>
@@ -225,14 +241,10 @@
     const auth = firebase.auth();
     const db   = firebase.database();
 
-    // ------- small helpers
     const $ = s => document.querySelector(s);
-    function toast(msg){
-      const el = $('#toast'); el.textContent = msg; el.style.display = 'block';
-      setTimeout(()=> el.style.display = 'none', 2200);
-    }
+    function toast(msg){ const el = $('#toast'); el.textContent = msg; el.style.display = 'block'; setTimeout(()=> el.style.display='none', 2200); }
 
-    // ------- Tabs
+    // Tabs
     const panels=[...document.querySelectorAll('[data-panel]')];
     const tabs=[...document.querySelectorAll('.tab')];
     function show(tabName){
@@ -245,7 +257,7 @@
     });
     show(new URL(location.href).searchParams.get('tab')||'overview');
 
-    // ------- Subtabs (wholesaler)
+    // Subtabs (wholesaler)
     const whTabs=[...document.querySelectorAll('#whSubtabs .subtab')];
     const whPanels=[...document.querySelectorAll('[data-subpanel]')];
     function showWh(sub){
@@ -253,53 +265,62 @@
       whPanels.forEach(p=>p.style.display=(p.dataset.subpanel===sub)?'':'none');
       const url=new URL(location.href); url.searchParams.set('wh',sub); history.replaceState(null,'',url);
     }
-    document.getElementById('whSubtabs').addEventListener('click',e=>{
-      const b=e.target.closest('.subtab'); if(!b) return; showWh(b.dataset.sub);
+    document.addEventListener('click',e=>{
+      const b=e.target.closest('#whSubtabs .subtab'); if(!b) return; showWh(b.dataset.sub);
     });
     showWh(new URL(location.href).searchParams.get('wh')||'acq');
 
-    // ------- Auth + set iframes (guard against mirror)
+    // Auth + gating
     let iframesSet=false, currentUser=null;
-    auth.onAuthStateChanged(user=>{
+    auth.onAuthStateChanged(async user=>{
       if(!user){ location.href='index.html'; return; }
       currentUser=user;
-      if(iframesSet) return;
-      iframesSet=true;
+      $('#meLine').textContent = `${user.email||''} — UID: ${user.uid}`;
 
-      const uid=encodeURIComponent(user.uid);
-      const whSrc=`wholesaler.html?uid=${uid}&wh=acq`;
-      const diSrc=`dispo.html?uid=${uid}`;
+      // Red/Blue phone (pre-fill request type)
+      const reqTypeSelect = document.getElementById('reqType');
+      document.getElementById('redPhoneBtn').onclick  = ()=>{ reqTypeSelect.value='Immediate Need'; openReq(); };
+      document.getElementById('bluePhoneBtn').onclick = ()=>{ reqTypeSelect.value='Funding'; openReq(); };
 
-      const wh=document.getElementById('whFrame');
-      const di=document.getElementById('diFrame');
-      wh.setAttribute('src',whSrc);
-      di.setAttribute('src',diSrc);
-
-      document.getElementById('btnNewTabWh').onclick=()=>window.open(whSrc,'_blank');
-      document.getElementById('btnNewTabDi').onclick=()=>window.open(diSrc,'_blank');
-      document.getElementById('btnReloadWh').onclick=()=>wh.contentWindow?.location.reload();
-      document.getElementById('btnReloadDi').onclick=()=>di.contentWindow?.location.reload();
-
-      // Populate Overview with last 10 requests from this user
+      // Load user's last 10 requests
       db.ref('requests').orderByChild('uid').equalTo(user.uid).limitToLast(10).on('value',snap=>{
         const box = document.getElementById('myRequests');
         if(!snap.exists()){ box.innerHTML = '<div class="row muted">No requests yet.</div>'; return; }
         const items=[];
         snap.forEach(child=>{
-          const r = child.val();
-          const d = new Date(r.createdAt||Date.now());
-          items.unshift(`
-            <div class="row">
-              <div style="font-weight:700">${r.type||'Request'}</div>
-              <div class="muted" style="margin:2px 0 6px">${r.subject||''}</div>
-              <div style="font-size:13px;white-space:pre-wrap">${(r.message||'').slice(0,300)}</div>
-              <div class="muted" style="margin-top:6px">${d.toLocaleString()} • ${r.status||'new'}</div>
-            </div>`);
+          const r = child.val(); const d = new Date(r.createdAt||Date.now());
+          items.unshift(`<div class="row">
+            <div style="font-weight:700">${r.type||'Request'}</div>
+            <div class="muted" style="margin:2px 0 6px">${r.subject||''}</div>
+            <div style="font-size:13px;white-space:pre-wrap">${(r.message||'').slice(0,300)}</div>
+            <div class="muted" style="margin-top:6px">${d.toLocaleString()} • ${r.status||'new'}</div>
+          </div>`);
         });
         box.innerHTML = items.join('');
       });
 
-      // Prefill mailto fallback with the signed-in email
+      // Gate: only set iframes if leadsEnabled = true
+      const gateRef = db.ref(`userSettings/${user.uid}/wholesaler/leadsEnabled`);
+      gateRef.on('value', snap=>{
+        const allowed = !!snap.val();
+        document.getElementById('whGate').style.display = allowed ? 'none' : '';
+        document.getElementById('whReal').style.display = allowed ? '' : 'none';
+        if(allowed && !iframesSet){
+          iframesSet = true;
+          const uid=encodeURIComponent(user.uid);
+          const whSrc=`wholesaler.html?uid=${uid}&wh=acq`;
+          const diSrc=`dispo.html?uid=${uid}`;
+          const wh=document.getElementById('whFrame');
+          const di=document.getElementById('diFrame');
+          wh.src = whSrc; di.src = diSrc;
+          document.getElementById('btnNewTabWh').onclick=()=>window.open(whSrc,'_blank');
+          document.getElementById('btnNewTabDi').onclick=()=>window.open(diSrc,'_blank');
+          document.getElementById('btnReloadWh').onclick=()=>wh.contentWindow?.location.reload();
+          document.getElementById('btnReloadDi').onclick=()=>di.contentWindow?.location.reload();
+        }
+      });
+
+      // Prefill mailto fallback
       const mailto = document.getElementById('mailtoFallback');
       const addr = encodeURIComponent('support@dealbankers.com');
       const subj = encodeURIComponent('DealBankers Request');
@@ -307,11 +328,10 @@
       mailto.href = `mailto:${addr}?subject=${subj}&body=${body}`;
     });
 
-    // ------- Requests modal + submit
+    // Requests Modal
     const reqModal = document.getElementById('reqModal');
     const openReq  = ()=>{ reqModal.classList.add('open'); reqModal.setAttribute('aria-hidden','false'); };
     const closeReq = ()=>{ reqModal.classList.remove('open'); reqModal.setAttribute('aria-hidden','true'); };
-    document.getElementById('requestsBtn').addEventListener('click', openReq);
     reqModal.addEventListener('click', e=>{ if (e.target.hasAttribute('data-close')) closeReq(); });
 
     document.getElementById('reqForm').addEventListener('submit', async (e)=>{
@@ -322,35 +342,12 @@
       const subject = document.getElementById('reqSubject').value.trim();
       const message = document.getElementById('reqMessage').value.trim();
       if(!message){ return toast('Please add a message'); }
-
-      const payload = {
-        uid: currentUser.uid,
-        email: currentUser.email || '',
-        name: currentUser.displayName || '',
-        type, contact, subject, message,
-        status: 'new',
-        createdAt: Date.now()
-      };
-      try{
-        await db.ref('requests').push(payload);
-        toast('Request sent');
-        (e.target).reset();
-        closeReq();
-      }catch(err){
-        console.error(err);
-        toast('Could not send. Try again.');
-      }
+      const payload = { uid: currentUser.uid, email: currentUser.email||'', name: currentUser.displayName||'', type, contact, subject, message, status: 'new', createdAt: Date.now() };
+      try{ await db.ref('requests').push(payload); toast('Request sent'); e.target.reset(); closeReq(); }catch(err){ console.error(err); toast('Could not send. Try again.'); }
     });
 
-    // ------- Logout
-    document.getElementById('logoutBtn').addEventListener('click',async()=>{
-      try{ await auth.signOut(); location.href='index.html'; }catch(e){ alert(e.message); }
-    });
-
-    // Optional: allow iframes to open the Requests modal via postMessage
-    window.addEventListener('message', (ev)=>{
-      if(typeof ev.data === 'object' && ev.data?.type === 'openRequests'){ openReq(); }
-    });
+    // Logout
+    document.getElementById('logoutBtn').addEventListener('click',async()=>{ try{ await auth.signOut(); location.href='index.html'; }catch(e){ alert(e.message); }});
   </script>
 </body>
 </html>
