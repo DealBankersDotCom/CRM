@@ -62,8 +62,7 @@
     <div id="originInfo" class="hint"></div>
     <div id="status" class="status" aria-live="polite"></div>
 
-    <p class="tiny">Having trouble? Ensure your domain is authorized in Firebase Auth and included in your API key’s HTTP referrers.</p>
-    <p class="tiny">After sign-in, you can redirect users to <code>/acquisition.html</code> or wherever you need.</p>
+    <p class="tiny">If sign-in fails, verify your domain is in Firebase Auth → Authorized domains and in your API key’s HTTP referrers.</p>
   </div>
 
   <!-- Firebase v10 (modular, CDN) -->
@@ -74,7 +73,7 @@
       setPersistence, browserLocalPersistence, onAuthStateChanged, signOut
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // 🔧 Replace ONLY if your project info differs. appId is optional for Auth.
+    // Keep your existing project settings (no API key printed anywhere)
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -100,22 +99,18 @@
       console.log(msg);
     }
 
-    // Show which API key we’re using (debug)
-    log("Firebase API key in use: " + firebaseConfig.apiKey);
-
-    // Persist across reloads
     await setPersistence(auth, browserLocalPersistence);
 
-    // If we’re returning from a redirect, surface the result (or error)
+    // Show redirect result if returning from the Google redirect flow
     try {
       const redir = await getRedirectResult(auth);
       if (redir?.user) {
         log("✅ Redirect signed in: " + (redir.user.email || redir.user.uid), "ok");
-        // window.location.href = "/acquisition.html"; // uncomment to route after successful login
+        // Keep overview: no auto-redirect. If you ever want it:
+        // window.location.href = "/acquisition.html";
       }
     } catch (e) {
       log("❌ Redirect error: " + e.code + " — " + e.message, "bad");
-      if (e.customData?.appName) log("customData.appName=" + e.customData.appName);
     }
 
     onAuthStateChanged(auth, (user) => {
@@ -126,16 +121,21 @@
       try {
         const res = await signInWithPopup(auth, provider);
         log("✅ Popup signed in: " + (res.user.email || res.user.uid), "ok");
+        // Keep overview: no auto-redirect.
         // window.location.href = "/acquisition.html";
       } catch (e) {
         log("❌ Popup sign-in failed: " + e.code + " — " + e.message, "bad");
-        // Common: auth/requests-from-referer-… means API key referrer restriction or unauthorized domain
-        if (e.code === "auth/popup-blocked" || e.code === "auth/popup-closed-by-user") {
-          log("ℹ️ Popup blocked/closed. Using redirect instead…");
+        const code = (e.code || "").toString();
+        // Fall back where popup is unreliable
+        if (
+          code === "auth/popup-blocked" ||
+          code === "auth/popup-closed-by-user" ||
+          code.startsWith("auth/visibility") ||
+          code === "auth/cors-unsupported" ||
+          code === "auth/operation-not-supported-in-this-environment"
+        ) {
+          log("↪️ Using redirect flow instead…");
           return loginRedirect();
-        }
-        if (e.code?.startsWith("auth/requests-from-referer")) {
-          log("🚫 Your API key is blocking this origin. See ‘Fix on the backend’ steps above.");
         }
       }
     }
