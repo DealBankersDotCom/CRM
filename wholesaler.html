@@ -22,7 +22,6 @@
     .qbtn{min-width:160px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:1px solid #21445b;color:#0a1a22;font-weight:900;box-shadow:0 10px 18px rgba(0,0,0,.25)}
     .qbtn.call{background:linear-gradient(180deg,#2fe18a,#1bb76d)} .qbtn.sms{background:linear-gradient(180deg,#4eb6ff,#1a7fff);color:#fff}
     .qbtn.mail{background:linear-gradient(180deg,#ffd36a,#c89a2a)} .qbtn.note{background:linear-gradient(180deg,#ffffff,#dfe7ee)}
-    /* new: copy button + responsive visibility */
     .qbtn.copy{background:linear-gradient(180deg,#ffffff,#dfe7ee)}
     .hide-mobile{display:none}
     @media (min-width:820px){ .hide-mobile{display:inline-flex} }
@@ -38,13 +37,11 @@
     .chip{font-size:12px;padding:7px 12px;border-radius:999px;border:1px solid #28506a;background:#123a53}
     .map{width:100%;height:340px;border:0;border-radius:12px;background:#fff}
     @media (max-width:480px){.map{height:280px}}
-    /* Notes editor */
     .note-card{background:#0f334a;border:1px solid #224b63;border-radius:12px;padding:12px 14px;margin:14px auto;max-width:840px}
     .note-card h3{margin:0 0 8px;font-size:14px;letter-spacing:.03em}
     .textarea{width:100%;min-height:120px;resize:vertical;border-radius:10px;border:1px solid #2a5572;background:#0d2535;color:#eaf6ff;padding:10px 12px;line-height:1.45}
     .note-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;margin-top:10px}
     .btn-ghost{background:#0f3247;color:#eaf6ff}
-    /* toast */
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid #1a2a36;box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
   </style>
 </head>
@@ -81,10 +78,9 @@
     </section>
   </div>
 
-  <!-- Toast -->
   <div id="toast"></div>
 
-  <!-- Firebase (auth carries over from profile.html) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
@@ -99,7 +95,7 @@
     (function(){
       const s=document.createElement('script');
       s.src='/leads.js?v='+Date.now();
-      s.onload=()=>{ window.leads=window.leads||[]; init(); };
+      s.onload=()=>{ window.leads=window.leads||[]; init?.(); };
       s.onerror=()=>{ document.getElementById('status').textContent='Could not load /leads.js'; };
       document.head.appendChild(s);
     })();
@@ -114,18 +110,14 @@
     const phoneOf=l=>(l?.contacts?.[0]?.phone||'').trim();
     function toast(msg){const el=$('#toast');el.textContent=msg;el.style.display='block';setTimeout(()=>el.style.display='none',1800)}
 
-    // Create a stable lead key from address
     const leadKey = addr => encodeURIComponent(String(addr||'').trim());
 
-    // Read latest saved notes (override) for a lead
     async function fetchSavedNotes(key){
       try{
         const snap = await db.ref(`leadNotes/acq/${key}/latest`).get();
         return snap.exists() ? (snap.val().text||'') : '';
       }catch(e){ return ''; }
     }
-
-    // Save notes with history
     async function saveNotes(key, text){
       if(!currentUser){ toast('Sign in again.'); return; }
       const payload = { text, uid: currentUser.uid, email: currentUser.email||'', ts: Date.now() };
@@ -133,6 +125,14 @@
       await base.child('latest').set(payload);
       await base.child('history').push(payload);
       toast('Notes saved');
+    }
+
+    function streetViewSrc(addr){
+      // Street View on desktop only; classic flags for broader coverage
+      return `https://maps.google.com/maps?q=${encodeURIComponent(addr)}&layer=c&z=18&output=svembed`;
+    }
+    function mapSrc(addr){
+      return `https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed`;
     }
 
     function render(i){
@@ -150,8 +150,11 @@
 
       setStatus(`Lead ${idx+1} of ${window.leads.length}`);
 
-      // Base notes from file
       const fileNotes = (lead?.notes||'').trim();
+
+      // Choose embed: Street View on desktop, Map on mobile
+      const isMobile = window.matchMedia('(max-width: 820px)').matches;
+      const embed = isMobile ? mapSrc(addr) : streetViewSrc(addr);
 
       $('#leadCard').innerHTML=`
         <div class="title">${addr || name}</div>
@@ -161,7 +164,6 @@
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
           </div>
 
-          <!-- Editable notes ABOVE the map -->
           <div class="note-card">
             <h3>📊 Deal Details</h3>
             <textarea id="noteArea" class="textarea" placeholder="Type notes…"></textarea>
@@ -172,10 +174,7 @@
             <div id="noteHint" class="muted" style="margin-top:6px"></div>
           </div>
 
-          <!-- Street View embed -->
-          <iframe class="map"
-            src="https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=svembed"
-            loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe class="map" src="${embed}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0">
             <a class="btn" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Directions</a>
@@ -184,7 +183,7 @@
         </div>
       `;
 
-      // Wire quickbar
+      // Quickbar actions
       const callHref  = phone ? `tel:${phone}` : '#';
       const smsHref   = phone ? `sms:${phone}` : '#';
       const mailHref  = `mailto:?subject=${encodeURIComponent(name)} — Lead&body=${encodeURIComponent(addr)}`;
@@ -200,7 +199,7 @@
         catch { toast('Could not copy'); }
       };
 
-      // Load saved notes (override) then set textarea
+      // Notes load/save
       (async ()=>{
         const key = leadKey(addr);
         const saved = (await fetchSavedNotes(key)) || '';
@@ -236,7 +235,7 @@
       if(e.key.toLowerCase()==='r') return render(Math.floor(Math.random()*(window.leads?.length||1)));
     });
 
-    // Wait for auth (so writes use the signed-in user)
+    // Wait for auth and render
     firebase.auth().onAuthStateChanged(u=>{
       currentUser = u || null;
       if(document.readyState==='loading'){
@@ -245,6 +244,9 @@
         render(0);
       }
     });
+
+    // Re-render on resize to switch between SV / Map if needed
+    window.addEventListener('resize', ()=> render(idx));
   </script>
 </body>
 </html>
