@@ -3,325 +3,152 @@
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DealBankers — Secure Access</title>
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-
+  <title>DealBankers — Sign In</title>
+  <meta name="robots" content="noindex"/>
   <style>
     :root{
-      --bg1:#0b1218; --bg2:#0e1a24; --bg3:#0f2432;
-      --card:#0f1a24ee;
-      --panel:#0b141b;
-      --glass:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.12);
-      --text:#e7eef4; --muted:#9fb3c7;
-      --green:#27a844; --green-2:#1f8a39;
-      --blue:#0d6efd; --blue-2:#0a58ca;
-      --accent:#c7a86a;
-      --shadow:0 24px 64px rgba(0,0,0,.55);
-      --radius:18px;
+      --bg:#0b1218; --panel:#0f1a24ee; --glass:rgba(255,255,255,.06);
+      --text:#e7eef4; --muted:#9fb3c7; --accent:#c7a86a; --line:rgba(255,255,255,.12);
+      --ok:#2aa84a; --bad:#de3e3e;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
     body{
-      margin:0; color:var(--text);
-      font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-      background:
-        radial-gradient(1400px 600px at 85% -10%, #133243 0%, transparent 60%),
-        radial-gradient(1000px 600px at 10% 110%, #0b1d29 0%, transparent 55%),
-        linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
-      display:flex; align-items:center; justify-content:center;
-      padding:20px;
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Inter,Arial,sans-serif;
+      color:var(--text); background:radial-gradient(1000px 800px at 10% 0%, #14202b 0%, var(--bg) 40%, #071017 100%);
+      display:grid; place-items:center; padding:24px;
     }
-
-    .wrap{
-      width:1100px; max-width:100%;
-      border:1px solid var(--line);
-      border-radius:24px; overflow:hidden;
-      background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.03));
-      box-shadow:var(--shadow); backdrop-filter:blur(14px);
-    }
-
-    /* HEADER */
-    .top{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 18px; border-bottom:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(0,0,0,.12), transparent);
-    }
-    .brand{display:flex; align-items:center; gap:12px}
-    .brand img{width:42px;height:42px;border-radius:10px;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.35)}
-    .brand h1{margin:0;font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-    .chip{font-size:12px;color:var(--muted);padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04)}
-
-    /* LAYOUT */
-    .layout{
-      display:grid; grid-template-columns: 42% 58%;
-      gap:22px; padding:22px; align-items:stretch;
-    }
-
-    .hero{
-      border:1px solid var(--line); border-radius:var(--radius);
-      background:var(--panel); overflow:hidden; position:relative;
-    }
-    .hero-img{
-      width:100%; height:100%;
-      aspect-ratio: 4 / 3;
-      background:linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.55)),
-                 url("icon (1).jpg") center/cover no-repeat;
-    }
-    .hero-text{
-      position:absolute; inset:auto 0 0 0; padding:16px 18px;
-      background:linear-gradient(180deg, transparent 20%, rgba(0,0,0,.45));
-    }
-    .hero-title{font-size:clamp(18px, 2.4vw, 24px); font-weight:800; letter-spacing:.02em}
-    .hero-sub{font-size:12px;color:var(--muted);margin-top:4px}
-
-    /* CARD */
     .card{
-      border:1px solid var(--line); border-radius:var(--radius);
-      background:var(--card); padding:22px; position:relative; overflow:hidden;
+      width:100%; max-width:460px; background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line); border-radius:22px; padding:28px; box-shadow:0 24px 64px rgba(0,0,0,.45);
+      backdrop-filter: blur(8px);
     }
-    .card:after{
-      content:""; position:absolute; inset:-35%;
-      background:radial-gradient(700px 220px at 120% -10%, rgba(199,168,106,.12), transparent 55%);
-      transform:rotate(-8deg);
+    .brand{display:flex; align-items:center; gap:12px; margin-bottom:14px}
+    .brand .dot{width:12px; height:12px; border-radius:50%; background:var(--accent); box-shadow:0 0 24px var(--accent)}
+    h1{margin:0; font-size:22px; letter-spacing:.2px}
+    p{margin:6px 0 16px; color:var(--muted); font-size:14px}
+    button{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line); background:#162330;
+      color:var(--text); font-weight:600; cursor:pointer; transition:transform .04s ease, border-color .2s ease, background .2s ease;
     }
-    .card-inner{position:relative; z-index:1}
-    h2{margin:0 0 6px; font-weight:800; letter-spacing:.02em; font-size:clamp(20px,2.6vw,28px)}
-    .sub{color:var(--muted); font-size:13px; margin-bottom:12px}
-
-    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-    .input{
-      padding:12px 14px; border:1px solid var(--line); border-radius:12px;
-      background:rgba(8,14,20,.6); color:var(--text); font-size:15px; outline:none;
-    }
-    .input::placeholder{color:#8aa0b3}
-    .input:focus{border-color:var(--accent); box-shadow:0 0 0 2px rgba(199,168,106,.18)}
-
-    .btn{
-      width:100%; padding:13px 14px; border-radius:12px; border:1px solid var(--line);
-      background:rgba(255,255,255,.06); color:var(--text); font-size:15px; cursor:pointer;
-      transition:transform .02s ease, filter .15s ease, background .15s ease;
-      backdrop-filter: blur(6px);
-    }
-    .btn:active{transform:translateY(1px)}
-    .btn-primary{background:linear-gradient(180deg,var(--green),var(--green-2)); border:none}
-    .btn-primary:hover{filter:brightness(1.03)}
-    .btn-dark{background:linear-gradient(180deg,#101b25,#0c151d); border:1px solid var(--line)}
-    .btn-ghost:hover{background:rgba(255,255,255,.09)}
-
-    .g-btn{
-      display:flex; align-items:center; justify-content:center; gap:10px;
-      background:#ffffff; color:#1b1f23; border:none;
-      height:48px;
-      box-shadow:0 1px 0 rgba(0,0,0,.06) inset;
-    }
-    .g-btn img{width:18px;height:18px}
-
-    .actions{display:grid; grid-template-columns:1fr 1fr; gap:12px}
-
-    .roles{display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:12px}
-    .role{
-      padding:11px 0; border-radius:12px; border:1px solid var(--line);
-      background:linear-gradient(180deg,var(--blue),var(--blue-2)); color:#fff; font-size:14px; cursor:pointer;
-    }
-    .fine{color:var(--muted); font-size:12px; text-align:center; margin-top:10px}
-
-    /* RESPONSIVE */
-    @media (max-width: 980px){
-      .layout{grid-template-columns:1fr; gap:18px}
-      .hero-img{aspect-ratio: 16 / 9}
-    }
-    @media (max-width: 560px){
-      .wrap{border-radius:16px}
-      .layout{padding:16px}
-      .card{padding:16px}
-      .row{grid-template-columns:1fr}
-      .actions{grid-template-columns:1fr}
-      .roles{grid-template-columns:1fr 1fr}
-      .g-btn{height:46px}
-    }
-
-    #toast{
-      position:fixed;left:50%;transform:translateX(-50%);
-      bottom:18px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;
-      border:1px solid var(--line);box-shadow:var(--shadow);font-size:14px;display:none;z-index:50
-    }
+    button:hover{transform:translateY(-1px); border-color:#2b96ff44}
+    .row{display:flex; gap:12px}
+    .row > button{flex:1}
+    .sep{display:flex; align-items:center; gap:12px; margin:16px 0; color:var(--muted); font-size:12px}
+    .sep:before,.sep:after{content:""; flex:1; height:1px; background:var(--line)}
+    .tiny{font-size:12px; color:var(--muted)}
+    .status{margin-top:14px; padding:10px 12px; border-radius:10px; background:rgba(255,255,255,.04); border:1px dashed var(--line); font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; max-height:160px; overflow:auto; white-space:pre-wrap}
+    .ok{color:var(--ok)} .bad{color:var(--bad)}
+    .hint{margin-top:10px; font-size:12px; color:var(--muted)}
+    a.link{color:#8ecaff; text-decoration:none}
+    a.link:hover{text-decoration:underline}
   </style>
 </head>
 <body>
-  <main class="wrap" aria-label="Secure Login">
-    <header class="top">
-      <div class="brand">
-        <img src="icon (1).jpg" alt="DealBankers"/>
-        <h1>DEALBANKERS • ACCESS</h1>
-      </div>
-      <span class="chip">Secure Portal • v1</span>
-    </header>
+  <div class="card">
+    <div class="brand"><span class="dot"></span><h1>DealBankers — Secure Sign-In</h1></div>
+    <p>Use your Google account to access your portal.</p>
 
-    <section class="layout">
-      <!-- HERO -->
-      <aside class="hero" aria-hidden="true">
-        <div class="hero-img"></div>
-        <div class="hero-text">
-          <div class="hero-title">Operational • Confidential</div>
-          <div class="hero-sub">Authenticated users only. Activity monitored.</div>
-        </div>
-      </aside>
+    <button id="googleBtn" type="button">Continue with Google</button>
 
-      <!-- LOGIN CARD -->
-      <section class="card">
-        <div class="card-inner">
-          <h2>Sign In</h2>
-          <div class="sub">Use your email & password or your Google identity.</div>
+    <div class="sep">or</div>
 
-          <!-- form fixes Chrome's password warning and enables Enter-to-submit -->
-          <form id="loginForm" novalidate>
-            <div class="row" style="margin-bottom:12px">
-              <input id="email" class="input" type="email" placeholder="Email" autocomplete="username" required/>
-              <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password" required/>
-            </div>
-            <button id="emailLogin" class="btn btn-primary" type="submit" style="margin-bottom:10px">Enter</button>
-          </form>
+    <div class="row">
+      <button id="redirectBtn" type="button" title="Use redirect flow (more reliable on locked-down browsers)">Use Redirect</button>
+      <button id="signOutBtn" type="button">Sign out</button>
+    </div>
 
-          <button id="googleSignIn" class="btn g-btn" aria-label="Sign in with Google" style="margin-bottom:12px">
-            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google"/>
-            <span>Sign in with Google</span>
-          </button>
+    <div id="authState" class="hint">Auth: <span>checking…</span></div>
+    <div id="originInfo" class="hint"></div>
+    <div id="status" class="status" aria-live="polite"></div>
 
-          <div class="actions" style="margin-bottom:6px">
-            <button id="signupBtn" class="btn btn-dark">Create Account</button>
-            <button id="resetBtn" class="btn btn-ghost">Forgot Password</button>
-          </div>
+    <p class="tiny">If sign-in fails, verify your domain is in Firebase Auth → Authorized domains and in your API key’s HTTP referrers.</p>
+  </div>
 
-          <div class="roles">
-            <button class="role" onclick="location.href='profile.html'">Contractor</button>
-            <button class="role" onclick="location.href='profile.html'">Wholesaler</button>
-            <button class="role" onclick="location.href='profile.html'">Realtor</button>
-            <button class="role" onclick="location.href='profile.html'">Investor</button>
-          </div>
+  <!-- Firebase v10 (modular, CDN) -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
+      setPersistence, browserLocalPersistence, onAuthStateChanged, signOut
+    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-          <div class="fine">By continuing, you agree to our Terms & Privacy Policy.</div>
-        </div>
-      </section>
-    </section>
-  </main>
-
-  <div id="toast"></div>
-
-  <!-- Firebase (compat for static hosting) -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script>
-    // --- Firebase Project ---
+    // 🔧 Replace with your actual project config (key shown here is already public in your app config).
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
-      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
-      projectId: "deal-bankers",
-      storageBucket: "deal-bankers.firebasestorage.app",
-      messagingSenderId: "485110155601",
-      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
-      measurementId: "G-KTNXZM14F7"
+      projectId: "deal-bankers"
     };
-    firebase.initializeApp(firebaseConfig);
 
-    const auth = firebase.auth();
-    const db   = firebase.database();
-    const provider = new firebase.auth.GoogleAuthProvider();
+    const app  = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
 
-    // Persist session across tabs/refresh
-    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+    const statusEl = document.getElementById("status");
+    const authStateEl = document.getElementById("authState").querySelector("span");
+    const originInfo = document.getElementById("originInfo");
+    originInfo.textContent = "Origin: " + window.location.origin;
 
-    function toast(msg){
-      const el = document.getElementById('toast');
-      el.textContent = msg;
-      el.style.display = 'block';
-      clearTimeout(window.__tTo);
-      window.__tTo = setTimeout(()=> el.style.display = 'none', 2400);
+    function log(msg, cls=""){
+      const line = document.createElement("div");
+      if (cls) line.className = cls;
+      line.textContent = msg;
+      statusEl.appendChild(line);
+      statusEl.scrollTop = statusEl.scrollHeight;
+      console.log(msg);
     }
-    const cleanMsg = (e)=>{
-      const m = (e && (e.message||e.code||'')).toString();
-      return m.replace(/^Firebase:\s*/,'').replace(/\(auth\/.*\)\.?$/,'').trim() || 'Something went wrong';
-    };
 
-    // If already signed in, go straight to profile
-    auth.onAuthStateChanged(u => { if (u) location.href = 'profile.html'; });
+    await setPersistence(auth, browserLocalPersistence);
 
-    // Handle Google redirect result (fallback path)
-    auth.getRedirectResult().then(async res=>{
-      if(res && res.user){
-        const u = res.user;
-        await db.ref(`users/${u.uid}`).update({ email: u.email || '', updatedAt: Date.now() });
-        location.href = 'profile.html';
+    try {
+      const redir = await getRedirectResult(auth);
+      if (redir?.user) {
+        log("✅ Redirect signed in: " + (redir.user.email || redir.user.uid), "ok");
+        // window.location.href = "/acquisition.html";
       }
-    }).catch(e=>{
-      console.error(e);
-      toast(cleanMsg(e));
+    } catch (e) {
+      log("❌ Redirect error: " + e.code + " — " + e.message, "bad");
+    }
+
+    onAuthStateChanged(auth, (user) => {
+      authStateEl.textContent = user ? (user.email || user.uid) : "signed out";
     });
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const emailEl   = document.getElementById('email');
-      const passEl    = document.getElementById('password');
-      const googleBtn = document.getElementById('googleSignIn');
-      const signupBtn = document.getElementById('signupBtn');
-      const resetBtn  = document.getElementById('resetBtn');
-
-      // Email/password via FORM submit (fixes Chrome warning + enables Enter)
-      document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
-        e.preventDefault();
-        const email = (emailEl?.value || '').trim();
-        const password = passEl?.value || '';
-        if (!email || !password) return toast('Enter email & password');
-        try{
-          await auth.signInWithEmailAndPassword(email, password);
-          location.href = 'profile.html';
-        }catch(e){ console.error(e); toast(cleanMsg(e)); }
-      });
-
-      // Google popup with redirect fallback
-      googleBtn?.addEventListener('click', async () => {
-        try{
-          const res = await auth.signInWithPopup(provider);
-          const u = res.user;
-          await db.ref(`users/${u.uid}`).update({ email: u.email || '', updatedAt: Date.now() });
-          location.href = 'profile.html';
-        }catch(e){
-          console.warn('Popup sign-in failed, trying redirect…', e);
-          try{
-            await auth.signInWithRedirect(provider);
-          }catch(e2){
-            console.error(e2);
-            toast(cleanMsg(e2));
-          }
+    async function loginPopup(){
+      try {
+        const res = await signInWithPopup(auth, provider);
+        log("✅ Popup signed in: " + (res.user.email || res.user.uid), "ok");
+        // window.location.href = "/acquisition.html";
+      } catch (e) {
+        log("❌ Popup sign-in failed: " + e.code + " — " + e.message, "bad");
+        if (e.code === "auth/popup-blocked" || e.code === "auth/popup-closed-by-user") {
+          log("ℹ️ Popup blocked/closed. Using redirect instead…");
+          return loginRedirect();
         }
-      });
+      }
+    }
 
-      // Create account
-      signupBtn?.addEventListener('click', async () => {
-        const email = (emailEl?.value || '').trim();
-        const password = passEl?.value || '';
-        if (!email || !password) return toast('Enter email & password to sign up');
-        try{
-          const cred = await auth.createUserWithEmailAndPassword(email, password);
-          await db.ref(`users/${cred.user.uid}`).set({ email, createdAt: Date.now() });
-          location.href = 'profile.html';
-        }catch(e){ console.error(e); toast(cleanMsg(e)); }
-      });
+    async function loginRedirect(){
+      try {
+        await signInWithRedirect(auth, provider);
+      } catch (e) {
+        log("❌ Redirect sign-in failed: " + e.code + " — " + e.message, "bad");
+      }
+    }
 
-      // Reset password
-      resetBtn?.addEventListener('click', async () => {
-        const email = (emailEl?.value || '').trim();
-        if (!email) return toast('Enter your email first');
-        try{
-          await auth.sendPasswordResetEmail(email);
-          toast('Reset email sent');
-        }catch(e){ console.error(e); toast(cleanMsg(e)); }
-      });
-    });
+    async function doSignOut(){
+      try {
+        await signOut(auth);
+        log("👋 Signed out", "ok");
+      } catch (e) {
+        log("❌ Sign-out error: " + e.code + " — " + e.message, "bad");
+      }
+    }
 
-    // (Optional) log the API key in console so you can verify you edited the right key in GCP
-    console.log('Firebase API key in use:', firebase.app().options.apiKey);
+    document.getElementById("googleBtn").addEventListener("click", loginPopup);
+    document.getElementById("redirectBtn").addEventListener("click", loginRedirect);
+    document.getElementById("signOutBtn").addEventListener("click", doSignOut);
   </script>
 </body>
 </html>
