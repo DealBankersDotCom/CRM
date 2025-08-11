@@ -141,7 +141,6 @@
       .g-btn{height:46px}
     }
 
-    /* tiny helper */
     #toast{
       position:fixed;left:50%;transform:translateX(-50%);
       bottom:18px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;
@@ -175,12 +174,14 @@
           <h2>Sign In</h2>
           <div class="sub">Use your email & password or your Google identity.</div>
 
-          <div class="row" style="margin-bottom:12px">
-            <input id="email" class="input" type="email" placeholder="Email" autocomplete="username"/>
-            <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password"/>
-          </div>
-
-          <button id="emailLogin" class="btn btn-primary" style="margin-bottom:10px">Enter</button>
+          <!-- form fixes Chrome's password warning and enables Enter-to-submit -->
+          <form id="loginForm" novalidate>
+            <div class="row" style="margin-bottom:12px">
+              <input id="email" class="input" type="email" placeholder="Email" autocomplete="username" required/>
+              <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password" required/>
+            </div>
+            <button id="emailLogin" class="btn btn-primary" type="submit" style="margin-bottom:10px">Enter</button>
+          </form>
 
           <button id="googleSignIn" class="btn g-btn" aria-label="Sign in with Google" style="margin-bottom:12px">
             <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google"/>
@@ -212,7 +213,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // --- Firebase Project (unchanged) ---
+    // --- Firebase Project ---
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -229,7 +230,7 @@
     const db   = firebase.database();
     const provider = new firebase.auth.GoogleAuthProvider();
 
-    // Keep sessions between visits
+    // Persist session across tabs/refresh
     auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
     function toast(msg){
@@ -239,11 +240,15 @@
       clearTimeout(window.__tTo);
       window.__tTo = setTimeout(()=> el.style.display = 'none', 2400);
     }
+    const cleanMsg = (e)=>{
+      const m = (e && (e.message||e.code||'')).toString();
+      return m.replace(/^Firebase:\s*/,'').replace(/\(auth\/.*\)\.?$/,'').trim() || 'Something went wrong';
+    };
 
-    // If already signed in, move on.
+    // If already signed in, go straight to profile
     auth.onAuthStateChanged(u => { if (u) location.href = 'profile.html'; });
 
-    // Handle redirect result (Google fallback)
+    // Handle Google redirect result (fallback path)
     auth.getRedirectResult().then(async res=>{
       if(res && res.user){
         const u = res.user;
@@ -255,21 +260,16 @@
       toast(cleanMsg(e));
     });
 
-    // Enter key submits email/password
-    document.addEventListener('keydown', e => {
-      if (e.key === 'Enter') document.getElementById('emailLogin')?.click();
-    });
-
     document.addEventListener('DOMContentLoaded', () => {
       const emailEl   = document.getElementById('email');
       const passEl    = document.getElementById('password');
-      const emailBtn  = document.getElementById('emailLogin');
       const googleBtn = document.getElementById('googleSignIn');
       const signupBtn = document.getElementById('signupBtn');
       const resetBtn  = document.getElementById('resetBtn');
 
-      // Email/Password login
-      emailBtn?.addEventListener('click', async () => {
+      // Email/password via FORM submit (fixes Chrome warning + enables Enter)
+      document.getElementById('loginForm')?.addEventListener('submit', async (e) => {
+        e.preventDefault();
         const email = (emailEl?.value || '').trim();
         const password = passEl?.value || '';
         if (!email || !password) return toast('Enter email & password');
@@ -279,7 +279,7 @@
         }catch(e){ console.error(e); toast(cleanMsg(e)); }
       });
 
-      // Google popup with redirect fallback (fixes “requests-from-referer … blocked” & popup issues)
+      // Google popup with redirect fallback
       googleBtn?.addEventListener('click', async () => {
         try{
           const res = await auth.signInWithPopup(provider);
@@ -287,17 +287,12 @@
           await db.ref(`users/${u.uid}`).update({ email: u.email || '', updatedAt: Date.now() });
           location.href = 'profile.html';
         }catch(e){
-          // Common causes: blocked popups, third-party cookie rules, referer restrictions.
           console.warn('Popup sign-in failed, trying redirect…', e);
           try{
             await auth.signInWithRedirect(provider);
           }catch(e2){
             console.error(e2);
             toast(cleanMsg(e2));
-            // Helpful hint for domain / referer problems:
-            if(String(e2.message||'').includes('blocked') || String(e2.code||'').includes('auth/')){
-              console.log('Check Firebase Auth > Settings > Authorized domains include both dealbankers.com and www.dealbankers.com. Also ensure Google provider is enabled.');
-            }
           }
         }
       });
@@ -325,10 +320,8 @@
       });
     });
 
-    function cleanMsg(e){
-      const m = (e && (e.message||e.code||'')).toString();
-      return m.replace(/^Firebase:\s*/,'').replace(/\(auth\/.*\)\.?$/,'').trim() || 'Something went wrong';
-    }
+    // (Optional) log the API key in console so you can verify you edited the right key in GCP
+    console.log('Firebase API key in use:', firebase.app().options.apiKey);
   </script>
 </body>
 </html>
