@@ -1,281 +1,118 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Deal Bankers Dispo CRM</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background: #f2f2f2;
-    }
-    header {
-      background-color: #111;
-      color: #fff;
-      padding: 15px 20px;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      font-size: 20px;
-    }
-    .menu {
-      cursor: pointer;
-      font-size: 24px;
-    }
-    .menu-content {
-      display: none;
-      position: absolute;
-      top: 60px;
-      right: 15px;
-      background-color: #fff;
-      border: 1px solid #ccc;
-      border-radius: 8px;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2);
-      z-index: 1000;
-    }
-    .menu-content a {
-      display: block;
-      padding: 10px 20px;
-      text-decoration: none;
-      color: #333;
-    }
-    .menu-content a:hover {
-      background-color: #f2f2f2;
-    }
-    .container {
-      display: flex;
-      flex-direction: column;
-    }
-    @media (min-width: 768px) {
-      .container {
-        flex-direction: row;
-        height: calc(100vh - 60px);
-      }
-    }
-    .lead-section, .map-section {
-      padding: 10px;
-    }
-    .lead-section {
-      flex: 1;
-    }
-    .map-section {
-      flex: 1;
-    }
-    .lead-buttons {
-      display: flex;
-      justify-content: center;
-      gap: 10px;
-      margin-bottom: 10px;
-      flex-wrap: wrap;
-    }
-    .lead-buttons a, .lead-buttons button {
-      font-size: 22px;
-      border: none;
-      border-radius: 8px;
-      text-decoration: none;
-      cursor: pointer;
-      padding: 8px 12px;
-      color: white;
-    }
-    .call { background-color: #007BFF; }
-    .drive { background-color: #6c757d; }
-    .settings { background-color: #343a40; }
-    .chat { background-color: #17a2b8; }
-    .lead-card {
-      background: #fff;
-      padding: 15px;
-      border-radius: 8px;
-      box-shadow: 0 0 8px rgba(0, 0, 0, 0.1);
-      margin: 0 auto 15px;
-      max-width: 500px;
-    }
-    .lead-card a {
-      color: #007BFF;
-      font-weight: bold;
-      text-decoration: none;
-    }
-    .lead-card button {
-      background-color: #28a745;
-      color: white;
-      padding: 6px 10px;
-      border: none;
-      border-radius: 4px;
-      font-size: 14px;
-      margin-top: 10px;
-      cursor: pointer;
-    }
-    .next-btn {
-      display: block;
-      margin: 15px auto;
-      padding: 10px 20px;
-      font-size: 18px;
-      background-color: #111;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    iframe.map {
-      width: 100%;
-      height: 300px;
-      border: none;
-    }
-    @media (min-width: 768px) {
-      iframe.map {
-        height: 100%;
-      }
-    }
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 999;
-      left: 0;
-      top: 0;
-      width: 100vw;
-      height: 100vh;
-      background-color: rgba(0, 0, 0, 0.7);
-      justify-content: center;
-      align-items: center;
-    }
-    .modal-content {
-      width: 90%;
-      height: 80%;
-      background: white;
-      border-radius: 10px;
-      overflow: hidden;
-      position: relative;
-    }
-    .modal iframe {
-      width: 100%;
-      height: 100%;
-      border: none;
-    }
-    .close-btn {
-      position: absolute;
-      top: 10px;
-      right: 15px;
-      font-size: 20px;
-      background: #333;
-      color: white;
-      border: none;
-      border-radius: 50%;
-      width: 30px;
-      height: 30px;
-      cursor: pointer;
-    }
-    .accordion {
-      margin-top: 10px;
-      border-radius: 8px;
-      overflow: hidden;
-      border: 1px solid #ccc;
-    }
-    .accordion summary {
-      background-color: #eee;
-      cursor: pointer;
-      padding: 10px;
-      font-weight: bold;
-    }
-    .accordion div {
-      padding: 10px;
-      background-color: #f9f9f9;
-      font-size: 14px;
-    }
-  </style>
-  <script src="dispo.js"></script>
-  <script>
-    let index = 0;
-
-    function showLead(lead) {
-      const name = lead.contacts[0]?.name || "Unknown";
-      const phone = lead.contacts[0]?.phone || "N/A";
-      const notes = lead.notes ? lead.notes.replace(/\n/g, "<br>") : "No deal notes available.";
-      const url = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=Dispo&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
-
-      document.getElementById("leadCard").innerHTML = `
-        <div class="lead-buttons">
-          <button class="call" onclick="copyToClipboard('${phone}')">📞</button>
-          <button class="drive" onclick="alert('Driving directions coming soon')">🚗</button>
-          <a class="settings" href="#">⚙️</a>
-          <a class="chat" href="https://www.dealbankers.com/chat.html" target="_blank">💬</a>
-        </div>
-        <div class="lead-card">
-          <strong>${name}</strong><br>
-          ${lead.address}<br>
-          <a href="https://www.textnow.com/messaging" target="_blank">TextNow Link</a><br>
-          <button onclick="openModal('${url}')">📝 Update Notes</button>
-          <details class="accordion">
-            <summary>📊 Deal Details</summary>
-            <div>${notes}</div>
-          </details>
-        </div>
-      `;
-    }
-
-    function nextLead() {
-      index++;
-      if (index >= leads.length) index = 0;
-      showLead(leads[index]);
-    }
-
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => {
-        alert("Copied number: " + text);
-      });
-    }
-
-    function openModal(url) {
-      const modal = document.getElementById("formModal");
-      const iframe = document.getElementById("formIframe");
-      iframe.src = url;
-      modal.style.display = "flex";
-    }
-
-    function closeModal() {
-      document.getElementById("formModal").style.display = "none";
-      document.getElementById("formIframe").src = "";
-    }
-
-    function toggleMenu() {
-      const menu = document.getElementById("menuContent");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
-
-    window.onload = function () {
-      if (typeof leads !== "undefined" && leads.length > 0) {
-        showLead(leads[index]);
-      } else {
-        document.getElementById("leadCard").innerHTML = `<div class="lead-card">No dispo deals loaded.</div>`;
-      }
-    };
-  </script>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Dispo • DealBankers</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+<style>
+  :root{--panel:#0f1c28;--line:#1e3343;--text:#edf5fb;--muted:#9fb4c6;--cta:#1ecf7a}
+  *{box-sizing:border-box}
+  body{margin:0;background:#0b141d;color:var(--text);font-family:system-ui,Segoe UI,Arial,sans-serif}
+  .bar{position:sticky;top:0;z-index:6;border-bottom:1px solid var(--line);background:linear-gradient(180deg,rgba(255,255,255,.06),transparent)}
+  .bar-inner{display:flex;gap:10px;align-items:center;padding:10px}
+  .cta{flex:1 1 auto;text-align:center;padding:12px;border-radius:12px;background:linear-gradient(180deg,var(--cta),#189f62);color:#08140d;font-weight:900;border:0;cursor:pointer}
+  .icons{display:flex;gap:8px;flex-wrap:wrap}
+  .ico{width:38px;height:38px;border-radius:10px;border:1px solid var(--line);background:#0e2332;display:grid;place-items:center;color:#e9f4ff;text-decoration:none}
+  .ico:hover{background:#143142}
+  .shell{display:grid;grid-template-columns:1fr 340px;gap:12px;padding:12px}
+  @media(max-width:900px){.shell{grid-template-columns:1fr}}
+  .card{border:1px solid var(--line);border-radius:12px;background:#0d1f2c;overflow:hidden}
+  .ttl{padding:12px 14px;border-bottom:1px solid var(--line);font-weight:900}
+  .body{padding:10px 12px}
+  .name{font-weight:900;font-size:18px;margin:2px 0 10px}
+  .map{width:100%;height:220px;border:0;border-radius:10px;background:#fff;margin-top:8px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+  .chip{font-size:12px;font-weight:700;padding:6px 10px;border-radius:999px;background:#0e2332;border:1px solid var(--line);color:#cfe1f1}
+  .notes{border:1px solid var(--line);border-radius:12px;background:#0d1f2c;display:flex;flex-direction:column;min-height:420px;position:sticky;top:62px}
+  .notes .hd{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+  .notes .pad{padding:10px 12px;display:flex;flex-direction:column;gap:8px}
+  textarea{width:100%;min-height:240px;border-radius:10px;border:1px solid #25465b;background:#0b1a24;color:#eaf6ff;padding:10px 12px;resize:vertical}
+  .btnS{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0e2332;color:#eaf6ff;cursor:pointer}
+</style>
 </head>
 <body>
-  <header>
-    Deal Bankers Dispo CRM
-    <div class="menu" onclick="toggleMenu()">☰</div>
-    <div class="menu-content" id="menuContent">
-      <a href="https://www.dealbankers.com/wholesaler.html">Go to Acquisition Page</a>
+  <div class="bar"><div class="bar-inner">
+    <div class="icons">
+      <a id="prev" class="ico" title="Prev">◀️</a>
+      <a id="rand" class="ico" title="Random">🎲</a>
     </div>
-  </header>
-  <div class="container">
-    <div class="lead-section">
-      <div id="leadCard"></div>
-      <button class="next-btn" onclick="nextLead()">⏭️ Next Deal</button>
+    <button id="next" class="cta">Next Buyer</button>
+    <div class="icons">
+      <a id="call"  class="ico" title="Call">📞</a>
+      <a id="sms"   class="ico" title="SMS">💬</a>
+      <a id="email" class="ico" title="Email">✉️</a>
+      <a id="copy"  class="ico" title="Copy">📋</a>
     </div>
-    <div class="map-section">
-      <iframe
-        class="map"
-        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
-        allowfullscreen
-      ></iframe>
+  </div></div>
+
+  <div class="shell">
+    <div>
+      <div id="leadCard" class="card"><div class="body">Loading sheet…</div></div>
     </div>
+    <aside class="notes">
+      <div class="hd"><strong>Notes</strong><span id="saveState" style="font-size:12px;color:#9fb4c6">Idle</span></div>
+      <div class="pad">
+        <textarea id="notesText" placeholder="Buyer preferences, price, terms, follow-ups…"></textarea>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btnS" id="insertStamp">Insert Timestamp</button>
+          <button class="btnS" id="clearNotes">Clear</button>
+          <button class="btnS" id="saveLocal">Save (Local)</button>
+          <a class="btnS" id="openForm" target="_blank" rel="noopener">Open Google Form</a>
+        </div>
+      </div>
+    </aside>
   </div>
-  <div id="formModal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <iframe id="formIframe"></iframe>
-    </div>
-  </div>
+
+  <script>
+    const SHEET_ID='1CVcnqMcpvYF9kC6yCZ6U7jqG_6YZEiuS';
+    const GID='1647085978';
+    const COLS={ first:'FirstName', last:'Last Name', phone:'Phone', email:'Email', notes:'Notes', addr:'Mailing' };
+
+    const $=q=>document.querySelector(q); let rows=[], idx=0; const uid=new URL(location.href).searchParams.get('uid')||'anon';
+
+    async function fetchSheet(){
+      const url=`https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${GID}`;
+      const res=await fetch(url,{cache:'no-store'}); const text=await res.text();
+      const json=JSON.parse(text.replace(/^[\s\S]*setResponse\(/,'').replace(/\);\s*$/,''));
+      const headers=json.table.cols.map(c=> (c.label||c.id||'').trim());
+      const find=(h)=> headers.findIndex(x=>x.toLowerCase()===(h||'').toLowerCase());
+      const map={ first:find(COLS.first), last:find(COLS.last), phone:find(COLS.phone), email:find(COLS.email), notes:find(COLS.notes), addr:find(COLS.addr) };
+      rows=json.table.rows.map(r=>{ const cell=i=> (i>=0&&r.c[i]) ? (r.c[i].v??'') : ''; return { first:cell(map.first), last:cell(map.last), phone:(cell(map.phone)+'').replace(/[^\d+]/g,''), email:cell(map.email), notes:cell(map.notes), addr:cell(map.addr) }; }).filter(x=>x.first||x.last||x.phone||x.addr);
+    }
+
+    function setCount(){ window.parent?.postMessage({type:'count',scope:'di',text: rows.length?`Row ${idx+1} of ${rows.length}`:'No rows'},'*'); }
+
+    function render(n){ if(!rows.length){ $('#leadCard').innerHTML='<div class="body">No buyers found.</div>'; setCount(); return; }
+      if(n<0) n=rows.length-1; if(n>=rows.length) n=0; idx=n; const r=rows[idx]; setCount();
+      const fullName=[r.first,r.last].filter(Boolean).join(' ')||'Unknown'; const phone=r.phone||''; const addr=r.addr||''; const notes=(r.notes||'').toString().replace(/\n/g,'<br>');
+      $('#call').href=phone?`tel:${phone}`:'#'; $('#sms').href=phone?`sms:${phone}`:'#'; $('#email').href=`mailto:${encodeURIComponent(r.email||'')}?subject=${encodeURIComponent('Deal from DealBankers')}`; $('#copy').onclick=()=>{ if(!phone) return alert('No phone'); navigator.clipboard.writeText(phone).then(()=>alert('Copied: '+phone)); };
+      $('#leadCard').innerHTML=`
+        <div class="ttl">${addr||fullName}</div>
+        <div class="body">
+          <div class="name">${fullName}</div>
+          <div style="padding:8px 12px">${notes||'—'}</div>
+          ${addr?`<iframe class="map" src="https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed" loading="lazy"></iframe>`:''}
+          <div class="chips">
+            <div class="chip">UID: ${uid.slice(0,8)}</div>
+            ${phone?'<div class="chip">Phone on file</div>':'<div class="chip">No phone</div>'}
+            ${addr?`<a class="chip" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Directions</a>`:''}
+            ${addr?`<a class="chip" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">Open in Google Maps</a>`:''}
+          </div>
+        </div>`;
+      const key='dispoNotes:'+btoa(unescape(encodeURIComponent((fullName+'|'+phone+'|'+addr)+'|'+uid))).replace(/=+$/,'');
+      const ta=$('#notesText'); const ss=$('#saveState'); ta.value=localStorage.getItem(key)||''; ss.textContent='Idle';
+      $('#saveLocal').onclick=()=>{ localStorage.setItem(key, ta.value||''); ss.textContent='Saved • '+new Date().toLocaleTimeString(); };
+      $('#insertStamp').onclick=()=>{ ta.value += `\n[${new Date().toLocaleString()}] `; };
+      $('#clearNotes').onclick=()=>{ if(confirm('Clear notes for this buyer?')){ ta.value=''; } };
+      $('#openForm').href=`https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Dispo')}&entry.121126280=${encodeURIComponent(fullName)}&entry.1828741519=${encodeURIComponent(addr)}`;
+    }
+
+    // controls + parent messages
+    $('#next').onclick=()=>render(idx+1); $('#prev').onclick=()=>render(idx-1); $('#rand').onclick=()=>render(Math.floor(Math.random()*(rows?.length||1)));
+    window.addEventListener('message',ev=>{ const c=ev.data?.cmd; if(c==='next') return $('#next').click(); if(c==='prev') return $('#prev').click(); if(c==='rand') return $('#rand').click(); if(c==='call') return $('#call').click(); if(c==='sms') return $('#sms').click(); if(c==='email') return $('#email').click(); if(c==='copy') return $('#copy').click(); });
+
+    (async()=>{ try{ await fetchSheet(); render(0);} catch(e){ console.error(e); $('#leadCard').innerHTML='<div class="body">Could not load sheet (share it “Anyone with the link”).</div>'; setCount(); } })();
+  </script>
 </body>
 </html>
