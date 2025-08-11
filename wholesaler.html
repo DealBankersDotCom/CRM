@@ -22,6 +22,11 @@
     .qbtn{min-width:160px;display:flex;align-items:center;justify-content:center;gap:8px;padding:12px 16px;border-radius:12px;border:1px solid #21445b;color:#0a1a22;font-weight:900;box-shadow:0 10px 18px rgba(0,0,0,.25)}
     .qbtn.call{background:linear-gradient(180deg,#2fe18a,#1bb76d)} .qbtn.sms{background:linear-gradient(180deg,#4eb6ff,#1a7fff);color:#fff}
     .qbtn.mail{background:linear-gradient(180deg,#ffd36a,#c89a2a)} .qbtn.note{background:linear-gradient(180deg,#ffffff,#dfe7ee)}
+    /* new: copy button + responsive visibility */
+    .qbtn.copy{background:linear-gradient(180deg,#ffffff,#dfe7ee)}
+    .hide-mobile{display:none}
+    @media (min-width:820px){ .hide-mobile{display:inline-flex} }
+
     .center{max-width:900px;margin:0 auto;padding:14px}
     .panel{background:var(--panel);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
     .panel .hd{padding:12px 14px;font-weight:800;font-size:14px;letter-spacing:.02em;border-bottom:1px solid var(--line);background:linear-gradient(90deg,rgba(255,211,106,.22),transparent 40%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
@@ -61,6 +66,7 @@
         <button class="qbtn call" id="qbCall">📞 Call</button>
         <button class="qbtn sms"  id="qbSMS">💬 SMS</button>
         <button class="qbtn mail" id="qbEmail">✉️ Email</button>
+        <button class="qbtn copy hide-mobile" id="qbCopy">📋 Copy Phone</button>
         <button class="qbtn note" id="qbNotes">📝 Update Notes</button>
       </div>
 
@@ -166,8 +172,9 @@
             <div id="noteHint" class="muted" style="margin-top:6px"></div>
           </div>
 
+          <!-- Street View embed -->
           <iframe class="map"
-            src="https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed"
+            src="https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=svembed"
             loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
 
           <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin:12px 0">
@@ -182,10 +189,16 @@
       const smsHref   = phone ? `sms:${phone}` : '#';
       const mailHref  = `mailto:?subject=${encodeURIComponent(name)} — Lead&body=${encodeURIComponent(addr)}`;
       const notesForm = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(addr)}`;
+
       $('#qbCall').onclick = ()=> window.open(callHref,'_self');
       $('#qbSMS').onclick  = ()=> window.open(smsHref,'_self');
       $('#qbEmail').onclick= ()=> window.open(mailHref,'_self');
       $('#qbNotes').onclick= ()=> window.open(notesForm,'_blank','noopener');
+      $('#qbCopy').onclick = async ()=> {
+        if (!phone) { toast('No phone on file'); return; }
+        try { await navigator.clipboard.writeText(phone); toast('Phone copied'); }
+        catch { toast('Could not copy'); }
+      };
 
       // Load saved notes (override) then set textarea
       (async ()=>{
