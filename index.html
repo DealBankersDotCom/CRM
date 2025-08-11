@@ -12,7 +12,6 @@
       --bg1:#0b1218; --bg2:#0f1a24; --bg3:#0c1922;
       --text:#e7eef4; --muted:#9fb3c7; --line:rgba(255,255,255,.12);
       --accent:#c7a86a; --panel:#0f1a24ee; --shadow:0 24px 64px rgba(0,0,0,.45);
-      --ok:#2aa84a; --bad:#de3e3e;
     }
     *{box-sizing:border-box}
     html,body{height:100%}
@@ -26,7 +25,7 @@
       padding:24px;
     }
     .wrap{
-      width:100%; max-width:980px;
+      width:100%; max-width:880px;
       display:grid; gap:18px;
       grid-template-columns: 1.2fr 1fr;
     }
@@ -63,24 +62,18 @@
 
     /* Google-style button */
     .gbtn{
-      width:100%; height:44px; display:inline-flex; align-items:center; justify-content:center;
+      width:100%; height:46px; display:inline-flex; align-items:center; justify-content:center;
       gap:12px; background:#fff; color:#1f1f1f; font-weight:600; border-radius:6px;
       border:1px solid #dadce0; cursor:pointer; transition:transform .04s ease, box-shadow .2s ease, border-color .2s ease;
     }
     .gbtn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.18)}
     .gicon{width:20px; height:20px}
-    .row{display:flex; gap:12px; margin-top:12px}
-    .row > button{flex:1; height:40px; background:#162330; color:var(--text); border:1px solid var(--line); border-radius:10px; cursor:pointer}
     .hint{margin-top:10px; font-size:12px; color:var(--muted)}
-    .status{margin-top:12px; padding:10px 12px; border-radius:10px; background:rgba(255,255,255,.04); border:1px dashed var(--line); font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; font-size:12px; max-height:150px; overflow:auto; white-space:pre-wrap}
-    .ok{color:var(--ok)} .bad{color:var(--bad)}
-    .debug-toggle{margin-top:10px; font-size:12px; color:#8ecaff; cursor:pointer; user-select:none}
-    .hide{display:none}
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Left brand panel with your logo -->
+    <!-- Left brand panel -->
     <section class="brand">
       <div class="logo" aria-label="DealBankers logo"></div>
       <div>
@@ -89,11 +82,10 @@
       </div>
     </section>
 
-    <!-- Right: login card -->
+    <!-- Right login -->
     <section class="card">
       <div class="title"><span class="dot"></span><h2>Secure Sign-In</h2></div>
       <button id="googleBtn" class="gbtn" type="button" aria-label="Sign in with Google">
-        <!-- Official Google 'G' as inline SVG (brand-compliant) -->
         <svg class="gicon" viewBox="0 0 48 48" aria-hidden="true">
           <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.2C33.7 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 19-7.3 19-20 0-1.3-.1-2.7-.4-3.5z"/>
           <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.8 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 15.5 4 8.3 8.8 6.3 14.7z"/>
@@ -102,110 +94,49 @@
         </svg>
         <span>Sign in with Google</span>
       </button>
-
-      <div class="row">
-        <button id="redirectBtn" type="button" title="Use redirect flow (more reliable on strict browsers)">Use Redirect</button>
-        <button id="signOutBtn" type="button">Sign out</button>
-      </div>
-
-      <div class="hint">Auth: <span id="authState">checking…</span></div>
-      <div class="hint">Origin: <span id="originInfo"></span></div>
-
-      <div id="debugToggle" class="debug-toggle">Show debug</div>
-      <div id="status" class="status hide" aria-live="polite"></div>
+      <div class="hint">Auth status: <span id="authState">checking…</span></div>
     </section>
   </div>
 
-  <!-- Firebase v10 (modular, CDN) -->
+  <!-- Firebase -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
     import {
-      getAuth, GoogleAuthProvider, signInWithPopup, signInWithRedirect, getRedirectResult,
-      setPersistence, browserLocalPersistence, onAuthStateChanged, signOut
+      getAuth, GoogleAuthProvider, signInWithPopup,
+      setPersistence, browserLocalPersistence, onAuthStateChanged
     } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-    // Your Firebase project
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
       projectId: "deal-bankers"
     };
-
     const app  = initializeApp(firebaseConfig);
     const auth = getAuth(app);
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
 
-    const statusEl   = document.getElementById("status");
-    const debugBtn   = document.getElementById("debugToggle");
-    const authState  = document.getElementById("authState");
-    const originInfo = document.getElementById("originInfo");
-
-    originInfo.textContent = window.location.origin;
-
-    function log(msg, cls=""){
-      const line = document.createElement("div");
-      if (cls) line.className = cls;
-      line.textContent = msg;
-      statusEl.appendChild(line);
-      statusEl.scrollTop = statusEl.scrollHeight;
-      console.log(msg);
-    }
-
-    // Toggle debug visibility (keeps UI clean by default)
-    debugBtn.addEventListener("click", () => {
-      statusEl.classList.toggle("hide");
-      debugBtn.textContent = statusEl.classList.contains("hide") ? "Show debug" : "Hide debug";
-    });
-
     await setPersistence(auth, browserLocalPersistence);
 
-    // If we returned from redirect, surface the result
-    try {
-      const redir = await getRedirectResult(auth);
-      if (redir?.user) {
-        log("✅ Redirect signed in: " + (redir.user.email || redir.user.uid), "ok");
-      }
-    } catch (e) {
-      log("❌ Redirect error: " + e.code + " — " + e.message, "bad");
-    }
+    const authState = document.getElementById("authState");
 
     onAuthStateChanged(auth, (user) => {
-      authState.textContent = user ? (user.email || user.uid) : "signed out";
+      if (user) {
+        authState.textContent = user.email || user.uid;
+        // Redirect after successful login
+        window.location.href = "https://www.dealbankers.com/profile.html";
+      } else {
+        authState.textContent = "signed out";
+      }
     });
 
-    async function loginPopup(){
+    document.getElementById("googleBtn").addEventListener("click", async () => {
       try {
-        const res = await signInWithPopup(auth, provider);
-        log("✅ Popup signed in: " + (res.user.email || res.user.uid), "ok");
+        await signInWithPopup(auth, provider);
       } catch (e) {
-        log("❌ Popup sign-in failed: " + e.code + " — " + e.message, "bad");
-        const code = (e.code || "").toString();
-        // Fallbacks where popup is unreliable
-        if (
-          code === "auth/popup-blocked" ||
-          code === "auth/popup-closed-by-user" ||
-          code.startsWith("auth/visibility") ||
-          code === "auth/cors-unsupported" ||
-          code === "auth/operation-not-supported-in-this-environment"
-        ) {
-          log("↪️ Using redirect flow instead…");
-          return loginRedirect();
-        }
+        alert("Sign-in failed: " + e.message);
       }
-    }
-    async function loginRedirect(){
-      try { await signInWithRedirect(auth, provider); }
-      catch (e) { log("❌ Redirect sign-in failed: " + e.code + " — " + e.message, "bad"); }
-    }
-    async function doSignOut(){
-      try { await signOut(auth); log("👋 Signed out","ok"); }
-      catch (e){ log("❌ Sign-out error: " + e.code + " — " + e.message,"bad"); }
-    }
-
-    document.getElementById("googleBtn").addEventListener("click", loginPopup);
-    document.getElementById("redirectBtn").addEventListener("click", loginRedirect);
-    document.getElementById("signOutBtn").addEventListener("click", doSignOut);
+    });
   </script>
 </body>
 </html>
