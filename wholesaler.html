@@ -10,7 +10,7 @@
     :root{
       --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
       --panel:#133045; --line:#2a5a78;
-      --text:#f3f8fb; --muted:#c7d7e6; --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff;
+      --text:#f3f8fb; --muted:#c7d7e6; --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff; --red:#ff5a5a;
       --r:16px; --shadow:0 28px 70px rgba(0,0,0,.55);
     }
     *{box-sizing:border-box}
@@ -39,6 +39,8 @@
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
+    .btn-red{background:linear-gradient(180deg,var(--red),#c63a3a);border:none;color:#fff}
+    .btn-blue{background:linear-gradient(180deg,var(--blue),#1a78cc);border:none;color:#fff}
     .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
@@ -52,27 +54,25 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
 
-    details{background:#0e2130;border:1px solid rgba(255,255,255,.2);border-radius:12px;overflow:hidden;margin:10px 0}
-    summary{cursor:pointer;padding:12px 14px;font-weight:800}
-    .map,.sv{width:100%;border:0;border-radius:14px;background:#fff}
+    /* Street View FIRST, map SECOND */
+    .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
+    .sv{height:250px;margin-top:6px}
     .map{height:220px;margin-top:8px}
-    .sv{height:250px;margin-top:8px}
 
-    /* settings modal */
-    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:50}
-    .modal.open{display:flex}
-    .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
-    .sheet{position:relative;width:min(520px,94vw);background:#0f1a24;border:1px solid rgba(255,255,255,.18);
-      border-radius:16px;padding:14px}
-    .close{position:absolute;right:10px;top:10px;border:0;background:#182632;color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer}
-    .opt{display:flex;gap:10px;align-items:center;margin:10px 0}
-    label{display:flex;gap:8px;align-items:center}
-    .save{margin-top:8px}
+    .notesBox{display:grid;gap:8px;margin-top:8px}
+    .textarea{
+      width:100%;min-height:130px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+      background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
+    }
+
     @media (max-width:430px){
       .grid4{grid-template-columns:repeat(4,1fr)}
       .title{font-size:16px}
-      .map{height:200px} .sv{height:220px}
+      .sv{height:230px} .map{height:200px}
     }
+
+    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
+      color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
   </style>
 </head>
 <body>
@@ -86,10 +86,10 @@
       <!-- sticky actions -->
       <div class="sticky">
         <div class="grid4" style="margin-bottom:8px">
-          <a class="btn btn-gold" id="btnCall"  aria-label="Call"><span class="ico">📞</span></a>
-          <a class="btn btn-gold" id="btnSMS"   aria-label="SMS"><span class="ico">💬</span></a>
-          <a class="btn btn-gold" id="btnNotes" aria-label="Update Notes" target="_blank" rel="noopener"><span class="ico">📝</span></a>
-          <button class="btn btn-ghost" id="btnSettings" aria-label="Settings"><span class="ico">⚙️</span></button>
+          <a class="btn btn-red"  id="btnCall"  aria-label="Call"><span class="ico">📞</span></a>
+          <a class="btn btn-blue" id="btnSMS"   aria-label="SMS"><span class="ico">📱</span></a>
+          <button class="btn btn-gold" id="btnSave" aria-label="Save Notes"><span class="ico">💾</span></button>
+          <button class="btn btn-ghost" id="btnReload" aria-label="Reload"><span class="ico">⟳</span></button>
         </div>
         <div class="grid4">
           <button class="btn btn-ghost" id="btnPrev"   aria-label="Previous"><span class="ico">◀</span></button>
@@ -108,19 +108,7 @@
     </section>
   </div>
 
-  <!-- Settings modal -->
-  <div id="modal" class="modal" aria-hidden="true" role="dialog" aria-label="Phone link settings">
-    <div class="backdrop" data-close></div>
-    <div class="sheet">
-      <button class="close" data-close>Close</button>
-      <h3 style="margin:0 0 6px">Phone Link Preference</h3>
-      <div class="opt"><label><input type="radio" name="mode" value="device"> <span>Device Phone (tel:)</span></label></div>
-      <div class="opt"><label><input type="radio" name="mode" value="textnow"> <span>TextNow (web)</span></label></div>
-      <div class="opt"><label><input type="radio" name="mode" value="gvoice"> <span>Google Voice (web)</span></label></div>
-      <button id="saveMode" class="btn btn-gold save">Save</button>
-      <p style="color:#9fb3c7;font-size:12px;margin-top:8px">Tip: For TextNow/Voice web, we’ll also copy the number so you can paste fast.</p>
-    </div>
-  </div>
+  <div id="toast"></div>
 
   <!-- leads.js (cache-busted) -->
   <script>
@@ -135,44 +123,39 @@
 
   <script>
     const $=s=>document.querySelector(s);
-    const statusEl=$('#status');
-    let idx=0;
+    const statusEl=$('#status'); const toastEl=$('#toast');
+    let idx=0, currentLead=null;
 
     const uid=new URL(location.href).searchParams.get('uid')||'anon';
 
+    function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
-    const clean=(p)=> (p||'').trim();
+    const clean=s=>(s||'').trim();
     const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
 
-    // Phone link mode storage
+    // phone dial preference (device/textnow/gvoice) saved locally
     const MODE_KEY='db_phone_link_mode';
     function getMode(){ return localStorage.getItem(MODE_KEY) || 'device'; }
-    function setMode(m){ localStorage.setItem(MODE_KEY,m); }
 
     function phoneHref(number, mode){
-      const num = number.replace(/[^\d+]/g,'');
+      const num=(number||'').replace(/[^\d+]/g,'');
       if(!num) return '#';
       if(mode==='device') return `tel:${num}`;
-      if(mode==='textnow'){
-        // Copy so user can paste in TextNow; open messaging hub
-        navigator.clipboard?.writeText(num);
-        return 'https://www.textnow.com/messaging';
-      }
-      if(mode==='gvoice'){
-        // Copy then open Voice calls page (web)
-        navigator.clipboard?.writeText(num);
-        return 'https://voice.google.com/u/0/calls';
-      }
+      if(mode==='textnow'){ navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging'; }
+      if(mode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
       return `tel:${num}`;
     }
 
-    function streetViewSrc(addr){
-      // Street View embed via old svembed fallback; works without API key
-      return `https://maps.google.com/maps?q=${encodeURIComponent(addr)}&layer=c&output=svembed`;
-    }
-    function mapSrc(addr){
-      return `https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed`;
-    }
+    // Street View (top) + standard map (bottom)
+    function streetViewSrc(addr){ return `https://maps.google.com/maps?q=${encodeURIComponent(addr)}&layer=c&output=svembed`; }
+    function mapSrc(addr){ return `https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed`; }
+
+    // simple in-browser notes save (per-address)
+    function noteKey(addr){ return 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-'); }
+    function loadNotes(addr){ return localStorage.getItem(noteKey(addr)) || ''; }
+    function saveNotes(addr, text){ localStorage.setItem(noteKey(addr), text||''); }
+
+    function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
@@ -184,29 +167,24 @@
       idx=i;
 
       const lead=window.leads[idx];
+      currentLead=lead;
+
       const name = clean(lead?.contacts?.[0]?.name||'Unknown');
       const phone= phoneOf(lead);
       const addr = clean(lead?.address||'');
-      const notes= (lead?.notes||'').replace(/\n/g,'<br>');
 
       setStatus(`Lead ${idx+1} of ${window.leads.length}`);
 
-      // Update sticky links
+      // update sticky links
       const mode=getMode();
-      $('#btnCall').href = phoneHref(phone, mode);
-      $('#btnSMS').href  = phone ? `sms:${phone}` : '#';
-      $('#btnNotes').href=`https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=${encodeURIComponent('Wholesaler')}&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(addr)}`;
+      $('#btnCall').href = phoneHref(phone, mode);                      // red phone
+      $('#btnSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode); // blue phone (SMS or provider)
 
-      // Lead card
+      // render card: Street View FIRST, map SECOND
       $('#leadCard').innerHTML = `
         <div class="title">${addr || name}</div>
         <div class="body">
           <div style="margin-bottom:6px;font-weight:800">${name}</div>
-
-          <details open>
-            <summary>📊 Deal Details</summary>
-            <div style="padding:10px 12px">${notes || 'No deal notes yet.'}</div>
-          </details>
 
           <div class="chips">
             <div class="chip">UID: ${uid.slice(0,8)}</div>
@@ -214,15 +192,26 @@
             <div class="chip">Dial: ${mode}</div>
           </div>
 
-          <iframe class="sv" src="${streetViewSrc(addr)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
-          <iframe class="map" src="${mapSrc(addr)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe class="sv"  src="${streetViewSrc(addr)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
+          <iframe class="map" src="${mapSrc(addr)}"        loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
 
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-            <a class="btn btn-ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">🧭 Directions</a>
-            <a class="btn btn-ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">🌐 Open Maps</a>
-          </div>
+          <details open>
+            <summary>📊 Deal Details</summary>
+            <div class="notesBox">
+              <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <a class="btn btn-ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">🧭 Directions</a>
+                <a class="btn btn-ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">🌐 Open Maps</a>
+              </div>
+            </div>
+          </details>
         </div>
       `;
+
+      const ta=$('#noteInput');
+      ta.value = loadNotes(addr);
+      autoGrow(ta);
+      ta.addEventListener('input',()=>autoGrow(ta));
     }
 
     // actions
@@ -232,24 +221,20 @@
     $('#btnCopy').onclick = ()=>{
       const p=phoneOf(window.leads?.[idx]);
       if(!p) return alert('No phone on this lead.');
-      navigator.clipboard.writeText(p).then(()=>alert('Copied: '+p));
+      navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
+    };
+    $('#btnReload').onclick = ()=>location.reload();
+    $('#btnSave').onclick = ()=>{
+      const addr = (currentLead?.address)||'';
+      const text = ($('#noteInput')?.value||'').trim();
+      saveNotes(addr, text);
+      toast('Notes saved (local)');
     };
 
-    // settings modal
-    const modal=$('#modal');
-    function openModal(){ modal.classList.add('open'); modal.setAttribute('aria-hidden','false'); const cur=getMode(); document.querySelectorAll('input[name="mode"]').forEach(r=>{ r.checked = (r.value===cur); }); }
-    function closeModal(){ modal.classList.remove('open'); modal.setAttribute('aria-hidden','true'); render(idx); }
-    $('#btnSettings').onclick=openModal;
-    modal.addEventListener('click',e=>{ if(e.target.hasAttribute('data-close')) closeModal(); });
-    $('#saveMode').onclick=()=>{ const m=document.querySelector('input[name="mode"]:checked')?.value||'device'; setMode(m); closeModal(); };
-
-    // keyboard niceties (desktop)
     document.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft') return $('#btnPrev').click();
       if(e.key==='ArrowRight') return $('#btnNext').click();
-      if(e.key.toLowerCase()==='r') return $('#btnRandom').click();
-      if(e.key.toLowerCase()==='c') return $('#btnCopy').click();
-      if(e.key.toLowerCase()==='s') return $('#btnSettings').click();
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return $('#btnSave').click(); }
     });
 
     function init(){
