@@ -1,3 +1,4 @@
+<!-- ================================= wholesaler.html (guarded by DB leadsEnabled before loading leads.js) ================================ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -32,7 +33,6 @@
     .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
     .status{font-size:12px;color:#e8f7ff}
 
-    /* compact action bar (two lines on mobile) */
     .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
       background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
     .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
@@ -53,7 +53,6 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
 
-    /* Street View FIRST, Map SECOND */
     .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
     .sv{height:260px;margin-top:6px}
     .map{height:220px;margin-top:8px}
@@ -85,7 +84,6 @@
         <div class="status" id="status">Loading…</div>
       </div>
 
-      <!-- simplified action bar -->
       <div class="sticky">
         <div class="actions">
           <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
@@ -109,7 +107,7 @@
     </section>
   </div>
 
-  <!-- settings modal (phone link provider for this portal) -->
+  <!-- settings dialog -->
   <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
     <h3 style="margin:0 0 8px">Phone Link Preference</h3>
     <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
@@ -123,15 +121,39 @@
 
   <div id="toast"></div>
 
-  <!-- leads.js (cache-busted) -->
+  <!-- Firebase for lead gate -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    (function(){
-      const s=document.createElement('script');
-      s.src='/leads.js?v='+Date.now();
-      s.onload=()=>{window.leads=window.leads||[]; init();};
-      s.onerror=()=>document.getElementById('status').textContent='Could not load /leads.js';
-      document.head.appendChild(s);
-    })();
+    // Initialize a dedicated app instance for this page (avoid clashes if embedded)
+    const gateApp = firebase.initializeApp(
+      {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
+      "whGate"
+    );
+    const gateDb = gateApp.database();
+
+    const params = new URL(location.href).searchParams;
+    const uidParam = params.get('uid') || 'anon';
+
+    // Check gate before loading leads.js
+    gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
+      const allowed = !!snap.val();
+      if(!allowed){
+        document.getElementById('leadCard').innerHTML =
+          '<div class="body">Access to leads is disabled for this account.</div>';
+        document.getElementById('status').textContent = 'Access denied';
+      }else{
+        const s=document.createElement('script');
+        s.src='/leads.js?v='+Date.now();
+        s.onload=()=>{ window.leads = window.leads || []; init(); };
+        s.onerror=()=>document.getElementById('status').textContent='Could not load /leads.js';
+        document.head.appendChild(s);
+      }
+    }).catch(()=>{
+      document.getElementById('leadCard').innerHTML =
+        '<div class="body">Could not verify access right now. Try again shortly.</div>';
+      document.getElementById('status').textContent = 'Gate check failed';
+    });
   </script>
 
   <script>
@@ -141,7 +163,7 @@
     let idx=0, currentLead=null;
 
     const uid=new URL(location.href).searchParams.get('uid')||'anon';
-    const MODE_KEY='db_phone_link_mode_wh'; // local to wholesaler portal
+    const MODE_KEY='db_phone_link_mode_wh';
 
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
@@ -160,11 +182,9 @@
       return `tel:${num}`;
     }
 
-    // Street View first (front-facing), Map second
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
-    // local notes (per address)
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
     const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
@@ -201,7 +221,6 @@
       $('#actCall').href = phoneHref(phone, mode);
       $('#actSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode);
 
-      // Lead card — details moved ABOVE maps, with inline Save button + saved time
       const lastSaved = saveTimeGet(addr);
       const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
 
@@ -275,7 +294,6 @@
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
     });
 
-    // auto-save notes when leaving the page
     window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
 
     function init(){
