@@ -1,4 +1,3 @@
-<!-- ===================== profile.html (outer frame with universal red/blue phone, original layout) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -13,7 +12,7 @@
       --bg:#0d1620; --panel:#0f1a24; --line:#1b3245;
       --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff;
       --r:18px; --shadow:0 24px 64px rgba(0,0,0,.5);
-      --red:#ff5a5a; --cyan:#47b4ff;
+      --red:#ff5a5a; --cyan:#47b4ff; --green:#26cf84;
     }
     *{box-sizing:border-box}
     body{
@@ -46,9 +45,24 @@
     .tab.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
     .panel{padding:12px}
     .card{background:#10222e;border:1px solid var(--line);border-radius:var(--r);padding:12px}
+
     .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:85vh;min-height:620px}
     .iframe-wrap iframe{width:100%;height:100%;border:0}
     @media (max-width:900px){ .iframe-wrap{height:90vh;min-height:680px} }
+
+    /* Townhall chat */
+    .townhall{display:grid;grid-template-rows:auto 1fr auto; gap:10px; height:75vh; min-height:520px}
+    .th-head{display:flex;align-items:center;justify-content:space-between}
+    .th-head h2{margin:0;font-size:18px;letter-spacing:.05em}
+    .presence{font-size:12px;color:var(--muted)}
+    .th-body{border:1px solid var(--line);border-radius:14px;background:#0f1a24;overflow:auto;padding:12px}
+    .msg{margin:8px 0;display:grid;gap:4px}
+    .meta{font-size:11px;color:#a7bed0}
+    .bubble{display:inline-block;max-width:min(680px,85%);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#142332}
+    .me .bubble{background:linear-gradient(180deg,#143a2a,#0d291f);border-color:rgba(69,255,169,.25)}
+    .th-input{display:flex;gap:8px}
+    .th-input input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1a24;color:#eaf1f6}
+    .th-input button{min-width:96px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;cursor:pointer}
   </style>
 </head>
 <body>
@@ -76,25 +90,44 @@
     </nav>
 
     <section class="panel">
+      <!-- Wholesaler -->
       <div class="card" data-panel="wholesaler">
         <div class="iframe-wrap">
           <iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe>
         </div>
       </div>
+
+      <!-- Contractor / Realtor / Investor placeholders -->
       <div class="card" data-panel="contractor" style="display:none"><p style="margin:0;color:#9fb3c7">Contractor portal coming soon.</p></div>
       <div class="card" data-panel="realtor" style="display:none"><p style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
       <div class="card" data-panel="investor" style="display:none"><p style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
-      <div class="card" data-panel="overview"  style="display:none"><p style="margin:0;color:#9fb3c7">Welcome. Pick a portal above.</p></div>
+
+      <!-- OVERVIEW = Townhall Chat -->
+      <div class="card" data-panel="overview" style="display:none">
+        <div class="townhall">
+          <div class="th-head">
+            <h2>🏛️ Townhall (All Users)</h2>
+            <div class="presence" id="presence">Connecting…</div>
+          </div>
+          <div class="th-body" id="thBody" aria-live="polite"></div>
+          <div class="th-input">
+            <input id="thInput" type="text" placeholder="Say something to the room… (press Enter to send)"/>
+            <button id="thSend">Send</button>
+          </div>
+        </div>
+      </div>
     </section>
   </div>
 
-  <!-- Firebase (auth gate + logout) -->
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers"};
+    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
     firebase.initializeApp(firebaseConfig);
     const auth=firebase.auth();
+    const db=firebase.database();
 
     const $=s=>document.querySelector(s);
     const tabs=[...document.querySelectorAll('.tab')];
@@ -104,17 +137,19 @@
     $('#hdrCall').onclick = ()=>location.href='tel:';
     $('#hdrSMS').onclick  = ()=>location.href='sms:';
 
+    // tab routing
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
       const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
       if(name==='wholesaler') ensureWhIframe();
+      if(name==='overview') ensureTownhall();
     }
-
     $('#tabs').addEventListener('click',e=>{
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
+    // wholesaler iframe
     let ifSet=false;
     function ensureWhIframe(){
       if(ifSet) return; ifSet=true;
@@ -122,14 +157,65 @@
       $('#whFrame').src=`wholesaler.html?uid=${uid}`;
     }
 
+    // Townhall chat
+    let thReady=false, thRef=null, presenceRef=null;
+    function ensureTownhall(){
+      if(thReady) return;
+      thReady=true;
+      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend'), presEl=$('#presence');
+
+      function scrollBottom(){ body.scrollTop=body.scrollHeight; }
+
+      // live messages (last 100)
+      thRef=db.ref('townhall/messages').limitToLast(100);
+      thRef.on('child_added',snap=>{
+        const m=snap.val(); if(!m) return;
+        const me=auth.currentUser?.uid===m.uid;
+        const div=document.createElement('div'); div.className='msg'+(me?' me':'');
+        const meta=document.createElement('div'); meta.className='meta';
+        const name=(m.name||'Someone'); const t=new Date(m.ts||Date.now());
+        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+        meta.textContent=`${name} • ${hh}:${mm}`;
+        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
+        div.append(meta,bubble); body.appendChild(div); scrollBottom();
+      });
+
+      // basic online count (approx)
+      presenceRef=db.ref('townhall/presence');
+      const myRef=presenceRef.push();
+      const onlineRef=db.ref('.info/connected');
+      onlineRef.on('value',snap=>{
+        if(snap.val()===true){
+          myRef.onDisconnect().remove();
+          myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP});
+        }
+      });
+      presenceRef.on('value',snap=>{
+        const n=snap.numChildren(); presEl.textContent = `${n} online`;
+      });
+
+      function sendMsg(){
+        const txt=(input.value||'').trim(); if(!txt) return;
+        const u=auth.currentUser||{};
+        db.ref('townhall/messages').push({
+          uid: u.uid || 'anon',
+          name: u.displayName || u.email || 'Anon',
+          text: txt,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
+        input.value=''; input.focus();
+      }
+      input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
+      send.addEventListener('click',sendMsg);
+    }
+
+    // auth gate
     auth.onAuthStateChanged(u=>{
       if(!u){ location.href='index.html'; return; }
-      ensureWhIframe();
+      const initial = new URL(location.href).searchParams.get('tab') || 'wholesaler';
+      show(initial);
     });
-
     $('#logoutBtn').onclick=()=>auth.signOut().then(()=>location.href='index.html');
-
-    show(new URL(location.href).searchParams.get('tab')||'wholesaler');
   </script>
 </body>
 </html>
