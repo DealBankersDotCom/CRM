@@ -1,4 +1,3 @@
-<!-- ===================== wholesaler.html (inner portal — simple buttons, editable details, Street View then Map) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -59,11 +58,13 @@
     .sv{height:260px;margin-top:6px}
     .map{height:220px;margin-top:8px}
 
-    .notesBox{display:grid;gap:8px;margin-top:8px}
+    .notesBox{display:grid;gap:8px;margin:8px 0 10px}
     .textarea{
       width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
       background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
     }
+    .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
     @media (max-width:480px){
       .actions{grid-template-columns:repeat(3,1fr)}
@@ -167,6 +168,14 @@
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
     const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
+    const saveTimeKey = addr => noteKey(addr)+'_ts';
+    const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
+    const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
+
+    function fmtTime(ts){
+      const d=new Date(ts); const pad=n=>String(n).padStart(2,'0');
+      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
 
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
@@ -192,6 +201,10 @@
       $('#actCall').href = phoneHref(phone, mode);
       $('#actSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode);
 
+      // Lead card — details moved ABOVE maps, with inline Save button + saved time
+      const lastSaved = saveTimeGet(addr);
+      const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
+
       $('#leadCard').innerHTML = `
         <div class="title">${addr || name}</div>
         <div class="body">
@@ -203,13 +216,17 @@
             <div class="chip">Dial: ${mode}</div>
           </div>
 
-          <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
-          <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
-
           <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
           <div class="notesBox">
             <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
+            <div class="notesRow">
+              <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
+              <span id="savedTag" class="savedTag">${lastSavedText}</span>
+            </div>
           </div>
+
+          <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
+          <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
         </div>
       `;
 
@@ -217,6 +234,17 @@
       ta.value = loadNotes(addr) || (lead?.notes || '');
       autoGrow(ta);
       ta.addEventListener('input',()=>autoGrow(ta));
+
+      $('#inlineSave').onclick = ()=>doSaveNotes();
+    }
+
+    function doSaveNotes(){
+      const addr = (currentLead?.address)||'';
+      const text = ($('#noteInput')?.value||'').trim();
+      saveNotes(addr, text);
+      const ts=Date.now(); saveTimeSet(addr, ts);
+      const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${fmtTime(ts)}`; tag.style.display='inline'; }
+      toast('Notes saved');
     }
 
     // actions
@@ -244,22 +272,11 @@
     document.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft') return $('#btnPrev').click();
       if(e.key==='ArrowRight') return $('#btnNext').click();
-      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){
-        e.preventDefault();
-        const addr=(currentLead?.address)||'';
-        const text=($('#noteInput')?.value||'').trim();
-        saveNotes(addr,text); toast('Notes saved');
-      }
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
     });
 
     // auto-save notes when leaving the page
-    window.addEventListener('beforeunload',()=>{
-      if(currentLead){
-        const addr=(currentLead.address)||'';
-        const text=($('#noteInput')?.value||'').trim();
-        saveNotes(addr,text);
-      }
-    });
+    window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
 
     function init(){
       if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
