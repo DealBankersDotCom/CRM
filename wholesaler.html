@@ -1,3 +1,4 @@
+<!-- ===================== wholesaler.html (inner portal — simple buttons, editable details, Street View then Map) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -9,8 +10,8 @@
   <style>
     :root{
       --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
-      --panel:#133045; --line:#2a5a78;
-      --text:#f3f8fb; --muted:#c7d7e6; --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff; --red:#ff5a5a;
+      --line:#2a5a78; --text:#f3f8fb; --muted:#c7d7e6;
+      --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff; --panel:#133045;
       --r:16px; --shadow:0 28px 70px rgba(0,0,0,.55);
     }
     *{box-sizing:border-box}
@@ -26,25 +27,24 @@
     .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
 
-    /* header + sticky actions */
     .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
       background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px}
     .crumbs{display:flex;gap:10px;align-items:center;color:var(--muted)}
     .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
     .status{font-size:12px;color:#e8f7ff}
 
+    /* compact action bar (two lines on mobile) */
     .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
       background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
-    .grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+    .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
-    .btn-red{background:linear-gradient(180deg,var(--red),#c63a3a);border:none;color:#fff}
-    .btn-blue{background:linear-gradient(180deg,var(--blue),#1a78cc);border:none;color:#fff}
     .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
     .ico{font-size:20px}
+    .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 
     .lead-wrap{padding:12px}
     .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
@@ -54,19 +54,20 @@
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
 
-    /* Street View FIRST, map SECOND */
+    /* Street View FIRST, Map SECOND */
     .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
-    .sv{height:250px;margin-top:6px}
+    .sv{height:260px;margin-top:6px}
     .map{height:220px;margin-top:8px}
 
     .notesBox{display:grid;gap:8px;margin-top:8px}
     .textarea{
-      width:100%;min-height:130px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+      width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
       background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
     }
 
-    @media (max-width:430px){
-      .grid4{grid-template-columns:repeat(4,1fr)}
+    @media (max-width:480px){
+      .actions{grid-template-columns:repeat(3,1fr)}
+      .navrow{grid-template-columns:repeat(3,1fr)}
       .title{font-size:16px}
       .sv{height:230px} .map{height:200px}
     }
@@ -83,23 +84,22 @@
         <div class="status" id="status">Loading…</div>
       </div>
 
-      <!-- sticky actions -->
+      <!-- simplified action bar -->
       <div class="sticky">
-        <div class="grid4" style="margin-bottom:8px">
-          <a class="btn btn-red"  id="btnCall"  aria-label="Call"><span class="ico">📞</span></a>
-          <a class="btn btn-blue" id="btnSMS"   aria-label="SMS"><span class="ico">📱</span></a>
-          <button class="btn btn-gold" id="btnSave" aria-label="Save Notes"><span class="ico">💾</span></button>
-          <button class="btn btn-ghost" id="btnReload" aria-label="Reload"><span class="ico">⟳</span></button>
+        <div class="actions">
+          <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
+          <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
+          <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
+          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
+          <button class="btn btn-ghost" id="actSettings" title="Settings"><span class="ico">⚙️</span></button>
         </div>
-        <div class="grid4">
-          <button class="btn btn-ghost" id="btnPrev"   aria-label="Previous"><span class="ico">◀</span></button>
-          <button class="btn btn-ghost" id="btnRandom" aria-label="Random"><span class="ico">🎲</span></button>
-          <button class="btn btn-ghost" id="btnNext"   aria-label="Next"><span class="ico">▶</span></button>
-          <button class="btn btn-green" id="btnCopy"   aria-label="Copy phone"><span class="ico">📋</span></button>
+        <div class="navrow">
+          <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
+          <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
+          <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
         </div>
       </div>
 
-      <!-- lead -->
       <div class="lead-wrap">
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
@@ -107,6 +107,18 @@
       </div>
     </section>
   </div>
+
+  <!-- settings modal (phone link provider for this portal) -->
+  <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
+    <h3 style="margin:0 0 8px">Phone Link Preference</h3>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="textnow"> TextNow (web)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="gvoice"> Google Voice (web)</label>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="saveMode" class="btn" style="flex:1">Save</button>
+      <button id="closeMode" class="btn" style="flex:1">Close</button>
+    </div>
+  </dialog>
 
   <div id="toast"></div>
 
@@ -124,18 +136,19 @@
   <script>
     const $=s=>document.querySelector(s);
     const statusEl=$('#status'); const toastEl=$('#toast');
+    const dlg=$('#settingsDlg');
     let idx=0, currentLead=null;
 
     const uid=new URL(location.href).searchParams.get('uid')||'anon';
+    const MODE_KEY='db_phone_link_mode_wh'; // local to wholesaler portal
 
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
     const clean=s=>(s||'').trim();
     const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
 
-    // phone dial preference (device/textnow/gvoice) saved locally
-    const MODE_KEY='db_phone_link_mode';
-    function getMode(){ return localStorage.getItem(MODE_KEY) || 'device'; }
+    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
+    const setMode=m=>localStorage.setItem(MODE_KEY,m);
 
     function phoneHref(number, mode){
       const num=(number||'').replace(/[^\d+]/g,'');
@@ -146,14 +159,14 @@
       return `tel:${num}`;
     }
 
-    // Street View (top) + standard map (bottom)
-    function streetViewSrc(addr){ return `https://maps.google.com/maps?q=${encodeURIComponent(addr)}&layer=c&output=svembed`; }
-    function mapSrc(addr){ return `https://www.google.com/maps?q=${encodeURIComponent(addr)}&output=embed`; }
+    // Street View first (front-facing), Map second
+    function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
+    function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
-    // simple in-browser notes save (per-address)
-    function noteKey(addr){ return 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-'); }
-    function loadNotes(addr){ return localStorage.getItem(noteKey(addr)) || ''; }
-    function saveNotes(addr, text){ localStorage.setItem(noteKey(addr), text||''); }
+    // local notes (per address)
+    const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
+    const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
 
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
@@ -169,18 +182,16 @@
       const lead=window.leads[idx];
       currentLead=lead;
 
-      const name = clean(lead?.contacts?.[0]?.name||'Unknown');
-      const phone= phoneOf(lead);
-      const addr = clean(lead?.address||'');
+      const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
+      const phone = phoneOf(lead);
+      const addr  = clean(lead?.address||'');
 
       setStatus(`Lead ${idx+1} of ${window.leads.length}`);
 
-      // update sticky links
       const mode=getMode();
-      $('#btnCall').href = phoneHref(phone, mode);                      // red phone
-      $('#btnSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode); // blue phone (SMS or provider)
+      $('#actCall').href = phoneHref(phone, mode);
+      $('#actSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode);
 
-      // render card: Street View FIRST, map SECOND
       $('#leadCard').innerHTML = `
         <div class="title">${addr || name}</div>
         <div class="body">
@@ -192,49 +203,62 @@
             <div class="chip">Dial: ${mode}</div>
           </div>
 
-          <iframe class="sv"  src="${streetViewSrc(addr)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
-          <iframe class="map" src="${mapSrc(addr)}"        loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
+          <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
+          <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
 
-          <details open>
-            <summary>📊 Deal Details</summary>
-            <div class="notesBox">
-              <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
-              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-                <a class="btn btn-ghost" href="https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}" target="_blank" rel="noopener">🧭 Directions</a>
-                <a class="btn btn-ghost" href="https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}" target="_blank" rel="noopener">🌐 Open Maps</a>
-              </div>
-            </div>
-          </details>
+          <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
+          <div class="notesBox">
+            <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
+          </div>
         </div>
       `;
 
       const ta=$('#noteInput');
-      ta.value = loadNotes(addr);
+      ta.value = loadNotes(addr) || (lead?.notes || '');
       autoGrow(ta);
       ta.addEventListener('input',()=>autoGrow(ta));
     }
 
     // actions
-    $('#btnPrev').onclick = ()=>render(idx-1);
-    $('#btnNext').onclick = ()=>render(idx+1);
+    $('#btnPrev').onclick   = ()=>render(idx-1);
+    $('#btnNext').onclick   = ()=>render(idx+1);
     $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
-    $('#btnCopy').onclick = ()=>{
+
+    $('#actCopy').onclick = ()=>{
       const p=phoneOf(window.leads?.[idx]);
       if(!p) return alert('No phone on this lead.');
       navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
     };
-    $('#btnReload').onclick = ()=>location.reload();
-    $('#btnSave').onclick = ()=>{
-      const addr = (currentLead?.address)||'';
-      const text = ($('#noteInput')?.value||'').trim();
-      saveNotes(addr, text);
-      toast('Notes saved (local)');
+
+    $('#actSettings').onclick = ()=>{
+      dlg.showModal();
+      const cur=getMode();
+      dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur));
     };
+    $('#saveMode').onclick = ()=>{
+      const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device';
+      setMode(m); dlg.close(); render(idx);
+    };
+    $('#closeMode').onclick = ()=>dlg.close();
 
     document.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft') return $('#btnPrev').click();
       if(e.key==='ArrowRight') return $('#btnNext').click();
-      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return $('#btnSave').click(); }
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){
+        e.preventDefault();
+        const addr=(currentLead?.address)||'';
+        const text=($('#noteInput')?.value||'').trim();
+        saveNotes(addr,text); toast('Notes saved');
+      }
+    });
+
+    // auto-save notes when leaving the page
+    window.addEventListener('beforeunload',()=>{
+      if(currentLead){
+        const addr=(currentLead.address)||'';
+        const text=($('#noteInput')?.value||'').trim();
+        saveNotes(addr,text);
+      }
     });
 
     function init(){
