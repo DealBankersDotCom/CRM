@@ -1,17 +1,19 @@
+<!-- ======================== profile.html (with DB lead-gating + old-school red/blue + overview embed) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DealBankers • Profile (Test)</title>
+  <title>DealBankers • Profile</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <meta name="robots" content="noindex"/>
 
   <style>
     :root{
       --bg:#0d1620; --panel:#0f1a24; --line:#1b3245;
-      --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff; --green:#26cf84;
+      --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff;
       --r:18px; --shadow:0 24px 64px rgba(0,0,0,.5);
+      --red:#ff5a5a; --cyan:#47b4ff; --green:#26cf84;
     }
     *{box-sizing:border-box}
     body{
@@ -29,6 +31,7 @@
     .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
     .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
 
+    /* old-school Red/Blue request phones (open Request modal) */
     .hdr-actions{display:flex;gap:10px;align-items:center}
     .pill{
       width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
@@ -47,6 +50,30 @@
     .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:85vh;min-height:620px}
     .iframe-wrap iframe{width:100%;height:100%;border:0}
     @media (max-width:900px){ .iframe-wrap{height:90vh;min-height:680px} }
+
+    /* Overview layout: Announcements + Townhall + Embedded Portal */
+    .overview-grid{display:grid;gap:12px;grid-template-columns:1.1fr 1.4fr}
+    .announce{border:1px solid var(--line);border-radius:14px;background:#0f1a24;padding:12px}
+    .townhall{display:grid;grid-template-rows:auto 1fr auto; gap:10px; height:62vh; min-height:420px}
+    .th-head{display:flex;align-items:center;justify-content:space-between}
+    .th-head h2{margin:0;font-size:18px;letter-spacing:.05em}
+    .presence{font-size:12px;color:#9fb3c7}
+    .th-body{border:1px solid var(--line);border-radius:14px;background:#0f1a24;overflow:auto;padding:12px}
+    .msg{margin:8px 0;display:grid;gap:4px}
+    .meta{font-size:11px;color:#a7bed0}
+    .bubble{display:inline-block;max-width:min(680px,85%);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#142332}
+    .me .bubble{background:linear-gradient(180deg,#143a2a,#0d291f);border-color:rgba(69,255,169,.25)}
+    .th-input{display:flex;gap:8px}
+    .th-input input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1a24;color:#eaf1f6}
+    .th-input button{min-width:96px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;cursor:pointer}
+
+    .portal-embed{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b141b;height:62vh;min-height:420px}
+    .portal-embed iframe{width:100%;height:100%;border:0}
+
+    @media (max-width:980px){
+      .overview-grid{grid-template-columns:1fr}
+      .townhall, .portal-embed{height:58vh;min-height:380px}
+    }
 
     /* Requests modal */
     .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60}
@@ -81,29 +108,47 @@
     <nav class="tabs" id="tabs">
       <button class="tab active" data-tab="overview">Overview</button>
       <button class="tab" data-tab="wholesaler">Wholesaler</button>
-      <button class="tab" data-tab="dispo">Dispo</button>
       <button class="tab" data-tab="contractor">Contractor</button>
       <button class="tab" data-tab="realtor">Realtor</button>
       <button class="tab" data-tab="investor">Investor</button>
     </nav>
 
     <section class="panel">
-      <!-- OVERVIEW (kept minimal for test) -->
+      <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
-        <p class="muted" style="margin:0 0 10px">Quick links:</p>
-        <div class="iframe-wrap">
-          <iframe id="ovFrame" src="about:blank" title="Overview Embed"></iframe>
+        <div class="overview-grid">
+          <div class="announce">
+            <h3 style="margin:0 0 6px">📢 Special Announcements</h3>
+            <div id="meLine" class="muted" style="margin-bottom:8px"></div>
+            <ul id="annList" style="margin:0 0 10px 18px">
+              <li>Welcome to the Townhall. Be respectful, be helpful.</li>
+              <li>New: Street View on top inside the wholesaler portal.</li>
+            </ul>
+          </div>
+
+          <div class="townhall">
+            <div class="th-head">
+              <h2>🏛️ Townhall (All Users)</h2>
+              <div class="presence" id="presence">Connecting…</div>
+            </div>
+            <div class="th-body" id="thBody" aria-live="polite"></div>
+            <div class="th-input">
+              <input id="thInput" type="text" placeholder="Say something to the room… (press Enter to send)"/>
+              <button id="thSend">Send</button>
+            </div>
+          </div>
+
+          <div class="portal-embed">
+            <iframe id="whEmbed" src="about:blank" title="Wholesaler Portal (Embedded)"></iframe>
+          </div>
         </div>
       </div>
 
-      <!-- WHOLESALER • ACQUISITION -->
+      <!-- WHOLESALER TAB -->
       <div class="card" data-panel="wholesaler" style="display:none">
-        <div class="iframe-wrap"><iframe id="whFrame" src="about:blank" title="Wholesaler • Acquisition"></iframe></div>
-      </div>
-
-      <!-- DISPO -->
-      <div class="card" data-panel="dispo" style="display:none">
-        <div class="iframe-wrap"><iframe id="diFrame" src="about:blank" title="Wholesaler • Dispo"></iframe></div>
+        <div class="iframe-wrap">
+          <iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe>
+        </div>
       </div>
 
       <!-- Placeholders -->
@@ -113,7 +158,7 @@
     </section>
   </div>
 
-  <!-- REQUESTS MODAL (unchanged) -->
+  <!-- REQUESTS MODAL -->
   <div id="reqModal" class="modal" aria-hidden="true" role="dialog" aria-label="Send a request">
     <div class="backdrop" data-close></div>
     <div class="sheet">
@@ -174,57 +219,151 @@
     const $=s=>document.querySelector(s);
     const tabs=[...document.querySelectorAll('.tab')];
     const panels=[...document.querySelectorAll('[data-panel]')];
+
+    // routing
     function show(name){
+      // prevent navigating to wholesaler if not allowed
+      if(name==='wholesaler' && !allowLeads) name='overview';
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
       const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
-      if(name==='wholesaler') ensureWh();
-      if(name==='dispo') ensureDi();
-      if(name==='overview') ensureOv();
+      if(name==='wholesaler' && allowLeads) ensureWhIframe();
+      if(name==='overview') ensureOverviewReady();
     }
     $('#tabs').addEventListener('click',e=>{
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
-    // If an account is restricted from leads, we’ll hide the Wholesaler tab only.
-    let allowLeads=false;
-    function applyGate(){
-      const whTab=document.querySelector('[data-tab="wholesaler"]');
-      const whPanel=document.querySelector('[data-panel="wholesaler"]');
-      if(!allowLeads){ if(whTab) whTab.style.display='none'; if(whPanel) whPanel.style.display='none'; }
+    // wholesaler iframes (lazy)
+    let whMainSet=false, whEmbedSet=false;
+    function ensureWhIframe(){
+      if(whMainSet) return; whMainSet=true;
+      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
+      $('#whFrame').src=`wholesaler.html?uid=${uid}`;
+    }
+    function ensureWhEmbed(){
+      if(whEmbedSet) return; whEmbedSet=true;
+      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
+      $('#whEmbed').src=`wholesaler.html?uid=${uid}`;
     }
 
-    // Lazy-load iframes with UID + a soft "bright" hint for acquisition
-    function uidQS(){ return `uid=${encodeURIComponent(auth.currentUser?.uid||'anon')}`; }
-    function ensureWh(){ if(!$('#whFrame').src) $('#whFrame').src = `wholesaler.html?${uidQS()}&theme=bright`; }
-    function ensureDi(){ if(!$('#diFrame').src) $('#diFrame').src = `dispo.html?${uidQS()}`; }
-    function ensureOv(){ if(!$('#ovFrame').src) $('#ovFrame').src = `wholesaler.html?${uidQS()}&theme=bright`; }
+    // overview: chat + embed (respect gate)
+    let thReady=false;
+    function ensureOverviewReady(){
+      if(allowLeads) ensureWhEmbed();
+      else {
+        const wrap=document.getElementById('whEmbed')?.closest('.portal-embed');
+        if(wrap) wrap.innerHTML='<div style="padding:12px;color:#9fb3c7">Leads are disabled for this account.</div>';
+      }
+      if(thReady) return; thReady=true;
+
+      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend'), presEl=$('#presence');
+      function scrollBottom(){ body.scrollTop=body.scrollHeight; }
+
+      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
+        const m=snap.val(); if(!m) return;
+        const me=auth.currentUser?.uid===m.uid;
+        const div=document.createElement('div'); div.className='msg'+(me?' me':'');
+        const meta=document.createElement('div'); meta.className='meta';
+        const name=(m.name||'Someone'); const t=new Date(m.ts||Date.now());
+        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+        meta.textContent=`${name} • ${hh}:${mm}`;
+        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
+        div.append(meta,bubble); body.appendChild(div); scrollBottom();
+      });
+
+      const presenceRef=db.ref('townhall/presence');
+      const myRef=presenceRef.push();
+      db.ref('.info/connected').on('value',snap=>{
+        if(snap.val()===true){
+          myRef.onDisconnect().remove();
+          myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP});
+        }
+      });
+      presenceRef.on('value',snap=>{ document.getElementById('presence').textContent = `${snap.numChildren()} online`; });
+
+      function sendMsg(){
+        const txt=(input.value||'').trim(); if(!txt) return;
+        const u=auth.currentUser||{};
+        db.ref('townhall/messages').push({
+          uid: u.uid || 'anon',
+          name: u.displayName || u.email || 'Anon',
+          text: txt,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
+        input.value=''; input.focus();
+      }
+      input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
+      send.addEventListener('click',sendMsg);
+    }
 
     // Requests modal
-    const reqModal=document.getElementById('reqModal');
-    const openReq=()=>{reqModal.classList.add('open');reqModal.setAttribute('aria-hidden','false');};
-    const closeReq=()=>{reqModal.classList.remove('open');reqModal.setAttribute('aria-hidden','true');};
-    reqModal.addEventListener('click',e=>{ if(e.target.hasAttribute('data-close')) closeReq(); });
-    document.getElementById('redPhoneBtn').onclick = ()=>{ document.getElementById('reqType').value='Immediate Need'; openReq(); };
-    document.getElementById('bluePhoneBtn').onclick= ()=>{ document.getElementById('reqType').value='Funding'; openReq(); };
+    const reqModal = document.getElementById('reqModal');
+    const openReq  = ()=>{ reqModal.classList.add('open'); reqModal.setAttribute('aria-hidden','false'); };
+    const closeReq = ()=>{ reqModal.classList.remove('open'); reqModal.setAttribute('aria-hidden','true'); };
+    reqModal.addEventListener('click', e=>{ if (e.target.hasAttribute('data-close')) closeReq(); });
+    document.getElementById('redPhoneBtn').onclick  = ()=>{ document.getElementById('reqType').value='Immediate Need'; openReq(); };
+    document.getElementById('bluePhoneBtn').onclick = ()=>{ document.getElementById('reqType').value='Funding'; openReq(); };
 
-    // Auth + gating
-    auth.onAuthStateChanged(async u=>{
+    document.getElementById('reqForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const u=auth.currentUser; if(!u) return alert('Please sign in again');
+      const payload={
+        uid:u.uid, email:u.email||'', name:u.displayName||'',
+        type: document.getElementById('reqType').value,
+        contact: document.getElementById('reqContact').value.trim(),
+        subject: document.getElementById('reqSubject').value.trim(),
+        message: document.getElementById('reqMessage').value.trim(),
+        status:'new', ts: Date.now()
+      };
+      if(!payload.message){ return alert('Please add a message'); }
+      try{ await db.ref('requests').push(payload); closeReq(); alert('Request sent'); }
+      catch(err){ console.error(err); alert('Could not send. Try again.'); }
+    });
+
+    // Lead gating
+    let allowLeads=false;
+    function applyLeadGate(){
+      const whTab   = document.querySelector('[data-tab="wholesaler"]');
+      const whPanel = document.querySelector('[data-panel="wholesaler"]');
+      const whEmbedWrap = document.getElementById('whEmbed')?.closest('.portal-embed');
+
+      if(!allowLeads){
+        if(whTab)   whTab.style.display='none';
+        if(whPanel) whPanel.style.display='none';
+        if(whEmbedWrap) whEmbedWrap.innerHTML='<div style="padding:12px;color:#9fb3c7">Leads are disabled for this account.</div>';
+      } else {
+        // OK to lazy-load when user visits
+        if(document.querySelector('.tab.active')?.dataset.tab==='wholesaler') ensureWhIframe();
+        if(document.querySelector('.tab.active')?.dataset.tab==='overview')  ensureWhEmbed();
+      }
+    }
+
+    // auth gate + initial view
+    auth.onAuthStateChanged(u=>{
       if(!u){ location.href='index.html'; return; }
+      document.getElementById('meLine').textContent = `${u.email||''} — UID: ${u.uid}`;
       const addr = encodeURIComponent('support@dealbankers.com');
       const subj = encodeURIComponent('DealBankers Request');
       const body = encodeURIComponent(`From: ${u.displayName||''} <${u.email||''}>\n\nDescribe your request here...`);
       document.getElementById('mailtoFallback').href = `mailto:${addr}?subject=${subj}&body=${body}`;
 
-      // gate for wholesaler
-      db.ref(`userSettings/${u.uid}/wholesaler/leadsEnabled`).on('value',snap=>{
-        allowLeads=!!snap.val();
-        // legacy hard restriction
-        const restricted="therealbillwilburn";
-        const isRestricted=(u.displayName&&u.displayName.toLowerCase()===restricted)||(u.email&&u.email.split("@")[0].toLowerCase()===restricted);
+      // DB-driven gate
+      const uid=u.uid;
+      db.ref(`userSettings/${uid}/wholesaler/leadsEnabled`).on('value', snap=>{
+        allowLeads = !!snap.val();
+
+        // hard restriction for therealbillwilburn (legacy behavior)
+        const restricted = "therealbillwilburn";
+        const isRestricted =
+          (u.displayName && u.displayName.toLowerCase()===restricted) ||
+          (u.email && u.email.split("@")[0].toLowerCase()===restricted);
         if(isRestricted) allowLeads=false;
-        applyGate();
-        show(new URL(location.href).searchParams.get('tab') || 'overview');
+
+        applyLeadGate();
+
+        const initial = new URL(location.href).searchParams.get('tab') || 'overview';
+        show(initial); // respects allowLeads internally
       });
     });
 
