@@ -1,4 +1,4 @@
-<!-- ======================== profile.html (original + Settings tab for per-role lead filters) ======================== -->
+<!-- ======================== profile.html (with DB lead-gating + old-school red/blue + overview embed) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,7 +14,6 @@
       --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff;
       --r:18px; --shadow:0 24px 64px rgba(0,0,0,.5);
       --red:#ff5a5a; --cyan:#47b4ff; --green:#26cf84;
-      --bright:#102132; --accent:#3b9eff;
     }
     *{box-sizing:border-box}
     body{
@@ -32,6 +31,7 @@
     .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
     .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
 
+    /* old-school Red/Blue request phones (open Request modal) */
     .hdr-actions{display:flex;gap:10px;align-items:center}
     .pill{
       width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
@@ -75,21 +75,19 @@
       .townhall, .portal-embed{height:58vh;min-height:380px}
     }
 
-    /* SETTINGS: bright, simple Apple-like form */
-    .settings-grid{display:grid;gap:12px;grid-template-columns:1fr 1fr}
-    .set-card{background:var(--bright); border:1px solid var(--line); border-radius:14px; padding:12px}
-    .set-title{margin:0 0 8px; font-size:16px; font-weight:800}
-    .row{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
-    .chk{display:flex; gap:8px; align-items:center}
-    .input, .area{
-      width:100%; border:1px solid var(--line); border-radius:10px; background:#0f1a24; color:var(--text);
-      padding:10px 12px; font-size:14px
+    /* Requests modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60}
+    .modal.open{display:flex}
+    .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+    .sheet{position:relative;width:min(720px,94vw);max-height:86vh;overflow:auto;
+      background:#0f1a24;border:1px solid var(--line);border-radius:16px;padding:16px}
+    .close{position:absolute;right:12px;top:12px;border:0;background:#182632;color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .input, .select, .textarea{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0c1620;color:#eaf1f6
     }
-    .area{min-height:84px; resize:vertical}
-    .hint{font-size:12px; color:var(--muted)}
-    .savebar{display:flex; gap:8px; justify-content:flex-end; margin-top:10px}
-    .save{background:linear-gradient(180deg,var(--accent),#0a58ca); border:none; color:#fff; padding:10px 12px; border-radius:10px; cursor:pointer}
-    @media (max-width:920px){ .settings-grid{grid-template-columns:1fr} }
+    .textarea{min-height:120px;resize:vertical}
+    .muted{color:#9fb3c7;font-size:13px}
   </style>
 </head>
 <body>
@@ -113,11 +111,10 @@
       <button class="tab" data-tab="contractor">Contractor</button>
       <button class="tab" data-tab="realtor">Realtor</button>
       <button class="tab" data-tab="investor">Investor</button>
-      <button class="tab" data-tab="settings">Settings</button>
     </nav>
 
     <section class="panel">
-      <!-- OVERVIEW (unchanged) -->
+      <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
         <div class="overview-grid">
           <div class="announce">
@@ -147,91 +144,21 @@
         </div>
       </div>
 
-      <!-- WHOLESALER TAB (unchanged behavior) -->
+      <!-- WHOLESALER TAB -->
       <div class="card" data-panel="wholesaler" style="display:none">
         <div class="iframe-wrap">
           <iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe>
         </div>
       </div>
 
-      <!-- CONTRACTOR / REALTOR / INVESTOR placeholders (unchanged) -->
+      <!-- Placeholders -->
       <div class="card" data-panel="contractor" style="display:none"><p style="margin:0;color:#9fb3c7">Contractor portal coming soon.</p></div>
       <div class="card" data-panel="realtor" style="display:none"><p style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
       <div class="card" data-panel="investor" style="display:none"><p style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
-
-      <!-- SETTINGS (NEW) -->
-      <div class="card" data-panel="settings" style="display:none">
-        <h2 style="margin:0 0 10px">Settings</h2>
-        <p class="hint" style="margin:6px 0 12px">Choose how leads are routed into your portals. (Per-user; saved to your account.)</p>
-
-        <div class="settings-grid">
-
-          <!-- Wholesaler Filters -->
-          <div class="set-card">
-            <h3 class="set-title">Wholesaler • Lead Filters</h3>
-            <div class="row" style="margin-bottom:8px">
-              <label class="chk"><input type="checkbox" id="whCommercial"> <span>Commercial</span></label>
-              <label class="chk"><input type="checkbox" id="whResidential"> <span>Residential</span></label>
-              <label class="chk"><input type="checkbox" id="whMultifamily"> <span>Multifamily (5+)</span></label>
-              <label class="chk"><input type="checkbox" id="whForeclosure"> <span>Pre-Foreclosure/REO</span></label>
-            </div>
-            <label class="hint">ZIP filters (comma or newline separated)</label>
-            <textarea id="whZips" class="area" placeholder="e.g. 77002, 77004, 90014"></textarea>
-            <div class="savebar">
-              <button id="saveWh" class="save">Save Wholesaler Filters</button>
-            </div>
-          </div>
-
-          <!-- Contractor Filters (placeholder) -->
-          <div class="set-card">
-            <h3 class="set-title">Contractor • Lead Filters</h3>
-            <div class="row" style="margin-bottom:8px">
-              <label class="chk"><input type="checkbox" id="ctResidential"> <span>Residential Jobs</span></label>
-              <label class="chk"><input type="checkbox" id="ctCommercial"> <span>Commercial Jobs</span></label>
-            </div>
-            <label class="hint">Service ZIPs</label>
-            <textarea id="ctZips" class="area" placeholder="ZIPs you cover"></textarea>
-            <div class="savebar">
-              <button id="saveCt" class="save">Save Contractor Filters</button>
-            </div>
-          </div>
-
-          <!-- Realtor Filters (placeholder) -->
-          <div class="set-card">
-            <h3 class="set-title">Realtor • Lead Filters</h3>
-            <div class="row" style="margin-bottom:8px">
-              <label class="chk"><input type="checkbox" id="reListings"> <span>Listings</span></label>
-              <label class="chk"><input type="checkbox" id="reBuyers"> <span>Buyers</span></label>
-              <label class="chk"><input type="checkbox" id="reInvestors"> <span>Investors</span></label>
-            </div>
-            <label class="hint">ZIPs / MLS Areas</label>
-            <textarea id="reAreas" class="area" placeholder="ZIPs or MLS area codes"></textarea>
-            <div class="savebar">
-              <button id="saveRe" class="save">Save Realtor Filters</button>
-            </div>
-          </div>
-
-          <!-- Investor Filters (placeholder) -->
-          <div class="set-card">
-            <h3 class="set-title">Investor • Buy Box</h3>
-            <div class="row" style="margin-bottom:8px">
-              <label class="chk"><input type="checkbox" id="inSfr"> <span>SFR</span></label>
-              <label class="chk"><input type="checkbox" id="inMf"> <span>Multifamily</span></label>
-              <label class="chk"><input type="checkbox" id="inLand"> <span>Land</span></label>
-            </div>
-            <label class="hint">Target ZIPs</label>
-            <textarea id="inZips" class="area" placeholder="e.g. 30312, 60611"></textarea>
-            <div class="savebar">
-              <button id="saveIn" class="save">Save Investor Filters</button>
-            </div>
-          </div>
-
-        </div>
-      </div>
     </section>
   </div>
 
-  <!-- REQUESTS MODAL (unchanged) -->
+  <!-- REQUESTS MODAL -->
   <div id="reqModal" class="modal" aria-hidden="true" role="dialog" aria-label="Send a request">
     <div class="backdrop" data-close></div>
     <div class="sheet">
@@ -293,8 +220,9 @@
     const tabs=[...document.querySelectorAll('.tab')];
     const panels=[...document.querySelectorAll('[data-panel]')];
 
-    // routing (kept same)
+    // routing
     function show(name){
+      // prevent navigating to wholesaler if not allowed
       if(name==='wholesaler' && !allowLeads) name='overview';
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
@@ -319,7 +247,7 @@
       $('#whEmbed').src=`wholesaler.html?uid=${uid}`;
     }
 
-    // overview: chat + embed
+    // overview: chat + embed (respect gate)
     let thReady=false;
     function ensureOverviewReady(){
       if(allowLeads) ensureWhEmbed();
@@ -329,7 +257,7 @@
       }
       if(thReady) return; thReady=true;
 
-      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend');
+      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend'), presEl=$('#presence');
       function scrollBottom(){ body.scrollTop=body.scrollHeight; }
 
       db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
@@ -369,7 +297,7 @@
       send.addEventListener('click',sendMsg);
     }
 
-    // Requests modal (unchanged)
+    // Requests modal
     const reqModal = document.getElementById('reqModal');
     const openReq  = ()=>{ reqModal.classList.add('open'); reqModal.setAttribute('aria-hidden','false'); };
     const closeReq = ()=>{ reqModal.classList.remove('open'); reqModal.setAttribute('aria-hidden','true'); };
@@ -393,7 +321,7 @@
       catch(err){ console.error(err); alert('Could not send. Try again.'); }
     });
 
-    // Lead gating (unchanged)
+    // Lead gating
     let allowLeads=false;
     function applyLeadGate(){
       const whTab   = document.querySelector('[data-tab="wholesaler"]');
@@ -405,132 +333,41 @@
         if(whPanel) whPanel.style.display='none';
         if(whEmbedWrap) whEmbedWrap.innerHTML='<div style="padding:12px;color:#9fb3c7">Leads are disabled for this account.</div>';
       } else {
+        // OK to lazy-load when user visits
         if(document.querySelector('.tab.active')?.dataset.tab==='wholesaler') ensureWhIframe();
         if(document.querySelector('.tab.active')?.dataset.tab==='overview')  ensureWhEmbed();
       }
     }
 
-    // SETTINGS: helpers to parse zips and save filters
-    const parseZips = (raw) =>{
-      return (raw||'')
-        .split(/[\s,]+/)
-        .map(z=>z.trim())
-        .filter(Boolean)
-        .slice(0,200);
-    };
-
-    function loadRoleFilters(uid, role, shape){
-      const ref = db.ref(`userSettings/${uid}/${role}/filters`);
-      return ref.once('value').then(s=>({ref, data: s.val()||shape}));
-    }
-    function saveRoleFilters(ref, data){ return ref.set(data); }
-
-    // auth gate + initial view + load settings
-    auth.onAuthStateChanged(async u=>{
+    // auth gate + initial view
+    auth.onAuthStateChanged(u=>{
       if(!u){ location.href='index.html'; return; }
       document.getElementById('meLine').textContent = `${u.email||''} — UID: ${u.uid}`;
-      // mailto fallback stays same
       const addr = encodeURIComponent('support@dealbankers.com');
       const subj = encodeURIComponent('DealBankers Request');
       const body = encodeURIComponent(`From: ${u.displayName||''} <${u.email||''}>\n\nDescribe your request here...`);
       document.getElementById('mailtoFallback').href = `mailto:${addr}?subject=${subj}&body=${body}`;
 
       // DB-driven gate
-      db.ref(`userSettings/${u.uid}/wholesaler/leadsEnabled`).on('value', snap=>{
+      const uid=u.uid;
+      db.ref(`userSettings/${uid}/wholesaler/leadsEnabled`).on('value', snap=>{
         allowLeads = !!snap.val();
+
+        // hard restriction for therealbillwilburn (legacy behavior)
         const restricted = "therealbillwilburn";
         const isRestricted =
           (u.displayName && u.displayName.toLowerCase()===restricted) ||
           (u.email && u.email.split("@")[0].toLowerCase()===restricted);
         if(isRestricted) allowLeads=false;
+
         applyLeadGate();
+
         const initial = new URL(location.href).searchParams.get('tab') || 'overview';
-        show(initial);
+        show(initial); // respects allowLeads internally
       });
-
-      // Load existing filters (with safe defaults) and wire save buttons
-      // WHOLESALER
-      {
-        const shape = { commercial:false, residential:true, multifamily:false, foreclosure:false, zips:[] };
-        const {ref, data} = await loadRoleFilters(u.uid, 'wholesaler', shape);
-        document.getElementById('whCommercial').checked  = !!data.commercial;
-        document.getElementById('whResidential').checked = !!data.residential;
-        document.getElementById('whMultifamily').checked = !!data.multifamily;
-        document.getElementById('whForeclosure').checked = !!data.foreclosure;
-        document.getElementById('whZips').value = (data.zips||[]).join(', ');
-        document.getElementById('saveWh').onclick = async ()=>{
-          const payload = {
-            commercial:  document.getElementById('whCommercial').checked,
-            residential: document.getElementById('whResidential').checked,
-            multifamily: document.getElementById('whMultifamily').checked,
-            foreclosure: document.getElementById('whForeclosure').checked,
-            zips: parseZips(document.getElementById('whZips').value)
-          };
-          await saveRoleFilters(ref, payload);
-          alert('Wholesaler filters saved');
-        };
-      }
-
-      // CONTRACTOR (placeholder)
-      {
-        const shape = { residential:false, commercial:false, zips:[] };
-        const {ref, data} = await loadRoleFilters(u.uid, 'contractor', shape);
-        document.getElementById('ctResidential').checked = !!data.residential;
-        document.getElementById('ctCommercial').checked  = !!data.commercial;
-        document.getElementById('ctZips').value = (data.zips||[]).join(', ');
-        document.getElementById('saveCt').onclick = async ()=>{
-          const payload = {
-            residential: document.getElementById('ctResidential').checked,
-            commercial:  document.getElementById('ctCommercial').checked,
-            zips: parseZips(document.getElementById('ctZips').value)
-          };
-          await saveRoleFilters(ref, payload);
-          alert('Contractor filters saved');
-        };
-      }
-
-      // REALTOR (placeholder)
-      {
-        const shape = { listings:false, buyers:false, investors:false, areas:[] };
-        const {ref, data} = await loadRoleFilters(u.uid, 'realtor', shape);
-        document.getElementById('reListings').checked  = !!data.listings;
-        document.getElementById('reBuyers').checked    = !!data.buyers;
-        document.getElementById('reInvestors').checked = !!data.investors;
-        document.getElementById('reAreas').value = (data.areas||[]).join(', ');
-        document.getElementById('saveRe').onclick = async ()=>{
-          const payload = {
-            listings:  document.getElementById('reListings').checked,
-            buyers:    document.getElementById('reBuyers').checked,
-            investors: document.getElementById('reInvestors').checked,
-            areas: parseZips(document.getElementById('reAreas').value)
-          };
-          await saveRoleFilters(ref, payload);
-          alert('Realtor filters saved');
-        };
-      }
-
-      // INVESTOR (placeholder)
-      {
-        const shape = { sfr:false, mf:false, land:false, zips:[] };
-        const {ref, data} = await loadRoleFilters(u.uid, 'investor', shape);
-        document.getElementById('inSfr').checked  = !!data.sfr;
-        document.getElementById('inMf').checked   = !!data.mf;
-        document.getElementById('inLand').checked = !!data.land;
-        document.getElementById('inZips').value = (data.zips||[]).join(', ');
-        document.getElementById('saveIn').onclick = async ()=>{
-          const payload = {
-            sfr:  document.getElementById('inSfr').checked,
-            mf:   document.getElementById('inMf').checked,
-            land: document.getElementById('inLand').checked,
-            zips: parseZips(document.getElementById('inZips').value)
-          };
-          await saveRoleFilters(ref, payload);
-          alert('Investor filters saved');
-        };
-      }
     });
 
-    // logout (unchanged)
+    // logout
     document.getElementById('logoutBtn').onclick=()=>auth.signOut().then(()=>location.href='index.html');
   </script>
 </body>
