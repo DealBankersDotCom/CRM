@@ -1,4 +1,4 @@
-<!-- ================= Wholesaler Portal (Acq/Dispo, Lead Source Chooser, CSV upload, robust /leads.js loader) ================= -->
+<!-- ================= Wholesaler Portal (Acq/Dispo, Lead Source Chooser, CSV upload, robust /leads.js loader, multi-offering Dispo) ================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,30 +7,54 @@
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 <style>
   :root{--bg1:#0b131b;--bg2:#142838;--bg3:#173c53;--text:#f3f8fb;--muted:#c7d7e6;--gold:#ffd36b;--green:#26cf84;--line:#2a5a78}
-  *{box-sizing:border-box} body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-  background:radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));padding:10px}
-  .wrap{max-width:1100px;margin:0 auto}.card{border:1px solid rgba(255,255,255,.18);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));overflow:hidden}
+  *{box-sizing:border-box}
+  body{
+    margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+    background:radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+    padding:10px
+  }
+  .wrap{max-width:1100px;margin:0 auto}
+  .card{border:1px solid rgba(255,255,255,.18);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));overflow:hidden}
+
   .top{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2)}
   .crumbs{display:flex;gap:8px;align-items:center;color:var(--muted)} .status{font-size:12px;color:#e8f7ff}
+
   .sticky{position:sticky;top:0;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
-  .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;text-decoration:none}
-  .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}.btn-green{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;border:none}
+  .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;text-decoration:none}
+  .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
+  .btn-green{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;border:none}
+
   .lead{margin:12px;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));overflow:hidden}
   .title{padding:12px 14px;font-weight:900;border-bottom:1px solid rgba(255,255,255,.18)}
-  .body{padding:12px 14px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
+  .body{padding:12px 14px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
   .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}.sv{height:260px;margin-top:6px}.map{height:220px;margin:8px 0}
-  .chooser{padding:16px;display:grid;gap:10px}.grid4{display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:10px}
+
+  /* Lead source chooser */
+  .chooser{padding:16px;display:grid;gap:10px}
+  .grid4{display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:10px}
   @media (min-width:860px){.grid4{grid-template-columns:repeat(4,1fr)}}
   .choice{border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px;background:#0e2233}
-  .choice h4{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}.input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+  .choice h4{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}
+  .input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
   .textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+
+  /* Dispo */
+  .offerCard{display:flex;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.18);background:#0f2a3a;border-radius:12px;padding:10px;cursor:pointer}
+  .badge{font-size:11px;padding:4px 8px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:#0c1f2d;color:#cfe7ff}
+
   #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);display:none}
 </style>
 </head>
 <body>
   <div class="wrap">
     <section class="card">
-      <div class="top"><div class="crumbs"><span>Wholesaler</span><span>•</span><span id="crumb">Acquisition</span></div><div id="status" class="status">Loading…</div></div>
+      <div class="top">
+        <div class="crumbs"><span>Wholesaler</span><span>•</span><span id="crumb">Acquisition</span></div>
+        <div id="status" class="status">Loading…</div>
+      </div>
 
       <!-- Toolbar (Acq) -->
       <div class="sticky" id="acqBar" style="display:none">
@@ -48,7 +72,7 @@
         <div id="leadCard" class="lead"><div class="body">Initializing…</div></div>
       </div>
 
-      <!-- Lead Source Chooser (only when leads not enabled or leads.js fails) -->
+      <!-- Lead Source Chooser (when leads disabled OR leads.js not present) -->
       <div id="chooser" class="chooser" style="display:none">
         <h3 style="margin:0">Pick how you want to work leads</h3>
         <div class="muted">We’ll notify admin and turn on the right feed. You can also upload a CSV to start immediately.</div>
@@ -67,16 +91,21 @@
         </div>
       </div>
 
-      <!-- DISPO (unchanged quick embed) -->
+      <!-- DISPO: multi-offering list + preview -->
       <div id="dispoWrap" style="display:none;padding:12px">
-        <div style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
-          <h3 style="margin:0 0 8px">Active Offering</h3>
-          <div style="display:flex;gap:10px;flex-wrap:wrap">
-            <a class="btn btn-gold" target="_blank" rel="noopener" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview">Open Offering Memo</a>
-            <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview#interest">Submit Interest</a>
+        <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
+          <div id="offerList" style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
+            <h3 style="margin:0 0 8px">Active Offerings</h3>
+            <div id="offerCards" style="display:grid;gap:10px"></div>
           </div>
-          <iframe title="SOF" style="width:100%;height:520px;border:0;border-radius:12px;background:#fff;margin-top:10px"
-            src="https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview"></iframe>
+          <div style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
+            <h3 style="margin:0 0 8px">Statement of Facts (Preview)</h3>
+            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
+              <a id="btnOpenMemo" class="btn btn-gold" target="_blank" rel="noopener">Open Offering Memo</a>
+              <a id="btnInterest" class="btn" target="_blank" rel="noopener">Submit Interest</a>
+            </div>
+            <iframe id="sofPreview" title="SOF preview" style="width:100%;height:520px;border:0;border-radius:12px;background:#fff"></iframe>
+          </div>
         </div>
       </div>
     </section>
@@ -84,10 +113,11 @@
 
   <div id="toast"></div>
 
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // Firebase (dedicated)
+    // Firebase (isolated app for this page)
     const app=firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
@@ -96,7 +126,7 @@
 
     // URL params
     const p=new URL(location.href).searchParams;
-    const sub=(p.get('sub')||p.get('mode')||'acq').toLowerCase();
+    const sub=(p.get('sub')||p.get('mode')||'acq').toLowerCase();      // 'acq' | 'dispo'
     const uid=p.get('uid')||'anon';
     const whTypes=(p.get('whTypes')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
     const whZips=(p.get('whZips')||'').split(',').map(s=>s.trim()).filter(Boolean);
@@ -112,12 +142,12 @@
     function showDispo(){ $('#crumb').textContent='Dispo'; $('#acqBar').style.display='none'; $('#acqWrap').style.display='none'; $('#dispoWrap').style.display='block'; }
     if(sub==='dispo') showDispo(); else showAcq();
 
-    // ------- Lead gate and chooser -------
+    // ------- Lead gate and chooser (Acq) -------
     if(sub==='acq'){
       setStatus('Checking access…');
       db.ref(`userSettings/${uid}/wholesaler`).once('value').then(s=>{
         const v=s.val()||{};
-        const allowed=!!v.leadsEnabled;
+        const allowed=!!v.leadsEnabled;           // admin flips this
         if(!allowed){ renderChooser('Access to leads is not enabled yet.'); return; }
         loadLeadsScript();
       }).catch(()=>renderChooser('Could not verify access right now.'));
@@ -133,45 +163,56 @@
         try{await db.ref('requests').push(payload); toast('Request sent'); setStatus('Request sent — we’ll enable your feed.');}
         catch{toast('Could not send request');}
       });
-      // CSV upload
       $('#csv').addEventListener('change', handleCSV);
     }
 
     // Robust /leads.js loader with fallback path and timeout
     function loadLeadsScript(){
-      const done=()=>{ if(Array.isArray(window.leads)&&window.leads.length){ initAcq(); }
-                      else { renderChooser('No leads loaded yet. You can request a source or upload CSV.'); } };
+      const finished=()=>{ if(Array.isArray(window.leads)&&window.leads.length){ initAcq(); }
+                           else { renderChooser('No leads loaded yet. You can request a source or upload CSV.'); } };
       let settled=false;
       function trySrc(src){
-        const s=document.createElement('script'); s.src=src; s.onload=()=>{if(!settled){settled=true; done();}}; s.onerror=()=>{if(!settled){tryNext();}}
+        const s=document.createElement('script'); s.src=src;
+        s.onload=()=>{ if(!settled){ settled=true; finished(); } };
+        s.onerror=()=>{ if(!settled){ tryNext(); } };
         document.head.appendChild(s);
       }
       const sources=['/leads.js?v='+Date.now(),'leads.js?v='+Date.now()];
-      function tryNext(){ const next=sources.shift(); if(next) trySrc(next); else if(!settled){settled=true; renderChooser('Could not load leads.js');} }
-      setTimeout(()=>{ if(!settled) renderChooser('Leads loader timed out'); }, 7000);
+      function tryNext(){ const next=sources.shift(); if(next) trySrc(next); else if(!settled){ settled=true; renderChooser('Could not load leads.js'); } }
+      setTimeout(()=>{ if(!settled){ settled=true; renderChooser('Leads loader timed out'); } }, 7000);
       tryNext();
     }
 
-    // --------- ACQ core (filter + render) -----------
+    // --------- ACQ: classify, filter, render -----------
     let idx=0, current=null; const MODE_KEY='db_phone_link_mode_wh';
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device'; const setMode=m=>localStorage.setItem(MODE_KEY,m);
     const clean=s=>(s||'').toString().trim();
     const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
-    function phoneHref(number,mode){const num=(number||'').replace(/[^\d+]/g,''); if(!num) return '#';
-      if(mode==='device') return `tel:${num}`; if(mode==='textnow'){navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging';}
-      if(mode==='gvoice'){navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages';} return `tel:${num}`;}
+    function phoneHref(number,mode){
+      const num=(number||'').replace(/[^\d+]/g,''); if(!num) return '#';
+      if(mode==='device') return `tel:${num}`;
+      if(mode==='textnow'){navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging';}
+      if(mode==='gvoice'){navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages';}
+      return `tel:${num}`;
+    }
     const extractZip=addr=>{const m=String(addr||'').match(/\b\d{5}\b/); return m?m[0]:'';}
     function classifyLead(lead){
+      // Stronger land detection so "vacant lots" don't bleed into commercial
       const bag=[lead?.type,lead?.category,lead?.tags,lead?.notes,lead?.details,lead?.description,lead?.zoning,lead?.use].map(clean).join(' ').toLowerCase();
-      const isComm=/\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|c[- ]?store|gas|shopping|mall|strip|mixed[- ]use|cap ?rate|triple ?net|nnn|flex|medical office|clinic|self[ -]?storage|automotive|dealership|multifamily(?!\s*residential))\b/.test(bag)||/\bzoned\s*[cbi]\b/.test(bag);
-      const isResi=/\b(residential|single[- ]family|sfh|house|duplex|triplex|quadplex|apartment|condo|townhome|mobile home|mh)\b/.test(bag);
-      const isLand=/\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag)||/\blot\b/.test(bag);
+      const isLand=/\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag)||/\blot\b/.test(bag)||/\bacre(s)?\b/.test(bag);
+      const isComm=!isLand && (/\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|c[- ]?store|gas|shopping|mall|strip|mixed[- ]use|cap ?rate|triple ?net|nnn|flex|medical office|clinic|self[ -]?storage|automotive|dealership|multifamily(?!\s*residential))\b/.test(bag)||/\bzoned\s*[cbi]\b/.test(bag));
+      const isResi=!isLand && /\b(residential|single[- ]family|sfh|house|duplex|triplex|quadplex|apartment|condo|townhome|mobile home|mh)\b/.test(bag);
       if(isComm) return 'commercial'; if(isResi) return 'residential'; if(isLand) return 'land'; return '';
     }
     function applyFilters(all){
       let arr=all;
       if(hasTypeFilter){
-        arr=arr.filter(l=>{const t=classifyLead(l); if(t==='') return false; if(t==='land') return whTypes.includes('land'); return whTypes.includes(t);});
+        arr=arr.filter(l=>{
+          const t=classifyLead(l);
+          if(t==='') return false;
+          if(t==='land') return whTypes.includes('land');
+          return whTypes.includes(t);
+        });
       }
       if(zipSet.size){arr=arr.filter(l=>{const z=extractZip(l?.address||''); return z && zipSet.has(z);});}
       return arr;
@@ -208,27 +249,83 @@
           <iframe class="map" src="${mapSrc(addr)}" loading="lazy"></iframe>
         </div>`;
       const key='db_notes_'+addr.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-      const ta=$('#noteInput'); ta.value=localStorage.getItem(key)||current?.notes||''; $('#saveNotes').onclick=()=>{localStorage.setItem(key,ta.value.trim()); toast('Notes saved');};
-      document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') render(idx-1); if(e.key==='ArrowRight') render(idx+1);});
+      const ta=$('#noteInput'); ta.value=localStorage.getItem(key)||current?.notes||'';
+      $('#saveNotes').onclick=()=>{localStorage.setItem(key,ta.value.trim()); toast('Notes saved');};
+      document.onkeydown=(e)=>{ if(e.key==='ArrowLeft') render(idx-1); if(e.key==='ArrowRight') render(idx+1);};
       $('#actCopy').onclick=()=>{ if(!phone) return alert('No phone on this lead.'); navigator.clipboard.writeText(phone).then(()=>toast('Phone copied')); };
       $('#actSettings').onclick=()=>{ const cur=getMode(); const next=cur==='device'?'textnow':cur==='textnow'?'gvoice':'device'; setMode(next); toast(`Dial mode: ${next}`); render(idx); };
     }
 
-    // CSV uploader for quick start
+    // CSV uploader quick start (bypasses /leads.js)
     function handleCSV(ev){
       const f=ev.target.files?.[0]; if(!f) return;
       const r=new FileReader();
       r.onload=()=>{
         const txt=String(r.result||''); const rows=txt.split(/\r?\n/).filter(Boolean);
-        const hdr=rows.shift().split(',').map(s=>s.trim().toLowerCase());
-        const idxOf=n=>hdr.findIndex(h=>h===n);
-        const iAddr=idxOf('address'), iName=idxOf('name'), iPhone=idxOf('phone'), iNotes=idxOf('notes');
-        const arr=rows.map(line=>{const cols=line.split(','); return {address:cols[iAddr]||'', contacts:[{name:cols[iName]||'', phone:cols[iPhone]||''}], notes:cols[iNotes]||''};});
-        window.leads=arr; $('#csvMsg').textContent=`Loaded ${arr.length} lead(s) from CSV.`;
-        $('#chooser').style.display='none'; $('#acqWrap').style.display='block'; loadLeadsScript(); // will call initAcq which uses window.leads
+        const hdr=(rows.shift()||'').split(',').map(s=>s.trim().toLowerCase());
+        const ix=n=>hdr.findIndex(h=>h===n);
+        const iAddr=ix('address'), iName=ix('name'), iPhone=ix('phone'), iNotes=ix('notes');
+        const arr=rows.map(line=>{
+          const cols=line.split(',');
+          return {address:cols[iAddr]||'', contacts:[{name:cols[iName]||'', phone:cols[iPhone]||''}], notes:cols[iNotes]||''};
+        });
+        window.leads=arr;
+        $('#csvMsg').textContent=`Loaded ${arr.length} lead(s) from CSV.`;
+        $('#chooser').style.display='none'; $('#acqWrap').style.display='block';
+        initAcq();
       };
       r.readAsText(f);
     }
+
+    // -------------------- DISPO --------------------
+    function memoUrl(sof){ return 'offering-memo2.html?sof=' + encodeURIComponent(sof||''); }
+    function setPreview(sof){
+      const url = sof || 'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview';
+      $('#sofPreview').src = url;
+      $('#btnOpenMemo').href = memoUrl(url);
+      $('#btnInterest').href = memoUrl(url) + '#interest';
+    }
+    async function loadDispoOfferings(){
+      setStatus('Loading offerings…');
+      const wrap = $('#offerCards'); wrap.innerHTML = '<div class="muted">Loading…</div>';
+      const [gSnap, uSnap] = await Promise.all([
+        db.ref('offerings/global').get().catch(()=>({val:()=>null})),
+        db.ref(`offerings/${uid}`).get().catch(()=>({val:()=>null}))
+      ]);
+      const toArr = o => o ? Object.values(o) : [];
+      let items = [...toArr(gSnap.val()), ...toArr(uSnap.val())];
+
+      if(!items.length){
+        items = [{ title:'Virgin D6 Lift — FOB Houston',
+                   sof:'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview',
+                   badges:['Capital Need: $300k','Repay: 7–10 days','100M gallons'],
+                   icon:'🛢️'}];
+      }
+      wrap.innerHTML = '';
+      items.forEach((o,i)=>{
+        const card = document.createElement('div');
+        card.className='offerCard';
+        card.innerHTML = `
+          <div style="font-size:24px">${o.icon||'📄'}</div>
+          <div style="flex:1">
+            <div style="font-weight:900">${o.title||'Untitled Offering'}</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
+              ${(o.badges||[]).map(b=>`<span class="badge">${b}</span>`).join('')}
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.sof||'')}">Open</a>
+            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.sof||'')}#interest">Interest</a>
+          </div>`;
+        card.addEventListener('click', ()=> setPreview(o.sof));
+        wrap.appendChild(card);
+        if(i===0) setPreview(o.sof);
+      });
+      setStatus('Offerings');
+    }
+
+    // Boot per mode
+    if(sub==='dispo'){ loadDispoOfferings(); }
   </script>
 </body>
 </html>
