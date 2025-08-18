@@ -1,52 +1,141 @@
-<!-- ============================ dispo.html (Disposition Portal + Offerings manager + memo2 links) ============================ -->
+<!-- ========================= dispo.html ========================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Deal Bankers • Dispo</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Deal Bankers • Dispo CRM</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <style>
-    /* (same visuals you have; omitted here for length) */
+    :root{--bg:#0c151e;--panel:#0f1a24;--line:#24455f;--text:#e9f3ff;--muted:#a9c3db;--btn:#173449;}
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;background:linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);color:var(--text)}
+    header{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border-bottom:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
+    .menu{cursor:pointer;font-size:22px}
+    .menu-content{display:none;position:absolute;top:56px;right:12px;background:#0f1a24;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.45);z-index:10}
+    .menu-content a{display:block;padding:10px 14px;text-decoration:none;color:#cfe3f6}
+    .menu-content a:hover{background:#0e2433}
+    .container{display:flex;flex-direction:column;gap:12px;padding:12px}
+    @media (min-width:780px){ .container{flex-direction:row;height:calc(100vh - 56px)} }
+    .lead-section,.map-section{flex:1;min-width:0}
+    .lead-buttons{display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
+    .lead-buttons a,.lead-buttons button{font-size:22px;border:1px solid var(--line);border-radius:10px;text-decoration:none;cursor:pointer;padding:8px 12px;color:#fff;background:#0e2433}
+    .lead-buttons .call,.lead-buttons .text{background:linear-gradient(180deg,#ffd36b,#c89b3a);color:#211a05;border:none}
+    .lead-buttons .dirs{background:#0e2433}
+    .lead-card{background:#10222e;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 14px 36px rgba(0,0,0,.35);margin:0 auto 12px;max-width:560px}
+    .lead-card a{color:#8cc8ff;text-decoration:none}
+    .lead-card a:hover{text-decoration:underline}
+    .lead-card button{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;padding:8px 12px;border:none;border-radius:8px;font-size:14px;margin-top:10px;cursor:pointer}
+    .next-btn{display:block;margin:12px auto;padding:10px 20px;font-size:18px;background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff;border:none;border-radius:10px;cursor:pointer}
+    iframe.map{width:100%;height:320px;border:none;border-radius:12px;background:#fff}
+    @media (min-width:780px){ iframe.map{height:100%} }
+    .modal{display:none;position:fixed;z-index:999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,.7);justify-content:center;align-items:center}
+    .modal-content{width:92%;height:80%;background:#0f1a24;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--line)}
+    .modal iframe{width:100%;height:100%;border:none}
+    .close-btn{position:absolute;top:10px;right:15px;font-size:20px;background:#333;color:white;border:none;border-radius:50%;width:34px;height:34px;cursor:pointer}
+    .accordion{margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
+    .accordion summary{background:#0f2a3a;cursor:pointer;padding:10px;font-weight:700;color:#cfe3f6}
+    .accordion div{padding:10px;background:#0e2433;font-size:14px;color:#cfe3f6}
   </style>
+
+  <script src="dispo.js"></script>
+  <script>
+    let index = 0;
+
+    function gmapDir(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`; }
+
+    function showLead(lead) {
+      const name = lead.contacts?.[0]?.name || "Unknown";
+      const phone = lead.contacts?.[0]?.phone || "N/A";
+      const notes = lead.notes ? lead.notes.replace(/\n/g, "<br>") : "No deal notes available.";
+      const url = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=Dispo&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
+
+      const dirs = gmapDir(lead.address||'');
+
+      document.getElementById("leadCard").innerHTML = `
+        <div class="lead-buttons">
+          <button class="call" onclick="copyToClipboard('${phone}')">📞</button>
+          <a class="text" href="https://www.textnow.com/messaging" target="_blank">💬</a>
+          <a class="dirs" href="${dirs}" target="_blank" title="Directions">🚗</a>
+          <a class="dirs" href="https://drive.google.com" target="_blank" title="Drive">📁</a>
+        </div>
+        <div class="lead-card">
+          <strong>${name}</strong><br/>
+          ${lead.address || ''}<br/>
+          <a href="https://www.textnow.com/messaging" target="_blank">Open TextNow</a><br/>
+          <button onclick="openModal('${url}')">📝 Update Notes</button>
+          <details class="accordion">
+            <summary>📊 Deal Details</summary>
+            <div>${notes}</div>
+          </details>
+        </div>
+      `;
+    }
+
+    function nextLead() {
+      index = (index + 1) % (leads?.length || 1);
+      showLead(leads[index]);
+    }
+
+    function copyToClipboard(text) {
+      navigator.clipboard.writeText(text).then(() => alert("Copied number: " + text));
+    }
+
+    function openModal(url) {
+      const modal = document.getElementById("formModal");
+      const iframe = document.getElementById("formIframe");
+      iframe.src = url;
+      modal.style.display = "flex";
+    }
+
+    function closeModal() {
+      document.getElementById("formModal").style.display = "none";
+      document.getElementById("formIframe").src = "";
+    }
+
+    function toggleMenu() {
+      const menu = document.getElementById("menuContent");
+      menu.style.display = menu.style.display === "block" ? "none" : "block";
+    }
+
+    window.onload = function () {
+      if (Array.isArray(leads) && leads.length > 0) {
+        index = 0;
+        showLead(leads[index]);
+      } else {
+        document.getElementById("leadCard").innerHTML = `<div class="lead-card">No dispo deals loaded.</div>`;
+      }
+    };
+  </script>
 </head>
 <body>
-  <!-- header + toolbar unchanged -->
-
-  <div class="grid">
-    <div class="panel">
-      <h3 class="h">Active Offerings</h3>
-
-      <!-- D6 now opens memo2 -->
-      <div class="offer">
-        <div>
-          <div class="row" style="font-weight:800">Virgin D6 Lift — FOB Houston</div>
-          <div class="row" style="margin-top:6px">
-            <span class="badge">Capital Need: $300k</span>
-            <span class="badge">Repay: 7–10 days</span>
-            <span class="badge">100M gallons</span>
-          </div>
-        </div>
-        <div class="row">
-          <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview">Open Offering Memo</a>
-          <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview#interest">Submit Interest</a>
-        </div>
+  <header>
+    <div>Deal Bankers • Dispo CRM</div>
+    <div style="position:relative">
+      <div class="menu" onclick="toggleMenu()">☰</div>
+      <div class="menu-content" id="menuContent">
+        <a href="wholesaler.html">Go to Acquisition</a>
       </div>
-
-      <!-- Your new memo 2 page quick link -->
-      <div class="offer" style="margin-top:10px">
-        <div><div class="row" style="font-weight:800">Booth St. Case Study</div><div class="row" style="margin-top:6px"><span class="badge">offering-memo2.html</span></div></div>
-        <div class="row"><a class="btn" target="_blank" rel="noopener" href="offering-memo2.html">Open Memo 2</a></div>
-      </div>
-
-      <!-- per-user offerings list stays the same -->
     </div>
+  </header>
 
-    <div class="panel">
-      <h3 class="h">Statement of Facts (Inline Preview)</h3>
-      <iframe class="pdf" title="SOF" src="https://docs.google.com/gview?embedded=1&url=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/view?usp=drive_link"></iframe>
+  <div class="container">
+    <div class="lead-section">
+      <div id="leadCard"></div>
+      <button class="next-btn" onclick="nextLead()">⏭️ Next Deal</button>
+    </div>
+    <div class="map-section">
+      <iframe class="map"
+        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
+        allowfullscreen></iframe>
     </div>
   </div>
 
-  <!-- rest of your notes/share tools + Firebase wiring unchanged from your last file -->
+  <div id="formModal" class="modal">
+    <div class="modal-content">
+      <button class="close-btn" onclick="closeModal()">×</button>
+      <iframe id="formIframe"></iframe>
+    </div>
+  </div>
 </body>
 </html>
