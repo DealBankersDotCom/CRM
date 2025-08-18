@@ -1,4 +1,4 @@
-<!-- ================================= Wholesaler Portal (Acq + Dispo, per-sub gating, filters, offerings) ================================ -->
+<!-- ================= Wholesaler Portal (Acq + Dispo • house leads + user uploads • filters • offerings) ================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -36,8 +36,8 @@
     .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
       background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
 
-    /* Desktop-friendly actions (labels always visible) */
-    .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    /* Actions */
+    .actions{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
     .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
@@ -69,7 +69,7 @@
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-    /* Dispo view */
+    /* Dispo view (kept) */
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
     .card2{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px}
     .offer-card{display:flex;gap:12px;align-items:center;border:1px solid rgba(255,255,255,.18);background:#0f2a3a;border-radius:12px;padding:10px}
@@ -86,6 +86,11 @@
 
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
+
+    /* Source switcher */
+    .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
+    .seg button{background:#0f2a3a;color:#cde1f3;border:0;padding:8px 12px;cursor:pointer}
+    .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
   </style>
 </head>
 <body>
@@ -105,12 +110,22 @@
           <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span><span class="label">Text</span></a>
           <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span><span class="label">Copy</span></button>
           <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span><span class="label">Drive</span></a>
+          <button class="btn btn-ghost" id="btnUpload"   title="Upload Leads"><span class="ico">📤</span><span class="label">Upload</span></button>
           <button class="btn btn-ghost" id="actSettings" title="Settings"><span class="ico">⚙️</span><span class="label">Dial Pref</span></button>
         </div>
         <div class="navrow">
           <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀ <span class="label">Prev</span></button>
           <button class="btn btn-ghost" id="btnRandom" title="Random">🎲 <span class="label">Random</span></button>
           <button class="btn btn-green" id="btnNext"   title="Next">▶ <span class="label">Next</span></button>
+        </div>
+
+        <!-- Source switcher -->
+        <div style="margin-top:8px;display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+          <div class="seg">
+            <button id="srcHouse" class="active">House</button>
+            <button id="srcMine">My Uploads</button>
+          </div>
+          <div class="muted" id="srcMeta" style="font-size:12px">Source: House</div>
         </div>
       </div>
 
@@ -121,13 +136,11 @@
         </div>
       </div>
 
-      <!-- DISPO: Offerings -->
+      <!-- DISPO (unchanged demo, shortened for brevity) -->
       <div id="dispoWrap" style="display:none; padding:12px">
         <div class="grid">
           <div class="card2">
             <h3 style="margin:0 0 8px">Active Offerings</h3>
-
-            <!-- Your D6 offering -->
             <div class="offer-card" style="margin-bottom:10px">
               <div style="font-size:28px">🛢️</div>
               <div style="flex:1">
@@ -138,21 +151,8 @@
                   <span class="badge">100M gallons</span>
                 </div>
                 <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
-                  <!-- Open new memo page (memo2) -->
                   <a class="btn btn-gold" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview" target="_blank" rel="noopener">Open Offering Memo</a>
                   <a class="btn btn-ghost" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview#interest" target="_blank" rel="noopener">Submit Interest</a>
-                </div>
-              </div>
-            </div>
-
-            <!-- Placeholder slot for more Offerings (user-generated coming soon) -->
-            <div class="offer-card" style="opacity:.85">
-              <div style="font-size:26px">🏗️</div>
-              <div style="flex:1">
-                <div class="offer-title">Add your first Dispo offering</div>
-                <div class="offer-badges"><span class="badge">Bring your deal</span><span class="badge">Upload docs</span></div>
-                <div style="margin-top:8px">
-                  <a class="btn btn-ghost" href="#" onclick="alert('Coming soon: create-offering.html');return false;">Create Offering</a>
                 </div>
               </div>
             </div>
@@ -180,13 +180,37 @@
     </div>
   </dialog>
 
+  <!-- Upload leads dialog -->
+  <dialog id="uploadDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:16px;max-width:760px;width:92%">
+    <h3 style="margin:0 0 8px">Upload My Leads</h3>
+    <p style="margin:0 0 8px;color:#c7d7e6;font-size:13px">
+      Paste CSV or JSON, or choose a file. Columns recognized: <b>address, name, phone, type, notes, zip</b>.
+      We’ll store these under your account and show them in “My Uploads”.
+    </p>
+    <div style="display:grid;gap:10px">
+      <textarea id="uploadPaste" class="textarea" placeholder="Paste CSV or JSON array here…"></textarea>
+      <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
+        <input id="uploadFile" type="file" accept=".csv,.json" />
+        <button id="uploadParse" class="btn btn-gold">Import</button>
+        <button id="uploadClose" class="btn">Close</button>
+      </div>
+      <details>
+        <summary style="cursor:pointer;color:#c7d7e6">CSV template</summary>
+        <pre style="white-space:pre-wrap;color:#a9c7dd;background:#0a1a26;border:1px solid #24445c;padding:8px;border-radius:8px;margin:8px 0 0">
+address,name,phone,type,notes,zip
+3014 El Paso St, San Antonio, TX 78207,Kevin Holdsworth,2105551234,residential,"pier foundation; 1945 build",78207
+        </pre>
+      </details>
+    </div>
+  </dialog>
+
   <div id="toast"></div>
 
   <!-- Firebase (dedicated instance for this page) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // Dedicated app for gating
+    // Dedicated app for gating + user uploads
     const gateApp = firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
@@ -207,6 +231,7 @@
     // UI helpers
     const $=s=>document.querySelector(s);
     const statusEl=$('#status'); const toastEl=$('#toast'); const dlg=$('#settingsDlg');
+    const uploadDlg=$('#uploadDlg');
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
     function showAcq(){ $('#modeCrumb').textContent='Acquisition'; $('#acqBar').style.display='block'; $('#acqWrap').style.display='block'; $('#dispoWrap').style.display='none'; }
@@ -214,30 +239,52 @@
 
     if(sub==='dispo'){ showDispo(); } else { showAcq(); }
 
-    // ----- Gate per sub-tab (leadsEnabled OR specific flag) -----
+    // ------- Lead sources -------
+    let houseAllowed=false;
+    let source='house'; // 'house' | 'mine'
+    $('#srcHouse').onclick=()=>{ source='house'; refreshSource(); };
+    $('#srcMine').onclick =()=>{ source='mine';  refreshSource(); };
+
+    function refreshSource(){
+      $('#srcHouse').classList.toggle('active',source==='house');
+      $('#srcMine').classList.toggle('active',source==='mine');
+      $('#srcMeta').textContent = `Source: ${source==='house'?'House':'My Uploads'}`;
+      if(sub==='acq'){
+        if(source==='house') bootHouseLeads();
+        else bootMyLeads();
+      }
+    }
+
+    // ----- Gate per sub-tab (leadsEnabled or specific flag) -----
     if(sub==='acq' || sub==='dispo'){
       gateDb.ref(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
         const v = snap.val() || {};
-        const allowed = !!(v.leadsEnabled || (sub==='dispo' ? v.dispoLeadsEnabled : v.acqLeadsEnabled));
-        if(!allowed){
-          $('#leadCard').innerHTML = '<div class="body">Access to leads is disabled for this account.</div>';
-          if(sub==='acq') setStatus('Access denied');
+        houseAllowed = !!(v.leadsEnabled || v.acqLeadsEnabled);
+        if(!houseAllowed){
+          // Encourage uploads and default to "mine"
+          showAcq();
+          source='mine';
+          refreshSource();
+          promptUploadCTA();
           return;
         }
-        if(sub==='acq'){
-          // Lazy load leads.js only for Acquisition
-          const s=document.createElement('script');
-          s.src='/leads.js?v='+Date.now();
-          s.onload=()=>{ window.leads = window.leads || []; initAcq(); };
-          s.onerror=()=>setStatus('Could not load /leads.js');
-          document.head.appendChild(s);
-        }
+        // Default to House when allowed
+        refreshSource();
       }).catch(()=>{
-        if(sub==='acq'){
-          $('#leadCard').innerHTML = '<div class="body">Could not verify access right now. Try again shortly.</div>';
-          setStatus('Gate check failed');
-        }
+        // Fallback to uploads
+        source='mine'; refreshSource();
       });
+    }
+
+    function promptUploadCTA(){
+      $('#leadCard').innerHTML = `
+        <div class="body">
+          <b>House leads are disabled for this account.</b>
+          <div style="margin-top:6px">You can still work your own list. Upload CSV or JSON and we’ll show them here.</div>
+          <div style="margin-top:10px"><button class="btn btn-gold" id="ctaUpload">Upload My Leads</button></div>
+        </div>`;
+      setStatus('Uploads available');
+      $('#ctaUpload').onclick=()=>uploadDlg.showModal();
     }
 
     // ----- ACQ logic (filters, notes, dialing) -----
@@ -269,7 +316,7 @@
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
     const extractZip = (addr='') => { const m = String(addr).match(/\b\d{5}\b/); return m ? m[0] : ''; };
-    const leadType = (lead) => {
+    const leadType = (lead='') => {
       const t = (lead?.type || lead?.category || lead?.tags || '').toString().toLowerCase();
       if(t.includes('comm')) return 'commercial';
       if(t.includes('resi') || t.includes('sfr') || t.includes('home') || t.includes('house')) return 'residential';
@@ -286,16 +333,15 @@
       }
       if(zipSet.size){
         arr = arr.filter(l=>{
-          const z = extractZip(l?.address||'');
+          const z = extractZip(l?.address||'') || l?.zip || '';
           return z && zipSet.has(z);
         });
       }
       return arr;
     }
 
-    function initAcq(){
-      const all = Array.isArray(window.leads) ? window.leads.slice() : [];
-      const filtered = applyFilters(all);
+    function initAcqFromArray(all){
+      const filtered = applyFilters(all||[]);
       if(!filtered.length){
         $('#leadCard').innerHTML = `
           <div class="body">
@@ -304,7 +350,7 @@
               Types: ${hasTypeFilter ? whTypes.join(', ') : 'any'} • Zips: ${whZips.length?whZips.join(', '):'any'}
             </div>
           </div>`;
-        setStatus('0 leads after filters');
+        setStatus('0 after filters');
         return;
       }
       window.__filteredLeads = filtered;
@@ -325,8 +371,8 @@
       const lead=arr[idx];
       currentLead=lead;
 
-      const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
-      const phone = phoneOf(lead);
+      const name  = clean(lead?.contacts?.[0]?.name || lead?.name || 'Unknown');
+      const phone = phoneOf(lead) || clean(lead?.phone || '');
       const addr  = clean(lead?.address||'');
 
       setStatus(`Lead ${idx+1} of ${arr.length}`);
@@ -348,7 +394,7 @@
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${mode}</div>
             ${hasTypeFilter ? `<div class="chip">Type: ${leadType(lead)||'n/a'}</div>` : '' }
-            ${zipSet.size ? `<div class="chip">ZIP: ${extractZip(addr)||'n/a'}</div>` : '' }
+            ${zipSet.size ? `<div class="chip">ZIP: ${extractZip(addr)||lead?.zip||'n/a'}</div>` : '' }
           </div>
 
           <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
@@ -391,7 +437,7 @@
 
     $('#actCopy')?.addEventListener('click', ()=>{
       const arr = window.__filteredLeads||[];
-      const p= phoneOf(arr[idx]||{});
+      const p= phoneOf(arr[idx]||{}) || clean((arr[idx]||{}).phone||'');
       if(!p) return alert('No phone on this lead.');
       navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
     });
@@ -415,6 +461,146 @@
     });
 
     window.addEventListener('beforeunload',()=>{ if(currentLead && sub==='acq'){ doSaveNotes(); } });
+
+    // ---------- HOUSE LEADS ----------
+    let houseLoaded=false;
+    function bootHouseLeads(){
+      if(!houseAllowed){
+        promptUploadCTA();
+        return;
+      }
+      if(houseLoaded && window.__houseCache){ initAcqFromArray(window.__houseCache); return; }
+      const s=document.createElement('script');
+      s.src='/leads.js?v='+Date.now();
+      s.onload=()=>{
+        const arr = Array.isArray(window.leads) ? window.leads.slice() : [];
+        window.__houseCache = arr;
+        houseLoaded=true;
+        initAcqFromArray(arr);
+      };
+      s.onerror=()=>{ setStatus('Could not load /leads.js'); };
+      document.head.appendChild(s);
+    }
+
+    // ---------- MY UPLOADS ----------
+    let mineLoaded=false;
+    function bootMyLeads(){
+      gateDb.ref(`userLeads/${uidParam}`).once('value').then(snap=>{
+        const arr = Array.isArray(snap.val()) ? snap.val() : (snap.val()?.items || []);
+        mineLoaded=true;
+        window.__mineCache = arr;
+        if(!arr.length){
+          // invite upload
+          promptUploadCTA();
+        } else {
+          initAcqFromArray(arr);
+        }
+      }).catch(()=>promptUploadCTA());
+    }
+
+    // Upload dialog wiring
+    $('#btnUpload').onclick = ()=>uploadDlg.showModal();
+    $('#uploadClose').onclick = ()=>uploadDlg.close();
+
+    $('#uploadFile').addEventListener('change', async e=>{
+      const f=e.target.files?.[0]; if(!f) return;
+      const text = await f.text();
+      $('#uploadPaste').value = text;
+    });
+
+    $('#uploadParse').onclick = async ()=>{
+      const raw = ($('#uploadPaste').value||'').trim();
+      if(!raw) return alert('Paste CSV or JSON, or choose a file first.');
+      let items=[];
+      try{
+        if(raw.trim().startsWith('[')){
+          items = normalizeArray(JSON.parse(raw));
+        }else{
+          items = parseCSV(raw);
+        }
+      }catch(err){
+        console.error(err); return alert('Could not parse. Check format.');
+      }
+      if(!items.length) return alert('No rows found.');
+      // Save under userLeads/{uid}
+      try{
+        await gateDb.ref(`userLeads/${uidParam}`).set({ items, ts: Date.now() });
+        uploadDlg.close();
+        toast(`Imported ${items.length} lead(s)`);
+        source='mine'; refreshSource();
+      }catch(e){
+        alert('Could not save right now.');
+      }
+    };
+
+    function normalizeArray(arr){
+      return (arr||[]).map(r=>{
+        const address = r.address || r.addr || '';
+        const name    = r.name || r.contact || (r.contacts?.[0]?.name)||'';
+        const phone   = r.phone || r.phoneNumber || (r.contacts?.[0]?.phone)||'';
+        const type    = r.type || r.category || '';
+        const notes   = r.notes || '';
+        const zip     = r.zip || extractZip(address) || '';
+        return {
+          address,
+          contacts: [{ name, phone }],
+          type, notes, zip
+        };
+      }).filter(r=>r.address);
+    }
+
+    function parseCSV(text){
+      // Tiny CSV parser (no quotes inside fields edge-cases)
+      const lines = text.split(/\r?\n/).filter(l=>l.trim().length);
+      if(!lines.length) return [];
+      const headers = lines[0].split(',').map(h=>h.trim().toLowerCase());
+      const idxOf = k => headers.indexOf(k);
+      const iAddr=firstOf(['address','addr'],headers);
+      const iName=firstOf(['name','contact'],headers);
+      const iPhone=firstOf(['phone','phonenumber','phone_number'],headers);
+      const iType=firstOf(['type','category'],headers);
+      const iNotes=firstOf(['notes','note'],headers);
+      const iZip=firstOf(['zip','zipcode','postal'],headers);
+
+      const out=[];
+      for(let i=1;i<lines.length;i++){
+        const cols = splitRow(lines[i]);
+        const address = pick(cols,iAddr);
+        if(!address) continue;
+        const name  = pick(cols,iName);
+        const phone = pick(cols,iPhone);
+        const type  = pick(cols,iType);
+        const notes = pick(cols,iNotes);
+        const zip   = pick(cols,iZip) || extractZip(address);
+        out.push({
+          address,
+          contacts:[{name, phone}],
+          type, notes, zip
+        });
+      }
+      return out;
+
+      function firstOf(keys, hdrs){ for(const k of keys){ const j=hdrs.indexOf(k); if(j>-1) return j; } return -1; }
+      function pick(arr, idx){ return idx>-1 ? (arr[idx]||'').trim() : ''; }
+      function splitRow(row){
+        // basic CSV with quoted fields support
+        const res=[]; let cur=''; let q=false;
+        for(let j=0;j<row.length;j++){
+          const ch=row[j];
+          if(ch==='\"'){ q=!q; continue; }
+          if(ch===',' && !q){ res.push(cur); cur=''; continue; }
+          cur+=ch;
+        }
+        res.push(cur);
+        return res;
+      }
+    }
+
+    // Kickoff by source
+    function start(){
+      if(sub==='acq') refreshSource();
+    }
+    start();
   </script>
 </body>
 </html>
