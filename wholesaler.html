@@ -1,19 +1,20 @@
+<!-- ======================= wholesaler.html ======================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Wholesaler • Acquisition</title>
+  <title>Wholesaler • Portal</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
   <style>
     :root{
       --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
       --line:#2a5a78; --text:#f3f8fb; --muted:#c7d7e6;
-      --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff; --panel:#133045;
-      --shadow:0 28px 70px rgba(0,0,0,.55);
+      --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff;
+      --r:16px; --shadow:0 28px 70px rgba(0,0,0,.55);
     }
-    *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+    *{box-sizing:border-box}
     body{
       margin:0; color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
@@ -23,30 +24,22 @@
       padding:10px;
     }
     .wrap{max-width:1100px;margin:0 auto}
-    .card{
-      background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
-      border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden
-    }
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
 
-    /* Header */
-    .top{
-      display:flex;align-items:center;justify-content:space-between;
-      padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
-      background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px
-    }
+    .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
+      background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px}
     .crumbs{display:flex;gap:10px;align-items:center;color:var(--muted)}
     .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
     .status{font-size:12px;color:#e8f7ff}
 
-    /* Sub-nav (Acq/Dispo only – no inner Wholesaler/Settings) */
-    .subnav{
-      display:flex;gap:8px;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
-      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))
-    }
-    .pill{padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#cfe7ff;text-decoration:none}
-    .pill.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);border:none;color:#fff}
+    .tabs{display:flex;gap:8px;padding:10px;flex-wrap:wrap;background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06));border-bottom:1px solid rgba(255,255,255,.2)}
+    .tab{padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2a3a;color:#cde1f3;cursor:pointer}
+    .tab.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff;border:none}
 
-    .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;padding:10px;border-top:1px solid rgba(255,255,255,.08)}
+    .sticky{position:sticky;top:0;z-index:8}
+    .actions{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
+      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
@@ -54,7 +47,7 @@
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
     .ico{font-size:20px}
-    .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;padding:0 10px 10px}
+    .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:8px 10px 10px}
 
     .lead-wrap{padding:12px}
     .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
@@ -69,11 +62,19 @@
     .map{height:220px;margin-top:8px}
 
     .notesBox{display:grid;gap:8px;margin:8px 0 10px}
-    .textarea{width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
-      background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4}
+    .textarea{
+      width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+      background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
+    }
+    .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-    @media (max-width:480px){
+    .dispoWrap{padding:14px}
+    .dispoFrame{width:100%;height:70vh;border:0;border-radius:16px;overflow:hidden;background:#0b141b}
+
+    @media (max-width:560px){
       .actions{grid-template-columns:repeat(3,1fr)}
+      .navrow{grid-template-columns:repeat(3,1fr)}
       .title{font-size:16px}
       .sv{height:230px} .map{height:200px}
     }
@@ -86,40 +87,47 @@
   <div class="wrap">
     <section class="card">
       <div class="top">
-        <div class="crumbs"><span>Wholesaler</span><span class="dot"></span><span>Acquisition</span></div>
+        <div class="crumbs"><span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acquisition</span></div>
         <div class="status" id="status">Loading…</div>
       </div>
 
-      <!-- Only Acquisition/Dispo here. (No inner "Wholesaler" or "Settings" tab.) -->
-      <div class="subnav">
-        <span class="pill active">Acquisition</span>
-        <a class="pill" href="dispo.html">Dispo</a>
-        <span style="margin-left:auto;color:#9fc9ec;font-size:12px">Lead filters live in <b>Profile → Settings → Wholesaler</b>.</span>
+      <div class="tabs">
+        <button class="tab active" data-tab="acq">Acquisition</button>
+        <button class="tab" data-tab="dispo">Dispo</button>
       </div>
 
-      <div class="actions">
-        <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
-        <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
-        <a class="btn btn-ghost" id="actDirections"   title="Directions" href="#" target="_blank" rel="noopener"><span class="ico">🧭</span></a>
-        <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
-        <button class="btn btn-ghost" id="actSettings" title="Dial mode"><span class="ico">⚙️</span></button>
+      <!-- ACQ toolbars -->
+      <div class="sticky" id="acqBars">
+        <div class="actions">
+          <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
+          <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
+          <a class="btn btn-ghost" href="#" id="actDirs"  title="Directions"><span class="ico">🚗</span></a>
+          <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
+          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
+          <button class="btn btn-ghost" id="actSettings" title="Settings"><span class="ico">⚙️</span></button>
+        </div>
+        <div class="navrow">
+          <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
+          <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
+          <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
+        </div>
       </div>
 
-      <div class="navrow">
-        <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
-        <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
-        <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
-      </div>
-
-      <div class="lead-wrap">
+      <!-- ACQ content -->
+      <div class="lead-wrap" data-panel="acq">
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
         </div>
       </div>
+
+      <!-- DISPO content -->
+      <div class="dispoWrap" data-panel="dispo" style="display:none">
+        <iframe id="dispoFrame" class="dispoFrame" src="about:blank" title="Dispo Portal"></iframe>
+      </div>
     </section>
   </div>
 
-  <!-- simple dial-mode dialog -->
+  <!-- settings dialog -->
   <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
     <h3 style="margin:0 0 8px">Phone Link Preference</h3>
     <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
@@ -133,21 +141,55 @@
 
   <div id="toast"></div>
 
+  <!-- Firebase for lead gate -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    /* ---------- helpers ---------- */
-    const $=s=>document.querySelector(s);
+    const gateApp = firebase.initializeApp(
+      {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
+      "whGate"
+    );
+    const gateDb = gateApp.database();
+
+    const params = new URL(location.href).searchParams;
+    const uidParam = params.get('uid') || 'anon';
+    const $ = s => document.querySelector(s);
+
+    // Gate before loading leads.js
+    gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
+      const allowed = !!snap.val();
+      if(!allowed){
+        document.getElementById('leadCard').innerHTML = '<div class="body">Access to leads is disabled for this account.</div>';
+        document.getElementById('status').textContent = 'Access denied';
+      }else{
+        const s=document.createElement('script');
+        s.src='/leads.js?v='+Date.now();
+        s.onload=()=>{ window.leads = window.leads || []; init(); };
+        s.onerror=()=>document.getElementById('status').textContent='Could not load /leads.js';
+        document.head.appendChild(s);
+      }
+    }).catch(()=>{
+      document.getElementById('leadCard').innerHTML = '<div class="body">Could not verify access right now. Try again shortly.</div>';
+      document.getElementById('status').textContent = 'Gate check failed';
+    });
+  </script>
+
+  <script>
     const statusEl=$('#status'); const toastEl=$('#toast');
     const dlg=$('#settingsDlg');
     let idx=0, currentLead=null;
 
+    const uid=new URL(location.href).searchParams.get('uid')||'anon';
     const MODE_KEY='db_phone_link_mode_wh';
-    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
-    const setMode=m=>localStorage.setItem(MODE_KEY,m);
-    const clean=s=>(s||'').trim();
-    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
 
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
+    const clean=s=>(s||'').trim();
+    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
+    const addrOf = l => clean(l?.address||'');
+
+    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
+    const setMode=m=>localStorage.setItem(MODE_KEY,m);
 
     function phoneHref(number, mode){
       const num=(number||'').replace(/[^\d+]/g,'');
@@ -157,10 +199,9 @@
       if(mode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
       return `tel:${num}`;
     }
-
+    function gmapDir(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`; }
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
-    function dirHref(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`; }
 
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
@@ -168,86 +209,48 @@
     const saveTimeKey = addr => noteKey(addr)+'_ts';
     const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
     const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
+    function fmtTime(ts){ const d=new Date(ts), pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+    function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
-    const pad=n=>String(n).padStart(2,'0');
-    const fmtTime=ts=>{ const d=new Date(ts); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-
-    /* ---------- gate + filters (driven by Profile via postMessage, optional) ---------- */
-    const state = {
-      uid: null,
-      gate: null, // null=unknown, true=enabled, false=disabled
-      filters: {zips:[],types:[],strategies:[],hasPhone:false},
-    };
-
-    function zipOf(a){ const m=String(a||'').match(/\b\d{5}\b/); return m?m[0]:''; }
-    function classifyLead(lead){
-      const bag=[lead?.type,lead?.category,lead?.tags,lead?.notes,lead?.details,lead?.description,lead?.zoning,lead?.use].map(clean).join(' ').toLowerCase();
-      const isLand=/\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag)||/\blot\b/.test(bag)||/\bacre(s)?\b/.test(bag);
-      const isComm=!isLand && (/\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|shopping|strip|mixed[- ]use|cap ?rate|nnn|self[ -]?storage|flex|medical|clinic|multifamily(?!\s*residential))\b/.test(bag));
-      const isResi=!isLand && /\b(residential|single[- ]family|sfh|house|duplex|triplex|quad(plex)?|apartment|condo|townhome|mobile)\b/.test(bag);
-      if(isComm) return 'commercial'; if(isResi) return 'residential'; if(isLand) return 'land'; return '';
-    }
-    function matchesStrategies(lead){
-      const wanted=state.filters.strategies||[];
-      if(!wanted.length) return true;
-      const bag=`${lead?.notes||''} ${lead?.details||''} ${lead?.tags||''} ${lead?.description||''}`.toLowerCase();
-      const map={flip:/\bflip|rehab|fix[ -]?and[ -]?flip|arv\b/, brrrr:/\bbrrrr\b/, buyhold:/\bbuy\s*&?\s*hold|cash\s*flow|rental\b/, wholesale:/\bwholesale|assignment\b/, sellerfinance:/\bseller[- ]?finance|owner[- ]?finance|carry\s*back\b/};
-      return wanted.some(k=>map[k]?.test(bag));
-    }
-    function applyFilters(all){
-      let arr=all.slice();
-      const f=state.filters||{};
-      if(f.types?.length){
-        const set=new Set(f.types);
-        arr=arr.filter(l=>set.has(classifyLead(l)));
+    // Sub-tabs
+    const acqPanel = document.querySelector('[data-panel="acq"]');
+    const dispoPanel = document.querySelector('[data-panel="dispo"]');
+    document.querySelector('.tabs').addEventListener('click',(e)=>{
+      const b=e.target.closest('.tab'); if(!b) return;
+      document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('active',t===b));
+      const tab=b.dataset.tab;
+      document.getElementById('crumbMode').textContent = tab==='dispo' ? 'Dispo' : 'Acquisition';
+      acqPanel.style.display = tab==='acq' ? 'block' : 'none';
+      document.getElementById('acqBars').style.display = tab==='acq' ? 'block' : 'none';
+      dispoPanel.style.display = tab==='dispo' ? 'block' : 'none';
+      if(tab==='dispo' && !document.getElementById('dispoFrame').src){
+        const uid=encodeURIComponent(new URL(location.href).searchParams.get('uid')||'anon');
+        document.getElementById('dispoFrame').src = `dispo.html?uid=${uid}`;
       }
-      if(f.zips?.length){
-        const zset=new Set(f.zips);
-        arr=arr.filter(l=>{const z=zipOf(l?.address||''); return z && zset.has(z);});
-      }
-      if(f.hasPhone){ arr=arr.filter(l=>phoneOf(l)); }
-      if(f.strategies?.length){ arr=arr.filter(l=>matchesStrategies(l)); }
-      return arr;
-    }
-
-    /* ---------- render ---------- */
-    let idxFiltered=0, filtered=[];
-    function telemetry(allCount, filteredCount){
-      const g = (state.gate===false)? ' • access disabled' : (state.gate===true? '' : ' • gate unknown');
-      setStatus(`Loaded ${filteredCount} lead(s) • Feed: ${allCount}${g}`);
-    }
+    });
 
     function render(i){
-      const all = Array.isArray(window.leads)? window.leads : [];
-
-      if(state.gate===false){
-        $('#leadCard').innerHTML='<div class="body">Access to leads is not enabled yet.</div>';
-        telemetry(all.length, 0);
-        return;
+      if(!Array.isArray(window.leads)||!window.leads.length){
+        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>/leads.js</b> defines <code>window.leads=[...]</code>.</div>';
+        setStatus('No leads found'); return;
       }
+      if(i<0) i=window.leads.length-1;
+      if(i>=window.leads.length) i=0;
+      idx=i;
 
-      filtered = applyFilters(all);
-      if(!filtered.length){
-        $('#leadCard').innerHTML='<div class="body">No leads match your current settings.</div>';
-        telemetry(all.length, 0);
-        return;
-      }
-
-      if(i<0) i=filtered.length-1;
-      if(i>=filtered.length) i=0;
-      idxFiltered=i;
-
-      const lead=filtered[idxFiltered];
+      const lead=window.leads[idx];
       currentLead=lead;
 
       const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
       const phone = phoneOf(lead);
-      const addr  = clean(lead?.address||'');
+      const addr  = addrOf(lead);
+
+      setStatus(`Loaded ${window.leads.length} lead(s) • Showing ${idx+1}`);
 
       const mode=getMode();
       $('#actCall').href = phoneHref(phone, mode);
       $('#actSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode);
-      $('#actDirections').href = dirHref(addr);
+      $('#actDirs').href = gmapDir(addr);
 
       const lastSaved = saveTimeGet(addr);
       const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
@@ -258,18 +261,18 @@
           <div style="margin-bottom:6px;font-weight:800">${name}</div>
 
           <div class="chips">
-            <div class="chip">UID: ${(state.uid||'anon').slice(0,8)}</div>
+            <div class="chip">UID: ${uid.slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${mode}</div>
-            <div class="chip">Type: ${classifyLead(lead) || 'n/a'}</div>
+            <div class="chip">Type: ${clean(lead?.type||'unknown')}</div>
           </div>
 
           <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
           <div class="notesBox">
-            <textarea id="noteInput" class="textarea" placeholder="Type notes here…">${lead?.notes?clean(lead.notes):loadNotes(addr)}</textarea>
-            <div class="chips" style="margin:6px 0 0">
+            <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
+            <div class="notesRow">
               <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
-              <span id="savedTag" class="chip" style="background:#103b2a;border-color:#1f6a49">${lastSavedText}</span>
+              <span id="savedTag" class="savedTag">${lastSavedText}</span>
             </div>
           </div>
 
@@ -278,24 +281,30 @@
         </div>
       `;
 
-      $('#inlineSave').onclick = ()=>{
-        const text = ($('#noteInput')?.value||'').trim();
-        saveNotes(addr, text);
-        const ts=Date.now(); saveTimeSet(addr, ts);
-        const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${fmtTime(ts)}`; }
-        toast('Notes saved');
-      };
+      const ta=$('#noteInput');
+      ta.value = loadNotes(addr) || (lead?.notes || '');
+      autoGrow(ta);
+      ta.addEventListener('input',()=>autoGrow(ta));
 
-      telemetry(all.length, filtered.length);
+      $('#inlineSave').onclick = ()=>doSaveNotes();
     }
 
-    /* ---------- controls ---------- */
-    $('#btnPrev').onclick   = ()=>render(idxFiltered-1);
-    $('#btnNext').onclick   = ()=>render(idxFiltered+1);
-    $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(filtered?.length||1)));
+    function doSaveNotes(){
+      const addr = (currentLead?.address)||'';
+      const text = ($('#noteInput')?.value||'').trim();
+      saveNotes(addr, text);
+      const ts=Date.now(); saveTimeSet(addr, ts);
+      const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${fmtTime(ts)}`; tag.style.display='inline'; }
+      toast('Notes saved');
+    }
+
+    // actions
+    $('#btnPrev').onclick   = ()=>render(idx-1);
+    $('#btnNext').onclick   = ()=>render(idx+1);
+    $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
 
     $('#actCopy').onclick = ()=>{
-      const p=phoneOf(filtered?.[idxFiltered]);
+      const p=phoneOf(window.leads?.[idx]);
       if(!p) return alert('No phone on this lead.');
       navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
     };
@@ -307,35 +316,22 @@
     };
     $('#saveMode').onclick = ()=>{
       const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device';
-      setMode(m); dlg.close(); render(idxFiltered);
+      setMode(m); dlg.close(); render(idx);
     };
     $('#closeMode').onclick = ()=>dlg.close();
 
     document.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft') return $('#btnPrev').click();
       if(e.key==='ArrowRight') return $('#btnNext').click();
-      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); const b=document.getElementById('inlineSave'); if(b) b.click(); }
+      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
     });
 
-    /* ---------- parent handshake ---------- */
-    window.addEventListener('message', (ev)=>{
-      const d=ev.data||{};
-      if(d && d.type==='db-auth'){
-        state.uid = d.uid || state.uid;
-        if(typeof d.leadsEnabled==='boolean') state.gate = d.leadsEnabled;
-        state.filters = d.filters || state.filters;
-        render(idxFiltered);
-      }
-    });
+    window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
 
-    /* ---------- boot: load /leads.js immediately so phones see leads ---------- */
-    (function boot(){
-      const s=document.createElement('script');
-      s.src='/leads.js?v='+Date.now();
-      s.onload=()=>{ window.leads = window.leads || []; render(0); };
-      s.onerror=()=>setStatus('Could not load /leads.js');
-      document.head.appendChild(s);
-    })();
+    function init(){
+      if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
+      else { render(0); }
+    }
   </script>
 </body>
 </html>
