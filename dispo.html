@@ -1,55 +1,85 @@
+<!-- ============================ dispo.html (Disposition Portal + Offerings manager) ============================ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Wholesaler • Dispo</title>
+  <title>Deal Bankers • Dispo</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
   <style>
     :root{
-      /* Brighter than acquisition, still sleek */
-      --bg1:#0b131b; --bg2:#1a2a38; --bg3:#233748;
-      --text:#f3f8fb; --muted:#c7d7e6; --line:rgba(255,255,255,.22);
-      --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff;
-      --r:18px; --shadow:0 28px 70px rgba(0,0,0,.45);
+      --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
+      --line:#2a5a78; --text:#f3f8fb; --muted:#c7d7e6;
+      --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff; --panel:#133045;
+      --r:16px; --shadow:0 28px 70px rgba(0,0,0,.55);
     }
     *{box-sizing:border-box}
     body{
       margin:0; color:var(--text);
       font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-      background:linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+      background:
+        radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
       padding:10px;
     }
     .wrap{max-width:1100px;margin:0 auto}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.06));
-      border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
 
-    .top{display:flex;align-items:center;justify-content:space-between;padding:12px;border-bottom:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(255,255,255,.22),rgba(255,255,255,.08)); font-weight:700}
+    /* Header */
+    .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
+      background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px}
     .crumbs{display:flex;gap:10px;align-items:center;color:var(--muted)}
-    .dot{width:7px;height:7px;border-radius:999px;background:var(--gold);box-shadow:0 0 14px rgba(255,211,107,.9)}
-    .status{font-size:12px;color:#1cfc9b}
+    .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
+    .status{font-size:12px;color:#e8f7ff}
 
-    .sticky{position:sticky;top:0;z-index:8;padding:12px;border-bottom:1px solid var(--line);
-      background:linear-gradient(180deg,rgba(0,0,0,.08),rgba(255,255,255,.06))}
-    .actions{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px;border-radius:12px;
-      font-weight:800;border:1px solid var(--line);background:#102432;color:#eaf6ff;cursor:pointer;min-height:46px;text-decoration:none}
+    /* Toolbar (desktop: labeled; mobile: icons) */
+    .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
+      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+    .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;padding:10px;border-radius:12px;
+      font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none
+    }
     .btn:hover{filter:brightness(1.08)}
     .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
-    .ico{font-size:20px}
+    .ico{font-size:18px}
+    .label{display:inline}
+    @media (max-width:560px){ .label{display:none} } /* mobile -> icon only */
 
-    .section{padding:12px}
-    .panel{border:1px solid var(--line);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));padding:12px;margin-top:10px}
+    .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 
-    .map{width:100%;height:420px;border:0;border-radius:14px;background:#fff}
-    @media (max-width:520px){ .actions{grid-template-columns:repeat(3,1fr)} .map{height:320px} }
+    /* Lead card */
+    .lead-wrap{padding:12px}
+    .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
+    .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(90deg,rgba(255,211,107,.22),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
+    .body{padding:12px 14px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
 
+    .map{width:100%;height:260px;border:0;border-radius:14px;background:#fff;margin-top:8px}
+
+    .notesBox{display:grid;gap:8px;margin:8px 0 10px}
+    .textarea{
+      width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+      background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
+    }
+
+    /* Offerings dialog */
+    dialog{border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:720px;width:92%}
+    .off-row{display:grid;grid-template-columns:1fr 2fr auto;gap:8px}
+    @media (max-width:640px){ .off-row{grid-template-columns:1fr} }
+    .off-list{display:grid;gap:8px;margin:10px 0}
+    .off-item{display:flex;gap:10px;align-items:center}
+    .off-item a{flex:1}
+
+    /* Toast */
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
-      color:#fff;padding:10px 14px;border-radius:12px;border:1px solid var(--line);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
+      color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
   </style>
 </head>
 <body>
@@ -57,53 +87,235 @@
     <section class="card">
       <div class="top">
         <div class="crumbs"><span>Wholesaler</span><span class="dot"></span><span>Dispo</span></div>
-        <div class="status" id="status">Ready</div>
+        <div class="status" id="status">Loading…</div>
       </div>
 
       <div class="sticky">
-        <div class="actions">
-          <a class="btn btn-gold" href="#" id="actCall" title="Call"><span class="ico">📞</span>Call</a>
-          <a class="btn btn-gold" href="#" id="actSMS" title="Text"><span class="ico">💬</span>Text</a>
-          <a class="btn btn-ghost" href="https://www.textnow.com/messaging" target="_blank" rel="noopener"><span class="ico">🔗</span>TextNow</a>
-          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener"><span class="ico">📁</span>Drive</a>
-          <a class="btn btn-ghost" href="#" id="btnNotes"><span class="ico">📝</span>Update Notes</a>
-          <button class="btn btn-green" id="btnNext"><span class="ico">⏭️</span>Next Deal</button>
+        <div class="actions" id="toolbar">
+          <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span><span class="label">Call</span></a>
+          <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span><span class="label">Text</span></a>
+          <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span><span class="label">Copy #</span></button>
+          <button class="btn btn-ghost" id="btnOfferings" title="Offerings"><span class="ico">📄</span><span class="label">Offerings</span></button>
+          <button class="btn btn-ghost" id="actSettings" title="Settings"><span class="ico">⚙️</span><span class="label">Settings</span></button>
+        </div>
+        <div class="navrow">
+          <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀ <span class="label">Prev</span></button>
+          <button class="btn btn-ghost" id="btnRandom" title="Random">🎲 <span class="label">Random</span></button>
+          <button class="btn btn-green" id="btnNext"   title="Next"><span class="label">Next</span> ▶</button>
         </div>
       </div>
 
-      <div class="section">
-        <div class="panel">
-          <div style="display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-            <strong id="dealTitle">Investor Group A • Example</strong>
-            <span style="opacity:.8">1510 Blanco Rd, San Antonio, TX</span>
-          </div>
-          <div style="margin-top:10px">
-            <!-- Your “all leads” map (you can swap this ID) -->
-            <iframe class="map"
-              src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
-              loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-              title="Disposition Map"></iframe>
-          </div>
+      <div class="lead-wrap">
+        <div id="leadCard" class="lead">
+          <div class="body">Initializing…</div>
         </div>
       </div>
     </section>
   </div>
 
+  <!-- Offerings Modal -->
+  <dialog id="offeringsDlg">
+    <h3 style="margin:0 0 8px">Offerings</h3>
+    <div class="off-list" id="offsList"></div>
+
+    <h4 style="margin:10px 0 6px">Add a new offering</h4>
+    <div class="off-row">
+      <input id="offTitle" class="textarea" placeholder="Title (e.g., Virgin D6 Lift)"/>
+      <input id="offUrl" class="textarea" placeholder="PDF URL (public)"/>
+      <button id="offAdd" class="btn">Add</button>
+    </div>
+
+    <div style="text-align:right;margin-top:10px">
+      <button id="offClose" class="btn">Close</button>
+    </div>
+  </dialog>
+
   <div id="toast"></div>
 
-  <script>
-    // Lightweight: pull phone from query if you want (?phone=)
-    const params=new URL(location.href).searchParams;
-    const phone=(params.get('phone')||'').replace(/[^\d+]/g,'');
-    const callHref = phone ? `tel:${phone}` : '#';
-    const smsHref  = phone ? `sms:${phone}` : '#';
-    document.getElementById('actCall').href = callHref;
-    document.getElementById('actSMS').href  = smsHref;
+  <!-- Firebase (DB only is enough here) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
 
-    document.getElementById('btnNotes').onclick=()=>window.open(
-      'https://docs.google.com/forms', '_blank', 'noopener'
-    );
-    document.getElementById('btnNext').onclick=()=>window.scrollTo({top:0,behavior:'smooth'});
+  <script>
+    // ---------------- Firebase ----------------
+    const firebaseConfig = {
+      apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain:"deal-bankers.firebaseapp.com",
+      databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId:"deal-bankers"
+    };
+    firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
+    const auth = firebase.auth();
+
+    // ---------------- Helpers ----------------
+    const $ = s => document.querySelector(s);
+    const statusEl = $('#status');
+    const toastEl = $('#toast');
+    const leadEl = $('#leadCard');
+    function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
+    function setStatus(t){ statusEl.textContent = t; }
+    const clean = s => (s||'').trim();
+
+    // Dial mode (same pattern as wholesaler)
+    const MODE_KEY='db_phone_link_mode_dispo';
+    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
+    const setMode=m=>localStorage.setItem(MODE_KEY,m);
+    function phoneHref(number, mode){
+      const num=(number||'').replace(/[^\d+]/g,'');
+      if(!num) return '#';
+      if(mode==='device') return `tel:${num}`;
+      if(mode==='textnow'){ navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging'; }
+      if(mode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
+      return `tel:${num}`;
+    }
+
+    // Build map
+    function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr||'San Antonio, TX')}`; }
+
+    // Notes (local) keyed by address
+    const noteKey = addr => 'db_dispo_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
+    const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
+
+    // ---------------- Data & Rendering ----------------
+    let idx=0; let current=null;
+
+    function phoneOf(d){ return clean(d?.contacts?.[0]?.phone||''); }
+
+    function render(i){
+      const list = (window.dispo && Array.isArray(window.dispo) ? window.dispo : []);
+      if(!list.length){
+        leadEl.innerHTML = `
+          <div class="body">
+            <h3 style="margin:0 0 8px">No dispo deals loaded.</h3>
+            <p style="margin:0 0 10px;color:${'#c7d7e6'}">Create <code>dispo.js</code> that assigns <code>window.dispo=[...]</code>, or load this page with your data.</p>
+          </div>`;
+        setStatus('Ready'); 
+        return;
+      }
+      if(i<0) i=list.length-1;
+      if(i>=list.length) i=0;
+      idx=i;
+      current = list[idx];
+
+      const name  = clean(current?.name || current?.contacts?.[0]?.name || 'Investor / Buyer');
+      const phone = phoneOf(current);
+      const addr  = clean(current?.address || current?.market || '');
+      const notes = clean(current?.notes || '');
+
+      setStatus(`Deal ${idx+1} of ${list.length}`);
+
+      // set dial links from mode
+      const mode=getMode();
+      $('#actCall').href = phoneHref(phone, mode);
+      $('#actSMS').href  = mode==='device' && phone ? `sms:${phone}` : phoneHref(phone, mode);
+
+      leadEl.innerHTML = `
+        <div class="title">${name}</div>
+        <div class="body">
+          <div class="chips">
+            <div class="chip">${addr || 'No address'}</div>
+            <div class="chip">${phone ? 'Phone on file' : 'No phone'}</div>
+            <div class="chip">Dial: ${mode}</div>
+          </div>
+
+          <h3 style="margin:10px 0 6px;font-size:16px">Deal details</h3>
+          <div class="notesBox">
+            <textarea id="noteInput" class="textarea" placeholder="Dispo notes…">${loadNotes(addr) || notes}</textarea>
+            <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> <span class="label">Save Notes</span></button>
+          </div>
+
+          <iframe class="map" src="${mapSrc(addr)}" loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
+        </div>
+      `;
+      $('#inlineSave').onclick = ()=>doSaveNotes(addr);
+    }
+
+    function doSaveNotes(addr){
+      const text = ($('#noteInput')?.value||'').trim();
+      saveNotes(addr, text);
+      toast('Notes saved');
+    }
+
+    // ---------------- Offerings Manager ----------------
+    const dlg = $('#offeringsDlg');
+    $('#btnOfferings').onclick = ()=>{ loadOfferings(); dlg.showModal(); };
+    $('#offClose').onclick = ()=>dlg.close();
+
+    async function loadOfferings(){
+      const uid = auth.currentUser?.uid || 'anon';
+      const snap = await db.ref(`offerings/${uid}`).get();
+      const list = snap.val() || {};
+      const wrap = $('#offsList');
+      wrap.innerHTML = '';
+      const entries = Object.entries(list).sort((a,b)=> (b[1]?.ts||0)-(a[1]?.ts||0));
+      if(!entries.length){
+        const p=document.createElement('p'); p.style.color='#c7d7e6'; p.textContent='No offerings yet. Add one below.';
+        wrap.appendChild(p);
+      } else {
+        entries.forEach(([id,o])=>{
+          const row = document.createElement('div');
+          row.className = 'off-item';
+          const open = document.createElement('a');
+          open.className = 'btn';
+          open.textContent = o.title || 'Untitled';
+          open.href = `offering-memo.html?sof=${encodeURIComponent(o.pdfUrl||'')}`;
+          open.target = '_blank'; open.rel='noopener';
+          const del = document.createElement('button');
+          del.className = 'btn btn-ghost'; del.textContent = 'Delete';
+          del.onclick = async()=>{ if(confirm('Delete this offering?')){ await db.ref(`offerings/${uid}/${id}`).remove(); loadOfferings(); } };
+          row.appendChild(open); row.appendChild(del);
+          wrap.appendChild(row);
+        });
+      }
+    }
+
+    $('#offAdd').onclick = async ()=>{
+      const title = $('#offTitle').value.trim();
+      const pdfUrl = $('#offUrl').value.trim();
+      if(!title || !pdfUrl){ return alert('Title and PDF URL are required'); }
+      const uid = auth.currentUser?.uid || 'anon';
+      await db.ref(`offerings/${uid}`).push({ title, pdfUrl, ts: Date.now() });
+      $('#offTitle').value=''; $('#offUrl').value='';
+      loadOfferings();
+      toast('Offering added');
+    };
+
+    // ---------------- Actions ----------------
+    $('#btnPrev').onclick   = ()=>render(idx-1);
+    $('#btnNext').onclick   = ()=>render(idx+1);
+    $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*((window.dispo?.length)||1)));
+
+    $('#actCopy').onclick = ()=>{
+      const p=phoneOf(current);
+      if(!p) return alert('No phone on this record.');
+      navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
+    };
+
+    // rudimentary settings: just switch dial mode for now
+    $('#actSettings').onclick = ()=>{
+      const cur=getMode();
+      const next = cur==='device' ? 'textnow' : cur==='textnow' ? 'gvoice' : 'device';
+      setMode(next);
+      toast(`Dial mode: ${next}`);
+      render(idx);
+    };
+
+    // ---------------- Load data (optional external file) ----------------
+    function boot(){
+      if(window.dispo && Array.isArray(window.dispo)) { render(0); setStatus('Ready'); return; }
+      // Try to lazy-load dispo.js if present
+      const s=document.createElement('script');
+      s.src='dispo.js?v='+Date.now();
+      s.onload=()=>{ render(0); setStatus('Ready'); };
+      s.onerror=()=>{ render(0); setStatus('Ready'); }; // falls back to empty message
+      document.head.appendChild(s);
+    }
+
+    // Auth (only to tie offerings to user id)
+    auth.onAuthStateChanged(()=>boot());
   </script>
 </body>
 </html>
