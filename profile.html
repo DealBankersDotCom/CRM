@@ -1,4 +1,4 @@
-<!-- ======================== profile.html (Overview, Townhall, Wholesaler visible always, Settings incl. Realtor) ======================== -->
+<!-- ======================== profile.html (Overview, Townhall, Wholesaler embed, Contractor portal w/ View/Post + Map, Long-term Settings) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +7,10 @@
   <title>DealBankers • Profile</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <meta name="robots" content="noindex"/>
+  <!-- Leaflet for Contractor map -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
   <style>
-    :root{--bg:#0d1620;--panel:#0f1a24;--line:#1b3245;--text:#eaf1f6;--muted:#9fb3c7;--blue:#2b74ff;--r:18px;--shadow:0 24px 64px rgba(0,0,0,.5);--green:#26cf84;--card:#10222e}
+    :root{--bg:#0d1620;--panel:#0f1a24;--line:#1b3245;--text:#eaf1f6;--muted:#9fb3c7;--blue:#2b74ff;--r:18px;--shadow:0 24px 64px rgba(0,0,0,.5);--green:#26cf84;--card:#10222e;--gold:#ffd36b}
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;color:var(--text);
       background:radial-gradient(900px 500px at 90% -10%, #123043 0%, transparent 60%),linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);min-height:100vh;padding:14px}
@@ -18,6 +20,7 @@
     .pill{width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
     .pill.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}.pill.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
     .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
+    .btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:0}
     .tabs{display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap}.tab{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}.tab.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
     .panel{padding:12px}.card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
     .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:85vh;min-height:620px}
@@ -31,15 +34,22 @@
     .bubble{display:inline-block;max-width:min(680px,85%);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#142332}
     .portal-embed{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b141b;height:62vh;min-height:420px}
     @media (max-width:980px){.overview-grid{grid-template-columns:1fr}.townhall,.portal-embed{height:58vh;min-height:380px}}
+
     .subtabs{display:flex;gap:8px;margin:0 0 10px}.subtab{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}.subtab.active{background:linear-gradient(180deg,#ffd36b,#c89b3a);color:#1a1a1a;border:none}
-    .settings-grid{display:grid;grid-template-columns:1fr;gap:12px}.setting-card{background:#0f1a24;border:1px solid var(--line);border-radius:14px;padding:12px}
-    .row{display:flex;gap:12px;flex-wrap:wrap;align-items:center}.chip{display:inline-flex;gap:8px;align-items:center;background:#0e1c27;border:1px solid var(--line);border-radius:12px;padding:8px 10px}
-    .chips{display:flex;gap:10px;flex-wrap:wrap}.zipbox{width:100%;min-height:90px;border-radius:12px;border:1px solid var(--line);background:#0e1c27;color:#eaf1f6;padding:10px}
-    .savebar{display:flex;gap:8px;justify-content:flex-end;margin-top:8px}.seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
-    .seg button{background:#0f1a24;color:#cde1f3;border:0;padding:8px 12px;cursor:pointer}.seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.input,.select,.textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0c1620;color:#eaf1f6}
-    .textarea{min-height:120px;resize:vertical}.muted{color:#9fb3c7;font-size:13px}.hid{display:none}
-    .div-grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:8px}@media (max-width:900px){.div-grid{grid-template-columns:repeat(2,minmax(160px,1fr))}}label.div-chip{display:flex;gap:8px;align-items:center;background:#0e1c27;border:1px solid var(--line);border-radius:10px;padding:8px}
+    .muted{color:#9fb3c7;font-size:13px}
+
+    /* Contractor */
+    .co-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
+    .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+    .seg button{background:#0f1a24;color:#cde1f3;border:0;padding:8px 12px;cursor:pointer}
+    .seg button.active{background:linear-gradient(180deg,#ffd36b,#c89b3a);color:#1a1a1a}
+    #coMap{height:58vh;min-height:360px;border-radius:12px;border:1px solid var(--line);overflow:hidden}
+    .filters{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .input,.select,.textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0c1620;color:#eaf1f6}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .jobCard{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0f1a24}
+
+    footer{max-width:1200px;margin:14px auto 6px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:8px}
   </style>
 </head>
 <body>
@@ -70,14 +80,14 @@
             <h3 style="margin:0 0 6px">📢 Special Announcements</h3>
             <div id="meLine" class="muted" style="margin-bottom:8px"></div>
             <ul style="margin:0 0 10px 18px">
-              <li>Welcome to the Townhall. Be respectful, be helpful.</li>
-              <li>New: Street View on top inside the wholesaler portal.</li>
+              <li>Lead filters have moved into the <b>Acquisition</b> toolbar — adjust them on the fly.</li>
+              <li>New Contractor map: view or post jobs, filter by ZIP or auto-location.</li>
             </ul>
           </div>
           <div class="townhall">
             <div class="th-head"><h2>🏛️ Townhall (All Users)</h2><div class="presence" id="presence">Connecting…</div></div>
             <div class="th-body" id="thBody" aria-live="polite"></div>
-            <div class="row"><input id="thInput" class="input" placeholder="Say something to the room… (Enter to send)"/><button id="thSend" class="btn">Send</button></div>
+            <div style="display:flex;gap:8px"><input id="thInput" class="input" placeholder="Say something to the room… (Enter to send)"/><button id="thSend" class="btn">Send</button></div>
           </div>
           <div class="portal-embed"><iframe id="whEmbed" title="Wholesaler Portal (Embedded)"></iframe></div>
         </div>
@@ -88,121 +98,141 @@
         <div class="subtabs">
           <button class="subtab active" data-sub="acq">Acquisition</button>
           <button class="subtab" data-sub="dispo">Dispo</button>
-          <div class="muted" style="margin-left:auto">Lead filters from Settings are applied on load.</div>
+          <div class="muted" style="margin-left:auto">Filters are inside Acquisition now.</div>
         </div>
         <div class="iframe-wrap"><iframe id="whFrame" title="Wholesaler Portal"></iframe></div>
       </div>
 
-      <!-- CONTRACTOR / REALTOR / INVESTOR tabs -->
-      <div class="card" data-panel="contractor" style="display:none"><p class="muted" style="margin:0">Contractor portal coming soon.</p></div>
-      <div class="card" data-panel="realtor" style="display:none"><p class="muted" style="margin:0">Realtor tools coming soon. Configure preferences in Settings → Realtor.</p></div>
+      <!-- CONTRACTOR -->
+      <div class="card" data-panel="contractor" style="display:none">
+        <div class="co-head">
+          <h2 style="margin:0">Contractor Portal</h2>
+          <div class="seg" id="coSeg">
+            <button data-co="view" class="active">View Jobs</button>
+            <button data-co="post">Post Job</button>
+          </div>
+        </div>
+
+        <!-- View -->
+        <div id="coView">
+          <div class="filters">
+            <input id="coZip" class="input" style="max-width:180px" placeholder="ZIP (e.g. 77002)"/>
+            <select id="coTrade" class="select" style="max-width:220px">
+              <option value="">All Trades</option>
+              <option>General</option><option>Concrete</option><option>Masonry</option><option>Electrical</option><option>Plumbing</option><option>Roofing</option><option>Finish</option>
+            </select>
+            <button id="coUseLoc" class="btn">📍 Use My Location</button>
+            <button id="coRefresh" class="btn">Refresh</button>
+          </div>
+          <div id="coMap"></div>
+          <div id="jobList" style="display:grid;gap:10px;margin-top:10px"></div>
+        </div>
+
+        <!-- Post -->
+        <div id="coPost" style="display:none">
+          <div class="grid">
+            <input id="jobTitle" class="input" placeholder="Job Title (e.g., Kitchen Remodel)"/>
+            <select id="jobTrade" class="select">
+              <option>General</option><option>Concrete</option><option>Masonry</option><option>Electrical</option><option>Plumbing</option><option>Roofing</option><option>Finish</option>
+            </select>
+            <input id="jobZip" class="input" placeholder="ZIP"/>
+            <input id="jobPay" class="input" placeholder="Pay (e.g., $45/hr or $12,000)"/>
+          </div>
+          <textarea id="jobDesc" class="textarea" placeholder="Scope / Notes"></textarea>
+          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+            <input id="jobPhotos" type="file" accept="image/*" multiple/>
+            <button id="postJob" class="btn gold">Post Job</button>
+          </div>
+          <div id="jobBar" style="margin-top:8px;color:#9fb3c7"></div>
+        </div>
+      </div>
+
+      <!-- REALTOR / INVESTOR placeholders -->
+      <div class="card" data-panel="realtor" style="display:none"><p class="muted" style="margin:0">Realtor tools coming soon.</p></div>
       <div class="card" data-panel="investor" style="display:none"><p class="muted" style="margin:0">Investor portal coming soon.</p></div>
 
       <!-- SETTINGS -->
       <div class="card" data-panel="settings" style="display:none">
-        <div class="row" style="justify-content:space-between;align-items:center;margin-bottom:6px">
-          <h2 style="margin:0">Settings</h2>
-          <div class="seg" id="settingsSeg">
-            <button data-s="wh" class="active">Wholesaler</button>
-            <button data-s="co">Contractor</button>
-            <button data-s="re">Realtor</button>
-            <button data-s="in">Investor</button>
-          </div>
+        <h2 style="margin:0 0 8px">Settings (Long-term)</h2>
+        <p class="muted" style="margin:0 0 12px">These are durable preferences we’ll use for future matching algorithms. <b>Lead filters now live inside the Acquisition toolbar.</b></p>
+
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin:0 0 6px">Wholesaler (long-term)</h3>
+          <div class="muted">No long-term knobs yet — your per-session lead filters are adjusted in the Acq portal.</div>
         </div>
 
-        <div class="settings-grid">
-          <!-- Wholesaler -->
-          <div id="s_wh" class="setting-card">
-            <h3 style="margin:0 0 8px">Wholesaler • Lead Filters</h3>
-            <p class="muted" style="margin:0 0 10px">Choose what leads you want to see. Saved per-user.</p>
-            <div class="chips">
-              <label class="chip"><input id="wsCommercial" type="checkbox"/> <span>Commercial</span></label>
-              <label class="chip"><input id="wsResidential" type="checkbox" checked/> <span>Residential</span></label>
-            </div>
-            <div style="margin-top:10px">
-              <div class="muted" style="margin-bottom:6px">ZIP filters (comma or newline)</div>
-              <textarea id="wsZips" class="zipbox" placeholder="e.g. 77002, 77004, 90014"></textarea>
-            </div>
-            <div class="savebar"><button id="saveWsFilters" class="btn">Save Wholesaler Filters</button><div id="wsSaved" class="muted" style="display:none">Saved ✓</div></div>
+        <div class="card" style="margin-bottom:10px">
+          <h3 style="margin:0 0 6px">Contractor Preferences</h3>
+          <div class="grid">
+            <label><div class="muted">Preferred Trade</div><select id="coPrefTrade" class="select"><option>General</option><option>Concrete</option><option>Masonry</option><option>Electrical</option><option>Plumbing</option><option>Roofing</option><option>Finish</option></select></label>
+            <label><div class="muted">Service ZIPs</div><input id="coPrefZips" class="input" placeholder="e.g., 77002, 77004"/></label>
           </div>
+          <div style="margin-top:8px"><button id="saveCoLong" class="btn">Save Contractor Preferences</button> <span id="coLongSaved" class="muted" style="display:none">Saved ✓</span></div>
+        </div>
 
-          <!-- Contractor -->
-          <div id="s_co" class="setting-card hid">
-            <h3 style="margin:0 0 8px">Contractor • Preferences</h3>
-            <div class="chips">
-              <label class="chip"><input type="radio" name="coMode" value="looking"> Looking for jobs</label>
-              <label class="chip"><input type="radio" name="coMode" value="offering"> Offering services</label>
-              <label class="chip"><input type="radio" name="coMode" value="both" checked> Both</label>
-            </div>
-            <div style="margin-top:10px"><div class="muted" style="margin-bottom:6px">Divisions (MasterFormat 01–16)</div><div id="coDivs" class="div-grid"></div></div>
-            <div class="savebar"><button id="saveCo" class="btn">Save Contractor Settings</button><div id="coSaved" class="muted" style="display:none">Saved ✓</div></div>
+        <div class="card">
+          <h3 style="margin:0 0 6px">Realtor</h3>
+          <div class="grid">
+            <label><div class="muted">License #</div><input id="reLicense" class="input" placeholder="e.g. 123456"/></label>
+            <label><div class="muted">Brokerage</div><input id="reBrokerage" class="input" placeholder="e.g. DealBankers Realty"/></label>
           </div>
-
-          <!-- Realtor (new) -->
-          <div id="s_re" class="setting-card hid">
-            <h3 style="margin:0 0 8px">Realtor • Preferences</h3>
-            <div class="grid">
-              <label><div class="muted">License #</div><input id="reLicense" class="input" placeholder="e.g. 123456"/></label>
-              <label><div class="muted">Brokerage</div><input id="reBrokerage" class="input" placeholder="e.g. DealBankers Realty"/></label>
-            </div>
-            <div class="chips" style="margin-top:10px">
-              <label class="chip"><input id="reBuyer" type="checkbox" checked/> <span>Buyer Clients</span></label>
-              <label class="chip"><input id="reSeller" type="checkbox" checked/> <span>Seller Clients</span></label>
-              <label class="chip"><input id="reInvestors" type="checkbox"/> <span>Investors</span></label>
-            </div>
-            <div style="margin-top:10px">
-              <div class="muted" style="margin-bottom:6px">Service ZIPs (comma/newline)</div>
-              <textarea id="reZips" class="zipbox" placeholder="e.g. 78209, 78232"></textarea>
-            </div>
-            <div class="chips" style="margin-top:10px">
-              <label class="chip"><input id="reNotify" type="checkbox" checked/> <span>Email me new matches</span></label>
-            </div>
-            <div class="savebar"><button id="saveRe" class="btn">Save Realtor Settings</button><div id="reSaved" class="muted" style="display:none">Saved ✓</div></div>
-          </div>
-
-          <!-- Investor placeholder -->
-          <div id="s_in" class="setting-card hid"><h3 style="margin:0 0 8px">Investor • Preferences</h3><p class="muted" style="margin:0">Coming soon.</p></div>
+          <div style="margin-top:8px"><button id="saveRe" class="btn">Save Realtor</button> <span id="reSaved" class="muted" style="display:none">Saved ✓</span></div>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- Firebase -->
+  <footer>
+    <div>© 2025 DealBankers.com — All rights reserved.</div>
+    <div>Profile v2.0</div>
+  </footer>
+
+  <!-- Firebase + Leaflet -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
   <script>
     const cfg={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
-    firebase.initializeApp(cfg); const auth=firebase.auth(); const db=firebase.database();
+    firebase.initializeApp(cfg); const auth=firebase.auth(); const db=firebase.database(); const storage=firebase.storage();
     const $=s=>document.querySelector(s);
-    const tabs=[...document.querySelectorAll('.tab')], panels=[...document.querySelectorAll('[data-panel]')];
 
+    // Tabs
+    const tabs=[...document.querySelectorAll('.tab')], panels=[...document.querySelectorAll('[data-panel]')];
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
       const u=new URL(location.href); u.searchParams.set('tab',name); history.replaceState(null,'',u);
       if(name==='wholesaler') loadWhIframe(currentSub);
       if(name==='overview') overviewReady();
-      if(name==='settings') ensureSettingsLoaded();
+      if(name==='contractor') contractorReady();
     }
     $('#tabs').addEventListener('click',e=>{ const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab); });
 
-    // wholesaler subtabs
+    // Wholesaler subtabs
     let currentSub=(new URL(location.href).searchParams.get('wh')==='dispo')?'dispo':'acq';
-    const subBtns=[]; document.querySelectorAll('.subtab').forEach(b=>{subBtns.push(b); b.classList.toggle('active',b.dataset.sub===currentSub);
-      b.addEventListener('click',()=>{currentSub=b.dataset.sub; subBtns.forEach(x=>x.classList.toggle('active',x===b));
-        const u=new URL(location.href); u.searchParams.set('wh',currentSub); history.replaceState(null,'',u); loadWhIframe(currentSub);});});
+    document.querySelectorAll('.subtab').forEach(b=>{
+      b.classList.toggle('active',b.dataset.sub===currentSub);
+      b.addEventListener('click',()=>{currentSub=b.dataset.sub; document.querySelectorAll('.subtab').forEach(x=>x.classList.toggle('active',x===b));
+        const u=new URL(location.href); u.searchParams.set('wh',currentSub); history.replaceState(null,'',u); loadWhIframe(currentSub);});
+    });
 
     function isDesktop(){return window.innerWidth>=1024}
-    function parseZipBox(t){return (t||'').split(/[\s,]+/g).map(z=>z.trim()).filter(Boolean)}
-    async function readWsFilters(){const uid=auth.currentUser?.uid; if(!uid) return {types:{residential:true},zips:[]};
+    async function readWsFilters(){ // still read saved filters to seed the portal iframe’s URL (optional)
+      const uid=auth.currentUser?.uid; if(!uid) return {types:{residential:true},zips:[]};
       const snap=await db.ref(`userSettings/${uid}/wholesaler/filters`).get(); const v=snap.val()||{};
-      return {types:{commercial:!!v?.types?.commercial,residential:v?.types?.residential!==false},zips:Array.isArray(v?.zips)?v.zips:[]};}
-    function buildWhSrc(sub,f){const uid=encodeURIComponent(auth.currentUser?.uid||'anon'); const types=[]; if(f?.types?.commercial)types.push('commercial'); if(f?.types?.residential)types.push('residential');
-      const qp=new URLSearchParams({uid,sub,whTypes:types.join(','),whZips:(f?.zips||[]).join(','),ui:isDesktop()?'desktop':'auto'}); return `wholesaler.html?${qp.toString()}`;}
+      return {types:{commercial:!!v?.types?.commercial,residential:v?.types?.residential!==false,land:!!v?.types?.land},zips:Array.isArray(v?.zips)?v.zips:[]};
+    }
+    function buildWhSrc(sub,f){
+      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
+      const types=[]; if(f?.types?.commercial)types.push('commercial'); if(f?.types?.residential)types.push('residential'); if(f?.types?.land)types.push('land');
+      const qp=new URLSearchParams({uid,sub,whTypes:types.join(','),whZips:(f?.zips||[]).join(','),ui:isDesktop()?'desktop':'auto'});
+      return `wholesaler.html?${qp.toString()}`;
+    }
     async function loadWhIframe(sub){const f=await readWsFilters(); $('#whFrame').src=buildWhSrc(sub,f); $('#whEmbed').src=buildWhSrc('acq',f);}
 
-    // overview + townhall
+    // Overview + townhall
     function overviewReady(){
       const body=$('#thBody'),input=$('#thInput'),send=$('#thSend'),presenceRef=db.ref('townhall/presence'),myRef=presenceRef.push();
       if(body.dataset.live) return; body.dataset.live="1";
@@ -217,40 +247,108 @@
       input.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault(); sendMsg();}}); send.addEventListener('click',sendMsg);
     }
 
-    // settings
-    const DIVS=["01 General Requirements","02 Existing Conditions","03 Concrete","04 Masonry","05 Metals","06 Wood & Plastics","07 Thermal & Moisture","08 Openings","09 Finishes","10 Specialties","11 Equipment","12 Furnishings","13 Special Construction","14 Conveying Systems","15 Mechanical","16 Electrical"];
-    function renderDivs(){const w=$('#coDivs'); if(!w) return; w.innerHTML=''; DIVS.forEach((d,i)=>{const id='div_'+(i+1); const lab=document.createElement('label'); lab.className='div-chip'; lab.innerHTML=`<input type="checkbox" id="${id}"><span>${d}</span>`; w.appendChild(lab);});}
-    renderDivs();
-    async function loadContractor(){const uid=auth.currentUser?.uid; if(!uid) return; const s=await db.ref(`userSettings/${uid}/contractor/settings`).get(); const v=s.val()||{mode:'both',divisions:[]};
-      document.querySelectorAll('input[name="coMode"]').forEach(r=>r.checked=(r.value===v.mode)); const set=new Set(v.divisions||[]); DIVS.forEach((d,i)=>{$('#div_'+(i+1)).checked=set.has(i+1);});}
-    async function saveContractor(){const uid=auth.currentUser?.uid; if(!uid) return; const mode=(document.querySelector('input[name="coMode"]:checked')||{}).value||'both';
-      const divisions=[]; DIVS.forEach((d,i)=>{if($('#div_'+(i+1))?.checked) divisions.push(i+1)}); await db.ref(`userSettings/${uid}/contractor/settings`).set({mode,divisions});}
-    $('#saveCo')?.addEventListener('click',async()=>{await saveContractor(); const t=$('#coSaved'); t.style.display='block'; setTimeout(()=>t.style.display='none',1400);});
+    // Contractor portal
+    let coMode='view', map, markers=[];
+    function contractorReady(){
+      // Nav
+      $('#coSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; ['view','post'].forEach(k=>$('#coSeg [data-co="'+k+'"]').classList.toggle('active',b.dataset.co===k));
+        coMode=b.dataset.co; $('#coView').style.display=(coMode==='view')?'block':'none'; $('#coPost').style.display=(coMode==='post')?'block':'none';
+        if(coMode==='view') ensureMap(); });
+      ensureMap();
+      $('#coUseLoc').onclick=useMyLocation; $('#coRefresh').onclick=refreshJobs;
+      $('#postJob').onclick=postJob;
+    }
 
-    async function ensureSettingsLoaded(){setSettingsSection(curSettings); const f=await readWsFilters();
-      $('#wsCommercial').checked=!!f.types.commercial; $('#wsResidential').checked=!!f.types.residential; $('#wsZips').value=(f.zips||[]).join(', ');
-      await loadContractor(); await loadRealtor(); }
-    $('#saveWsFilters').addEventListener('click',async()=>{const data={types:{commercial:$('#wsCommercial').checked,residential:$('#wsResidential').checked},zips:parseZipBox($('#wsZips').value)};
-      await db.ref(`userSettings/${auth.currentUser.uid}/wholesaler/filters`).set(data); const t=$('#wsSaved'); t.style.display='block'; setTimeout(()=>t.style.display='none',1400); loadWhIframe(currentSub);});
+    function ensureMap(){
+      if(map) return;
+      map=L.map('coMap',{zoomControl:true,attributionControl:false}).setView([29.7604,-95.3698],10); // default Houston area
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
+      refreshJobs();
+    }
+    function clearMarkers(){ markers.forEach(m=>m.remove()); markers=[]; }
+    function addMarker(j){
+      if(!(j.lat && j.lng)) return;
+      const m=L.marker([j.lat,j.lng]).addTo(map).bindPopup(`<b>${j.title||'Job'}</b><br>${j.trade||''} • ${j.pay||''}<br>${j.zip||''}`);
+      markers.push(m);
+    }
+    function renderJobList(list){
+      const w=$('#jobList'); w.innerHTML='';
+      list.forEach(j=>{
+        const el=document.createElement('div'); el.className='jobCard';
+        el.innerHTML=`<div style="display:flex;justify-content:space-between;align-items:center">
+          <div><b>${j.title||'Job'}</b> — ${j.trade||''}</div>
+          <div class="muted">${j.pay||''}</div></div>
+          <div class="muted">${j.zip||''}</div>
+          <div style="margin-top:6px">${(j.desc||'').slice(0,220)}</div>`;
+        w.appendChild(el);
+      });
+    }
+    async function refreshJobs(){
+      const [g,u]=await Promise.all([
+        db.ref('jobs/global').get().catch(()=>({val:()=>null})),
+        db.ref(`jobs/${auth.currentUser?.uid||'anon'}`).get().catch(()=>({val:()=>null}))
+      ]);
+      const toArr=o=>o?Object.values(o):[];
+      let jobs=[...toArr(g.val()),...toArr(u.val())];
 
-    // Realtor settings
-    async function loadRealtor(){const uid=auth.currentUser?.uid; if(!uid) return; const s=await db.ref(`userSettings/${uid}/realtor/settings`).get(); const v=s.val()||{};
-      $('#reLicense').value=v.license||''; $('#reBrokerage').value=v.brokerage||''; $('#reBuyer').checked=!!v?.roles?.buyer; $('#reSeller').checked=!!v?.roles?.seller; $('#reInvestors').checked=!!v?.roles?.investor;
-      $('#reZips').value=Array.isArray(v.zips)?v.zips.join(', '):''; $('#reNotify').checked=v.notify!==false;}
-    $('#saveRe').addEventListener('click',async()=>{const uid=auth.currentUser?.uid; const v={license:$('#reLicense').value.trim(),brokerage:$('#reBrokerage').value.trim(),
-        roles:{buyer:$('#reBuyer').checked,seller:$('#reSeller').checked,investor:$('#reInvestors').checked},zips:parseZipBox($('#reZips').value),notify:$('#reNotify').checked};
-      await db.ref(`userSettings/${uid}/realtor/settings`).set(v); const t=$('#reSaved'); t.style.display='block'; setTimeout(()=>t.style.display='none',1400);});
+      const z=($('#coZip').value||'').trim(); if(z) jobs=jobs.filter(j=>String(j.zip||'').includes(z));
+      const t=$('#coTrade').value; if(t) jobs=jobs.filter(j=>j.trade===t);
 
-    // settings section switcher
-    let curSettings='wh';
-    function setSettingsSection(key){curSettings=key; const map={wh:'s_wh',co:'s_co',re:'s_re',in:'s_in'}; ['s_wh','s_co','s_re','s_in'].forEach(id=>document.getElementById(id)?.classList.add('hid')); document.getElementById(map[key])?.classList.remove('hid');
-      document.querySelectorAll('#settingsSeg button').forEach(b=>b.classList.toggle('active',b.dataset.s===key));}
-    document.getElementById('settingsSeg').addEventListener('click',e=>{const b=e.target.closest('button'); if(!b) return; setSettingsSection(b.dataset.s);});
+      clearMarkers(); jobs.forEach(addMarker);
+      if(jobs.length && jobs[0].lat && jobs[0].lng) map.setView([jobs[0].lat,jobs[0].lng],11);
+      renderJobList(jobs);
+    }
+    function useMyLocation(){
+      if(!navigator.geolocation){ alert('Geolocation not supported'); return; }
+      navigator.geolocation.getCurrentPosition((pos)=>{ const {latitude,longitude}=pos.coords; map.setView([latitude,longitude],12); }, ()=>alert('Could not get location'), {enableHighAccuracy:true,timeout:8000});
+    }
 
-    // auth & boot
-    auth.onAuthStateChanged(u=>{ if(!u){location.href='index.html';return;}
+    // Geocode helper (best-effort via Nominatim)
+    async function geocodeZip(zip){
+      try{
+        const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(zip)}`,{headers:{'Accept-Language':'en'}});
+        const j=await res.json(); if(Array.isArray(j)&&j[0]) return {lat:+j[0].lat,lng:+j[0].lon};
+      }catch(e){}
+      return {lat:null,lng:null};
+    }
+
+    async function uploadJobPhotos(files, jobId){
+      const out=[]; for(let i=0;i<files.length;i++){ const f=files[i]; const ref=storage.ref().child(`job-photos/${auth.currentUser.uid}/${jobId}/${Date.now()}-${i}-${f.name}`); await ref.put(f); const url=await ref.getDownloadURL(); out.push(url); }
+      return out;
+    }
+    async function postJob(){
+      const t=$('#jobTitle').value.trim(); const trade=$('#jobTrade').value; const zip=$('#jobZip').value.trim(); const pay=$('#jobPay').value.trim(); const desc=$('#jobDesc').value.trim();
+      if(!t||!zip){ alert('Title and ZIP are required'); return; }
+      const id=String(Date.now());
+      const coords=await geocodeZip(zip);
+      const photos=$('#jobPhotos').files; let urls=[]; if(photos && photos.length) urls=await uploadJobPhotos(photos,id);
+      const job={id,title:t,trade,zip,pay,desc,lat:coords.lat,lng:coords.lng,ts:Date.now(),uid:auth.currentUser.uid,photos:urls};
+      await db.ref(`jobs/${auth.currentUser.uid}/${id}`).set(job);
+      $('#jobBar').textContent='Posted ✓'; setTimeout(()=>$('#jobBar').textContent='',1400);
+      $('#jobTitle').value=''; $('#jobZip').value=''; $('#jobPay').value=''; $('#jobDesc').value=''; $('#jobPhotos').value='';
+      // switch back to view
+      document.querySelector('#coSeg [data-co="view"]').click(); refreshJobs();
+    }
+
+    // Settings (long-term)
+    $('#saveCoLong')?.addEventListener('click', async ()=>{
+      const v={trade:$('#coPrefTrade').value, zips:($('#coPrefZips').value||'').split(/[\s,]+/).filter(Boolean)};
+      await db.ref(`userSettings/${auth.currentUser?.uid}/contractor/longterm`).set(v);
+      const t=$('#coLongSaved'); t.style.display='inline'; setTimeout(()=>t.style.display='none',1200);
+    });
+    $('#saveRe')?.addEventListener('click', async ()=>{
+      const v={license:$('#reLicense').value.trim(),brokerage:$('#reBrokerage').value.trim()};
+      await db.ref(`userSettings/${auth.currentUser?.uid}/realtor/settings`).update(v);
+      const t=$('#reSaved'); t.style.display='inline'; setTimeout(()=>t.style.display='none',1200);
+    });
+
+    // Auth & boot
+    auth.onAuthStateChanged(async u=>{
+      if(!u){location.href='index.html';return;}
       $('#meLine').textContent=`${u.email||''} — UID: ${u.uid}`;
       const initial=new URL(location.href).searchParams.get('tab')||'overview'; show(initial);
+      // seed wholesaler embeds
+      const f=await readWsFilters(); $('#whFrame').src=buildWhSrc(currentSub,f); $('#whEmbed').src=buildWhSrc('acq',f);
     });
     document.getElementById('logoutBtn').onclick=()=>auth.signOut().then(()=>location.href='index.html');
   </script>
