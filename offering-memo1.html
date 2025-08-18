@@ -140,7 +140,7 @@
           <div class="tools">
             <a id="openPdf" class="btn">Open</a>
             <a id="dlPdf" class="btn">Download</a>
-            <button id="copyPdf" class="btn">Copy Link</button>
+            <button id="copyPdf" class="btn" type="button">Copy Link</button>
           </div>
         </div>
         <iframe id="sofFrame" class="pdf-ifr" title="Statement of Facts"></iframe>
@@ -237,22 +237,46 @@
       }
     });
 
-    // SOF PDF viewer (defaults to offerring1.pdf at site root unless ?sof= provided)
+    // ---- SOF PDF viewer ----
+    // Default: your Drive link (shared). You gave: https://drive.google.com/file/d/1mhMsaDBQtzOoC2ddU7YbvrDtaMETpYBr/view?usp=sharing
+    const DEFAULT_DRIVE_VIEW = "https://drive.google.com/file/d/1mhMsaDBQtzOoC2ddU7YbvrDtaMETpYBr/view?usp=sharing";
+
+    function driveInfo(url){
+      // Accept /file/d/<id>/view or /open?id=<id>
+      const m1 = url.match(/\/file\/d\/([^/]+)\//);
+      const m2 = url.match(/[?&]id=([^&]+)/);
+      const id = (m1 && m1[1]) || (m2 && m2[1]) || null;
+      if(!id) return null;
+      return {
+        id,
+        preview: `https://drive.google.com/file/d/${id}/preview`,
+        view:    `https://drive.google.com/file/d/${id}/view?usp=sharing`,
+        download:`https://drive.google.com/uc?export=download&id=${id}`
+      };
+    }
+
     (function loadSOF(){
       const p = new URL(location.href).searchParams;
-      const defaultURL = new URL('offerring1.pdf', location.href).href; // your uploaded file
-      const sof = p.get('sof') || defaultURL;
-      const viewer = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(sof)}`;
-      const frame = $('#sofFrame');
-      frame.src = viewer;
+      const sofParam = p.get('sof') || DEFAULT_DRIVE_VIEW;
 
-      // toolbar links
-      $('#openPdf').href = sof; $('#openPdf').target = '_blank'; $('#openPdf').rel = 'noopener';
-      $('#dlPdf').href   = sof; $('#dlPdf').download = sof.split('/').pop();
-      $('#copyPdf').addEventListener('click', async ()=>{
-        try { await navigator.clipboard.writeText(sof); toast('PDF link copied'); }
-        catch { toast('Could not copy'); }
-      });
+      const frame = $('#sofFrame');
+      const d = driveInfo(sofParam);
+
+      if(d){
+        // Use Drive's native preview for the iframe
+        frame.src = d.preview;
+        // Toolbar
+        $('#openPdf').href = d.view;  $('#openPdf').target = '_blank'; $('#openPdf').rel='noopener';
+        $('#dlPdf').href   = d.download; $('#dlPdf').download = 'Statement-of-Facts.pdf';
+        $('#copyPdf').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(d.view); toast('Drive link copied'); }catch{ toast('Could not copy'); }});
+      }else{
+        // Non-Drive URL: show via Google Docs Viewer
+        const viewer = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(sofParam)}`;
+        frame.src = viewer;
+        $('#openPdf').href = sofParam; $('#openPdf').target='_blank'; $('#openPdf').rel='noopener';
+        $('#dlPdf').href   = sofParam; $('#dlPdf').download = sofParam.split('/').pop() || 'document.pdf';
+        $('#copyPdf').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(sofParam); toast('PDF link copied'); }catch{ toast('Could not copy'); }});
+      }
     })();
 
     // Interest form -> /capitalInterest
