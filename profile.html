@@ -1,4 +1,4 @@
-<!-- ======================== profile.html (Overview+Townhall intact • Wholesaler+Dispo toggle • Settings switcher) ======================== -->
+<!-- ======================== profile.html (Overview + Townhall • Wholesaler/Dispo embed • Settings switcher) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -423,14 +423,11 @@
       await db.ref(`userSettings/${uid}/wholesaler/filters`).set(data);
     }
     async function ensureSettingsLoaded(){
-      // switcher default
       setSettingsSection(curSettings);
-      // fill wholesaler
       const f = await readWsFilters();
       $('#wsCommercial').checked = !!f.types.commercial;
       $('#wsResidential').checked = !!f.types.residential;
       $('#wsZips').value = (f.zips||[]).join(', ');
-      // fill contractor
       await loadContractorSettings();
     }
     $('#saveWsFilters')?.addEventListener('click', async ()=>{
@@ -529,7 +526,7 @@
       catch(err){ console.error(err); alert('Could not send. Try again.'); }
     });
 
-    // --- Lead gate + initial view ---
+    // --- Lead gate + initial view (show tab if either Acq or Dispo is enabled) ---
     let allowLeads=false;
     function applyLeadGate(){
       const whTab   = document.querySelector('[data-tab="wholesaler"]');
@@ -555,9 +552,11 @@
       document.getElementById('mailtoFallback').href = `mailto:${addr}?subject=${subj}&body=${body}`;
 
       const uid=u.uid;
-      db.ref(`userSettings/${uid}/wholesaler/leadsEnabled`).on('value', snap=>{
-        allowLeads = !!snap.val();
+      db.ref(`userSettings/${uid}/wholesaler`).on('value', snap=>{
+        const v = snap.val() || {};
+        allowLeads = !!(v.leadsEnabled || v.acqLeadsEnabled || v.dispoLeadsEnabled);
 
+        // optional: legacy restriction example
         const restricted = "therealbillwilburn";
         const isRestricted =
           (u.displayName && u.displayName.toLowerCase()===restricted) ||
