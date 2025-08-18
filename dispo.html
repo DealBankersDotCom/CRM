@@ -1,4 +1,4 @@
-<!-- ============================ dispo.html (Disposition Portal + Offerings manager + share tools) ============================ -->
+<!-- ============================ dispo.html (Disposition Portal • Offerings manager • Share tools) ============================ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -48,7 +48,7 @@
     .btn-ghost{background:#0f2a3a}
     .ico{font-size:18px}
     .label{display:inline}
-    @media (max-width:680px){ .label{display:none} } /* mobile -> icon only */
+    @media (max-width:680px){ .label{display:none} }
 
     .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 
@@ -76,7 +76,7 @@
     }
     .textarea{min-height:120px;resize:vertical}
 
-    /* Lead card (kept) */
+    /* Lead card */
     .lead-wrap{padding:12px}
     .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
     .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
@@ -119,7 +119,7 @@
         <div class="panel">
           <h3 class="h">Active Offerings</h3>
 
-          <!-- Virgin D6 (uses your new Drive link) -->
+          <!-- Virgin D6 (memo2 first) -->
           <div class="offer">
             <div>
               <div class="row" style="font-weight:800">Virgin D6 Lift — FOB Houston</div>
@@ -130,7 +130,7 @@
               </div>
             </div>
             <div class="row">
-              <a class="btn" target="_blank" rel="noopener" id="btnOpenMemo1">Open Offering Memo</a>
+              <a class="btn" target="_blank" rel="noopener" id="btnOpenMemo2">Open Offering Memo</a>
               <a class="btn" target="_blank" rel="noopener" id="btnInterest">Submit Interest</a>
             </div>
           </div>
@@ -145,6 +145,7 @@
             </div>
             <div class="row">
               <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html">Open Memo 2</a>
+              <a class="btn btn-ghost" target="_blank" rel="noopener" href="offering-memo.html">Open Memo 1</a>
             </div>
           </div>
 
@@ -168,7 +169,7 @@
         </div>
       </div>
 
-      <!-- Lead viewer (unchanged) -->
+      <!-- Lead viewer -->
       <div class="lead-wrap">
         <div id="leadCard" class="lead">
           <div class="title">Your Dispo Lead</div>
@@ -238,7 +239,7 @@
     const clean = s => (s||'').trim();
     const BILL_PHONE = "2104281449";
 
-    // Dial mode (keep parity with wholesaler)
+    // Dial mode
     const MODE_KEY='db_phone_link_mode_dispo';
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
     const setMode=m=>localStorage.setItem(MODE_KEY,m);
@@ -251,15 +252,14 @@
       return `tel:${num}`;
     }
 
-    // ---------- Offering: your Drive URL & memo links ----------
-    const DRIVE_SOF = "https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/view?usp=drive_link";
-    function gview(url){ return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`; }
+    // ---------- Offering: SOF and memo links ----------
+    const DRIVE_SOF_PREVIEW = "https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview";
 
-    // Wire buttons
-    $('#btnOpenMemo1').href = `offering-memo.html?sof=${encodeURIComponent(DRIVE_SOF)}`;
-    $('#btnInterest').href  = `offering-memo.html?sof=${encodeURIComponent(DRIVE_SOF)}#interest`;
-    $('#sofFrame').src = gview(DRIVE_SOF);
-    $('#offerLink').value = location.origin + '/offering-memo.html?sof=' + encodeURIComponent(DRIVE_SOF);
+    // Wire default (memo2 first)
+    $('#btnOpenMemo2').href = `offering-memo2.html?sof=${encodeURIComponent(DRIVE_SOF_PREVIEW)}`;
+    $('#btnInterest').href  = `offering-memo2.html?sof=${encodeURIComponent(DRIVE_SOF_PREVIEW)}#interest`;
+    $('#sofFrame').src = DRIVE_SOF_PREVIEW;
+    $('#offerLink').value = location.origin + '/offering-memo2.html?sof=' + encodeURIComponent(DRIVE_SOF_PREVIEW);
 
     // ---------- Share helpers ----------
     function buildAdCopy(){
@@ -272,12 +272,12 @@
         "Docs on file: SPA, TSR invoice, SOF, Voided check",
         "",
         "Offering memo & SOF:",
-        location.origin + '/offering-memo.html?sof=' + encodeURIComponent(DRIVE_SOF),
+        location.origin + '/offering-memo2.html?sof=' + encodeURIComponent(DRIVE_SOF_PREVIEW),
         "",
         "Text Bill: " + BILL_PHONE
       ].join("\n");
     }
-    function smsHref(body){ 
+    function smsHref(body){
       const base = /iPhone|iPad|Macintosh/.test(navigator.userAgent) ? `sms:${BILL_PHONE}&` : `sms:${BILL_PHONE}?`;
       return base + "body=" + encodeURIComponent(body);
     }
@@ -285,7 +285,6 @@
     $('#copyAd').onclick = ()=>{ navigator.clipboard.writeText($('#adText').value).then(()=>toast('Ad copied')); };
     $('#mailtoBtn').href = `mailto:?subject=${encodeURIComponent('Virgin D6 Lift — Investor Interest')}&body=${encodeURIComponent($('#adText').value)}`;
     $('#smsBtn').href    = smsHref('Interested in D6 Capital Raise');
-
     $('#copyLink').onclick = ()=>{ navigator.clipboard.writeText($('#offerLink').value).then(()=>toast('Link copied')); };
 
     // ---------- Offerings (per-user) ----------
@@ -301,13 +300,14 @@
         wrap.appendChild(p);
       } else {
         entries.forEach(([id,o])=>{
+          const url = o.pdfUrl || '';
           const row = document.createElement('div');
           row.className = 'offer';
           row.innerHTML = `
             <div style="font-weight:800">${o.title||'Untitled'}</div>
             <div class="row">
-              <a class="btn" target="_blank" rel="noopener" href="offering-memo.html?sof=${encodeURIComponent(o.pdfUrl||'')}">Open</a>
-              <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html?sof=${encodeURIComponent(o.pdfUrl||'')}">Open in Memo 2</a>
+              <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html?sof=${encodeURIComponent(url)}">Open (Memo 2)</a>
+              <a class="btn btn-ghost" target="_blank" rel="noopener" href="offering-memo.html?sof=${encodeURIComponent(url)}">Open (Memo 1)</a>
               <button class="btn btn-ghost" data-del="${id}">Delete</button>
             </div>`;
           wrap.appendChild(row);
@@ -331,7 +331,7 @@
       loadOfferings(); toast('Offering added');
     };
 
-    // ---------- Dispo lead viewer (lightweight demo; uses window.dispo if present) ----------
+    // ---------- Dispo lead viewer (window.dispo or lazy dispo.js) ----------
     const chips = $('#chips');
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr||'San Antonio, TX')}`; }
     function useLead(lead){
@@ -350,7 +350,6 @@
     }
     function bootLead(){
       if(window.dispo && window.dispo.length){ useLead(window.dispo[0]); setStatus('Ready'); return; }
-      // lazy-load dispo.js if present
       const s=document.createElement('script');
       s.src='dispo.js?v='+Date.now();
       s.onload=()=>{ if(window.dispo?.length){ useLead(window.dispo[0]); } setStatus('Ready'); };
@@ -358,7 +357,7 @@
       document.head.appendChild(s);
     }
 
-    // copy number
+    // Copy number
     $('#actCopy').onclick = ()=>{
       const txt = $('#actCall').href || '';
       const num = txt.replace(/.*tel:/,'').replace(/[^\d+]/g,'');
@@ -366,7 +365,7 @@
       navigator.clipboard.writeText(num).then(()=>toast('Phone copied'));
     };
 
-    // simple settings toggle for dial mode
+    // Dial mode cycle
     $('#actSettings').onclick = ()=>{
       const cur=getMode();
       const next = cur==='device' ? 'textnow' : cur==='textnow' ? 'gvoice' : 'device';
@@ -374,12 +373,11 @@
       toast(`Dial mode: ${next}`);
     };
 
-    // share button just scrolls to the panel
+    // Share button scrolls to panel
     $('#btnShare').onclick = ()=>document.getElementById('adText').scrollIntoView({behavior:'smooth',block:'center'});
 
     auth.onAuthStateChanged(()=>{ bootLead(); loadOfferings(); });
 
-    // initial status
     setStatus('Ready');
   </script>
 </body>
