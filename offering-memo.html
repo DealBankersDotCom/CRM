@@ -15,8 +15,9 @@
   body{
     margin:0; font-family: system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
     color:var(--text);
-    background: radial-gradient(900px 500px at 85% -10%, #123043 0%, transparent 60%),
-                linear-gradient(135deg,#0b1117,#0f1a24 55%,#10283a);
+    background:
+      radial-gradient(900px 500px at 85% -10%, #123043 0%, transparent 60%),
+      linear-gradient(135deg,#0b1117,#0f1a24 55%,#10283a);
   }
   .wrap{max-width:1100px; margin:0 auto; padding:24px 16px}
   header{
@@ -32,10 +33,12 @@
   .btn{
     border:1px solid var(--line); background:#122233; color:#eaf1f6;
     padding:10px 14px; border-radius:12px; cursor:pointer; font-weight:700;
+    text-decoration:none; display:inline-flex; align-items:center; gap:8px;
   }
   .btn:hover{filter:brightness(1.06)}
   .btn-accent{background:linear-gradient(180deg,var(--accent),#0a58ca); border:none}
   .btn-green{background:linear-gradient(180deg,var(--green),#1f8a39); border:none}
+
   .grid{display:grid; gap:16px; grid-template-columns:1.15fr .85fr; margin-top:16px}
   @media (max-width:960px){ .grid{grid-template-columns:1fr} }
 
@@ -49,9 +52,15 @@
   .kv .lab{color:#b8cadd; font-size:12px; text-transform:uppercase; letter-spacing:.08em}
   .kv .val{font-weight:800; margin-top:4px}
   .list{margin:8px 0 0 18px; color:#d7e6f5}
-  .pdfbar{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px}
+
+  .pdfbar{
+    display:flex; align-items:center; justify-content:space-between; gap:10px; margin:14px 0 8px;
+    padding:8px 10px; background:#0d1f2e; border:1px solid var(--line); border-radius:12px;
+  }
   .pdfbar .title{display:flex; align-items:center; gap:10px; font-weight:800}
   .pdfbar img{width:22px; height:22px}
+  .pdfbar .tools{display:flex; gap:8px; flex-wrap:wrap}
+
   .pdf-ifr{width:100%; height:560px; border:0; background:#fff; border-radius:12px}
   @media (max-width:960px){ .pdf-ifr{height:420px} }
 
@@ -64,6 +73,7 @@
   }
   .textarea{min-height:120px; resize:vertical}
   .muted{color:var(--muted); font-size:13px}
+
   .qrbox{
     display:flex; gap:12px; align-items:center; background:#0d1f2e; border:1px solid var(--line);
     border-radius:12px; padding:10px 12px;
@@ -122,9 +132,16 @@
           <li>Injection in progress; next QA scheduled (insert date)</li>
         </ul>
 
-        <div class="pdfbar" style="margin-top:14px">
-          <div class="title"><img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4c4.svg" alt="doc"/><span>Statement of Facts (PDF)</span></div>
-          <div class="muted">Change the PDF via <code>?sof=URL</code> parameter.</div>
+        <div class="pdfbar">
+          <div class="title">
+            <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f4c4.svg" alt="doc"/>
+            <span>Statement of Facts (PDF)</span>
+          </div>
+          <div class="tools">
+            <a id="openPdf" class="btn">Open</a>
+            <a id="dlPdf" class="btn">Download</a>
+            <button id="copyPdf" class="btn">Copy Link</button>
+          </div>
         </div>
         <iframe id="sofFrame" class="pdf-ifr" title="Statement of Facts"></iframe>
       </div>
@@ -176,7 +193,7 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // ---- CONFIG (same project as your site) ----
+    // Firebase (same project)
     const firebaseConfig = {
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -190,11 +207,11 @@
     firebase.initializeApp(firebaseConfig);
     const db = firebase.database();
 
-    // ---- Helpers ----
+    // Helpers
     const $ = s => document.querySelector(s);
     const toast = t => { const el=$('#toast'); el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1600); };
 
-    // ---- SMS / QR ----
+    // SMS / QR
     const BILL_PHONE = "2104281449";
     const SMS_TEXT = "Interested in D6 Capital Raise";
     function smsHref(){
@@ -209,41 +226,36 @@
       $('#smsBtn').href  = smsHref();
     }
 
-    // ---- Share ----
+    // Share
     $('#shareBtn').addEventListener('click', async ()=>{
-      const shareData = {
-        title: document.title,
-        text: "Offering Memorandum – Virgin D6 Lift (FOB Houston)",
-        url: location.href
-      };
+      const shareData = { title: document.title, text: "Offering Memorandum – Virgin D6 Lift (FOB Houston)", url: location.href };
       if (navigator.share) {
-        try { await navigator.share(shareData); }
-        catch(e){ /* user canceled */ }
+        try { await navigator.share(shareData); } catch(e){}
       } else {
         await navigator.clipboard.writeText(location.href);
         toast('Link copied to clipboard');
       }
     });
 
-    // ---- SOF PDF viewer ----
+    // SOF PDF viewer (defaults to offerring1.pdf at site root unless ?sof= provided)
     (function loadSOF(){
       const p = new URL(location.href).searchParams;
-      const sof = p.get('sof') || ''; // put your public PDF URL as default if you want
+      const defaultURL = new URL('offerring1.pdf', location.href).href; // your uploaded file
+      const sof = p.get('sof') || defaultURL;
+      const viewer = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(sof)}`;
       const frame = $('#sofFrame');
-      if(sof){
-        frame.src = `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(sof)}`;
-      } else {
-        frame.srcdoc = `
-          <div style="font-family:system-ui,Segoe UI,Arial; padding:18px">
-            <h3>Statement of Facts (PDF)</h3>
-            <p>Add <code>?sof=PUBLIC_PDF_URL</code> to this page link to show the document inline.</p>
-            <p style="color:#666">Example:<br><code>${location.origin}${location.pathname}?sof=https://example.com/your-sof.pdf</code></p>
-          </div>
-        `;
-      }
+      frame.src = viewer;
+
+      // toolbar links
+      $('#openPdf').href = sof; $('#openPdf').target = '_blank'; $('#openPdf').rel = 'noopener';
+      $('#dlPdf').href   = sof; $('#dlPdf').download = sof.split('/').pop();
+      $('#copyPdf').addEventListener('click', async ()=>{
+        try { await navigator.clipboard.writeText(sof); toast('PDF link copied'); }
+        catch { toast('Could not copy'); }
+      });
     })();
 
-    // ---- Form submit -> /capitalInterest ----
+    // Interest form -> /capitalInterest
     $('#interestForm').addEventListener('submit', async (e)=>{
       e.preventDefault();
       const name = $('#name').value.trim();
@@ -253,9 +265,7 @@
       const accredited = $('#accredited').value;
       const notes = $('#notes').value.trim();
 
-      if(!name || !email || !accredited){
-        toast('Please complete required fields'); return;
-      }
+      if(!name || !email || !accredited){ toast('Please complete required fields'); return; }
 
       const rec = {
         page: 'Virgin D6 Lift – Offering Memo',
@@ -263,7 +273,6 @@
         name, email, phone, amount, accredited, notes,
         ts: Date.now()
       };
-
       try{
         await db.ref('capitalInterest').push(rec);
         $('#ok').style.display='block';
@@ -274,7 +283,6 @@
       }
     });
 
-    // init
     setQR();
   </script>
 </body>
