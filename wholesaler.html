@@ -1,10 +1,10 @@
-<!-- ================================= wholesaler.html (guarded by DB leadsEnabled before loading leads.js) ================================ -->
+<!-- ================================= wholesaler.html (Acq+Dispo; desktop labels; client-side filters; offerings embed) ================================ -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Wholesaler • Acquisition</title>
+  <title>Wholesaler Portal</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
   <style>
@@ -35,14 +35,18 @@
 
     .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
       background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+
+    /* Desktop-friendly actions (labels always visible) */
     .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
+    .btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
     .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
-    .ico{font-size:20px}
+    .ico{font-size:18px}
+    .label{font-weight:800}
+
     .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 
     .lead-wrap{padding:12px}
@@ -65,11 +69,19 @@
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-    @media (max-width:480px){
+    /* Dispo view */
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+    .card2{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px}
+    .offer-card{display:flex;gap:12px;align-items:center;border:1px solid rgba(255,255,255,.18);background:#0f2a3a;border-radius:12px;padding:10px}
+    .offer-title{font-weight:900}
+    .offer-badges{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{font-size:12px;background:#112f45;border:1px solid rgba(255,255,255,.18);padding:4px 8px;border-radius:999px}
+
+    @media (max-width:680px){
       .actions{grid-template-columns:repeat(3,1fr)}
       .navrow{grid-template-columns:repeat(3,1fr)}
-      .title{font-size:16px}
       .sv{height:230px} .map{height:200px}
+      .grid{grid-template-columns:1fr}
     }
 
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
@@ -80,34 +92,82 @@
   <div class="wrap">
     <section class="card">
       <div class="top">
-        <div class="crumbs"><span>Wholesaler</span><span class="dot"></span><span>Acquisition</span></div>
+        <div class="crumbs">
+          <span>Wholesaler</span><span class="dot"></span><span id="modeCrumb">Acquisition</span>
+        </div>
         <div class="status" id="status">Loading…</div>
       </div>
 
-      <div class="sticky">
+      <!-- STICKY ACTIONS (Acq only; hidden in Dispo) -->
+      <div class="sticky" id="acqBar" style="display:none">
         <div class="actions">
-          <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
-          <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
-          <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
-          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
-          <button class="btn btn-ghost" id="actSettings" title="Settings"><span class="ico">⚙️</span></button>
+          <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span><span class="label">Call</span></a>
+          <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span><span class="label">Text</span></a>
+          <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span><span class="label">Copy</span></button>
+          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span><span class="label">Drive</span></a>
+          <button class="btn btn-ghost" id="actSettings" title="Settings"><span class="ico">⚙️</span><span class="label">Dial Pref</span></button>
         </div>
         <div class="navrow">
-          <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
-          <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
-          <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
+          <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀ <span class="label">Prev</span></button>
+          <button class="btn btn-ghost" id="btnRandom" title="Random">🎲 <span class="label">Random</span></button>
+          <button class="btn btn-green" id="btnNext"   title="Next">▶ <span class="label">Next</span></button>
         </div>
       </div>
 
-      <div class="lead-wrap">
+      <!-- ACQ: Lead viewer -->
+      <div class="lead-wrap" id="acqWrap" style="display:none">
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
+        </div>
+      </div>
+
+      <!-- DISPO: Offerings -->
+      <div id="dispoWrap" style="display:none; padding:12px">
+        <div class="grid">
+          <div class="card2">
+            <h3 style="margin:0 0 8px">Active Offerings</h3>
+
+            <!-- Example: your D6 offering -->
+            <div class="offer-card" style="margin-bottom:10px">
+              <div style="font-size:28px">🛢️</div>
+              <div style="flex:1">
+                <div class="offer-title">Virgin D6 Lift — FOB Houston</div>
+                <div class="offer-badges">
+                  <span class="badge">Capital Need: $300k</span>
+                  <span class="badge">Repay: 7–10 days</span>
+                  <span class="badge">100M gallons</span>
+                </div>
+                <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+                  <a class="btn btn-gold" href="offering-memo.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview" target="_blank" rel="noopener">Open Offering Memo</a>
+                  <a class="btn btn-ghost" href="offering-memo.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview#interest" target="_blank" rel="noopener">Submit Interest</a>
+                </div>
+              </div>
+            </div>
+
+            <!-- Placeholder slot for more Offerings (users can add later) -->
+            <div class="offer-card" style="opacity:.8">
+              <div style="font-size:26px">🏗️</div>
+              <div style="flex:1">
+                <div class="offer-title">Add your first Dispo offering</div>
+                <div class="offer-badges"><span class="badge">Bring your deal</span><span class="badge">Upload docs</span></div>
+                <div style="margin-top:8px">
+                  <a class="btn btn-ghost" href="#" onclick="alert('Coming soon: create-offering.html');return false;">Create Offering</a>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="card2">
+            <h3 style="margin:0 0 8px">Statement of Facts (Inline Preview)</h3>
+            <iframe id="dispoSOF" title="SOF" style="width:100%;height:520px;border:0;border-radius:12px;background:#fff"
+              src="https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview" allow="autoplay"></iframe>
+          </div>
         </div>
       </div>
     </section>
   </div>
 
-  <!-- settings dialog -->
+  <!-- Dial preference dialog (unchanged) -->
   <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
     <h3 style="margin:0 0 8px">Phone Link Preference</h3>
     <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
@@ -121,57 +181,66 @@
 
   <div id="toast"></div>
 
-  <!-- Firebase for lead gate -->
+  <!-- Firebase (dedicated instance for this page) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // Initialize a dedicated app instance for this page (avoid clashes if embedded)
     const gateApp = firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
     );
     const gateDb = gateApp.database();
 
-    const params = new URL(location.href).searchParams;
-    const uidParam = params.get('uid') || 'anon';
+    // Query params
+    const urlp   = new URL(location.href).searchParams;
+    const sub    = (urlp.get('sub')||urlp.get('mode')||'acq').toLowerCase();   // 'acq' or 'dispo'
+    const uidParam = urlp.get('uid') || 'anon';
 
-    // Check gate before loading leads.js
-    gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
-      const allowed = !!snap.val();
-      if(!allowed){
-        document.getElementById('leadCard').innerHTML =
-          '<div class="body">Access to leads is disabled for this account.</div>';
-        document.getElementById('status').textContent = 'Access denied';
-      }else{
-        const s=document.createElement('script');
-        s.src='/leads.js?v='+Date.now();
-        s.onload=()=>{ window.leads = window.leads || []; init(); };
-        s.onerror=()=>document.getElementById('status').textContent='Could not load /leads.js';
-        document.head.appendChild(s);
-      }
-    }).catch(()=>{
-      document.getElementById('leadCard').innerHTML =
-        '<div class="body">Could not verify access right now. Try again shortly.</div>';
-      document.getElementById('status').textContent = 'Gate check failed';
-    });
-  </script>
+    // Lead filter params from profile.html
+    const whTypes = (urlp.get('whTypes')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean); // ['commercial','residential']
+    const whZips  = (urlp.get('whZips')||'').split(',').map(s=>s.trim()).filter(Boolean);                // ['78207','77002']
+    const hasTypeFilter = whTypes.length>0;
+    const zipSet = new Set(whZips);
 
-  <script>
+    // UI helpers
     const $=s=>document.querySelector(s);
-    const statusEl=$('#status'); const toastEl=$('#toast');
-    const dlg=$('#settingsDlg');
-    let idx=0, currentLead=null;
-
-    const uid=new URL(location.href).searchParams.get('uid')||'anon';
-    const MODE_KEY='db_phone_link_mode_wh';
-
+    const statusEl=$('#status'); const toastEl=$('#toast'); const dlg=$('#settingsDlg');
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
-    const clean=s=>(s||'').trim();
-    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
 
+    // Mode toggle
+    function showAcq(){ $('#modeCrumb').textContent='Acquisition'; $('#acqBar').style.display='block'; $('#acqWrap').style.display='block'; $('#dispoWrap').style.display='none'; }
+    function showDispo(){ $('#modeCrumb').textContent='Dispo'; $('#acqBar').style.display='none'; $('#acqWrap').style.display='none'; $('#dispoWrap').style.display='block'; setStatus('Offerings'); }
+
+    if(sub==='dispo'){ showDispo(); } else { showAcq(); }
+
+    // ----- ACQ: Lead gate then load /leads.js and apply client-side filters -----
+    if(sub==='acq'){
+      gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
+        const allowed = !!snap.val();
+        if(!allowed){
+          $('#leadCard').innerHTML = '<div class="body">Access to leads is disabled for this account.</div>';
+          setStatus('Access denied');
+        }else{
+          const s=document.createElement('script');
+          s.src='/leads.js?v='+Date.now();
+          s.onload=()=>{ window.leads = window.leads || []; initAcq(); };
+          s.onerror=()=>setStatus('Could not load /leads.js');
+          document.head.appendChild(s);
+        }
+      }).catch(()=>{
+        $('#leadCard').innerHTML = '<div class="body">Could not verify access right now. Try again shortly.</div>';
+        setStatus('Gate check failed');
+      });
+    }
+
+    // ----- ACQ logic (unchanged core, + filters & desktop labels) -----
+    let idx=0, currentLead=null;
+    const MODE_KEY='db_phone_link_mode_wh';
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
     const setMode=m=>localStorage.setItem(MODE_KEY,m);
+    const clean=s=>(s||'').trim();
+    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
 
     function phoneHref(number, mode){
       const num=(number||'').replace(/[^\d+]/g,'');
@@ -181,7 +250,6 @@
       if(mode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
       return `tel:${num}`;
     }
-
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
@@ -191,31 +259,79 @@
     const saveTimeKey = addr => noteKey(addr)+'_ts';
     const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
     const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
-
-    function fmtTime(ts){
-      const d=new Date(ts); const pad=n=>String(n).padStart(2,'0');
-      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
+    function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
+    // helpers for filters
+    const extractZip = (addr='') => {
+      const m = String(addr).match(/\b\d{5}\b/);
+      return m ? m[0] : '';
+    };
+    const leadType = (lead) => {
+      // Try a few common places
+      const t = (lead?.type || lead?.category || lead?.tags || '').toString().toLowerCase();
+      if(t.includes('comm')) return 'commercial';
+      if(t.includes('resi') || t.includes('sfr') || t.includes('home') || t.includes('house')) return 'residential';
+      return ''; // unknown -> allowed if no type filter
+    };
+
+    function applyFilters(all){
+      // Type filter
+      let arr = all;
+      if(hasTypeFilter){
+        arr = arr.filter(l=>{
+          const lt = leadType(l);
+          return lt ? whTypes.includes(lt) : true; // if unknown, let it through
+        });
+      }
+      // ZIP filter
+      if(zipSet.size){
+        arr = arr.filter(l=>{
+          const z = extractZip(l?.address||'');
+          return z && zipSet.has(z);
+        });
+      }
+      return arr;
+    }
+
+    function initAcq(){
+      const all = Array.isArray(window.leads) ? window.leads.slice() : [];
+      const filtered = applyFilters(all);
+      if(!filtered.length){
+        $('#leadCard').innerHTML = `
+          <div class="body">
+            <b>No leads match your filters.</b>
+            <div style="margin-top:6px;font-size:13px;opacity:.85">
+              Types: ${hasTypeFilter ? whTypes.join(', ') : 'any'} • Zips: ${whZips.length?whZips.join(', '):'any'}
+            </div>
+          </div>`;
+        setStatus('0 leads after filters');
+        return;
+      }
+      // keep a private copy so we don't mutate the global
+      window.__filteredLeads = filtered;
+      showAcq(); setStatus(`Loaded ${filtered.length} lead(s)`);
+      render(0);
+    }
+
     function render(i){
-      if(!Array.isArray(window.leads)||!window.leads.length){
-        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>/leads.js</b> defines <code>window.leads=[...]</code>.</div>';
+      const arr = window.__filteredLeads || [];
+      if(!arr.length){
+        $('#leadCard').innerHTML='<div class="body">No leads loaded.</div>';
         setStatus('No leads found'); return;
       }
-      if(i<0) i=window.leads.length-1;
-      if(i>=window.leads.length) i=0;
+      if(i<0) i=arr.length-1;
+      if(i>=arr.length) i=0;
       idx=i;
 
-      const lead=window.leads[idx];
+      const lead=arr[idx];
       currentLead=lead;
 
       const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
       const phone = phoneOf(lead);
       const addr  = clean(lead?.address||'');
 
-      setStatus(`Lead ${idx+1} of ${window.leads.length}`);
+      setStatus(`Lead ${idx+1} of ${arr.length}`);
 
       const mode=getMode();
       $('#actCall').href = phoneHref(phone, mode);
@@ -230,16 +346,18 @@
           <div style="margin-bottom:6px;font-weight:800">${name}</div>
 
           <div class="chips">
-            <div class="chip">UID: ${uid.slice(0,8)}</div>
+            <div class="chip">UID: ${(uidParam||'anon').slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${mode}</div>
+            ${hasTypeFilter ? `<div class="chip">Type: ${leadType(lead)||'n/a'}</div>` : '' }
+            ${zipSet.size ? `<div class="chip">ZIP: ${extractZip(addr)||'n/a'}</div>` : '' }
           </div>
 
           <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
           <div class="notesBox">
             <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
             <div class="notesRow">
-              <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
+              <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span><span class="label">Save Notes</span></button>
               <span id="savedTag" class="savedTag">${lastSavedText}</span>
             </div>
           </div>
@@ -266,40 +384,39 @@
       toast('Notes saved');
     }
 
-    // actions
-    $('#btnPrev').onclick   = ()=>render(idx-1);
-    $('#btnNext').onclick   = ()=>render(idx+1);
-    $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
+    // actions (Acq)
+    document.addEventListener('click',e=>{
+      if(e.target.id==='btnPrev')   render(idx-1);
+      if(e.target.id==='btnNext')   render(idx+1);
+      if(e.target.id==='btnRandom') render(Math.floor(Math.random()*((window.__filteredLeads||[]).length||1)));
+    });
 
-    $('#actCopy').onclick = ()=>{
-      const p=phoneOf(window.leads?.[idx]);
+    $('#actCopy')?.addEventListener('click', ()=>{
+      const arr = window.__filteredLeads||[];
+      const p= phoneOf(arr[idx]||{});
       if(!p) return alert('No phone on this lead.');
       navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
-    };
+    });
 
-    $('#actSettings').onclick = ()=>{
+    $('#actSettings')?.addEventListener('click', ()=>{
       dlg.showModal();
       const cur=getMode();
       dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur));
-    };
-    $('#saveMode').onclick = ()=>{
+    });
+    $('#saveMode')?.addEventListener('click', ()=>{
       const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device';
       setMode(m); dlg.close(); render(idx);
-    };
-    $('#closeMode').onclick = ()=>dlg.close();
+    });
+    $('#closeMode')?.addEventListener('click', ()=>dlg.close());
 
     document.addEventListener('keydown',e=>{
-      if(e.key==='ArrowLeft') return $('#btnPrev').click();
-      if(e.key==='ArrowRight') return $('#btnNext').click();
+      if(sub!=='acq') return;
+      if(e.key==='ArrowLeft') return render(idx-1);
+      if(e.key==='ArrowRight') return render(idx+1);
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
     });
 
-    window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
-
-    function init(){
-      if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
-      else { render(0); }
-    }
+    window.addEventListener('beforeunload',()=>{ if(currentLead && sub==='acq'){ doSaveNotes(); } });
   </script>
 </body>
 </html>
