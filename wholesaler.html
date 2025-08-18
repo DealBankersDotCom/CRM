@@ -1,4 +1,4 @@
-<!-- ================================= wholesaler.html (Acq+Dispo; request-gated; improved type filter) ================================ -->
+<!-- ================= Wholesaler Portal (Acq/Dispo, Lead Source Chooser, CSV upload, robust /leads.js loader) ================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,94 +6,229 @@
 <title>Wholesaler Portal</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 <style>
-/* (same styles as you already have) */
+  :root{--bg1:#0b131b;--bg2:#142838;--bg3:#173c53;--text:#f3f8fb;--muted:#c7d7e6;--gold:#ffd36b;--green:#26cf84;--line:#2a5a78}
+  *{box-sizing:border-box} body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+  background:radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));padding:10px}
+  .wrap{max-width:1100px;margin:0 auto}.card{border:1px solid rgba(255,255,255,.18);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));overflow:hidden}
+  .top{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2)}
+  .crumbs{display:flex;gap:8px;align-items:center;color:var(--muted)} .status{font-size:12px;color:#e8f7ff}
+  .sticky{position:sticky;top:0;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+  .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;text-decoration:none}
+  .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}.btn-green{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;border:none}
+  .lead{margin:12px;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));overflow:hidden}
+  .title{padding:12px 14px;font-weight:900;border-bottom:1px solid rgba(255,255,255,.18)}
+  .body{padding:12px 14px}.chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}.chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
+  .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}.sv{height:260px;margin-top:6px}.map{height:220px;margin:8px 0}
+  .chooser{padding:16px;display:grid;gap:10px}.grid4{display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:10px}
+  @media (min-width:860px){.grid4{grid-template-columns:repeat(4,1fr)}}
+  .choice{border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px;background:#0e2233}
+  .choice h4{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}.input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+  .textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);display:none}
 </style>
 </head>
 <body>
-  <!-- header + acq/dispo UI identical to your last version; omitted styles for brevity -->
+  <div class="wrap">
+    <section class="card">
+      <div class="top"><div class="crumbs"><span>Wholesaler</span><span>•</span><span id="crumb">Acquisition</span></div><div id="status" class="status">Loading…</div></div>
 
-  <!-- Dispo offering uses offering-memo2.html -->
-  <!-- ... inside your Dispo block, ensure links use memo2: -->
-  <!--
-     <a class="btn btn-gold" href="offering-memo2.html?sof=GDRIVE_PREVIEW_URL" ...>Open Offering Memo</a>
-  -->
+      <!-- Toolbar (Acq) -->
+      <div class="sticky" id="acqBar" style="display:none">
+        <div class="actions">
+          <a class="btn btn-gold" id="actCall">📞 Call</a>
+          <a class="btn btn-gold" id="actSMS">💬 Text</a>
+          <button class="btn" id="actCopy">📋 Copy</button>
+          <a class="btn" href="https://drive.google.com" target="_blank" rel="noopener">📁 Drive</a>
+          <button class="btn" id="actSettings">⚙️ Dial Pref</button>
+        </div>
+      </div>
 
-  <!-- Firebase + Logic -->
+      <!-- ACQ lead card -->
+      <div id="acqWrap" style="display:none">
+        <div id="leadCard" class="lead"><div class="body">Initializing…</div></div>
+      </div>
+
+      <!-- Lead Source Chooser (only when leads not enabled or leads.js fails) -->
+      <div id="chooser" class="chooser" style="display:none">
+        <h3 style="margin:0">Pick how you want to work leads</h3>
+        <div class="muted">We’ll notify admin and turn on the right feed. You can also upload a CSV to start immediately.</div>
+        <div class="grid4">
+          <div class="choice"><h4>Street Leads</h4><div class="muted">Door-knock, driving for dollars. We curate by ZIP.</div><button class="btn btn-green" data-req="Street Leads">Request Street Leads</button></div>
+          <div class="choice"><h4>Web Leads</h4><div class="muted">Inbound web form / PPC / site capture.</div><button class="btn btn-green" data-req="Web Leads">Request Web Leads</button></div>
+          <div class="choice"><h4>Live Leads</h4><div class="muted">Live transfer / warm handoff.</div><button class="btn btn-green" data-req="Live Leads">Request Live Leads</button></div>
+          <div class="choice"><h4>Use Your CRM</h4><div class="muted">Give us API/CSV; we’ll sync.</div><button class="btn btn-green" data-req="Use Own CRM">Connect My CRM</button></div>
+        </div>
+
+        <div class="choice" style="margin-top:10px">
+          <h4>Upload your own leads (CSV)</h4>
+          <div class="muted" style="margin-bottom:6px">Columns accepted: <b>address</b>, name, phone, notes</div>
+          <input id="csv" type="file" accept=".csv" class="input"/>
+          <div class="muted" id="csvMsg" style="margin-top:8px"></div>
+        </div>
+      </div>
+
+      <!-- DISPO (unchanged quick embed) -->
+      <div id="dispoWrap" style="display:none;padding:12px">
+        <div style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
+          <h3 style="margin:0 0 8px">Active Offering</h3>
+          <div style="display:flex;gap:10px;flex-wrap:wrap">
+            <a class="btn btn-gold" target="_blank" rel="noopener" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview">Open Offering Memo</a>
+            <a class="btn" target="_blank" rel="noopener" href="offering-memo2.html?sof=https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview#interest">Submit Interest</a>
+          </div>
+          <iframe title="SOF" style="width:100%;height:520px;border:0;border-radius:12px;background:#fff;margin-top:10px"
+            src="https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview"></iframe>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast"></div>
+
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    const gateApp=firebase.initializeApp(
+    // Firebase (dedicated)
+    const app=firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
     );
-    const gateDb=gateApp.database();
+    const db=app.database();
 
-    const urlp=new URL(location.href).searchParams;
-    const sub=(urlp.get('sub')||urlp.get('mode')||'acq').toLowerCase();
-    const uidParam=urlp.get('uid')||'anon';
-    const whTypes=(urlp.get('whTypes')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-    const whZips=(urlp.get('whZips')||'').split(',').map(s=>s.trim()).filter(Boolean);
-    const hasTypeFilter=whTypes.length>0; const zipSet=new Set(whZips);
+    // URL params
+    const p=new URL(location.href).searchParams;
+    const sub=(p.get('sub')||p.get('mode')||'acq').toLowerCase();
+    const uid=p.get('uid')||'anon';
+    const whTypes=(p.get('whTypes')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
+    const whZips=(p.get('whZips')||'').split(',').map(s=>s.trim()).filter(Boolean);
+    const zipSet=new Set(whZips); const hasTypeFilter=whTypes.length>0;
 
+    // UI helpers
     const $=s=>document.querySelector(s);
-    function setStatus(t){ const s=document.getElementById('status'); if(s) s.textContent=t; }
+    function setStatus(t){$('#status').textContent=t}
+    function toast(t){const el=$('#toast'); el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1600)}
 
-    // gate
+    // Mode switch
+    function showAcq(){ $('#crumb').textContent='Acquisition'; $('#acqBar').style.display='block'; $('#acqWrap').style.display='block'; $('#dispoWrap').style.display='none'; }
+    function showDispo(){ $('#crumb').textContent='Dispo'; $('#acqBar').style.display='none'; $('#acqWrap').style.display='none'; $('#dispoWrap').style.display='block'; }
+    if(sub==='dispo') showDispo(); else showAcq();
+
+    // ------- Lead gate and chooser -------
     if(sub==='acq'){
-      gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
-        if(!snap.val()){
-          const c=document.getElementById('leadCard');
-          if(c) c.innerHTML='<div class="body">Leads are disabled. Open Wholesaler tab to request Street/Web/Live Leads or connect your CRM.</div>';
-          setStatus('Access denied');
-          return;
-        }
-        const s=document.createElement('script'); s.src='/leads.js?v='+Date.now();
-        s.onload=()=>{ window.leads=window.leads||[]; initAcq(); }; s.onerror=()=>setStatus('Could not load /leads.js'); document.head.appendChild(s);
+      setStatus('Checking access…');
+      db.ref(`userSettings/${uid}/wholesaler`).once('value').then(s=>{
+        const v=s.val()||{};
+        const allowed=!!v.leadsEnabled;
+        if(!allowed){ renderChooser('Access to leads is not enabled yet.'); return; }
+        loadLeadsScript();
+      }).catch(()=>renderChooser('Could not verify access right now.'));
+    }
+
+    // Chooser renders and wires request buttons
+    function renderChooser(reason){
+      showAcq(); $('#chooser').style.display='block'; $('#acqWrap').style.display='none'; setStatus(reason||'Pick a lead source');
+      $('#chooser').addEventListener('click',async e=>{
+        const btn=e.target.closest('[data-req]'); if(!btn) return;
+        const type=btn.getAttribute('data-req');
+        const payload={uid, email:'', name:'', type:`Lead Access: ${type}`, contact:'', subject:'', message:`User requested: ${type}`, status:'new', ts:Date.now()};
+        try{await db.ref('requests').push(payload); toast('Request sent'); setStatus('Request sent — we’ll enable your feed.');}
+        catch{toast('Could not send request');}
       });
+      // CSV upload
+      $('#csv').addEventListener('change', handleCSV);
     }
 
-    // ---------- filtering helpers (UPDATED) ----------
-    const clean = s => (s||'').toString().trim();
-    const extractZip = (addr='') => { const m=String(addr).match(/\b\d{5}\b/); return m?m[0]:''; };
+    // Robust /leads.js loader with fallback path and timeout
+    function loadLeadsScript(){
+      const done=()=>{ if(Array.isArray(window.leads)&&window.leads.length){ initAcq(); }
+                      else { renderChooser('No leads loaded yet. You can request a source or upload CSV.'); } };
+      let settled=false;
+      function trySrc(src){
+        const s=document.createElement('script'); s.src=src; s.onload=()=>{if(!settled){settled=true; done();}}; s.onerror=()=>{if(!settled){tryNext();}}
+        document.head.appendChild(s);
+      }
+      const sources=['/leads.js?v='+Date.now(),'leads.js?v='+Date.now()];
+      function tryNext(){ const next=sources.shift(); if(next) trySrc(next); else if(!settled){settled=true; renderChooser('Could not load leads.js');} }
+      setTimeout(()=>{ if(!settled) renderChooser('Leads loader timed out'); }, 7000);
+      tryNext();
+    }
 
-    // Stronger classification: only count as "commercial" if explicit commercial cues.
+    // --------- ACQ core (filter + render) -----------
+    let idx=0, current=null; const MODE_KEY='db_phone_link_mode_wh';
+    const getMode=()=>localStorage.getItem(MODE_KEY)||'device'; const setMode=m=>localStorage.setItem(MODE_KEY,m);
+    const clean=s=>(s||'').toString().trim();
+    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
+    function phoneHref(number,mode){const num=(number||'').replace(/[^\d+]/g,''); if(!num) return '#';
+      if(mode==='device') return `tel:${num}`; if(mode==='textnow'){navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging';}
+      if(mode==='gvoice'){navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages';} return `tel:${num}`;}
+    const extractZip=addr=>{const m=String(addr||'').match(/\b\d{5}\b/); return m?m[0]:'';}
     function classifyLead(lead){
-      const bag = [
-        lead?.type, lead?.category, lead?.tags,
-        lead?.notes, lead?.details, lead?.description,
-        lead?.zoning, lead?.use
-      ].map(clean).join(' ').toLowerCase();
-
-      const isComm = /\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|c-store|gas|shopping|mall|strip|mixed[- ]use|cap ?rate|triple ?net|nnn|flex|medical office|clinic|self[ -]?storage|automotive|dealership|multifamily(?!\s*residential))\b/.test(bag)
-                    || /\bzoned\s*[c|b|i]\b/.test(bag);
-
-      const isResi = /\b(residential|single[- ]family|sfh|house|duplex|triplex|quadplex|apartment|condo|townhome|mh|mobile home)\b/.test(bag);
-
-      const isVacantLand = /\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag) || /\blot\b/.test(bag);
-
-      if(isComm) return 'commercial';
-      if(isResi) return 'residential';
-      if(isVacantLand) return 'land';
-      return ''; // unknown
+      const bag=[lead?.type,lead?.category,lead?.tags,lead?.notes,lead?.details,lead?.description,lead?.zoning,lead?.use].map(clean).join(' ').toLowerCase();
+      const isComm=/\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|c[- ]?store|gas|shopping|mall|strip|mixed[- ]use|cap ?rate|triple ?net|nnn|flex|medical office|clinic|self[ -]?storage|automotive|dealership|multifamily(?!\s*residential))\b/.test(bag)||/\bzoned\s*[cbi]\b/.test(bag);
+      const isResi=/\b(residential|single[- ]family|sfh|house|duplex|triplex|quadplex|apartment|condo|townhome|mobile home|mh)\b/.test(bag);
+      const isLand=/\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag)||/\blot\b/.test(bag);
+      if(isComm) return 'commercial'; if(isResi) return 'residential'; if(isLand) return 'land'; return '';
     }
-
     function applyFilters(all){
-      let arr = all;
+      let arr=all;
       if(hasTypeFilter){
-        arr = arr.filter(l=>{
-          const t = classifyLead(l);
-          if(t==='') return false;           // if user set any type filter, drop unknowns
-          if(t==='land') return whTypes.includes('land'); // optional "land" bucket if you add it later
-          return whTypes.includes(t);
-        });
+        arr=arr.filter(l=>{const t=classifyLead(l); if(t==='') return false; if(t==='land') return whTypes.includes('land'); return whTypes.includes(t);});
       }
-      if(zipSet.size){
-        arr = arr.filter(l=>{ const z=extractZip(l?.address||''); return z && zipSet.has(z); });
-      }
+      if(zipSet.size){arr=arr.filter(l=>{const z=extractZip(l?.address||''); return z && zipSet.has(z);});}
       return arr;
     }
+    function initAcq(){
+      showAcq();
+      const all=Array.isArray(window.leads)?window.leads.slice():[];
+      const filtered=applyFilters(all);
+      if(!filtered.length){ $('#leadCard').innerHTML='<div class="body"><b>No leads match your filters.</b></div>'; setStatus('0 leads after filters'); return; }
+      window.__filteredLeads=filtered; setStatus(`Loaded ${filtered.length} lead(s)`); render(0);
+    }
+    function svSrc(a){return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(a||'')}`;}
+    function mapSrc(a){return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(a||'')}`;}
+    function render(i){
+      const arr=window.__filteredLeads||[]; if(!arr.length){$('#leadCard').innerHTML='<div class="body">No leads.</div>'; return;}
+      if(i<0) i=arr.length-1; if(i>=arr.length) i=0; idx=i; current=arr[idx];
+      const name=clean(current?.contacts?.[0]?.name||'Unknown'); const phone=phoneOf(current); const addr=clean(current?.address||'');
+      const mode=getMode(); $('#actCall').href=phoneHref(phone,mode); $('#actSMS').href=mode==='device'&&phone?`sms:${phone}`:phoneHref(phone,mode);
+      $('#leadCard').innerHTML=`
+        <div class="title">${addr||name}</div>
+        <div class="body">
+          <div style="margin-bottom:6px;font-weight:800">${name}</div>
+          <div class="chips">
+            <div class="chip">UID: ${(uid||'anon').slice(0,8)}</div>
+            <div class="chip">${phone?'Phone on file':'Phone missing'}</div>
+            <div class="chip">Dial: ${mode}</div>
+            ${whTypes.length?`<div class="chip">Type: ${classifyLead(current)||'n/a'}</div>`:''}
+            ${whZips.length?`<div class="chip">ZIP: ${extractZip(addr)||'n/a'}</div>`:''}
+          </div>
+          <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
+          <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
+          <div style="margin-top:8px"><button id="saveNotes" class="btn btn-gold">💾 Save Notes</button></div>
+          <iframe class="sv" src="${svSrc(addr)}" loading="lazy"></iframe>
+          <iframe class="map" src="${mapSrc(addr)}" loading="lazy"></iframe>
+        </div>`;
+      const key='db_notes_'+addr.toLowerCase().replace(/[^a-z0-9]+/g,'-');
+      const ta=$('#noteInput'); ta.value=localStorage.getItem(key)||current?.notes||''; $('#saveNotes').onclick=()=>{localStorage.setItem(key,ta.value.trim()); toast('Notes saved');};
+      document.addEventListener('keydown',e=>{ if(e.key==='ArrowLeft') render(idx-1); if(e.key==='ArrowRight') render(idx+1);});
+      $('#actCopy').onclick=()=>{ if(!phone) return alert('No phone on this lead.'); navigator.clipboard.writeText(phone).then(()=>toast('Phone copied')); };
+      $('#actSettings').onclick=()=>{ const cur=getMode(); const next=cur==='device'?'textnow':cur==='textnow'?'gvoice':'device'; setMode(next); toast(`Dial mode: ${next}`); render(idx); };
+    }
 
-    // ...rest of your ACQ renderer from your last good build ...
+    // CSV uploader for quick start
+    function handleCSV(ev){
+      const f=ev.target.files?.[0]; if(!f) return;
+      const r=new FileReader();
+      r.onload=()=>{
+        const txt=String(r.result||''); const rows=txt.split(/\r?\n/).filter(Boolean);
+        const hdr=rows.shift().split(',').map(s=>s.trim().toLowerCase());
+        const idxOf=n=>hdr.findIndex(h=>h===n);
+        const iAddr=idxOf('address'), iName=idxOf('name'), iPhone=idxOf('phone'), iNotes=idxOf('notes');
+        const arr=rows.map(line=>{const cols=line.split(','); return {address:cols[iAddr]||'', contacts:[{name:cols[iName]||'', phone:cols[iPhone]||''}], notes:cols[iNotes]||''};});
+        window.leads=arr; $('#csvMsg').textContent=`Loaded ${arr.length} lead(s) from CSV.`;
+        $('#chooser').style.display='none'; $('#acqWrap').style.display='block'; loadLeadsScript(); // will call initAcq which uses window.leads
+      };
+      r.readAsText(f);
+    }
   </script>
 </body>
 </html>
