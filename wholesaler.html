@@ -1,4 +1,4 @@
-<!-- ================= Wholesaler Portal (Acq/Dispo, Lead Source Chooser, CSV upload, robust /leads.js loader, multi-offering Dispo) ================= -->
+<!-- =============== Wholesaler Portal (Acq/Dispo, CSV upload, robust leads loader, Prev/Next lead, Multi-Offering Dispo + Posting Console, 2025 workstation theme) =============== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,31 +6,75 @@
 <title>Wholesaler Portal</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 <style>
-  :root{--bg1:#0b131b;--bg2:#142838;--bg3:#173c53;--text:#f3f8fb;--muted:#c7d7e6;--gold:#ffd36b;--green:#26cf84;--line:#2a5a78}
+  /* ====== Theme: “Retro Bond Workstation” (Delorean dash meets alien bank) ====== */
+  :root{
+    --bg1:#0a0f16;--bg2:#102131;--bg3:#14354c;
+    --text:#e9f3ff;--muted:#a6c2d7;--gold:#ffd36b;--green:#25d18f;--line:#2a5a78;
+    --accent:#52c8ff;--accent2:#9ae6ff;--panel:#0e2433;--glass:rgba(255,255,255,.06);
+  }
   *{box-sizing:border-box}
   body{
     margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-    background:radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-    padding:10px
+    background:
+      radial-gradient(1200px 520px at 92% -12%, rgba(86,214,255,.22) 0%, transparent 60%),
+      linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+    padding:10px;
   }
-  .wrap{max-width:1100px;margin:0 auto}
-  .card{border:1px solid rgba(255,255,255,.18);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));overflow:hidden}
+  /* subtle neon grid overlay (desktop only) */
+  @media (min-width:1000px){
+    body::before{
+      content:"";position:fixed;inset:0;pointer-events:none;
+      background:
+        linear-gradient(transparent 31px, rgba(82,200,255,.06) 32px),
+        linear-gradient(90deg, transparent 31px, rgba(82,200,255,.06) 32px);
+      background-size:32px 32px;
+      mask-image:radial-gradient(1200px 520px at 85% -10%, black 35%, transparent 70%);
+    }
+  }
 
-  .top{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2)}
-  .crumbs{display:flex;gap:8px;align-items:center;color:var(--muted)} .status{font-size:12px;color:#e8f7ff}
+  .wrap{max-width:1180px;margin:0 auto}
+  .card{
+    border:1px solid rgba(255,255,255,.18);
+    border-radius:20px;
+    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+    overflow:hidden;position:relative;
+  }
+  .card::after{ /* neon edge */
+    content:"";position:absolute;inset:-1px;border-radius:20px;
+    border:1px solid rgba(146,233,255,.2);pointer-events:none;
+  }
 
-  .sticky{position:sticky;top:0;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
-  .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;text-decoration:none}
+  .top{
+    display:flex;justify-content:space-between;align-items:center;padding:12px 14px;
+    border-bottom:1px solid rgba(255,255,255,.2);
+    background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(255,255,255,.05));
+  }
+  .crumbs{display:flex;gap:8px;align-items:center;color:var(--muted);font-weight:600}
+  .status{font-size:12px;color:#e8f7ff;opacity:.9}
+
+  .sticky{position:sticky;top:0;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
+    background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06));z-index:5}
+  .actions{display:grid;grid-template-columns:repeat(7,1fr);gap:8px}
+  .btn{
+    display:inline-flex;align-items:center;justify-content:center;gap:8px;
+    padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.22);
+    background:var(--panel);color:#eaf6ff;cursor:pointer;text-decoration:none;
+    transition:transform .05s ease, box-shadow .15s ease;
+  }
+  .btn:active{transform:translateY(1px)}
+  .btn:hover{box-shadow:0 0 0 1px rgba(154,230,255,.18) inset, 0 0 18px rgba(82,200,255,.18)}
   .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
   .btn-green{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;border:none}
+  .btn-ghost{background:var(--glass)}
 
+  /* Lead */
   .lead{margin:12px;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));overflow:hidden}
   .title{padding:12px 14px;font-weight:900;border-bottom:1px solid rgba(255,255,255,.18)}
   .body{padding:12px 14px}
   .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
   .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
   .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}.sv{height:260px;margin-top:6px}.map{height:220px;margin:8px 0}
+  .textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
 
   /* Lead source chooser */
   .chooser{padding:16px;display:grid;gap:10px}
@@ -39,12 +83,17 @@
   .choice{border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px;background:#0e2233}
   .choice h4{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}
   .input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
-  .textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
 
   /* Dispo */
   .offerCard{display:flex;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.18);background:#0f2a3a;border-radius:12px;padding:10px;cursor:pointer}
   .badge{font-size:11px;padding:4px 8px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:#0c1f2d;color:#cfe7ff}
+  .postPanel{margin-top:12px;border:1px dashed rgba(154,230,255,.4);border-radius:14px;padding:12px;background:rgba(12,31,45,.4)}
+  .postGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
+  @media (min-width:860px){.postGrid{grid-template-columns:repeat(4,1fr)}}
 
+  /* Footer */
+  footer{max-width:1180px;margin:14px auto 6px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:8px}
+  footer a{color:var(--accent2);text-decoration:none}
   #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);display:none}
 </style>
 </head>
@@ -61,9 +110,11 @@
         <div class="actions">
           <a class="btn btn-gold" id="actCall">📞 Call</a>
           <a class="btn btn-gold" id="actSMS">💬 Text</a>
+          <a class="btn" id="actDirections" target="_blank" rel="noopener">🧭 Directions</a>
           <button class="btn" id="actCopy">📋 Copy</button>
-          <a class="btn" href="https://drive.google.com" target="_blank" rel="noopener">📁 Drive</a>
           <button class="btn" id="actSettings">⚙️ Dial Pref</button>
+          <button class="btn btn-ghost" id="prevLead">⬅️ Prev</button>
+          <button class="btn btn-green" id="nextLead">➡️ Next</button>
         </div>
       </div>
 
@@ -91,13 +142,27 @@
         </div>
       </div>
 
-      <!-- DISPO: multi-offering list + preview -->
+      <!-- DISPO: multi-offering list + preview + posting console -->
       <div id="dispoWrap" style="display:none;padding:12px">
         <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
           <div id="offerList" style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
             <h3 style="margin:0 0 8px">Active Offerings</h3>
             <div id="offerCards" style="display:grid;gap:10px"></div>
+
+            <div class="postPanel">
+              <div style="font-weight:800;margin-bottom:8px">Posting Console (TPE pass-through)</div>
+              <div class="postGrid">
+                <a class="btn" id="postCraigslist" target="_blank" rel="noopener">🅒 Post to Craigslist</a>
+                <a class="btn" id="postFBM" target="_blank" rel="noopener">📦 Post to FB Marketplace</a>
+                <a class="btn" id="emailBlast" target="_blank" rel="noopener">✉️ Email Blast</a>
+                <a class="btn" id="buyersActive" target="_blank" rel="noopener">🗂️ Active Buyers DB</a>
+                <a class="btn" id="buyersAll" target="_blank" rel="noopener">📚 Entire Buyers DB</a>
+                <a class="btn" id="townHall" target="_blank" rel="noopener">🏛️ Town Hall</a>
+              </div>
+              <div class="muted" style="margin-top:6px">These are placeholders; backend TPE automation will relay and post on your behalf.</div>
+            </div>
           </div>
+
           <div style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
             <h3 style="margin:0 0 8px">Statement of Facts (Preview)</h3>
             <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
@@ -110,6 +175,11 @@
       </div>
     </section>
   </div>
+
+  <footer>
+    <div>© 2025 DealBankers.com — All rights reserved.</div>
+    <div>v1.9 “Bond Workstation”</div>
+  </footer>
 
   <div id="toast"></div>
 
@@ -197,7 +267,6 @@
     }
     const extractZip=addr=>{const m=String(addr||'').match(/\b\d{5}\b/); return m?m[0]:'';}
     function classifyLead(lead){
-      // Stronger land detection so "vacant lots" don't bleed into commercial
       const bag=[lead?.type,lead?.category,lead?.tags,lead?.notes,lead?.details,lead?.description,lead?.zoning,lead?.use].map(clean).join(' ').toLowerCase();
       const isLand=/\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag)||/\blot\b/.test(bag)||/\bacre(s)?\b/.test(bag);
       const isComm=!isLand && (/\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|c[- ]?store|gas|shopping|mall|strip|mixed[- ]use|cap ?rate|triple ?net|nnn|flex|medical office|clinic|self[ -]?storage|automotive|dealership|multifamily(?!\s*residential))\b/.test(bag)||/\bzoned\s*[cbi]\b/.test(bag));
@@ -217,6 +286,9 @@
       if(zipSet.size){arr=arr.filter(l=>{const z=extractZip(l?.address||''); return z && zipSet.has(z);});}
       return arr;
     }
+    function svSrc(a){return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(a||'')}`;}
+    function mapSrc(a){return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(a||'')}`;}
+
     function initAcq(){
       showAcq();
       const all=Array.isArray(window.leads)?window.leads.slice():[];
@@ -224,13 +296,21 @@
       if(!filtered.length){ $('#leadCard').innerHTML='<div class="body"><b>No leads match your filters.</b></div>'; setStatus('0 leads after filters'); return; }
       window.__filteredLeads=filtered; setStatus(`Loaded ${filtered.length} lead(s)`); render(0);
     }
-    function svSrc(a){return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(a||'')}`;}
-    function mapSrc(a){return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(a||'')}`;}
     function render(i){
       const arr=window.__filteredLeads||[]; if(!arr.length){$('#leadCard').innerHTML='<div class="body">No leads.</div>'; return;}
       if(i<0) i=arr.length-1; if(i>=arr.length) i=0; idx=i; current=arr[idx];
-      const name=clean(current?.contacts?.[0]?.name||'Unknown'); const phone=phoneOf(current); const addr=clean(current?.address||'');
-      const mode=getMode(); $('#actCall').href=phoneHref(phone,mode); $('#actSMS').href=mode==='device'&&phone?`sms:${phone}`:phoneHref(phone,mode);
+
+      const name=clean(current?.contacts?.[0]?.name||'Unknown');
+      const phone=phoneOf(current);
+      const addr=clean(current?.address||'');
+      const mode=getMode();
+
+      // Top actions
+      $('#actCall').href=phoneHref(phone,mode);
+      $('#actSMS').href=mode==='device'&&phone?`sms:${phone}`:phoneHref(phone,mode);
+      $('#actDirections').href=addr?`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`:'#';
+
+      // Card
       $('#leadCard').innerHTML=`
         <div class="title">${addr||name}</div>
         <div class="body">
@@ -240,7 +320,7 @@
             <div class="chip">${phone?'Phone on file':'Phone missing'}</div>
             <div class="chip">Dial: ${mode}</div>
             ${whTypes.length?`<div class="chip">Type: ${classifyLead(current)||'n/a'}</div>`:''}
-            ${whZips.length?`<div class="chip">ZIP: ${extractZip(addr)||'n/a'}</div>`:''}
+            ${whZips.length?`<div class="chip">ZIP: ${addr.match(/\b\d{5}\b/)?.[0]||'n/a'}</div>`:''}
           </div>
           <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
           <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
@@ -248,10 +328,17 @@
           <iframe class="sv" src="${svSrc(addr)}" loading="lazy"></iframe>
           <iframe class="map" src="${mapSrc(addr)}" loading="lazy"></iframe>
         </div>`;
+
       const key='db_notes_'+addr.toLowerCase().replace(/[^a-z0-9]+/g,'-');
       const ta=$('#noteInput'); ta.value=localStorage.getItem(key)||current?.notes||'';
       $('#saveNotes').onclick=()=>{localStorage.setItem(key,ta.value.trim()); toast('Notes saved');};
+
+      // Nav + hotkeys
+      $('#prevLead').onclick=()=>render(idx-1);
+      $('#nextLead').onclick=()=>render(idx+1);
       document.onkeydown=(e)=>{ if(e.key==='ArrowLeft') render(idx-1); if(e.key==='ArrowRight') render(idx+1);};
+
+      // Utilities
       $('#actCopy').onclick=()=>{ if(!phone) return alert('No phone on this lead.'); navigator.clipboard.writeText(phone).then(()=>toast('Phone copied')); };
       $('#actSettings').onclick=()=>{ const cur=getMode(); const next=cur==='device'?'textnow':cur==='textnow'?'gvoice':'device'; setMode(next); toast(`Dial mode: ${next}`); render(idx); };
     }
@@ -278,16 +365,20 @@
     }
 
     // -------------------- DISPO --------------------
-    function memoUrl(sof){ return 'offering-memo2.html?sof=' + encodeURIComponent(sof||''); }
+    function memoUrl(page, sof){
+      const p = page || 'offering-memo2.html';
+      return p + (sof ? ('?sof=' + encodeURIComponent(sof)) : '');
+    }
     function setPreview(sof){
       const url = sof || 'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview';
       $('#sofPreview').src = url;
-      $('#btnOpenMemo').href = memoUrl(url);
-      $('#btnInterest').href = memoUrl(url) + '#interest';
+      // Buttons updated when a card is clicked (see below)
     }
+
     async function loadDispoOfferings(){
       setStatus('Loading offerings…');
       const wrap = $('#offerCards'); wrap.innerHTML = '<div class="muted">Loading…</div>';
+
       const [gSnap, uSnap] = await Promise.all([
         db.ref('offerings/global').get().catch(()=>({val:()=>null})),
         db.ref(`offerings/${uid}`).get().catch(()=>({val:()=>null}))
@@ -295,12 +386,22 @@
       const toArr = o => o ? Object.values(o) : [];
       let items = [...toArr(gSnap.val()), ...toArr(uSnap.val())];
 
+      // Fallback seed with TWO memos so list never collapses to one
       if(!items.length){
-        items = [{ title:'Virgin D6 Lift — FOB Houston',
-                   sof:'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview',
-                   badges:['Capital Need: $300k','Repay: 7–10 days','100M gallons'],
-                   icon:'🛢️'}];
+        items = [
+          { title:'Booth St. — Offering Memorandum',
+            page:'offering-memo1.html',
+            sof:'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview',
+            badges:['Target: $30k','Term: 3–6 months','30% return'],
+            icon:'🏠'},
+          { title:'Virgin D6 Lift — FOB Houston',
+            page:'offering-memo2.html',
+            sof:'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview',
+            badges:['Capital: $300k','Repay: 7–10 days','100M gallons'],
+            icon:'🛢️'}
+        ];
       }
+
       wrap.innerHTML = '';
       items.forEach((o,i)=>{
         const card = document.createElement('div');
@@ -314,13 +415,27 @@
             </div>
           </div>
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.sof||'')}">Open</a>
-            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.sof||'')}#interest">Interest</a>
+            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.page,o.sof)}">Open</a>
+            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.page,o.sof)}#interest">Interest</a>
           </div>`;
-        card.addEventListener('click', ()=> setPreview(o.sof));
+        card.addEventListener('click', ()=>{
+          setPreview(o.sof);
+          $('#btnOpenMemo').href = memoUrl(o.page,o.sof);
+          $('#btnInterest').href = memoUrl(o.page,o.sof) + '#interest';
+        });
         wrap.appendChild(card);
-        if(i===0) setPreview(o.sof);
+        if(i===0){ setPreview(o.sof); $('#btnOpenMemo').href=memoUrl(o.page,o.sof); $('#btnInterest').href=memoUrl(o.page,o.sof)+'#interest'; }
       });
+
+      // Posting console placeholders
+      const setHref=(id,url)=>{ const el=$(id); if(el) el.href=url; };
+      setHref('#postCraigslist','https://accounts.craigslist.org/login');
+      setHref('#postFBM','https://www.facebook.com/marketplace/create/item');
+      setHref('#emailBlast','mailto:?subject=DealBankers%20Offering&body=Reply%20to%20be%20added%20to%20buyers%20list');
+      setHref('#buyersActive','#buyers-active');
+      setHref('#buyersAll','#buyers-all');
+      setHref('#townHall','chat.html?tab=townhall');
+
       setStatus('Offerings');
     }
 
