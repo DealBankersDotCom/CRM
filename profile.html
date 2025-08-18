@@ -1,4 +1,3 @@
-<!-- ======================== DealBankers • Profile (retro-noir, cleaned) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,65 +6,103 @@
   <title>DealBankers • Profile</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <meta name="robots" content="noindex"/>
-  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
   <style>
     :root{
-      --bg:#0a0f16; --bg2:#0f1a24; --panel:#0f202e; --card:#0f1a24;
-      --line:#1f3950; --text:#eaf2ff; --muted:#9bb6ca;
-      --gold:#ffd36b; --neon:#52c8ff; --green:#26cf84; --r:18px;
-      --shadow:0 22px 60px rgba(0,0,0,.55);
+      --bg:#0d1620; --panel:#0f1a24; --line:#1b3245;
+      --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff;
+      --r:18px; --shadow:0 24px 64px rgba(0,0,0,.5);
+      --red:#ff5a5a; --cyan:#47b4ff; --green:#26cf84;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+      color:var(--text);
       background:
-        radial-gradient(1200px 560px at 90% -10%, rgba(82,200,255,.18) 0%, transparent 60%),
-        linear-gradient(135deg,#090f16,#0d1823 55%,#112a3c);
-      padding:14px;
+        radial-gradient(900px 500px at 90% -10%, #123043 0%, transparent 60%),
+        linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);
+      min-height:100vh; padding:14px;
     }
-    .shell{max-width:1200px;margin:0 auto;border:1px solid var(--line);border-radius:20px;box-shadow:var(--shadow);
-      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03))}
-    header{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
-    .brand{display:flex;gap:10px;align-items:center}
+    .shell{max-width:1200px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow)}
+    header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
+    .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
-    .brand h1{margin:0;font-size:14px;letter-spacing:.16em;color:#cfe0f2}
-    .pill{width:42px;height:42px;border-radius:50%;border:0;color:#fff;font-size:18px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center}
-    .pill.red{background:linear-gradient(180deg,#ff4040,#a40000)}
-    .pill.blue{background:linear-gradient(180deg,#3ba6ff,#004aa9)}
-    .btn{padding:8px 12px;border-radius:12px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
-    .btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#231b08}
+    .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
+
+    /* red/blue phones open request modal */
+    .hdr-actions{display:flex;gap:10px;align-items:center}
+    .pill{
+      width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
+      color:#fff; font-size:20px; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.35)
+    }
+    .pill.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}
+    .pill.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
+    .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
+
     .tabs{display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}
-    .tab.active{background:linear-gradient(180deg,#1a6c92,#0e435d);border-color:transparent;color:#ecfbff}
+    .tab.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
     .panel{padding:12px}
-    .card{background:var(--card);border:1px solid var(--line);border-radius:var(--r);padding:12px}
+    .card{background:#10222e;border:1px solid var(--line);border-radius:var(--r);padding:12px}
 
-    .subtabs{display:flex;gap:8px;margin:0 0 10px}
-    .subtab{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}
-    .subtab.active{background:linear-gradient(180deg,#ffd36b,#c89b3a);color:#1c1406;border:none}
-
-    .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:86vh;min-height:640px}
+    .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:86vh;min-height:620px}
     .iframe-wrap iframe{width:100%;height:100%;border:0}
+    @media (max-width:900px){ .iframe-wrap{height:90vh;min-height:680px} }
 
-    /* Settings */
-    .muted{color:var(--muted);font-size:13px}
+    .overview-grid{display:grid;gap:12px;grid-template-columns:1.1fr 1.4fr}
+    .announce{border:1px solid var(--line);border-radius:14px;background:#0f1a24;padding:12px}
+    .townhall{display:grid;grid-template-rows:auto 1fr auto; gap:10px; height:62vh; min-height:420px}
+    .th-head{display:flex;align-items:center;justify-content:space-between}
+    .th-head h2{margin:0;font-size:18px;letter-spacing:.05em}
+    .presence{font-size:12px;color:#9fb3c7}
+    .th-body{border:1px solid var(--line);border-radius:14px;background:#0f1a24;overflow:auto;padding:12px}
+    .msg{margin:8px 0;display:grid;gap:4px}
+    .meta{font-size:11px;color:#a7bed0}
+    .bubble{display:inline-block;max-width:min(680px,85%);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#142332}
+    .me .bubble{background:linear-gradient(180deg,#143a2a,#0d291f);border-color:rgba(69,255,169,.25)}
+    .th-input{display:flex;gap:8px}
+    .th-input input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1a24;color:#eaf1f6}
+    .th-input button{min-width:96px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;cursor:pointer}
+
+    .portal-embed{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b141b;height:62vh;min-height:420px}
+    .portal-embed iframe{width:100%;height:100%;border:0}
+
+    @media (max-width:980px){
+      .overview-grid{grid-template-columns:1fr}
+      .townhall, .portal-embed{height:58vh;min-height:380px}
+    }
+
+    /* Requests modal */
+    .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;z-index:60}
+    .modal.open{display:flex}
+    .backdrop{position:absolute;inset:0;background:rgba(0,0,0,.6)}
+    .sheet{position:relative;width:min(720px,94vw);max-height:86vh;overflow:auto;
+      background:#0f1a24;border:1px solid var(--line);border-radius:16px;padding:16px}
+    .close{position:absolute;right:12px;top:12px;border:0;background:#182632;color:#fff;padding:6px 10px;border-radius:8px;cursor:pointer}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    .input,.select,.textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1b3245;background:#0c1620;color:#eaf1f6}
-    .chk{display:flex;flex-wrap:wrap;gap:8px}
-    .chip{padding:7px 11px;border-radius:999px;border:1px solid var(--line);background:#0d2130}
-    .chip input{margin-right:6px}
-    @media (max-width:980px){.grid{grid-template-columns:1fr}}
+    .input, .select, .textarea{
+      width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0c1620;color:#eaf1f6
+    }
+    .textarea{min-height:120px;resize:vertical}
+    .muted{color:#9fb3c7;font-size:13px}
+
+    /* small banner when auth pending on phones */
+    .ribbon{margin:8px 0 0;border:1px dashed #5f7a92;border-radius:10px;padding:8px 10px;background:#0c1721;color:#b9d0e6;font-size:12px}
+    .hidden{display:none}
   </style>
 </head>
 <body>
   <div class="shell">
     <header>
-      <div class="brand"><img src="icon (1).jpg" alt="DealBankers"/><h1>DEALBANKERS • PROFILE</h1></div>
+      <div class="brand">
+        <img src="icon (1).jpg" alt="DealBankers"/>
+        <h1>DEALBANKERS • PROFILE</h1>
+      </div>
+
       <div class="hdr-actions">
-        <button class="pill red"  title="Immediate Need">☎</button>
-        <button class="pill blue" title="Standard Request">☎</button>
+        <button class="pill red"  id="redPhoneBtn"  title="Immediate Need">☎</button>
+        <button class="pill blue" id="bluePhoneBtn" title="Standard Request">☎</button>
         <button id="logoutBtn" class="btn">Log Out</button>
       </div>
     </header>
@@ -82,155 +119,308 @@
     <section class="panel">
       <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
-        <div class="muted">Townhall & notes coming here. (Trimmed for brevity)</div>
+        <div class="overview-grid">
+          <div class="announce">
+            <h3 style="margin:0 0 6px">📢 Special Announcements</h3>
+            <div id="meLine" class="muted" style="margin-bottom:8px"></div>
+            <ul id="annList" style="margin:0 0 10px 18px">
+              <li>Welcome to the Townhall. Be respectful, be helpful.</li>
+              <li>Filters live under <b>Settings → Wholesaler</b>. Applied everywhere.</li>
+            </ul>
+          </div>
+
+          <div class="townhall">
+            <div class="th-head">
+              <h2>🏛️ Townhall (All Users)</h2>
+              <div class="presence" id="presence">Connecting…</div>
+            </div>
+            <div class="th-body" id="thBody" aria-live="polite"></div>
+            <div class="th-input">
+              <input id="thInput" type="text" placeholder="Say something to the room… (press Enter to send)"/>
+              <button id="thSend">Send</button>
+            </div>
+          </div>
+
+          <div class="portal-embed">
+            <iframe id="whEmbed" src="wholesaler.html" title="Wholesaler Portal (Embedded)"></iframe>
+          </div>
+        </div>
       </div>
 
-      <!-- WHOLESALER -->
+      <!-- WHOLESALER TAB -->
       <div class="card" data-panel="wholesaler" style="display:none">
-        <div style="display:flex;gap:8px;align-items:center;margin-bottom:8px">
-          <div class="subtabs" id="whSubtabs">
-            <button class="subtab active" data-sub="acq">Acquisition</button>
-            <button class="subtab" data-sub="dispo">Dispo</button>
-          </div>
-          <div class="muted" style="margin-left:auto">Filters moved to <b>Settings → Wholesaler</b>.</div>
+        <div class="ribbon hidden" id="authRibbon">Signing you in… loading a basic feed meanwhile.</div>
+        <div class="iframe-wrap">
+          <iframe id="whFrame" src="wholesaler.html" title="Wholesaler Portal"></iframe>
         </div>
-        <div class="iframe-wrap"><iframe id="whFrame" title="Wholesaler Portal" loading="eager"></iframe></div>
       </div>
 
-      <!-- CONTRACTOR / REALTOR / INVESTOR placeholders -->
-      <div class="card" data-panel="contractor" style="display:none"><p class="muted" style="margin:0">Contractor portal is on its own screen (unchanged).</p></div>
-      <div class="card" data-panel="realtor" style="display:none"><p class="muted" style="margin:0">Realtor tools coming soon.</p></div>
-      <div class="card" data-panel="investor" style="display:none"><p class="muted" style="margin:0">Investor tools coming soon.</p></div>
+      <!-- PLACEHOLDERS -->
+      <div class="card" data-panel="contractor" style="display:none"><p style="margin:0;color:#9fb3c7">Contractor portal coming soon.</p></div>
+      <div class="card" data-panel="realtor" style="display:none"><p style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
+      <div class="card" data-panel="investor" style="display:none"><p style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
 
-      <!-- SETTINGS -->
+      <!-- SETTINGS TAB (centralized lead filters) -->
       <div class="card" data-panel="settings" style="display:none">
-        <h2 style="margin:0 0 10px">Settings</h2>
+        <h3 style="margin:0 0 10px">Wholesaler • Settings</h3>
+        <p class="muted" style="margin:0 0 10px">These apply to both tabs and the embedded card on Overview.</p>
 
-        <div class="card" style="margin-bottom:12px">
-          <h3 style="margin:0 0 6px">Wholesaler Buy Box</h3>
-          <div class="grid">
-            <label>
-              <div class="muted">ZIP filters (comma separated)</div>
-              <input id="whZips" class="input" placeholder="e.g., 77003, 77004"/>
-            </label>
-            <label>
-              <div class="muted">Require phone on file?</div>
-              <select id="whHasPhone" class="select">
-                <option value="">No preference</option>
-                <option value="1">Yes, must have phone</option>
-              </select>
-            </label>
-          </div>
-
-          <div style="margin-top:10px">
-            <div class="muted" style="margin-bottom:6px">Type</div>
-            <div class="chk" id="whTypes">
-              <label class="chip"><input type="checkbox" value="residential"/> Residential</label>
-              <label class="chip"><input type="checkbox" value="commercial"/> Commercial</label>
-              <label class="chip"><input type="checkbox" value="land"/> Land</label>
-            </div>
-          </div>
-
-          <div style="margin-top:10px">
-            <div class="muted" style="margin-bottom:6px">Strategy</div>
-            <div class="chk" id="whStrats">
-              <label class="chip"><input type="checkbox" value="flip"/> Flip</label>
-              <label class="chip"><input type="checkbox" value="brrrr"/> BRRRR</label>
-              <label class="chip"><input type="checkbox" value="buyhold"/> Buy & Hold</label>
-              <label class="chip"><input type="checkbox" value="wholesale"/> Wholesale</label>
-              <label class="chip"><input type="checkbox" value="sellerfinance"/> Seller Finance</label>
-            </div>
-          </div>
-
-          <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
-            <button id="saveWh" class="btn gold">Save Wholesaler Settings</button>
-            <span id="saveNote" class="muted" style="display:none">Saved ✓</span>
-          </div>
-          <div class="muted" style="margin-top:8px">These feed the ACQ view and are stored under <code>userSettings/&lt;uid&gt;/wholesaler</code>.</div>
+        <div style="display:grid;gap:10px;grid-template-columns:1fr 1fr 1fr">
+          <label><div class="muted">Zips (comma)</div><input class="input" id="setZips" placeholder="77003,77004"/></label>
+          <label><div class="muted">Types</div>
+            <select class="select" id="setTypes" multiple size="4" style="height:92px">
+              <option value="residential">Residential</option>
+              <option value="commercial">Commercial</option>
+              <option value="land">Land</option>
+            </select>
+          </label>
+          <label><div class="muted">Strategies</div>
+            <select class="select" id="setStrategies" multiple size="4" style="height:92px">
+              <option value="flip">Flip</option>
+              <option value="brrrr">BRRRR</option>
+              <option value="buyhold">Buy & Hold</option>
+              <option value="wholesale">Wholesale</option>
+              <option value="sellerfinance">Seller Finance</option>
+            </select>
+          </label>
         </div>
 
-        <!-- Other roles collapsed for brevity -->
-        <div class="muted">Other role preferences unchanged.</div>
+        <label style="display:flex;gap:10px;align-items:center;margin-top:10px">
+          <input type="checkbox" id="setHasPhone"/> <span class="muted">Only show leads with a phone number</span>
+        </label>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button id="saveSettings" class="btn" style="background:linear-gradient(180deg,#3b9eff,#0049b3);border:none">Save Settings</button>
+          <span id="saveStatus" class="muted"></span>
+        </div>
       </div>
     </section>
   </div>
 
-  <footer style="max-width:1200px;margin:12px auto 6px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between">
-    <div>© 2025 DealBankers.com — All rights reserved.</div>
-    <div>Profile v2.3</div>
-  </footer>
+  <!-- REQUESTS MODAL -->
+  <div id="reqModal" class="modal" aria-hidden="true" role="dialog" aria-label="Send a request">
+    <div class="backdrop" data-close></div>
+    <div class="sheet">
+      <button class="close" data-close>Close</button>
+      <h2 style="margin-top:4px">Send a Request</h2>
+      <p class="muted">Tell us what you need. We’ll follow up fast.</p>
 
-  <!-- Firebase + Leaflet -->
+      <form id="reqForm">
+        <div class="grid">
+          <label>
+            <div class="muted">Request Type</div>
+            <select class="select" id="reqType" required>
+              <option value="Immediate Need">Immediate Need</option>
+              <option value="Funding">Funding</option>
+              <option value="Sell a Property">Sell a Property</option>
+              <option value="Partner with Us">Partner with Us</option>
+              <option value="Contractor Services">Contractor Services</option>
+              <option value="Support / Bug">Support / Bug</option>
+              <option value="Other">Other</option>
+            </select>
+          </label>
+          <label>
+            <div class="muted">Preferred Contact</div>
+            <input class="input" id="reqContact" placeholder="Phone, email, or TextNow handle"/>
+          </label>
+        </div>
+
+        <label style="display:block;margin-top:10px">
+          <div class="muted">Subject</div>
+          <input class="input" id="reqSubject" placeholder="Short subject (optional)"/>
+        </label>
+
+        <label style="display:block;margin-top:10px">
+          <div class="muted">Message</div>
+          <textarea class="textarea" id="reqMessage" placeholder="What’s up? Add property address or details if relevant." required></textarea>
+        </label>
+
+        <div class="muted" style="margin-top:6px">We’ll attach your account info automatically (name, email, uid).</div>
+
+        <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap">
+          <button type="submit" class="btn" style="background:linear-gradient(180deg,#3b9eff,#0049b3);border:none">Send Request</button>
+          <a id="mailtoFallback" class="btn" href="#">Email Instead</a>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // Firebase
-    const cfg={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
-    firebase.initializeApp(cfg);
-    const auth=firebase.auth(), db=firebase.database();
-    const $=s=>document.querySelector(s), $$=s=>Array.from(document.querySelectorAll(s));
+    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
+    firebase.initializeApp(firebaseConfig);
+    const auth=firebase.auth();
+    const db=firebase.database();
 
-    // Tabs
-    const tabs=$$('.tab'), panels=$$('[data-panel]');
+    const $=s=>document.querySelector(s);
+    const tabs=[...document.querySelectorAll('.tab')];
+    const panels=[...document.querySelectorAll('[data-panel]')];
+
+    // tri-state gate so phones don't get stuck: null=unknown, true=enabled, false=disabled
+    let leadsGate=null;
+    let filters={zips:[],types:[],strategies:[],hasPhone:false};
+    let authedUser=null;
+    const AUTH_FALLBACK_MS=2500;
+
+    function pushAuthToFrames(){
+      const payload={type:'db-auth', uid:authedUser?.uid||null, leadsEnabled:leadsGate, filters};
+      ['whFrame','whEmbed'].forEach(id=>{
+        const f=document.getElementById(id);
+        if(f && f.contentWindow){ f.contentWindow.postMessage(payload,'*'); }
+      });
+    }
+
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
-      const u=new URL(location.href); u.searchParams.set('tab',name); history.replaceState(null,'',u);
-      if(name==='wholesaler') ensureWhFrame();
+      const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
     }
-    $('#tabs').addEventListener('click',e=>{const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);});
-
-    // ACQ/DISPO toggle (Profile is source of truth)
-    let whSub=(new URL(location.href).searchParams.get('wh')==='dispo')?'dispo':'acq';
-    $$('#whSubtabs .subtab').forEach(b=>{
-      b.classList.toggle('active',b.dataset.sub===whSub);
-      b.onclick=()=>{ whSub=b.dataset.sub; $$('#whSubtabs .subtab').forEach(x=>x.classList.toggle('active',x===b)); ensureWhFrame(); };
+    $('#tabs').addEventListener('click',e=>{
+      const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
-    // Build embedded wholesaler URL (hide its own nav)
-    function buildWhSrc(){
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      const qp=new URLSearchParams({embed:'1',sub:whSub,uid,ui:'embed'});
-      return `wholesaler.html?${qp.toString()}`;
+    // Overview chat + presence
+    let thReady=false;
+    function ensureOverviewReady(){
+      if(thReady) return; thReady=true;
+      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend');
+      function scrollBottom(){ body.scrollTop=body.scrollHeight; }
+      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
+        const m=snap.val(); if(!m) return;
+        const me=auth.currentUser?.uid===m.uid;
+        const div=document.createElement('div'); div.className='msg'+(me?' me':'');
+        const meta=document.createElement('div'); meta.className='meta';
+        const name=(m.name||'Someone'); const t=new Date(m.ts||Date.now());
+        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+        meta.textContent=`${name} • ${hh}:${mm}`;
+        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
+        div.append(meta,bubble); body.appendChild(div); scrollBottom();
+      });
+      const presenceRef=db.ref('townhall/presence');
+      const myRef=presenceRef.push();
+      db.ref('.info/connected').on('value',snap=>{
+        if(snap.val()===true){
+          myRef.onDisconnect().remove();
+          myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP});
+        }
+      });
+      presenceRef.on('value',snap=>{ document.getElementById('presence').textContent = `${snap.numChildren()} online`; });
+      function sendMsg(){
+        const txt=(input.value||'').trim(); if(!txt) return;
+        const u=auth.currentUser||{};
+        db.ref('townhall/messages').push({
+          uid: u.uid || 'anon',
+          name: u.displayName || u.email || 'Anon',
+          text: txt,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
+        input.value=''; input.focus();
+      }
+      input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }}); send.addEventListener('click',sendMsg);
     }
-    function ensureWhFrame(){ $('#whFrame').src = buildWhSrc(); }
 
-    // Settings (Wholesaler)
-    function readChecked(containerSel){
-      return $$(containerSel+' input[type="checkbox"]:checked').map(cb=>cb.value);
-    }
-    function setChecked(containerSel, values){
-      const set=new Set(values||[]); $$(containerSel+' input[type="checkbox"]').forEach(cb=>{ cb.checked=set.has(cb.value); });
-    }
-    async function loadWhSettings(uid){
-      const snap=await db.ref(`userSettings/${uid}/wholesaler`).get().catch(()=>({val:()=>null}));
-      const v=snap.val()||{};
-      $('#whZips').value=(v.zips||[]).join(', ');
-      $('#whHasPhone').value=v.hasPhone?'1':'';
-      setChecked('#whTypes', v.types||[]);
-      setChecked('#whStrats', v.strategies||[]);
-    }
-    async function saveWhSettings(uid){
-      const z=($('#whZips').value||'').split(',').map(s=>s.trim()).filter(Boolean);
-      const types=readChecked('#whTypes');
-      const strategies=readChecked('#whStrats');
-      const payload={zips:z, types, strategies, hasPhone:($('#whHasPhone').value==='1'), settingsVersion:firebase.database.ServerValue.TIMESTAMP, leadsEnabled:true};
-      await db.ref(`userSettings/${uid}/wholesaler`).set(payload);
-      $('#saveNote').style.display='inline'; setTimeout(()=>$('#saveNote').style.display='none',1200);
-      // refresh embedded ACQ/DISPO with new filters
-      ensureWhFrame();
-    }
-
-    // Boot
-    auth.onAuthStateChanged(async u=>{
-      if(!u){location.href='index.html';return;}
-      const tab=(new URL(location.href).searchParams.get('tab'))||'overview';
-      show(tab);
-      await loadWhSettings(u.uid);
-      $('#saveWh').onclick=()=>saveWhSettings(u.uid);
+    // Requests modal
+    const reqModal = document.getElementById('reqModal');
+    const openReq  = ()=>{ reqModal.classList.add('open'); reqModal.setAttribute('aria-hidden','false'); };
+    const closeReq = ()=>{ reqModal.classList.remove('open'); reqModal.setAttribute('aria-hidden','true'); };
+    reqModal.addEventListener('click', e=>{ if (e.target.hasAttribute('data-close')) closeReq(); });
+    document.getElementById('redPhoneBtn').onclick  = ()=>{ document.getElementById('reqType').value='Immediate Need'; openReq(); };
+    document.getElementById('bluePhoneBtn').onclick = ()=>{ document.getElementById('reqType').value='Funding'; openReq(); };
+    document.getElementById('reqForm').addEventListener('submit', async (e)=>{
+      e.preventDefault();
+      const u=auth.currentUser; if(!u) return alert('Please sign in again');
+      const payload={
+        uid:u.uid, email:u.email||'', name:u.displayName||'',
+        type: document.getElementById('reqType').value,
+        contact: document.getElementById('reqContact').value.trim(),
+        subject: document.getElementById('reqSubject').value.trim(),
+        message: document.getElementById('reqMessage').value.trim(),
+        status:'new', ts: Date.now()
+      };
+      if(!payload.message){ return alert('Please add a message'); }
+      try{ await db.ref('requests').push(payload); closeReq(); alert('Request sent'); }
+      catch(err){ console.error(err); alert('Could not send. Try again.'); }
     });
-    $('#logoutBtn').onclick=()=>auth.signOut().then(()=>location.href='index.html');
+
+    // Settings save/load (centralized)
+    function uiToFilters(){
+      const z=($('#setZips').value||'').split(',').map(s=>s.trim()).filter(Boolean);
+      const t=[...$('#setTypes').selectedOptions].map(o=>o.value);
+      const s=[...$('#setStrategies').selectedOptions].map(o=>o.value);
+      return {zips:z, types:t, strategies:s, hasPhone:$('#setHasPhone').checked};
+    }
+    function filtersToUI(f){
+      $('#setZips').value=(f.zips||[]).join(',');
+      [...$('#setTypes').options].forEach(o=>o.selected=(f.types||[]).includes(o.value));
+      [...$('#setStrategies').options].forEach(o=>o.selected=(f.strategies||[]).includes(o.value));
+      $('#setHasPhone').checked=!!f.hasPhone;
+    }
+    async function saveFilters(){
+      if(!authedUser) return;
+      const f=uiToFilters();
+      await db.ref(`userSettings/${authedUser.uid}/wholesaler`).set(f);
+      $('#saveStatus').textContent='Saved.';
+      setTimeout(()=>$('#saveStatus').textContent='',1500);
+    }
+    $('#saveSettings').onclick=saveFilters;
+
+    // Auth + gate bootstrap
+    function startAuth(){
+      // show the wholesaler embed live; we will inject auth later
+      ensureOverviewReady();
+
+      const ribbon=$('#authRibbon');
+      let timeout=setTimeout(()=>{ ribbon.classList.remove('hidden'); }, AUTH_FALLBACK_MS);
+
+      auth.onAuthStateChanged(async (u)=>{
+        authedUser=u||null;
+        $('#meLine').textContent = u ? `${u.email||''} — UID: ${u.uid}` : 'Not signed in';
+        const addr = encodeURIComponent('support@dealbankers.com');
+        const subj = encodeURIComponent('DealBankers Request');
+        const body = encodeURIComponent(`From: ${u?.displayName||''} <${u?.email||''}>\n\nDescribe your request here...`);
+        document.getElementById('mailtoFallback').href = `mailto:${addr}?subject=${subj}&body=${body}`;
+
+        if(!u){ location.href='index.html'; return; }
+
+        // load filters + gate
+        const [gateSnap, setSnap] = await Promise.all([
+          db.ref(`userSettings/${u.uid}/wholesaler/leadsEnabled`).get().catch(()=>({val:()=>null})),
+          db.ref(`userSettings/${u.uid}/wholesaler`).get().catch(()=>({val:()=>null}))
+        ]);
+
+        leadsGate = gateSnap.val(); // true/false/null
+        filters   = setSnap.val() || {zips:[],types:[],strategies:[],hasPhone:false};
+        filtersToUI(filters);
+
+        // legacy hard restriction (unchanged)
+        const restricted = "therealbillwilburn";
+        const isRestricted =
+          (u.displayName && u.displayName.toLowerCase()===restricted) ||
+          (u.email && u.email.split("@")[0].toLowerCase()===restricted);
+        if(isRestricted) leadsGate=false;
+
+        clearTimeout(timeout);
+        ribbon.classList.add('hidden');
+
+        // stream live updates
+        db.ref(`userSettings/${u.uid}/wholesaler/leadsEnabled`).on('value', s=>{ leadsGate = !!s.val(); pushAuthToFrames(); });
+        db.ref(`userSettings/${u.uid}/wholesaler`).on('value', s=>{ filters = s.val()||{zips:[],types:[],strategies:[],hasPhone:false}; filtersToUI(filters); pushAuthToFrames(); });
+
+        pushAuthToFrames();
+      });
+    }
+
+    startAuth();
+
+    // tab from URL
+    const initial = new URL(location.href).searchParams.get('tab') || 'overview';
+    show(initial);
+
+    // logout
+    document.getElementById('logoutBtn').onclick=()=>auth.signOut().then(()=>location.href='index.html');
   </script>
 </body>
 </html>
