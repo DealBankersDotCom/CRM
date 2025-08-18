@@ -34,10 +34,8 @@
     .bubble{display:inline-block;max-width:min(680px,85%);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#142332}
     .portal-embed{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0b141b;height:62vh;min-height:420px}
     @media (max-width:980px){.overview-grid{grid-template-columns:1fr}.townhall,.portal-embed{height:58vh;min-height:380px}}
-
     .subtabs{display:flex;gap:8px;margin:0 0 10px}.subtab{padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}.subtab.active{background:linear-gradient(180deg,#ffd36b,#c89b3a);color:#1a1a1a;border:none}
     .muted{color:#9fb3c7;font-size:13px}
-
     /* Contractor */
     .co-head{display:flex;gap:8px;align-items:center;justify-content:space-between}
     .seg{display:inline-flex;border:1px solid var(--line);border-radius:999px;overflow:hidden}
@@ -48,7 +46,6 @@
     .input,.select,.textarea{width:100%;padding:10px 12px;border-radius:10px;border:1px solid #1d3142;background:#0c1620;color:#eaf1f6}
     .grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .jobCard{border:1px solid var(--line);border-radius:12px;padding:10px;background:#0f1a24}
-
     footer{max-width:1200px;margin:14px auto 6px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:8px}
   </style>
 </head>
@@ -80,8 +77,8 @@
             <h3 style="margin:0 0 6px">📢 Special Announcements</h3>
             <div id="meLine" class="muted" style="margin-bottom:8px"></div>
             <ul style="margin:0 0 10px 18px">
-              <li>Lead filters have moved into the <b>Acquisition</b> toolbar — adjust them on the fly.</li>
-              <li>New Contractor map: view or post jobs, filter by ZIP or auto-location.</li>
+              <li>Lead filters live inside the <b>Acquisition</b> toolbar (quick filters).</li>
+              <li>Contractor map lets you view or post jobs.</li>
             </ul>
           </div>
           <div class="townhall">
@@ -154,11 +151,11 @@
       <!-- SETTINGS -->
       <div class="card" data-panel="settings" style="display:none">
         <h2 style="margin:0 0 8px">Settings (Long-term)</h2>
-        <p class="muted" style="margin:0 0 12px">These are durable preferences we’ll use for future matching algorithms. <b>Lead filters now live inside the Acquisition toolbar.</b></p>
+        <p class="muted" style="margin:0 0 12px">Durable prefs used for matching and posting; **lead filters are in the Acq toolbar**.</p>
 
         <div class="card" style="margin-bottom:10px">
           <h3 style="margin:0 0 6px">Wholesaler (long-term)</h3>
-          <div class="muted">No long-term knobs yet — your per-session lead filters are adjusted in the Acq portal.</div>
+          <div class="muted">No long-term knobs yet — use the quick filters in Acquisition per session.</div>
         </div>
 
         <div class="card" style="margin-bottom:10px">
@@ -219,7 +216,7 @@
     });
 
     function isDesktop(){return window.innerWidth>=1024}
-    async function readWsFilters(){ // still read saved filters to seed the portal iframe’s URL (optional)
+    async function readWsFilters(){ // optional seed
       const uid=auth.currentUser?.uid; if(!uid) return {types:{residential:true},zips:[]};
       const snap=await db.ref(`userSettings/${uid}/wholesaler/filters`).get(); const v=snap.val()||{};
       return {types:{commercial:!!v?.types?.commercial,residential:v?.types?.residential!==false,land:!!v?.types?.land},zips:Array.isArray(v?.zips)?v.zips:[]};
@@ -227,10 +224,19 @@
     function buildWhSrc(sub,f){
       const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
       const types=[]; if(f?.types?.commercial)types.push('commercial'); if(f?.types?.residential)types.push('residential'); if(f?.types?.land)types.push('land');
-      const qp=new URLSearchParams({uid,sub,whTypes:types.join(','),whZips:(f?.zips||[]).join(','),ui:isDesktop()?'desktop':'auto'});
+      const qp=new URLSearchParams({
+        uid, sub,
+        whTypes:types.join(','), whZips:(f?.zips||[]).join(','),
+        ui:isDesktop()?'desktop':'auto',
+        embed:'1'            // <<< ensures embedded mode, hides duplicate nav
+      });
       return `wholesaler.html?${qp.toString()}`;
     }
-    async function loadWhIframe(sub){const f=await readWsFilters(); $('#whFrame').src=buildWhSrc(sub,f); $('#whEmbed').src=buildWhSrc('acq',f);}
+    async function loadWhIframe(sub){
+      const f=await readWsFilters();
+      $('#whFrame').src=buildWhSrc(sub,f);
+      $('#whEmbed').src=buildWhSrc('acq',f);
+    }
 
     // Overview + townhall
     function overviewReady(){
@@ -250,7 +256,6 @@
     // Contractor portal
     let coMode='view', map, markers=[];
     function contractorReady(){
-      // Nav
       $('#coSeg').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return; ['view','post'].forEach(k=>$('#coSeg [data-co="'+k+'"]').classList.toggle('active',b.dataset.co===k));
         coMode=b.dataset.co; $('#coView').style.display=(coMode==='view')?'block':'none'; $('#coPost').style.display=(coMode==='post')?'block':'none';
         if(coMode==='view') ensureMap(); });
@@ -258,19 +263,14 @@
       $('#coUseLoc').onclick=useMyLocation; $('#coRefresh').onclick=refreshJobs;
       $('#postJob').onclick=postJob;
     }
-
     function ensureMap(){
       if(map) return;
-      map=L.map('coMap',{zoomControl:true,attributionControl:false}).setView([29.7604,-95.3698],10); // default Houston area
+      map=L.map('coMap',{zoomControl:true,attributionControl:false}).setView([29.7604,-95.3698],10);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{maxZoom:19}).addTo(map);
       refreshJobs();
     }
     function clearMarkers(){ markers.forEach(m=>m.remove()); markers=[]; }
-    function addMarker(j){
-      if(!(j.lat && j.lng)) return;
-      const m=L.marker([j.lat,j.lng]).addTo(map).bindPopup(`<b>${j.title||'Job'}</b><br>${j.trade||''} • ${j.pay||''}<br>${j.zip||''}`);
-      markers.push(m);
-    }
+    function addMarker(j){ if(!(j.lat && j.lng)) return; const m=L.marker([j.lat,j.lng]).addTo(map).bindPopup(`<b>${j.title||'Job'}</b><br>${j.trade||''} • ${j.pay||''}<br>${j.zip||''}`); markers.push(m); }
     function renderJobList(list){
       const w=$('#jobList'); w.innerHTML='';
       list.forEach(j=>{
@@ -290,10 +290,8 @@
       ]);
       const toArr=o=>o?Object.values(o):[];
       let jobs=[...toArr(g.val()),...toArr(u.val())];
-
       const z=($('#coZip').value||'').trim(); if(z) jobs=jobs.filter(j=>String(j.zip||'').includes(z));
       const t=$('#coTrade').value; if(t) jobs=jobs.filter(j=>j.trade===t);
-
       clearMarkers(); jobs.forEach(addMarker);
       if(jobs.length && jobs[0].lat && jobs[0].lng) map.setView([jobs[0].lat,jobs[0].lng],11);
       renderJobList(jobs);
@@ -303,7 +301,7 @@
       navigator.geolocation.getCurrentPosition((pos)=>{ const {latitude,longitude}=pos.coords; map.setView([latitude,longitude],12); }, ()=>alert('Could not get location'), {enableHighAccuracy:true,timeout:8000});
     }
 
-    // Geocode helper (best-effort via Nominatim)
+    // Geocode helper
     async function geocodeZip(zip){
       try{
         const res=await fetch(`https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(zip)}`,{headers:{'Accept-Language':'en'}});
@@ -326,7 +324,6 @@
       await db.ref(`jobs/${auth.currentUser.uid}/${id}`).set(job);
       $('#jobBar').textContent='Posted ✓'; setTimeout(()=>$('#jobBar').textContent='',1400);
       $('#jobTitle').value=''; $('#jobZip').value=''; $('#jobPay').value=''; $('#jobDesc').value=''; $('#jobPhotos').value='';
-      // switch back to view
       document.querySelector('#coSeg [data-co="view"]').click(); refreshJobs();
     }
 
@@ -347,7 +344,6 @@
       if(!u){location.href='index.html';return;}
       $('#meLine').textContent=`${u.email||''} — UID: ${u.uid}`;
       const initial=new URL(location.href).searchParams.get('tab')||'overview'; show(initial);
-      // seed wholesaler embeds
       const f=await readWsFilters(); $('#whFrame').src=buildWhSrc(currentSub,f); $('#whEmbed').src=buildWhSrc('acq',f);
     });
     document.getElementById('logoutBtn').onclick=()=>auth.signOut().then(()=>location.href='index.html');
