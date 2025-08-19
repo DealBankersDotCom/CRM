@@ -3,10 +3,10 @@ window.dispoItems = [
   {
     kind: 'deal',
     id: 'booth-st',
-    title: '707 Booth, San Antonio, TX 78216',
+    title: 'Seller finance possible (min $15k down)',
     address: '707 Booth, San Antonio, TX 78216',
     price: '255,000 ask',
-    terms: 'Seller finance possible (min $15k down)',
+    terms: '15k terms negotiable',
     memo: 'offering-memo2.html', // Booth memo
     share: 'https://www.facebook.com/marketplace/create/item',
     notes: '4/3 • 1,798 sqft • 1965 build • slab foundation • large floorplan',
