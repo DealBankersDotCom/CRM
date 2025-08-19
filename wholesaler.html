@@ -294,23 +294,38 @@
     function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
-    /* ---------- Dispo items (can be overridden by `dispo-data.js`) ---------- */
-    let dispoItems=null, dispoLoaded=false;
-    const fallbackDispo = [
-      { kind:'deal', title:'3014 El Paso St, San Antonio, TX 78207', address:'3014 El Paso St, San Antonio, TX 78207',
-        price:'$155,000 ask', terms:'Assignment $12k • As-is', memo:'offering-memo1.html',
-        share:'https://www.facebook.com/marketplace/create/item', notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024' },
-      { kind:'offering', title:'Virgin D6 Lift — FOB Houston', address:'—',
-        price:'Capital Need $300k', terms:'Repay 7–10 days • 100M gal', memo:'offering-memo2.html',
-        share:'https://www.craigslist.org/', notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.' }
-    ];
-    function ensureDispoData(cb){
-      if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
-      const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
-      s.onload=()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
-      s.onerror=()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
-      document.head.appendChild(s);
-    }
+/* ---------- Dispo items (can be overridden by `dispo-data.js`) ---------- */
+let dispoItems=null, dispoLoaded=false;
+const fallbackDispo = [
+  {
+    kind:'deal',
+    title:'3014 El Paso St, San Antonio, TX 78207',
+    address:'3014 El Paso St, San Antonio, TX 78207',
+    price:'$155,000 ask',
+    terms:'Assignment $12k • As-is',
+    memo:'offering-memo2.html',              // ← Booth memo
+    share:'https://www.facebook.com/marketplace/create/item',
+    notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
+  },
+  {
+    kind:'offering',
+    title:'Virgin D6 Lift — FOB Houston',
+    address:'—',
+    price:'Capital Need $300k',
+    terms:'Repay 7–10 days • 100M gal',
+    memo:'offering-memo1.html',              // ← D6 memo
+    share:'https://www.craigslist.org/',
+    notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.'
+  }
+];
+function ensureDispoData(cb){
+  if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
+  const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
+  s.onload = ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
+  s.onerror= ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
+  document.head.appendChild(s);
+}
+
 
     /* ---------------- Desktop-only photo preview & manager ---------------- */
     const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
