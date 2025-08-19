@@ -30,6 +30,7 @@
     .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
     .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
+
     .hdr-actions{display:flex;gap:10px;align-items:center}
     .pill{
       width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
@@ -67,6 +68,15 @@
 
     .facts-preview{width:100%;height:300px;border:0;border-radius:12px;background:#0b141b}
     @media (max-width:980px){ .overview-grid{grid-template-columns:1fr} .townhall{height:58vh;min-height:380px} }
+
+    /* Settings */
+    .settings-subtabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+    .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;font-size:13px}
+    .chip input{transform:scale(1.2)}
+    .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .input{padding:10px 12px;border:1px solid var(--line);background:#0f1a24;color:#eaf1f6;border-radius:10px}
+    .savebar{display:flex;gap:8px;align-items:center;margin-top:10px}
+    .muted{color:#9fb3c7}
   </style>
 </head>
 <body>
@@ -89,6 +99,7 @@
       <button class="tab" data-tab="contractor">Contractor</button>
       <button class="tab" data-tab="realtor">Realtor</button>
       <button class="tab" data-tab="investor">Investor</button>
+      <button class="tab" data-tab="settings">Settings</button>
     </nav>
 
     <section class="panel">
@@ -98,142 +109,9 @@
           <!-- Announcements + Active Offerings -->
           <div class="announce">
             <h3 style="margin:0 0 8px">📢 Special Announcements</h3>
-            <div id="meLine" style="color:#9fb3c7;margin-bottom:6px"></div>
+            <div id="meLine" class="muted" style="margin-bottom:6px"></div>
 
             <h4 style="margin:10px 0 6px">Active Offerings</h4>
             <div style="font-size:14px;line-height:1.5">
               <div><b>Virgin D6 Lift — FOB Houston</b> • Capital Need: <b>$300k</b> • Repay: <b>7–10 days</b> • <b>100M gal</b></div>
               <div style="margin-top:6px">
-                <a href="offering-memo1.html" target="_blank" rel="noopener">Open Memo 1</a> &nbsp;·&nbsp;
-                <a href="offering-memo2.html" target="_blank" rel="noopener">Open Memo 2</a> &nbsp;·&nbsp;
-                <a href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=sf_link" target="_blank" rel="noopener">Submit Interest</a>
-              </div>
-
-              <h5 style="margin:12px 0 6px">Statement of Facts (Inline Preview)</h5>
-              <iframe class="facts-preview" src="offering-memo2.html"></iframe>
-            </div>
-          </div>
-
-          <!-- Townhall -->
-          <div class="townhall">
-            <div class="th-head">
-              <h2 style="margin:0">🏛️ Townhall (All Users)</h2>
-              <div id="presence" style="font-size:12px;color:#9fb3c7">Connecting…</div>
-            </div>
-            <div class="th-body" id="thBody" aria-live="polite"></div>
-            <div class="th-input">
-              <input id="thInput" type="text" placeholder="Say something to the room… (press Enter to send)"/>
-              <button id="thSend">Send</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- WHOLESALER -->
-      <div class="card" data-panel="wholesaler" style="display:none">
-        <div style="color:#9fb3c7;margin:4px 6px 10px">Lead filters live in <b>Settings → Wholesaler</b>. No self-enable switch is shown here.</div>
-        <div class="iframe-wrap"><iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe></div>
-      </div>
-
-      <!-- CONTRACTOR -->
-      <div class="card" data-panel="contractor" style="display:none">
-        <div class="iframe-wrap"><iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe></div>
-      </div>
-
-      <!-- Placeholders -->
-      <div class="card" data-panel="realtor"  style="display:none"><p style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
-      <div class="card" data-panel="investor" style="display:none"><p style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
-    </section>
-  </div>
-
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-
-  <script>
-    // ---- Firebase
-    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth=firebase.auth(); const db=firebase.database();
-
-    // ---- Tabs + routing
-    const $=s=>document.querySelector(s);
-    const tabs=[...document.querySelectorAll('.tab')];
-    const panels=[...document.querySelectorAll('[data-panel]')];
-
-    function show(name){
-      tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-      panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
-
-      const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
-
-      if(name==='wholesaler') ensureWh();
-      if(name==='contractor') ensureCt();
-      if(name==='overview')  ensureOverview();
-    }
-    $('#tabs').addEventListener('click',e=>{
-      const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
-    });
-
-    // ---- Lazy iframes
-    let whSet=false, ctSet=false, ovSet=false;
-    function ensureWh(){
-      if(whSet) return; whSet=true;
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      $('#whFrame').src=`wholesaler.html?uid=${uid}`;
-    }
-    function ensureCt(){
-      if(ctSet) return; ctSet=true;
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      $('#ctFrame').src=`contractor.html?uid=${uid}`;
-    }
-    function ensureOverview(){ if(ovSet) return; ovSet=true; wireTownhall(); }
-
-    // ---- Townhall chat
-    function wireTownhall(){
-      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend'), presEl=$('#presence');
-      const scroll=()=>{ body.scrollTop=body.scrollHeight; };
-
-      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
-        const m=snap.val(); if(!m) return;
-        const me=auth.currentUser?.uid===m.uid;
-        const wrap=document.createElement('div'); wrap.className='msg'+(me?' me':'');
-        const meta=document.createElement('div'); meta.className='meta';
-        const t=new Date(m.ts||Date.now()); const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
-        meta.textContent=`${m.name||'Someone'} • ${hh}:${mm}`;
-        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
-        wrap.append(meta,bubble); body.appendChild(wrap); scroll();
-      });
-
-      const presenceRef=db.ref('townhall/presence'); const myRef=presenceRef.push();
-      db.ref('.info/connected').on('value',snap=>{
-        if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
-      });
-      presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
-
-      const sendMsg=()=>{
-        const txt=(input.value||'').trim(); if(!txt) return;
-        const u=auth.currentUser||{};
-        db.ref('townhall/messages').push({uid:u.uid||'anon',name:u.displayName||u.email||'Anon',text:txt,ts:firebase.database.ServerValue.TIMESTAMP});
-        input.value=''; input.focus();
-      };
-      input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
-      send.addEventListener('click',sendMsg);
-    }
-
-    // ---- Auth + initial route
-    auth.onAuthStateChanged(u=>{
-      if(!u){ location.href='index.html'; return; }
-      $('#meLine').textContent = `${u.email||''} — UID: ${u.uid}`;
-      const initial = new URL(location.href).searchParams.get('tab') || 'overview';
-      show(initial);
-    });
-
-    // ---- Header request buttons (open mailto fast)
-    document.getElementById('redPhoneBtn').onclick  = ()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
-    document.getElementById('bluePhoneBtn').onclick = ()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
-    document.getElementById('logoutBtn').onclick    = ()=>auth.signOut().then(()=>location.href='index.html');
-  </script>
-</body>
-</html>
