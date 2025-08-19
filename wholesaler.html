@@ -74,6 +74,16 @@
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
+    /* ---------- Dispo grid ---------- */
+    .dealgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px}
+    .dealhdr{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
+    .dealtype{font-size:11px;padding:3px 8px;border-radius:999px;background:#103043;border:1px solid rgba(255,255,255,.18)}
+    .dealmeta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+    .dealmeta .chip{background:#0d2a3c}
+    .actrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    @media (max-width:760px){ .dealgrid{grid-template-columns:1fr} }
+
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
 
@@ -121,16 +131,20 @@
           <div class="body">Initializing…</div>
         </div>
 
-        <!-- Dispo side (always present; we show only when mode==='dispo') -->
+        <!-- Dispo side (visible only when mode==='dispo') -->
         <div id="dispoPane" class="section" style="display:none">
           <h3 style="margin:2px 0 8px">📦 Deals & Offerings</h3>
-          <div class="banner">Quick links for sharing and interest capture.</div>
-          <div class="chips">
+          <div class="banner">Use these links to market deals. For cold-calling buyers, open the queue.</div>
+
+          <div class="chips" style="margin-bottom:6px">
             <a class="btn" href="offering-memo1.html" target="_blank" rel="noopener">Open Memo 1</a>
             <a class="btn" href="offering-memo2.html" target="_blank" rel="noopener">Open Memo 2</a>
             <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=sf_link" target="_blank" rel="noopener">Submit Interest</a>
-            <a class="btn" href="dispo.html" target="_blank" rel="noopener">Open Dispo Board</a>
+            <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
           </div>
+
+          <!-- dynamic grid of deals & offerings -->
+          <div id="dealGrid" class="dealgrid" aria-live="polite"></div>
         </div>
       </div>
     </section>
@@ -232,6 +246,82 @@
 
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
+    /* -------------------- DISPO ITEMS --------------------
+       You can override these by creating `dispo-data.js` that defines:
+         window.dispoItems = [
+           { kind:'deal'|'offering', title:'', address:'', price:'', terms:'', memo:'offering-memo1.html', share:'https://...', notes:'' }
+         ]
+    ------------------------------------------------------*/
+    let dispoItems=null, dispoLoaded=false;
+    const fallbackDispo = [
+      {
+        kind:'deal',
+        title:'3014 El Paso St, San Antonio, TX 78207',
+        address:'3014 El Paso St, San Antonio, TX 78207',
+        price:'$155,000 ask',
+        terms:'Assignment $12k • As-is',
+        memo:'offering-memo1.html',
+        share:'https://www.facebook.com/marketplace/',
+        notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
+      },
+      {
+        kind:'offering',
+        title:'Virgin D6 Lift — FOB Houston',
+        address:'—',
+        price:'Capital Need $300k',
+        terms:'Repay 7–10 days • 100M gal',
+        memo:'offering-memo2.html',
+        share:'https://houston.craigslist.org/',
+        notes:'Active fuel trade offering. Use Submit Interest form for soft commits.'
+      }
+    ];
+
+    function ensureDispoData(cb){
+      if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
+      const s=document.createElement('script');
+      s.src='dispo-data.js?v='+Date.now();
+      s.onload=()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
+      s.onerror=()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
+      document.head.appendChild(s);
+    }
+
+    function renderDispoGrid(){
+      const grid = $('#dealGrid');
+      grid.innerHTML = '';
+      const items = dispoItems || fallbackDispo;
+      items.forEach(it=>{
+        const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
+        const card = document.createElement('div');
+        card.className='dealcard';
+        card.innerHTML = `
+          <div class="dealhdr">
+            <div>${it.title}</div>
+            <div class="dealtype">${kindTag}</div>
+          </div>
+          <div class="dealmeta">
+            ${it.price?`<div class="chip">${it.price}</div>`:''}
+            ${it.terms?`<div class="chip">${it.terms}</div>`:''}
+            ${it.address?`<div class="chip">${it.address}</div>`:''}
+          </div>
+          ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${it.notes}</div>`:''}
+          <div class="actrow">
+            ${it.memo?`<a class="btn" href="${it.memo}" target="_blank" rel="noopener">Open Memo</a>`:''}
+            ${it.share?`<a class="btn" href="${it.share}" target="_blank" rel="noopener">Post / Share</a>`:''}
+            ${it.memo?`<button class="btn" data-copy="${location.origin.replace(/\/$/,'')+'/'+it.memo}">Copy Link</button>`:''}
+          </div>
+        `;
+        grid.appendChild(card);
+      });
+
+      // wire copy buttons
+      grid.querySelectorAll('button[data-copy]').forEach(b=>{
+        b.addEventListener('click', ()=>{
+          const link=b.getAttribute('data-copy');
+          navigator.clipboard.writeText(link).then(()=>toast('Link copied'));
+        });
+      });
+    }
+
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
         $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
@@ -259,7 +349,6 @@
       const lastSaved = saveTimeGet(addr);
       const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
 
-      // chips vary a bit by mode
       const modeChip = mode==='acq' ? 'Mode: acquisition' : 'Mode: dispo';
 
       $('#leadCard').innerHTML = `
@@ -294,8 +383,13 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
-      // show/hide Dispo helper pane
-      $('#dispoPane').style.display = (mode==='dispo') ? 'block' : 'none';
+      // Dispo helper pane
+      const pane = $('#dispoPane');
+      const showDispo = (mode==='dispo');
+      pane.style.display = showDispo ? 'block' : 'none';
+      if(showDispo){
+        ensureDispoData(()=>renderDispoGrid());
+      }
     }
 
     function doSaveNotes(){
