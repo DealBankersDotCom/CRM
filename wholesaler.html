@@ -49,6 +49,7 @@
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
     .ico{font-size:20px}
+    .small{min-height:34px;padding:6px 10px;font-weight:700}
 
     .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
     .hidden{display:none !important}
@@ -77,13 +78,27 @@
     .dealgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
     .group{margin-top:14px}
     .group h4{margin:0 0 8px;color:#d9e9f8}
-    .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px}
+    .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;cursor:pointer}
     .dealhdr{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
     .dealtype{font-size:11px;padding:3px 8px;border-radius:999px;background:#103043;border:1px solid rgba(255,255,255,.18)}
     .dealmeta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
     .dealmeta .chip{background:#0d2a3c}
     .actrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
     @media (max-width:760px){ .dealgrid{grid-template-columns:1fr} }
+
+    /* Desktop-only preview column */
+    .desktopOnly{display:inline-flex}
+    @media (max-width:980px){ .desktopOnly{display:none !important} }
+    .dispoLayout{display:grid;grid-template-columns:1.1fr .9fr;gap:10px}
+    @media (max-width:980px){ .dispoLayout{display:block} }
+    .preview{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;min-height:420px}
+    .pvHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .pvTitle{font-weight:900}
+    .carousel{position:relative;width:100%;height:340px;border-radius:12px;overflow:hidden;background:#08121a}
+    .carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
+    .carousel img.active{opacity:1}
+    .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
+    .carBtn{border:1px solid rgba(255,255,255,.22);background:#0b1a24;border-radius:999px;padding:6px 10px;color:#eaf6ff}
 
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
@@ -133,28 +148,42 @@
           <div class="body">Initializing…</div>
         </div>
 
-        <!-- Disposition panel (completely separate view) -->
+        <!-- Disposition panel -->
         <div id="dispoPane" class="section hidden" aria-live="polite">
           <div class="dispoHead">
             <h3 style="margin:2px 0">📦 Disposition</h3>
             <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
           </div>
+
           <div class="dispoCTA">
             <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Post to Craigslist</a>
             <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">Post to FB Marketplace</a>
             <a class="btn" id="linkShareAll" href="#" title="Copy a shareable link">Link Share</a>
           </div>
 
-          <!-- Deals -->
-          <div class="group" id="dealsGroup">
-            <h4>Deals</h4>
-            <div id="dealsGrid" class="dealgrid"></div>
-          </div>
+          <!-- Desktop-only 2-col layout: left cards, right preview -->
+          <div class="dispoLayout">
+            <div id="dispoLeft">
+              <div class="group" id="dealsGroup">
+                <h4>Deals</h4>
+                <div id="dealsGrid" class="dealgrid"></div>
+              </div>
+              <div class="group" id="offeringsGroup">
+                <h4>Offerings</h4>
+                <div id="offeringsGrid" class="dealgrid"></div>
+              </div>
+            </div>
 
-          <!-- Offerings -->
-          <div class="group" id="offeringsGroup">
-            <h4>Offerings</h4>
-            <div id="offeringsGrid" class="dealgrid"></div>
+            <div id="dispoPreview" class="preview desktopOnly">
+              <div class="pvHead">
+                <div class="pvTitle" id="pvTitle">Photo Preview</div>
+                <div style="display:flex;gap:6px">
+                  <button id="pvAdd"  class="btn small">＋ Add Photo</button>
+                  <button id="pvEdit" class="btn small">✎ Edit Photos</button>
+                </div>
+              </div>
+              <div class="carousel" id="pvCarousel"></div>
+            </div>
           </div>
         </div>
       </div>
@@ -170,6 +199,25 @@
     <div style="display:flex;gap:8px;margin-top:10px">
       <button id="saveMode" class="btn" style="flex:1">Save</button>
       <button id="closeMode" class="btn" style="flex:1">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Photo manager dialog (desktop-only) -->
+  <dialog id="photoDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:720px;width:92%">
+    <h3 style="margin:0 0 8px">Manage Photos</h3>
+    <div style="display:grid;gap:8px">
+      <label>Photo URLs (comma separated)
+        <textarea id="phUrls" rows="3" class="textarea" placeholder="https://...jpg, https://...png"></textarea>
+      </label>
+      <label>Upload Photos
+        <input id="phFiles" type="file" accept="image/*" multiple style="display:block;margin-top:6px"/>
+      </label>
+    </div>
+    <div id="phThumbs" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="phClear" class="btn">Clear All</button>
+      <button id="phSave"  class="btn btn-green">Save</button>
+      <button id="phClose" class="btn">Close</button>
     </div>
   </dialog>
 
@@ -233,7 +281,6 @@
       return `tel:${num}`;
     }
     function dirHref(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`; }
-    /* NOTE: Street View embed is still the same; we’ll revisit the SV URL separately when you’re ready. */
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
@@ -265,6 +312,92 @@
       document.head.appendChild(s);
     }
 
+    /* ---------------- Desktop-only photo preview & manager ---------------- */
+    const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
+          phUrls=$('#phUrls'), phFiles=$('#phFiles'), phThumbs=$('#phThumbs'),
+          pvAdd=$('#pvAdd'), pvEdit=$('#pvEdit');
+    let previewItem=null;
+
+    function slugFor(it){
+      const base=(it?.memo||'') || (it?.title||'') || (it?.address||'item');
+      return String(base).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    }
+    const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
+    function getPhotos(it){
+      try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
+      return Array.isArray(it?.photos)?it.photos:[]; // optional photos field if you add it in dispo-data.js
+    }
+    function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
+
+    let carIdx=0, carTimer=null, carRun=true;
+    function renderPreview(it){
+      previewItem=it;
+      pvTitle.textContent = it?.title || it?.address || 'Photo Preview';
+      const photos=getPhotos(it);
+      pvCar.innerHTML='';
+      if(!photos.length){
+        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs.</div>`;
+        return;
+      }
+      photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo'; if(i===0) img.className='active'; pvCar.appendChild(img); });
+      // controls
+      const ctr=document.createElement('div'); ctr.className='carBtns';
+      const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
+      const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
+      const next=document.createElement('button'); next.className='carBtn'; next.textContent='▶';
+      ctr.append(prev,pause,next); pvCar.appendChild(ctr);
+      prev.onclick=()=>{ carRun=false; setSlide(-1); };
+      next.onclick=()=>{ carRun=false; setSlide(+1); };
+      pause.onclick=()=>{ carRun=!carRun; if(carRun) startCar(); else stopCar(); };
+      startCar();
+    }
+    function setSlide(d){
+      const imgs=[...pvCar.querySelectorAll('img')]; if(!imgs.length) return;
+      imgs[carIdx]?.classList.remove('active');
+      carIdx=(carIdx+d+imgs.length)%imgs.length;
+      imgs[carIdx]?.classList.add('active');
+    }
+    function startCar(){ stopCar(); carTimer=setInterval(()=>{ if(carRun) setSlide(+1); },2800); }
+    function stopCar(){ if(carTimer){ clearInterval(carTimer); carTimer=null; } }
+
+    function openPhotoMgr(){
+      const it=previewItem; if(!it) return;
+      const arr=getPhotos(it);
+      phUrls.value = arr.filter(u=>!/^data:/.test(u)).join(', ');
+      drawThumbs(arr);
+      photoDlg.showModal();
+    }
+    function drawThumbs(arr){
+      phThumbs.innerHTML='';
+      arr.forEach((src,i)=>{
+        const d=document.createElement('div');
+        d.innerHTML=`<img src="${src}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px"/><button class="btn small" data-i="${i}" style="margin-top:4px">Remove</button>`;
+        phThumbs.appendChild(d);
+      });
+      phThumbs.querySelectorAll('button[data-i]').forEach(b=>{
+        b.onclick=()=>{ const i=+b.dataset.i; const cur=getPhotos(previewItem); cur.splice(i,1); savePhotos(previewItem,cur); drawThumbs(cur); renderPreview(previewItem); };
+      });
+    }
+    async function readUploads(files){
+      const out=[];
+      for(const f of files){
+        const data=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+        out.push(data);
+      }
+      return out;
+    }
+    $('#phSave').onclick = async ()=>{
+      if(!previewItem) return;
+      const urls=phUrls.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const ups = await readUploads(phFiles.files||[]);
+      const final=[...urls,...ups];
+      savePhotos(previewItem,final); renderPreview(previewItem); photoDlg.close(); phFiles.value=''; phUrls.value='';
+    };
+    $('#phClear').onclick = ()=>{ if(!previewItem) return; savePhotos(previewItem,[]); drawThumbs([]); renderPreview(previewItem); };
+    $('#phClose').onclick = ()=>photoDlg.close();
+    pvAdd.onclick = openPhotoMgr; pvEdit.onclick = openPhotoMgr;
+
+    /* ---------------- Dispo list rendering ---------------- */
     function renderDispo(){
       ensureDispoData(items=>{
         const deals = items.filter(i=>i.kind!=='offering');
@@ -291,20 +424,37 @@
                 <a class="btn" href="${it.share||'https://www.facebook.com/marketplace/create/item'}" target="_blank" rel="noopener">Post / Share</a>
                 ${it.memo?`<button class="btn" data-copy="${location.origin.replace(/\/$/,'')+'/'+it.memo}">Copy Link</button>`:''}
                 <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
-                <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">FB Marketplace</a>
+                <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
+                <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
               </div>`;
+            // click on card (desktop) selects preview
+            el.addEventListener('click',e=>{
+              if(window.matchMedia('(max-width: 980px)').matches) return; // mobile: no preview changes
+              if(e.target.closest('.actrow')){ // ignore action buttons; those have separate handlers below
+                if(e.target.matches('button[data-preview]')) { renderPreview(it); }
+                if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
+                return;
+              }
+              renderPreview(it);
+            });
             grid.appendChild(el);
           });
           grid.querySelectorAll('button[data-copy]').forEach(b=>{
-            b.addEventListener('click',()=>{ navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
+            b.addEventListener('click',e=>{ e.stopPropagation(); navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
           });
         };
 
         fill(deals, '#dealsGrid');
         fill(offs,  '#offeringsGrid');
+
+        // seed preview with the first item (desktop only)
+        if(!window.matchMedia('(max-width: 980px)').matches){
+          renderPreview(items[0]||null);
+        }
       });
     }
 
+    /* ---------------- Acquisition render (unchanged) ---------------- */
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
         $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
@@ -416,7 +566,7 @@
     $('#tabAcq').onclick  = ()=>switchTo('acq');
     $('#tabDispo').onclick= ()=>switchTo('dispo');
 
-    // share all (copies site root so your team can paste it into emails)
+    // share all
     $('#linkShareAll').addEventListener('click',e=>{
       e.preventDefault();
       navigator.clipboard.writeText(location.origin).then(()=>toast('Site link copied'));
