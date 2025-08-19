@@ -231,22 +231,33 @@
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
     );
-    const gateDb = gateApp.database();
-    const params = new URL(location.href).searchParams;
+    const gateDb   = gateApp.database();
+    const params   = new URL(location.href).searchParams;
     const uidParam = params.get('uid') || 'anon';
 
-    gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
-      const allowed = !!snap.val();
-      if(!allowed){
+    // Permission flags available to the rest of the page
+    window.whGate = { acqEnabled:false, dispoEnabled:false };
+
+    function loadLeadsJS(){
+      const s=document.createElement('script');
+      s.src='leads.js?v='+Date.now();
+      s.onload=()=>{ window.leads = window.leads || []; init(); };
+      s.onerror=()=>document.getElementById('status').textContent='Could not load leads.js';
+      document.head.appendChild(s);
+    }
+
+    gateDb.ref(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
+      const g = snap.val() || {};
+      // Back-compat: support old single switches if present
+      window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
+      window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
+
+      if(!window.whGate.acqEnabled){
         document.getElementById('leadCard').innerHTML =
-          '<div class="body">Access to leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
-        document.getElementById('status').textContent = 'Access denied';
-      }else{
-        const s=document.createElement('script');
-        s.src='leads.js?v='+Date.now();
-        s.onload=()=>{ window.leads = window.leads || []; init(); };
-        s.onerror=()=>document.getElementById('status').textContent='Could not load leads.js';
-        document.head.appendChild(s);
+          '<div class="body">Access to <b>acquisition</b> leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
+        document.getElementById('status').textContent = 'Acq access denied';
+      } else {
+        loadLeadsJS();
       }
     }).catch(()=>{
       document.getElementById('leadCard').innerHTML =
@@ -575,8 +586,27 @@ function ensureDispoData(cb){
       $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
 
       modeCrumb.textContent = (mode==='acq'?'Acquisition':'Dispo');
-      if(mode==='acq') render(idx);
-      else renderDispo();
+
+      if(mode==='acq'){
+        if(window.whGate?.acqEnabled){ render(idx); }
+        else{
+          $('#leadCard').classList.remove('hidden');
+          $('#leadCard').innerHTML = '<div class="body">Access to <b>acquisition</b> leads is disabled for this account.</div>';
+          setStatus('Acq access denied');
+        }
+      } else {
+        if(window.whGate?.dispoEnabled){
+          renderDispo();
+        } else {
+          const pane = $('#dispoPane');
+          pane.innerHTML = `
+            <div class="section">
+              <div style="font-weight:800;margin-bottom:6px">Dispo access disabled</div>
+              <div style="color:#cfe3f7">Your account does not currently have access to <b>Dispo</b> leads.</div>
+            </div>`;
+          setStatus('Dispo access denied');
+        }
+      }
     }
     $('#tabAcq').onclick  = ()=>switchTo('acq');
     $('#tabDispo').onclick= ()=>switchTo('dispo');
