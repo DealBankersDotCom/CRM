@@ -115,3 +115,238 @@
             <div style="font-size:14px;line-height:1.5">
               <div><b>Virgin D6 Lift — FOB Houston</b> • Capital Need: <b>$300k</b> • Repay: <b>7–10 days</b> • <b>100M gal</b></div>
               <div style="margin-top:6px">
+                <a href="offering-memo1.html" target="_blank" rel="noopener">Open Memo 1</a> &nbsp;·&nbsp;
+                <a href="offering-memo2.html" target="_blank" rel="noopener">Open Memo 2</a> &nbsp;·&nbsp;
+                <a href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=sf_link" target="_blank" rel="noopener">Submit Interest</a>
+              </div>
+
+              <h5 style="margin:12px 0 6px">Statement of Facts (Inline Preview)</h5>
+              <iframe class="facts-preview" src="offering-memo2.html"></iframe>
+            </div>
+          </div>
+
+          <!-- Townhall -->
+          <div class="townhall">
+            <div class="th-head">
+              <h2 style="margin:0">🏛️ Townhall (All Users)</h2>
+              <div id="presence" class="muted">Connecting…</div>
+            </div>
+            <div class="th-body" id="thBody" aria-live="polite"></div>
+            <div class="th-input">
+              <input id="thInput" type="text" placeholder="Say something to the room… (press Enter to send)"/>
+              <button id="thSend">Send</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- WHOLESALER -->
+      <div class="card" data-panel="wholesaler" style="display:none">
+        <div class="muted" style="margin:4px 6px 10px">Lead filters live in <b>Settings → Wholesaler</b>. No self-enable switch is shown here.</div>
+        <div class="iframe-wrap"><iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe></div>
+      </div>
+
+      <!-- CONTRACTOR -->
+      <div class="card" data-panel="contractor" style="display:none">
+        <div class="iframe-wrap"><iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe></div>
+      </div>
+
+      <!-- REALTOR/INVESTOR placeholders -->
+      <div class="card" data-panel="realtor"  style="display:none"><p class="muted" style="margin:0">Realtor portal coming soon.</p></div>
+      <div class="card" data-panel="investor" style="display:none"><p class="muted" style="margin:0">Investor portal coming soon.</p></div>
+
+      <!-- SETTINGS (with Wholesaler filter placeholder) -->
+      <div class="card" data-panel="settings" style="display:none">
+        <h3 style="margin:2px 0 10px">Settings</h3>
+
+        <div class="settings-subtabs">
+          <span class="chip"><input type="radio" name="settab" value="wh" checked/> Wholesaler</span>
+          <span class="chip"><input type="radio" name="settab" value="notify"/> Notifications</span>
+          <span class="chip"><input type="radio" name="settab" value="acct"/> Account</span>
+        </div>
+
+        <div id="set-wh">
+          <p class="muted" style="margin-top:0">A simple placeholder for your **wholesaler questionnaire/filters**. Saved to <code>userSettings/{uid}/wholesaler</code>. No self-enable toggle is shown.</p>
+
+          <div class="row">
+            <label class="chip"><input type="checkbox" id="ty-res"/> Residential</label>
+            <label class="chip"><input type="checkbox" id="ty-com"/> Commercial</label>
+            <label class="chip"><input type="checkbox" id="ty-land"/> Land</label>
+            <label class="chip"><input type="checkbox" id="has-phone"/> Has phone</label>
+          </div>
+
+          <div class="row">
+            <label class="chip"><input type="checkbox" id="st-flip"/> Flip</label>
+            <label class="chip"><input type="checkbox" id="st-brrrr"/> BRRRR</label>
+            <label class="chip"><input type="checkbox" id="st-buyhold"/> Buy & Hold</label>
+            <label class="chip"><input type="checkbox" id="st-wholesale"/> Wholesale</label>
+            <label class="chip"><input type="checkbox" id="st-sellerfin"/> Seller Finance</label>
+          </div>
+
+          <div class="row">
+            <input id="ziplist" class="input" style="min-width:340px" placeholder="ZIPs, e.g. 77003,77004"/>
+            <span class="muted">Comma-separated ZIP filters.</span>
+          </div>
+
+          <div class="savebar">
+            <button id="saveWh" class="btn">Save Wholesaler Filters</button>
+            <span id="saveWhMsg" class="muted"></span>
+          </div>
+        </div>
+
+        <div id="set-notify" style="display:none" class="muted">Notifications settings placeholder.</div>
+        <div id="set-acct"   style="display:none" class="muted">Account settings placeholder.</div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+
+  <script>
+    // ---- Firebase
+    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
+    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+    const auth=firebase.auth(); const db=firebase.database();
+
+    // ---- Tabs + routing
+    const $=s=>document.querySelector(s);
+    const tabs=[...document.querySelectorAll('.tab')];
+    const panels=[...document.querySelectorAll('[data-panel]')];
+
+    function show(name){
+      tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
+      panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
+
+      const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
+
+      if(name==='wholesaler') ensureWh();
+      if(name==='contractor') ensureCt();
+      if(name==='overview')  ensureOverview();
+      if(name==='settings')  ensureSettings();
+    }
+    $('#tabs').addEventListener('click',e=>{
+      const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
+    });
+
+    // ---- Lazy iframes
+    let whSet=false, ctSet=false, ovSet=false, stSet=false;
+    function ensureWh(){
+      if(whSet) return; whSet=true;
+      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
+      $('#whFrame').src=`wholesaler.html?uid=${uid}`;
+    }
+    function ensureCt(){
+      if(ctSet) return; ctSet=true;
+      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
+      $('#ctFrame').src=`contractor.html?uid=${uid}`;
+    }
+    function ensureOverview(){ if(ovSet) return; ovSet=true; wireTownhall(); }
+    function ensureSettings(){ if(stSet) return; stSet=true; wireSettings(); }
+
+    // ---- Townhall chat
+    function wireTownhall(){
+      const body=$('#thBody'), input=$('#thInput'), send=$('#thSend'), presEl=$('#presence');
+      const scroll=()=>{ body.scrollTop=body.scrollHeight; };
+
+      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
+        const m=snap.val(); if(!m) return;
+        const me=auth.currentUser?.uid===m.uid;
+        const wrap=document.createElement('div'); wrap.className='msg'+(me?' me':'');
+
+        const t=new Date(m.ts||Date.now());
+        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+
+        const meta=document.createElement('div'); meta.className='meta'; meta.textContent=`${m.name||'Someone'} • ${hh}:${mm}`;
+        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
+        wrap.append(meta,bubble); body.appendChild(wrap); scroll();
+      });
+
+      const presenceRef=db.ref('townhall/presence'); const myRef=presenceRef.push();
+      db.ref('.info/connected').on('value',snap=>{
+        if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
+      });
+      presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
+
+      const sendMsg=()=>{
+        const txt=($('#thInput').value||'').trim(); if(!txt) return;
+        const u=auth.currentUser||{};
+        db.ref('townhall/messages').push({uid:u.uid||'anon',name:u.displayName||u.email||'Anon',text:txt,ts:firebase.database.ServerValue.TIMESTAMP});
+        $('#thInput').value=''; $('#thInput').focus();
+      };
+      $('#thInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
+      $('#thSend').addEventListener('click',sendMsg);
+    }
+
+    // ---- Settings (placeholders + save)
+    function wireSettings(){
+      // subtab toggles
+      const radios=[...document.querySelectorAll('input[name="settab"]')];
+      const panes={wh:$('#set-wh'), notify:$('#set-notify'), acct:$('#set-acct')};
+      const switchTo=v=>{
+        panes.wh.style.display=(v==='wh')?'block':'none';
+        panes.notify.style.display=(v==='notify')?'block':'none';
+        panes.acct.style.display=(v==='acct')?'block':'none';
+      };
+      radios.forEach(r=>r.addEventListener('change',()=>switchTo(r.value)));
+      switchTo('wh');
+
+      const uid=auth.currentUser?.uid; if(!uid) return;
+
+      const ref=db.ref(`userSettings/${uid}/wholesaler`);
+      // load once
+      ref.get().then(s=>{
+        const v=s.val()||{};
+        $('#ty-res').checked=!!v.type_residential;
+        $('#ty-com').checked=!!v.type_commercial;
+        $('#ty-land').checked=!!v.type_land;
+        $('#has-phone').checked=!!v.has_phone;
+        $('#st-flip').checked=!!v.st_flip;
+        $('#st-brrrr').checked=!!v.st_brrrr;
+        $('#st-buyhold').checked=!!v.st_buyhold;
+        $('#st-wholesale').checked=!!v.st_wholesale;
+        $('#st-sellerfin').checked=!!v.st_sellerfin;
+        $('#ziplist').value=v.zips||'';
+      });
+
+      $('#saveWh').addEventListener('click',async ()=>{
+        const payload={
+          type_residential: $('#ty-res').checked,
+          type_commercial:  $('#ty-com').checked,
+          type_land:        $('#ty-land').checked,
+          has_phone:        $('#has-phone').checked,
+          st_flip:          $('#st-flip').checked,
+          st_brrrr:         $('#st-brrrr').checked,
+          st_buyhold:       $('#st-buyhold').checked,
+          st_wholesale:     $('#st-wholesale').checked,
+          st_sellerfin:     $('#st-sellerfin').checked,
+          zips:             $('#ziplist').value.trim()
+        };
+        try{
+          await ref.set(payload);
+          $('#saveWhMsg').textContent='Saved.';
+          setTimeout(()=>$('#saveWhMsg').textContent='',1200);
+        }catch(e){
+          console.error(e);
+          $('#saveWhMsg').textContent='Could not save.';
+        }
+      });
+    }
+
+    // ---- Auth + initial route
+    auth.onAuthStateChanged(u=>{
+      if(!u){ location.href='index.html'; return; }
+      $('#meLine').textContent = `${u.email||''} — UID: ${u.uid}`;
+      const initial = new URL(location.href).searchParams.get('tab') || 'overview';
+      show(initial);
+    });
+
+    // ---- Header request buttons (quick mailto)
+    document.getElementById('redPhoneBtn').onclick  = ()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
+    document.getElementById('bluePhoneBtn').onclick = ()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
+    document.getElementById('logoutBtn').onclick    = ()=>auth.signOut().then(()=>location.href='index.html');
+  </script>
+</body>
+</html>
