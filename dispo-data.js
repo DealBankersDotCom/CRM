@@ -9,7 +9,7 @@ window.dispoItems = [
     terms: 'Seller finance possible (min $15k down)',
     memo: 'offering-memo2.html', // Booth memo
     share: 'https://www.facebook.com/marketplace/create/item',
-    notes: '4/3 • 948 sqft • 1945 build • pier foundation • 2024 remodel',
+    notes: '4/3 • 1,798 sqft • 1965 build • slab foundation • large floorplan',
     photos: [
       'images/deals/booth-st/20250124_171714.jpg',
       'images/deals/booth-st/20250124_171724.jpg',
