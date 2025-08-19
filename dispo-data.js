@@ -3,7 +3,7 @@ window.dispoItems = [
   {
     kind: 'deal',
     id: 'booth-st',
-    title: 'Seller finance possible (min $15k down)',
+    title: 'Seller Finance Deal!)',
     address: '707 Booth, San Antonio, TX 78216',
     price: '255,000 ask',
     terms: '15k terms negotiable',
