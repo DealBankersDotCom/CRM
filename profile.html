@@ -1,4 +1,4 @@
-<!-- ======================== profile.html ======================== -->
+<!-- ======================== profile.html (tabs + settings questionnaires + townhall + offerings) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -14,6 +14,7 @@
       --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff;
       --r:18px; --shadow:0 24px 64px rgba(0,0,0,.5);
       --red:#ff5a5a; --cyan:#47b4ff; --green:#26cf84;
+      --gold:#ffd36b;
     }
     *{box-sizing:border-box}
     body{
@@ -39,6 +40,9 @@
     .pill.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}
     .pill.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
     .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
+    .btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a); color:#211a05; border:none; font-weight:800}
+    .btn.green{background:linear-gradient(180deg,var(--green),#1a9b61); color:#fff; border:none; font-weight:800}
+    .btn.ghost{background:#0e2433}
 
     .tabs{display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}
@@ -69,14 +73,23 @@
     .facts-preview{width:100%;height:300px;border:0;border-radius:12px;background:#0b141b}
     @media (max-width:980px){ .overview-grid{grid-template-columns:1fr} .townhall{height:58vh;min-height:380px} }
 
-    /* Settings */
-    .settings-subtabs{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-    .chip{display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;font-size:13px}
-    .chip input{transform:scale(1.2)}
-    .row{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-    .input{padding:10px 12px;border:1px solid var(--line);background:#0f1a24;color:#eaf1f6;border-radius:10px}
-    .savebar{display:flex;gap:8px;align-items:center;margin-top:10px}
-    .muted{color:#9fb3c7}
+    /* Settings form */
+    .settings-grid{display:grid;grid-template-columns:1fr 1fr; gap:12px}
+    @media (max-width:960px){ .settings-grid{grid-template-columns:1fr} }
+    .section{border:1px solid var(--line); border-radius:14px; padding:12px; background:#0f1a24}
+    .section h3{margin:0 0 8px}
+    .row{display:grid; grid-template-columns:140px 1fr; gap:10px; align-items:flex-start; margin:8px 0}
+    @media (max-width:640px){ .row{grid-template-columns:1fr} }
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chip{user-select:none; cursor:pointer; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#0f1a24; color:#d3e3f5; font-size:13px}
+    .chip input{display:none}
+    .chip.active{background:linear-gradient(180deg,#1e3a5f,#0d2136); border-color:#2b74ff}
+    .muted{color:var(--muted); font-size:13px}
+    .inline{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .input, .textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#0c1620; color:#eaf1f6}
+    .textarea{min-height:96px; resize:vertical}
+    .small{font-size:12px; color:#9fb3c7}
+    .badge{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:#0e1b27; font-size:12px}
   </style>
 </head>
 <body>
@@ -86,6 +99,7 @@
         <img src="icon (1).jpg" alt="DealBankers"/>
         <h1>DEALBANKERS • PROFILE</h1>
       </div>
+
       <div class="hdr-actions">
         <button class="pill red"  id="redPhoneBtn"  title="Immediate Need">☎</button>
         <button class="pill blue" id="bluePhoneBtn" title="Standard Request">☎</button>
@@ -109,7 +123,7 @@
           <!-- Announcements + Active Offerings -->
           <div class="announce">
             <h3 style="margin:0 0 8px">📢 Special Announcements</h3>
-            <div id="meLine" class="muted" style="margin-bottom:6px"></div>
+            <div id="meLine" class="small" style="margin-bottom:6px"></div>
 
             <h4 style="margin:10px 0 6px">Active Offerings</h4>
             <div style="font-size:14px;line-height:1.5">
@@ -121,7 +135,7 @@
               </div>
 
               <h5 style="margin:12px 0 6px">Statement of Facts (Inline Preview)</h5>
-              <iframe class="facts-preview" src="offering-memo2.html"></iframe>
+              <iframe class="facts-preview" src="offering-memo2.html" title="Offering Memo Preview"></iframe>
             </div>
           </div>
 
@@ -129,7 +143,7 @@
           <div class="townhall">
             <div class="th-head">
               <h2 style="margin:0">🏛️ Townhall (All Users)</h2>
-              <div id="presence" class="muted">Connecting…</div>
+              <div id="presence" class="small">Connecting…</div>
             </div>
             <div class="th-body" id="thBody" aria-live="polite"></div>
             <div class="th-input">
@@ -142,60 +156,157 @@
 
       <!-- WHOLESALER -->
       <div class="card" data-panel="wholesaler" style="display:none">
-        <div class="muted" style="margin:4px 6px 10px">Lead filters live in <b>Settings → Wholesaler</b>. No self-enable switch is shown here.</div>
-        <div class="iframe-wrap"><iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe></div>
+        <div class="small" style="margin:4px 6px 10px">
+          Lead filters live in <b>Settings → Wholesaler</b>.
+        </div>
+        <div class="iframe-wrap">
+          <iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe>
+        </div>
       </div>
 
       <!-- CONTRACTOR -->
       <div class="card" data-panel="contractor" style="display:none">
-        <div class="iframe-wrap"><iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe></div>
+        <div class="iframe-wrap">
+          <iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe>
+        </div>
       </div>
 
-      <!-- REALTOR/INVESTOR placeholders -->
-      <div class="card" data-panel="realtor"  style="display:none"><p class="muted" style="margin:0">Realtor portal coming soon.</p></div>
-      <div class="card" data-panel="investor" style="display:none"><p class="muted" style="margin:0">Investor portal coming soon.</p></div>
+      <!-- REALTOR / INVESTOR placeholders -->
+      <div class="card" data-panel="realtor"  style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
+      <div class="card" data-panel="investor" style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
 
-      <!-- SETTINGS (with Wholesaler filter placeholder) -->
+      <!-- SETTINGS (Questionnaires + Admin God Mode) -->
       <div class="card" data-panel="settings" style="display:none">
-        <h3 style="margin:2px 0 10px">Settings</h3>
+        <div class="settings-grid">
+          <!-- Wholesaler profile -->
+          <div class="section" id="whSettings">
+            <h3>⚙️ Wholesaler Profile</h3>
+            <div class="row">
+              <div class="muted">Asset type</div>
+              <div class="chips" data-name="types">
+                <label class="chip"><input type="checkbox" value="residential">Residential</label>
+                <label class="chip"><input type="checkbox" value="commercial">Commercial</label>
+                <label class="chip"><input type="checkbox" value="land">Land</label>
+                <label class="chip"><input type="checkbox" value="multifamily">Multifamily</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Strategy</div>
+              <div class="chips" data-name="strategy">
+                <label class="chip"><input type="checkbox" value="flip">Flip</label>
+                <label class="chip"><input type="checkbox" value="brrrr">BRRRR</label>
+                <label class="chip"><input type="checkbox" value="buy_hold">Buy & Hold</label>
+                <label class="chip"><input type="checkbox" value="wholesale">Wholesale</label>
+                <label class="chip"><input type="checkbox" value="novation">Novation</label>
+                <label class="chip"><input type="checkbox" value="seller_finance">Seller Finance</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Target price</div>
+              <div class="inline">
+                <input id="whMin" class="input" type="number" placeholder="Min $" style="max-width:160px">
+                <input id="whMax" class="input" type="number" placeholder="Max $" style="max-width:160px">
+                <span class="small">(optional)</span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Service ZIPs</div>
+              <div><input id="whZips" class="input" placeholder="Comma-separated ZIPs e.g. 77003,77004"></div>
+            </div>
+            <div class="row">
+              <div class="muted">Notes</div>
+              <div><textarea id="whNotes" class="textarea" placeholder="Anything else about how you operate…"></textarea></div>
+            </div>
+            <div class="inline" style="justify-content:flex-end">
+              <span id="whSaved" class="small" style="opacity:.8"></span>
+              <button id="saveWh" class="btn green">Save Wholesaler Profile</button>
+            </div>
+          </div>
 
-        <div class="settings-subtabs">
-          <span class="chip"><input type="radio" name="settab" value="wh" checked/> Wholesaler</span>
-          <span class="chip"><input type="radio" name="settab" value="notify"/> Notifications</span>
-          <span class="chip"><input type="radio" name="settab" value="acct"/> Account</span>
+          <!-- Contractor profile -->
+          <div class="section" id="ctSettings">
+            <h3>🛠️ Contractor Profile</h3>
+            <div class="row">
+              <div class="muted">Trades</div>
+              <div class="chips" data-name="trades">
+                <label class="chip"><input type="checkbox" value="gc">General Contractor</label>
+                <label class="chip"><input type="checkbox" value="framing">Framing</label>
+                <label class="chip"><input type="checkbox" value="drywall">Drywall</label>
+                <label class="chip"><input type="checkbox" value="paint">Paint</label>
+                <label class="chip"><input type="checkbox" value="roofing">Roofing</label>
+                <label class="chip"><input type="checkbox" value="plumbing">Plumbing</label>
+                <label class="chip"><input type="checkbox" value="electrical">Electrical</label>
+                <label class="chip"><input type="checkbox" value="hvac">HVAC</label>
+                <label class="chip"><input type="checkbox" value="concrete">Concrete</label>
+                <label class="chip"><input type="checkbox" value="landscaping">Landscaping</label>
+                <label class="chip"><input type="checkbox" value="demo">Demo</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Work type</div>
+              <div class="chips" data-name="workType">
+                <label class="chip"><input type="checkbox" value="residential">Residential</label>
+                <label class="chip"><input type="checkbox" value="commercial">Commercial</label>
+                <label class="chip"><input type="checkbox" value="new_build">New Build</label>
+                <label class="chip"><input type="checkbox" value="remodel">Remodel</label>
+                <label class="chip"><input type="checkbox" value="service">Service Calls</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Credentials</div>
+              <div class="chips" data-name="creds">
+                <label class="chip"><input type="checkbox" value="licensed">Licensed</label>
+                <label class="chip"><input type="checkbox" value="insured">Insured</label>
+                <label class="chip"><input type="checkbox" value="bonded">Bonded</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Service ZIPs</div>
+              <div><input id="ctZips" class="input" placeholder="Comma-separated ZIPs"></div>
+            </div>
+            <div class="row">
+              <div class="muted">Availability</div>
+              <div class="chips" data-name="availability">
+                <label class="chip"><input type="checkbox" value="immediate">Immediate</label>
+                <label class="chip"><input type="checkbox" value="1_2_weeks">1–2 weeks</label>
+                <label class="chip"><input type="checkbox" value="booked_out">Booked out</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Notes</div>
+              <div><textarea id="ctNotes" class="textarea" placeholder="Lic #, crew size, territory, etc."></textarea></div>
+            </div>
+            <div class="inline" style="justify-content:flex-end">
+              <span id="ctSaved" class="small" style="opacity:.8"></span>
+              <button id="saveCt" class="btn green">Save Contractor Profile</button>
+            </div>
+          </div>
         </div>
 
-        <div id="set-wh">
-          <p class="muted" style="margin-top:0">A simple placeholder for your **wholesaler questionnaire/filters**. Saved to <code>userSettings/{uid}/wholesaler</code>. No self-enable toggle is shown.</p>
-
-          <div class="row">
-            <label class="chip"><input type="checkbox" id="ty-res"/> Residential</label>
-            <label class="chip"><input type="checkbox" id="ty-com"/> Commercial</label>
-            <label class="chip"><input type="checkbox" id="ty-land"/> Land</label>
-            <label class="chip"><input type="checkbox" id="has-phone"/> Has phone</label>
+        <!-- God Mode (visible only to dealbankers@gmail.com) -->
+        <div id="adminBlock" class="section" style="margin-top:12px; display:none">
+          <h3>🧰 God Mode (Admin)</h3>
+          <div class="small muted" style="margin-bottom:8px">
+            Signed in as <span id="adminEmail"></span> • Current UID: <code id="currentUid"></code>
           </div>
-
           <div class="row">
-            <label class="chip"><input type="checkbox" id="st-flip"/> Flip</label>
-            <label class="chip"><input type="checkbox" id="st-brrrr"/> BRRRR</label>
-            <label class="chip"><input type="checkbox" id="st-buyhold"/> Buy & Hold</label>
-            <label class="chip"><input type="checkbox" id="st-wholesale"/> Wholesale</label>
-            <label class="chip"><input type="checkbox" id="st-sellerfin"/> Seller Finance</label>
+            <div class="muted">Leads for me</div>
+            <div class="inline">
+              <button id="meEnable"  class="btn gold">Enable</button>
+              <button id="meDisable" class="btn">Disable</button>
+              <span class="small" id="meGateMsg"></span>
+            </div>
           </div>
-
           <div class="row">
-            <input id="ziplist" class="input" style="min-width:340px" placeholder="ZIPs, e.g. 77003,77004"/>
-            <span class="muted">Comma-separated ZIP filters.</span>
-          </div>
-
-          <div class="savebar">
-            <button id="saveWh" class="btn">Save Wholesaler Filters</button>
-            <span id="saveWhMsg" class="muted"></span>
+            <div class="muted">Leads for UID</div>
+            <div class="inline" style="width:100%">
+              <input id="targetUid" class="input" placeholder="Paste target UID"/>
+              <button id="uidEnable"  class="btn gold">Enable</button>
+              <button id="uidDisable" class="btn">Disable</button>
+              <span class="small" id="uidGateMsg"></span>
+            </div>
           </div>
         </div>
-
-        <div id="set-notify" style="display:none" class="muted">Notifications settings placeholder.</div>
-        <div id="set-acct"   style="display:none" class="muted">Account settings placeholder.</div>
       </div>
     </section>
   </div>
@@ -211,8 +322,13 @@
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth=firebase.auth(); const db=firebase.database();
 
-    // ---- Tabs + routing
+    // ---- dom helpers
     const $=s=>document.querySelector(s);
+    const $$=s=>[...document.querySelectorAll(s)];
+    const byId=id=>document.getElementById(id);
+    const qs=new URL(location.href).searchParams;
+
+    // ---- Tabs + routing
     const tabs=[...document.querySelectorAll('.tab')];
     const panels=[...document.querySelectorAll('[data-panel]')];
 
@@ -225,26 +341,25 @@
       if(name==='wholesaler') ensureWh();
       if(name==='contractor') ensureCt();
       if(name==='overview')  ensureOverview();
-      if(name==='settings')  ensureSettings();
     }
     $('#tabs').addEventListener('click',e=>{
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
     // ---- Lazy iframes
-    let whSet=false, ctSet=false, ovSet=false, stSet=false;
+    let whSet=false, ctSet=false, ovSet=false;
     function ensureWh(){
       if(whSet) return; whSet=true;
       const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      $('#whFrame').src=`wholesaler.html?uid=${uid}`;
+      byId('whFrame').src=`wholesaler.html?uid=${uid}`;
     }
     function ensureCt(){
       if(ctSet) return; ctSet=true;
       const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      $('#ctFrame').src=`contractor.html?uid=${uid}`;
+      // if you build a dedicated contractor portal, point it here:
+      byId('ctFrame').src=`contractor.html?uid=${uid}`;
     }
     function ensureOverview(){ if(ovSet) return; ovSet=true; wireTownhall(); }
-    function ensureSettings(){ if(stSet) return; stSet=true; wireSettings(); }
 
     // ---- Townhall chat
     function wireTownhall(){
@@ -255,11 +370,9 @@
         const m=snap.val(); if(!m) return;
         const me=auth.currentUser?.uid===m.uid;
         const wrap=document.createElement('div'); wrap.className='msg'+(me?' me':'');
-
-        const t=new Date(m.ts||Date.now());
-        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
-
-        const meta=document.createElement('div'); meta.className='meta'; meta.textContent=`${m.name||'Someone'} • ${hh}:${mm}`;
+        const meta=document.createElement('div'); meta.className='meta';
+        const t=new Date(m.ts||Date.now()); const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+        meta.textContent=`${m.name||'Someone'} • ${hh}:${mm}`;
         const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
         wrap.append(meta,bubble); body.appendChild(wrap); scroll();
       });
@@ -271,82 +384,140 @@
       presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
 
       const sendMsg=()=>{
-        const txt=($('#thInput').value||'').trim(); if(!txt) return;
+        const txt=(input.value||'').trim(); if(!txt) return;
         const u=auth.currentUser||{};
         db.ref('townhall/messages').push({uid:u.uid||'anon',name:u.displayName||u.email||'Anon',text:txt,ts:firebase.database.ServerValue.TIMESTAMP});
-        $('#thInput').value=''; $('#thInput').focus();
+        input.value=''; input.focus();
       };
-      $('#thInput').addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
-      $('#thSend').addEventListener('click',sendMsg);
+      input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
+      send.addEventListener('click',sendMsg);
     }
 
-    // ---- Settings (placeholders + save)
-    function wireSettings(){
-      // subtab toggles
-      const radios=[...document.querySelectorAll('input[name="settab"]')];
-      const panes={wh:$('#set-wh'), notify:$('#set-notify'), acct:$('#set-acct')};
-      const switchTo=v=>{
-        panes.wh.style.display=(v==='wh')?'block':'none';
-        panes.notify.style.display=(v==='notify')?'block':'none';
-        panes.acct.style.display=(v==='acct')?'block':'none';
+    // ---- Chip toggles (visual)
+    function wireChips(root){
+      root.querySelectorAll('.chip').forEach(ch=>{
+        const input=ch.querySelector('input');
+        const sync=()=>{ ch.classList.toggle('active', input.checked); };
+        ch.addEventListener('click', e=>{
+          if(e.target.tagName!=='INPUT'){ input.checked=!input.checked; }
+          sync();
+        });
+        sync();
+      });
+    }
+
+    // ---- Load/save Settings
+    function getChipValues(container){ return [...container.querySelectorAll('input:checked')].map(i=>i.value); }
+    function setChipValues(container, arr){
+      const set=new Set(arr||[]);
+      container.querySelectorAll('input').forEach(i=>{
+        i.checked = set.has(i.value);
+        i.closest('.chip')?.classList.toggle('active', i.checked);
+      });
+    }
+
+    function readWhForm(){
+      return {
+        types:     getChipValues(byId('whSettings').querySelector('[data-name="types"]')),
+        strategy:  getChipValues(byId('whSettings').querySelector('[data-name="strategy"]')),
+        price:     { min: Number(byId('whMin').value||0)||null, max: Number(byId('whMax').value||0)||null },
+        zips:      (byId('whZips').value||'').trim(),
+        notes:     (byId('whNotes').value||'').trim(),
+        updatedAt: Date.now()
       };
-      radios.forEach(r=>r.addEventListener('change',()=>switchTo(r.value)));
-      switchTo('wh');
+    }
+    function fillWhForm(data={}){
+      setChipValues(byId('whSettings').querySelector('[data-name="types"]'), data.types);
+      setChipValues(byId('whSettings').querySelector('[data-name="strategy"]'), data.strategy);
+      byId('whMin').value = data?.price?.min ?? '';
+      byId('whMax').value = data?.price?.max ?? '';
+      byId('whZips').value = data.zips || '';
+      byId('whNotes').value = data.notes || '';
+      byId('whSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
+      wireChips(byId('whSettings'));
+    }
 
-      const uid=auth.currentUser?.uid; if(!uid) return;
+    function readCtForm(){
+      return {
+        trades:   getChipValues(byId('ctSettings').querySelector('[data-name="trades"]')),
+        workType: getChipValues(byId('ctSettings').querySelector('[data-name="workType"]')),
+        creds:    getChipValues(byId('ctSettings').querySelector('[data-name="creds"]')),
+        zips:     (byId('ctZips').value||'').trim(),
+        availability: getChipValues(byId('ctSettings').querySelector('[data-name="availability"]')),
+        notes:    (byId('ctNotes').value||'').trim(),
+        updatedAt: Date.now()
+      };
+    }
+    function fillCtForm(data={}){
+      setChipValues(byId('ctSettings').querySelector('[data-name="trades"]'), data.trades);
+      setChipValues(byId('ctSettings').querySelector('[data-name="workType"]'), data.workType);
+      setChipValues(byId('ctSettings').querySelector('[data-name="creds"]'), data.creds);
+      setChipValues(byId('ctSettings').querySelector('[data-name="availability"]'), data.availability);
+      byId('ctZips').value  = data.zips || '';
+      byId('ctNotes').value = data.notes || '';
+      byId('ctSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
+      wireChips(byId('ctSettings'));
+    }
 
-      const ref=db.ref(`userSettings/${uid}/wholesaler`);
-      // load once
-      ref.get().then(s=>{
-        const v=s.val()||{};
-        $('#ty-res').checked=!!v.type_residential;
-        $('#ty-com').checked=!!v.type_commercial;
-        $('#ty-land').checked=!!v.type_land;
-        $('#has-phone').checked=!!v.has_phone;
-        $('#st-flip').checked=!!v.st_flip;
-        $('#st-brrrr').checked=!!v.st_brrrr;
-        $('#st-buyhold').checked=!!v.st_buyhold;
-        $('#st-wholesale').checked=!!v.st_wholesale;
-        $('#st-sellerfin').checked=!!v.st_sellerfin;
-        $('#ziplist').value=v.zips||'';
-      });
+    async function save(path, obj){
+      await db.ref(path).set(obj);
+    }
+    async function load(path){
+      const snap = await db.ref(path).get();
+      return snap.val() || {};
+    }
 
-      $('#saveWh').addEventListener('click',async ()=>{
-        const payload={
-          type_residential: $('#ty-res').checked,
-          type_commercial:  $('#ty-com').checked,
-          type_land:        $('#ty-land').checked,
-          has_phone:        $('#has-phone').checked,
-          st_flip:          $('#st-flip').checked,
-          st_brrrr:         $('#st-brrrr').checked,
-          st_buyhold:       $('#st-buyhold').checked,
-          st_wholesale:     $('#st-wholesale').checked,
-          st_sellerfin:     $('#st-sellerfin').checked,
-          zips:             $('#ziplist').value.trim()
-        };
-        try{
-          await ref.set(payload);
-          $('#saveWhMsg').textContent='Saved.';
-          setTimeout(()=>$('#saveWhMsg').textContent='',1200);
-        }catch(e){
-          console.error(e);
-          $('#saveWhMsg').textContent='Could not save.';
-        }
-      });
+    // ---- Admin helpers
+    async function setLeadGate(uid, enabled){
+      await db.ref(`userSettings/${uid}/wholesaler/leadsEnabled`).set(!!enabled);
     }
 
     // ---- Auth + initial route
-    auth.onAuthStateChanged(u=>{
+    auth.onAuthStateChanged(async u=>{
       if(!u){ location.href='index.html'; return; }
-      $('#meLine').textContent = `${u.email||''} — UID: ${u.uid}`;
-      const initial = new URL(location.href).searchParams.get('tab') || 'overview';
+      byId('meLine').textContent = `${u.email||''} — UID: ${u.uid}`;
+
+      // populate settings forms
+      const wh = await load(`userSettings/${u.uid}/wholesaler`);
+      fillWhForm(wh);
+      const ct = await load(`userSettings/${u.uid}/contractor`);
+      fillCtForm(ct);
+
+      // wire saves
+      byId('saveWh').onclick = async ()=>{
+        const obj = readWhForm();
+        await save(`userSettings/${u.uid}/wholesaler`, obj);
+        fillWhForm(obj);
+      };
+      byId('saveCt').onclick = async ()=>{
+        const obj = readCtForm();
+        await save(`userSettings/${u.uid}/contractor`, obj);
+        fillCtForm(obj);
+      };
+
+      // God Mode visibility
+      const isAdmin = (u.email||'').toLowerCase()==='dealbankers@gmail.com';
+      if(isAdmin){
+        byId('adminBlock').style.display='block';
+        byId('adminEmail').textContent = u.email||'';
+        byId('currentUid').textContent = u.uid;
+
+        byId('meEnable').onclick  = async()=>{ await setLeadGate(u.uid, true);  byId('meGateMsg').textContent='Enabled'; };
+        byId('meDisable').onclick = async()=>{ await setLeadGate(u.uid, false); byId('meGateMsg').textContent='Disabled'; };
+
+        byId('uidEnable').onclick  = async()=>{ const t=byId('targetUid').value.trim(); if(!t) return; await setLeadGate(t,true);  byId('uidGateMsg').textContent='Enabled'; };
+        byId('uidDisable').onclick = async()=>{ const t=byId('targetUid').value.trim(); if(!t) return; await setLeadGate(t,false); byId('uidGateMsg').textContent='Disabled'; };
+      }
+
+      // initial tab
+      const initial = qs.get('tab') || 'overview';
       show(initial);
     });
 
-    // ---- Header request buttons (quick mailto)
-    document.getElementById('redPhoneBtn').onclick  = ()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
-    document.getElementById('bluePhoneBtn').onclick = ()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
-    document.getElementById('logoutBtn').onclick    = ()=>auth.signOut().then(()=>location.href='index.html');
+    // ---- Header request buttons (fast mailto)
+    byId('redPhoneBtn').onclick  = ()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
+    byId('bluePhoneBtn').onclick = ()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
+    byId('logoutBtn').onclick    = ()=>auth.signOut().then(()=>location.href='index.html');
   </script>
 </body>
 </html>
