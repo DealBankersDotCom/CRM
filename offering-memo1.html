@@ -1,3 +1,4 @@
+<!-- =================== offering-memo1.html (Virgin D6) =================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -23,6 +24,7 @@
   .btn:hover{filter:brightness(1.06)}
   .btn-accent{background:linear-gradient(180deg,var(--accent),#0a58ca);border:none}
   .btn-green{background:linear-gradient(180deg,var(--green),#1f8a39);border:none}
+
   .grid{display:grid;gap:16px;grid-template-columns:1.15fr .85fr;margin-top:16px}
   @media (max-width:960px){.grid{grid-template-columns:1fr}}
   .card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));border:1px solid var(--line);border-radius:18px;padding:16px}
@@ -32,12 +34,27 @@
   .kv .lab{color:#b8cadd;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
   .kv .val{font-weight:800;margin-top:4px}
   .list{margin:8px 0 0 18px;color:#d7e6f5}
+
+  /* Photos (desktop add/edit) */
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin:0}
+  .desktopOnly{display:inline-flex}
+  @media (max-width:960px){ .desktopOnly{display:none} }
+
+  .carousel{position:relative;width:100%;height:300px;overflow:hidden;border-radius:12px;margin:12px 0;background:#0b141b}
+  .carousel img{width:100%;height:300px;object-fit:cover;position:absolute;top:0;left:0;opacity:0;transition:opacity .6s}
+  .carousel img.active{opacity:1}
+  .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
+  .carBtn{border:1px solid var(--line);background:#0f1a24;border-radius:999px;padding:6px 10px;color:#eaf1f6}
+
+  /* PDF */
   .pdfbar{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:14px 0 8px;padding:8px 10px;background:#0d1f2e;border:1px solid var(--line);border-radius:12px}
   .pdfbar .title{display:flex;align-items:center;gap:10px;font-weight:800}
   .pdfbar img{width:22px;height:22px}
   .pdfbar .tools{display:flex;gap:8px;flex-wrap:wrap}
   .pdf-ifr{width:100%;height:560px;border:0;background:#fff;border-radius:12px}
   @media (max-width:960px){.pdf-ifr{height:420px}}
+
+  /* Form */
   form .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
   form .row3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px}
   @media (max-width:720px){form .row,form .row3{grid-template-columns:1fr}}
@@ -48,6 +65,11 @@
   .qrbox img{width:120px;height:120px;border-radius:10px;background:#fff}
   .success{display:none;margin-top:10px;background:#0f2a1a;border:1px solid #235e3e;color:#c7f2da;padding:10px 12px;border-radius:10px;font-size:14px}
   .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid var(--line);display:none;z-index:50}
+  dialog{border:none;border-radius:16px;background:#0f1a24;color:#eaf1f6;padding:14px;max-width:740px;width:92%}
+  .thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+  .thumb{position:relative}
+  .thumb img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px}
+  .thumb button{position:absolute;top:6px;right:6px;border:1px solid var(--line);background:#0b1218;border-radius:8px;color:#fff;padding:2px 6px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -61,6 +83,10 @@
         </div>
       </div>
       <div class="actions">
+        <div class="controls desktopOnly">
+          <button id="btnAdd"  class="btn btn-green">＋ Add Photos</button>
+          <button id="btnEdit" class="btn">✎ Edit Photos</button>
+        </div>
         <button id="shareBtn" class="btn btn-accent">Share</button>
         <a id="smsBtn" class="btn btn-green" href="#" target="_blank" rel="noopener">Text Bill</a>
       </div>
@@ -75,6 +101,9 @@
           <div class="kv"><div class="lab">Volume (first)</div><div class="val">100,000,000 gallons</div></div>
           <div class="kv"><div class="lab">Exit Buyer</div><div class="val">In place (pay on injection & clearance)</div></div>
         </div>
+
+        <!-- Photos -->
+        <div id="carousel" class="carousel"></div>
 
         <h3 style="margin:8px 0 6px">Capital Structure</h3>
         <ul class="list">
@@ -103,7 +132,7 @@
             <button id="copyPdf" class="btn" type="button">Copy Link</button>
           </div>
         </div>
-        <iframe id="sofFrame" class="pdf-ifr" title="Statement of Facts"></iframe>
+        <iframe id="sofFrame" class="pdf-ifr" title="Statement of Facts" src="docs/offerings/d6/sof.pdf"></iframe>
       </div>
 
       <div class="card">
@@ -146,59 +175,127 @@
     </section>
   </div>
 
+  <!-- Manage Photos dialog (desktop only) -->
+  <dialog id="mgr">
+    <h3 style="margin:0 0 8px">Manage Photos</h3>
+    <div style="display:grid;gap:8px">
+      <label>Photo URLs (comma separated)
+        <textarea id="urlInput" class="input" rows="3" placeholder="https://...jpg, https://...png"></textarea>
+      </label>
+      <label>Upload Photos
+        <input id="fileInput" type="file" accept="image/*" multiple style="display:block;margin-top:8px"/>
+      </label>
+    </div>
+    <div class="thumbs" id="thumbs"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="clearAll" class="btn">Clear All</button>
+      <button id="savePhotos" class="btn btn-green">Save</button>
+      <button id="closeMgr" class="btn">Close</button>
+    </div>
+  </dialog>
+
   <div id="toast" class="toast"></div>
 
+  <!-- Firebase for interest form -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
   <script>
     const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",
       databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"};
     firebase.initializeApp(firebaseConfig);
     const db=firebase.database();
+  </script>
 
+  <script>
     const $=s=>document.querySelector(s);
     const toast=t=>{const el=$('#toast');el.textContent=t;el.style.display='block';setTimeout(()=>el.style.display='none',1600);};
 
-    // SMS / QR
+    /* ---------- Photos: localStorage-first, then defaults from /images/offerings/d6/ ---------- */
+    const KEY = 'db_memo_photos_' + location.pathname.replace(/[^\w]+/g,'-');
+    // Put any filenames you uploaded in images/offerings/d6/ here, or just use Add Photos on desktop.
+    const defaultImgs = [
+      'images/offerings/d6/hero1.jpg',
+      'images/offerings/d6/hero2.jpg'
+      // e.g. 'images/offerings/d6/20250429_194437.jpg', ...
+    ];
+    function loadPhotos(){ try{const x=JSON.parse(localStorage.getItem(KEY)||'[]'); if(Array.isArray(x)&&x.length) return x;}catch{} return defaultImgs; }
+    function savePhotos(arr){ localStorage.setItem(KEY, JSON.stringify(arr||[])); }
+
+    /* ---------- Carousel ---------- */
+    let carIdx=0, carTimer=null, running=true;
+    const car = $('#carousel');
+    function renderCarousel(){
+      const photos=loadPhotos();
+      car.innerHTML='';
+      photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo '+(i+1); if(i===0) img.className='active'; car.appendChild(img); });
+      const ctr=document.createElement('div'); ctr.className='carBtns';
+      const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
+      const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
+      const next=document.createElement('button'); next.className='carBtn'; next.textContent='▶';
+      ctr.append(prev,pause,next); car.appendChild(ctr);
+      prev.onclick=()=>{ running=false; setSlide(-1); };
+      next.onclick=()=>{ running=false; setSlide(+1); };
+      pause.onclick=()=>{ running=!running; if(running) startCarousel(); else stopCarousel(); };
+      startCarousel();
+    }
+    function setSlide(d){ const imgs=[...car.querySelectorAll('img')]; if(!imgs.length) return;
+      imgs[carIdx]?.classList.remove('active'); carIdx=(carIdx+d+imgs.length)%imgs.length; imgs[carIdx]?.classList.add('active'); }
+    function startCarousel(){ stopCarousel(); carTimer=setInterval(()=>{ if(running) setSlide(+1); },3200); }
+    function stopCarousel(){ if(carTimer){ clearInterval(carTimer); carTimer=null; } }
+
+    /* ---------- PDF tools (uses GitHub-hosted file) ---------- */
+    (function(){
+      const sof = 'docs/offerings/d6/sof.pdf';
+      $('#openPdf').href = sof; $('#openPdf').target='_blank'; $('#openPdf').rel='noopener';
+      $('#dlPdf').href   = sof; $('#dlPdf').download = 'sof.pdf';
+      $('#copyPdf').addEventListener('click', async ()=>{ try{ await navigator.clipboard.writeText(new URL(sof, location.href)); toast('PDF link copied'); }catch{} });
+      // iframe src is already set inline; if you ever want GView instead:
+      // document.getElementById('sofFrame').src = 'https://docs.google.com/gview?embedded=1&url='+encodeURIComponent(new URL(sof,location.href));
+    })();
+
+    /* ---------- SMS / QR ---------- */
     const BILL_PHONE="2104281449"; const SMS_TEXT="Interested in D6 Capital Raise";
     function smsHref(){const base=/iPhone|iPad|Macintosh/.test(navigator.userAgent)?`sms:${BILL_PHONE}&`:`sms:${BILL_PHONE}?`;return base+"body="+encodeURIComponent(SMS_TEXT)}
-    function setQR(){const data=`SMSTO:${BILL_PHONE}:${SMS_TEXT}`;
+    (function setQR(){const data=`SMSTO:${BILL_PHONE}:${SMS_TEXT}`;
       const url=`https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=${encodeURIComponent(data)}`;
-      $('#qrImg').src=url; $('#smsLink').href=smsHref(); $('#smsBtn').href=smsHref();}
+      $('#qrImg').src=url; $('#smsLink').href=smsHref(); $('#smsBtn').href=smsHref();})();
 
-    // Share
+    /* ---------- Share ---------- */
     $('#shareBtn').addEventListener('click',async()=>{
       const shareData={title:document.title,text:"Offering Memorandum – Virgin D6 Lift (FOB Houston)",url:location.href};
       if(navigator.share){try{await navigator.share(shareData)}catch(e){}}
       else{await navigator.clipboard.writeText(location.href);toast('Link copied to clipboard');}
     });
 
-    // SOF PDF (default = your Drive file)
-    (function loadSOF(){
-      const p=new URL(location.href).searchParams;
-      const DRIVE_ID="1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT";
-      const defaultURL=`https://drive.google.com/uc?export=download&id=${DRIVE_ID}`;
-      const sof=p.get('sof')||defaultURL;
-      const viewer=`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(sof)}`;
-      const frame=$('#sofFrame'); frame.src=viewer;
-      $('#openPdf').href=sof; $('#openPdf').target='_blank'; $('#openPdf').rel='noopener';
-      $('#dlPdf').href=sof; $('#dlPdf').download=sof.split('/').pop()||'statement-of-facts.pdf';
-      $('#copyPdf').addEventListener('click',async()=>{try{await navigator.clipboard.writeText(sof);toast('PDF link copied')}catch{toast('Could not copy')}})
-    })();
-
-    // Interest form -> /capitalInterest
+    /* ---------- Interest form ---------- */
     $('#interestForm').addEventListener('submit',async(e)=>{
       e.preventDefault();
       const rec={page:'Virgin D6 Lift – Offering Memo',url:location.href,
         name:$('#name').value.trim(),email:$('#email').value.trim(),phone:$('#phone').value.trim(),
         amount:Number($('#amount').value||0),accredited:$('#accredited').value,notes:$('#notes').value.trim(),ts:Date.now()};
       if(!rec.name||!rec.email||!rec.accredited){toast('Please complete required fields');return;}
-      try{await db.ref('capitalInterest').push(rec);$('#ok').style.display='block';e.target.reset();}
-      catch(err){console.error(err);toast('Could not submit right now. Try again shortly.');}
+      try{await firebase.database().ref('capitalInterest').push(rec);$('#ok').style.display='block';e.target.reset();}
+      catch{toast('Could not submit right now. Try again shortly.');}
     });
 
-    setQR();
+    /* ---------- Photo Manager (desktop only) ---------- */
+    const mgr=$('#mgr'), urlInput=$('#urlInput'), fileInput=$('#fileInput'), thumbs=$('#thumbs');
+    function openMgr(){ const arr=loadPhotos(); urlInput.value=arr.filter(u=>!/^data:/.test(u)).join(', '); drawThumbs(arr); mgr.showModal(); }
+    function drawThumbs(arr){ thumbs.innerHTML=''; arr.forEach((src,i)=>{ const t=document.createElement('div'); t.className='thumb';
+      t.innerHTML=`<img src="${src}"/><button data-i="${i}">✕</button>`; thumbs.appendChild(t); });
+      thumbs.querySelectorAll('button').forEach(b=>{ b.onclick=()=>{ const i=+b.dataset.i; const cur=loadPhotos(); cur.splice(i,1); savePhotos(cur); drawThumbs(cur); renderCarousel(); }; });
+    }
+    async function gatherUploads(files){ const list=[]; for(const f of files){ const data=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); }); list.push(data); } return list; }
+    document.getElementById('btnAdd').onclick=openMgr; document.getElementById('btnEdit').onclick=openMgr;
+    document.getElementById('closeMgr').onclick=()=>mgr.close();
+    document.getElementById('clearAll').onclick=()=>{ savePhotos([]); drawThumbs([]); renderCarousel(); };
+    document.getElementById('savePhotos').onclick=async()=>{
+      const urls=urlInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const uploads=await gatherUploads(fileInput.files||[]);
+      const final=[...urls,...uploads]; savePhotos(final); drawThumbs(final); renderCarousel(); mgr.close(); fileInput.value=''; urlInput.value='';
+    };
+
+    renderCarousel();
   </script>
 </body>
 </html>
