@@ -39,6 +39,7 @@
     .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
 
     .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
+    .hint.hidden{display:none}
 
     .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
@@ -50,23 +51,19 @@
     .ico{font-size:20px}
 
     .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
+    .hidden{display:none !important}
 
     .lead-wrap{padding:12px}
-    .banner{font-size:12px;color:#b8cbe0;margin-bottom:8px}
     .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
     .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
       background:linear-gradient(90deg,rgba(255,211,107,.18),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
     .body{padding:12px 14px}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
-
     .section{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#0f1f2b;padding:10px;margin-top:10px}
-
     .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
     .sv{height:260px;margin-top:6px}
     .map{height:220px;margin-top:8px}
-
-    .notesBox{display:grid;gap:8px;margin:8px 0 10px}
     .textarea{
       width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
       background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
@@ -74,8 +71,12 @@
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-    /* ---------- Dispo grid ---------- */
+    /* ---------- Dispo-only UI ---------- */
+    .dispoHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
+    .dispoCTA{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
     .dealgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .group{margin-top:14px}
+    .group h4{margin:0 0 8px;color:#d9e9f8}
     .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px}
     .dealhdr{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
     .dealtype{font-size:11px;padding:3px 8px;border-radius:999px;background:#103043;border:1px solid rgba(255,255,255,.18)}
@@ -101,15 +102,16 @@
         <div class="status" id="status">Loading…</div>
       </div>
 
-      <!-- Sticky tools -->
+      <!-- Sticky controls -->
       <div class="sticky">
         <div class="seg" role="tablist" aria-label="Mode">
           <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acquisition</button>
           <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
         </div>
-        <div class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
+        <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
 
-        <div class="bar" aria-label="Actions">
+        <!-- Acq-only toolbars -->
+        <div id="acqBar" class="bar" aria-label="Actions">
           <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
           <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
           <a class="btn btn-ghost" href="#" id="actDir"  title="Directions"><span class="ico">🚗</span></a>
@@ -118,33 +120,42 @@
           <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
         </div>
 
-        <div class="navrow">
+        <div id="acqNav" class="navrow">
           <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
           <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
           <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
         </div>
       </div>
 
-      <!-- Lead -->
       <div class="lead-wrap">
+        <!-- Acquisition panel -->
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
         </div>
 
-        <!-- Dispo side (visible only when mode==='dispo') -->
-        <div id="dispoPane" class="section" style="display:none">
-          <h3 style="margin:2px 0 8px">📦 Deals & Offerings</h3>
-          <div class="banner">Use these links to market deals. For cold-calling buyers, open the queue.</div>
-
-          <div class="chips" style="margin-bottom:6px">
-            <a class="btn" href="offering-memo1.html" target="_blank" rel="noopener">Open Memo 1</a>
-            <a class="btn" href="offering-memo2.html" target="_blank" rel="noopener">Open Memo 2</a>
-            <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=sf_link" target="_blank" rel="noopener">Submit Interest</a>
+        <!-- Disposition panel (completely separate view) -->
+        <div id="dispoPane" class="section hidden" aria-live="polite">
+          <div class="dispoHead">
+            <h3 style="margin:2px 0">📦 Disposition</h3>
             <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
           </div>
+          <div class="dispoCTA">
+            <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Post to Craigslist</a>
+            <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">Post to FB Marketplace</a>
+            <a class="btn" id="linkShareAll" href="#" title="Copy a shareable link">Link Share</a>
+          </div>
 
-          <!-- dynamic grid of deals & offerings -->
-          <div id="dealGrid" class="dealgrid" aria-live="polite"></div>
+          <!-- Deals -->
+          <div class="group" id="dealsGroup">
+            <h4>Deals</h4>
+            <div id="dealsGrid" class="dealgrid"></div>
+          </div>
+
+          <!-- Offerings -->
+          <div class="group" id="offeringsGroup">
+            <h4>Offerings</h4>
+            <div id="offeringsGrid" class="dealgrid"></div>
+          </div>
         </div>
       </div>
     </section>
@@ -164,11 +175,10 @@
 
   <div id="toast"></div>
 
-  <!-- Firebase (gate) -->
+  <!-- Firebase (gate for leads) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // Dedicated app so we don't collide if embedded multiple times.
     const gateApp = firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
@@ -177,7 +187,6 @@
     const params = new URL(location.href).searchParams;
     const uidParam = params.get('uid') || 'anon';
 
-    // Check gate before loading leads.js
     gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
       const allowed = !!snap.val();
       if(!allowed){
@@ -214,10 +223,7 @@
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
     const setMode=m=>localStorage.setItem(MODE_KEY,m);
 
-    function phoneOf(l){
-      return clean(l?.contacts?.[0]?.phone||'');
-    }
-
+    function phoneOf(l){ return clean(l?.contacts?.[0]?.phone||''); }
     function phoneHref(number, dialMode){
       const num=(number||'').replace(/[^\d+]/g,'');
       if(!num) return '#';
@@ -226,9 +232,8 @@
       if(dialMode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
       return `tel:${num}`;
     }
-    function dirHref(addr){
-      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`;
-    }
+    function dirHref(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`; }
+    /* NOTE: Street View embed is still the same; we’ll revisit the SV URL separately when you’re ready. */
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
@@ -239,86 +244,64 @@
     const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
     const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
 
-    function fmtTime(ts){
-      const d=new Date(ts); const pad=n=>String(n).padStart(2,'0');
-      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-    }
-
+    function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
-    /* -------------------- DISPO ITEMS --------------------
-       You can override these by creating `dispo-data.js` that defines:
-         window.dispoItems = [
-           { kind:'deal'|'offering', title:'', address:'', price:'', terms:'', memo:'offering-memo1.html', share:'https://...', notes:'' }
-         ]
-    ------------------------------------------------------*/
+    /* ---------- Dispo items (can be overridden by `dispo-data.js`) ---------- */
     let dispoItems=null, dispoLoaded=false;
     const fallbackDispo = [
-      {
-        kind:'deal',
-        title:'3014 El Paso St, San Antonio, TX 78207',
-        address:'3014 El Paso St, San Antonio, TX 78207',
-        price:'$155,000 ask',
-        terms:'Assignment $12k • As-is',
-        memo:'offering-memo1.html',
-        share:'https://www.facebook.com/marketplace/',
-        notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
-      },
-      {
-        kind:'offering',
-        title:'Virgin D6 Lift — FOB Houston',
-        address:'—',
-        price:'Capital Need $300k',
-        terms:'Repay 7–10 days • 100M gal',
-        memo:'offering-memo2.html',
-        share:'https://houston.craigslist.org/',
-        notes:'Active fuel trade offering. Use Submit Interest form for soft commits.'
-      }
+      { kind:'deal', title:'3014 El Paso St, San Antonio, TX 78207', address:'3014 El Paso St, San Antonio, TX 78207',
+        price:'$155,000 ask', terms:'Assignment $12k • As-is', memo:'offering-memo1.html',
+        share:'https://www.facebook.com/marketplace/create/item', notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024' },
+      { kind:'offering', title:'Virgin D6 Lift — FOB Houston', address:'—',
+        price:'Capital Need $300k', terms:'Repay 7–10 days • 100M gal', memo:'offering-memo2.html',
+        share:'https://www.craigslist.org/', notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.' }
     ];
-
     function ensureDispoData(cb){
       if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
-      const s=document.createElement('script');
-      s.src='dispo-data.js?v='+Date.now();
+      const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
       s.onload=()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
       s.onerror=()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
       document.head.appendChild(s);
     }
 
-    function renderDispoGrid(){
-      const grid = $('#dealGrid');
-      grid.innerHTML = '';
-      const items = dispoItems || fallbackDispo;
-      items.forEach(it=>{
-        const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
-        const card = document.createElement('div');
-        card.className='dealcard';
-        card.innerHTML = `
-          <div class="dealhdr">
-            <div>${it.title}</div>
-            <div class="dealtype">${kindTag}</div>
-          </div>
-          <div class="dealmeta">
-            ${it.price?`<div class="chip">${it.price}</div>`:''}
-            ${it.terms?`<div class="chip">${it.terms}</div>`:''}
-            ${it.address?`<div class="chip">${it.address}</div>`:''}
-          </div>
-          ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${it.notes}</div>`:''}
-          <div class="actrow">
-            ${it.memo?`<a class="btn" href="${it.memo}" target="_blank" rel="noopener">Open Memo</a>`:''}
-            ${it.share?`<a class="btn" href="${it.share}" target="_blank" rel="noopener">Post / Share</a>`:''}
-            ${it.memo?`<button class="btn" data-copy="${location.origin.replace(/\/$/,'')+'/'+it.memo}">Copy Link</button>`:''}
-          </div>
-        `;
-        grid.appendChild(card);
-      });
+    function renderDispo(){
+      ensureDispoData(items=>{
+        const deals = items.filter(i=>i.kind!=='offering');
+        const offs  = items.filter(i=>i.kind==='offering');
 
-      // wire copy buttons
-      grid.querySelectorAll('button[data-copy]').forEach(b=>{
-        b.addEventListener('click', ()=>{
-          const link=b.getAttribute('data-copy');
-          navigator.clipboard.writeText(link).then(()=>toast('Link copied'));
-        });
+        const fill = (list, gridId) => {
+          const grid=$(gridId); grid.innerHTML='';
+          list.forEach(it=>{
+            const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
+            const el=document.createElement('div'); el.className='dealcard';
+            el.innerHTML=`
+              <div class="dealhdr">
+                <div>${it.title}</div>
+                <div class="dealtype">${kindTag}</div>
+              </div>
+              <div class="dealmeta">
+                ${it.price?`<div class="chip">${it.price}</div>`:''}
+                ${it.terms?`<div class="chip">${it.terms}</div>`:''}
+                ${it.address?`<div class="chip">${it.address}</div>`:''}
+              </div>
+              ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${it.notes}</div>`:''}
+              <div class="actrow">
+                ${it.memo?`<a class="btn" href="${it.memo}" target="_blank" rel="noopener">Open Memo</a>`:''}
+                <a class="btn" href="${it.share||'https://www.facebook.com/marketplace/create/item'}" target="_blank" rel="noopener">Post / Share</a>
+                ${it.memo?`<button class="btn" data-copy="${location.origin.replace(/\/$/,'')+'/'+it.memo}">Copy Link</button>`:''}
+                <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
+                <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">FB Marketplace</a>
+              </div>`;
+            grid.appendChild(el);
+          });
+          grid.querySelectorAll('button[data-copy]').forEach(b=>{
+            b.addEventListener('click',()=>{ navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
+          });
+        };
+
+        fill(deals, '#dealsGrid');
+        fill(offs,  '#offeringsGrid');
       });
     }
 
@@ -349,8 +332,6 @@
       const lastSaved = saveTimeGet(addr);
       const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
 
-      const modeChip = mode==='acq' ? 'Mode: acquisition' : 'Mode: dispo';
-
       $('#leadCard').innerHTML = `
         <div class="title">${addr || name}</div>
         <div class="body">
@@ -358,7 +339,7 @@
             <div class="chip">UID: ${uid.slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${dialMode}</div>
-            <div class="chip">${modeChip}</div>
+            <div class="chip">Mode: acquisition</div>
           </div>
 
           <h3 style="margin:4px 0 6px;font-size:16px">${name}</h3>
@@ -382,14 +363,6 @@
       autoGrow(ta);
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
-
-      // Dispo helper pane
-      const pane = $('#dispoPane');
-      const showDispo = (mode==='dispo');
-      pane.style.display = showDispo ? 'block' : 'none';
-      if(showDispo){
-        ensureDispoData(()=>renderDispoGrid());
-      }
     }
 
     function doSaveNotes(){
@@ -422,16 +395,42 @@
     $('#closeMode').onclick = ()=>dlg.close();
 
     // segmented switch
-    $('#tabAcq').onclick  = ()=>{ mode='acq';  $('#tabAcq').classList.add('active'); $('#tabDispo').classList.remove('active'); render(idx); };
-    $('#tabDispo').onclick= ()=>{ mode='dispo'; $('#tabDispo').classList.add('active'); $('#tabAcq').classList.remove('active'); render(idx); };
+    function switchTo(modeName){
+      mode = modeName;
+      $('#tabAcq').classList.toggle('active',mode==='acq');
+      $('#tabDispo').classList.toggle('active',mode==='dispo');
 
-    document.addEventListener('keydown',e=>{
-      if(e.key==='ArrowLeft') return $('#btnPrev').click();
-      if(e.key==='ArrowRight') return $('#btnNext').click();
-      if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
+      // Hide or show acq-only UI
+      $('#acqBar').classList.toggle('hidden',mode==='dispo');
+      $('#acqNav').classList.toggle('hidden',mode==='dispo');
+      $('#leadCard').classList.toggle('hidden',mode==='dispo');
+      $('#leadHint').classList.toggle('hidden',mode==='dispo');
+
+      // Show or hide dispo-only UI
+      $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
+
+      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Dispo');
+      if(mode==='acq') render(idx);
+      else renderDispo();
+    }
+    $('#tabAcq').onclick  = ()=>switchTo('acq');
+    $('#tabDispo').onclick= ()=>switchTo('dispo');
+
+    // share all (copies site root so your team can paste it into emails)
+    $('#linkShareAll').addEventListener('click',e=>{
+      e.preventDefault();
+      navigator.clipboard.writeText(location.origin).then(()=>toast('Site link copied'));
     });
 
-    window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
+    document.addEventListener('keydown',e=>{
+      if(mode==='acq'){
+        if(e.key==='ArrowLeft') return $('#btnPrev').click();
+        if(e.key==='ArrowRight') return $('#btnNext').click();
+        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
+      }
+    });
+
+    window.addEventListener('beforeunload',()=>{ if(mode==='acq' && currentLead){ doSaveNotes(); } });
 
     function init(){
       if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
