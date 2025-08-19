@@ -3,13 +3,13 @@ window.dispoItems = [
   {
     kind: 'deal',
     id: 'booth-st',
-    title: '3014 El Paso St, San Antonio, TX 78207',
-    address: '3014 El Paso St, San Antonio, TX 78207',
-    price: '$155,000 ask',
+    title: '707 Booth, San Antonio, TX 78216',
+    address: '707 Booth, San Antonio, TX 78216',
+    price: '255,000 ask',
     terms: 'Seller finance possible (min $15k down)',
     memo: 'offering-memo2.html', // Booth memo
     share: 'https://www.facebook.com/marketplace/create/item',
-    notes: '2/1 • 948 sqft • 1945 build • pier foundation • 2024 remodel',
+    notes: '4/3 • 948 sqft • 1945 build • pier foundation • 2024 remodel',
     photos: [
       'images/deals/booth-st/20250124_171714.jpg',
       'images/deals/booth-st/20250124_171724.jpg',
