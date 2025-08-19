@@ -1,28 +1,27 @@
-<!-- ================= wholesaler.html (Acq + Dispo; DB gate; mobile-ready) ================= -->
+<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; respects DB gate) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Wholesaler • Acquisition</title>
+  <title>Wholesaler • Portal</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
   <style>
     :root{
       --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
-      --line:#2a5a78; --text:#f3f8fb; --muted:#c7d7e6;
-      --gold:#ffd36b; --green:#26cf84; --blue:#47b4ff; --panel:#133045;
-      --r:16px; --shadow:0 28px 70px rgba(0,0,0,.55);
+      --panel:#0f1f2b; --line:#254a63;
+      --text:#f1f7fb; --muted:#c5d3e1;
+      --blue:#47b4ff; --green:#26cf84; --gold:#ffd36b;
+      --shadow:0 28px 70px rgba(0,0,0,.55);
+      --r:16px;
     }
     *{box-sizing:border-box}
-    body{
-      margin:0; color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+    body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
       background:
         radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
         linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-      padding:10px;
-    }
+      padding:10px}
     .wrap{max-width:1100px;margin:0 auto}
     .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
       border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
@@ -33,9 +32,15 @@
     .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
     .status{font-size:12px;color:#e8f7ff}
 
-    .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);
+    .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.18);
       background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
-    .actions{display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+    .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
+    .seg button{padding:8px 12px;background:#0e2332;border:0;color:#cfe6ff;cursor:pointer}
+    .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
+
+    .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
+
+    .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
@@ -43,16 +48,19 @@
     .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
     .btn-ghost{background:#0f2a3a}
     .ico{font-size:20px}
-    .navrow{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
 
-    .banner{margin:8px 12px;color:#cfe7ff;font-size:12px}
+    .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
+
     .lead-wrap{padding:12px}
+    .banner{font-size:12px;color:#b8cbe0;margin-bottom:8px}
     .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
     .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
-      background:linear-gradient(90deg,rgba(255,211,107,.22),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
+      background:linear-gradient(90deg,rgba(255,211,107,.18),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
     .body{padding:12px 14px}
     .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
+
+    .section{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#0f1f2b;padding:10px;margin-top:10px}
 
     .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
     .sv{height:260px;margin-top:6px}
@@ -66,40 +74,40 @@
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-    @media (max-width:480px){
-      .actions{grid-template-columns:repeat(3,1fr)}
-      .navrow{grid-template-columns:repeat(3,1fr)}
-      .title{font-size:16px}
-      .sv{height:230px} .map{height:200px}
-    }
-
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
+
+    @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
   </style>
 </head>
 <body>
   <div class="wrap">
     <section class="card">
+      <!-- Header -->
       <div class="top">
-        <div class="crumbs"><span>Wholesaler</span><span class="dot"></span><span id="modeLabel">Acquisition</span></div>
+        <div class="crumbs">
+          <span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acquisition</span>
+        </div>
         <div class="status" id="status">Loading…</div>
       </div>
 
-      <div class="banner">Lead filters live in <b>Profile → Settings → Wholesaler</b>.</div>
-
+      <!-- Sticky tools -->
       <div class="sticky">
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <button class="btn btn-ghost" id="tabAcq">Acquisition</button>
-          <button class="btn btn-ghost" id="tabDispo">Dispo</button>
+        <div class="seg" role="tablist" aria-label="Mode">
+          <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acquisition</button>
+          <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
         </div>
+        <div class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
 
-        <div class="actions">
+        <div class="bar" aria-label="Actions">
           <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
           <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
           <a class="btn btn-ghost" href="#" id="actDir"  title="Directions"><span class="ico">🚗</span></a>
           <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
           <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
+          <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
         </div>
+
         <div class="navrow">
           <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
           <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
@@ -107,42 +115,66 @@
         </div>
       </div>
 
+      <!-- Lead -->
       <div class="lead-wrap">
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
+        </div>
+
+        <!-- Dispo side (always present; we show only when mode==='dispo') -->
+        <div id="dispoPane" class="section" style="display:none">
+          <h3 style="margin:2px 0 8px">📦 Deals & Offerings</h3>
+          <div class="banner">Quick links for sharing and interest capture.</div>
+          <div class="chips">
+            <a class="btn" href="offering-memo1.html" target="_blank" rel="noopener">Open Memo 1</a>
+            <a class="btn" href="offering-memo2.html" target="_blank" rel="noopener">Open Memo 2</a>
+            <a class="btn" href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=sf_link" target="_blank" rel="noopener">Submit Interest</a>
+            <a class="btn" href="dispo.html" target="_blank" rel="noopener">Open Dispo Board</a>
+          </div>
         </div>
       </div>
     </section>
   </div>
 
+  <!-- Dial preference dialog -->
+  <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
+    <h3 style="margin:0 0 8px">Phone Link Preference</h3>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="textnow"> TextNow (web)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="gvoice"> Google Voice (web)</label>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="saveMode" class="btn" style="flex:1">Save</button>
+      <button id="closeMode" class="btn" style="flex:1">Close</button>
+    </div>
+  </dialog>
+
   <div id="toast"></div>
 
-  <!-- Firebase for lead gate -->
+  <!-- Firebase (gate) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // Dedicated instance for this page
+    // Dedicated app so we don't collide if embedded multiple times.
     const gateApp = firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
     );
     const gateDb = gateApp.database();
-
     const params = new URL(location.href).searchParams;
     const uidParam = params.get('uid') || 'anon';
 
     // Check gate before loading leads.js
     gateDb.ref(`userSettings/${uidParam}/wholesaler/leadsEnabled`).once('value').then(snap=>{
-      const allowed = snap.val() !== false; // default allow unless explicitly false
+      const allowed = !!snap.val();
       if(!allowed){
         document.getElementById('leadCard').innerHTML =
-          '<div class="body">Access to leads is disabled for this account.</div>';
+          '<div class="body">Access to leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
         document.getElementById('status').textContent = 'Access denied';
       }else{
         const s=document.createElement('script');
-        s.src='/leads.js?v='+Date.now();
+        s.src='leads.js?v='+Date.now();
         s.onload=()=>{ window.leads = window.leads || []; init(); };
-        s.onerror=()=>document.getElementById('status').textContent='Could not load /leads.js';
+        s.onerror=()=>document.getElementById('status').textContent='Could not load leads.js';
         document.head.appendChild(s);
       }
     }).catch(()=>{
@@ -154,24 +186,34 @@
 
   <script>
     const $=s=>document.querySelector(s);
-    const statusEl=$('#status'); const toastEl=$('#toast');
-    let idx=0, currentLead=null, curMode='acq'; // acq|dispo
+    const statusEl=$('#status'); const toastEl=$('#toast'); const modeCrumb=$('#crumbMode');
+    const dlg=$('#settingsDlg');
+    let idx=0, currentLead=null, mode='acq';
 
+    const uid=new URL(location.href).searchParams.get('uid')||'anon';
     const MODE_KEY='db_phone_link_mode_wh';
-    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
-    const setStatus=t=>statusEl.textContent=t;
-    const clean=s=>(s||'').trim();
-    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
-    const nameOf =l=>clean(l?.contacts?.[0]?.name||'Unknown');
-    const addrOf =l=>clean(l?.address||'');
 
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
-    function phoneHref(number, mode){
-      const num=(number||'').replace(/[^\d+]/g,''); if(!num) return '#';
-      if(mode==='device') return `tel:${num}`;
-      if(mode==='textnow'){ navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging'; }
-      if(mode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
+    function setStatus(t){statusEl.textContent=t;}
+    const clean=s=>(s||'').trim();
+
+    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
+    const setMode=m=>localStorage.setItem(MODE_KEY,m);
+
+    function phoneOf(l){
+      return clean(l?.contacts?.[0]?.phone||'');
+    }
+
+    function phoneHref(number, dialMode){
+      const num=(number||'').replace(/[^\d+]/g,'');
+      if(!num) return '#';
+      if(dialMode==='device') return `tel:${num}`;
+      if(dialMode==='textnow'){ navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging'; }
+      if(dialMode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
       return `tel:${num}`;
+    }
+    function dirHref(addr){
+      return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`;
     }
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
@@ -179,10 +221,20 @@
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
     const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
+    const saveTimeKey = addr => noteKey(addr)+'_ts';
+    const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
+    const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
+
+    function fmtTime(ts){
+      const d=new Date(ts); const pad=n=>String(n).padStart(2,'0');
+      return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
+    }
+
+    function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
-        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>/leads.js</b> defines <code>window.leads=[...]</code>.</div>';
+        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
         setStatus('No leads found'); return;
       }
       if(i<0) i=window.leads.length-1;
@@ -192,33 +244,42 @@
       const lead=window.leads[idx];
       currentLead=lead;
 
-      const name  = nameOf(lead);
+      const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
       const phone = phoneOf(lead);
-      const addr  = addrOf(lead);
+      const addr  = clean(lead?.address||'');
 
-      setStatus(`${curMode==='acq'?'Acquisition':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
+      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Dispo');
+      setStatus(`${mode==='acq'?'Acq':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
 
       const dialMode=getMode();
       $('#actCall').href = phoneHref(phone, dialMode);
       $('#actSMS').href  = dialMode==='device' && phone ? `sms:${phone}` : phoneHref(phone, dialMode);
-      $('#actDir').href  = `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`;
+      $('#actDir').href  = dirHref(addr);
+
+      const lastSaved = saveTimeGet(addr);
+      const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
+
+      // chips vary a bit by mode
+      const modeChip = mode==='acq' ? 'Mode: acquisition' : 'Mode: dispo';
 
       $('#leadCard').innerHTML = `
         <div class="title">${addr || name}</div>
         <div class="body">
-          <div style="margin-bottom:6px;font-weight:800">${name}</div>
           <div class="chips">
+            <div class="chip">UID: ${uid.slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${dialMode}</div>
-            <div class="chip">Mode: ${curMode}</div>
+            <div class="chip">${modeChip}</div>
           </div>
 
-          <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
-          <div class="notesBox">
+          <h3 style="margin:4px 0 6px;font-size:16px">${name}</h3>
+
+          <div class="section">
+            <div style="font-weight:800;margin-bottom:6px">Lead details</div>
             <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
             <div class="notesRow">
               <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
-              <span id="savedTag" class="savedTag"></span>
+              <span id="savedTag" class="savedTag">${lastSavedText}</span>
             </div>
           </div>
 
@@ -229,15 +290,20 @@
 
       const ta=$('#noteInput');
       ta.value = loadNotes(addr) || (lead?.notes || '');
+      autoGrow(ta);
+      ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
+
+      // show/hide Dispo helper pane
+      $('#dispoPane').style.display = (mode==='dispo') ? 'block' : 'none';
     }
 
     function doSaveNotes(){
-      const addr = addrOf(currentLead);
+      const addr = (currentLead?.address)||'';
       const text = ($('#noteInput')?.value||'').trim();
       saveNotes(addr, text);
-      const ts=new Date().toLocaleString();
-      const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${ts}`; tag.style.display='inline'; }
+      const ts=Date.now(); saveTimeSet(addr, ts);
+      const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${fmtTime(ts)}`; tag.style.display='inline'; }
       toast('Notes saved');
     }
 
@@ -245,19 +311,33 @@
     $('#btnPrev').onclick   = ()=>render(idx-1);
     $('#btnNext').onclick   = ()=>render(idx+1);
     $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
-    $('#actCopy').onclick   = ()=>{ const p=phoneOf(window.leads?.[idx]); if(!p) return alert('No phone.'); navigator.clipboard.writeText(p).then(()=>toast('Phone copied')); };
+
+    $('#actCopy').onclick = ()=>{
+      const p=phoneOf(window.leads?.[idx]);
+      if(!p) return alert('No phone on this lead.');
+      navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
+    };
+
+    // dial settings
+    $('#actSettings').onclick = ()=>{
+      dlg.showModal();
+      const cur=getMode();
+      dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur));
+    };
+    $('#saveMode').onclick = ()=>{ const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device'; setMode(m); dlg.close(); render(idx); };
+    $('#closeMode').onclick = ()=>dlg.close();
+
+    // segmented switch
+    $('#tabAcq').onclick  = ()=>{ mode='acq';  $('#tabAcq').classList.add('active'); $('#tabDispo').classList.remove('active'); render(idx); };
+    $('#tabDispo').onclick= ()=>{ mode='dispo'; $('#tabDispo').classList.add('active'); $('#tabAcq').classList.remove('active'); render(idx); };
 
     document.addEventListener('keydown',e=>{
       if(e.key==='ArrowLeft') return $('#btnPrev').click();
       if(e.key==='ArrowRight') return $('#btnNext').click();
       if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
     });
-    window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
 
-    // simple Acq/Dispo toggle (UI only; keeps same local leads array)
-    const modeLabel=$('#modeLabel');
-    $('#tabAcq').onclick = ()=>{ curMode='acq'; modeLabel.textContent='Acquisition'; render(idx); };
-    $('#tabDispo').onclick= ()=>{ curMode='dispo'; modeLabel.textContent='Dispo'; render(idx); };
+    window.addEventListener('beforeunload',()=>{ if(currentLead){ doSaveNotes(); } });
 
     function init(){
       if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
