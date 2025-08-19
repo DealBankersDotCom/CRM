@@ -1,3 +1,4 @@
+<!-- =================== offering-memo-booth.html =================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -25,9 +26,30 @@
   .kv .lab{color:#b8cadd;font-size:12px;text-transform:uppercase;letter-spacing:.08em}
   .kv .val{font-weight:800;margin-top:4px}
   .list{margin:8px 0 0 18px;color:#d7e6f5}
-  .carousel{position:relative;width:100%;height:300px;overflow:hidden;border-radius:12px;margin-top:12px}
-  .carousel img{width:100%;height:300px;object-fit:cover;position:absolute;top:0;left:0;opacity:0;transition:opacity 1s}
+
+  .controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+  .btn{display:inline-flex;align-items:center;justify-content:center;padding:8px 12px;border-radius:10px;border:1px solid var(--line);
+       background:#0f1a24;color:#d9e9f8;text-decoration:none;cursor:pointer}
+  .btn-accent{background:linear-gradient(180deg,var(--accent),#0a58ca);color:#fff;border:none}
+  .btn-green{background:linear-gradient(180deg,var(--green),#177a33);color:#fff;border:none}
+  .input{width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#eaf1f6}
+
+  .carousel{position:relative;width:100%;height:300px;overflow:hidden;border-radius:12px;margin-top:12px;background:#0b141b}
+  .carousel img{width:100%;height:300px;object-fit:cover;position:absolute;top:0;left:0;opacity:0;transition:opacity .6s}
   .carousel img.active{opacity:1}
+  .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
+  .carBtn{border:1px solid var(--line);background:#0f1a24;border-radius:999px;padding:6px 10px;color:#eaf1f6}
+
+  /* desktop-only manager buttons */
+  .desktopOnly{display:inline-flex}
+  @media (max-width:960px){ .desktopOnly{display:none} }
+
+  /* manage photos dialog */
+  dialog{border:none;border-radius:16px;background:#0f1a24;color:#eaf1f6;padding:14px;max-width:740px;width:92%}
+  .thumbs{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+  .thumb{position:relative}
+  .thumb img{width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px}
+  .thumb button{position:absolute;top:6px;right:6px;border:1px solid var(--line);background:#0b1218;border-radius:8px;color:#fff;padding:2px 6px;cursor:pointer}
 </style>
 </head>
 <body>
@@ -39,6 +61,10 @@
         <h1>Offering Memorandum — Booth St. Capital Raise</h1>
         <div class="sub">Churchill High School Area • Capital Needed: <b>$30,000</b> • Return: 30% in 3–6 Months</div>
       </div>
+    </div>
+    <div class="controls desktopOnly">
+      <button id="btnAdd"  class="btn btn-green">＋ Add Photos</button>
+      <button id="btnEdit" class="btn">✎ Edit Photos</button>
     </div>
   </header>
 
@@ -67,12 +93,8 @@
         <li>High rental demand + end-buyer appeal with seller financing</li>
       </ul>
 
-      <div class="carousel" id="carousel">
-        <!-- Upload your photos as booth1.jpg, booth2.jpg, booth3.jpg -->
-        <img src="booth1.jpg" class="active" alt="Booth St photo 1">
-        <img src="booth2.jpg" alt="Booth St photo 2">
-        <img src="booth3.jpg" alt="Booth St photo 3">
-      </div>
+      <!-- carousel -->
+      <div class="carousel" id="carousel"></div>
     </div>
 
     <div class="card">
@@ -85,27 +107,123 @@
         <input class="input" id="amount" type="number" min="0" step="1000" placeholder="Capital amount interested (USD)"/><br/><br/>
         <button class="btn btn-accent" type="submit">Submit Interest</button>
       </form>
-      <div id="ok" class="success">Thanks — we’ll follow up quickly.</div>
+      <div id="ok" class="success" style="display:none;margin-top:8px;color:#bfe9c9">Thanks — we’ll follow up quickly.</div>
     </div>
   </section>
 </div>
 
-<script>
-  // simple carousel
-  const imgs=document.querySelectorAll('#carousel img');
-  let idx=0;
-  setInterval(()=>{
-    imgs[idx].classList.remove('active');
-    idx=(idx+1)%imgs.length;
-    imgs[idx].classList.add('active');
-  },4000);
+<!-- Manage Photos dialog (desktop only) -->
+<dialog id="mgr">
+  <h3 style="margin:0 0 8px">Manage Photos</h3>
+  <div style="display:grid;gap:8px">
+    <label>Photo URLs (comma separated)
+      <textarea id="urlInput" class="input" rows="3" placeholder="https://...jpg, https://...png"></textarea>
+    </label>
+    <label>Upload Photos
+      <input id="fileInput" type="file" accept="image/*" multiple style="display:block;margin-top:8px"/>
+    </label>
+  </div>
+  <div class="thumbs" id="thumbs"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+    <button id="clearAll" class="btn">Clear All</button>
+    <button id="savePhotos" class="btn btn-green">Save</button>
+    <button id="closeMgr" class="btn">Close</button>
+  </div>
+</dialog>
 
-  // simple form alert
+<script>
+  /* ----- photo source (localStorage first, then defaults) ----- */
+  const KEY = 'db_memo_photos_' + location.pathname.replace(/[^\w]+/g,'-');
+  const defaultImgs = ['booth1.jpg','booth2.jpg','booth3.jpg']; // ship these or swap later
+
+  function loadPhotos(){
+    try{ const x=JSON.parse(localStorage.getItem(KEY)||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
+    return defaultImgs;
+  }
+  function savePhotos(arr){ localStorage.setItem(KEY, JSON.stringify(arr||[])); }
+
+  /* ----- carousel render ----- */
+  let carIdx=0, carTimer=null, running=true;
+  const car = document.getElementById('carousel');
+
+  function renderCarousel(){
+    const photos = loadPhotos();
+    car.innerHTML='';
+    photos.forEach((src,i)=>{
+      const img=new Image(); img.src=src; img.alt='photo '+(i+1); if(i===0) img.className='active';
+      car.appendChild(img);
+    });
+    addCarControls();
+    startCarousel();
+  }
+  function addCarControls(){
+    const ctr=document.createElement('div'); ctr.className='carBtns';
+    const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
+    const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
+    const next=document.createElement('button'); next.className='carBtn'; next.textContent='▶';
+    ctr.append(prev,pause,next); car.appendChild(ctr);
+    prev.onclick=()=>{ running=false; setSlide(-1); };
+    next.onclick=()=>{ running=false; setSlide(+1); };
+    pause.onclick=()=>{ running=!running; if(running) startCarousel(); else stopCarousel(); };
+  }
+  function setSlide(d){
+    const imgs=[...car.querySelectorAll('img')]; if(!imgs.length) return;
+    imgs[carIdx]?.classList.remove('active');
+    carIdx=(carIdx+d+imgs.length)%imgs.length;
+    imgs[carIdx]?.classList.add('active');
+  }
+  function startCarousel(){ stopCarousel(); carTimer=setInterval(()=>{ if(running) setSlide(+1); },3500); }
+  function stopCarousel(){ if(carTimer){ clearInterval(carTimer); carTimer=null; } }
+
+  /* ----- simple interest form ack ----- */
   document.querySelector('#interestForm').addEventListener('submit',e=>{
-    e.preventDefault();
-    document.querySelector('#ok').style.display='block';
-    e.target.reset();
+    e.preventDefault(); document.querySelector('#ok').style.display='block'; e.target.reset();
   });
+
+  /* ----- photo manager (desktop only) ----- */
+  const mgr=document.getElementById('mgr'), urlInput=document.getElementById('urlInput'),
+        fileInput=document.getElementById('fileInput'), thumbs=document.getElementById('thumbs');
+
+  function openMgr(){
+    // seed URLs (non-data URLs) to edit field
+    const arr=loadPhotos();
+    urlInput.value = arr.filter(u=>!/^data:/.test(u)).join(', ');
+    drawThumbs(arr);
+    mgr.showModal();
+  }
+  function drawThumbs(arr){
+    thumbs.innerHTML='';
+    arr.forEach((src,i)=>{
+      const t=document.createElement('div'); t.className='thumb';
+      t.innerHTML = `<img src="${src}"/><button data-i="${i}">✕</button>`;
+      thumbs.appendChild(t);
+    });
+    thumbs.querySelectorAll('button').forEach(b=>{
+      b.onclick=()=>{ const i=+b.dataset.i; const cur=loadPhotos(); cur.splice(i,1); savePhotos(cur); drawThumbs(cur); renderCarousel(); };
+    });
+  }
+  async function gatherUploads(files){
+    const list=[];
+    for(const f of files){
+      const data=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+      list.push(data);
+    }
+    return list;
+  }
+
+  document.getElementById('btnAdd').onclick = openMgr;
+  document.getElementById('btnEdit').onclick = openMgr;
+  document.getElementById('closeMgr').onclick = ()=>mgr.close();
+  document.getElementById('clearAll').onclick = ()=>{ savePhotos([]); drawThumbs([]); renderCarousel(); };
+  document.getElementById('savePhotos').onclick = async ()=>{
+    const urls=urlInput.value.split(',').map(s=>s.trim()).filter(Boolean);
+    const uploads=await gatherUploads(fileInput.files||[]);
+    const final=[...urls,...uploads];
+    savePhotos(final); drawThumbs(final); renderCarousel(); mgr.close();
+    fileInput.value=''; urlInput.value='';
+  };
+
+  renderCarousel();
 </script>
 </body>
 </html>
