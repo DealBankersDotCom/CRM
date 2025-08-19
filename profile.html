@@ -284,29 +284,46 @@
         </div>
 
         <!-- God Mode (visible only to dealbankers@gmail.com) -->
-        <div id="adminBlock" class="section" style="margin-top:12px; display:none">
-          <h3>🧰 God Mode (Admin)</h3>
-          <div class="small muted" style="margin-bottom:8px">
-            Signed in as <span id="adminEmail"></span> • Current UID: <code id="currentUid"></code>
+        <!-- === God Mode (Admin) — split Acq/Dispo toggles === -->
+        <div class="section" id="gmCard" style="margin-top:12px; display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <h3 style="margin:0">🧰 God Mode (Admin)</h3>
+            <div class="small muted">Signed in as <b id="gmEmail">—</b> • UID: <code id="gmUid">—</code></div>
           </div>
-          <div class="row">
-            <div class="muted">Leads for me</div>
-            <div class="inline">
-              <button id="meEnable"  class="btn gold">Enable</button>
-              <button id="meDisable" class="btn">Disable</button>
-              <span class="small" id="meGateMsg"></span>
+
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+            <div class="section">
+              <div style="font-weight:800;margin-bottom:6px">Leads for <b>me</b></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="chip">Acq: <b id="meAcqState">—</b></span>
+                <button class="btn green small" id="meAcqEnable">Enable</button>
+                <button class="btn small"        id="meAcqDisable">Disable</button>
+
+                <span class="chip">Dispo: <b id="meDispoState">—</b></span>
+                <button class="btn green small" id="meDispoEnable">Enable</button>
+                <button class="btn small"        id="meDispoDisable">Disable</button>
+              </div>
             </div>
-          </div>
-          <div class="row">
-            <div class="muted">Leads for UID</div>
-            <div class="inline" style="width:100%">
-              <input id="targetUid" class="input" placeholder="Paste target UID"/>
-              <button id="uidEnable"  class="btn gold">Enable</button>
-              <button id="uidDisable" class="btn">Disable</button>
-              <span class="small" id="uidGateMsg"></span>
+
+            <div class="section">
+              <div style="font-weight:800;margin-bottom:6px">Leads for <b>UID</b></div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                <input id="gmTargetUid" class="textarea" style="min-height:auto;height:38px" placeholder="Paste target UID"/>
+                <button class="btn small" id="gmLoad">Load</button>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="chip">Acq: <b id="uidAcqState">—</b></span>
+                <button class="btn green small" id="uidAcqEnable">Enable</button>
+                <button class="btn small"        id="uidAcqDisable">Disable</button>
+
+                <span class="chip">Dispo: <b id="uidDispoState">—</b></span>
+                <button class="btn green small" id="uidDispoEnable">Enable</button>
+                <button class="btn small"        id="uidDispoDisable">Disable</button>
+              </div>
             </div>
           </div>
         </div>
+        <!-- /God Mode -->
       </div>
     </section>
   </div>
@@ -467,10 +484,42 @@
       return snap.val() || {};
     }
 
-    // ---- Admin helpers
-    async function setLeadGate(uid, enabled){
-      await db.ref(`userSettings/${uid}/wholesaler/leadsEnabled`).set(!!enabled);
+    /* ===== God Mode helpers: split Acq/Dispo, mirror legacy flags ===== */
+    const gmStatePath = uid => `userSettings/${uid}/wholesaler`;
+    function gmMirrorLegacy(patch){
+      return Object.assign({}, patch, {
+        leadsEnabled:      (patch.acqEnabled ?? false) || (patch.dispoEnabled ?? false),
+        acqLeadsEnabled:   patch.acqEnabled   ?? false,
+        dispoLeadsEnabled: patch.dispoEnabled ?? false,
+        leadsEnabledDispo: patch.dispoEnabled ?? false
+      });
     }
+    async function gmSet(uid, patch){
+      await db.ref(gmStatePath(uid)).update(gmMirrorLegacy(patch));
+    }
+    async function gmGet(uid){
+      const v=(await db.ref(gmStatePath(uid)).get()).val()||{};
+      return {
+        acqEnabled:   !!(v.acqEnabled   ?? v.acqLeadsEnabled   ?? v.leadsEnabled),
+        dispoEnabled: !!(v.dispoEnabled ?? v.dispoLeadsEnabled ?? v.leadsEnabledDispo ?? false)
+      };
+    }
+    function gmShow(sel, on){ const el=$(sel); if(el) el.textContent = on ? 'ON' : 'OFF'; }
+    async function gmRefreshMe(){
+      const meUid = byId('gmUid').textContent.trim();
+      if(!meUid || meUid==='—') return;
+      const f = await gmGet(meUid);
+      gmShow('#meAcqState',   f.acqEnabled);
+      gmShow('#meDispoState', f.dispoEnabled);
+    }
+    async function gmRefreshTarget(){
+      const uid = byId('gmTargetUid').value.trim();
+      if(!uid) return;
+      const f = await gmGet(uid);
+      gmShow('#uidAcqState',   f.acqEnabled);
+      gmShow('#uidDispoState', f.dispoEnabled);
+    }
+    /* ===== /God Mode ===== */
 
     // ---- Auth + initial route
     auth.onAuthStateChanged(async u=>{
@@ -495,18 +544,27 @@
         fillCtForm(obj);
       };
 
-      // God Mode visibility
+      // God Mode visibility + wiring
       const isAdmin = (u.email||'').toLowerCase()==='dealbankers@gmail.com';
       if(isAdmin){
-        byId('adminBlock').style.display='block';
-        byId('adminEmail').textContent = u.email||'';
-        byId('currentUid').textContent = u.uid;
+        byId('gmCard').style.display='block';
+        byId('gmEmail').textContent = u.email||'';
+        byId('gmUid').textContent   = u.uid;
 
-        byId('meEnable').onclick  = async()=>{ await setLeadGate(u.uid, true);  byId('meGateMsg').textContent='Enabled'; };
-        byId('meDisable').onclick = async()=>{ await setLeadGate(u.uid, false); byId('meGateMsg').textContent='Disabled'; };
+        await gmRefreshMe();
 
-        byId('uidEnable').onclick  = async()=>{ const t=byId('targetUid').value.trim(); if(!t) return; await setLeadGate(t,true);  byId('uidGateMsg').textContent='Enabled'; };
-        byId('uidDisable').onclick = async()=>{ const t=byId('targetUid').value.trim(); if(!t) return; await setLeadGate(t,false); byId('uidGateMsg').textContent='Disabled'; };
+        // Me buttons
+        byId('meAcqEnable').onclick   = async()=>{ await gmSet(u.uid,{acqEnabled:true});   gmRefreshMe(); };
+        byId('meAcqDisable').onclick  = async()=>{ await gmSet(u.uid,{acqEnabled:false});  gmRefreshMe(); };
+        byId('meDispoEnable').onclick = async()=>{ await gmSet(u.uid,{dispoEnabled:true}); gmRefreshMe(); };
+        byId('meDispoDisable').onclick= async()=>{ await gmSet(u.uid,{dispoEnabled:false});gmRefreshMe(); };
+
+        // Target UID buttons
+        byId('gmLoad').onclick = gmRefreshTarget;
+        byId('uidAcqEnable').onclick   = async()=>{ const t=byId('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:true});   gmRefreshTarget(); };
+        byId('uidAcqDisable').onclick  = async()=>{ const t=byId('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:false});  gmRefreshTarget(); };
+        byId('uidDispoEnable').onclick = async()=>{ const t=byId('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:true}); gmRefreshTarget(); };
+        byId('uidDispoDisable').onclick= async()=>{ const t=byId('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:false});gmRefreshTarget(); };
       }
 
       // initial tab
