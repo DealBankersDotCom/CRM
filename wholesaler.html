@@ -292,8 +292,18 @@
       return `tel:${num}`;
     }
     function dirHref(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`; }
-    function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
-    function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
+    function svSrc(addr){
+      const a=encodeURIComponent(addr||'');
+      return `https://www.google.com/maps?q=${a}&layer=c&output=svembed`;
+    }
+    function mapSrc(addr){
+      const a=encodeURIComponent(addr||'');
+      return `https://www.google.com/maps?q=${a}&output=embed`;
+    }
+    function svLink(addr){
+      const a=encodeURIComponent(addr||'');
+      return `https://www.google.com/maps?q=${a}&layer=c`;
+    }
 
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
@@ -530,6 +540,9 @@ function ensureDispoData(cb){
           </div>
 
           <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
+          <div class="small" style="margin-top:6px">
+            If Street View doesn’t load, <a href="${svLink(addr)}" target="_blank" rel="noopener">open it in Google Maps ↗</a>
+          </div>
           <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
         </div>
       `;
