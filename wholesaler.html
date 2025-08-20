@@ -375,14 +375,15 @@
         const obj = snap.val() || {};
         return Object.entries(obj).map(([id,d])=>({
           id,
-          kind: d.kind || 'deal',
-          title: d.title || d?.['title'] || id,
+          kind:    d.kind || 'deal',
+          title:   d.title || d?.['title'] || id,
           address: d.location || d.address || '',
-          price: d.price || '',
-          terms: d.terms || '',
-          memo: d.memo || '',
-          notes: d.notes || '',
-          photos: Array.isArray(d.photos)? d.photos : []
+          price:   d.price || '',
+          terms:   d.terms || '',
+          memo:    d.memo || '',
+          notes:   d.notes || '',
+          photos:  Array.isArray(d.photos)? d.photos : [],
+          createdBy: d.createdBy || uidX
         }));
       }catch{ return []; }
     }
@@ -412,7 +413,7 @@
     const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
     function getPhotos(it){
       try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
-      return Array.isArray(it?.photos)?it.photos:[]; // optional photos field if you add it in dispo-data.js or DB
+      return Array.isArray(it?.photos)?it.photos:[]; // optional photos from script or DB
     }
     function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
 
@@ -430,7 +431,6 @@
       pvCar.innerHTML='';
 
       if(!photos.length && it?.memo){
-        // Show memo inline (PDF viewer or HTML page)
         const src = memoViewer(it.memo);
         pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`;
         return;
@@ -505,8 +505,10 @@
 
         const fill = (list, gridId) => {
           const grid=$(gridId); grid.innerHTML='';
+          const byId = Object.fromEntries(list.map(i=>[i.id,i]));
           list.forEach(it=>{
             const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
+            const editable = !!(it.createdBy && it.createdBy === uidParam);
             const el=document.createElement('div'); el.className='dealcard';
             el.innerHTML=`
               <div class="dealhdr">
@@ -526,6 +528,10 @@
                 <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
                 <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
                 <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
+                ${editable ? `
+                  <button class="btn small" data-edit="${it.id}">Edit</button>
+                  <button class="btn small" data-del="${it.id}">Delete</button>
+                ` : ``}
               </div>`;
             el.addEventListener('click',e=>{
               if(window.matchMedia('(max-width: 980px)').matches) return;
@@ -541,6 +547,25 @@
           grid.querySelectorAll('button[data-copy]').forEach(b=>{
             b.addEventListener('click',e=>{ e.stopPropagation(); navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
           });
+          grid.querySelectorAll('button[data-edit]').forEach(b=>{
+            b.addEventListener('click',e=>{
+              e.stopPropagation();
+              const it = byId[b.getAttribute('data-edit')];
+              if(it) openEditor(it);
+            });
+          });
+          grid.querySelectorAll('button[data-del]').forEach(b=>{
+            b.addEventListener('click',async e=>{
+              e.stopPropagation();
+              const id=b.getAttribute('data-del');
+              if(!confirm('Delete this item?')) return;
+              try{
+                await gateDb.ref(`deals/${uidParam}/${id}`).remove();
+                toast('Deleted');
+                renderDispo();
+              }catch{ alert('Could not delete right now.'); }
+            });
+          });
         };
 
         fill(deals, '#dealsGrid');
@@ -554,7 +579,6 @@
 
     /* ---------------- Acquisition render + robust Street View / map ---------------- */
 
-    // geocode via OSM Nominatim (no key)
     async function geocode(addr){
       if(!addr) return null;
       try{
@@ -572,9 +596,7 @@
       const hit = await geocode(addr);
       if(!hit) return;
 
-      // more stable: Street View locked to lat/lng
       svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
-      // reliable map: OpenStreetMap embed
       if(mapIframe) mapIframe.src = osmEmbed(hit.lat, hit.lon, 17);
 
       const a=$('#svOpen'); if(a){
@@ -649,7 +671,6 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
-      // upgrade embeds to precise lat/lng + reliable OSM map
       const svIframe = $('#leadCard .sv');
       const mapIframe= $('#leadCard .map');
       improveStreetViewAndMap(addr, svIframe, mapIframe);
@@ -748,9 +769,25 @@
 
     /* ---- New item (Deal / Offering) wiring ---- */
     const newDlg = $('#newItemDlg');
-    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.showModal(); };
-    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.showModal(); };
-    $('#niClose').onclick = ()=>newDlg.close();
+    function openEditor(it){
+      $('#newItemTitle').textContent = (it.kind==='offering' ? 'Edit Offering' : 'Edit Deal');
+      $('#niKind').value  = it.kind || 'deal';
+      $('#niTitle').value = it.title || '';
+      $('#niAddr').value  = it.address || '';
+      $('#niPrice').value = it.price || '';
+      $('#niTerms').value = it.terms || '';
+      $('#niMemo').value  = it.memo  || '';
+      $('#niNotes').value = it.notes || '';
+      $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[])
+        .filter(u=>!/^data:/.test(u)).join(', ');
+      newDlg.dataset.editing = it.id;
+      newDlg.showModal();
+    }
+
+    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); };
+    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); };
+    $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
+
     $('#niSave').onclick  = async ()=>{
       const kind  = $('#niKind').value;
       const title = $('#niTitle').value.trim();
@@ -762,7 +799,8 @@
       const notes = $('#niNotes').value.trim();
       const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
 
-      const id = slugify(title || addr || (kind+'-'+Date.now()));
+      const editingId = newDlg.dataset.editing || null;
+      const id = editingId || slugify(title || addr || (kind+'-'+Date.now()));
       const payload = {
         id, kind, title, address: addr, location: addr,
         price, terms, memo, notes, photos,
@@ -770,7 +808,8 @@
       };
       try{
         await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
-        toast('Saved');
+        newDlg.dataset.editing='';
+        toast(editingId ? 'Updated' : 'Saved');
         newDlg.close();
         renderDispo();
       }catch{ alert('Could not save right now.'); }
