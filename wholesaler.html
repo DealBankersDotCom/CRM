@@ -112,7 +112,7 @@
       <!-- Header -->
       <div class="top">
         <div class="crumbs">
-          <span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acq</span>
+          <span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acquisition</span>
         </div>
         <div class="status" id="status">Loading…</div>
       </div>
@@ -120,6 +120,7 @@
       <!-- Sticky controls -->
       <div class="sticky">
         <div class="seg" role="tablist" aria-label="Mode">
+          <!-- label now “Acq” per your request -->
           <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
           <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
         </div>
@@ -152,7 +153,11 @@
         <div id="dispoPane" class="section hidden" aria-live="polite">
           <div class="dispoHead">
             <h3 style="margin:2px 0">📦 Disposition</h3>
-            <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <a class="btn small" id="newDealBtn"      href="#">＋ New Deal</a>
+              <a class="btn small" id="newOfferingBtn"  href="#">＋ New Offering</a>
+              <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
+            </div>
           </div>
 
           <div class="dispoCTA">
@@ -176,7 +181,7 @@
 
             <div id="dispoPreview" class="preview desktopOnly">
               <div class="pvHead">
-                <div class="pvTitle" id="pvTitle">Photo Preview</div>
+                <div class="pvTitle" id="pvTitle">Photo / Memo Preview</div>
                 <div style="display:flex;gap:6px">
                   <button id="pvAdd"  class="btn small">＋ Add Photo</button>
                   <button id="pvEdit" class="btn small">✎ Edit Photos</button>
@@ -218,6 +223,32 @@
       <button id="phClear" class="btn">Clear All</button>
       <button id="phSave"  class="btn btn-green">Save</button>
       <button id="phClose" class="btn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- New item dialog (Deals / Offerings) -->
+  <dialog id="newItemDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:640px;width:92%">
+    <h3 id="newItemTitle" style="margin:0 0 8px">New Item</h3>
+    <div style="display:grid;gap:8px">
+      <label>Kind
+        <select id="niKind" class="textarea" style="min-height:auto;height:38px">
+          <option value="deal">Deal</option>
+          <option value="offering">Offering</option>
+        </select>
+      </label>
+      <label>Title <input id="niTitle" class="textarea" style="min-height:auto;height:38px"/></label>
+      <label>Address / Location (optional for Offering) <input id="niAddr" class="textarea" style="min-height:auto;height:38px"/></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label>Price <input id="niPrice" class="textarea" style="min-height:auto;height:38px"/></label>
+        <label>Terms <input id="niTerms" class="textarea" style="min-height:auto;height:38px"/></label>
+      </div>
+      <label>Memo URL (PDF or HTML; Offerings only, optional) <input id="niMemo" class="textarea" style="min-height:auto;height:38px" placeholder="https://...pdf or /offering-memoX.html"/></label>
+      <label>Notes <textarea id="niNotes" rows="3" class="textarea"></textarea></label>
+      <label>Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="niSave"  class="btn btn-green">Save</button>
+      <button id="niClose" class="btn">Close</button>
     </div>
   </dialog>
 
@@ -278,6 +309,7 @@
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
     const clean=s=>(s||'').trim();
+    const slugify = s => (s||'item').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
 
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
     const setMode=m=>localStorage.setItem(MODE_KEY,m);
@@ -295,6 +327,13 @@
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
+    // --- OpenStreetMap embed around a point
+    function osmEmbed(lat, lon, zoom=17){
+      const d=0.005;
+      const left=lon-d, right=lon+d, top=lat+d, bottom=lat-d;
+      return `https://www.openstreetmap.org/export/embed.html?bbox=${left}%2C${bottom}%2C${right}%2C${top}&layer=mapnik&marker=${lat}%2C${lon}`;
+    }
+
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
     const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
@@ -305,7 +344,7 @@
     function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
-    /* ---------- Dispo items (can be overridden by `dispo-data.js`) ---------- */
+    /* ---------- Dispo items (script + DB merge; Offerings allow PDF memos) ---------- */
     let dispoItems=null, dispoLoaded=false;
     const fallbackDispo = [
       {
@@ -329,15 +368,38 @@
         notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.'
       }
     ];
+
+    async function fetchDbDispo(uidX){
+      try{
+        const snap = await gateDb.ref(`deals/${uidX}`).get();
+        const obj = snap.val() || {};
+        return Object.entries(obj).map(([id,d])=>({
+          id,
+          kind: d.kind || 'deal',
+          title: d.title || d?.['title'] || id,
+          address: d.location || d.address || '',
+          price: d.price || '',
+          terms: d.terms || '',
+          memo: d.memo || '',
+          notes: d.notes || '',
+          photos: Array.isArray(d.photos)? d.photos : []
+        }));
+      }catch{ return []; }
+    }
+    async function mergeDispoData(){
+      const dbItems = await fetchDbDispo(uidParam);
+      const base = dispoItems || fallbackDispo;
+      return [...dbItems, ...base];
+    }
     function ensureDispoData(cb){
-      if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
+      if(dispoLoaded){ mergeDispoData().then(list=>cb(list)); return; }
       const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
-      s.onload = ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
-      s.onerror= ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
+      s.onload = async ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(await mergeDispoData()); };
+      s.onerror = async ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(await mergeDispoData()); };
       document.head.appendChild(s);
     }
 
-    /* ---------------- Desktop-only photo preview & manager ---------------- */
+    /* ---------------- Desktop-only photo / memo preview & manager ---------------- */
     const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
           phUrls=$('#phUrls'), phFiles=$('#phFiles'), phThumbs=$('#phThumbs'),
           pvAdd=$('#pvAdd'), pvEdit=$('#pvEdit');
@@ -350,22 +412,35 @@
     const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
     function getPhotos(it){
       try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
-      return Array.isArray(it?.photos)?it.photos:[]; // optional photos field if you add it in dispo-data.js
+      return Array.isArray(it?.photos)?it.photos:[]; // optional photos field if you add it in dispo-data.js or DB
     }
     function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
+
+    function isPdf(url){ try{ return /\.pdf($|\?)/i.test(new URL(url, location.href).pathname); }catch{return /\.pdf($|\?)/i.test(url||'');} }
+    function memoViewer(url){
+      if(isPdf(url)) return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
+      return url; // assume HTML memo page
+    }
 
     let carIdx=0, carTimer=null, carRun=true;
     function renderPreview(it){
       previewItem=it;
-      pvTitle.textContent = it?.title || it?.address || 'Photo Preview';
+      pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
       const photos=getPhotos(it);
       pvCar.innerHTML='';
+
+      if(!photos.length && it?.memo){
+        // Show memo inline (PDF viewer or HTML page)
+        const src = memoViewer(it.memo);
+        pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`;
+        return;
+      }
+
       if(!photos.length){
-        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs.</div>`;
+        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs${it?.memo? ' — memo available via Open Memo button.' : '.'}</div>`;
         return;
       }
       photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo'; if(i===0) img.className='active'; pvCar.appendChild(img); });
-      // controls
       const ctr=document.createElement('div'); ctr.className='carBtns';
       const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
       const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
@@ -452,10 +527,9 @@
                 <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
                 <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
               </div>`;
-            // click on card (desktop) selects preview
             el.addEventListener('click',e=>{
-              if(window.matchMedia('(max-width: 980px)').matches) return; // mobile: no preview changes
-              if(e.target.closest('.actrow')){ // ignore action buttons
+              if(window.matchMedia('(max-width: 980px)').matches) return;
+              if(e.target.closest('.actrow')){
                 if(e.target.matches('button[data-preview]')) { renderPreview(it); }
                 if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
                 return;
@@ -472,47 +546,42 @@
         fill(deals, '#dealsGrid');
         fill(offs,  '#offeringsGrid');
 
-        // seed preview with the first item (desktop only)
         if(!window.matchMedia('(max-width: 980px)').matches){
           renderPreview(items[0]||null);
         }
       });
     }
 
-    /* ---------------- Acquisition render (unchanged except SV improvement) ---------------- */
+    /* ---------------- Acquisition render + robust Street View / map ---------------- */
 
-    // --- improved Street View: geocode + multi-variant fallback + external button ---
-    async function improveStreetView(addr, iframeEl, openBtn){
+    // geocode via OSM Nominatim (no key)
+    async function geocode(addr){
+      if(!addr) return null;
       try{
-        if(!addr || !iframeEl) return;
-
         const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}&email=support%40dealbankers.com`;
         const res = await fetch(url, {headers:{'Accept':'application/json'}});
-        const data = await res.json();
-        const hit  = Array.isArray(data) ? data[0] : null;
-        if(!hit || !hit.lat || !hit.lon) return;
-
-        const lat = hit.lat, lng = hit.lon;
-
-        const candidates = [
-          `https://www.google.com/maps?output=svembed&layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0`,
-          `https://www.google.com/maps?output=svembed&layer=c&cbll=${lat},${lng}`,
-          `https://maps.google.com/?q=&layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0`
-        ];
-
-        let i = 0;
-        const tryNext = ()=>{ if(i < candidates.length) iframeEl.src = candidates[i++]; };
-        tryNext();
-        setTimeout(tryNext, 2500);
-        setTimeout(tryNext, 5000);
-
-        if(openBtn){
-          openBtn.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
-          openBtn.style.display = 'inline-flex';
+        const arr = await res.json();
+        if(Array.isArray(arr) && arr[0] && arr[0].lat && arr[0].lon){
+          return {lat:+arr[0].lat, lon:+arr[0].lon};
         }
-      }catch(e){ /* keep silent; original embed remains */ }
+      }catch{}
+      return null;
     }
-    // -------------------------------------------------------------------------------
+
+    async function improveStreetViewAndMap(addr, svIframe, mapIframe){
+      const hit = await geocode(addr);
+      if(!hit) return;
+
+      // more stable: Street View locked to lat/lng
+      svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
+      // reliable map: OpenStreetMap embed
+      if(mapIframe) mapIframe.src = osmEmbed(hit.lat, hit.lon, 17);
+
+      const a=$('#svOpen'); if(a){
+        a.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${hit.lat},${hit.lon}&heading=0&pitch=0&fov=75`;
+        a.style.display='inline-flex';
+      }
+    }
 
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
@@ -530,7 +599,8 @@
       const phone = phoneOf(lead);
       const addr  = clean(lead?.address||'');
 
-      modeCrumb.textContent = (mode==='acq'?'Acq':'Dispo');
+      // header crumb spelled out
+      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
       setStatus(`${mode==='acq'?'Acq':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
 
       const dialMode=getMode();
@@ -548,7 +618,7 @@
             <div class="chip">UID: ${uid.slice(0,8)}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${dialMode}</div>
-            <div class="chip">Mode: acquisition</div>
+            <div class="chip">Mode: Acquisition</div>
           </div>
 
           <h3 style="margin:4px 0 6px;font-size:16px">${name}</h3>
@@ -562,11 +632,14 @@
             </div>
           </div>
 
-          <div style="display:flex;gap:8px;margin-top:6px">
-            <a id="svOpen" class="btn small btn-ghost" href="#" target="_blank" rel="noopener" style="display:none">Open in Street View</a>
+          <div class="section">
+            <div class="notesRow" style="justify-content:space-between;margin-bottom:6px">
+              <div style="font-weight:800">Open in Street View</div>
+              <a id="svOpen" class="btn small" target="_blank" rel="noopener" style="display:none">Open in Google Street View</a>
+            </div>
+            <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
+            <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
           </div>
-          <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
-          <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
         </div>
       `;
 
@@ -576,8 +649,10 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
+      // upgrade embeds to precise lat/lng + reliable OSM map
       const svIframe = $('#leadCard .sv');
-      improveStreetView(addr, svIframe, $('#svOpen'));
+      const mapIframe= $('#leadCard .map');
+      improveStreetViewAndMap(addr, svIframe, mapIframe);
     }
 
     function doSaveNotes(){
@@ -624,7 +699,7 @@
       // Show or hide dispo-only UI
       $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
 
-      modeCrumb.textContent = (mode==='acq'?'Acq':'Dispo');
+      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
 
       if(mode==='acq'){
         if(window.whGate?.acqEnabled){ render(idx); }
@@ -670,6 +745,36 @@
       if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
       else { render(0); }
     }
+
+    /* ---- New item (Deal / Offering) wiring ---- */
+    const newDlg = $('#newItemDlg');
+    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.showModal(); };
+    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.showModal(); };
+    $('#niClose').onclick = ()=>newDlg.close();
+    $('#niSave').onclick  = async ()=>{
+      const kind  = $('#niKind').value;
+      const title = $('#niTitle').value.trim();
+      if(!title) return alert('Title is required');
+      const addr  = $('#niAddr').value.trim();
+      const price = $('#niPrice').value.trim();
+      const terms = $('#niTerms').value.trim();
+      const memo  = $('#niMemo').value.trim();
+      const notes = $('#niNotes').value.trim();
+      const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+      const id = slugify(title || addr || (kind+'-'+Date.now()));
+      const payload = {
+        id, kind, title, address: addr, location: addr,
+        price, terms, memo, notes, photos,
+        status:'active', createdBy: uidParam, updatedAt: Date.now()
+      };
+      try{
+        await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
+        toast('Saved');
+        newDlg.close();
+        renderDispo();
+      }catch{ alert('Could not save right now.'); }
+    };
   </script>
 </body>
 </html>
