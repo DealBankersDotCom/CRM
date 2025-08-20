@@ -292,18 +292,8 @@
       return `tel:${num}`;
     }
     function dirHref(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`; }
-    function svSrc(addr){
-      const a=encodeURIComponent(addr||'');
-      return `https://www.google.com/maps?q=${a}&layer=c&output=svembed`;
-    }
-    function mapSrc(addr){
-      const a=encodeURIComponent(addr||'');
-      return `https://www.google.com/maps?q=${a}&output=embed`;
-    }
-    function svLink(addr){
-      const a=encodeURIComponent(addr||'');
-      return `https://www.google.com/maps?q=${a}&layer=c`;
-    }
+    function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
+    function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
     const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
     const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
@@ -315,38 +305,37 @@
     function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
-/* ---------- Dispo items (can be overridden by `dispo-data.js`) ---------- */
-let dispoItems=null, dispoLoaded=false;
-const fallbackDispo = [
-  {
-    kind:'deal',
-    title:'3014 El Paso St, San Antonio, TX 78207',
-    address:'3014 El Paso St, San Antonio, TX 78207',
-    price:'$155,000 ask',
-    terms:'Assignment $12k • As-is',
-    memo:'offering-memo2.html',              // ← Booth memo
-    share:'https://www.facebook.com/marketplace/create/item',
-    notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
-  },
-  {
-    kind:'offering',
-    title:'Virgin D6 Lift — FOB Houston',
-    address:'—',
-    price:'Capital Need $300k',
-    terms:'Repay 7–10 days • 100M gal',
-    memo:'offering-memo1.html',              // ← D6 memo
-    share:'https://www.craigslist.org/',
-    notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.'
-  }
-];
-function ensureDispoData(cb){
-  if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
-  const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
-  s.onload = ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
-  s.onerror= ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
-  document.head.appendChild(s);
-}
-
+    /* ---------- Dispo items (can be overridden by `dispo-data.js`) ---------- */
+    let dispoItems=null, dispoLoaded=false;
+    const fallbackDispo = [
+      {
+        kind:'deal',
+        title:'3014 El Paso St, San Antonio, TX 78207',
+        address:'3014 El Paso St, San Antonio, TX 78207',
+        price:'$155,000 ask',
+        terms:'Assignment $12k • As-is',
+        memo:'offering-memo2.html',
+        share:'https://www.facebook.com/marketplace/create/item',
+        notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
+      },
+      {
+        kind:'offering',
+        title:'Virgin D6 Lift — FOB Houston',
+        address:'—',
+        price:'Capital Need $300k',
+        terms:'Repay 7–10 days • 100M gal',
+        memo:'offering-memo1.html',
+        share:'https://www.craigslist.org/',
+        notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.'
+      }
+    ];
+    function ensureDispoData(cb){
+      if(dispoLoaded){ cb(dispoItems||fallbackDispo); return; }
+      const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
+      s.onload = ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(dispoItems); };
+      s.onerror= ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(dispoItems); };
+      document.head.appendChild(s);
+    }
 
     /* ---------------- Desktop-only photo preview & manager ---------------- */
     const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
@@ -466,7 +455,7 @@ function ensureDispoData(cb){
             // click on card (desktop) selects preview
             el.addEventListener('click',e=>{
               if(window.matchMedia('(max-width: 980px)').matches) return; // mobile: no preview changes
-              if(e.target.closest('.actrow')){ // ignore action buttons; those have separate handlers below
+              if(e.target.closest('.actrow')){ // ignore action buttons
                 if(e.target.matches('button[data-preview]')) { renderPreview(it); }
                 if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
                 return;
@@ -490,7 +479,23 @@ function ensureDispoData(cb){
       });
     }
 
-    /* ---------------- Acquisition render (unchanged) ---------------- */
+    /* ---------------- Acquisition render (unchanged except SV improvement) ---------------- */
+
+    // --- improve Street View by geocoding to lat/lng ---
+    async function improveStreetView(addr, iframeEl){
+      try{
+        if(!addr || !iframeEl) return;
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}&email=support%40dealbankers.com`;
+        const res = await fetch(url, {headers:{'Accept':'application/json'}});
+        const data = await res.json();
+        const hit = Array.isArray(data) ? data[0] : null;
+        if(hit && hit.lat && hit.lon){
+          iframeEl.src = `https://www.google.com/maps?output=svembed&layer=c&cbll=${hit.lat},${hit.lon}`;
+        }
+      }catch(e){ /* silent fallback keeps original q= embed */ }
+    }
+    // ----------------------------------------------------
+
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
         $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
@@ -540,9 +545,6 @@ function ensureDispoData(cb){
           </div>
 
           <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
-          <div class="small" style="margin-top:6px">
-            If Street View doesn’t load, <a href="${svLink(addr)}" target="_blank" rel="noopener">open it in Google Maps ↗</a>
-          </div>
           <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
         </div>
       `;
@@ -552,6 +554,10 @@ function ensureDispoData(cb){
       autoGrow(ta);
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
+
+      // try to upgrade the Street View embed with cbll=lat,lng
+      const svIframe = $('#leadCard .sv');
+      improveStreetView(addr, svIframe);
     }
 
     function doSaveNotes(){
