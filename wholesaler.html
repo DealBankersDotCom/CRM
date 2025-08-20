@@ -112,7 +112,7 @@
       <!-- Header -->
       <div class="top">
         <div class="crumbs">
-          <span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acquisition</span>
+          <span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acq</span>
         </div>
         <div class="status" id="status">Loading…</div>
       </div>
@@ -120,7 +120,7 @@
       <!-- Sticky controls -->
       <div class="sticky">
         <div class="seg" role="tablist" aria-label="Mode">
-          <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acquisition</button>
+          <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
           <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
         </div>
         <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
@@ -481,20 +481,38 @@
 
     /* ---------------- Acquisition render (unchanged except SV improvement) ---------------- */
 
-    // --- improve Street View by geocoding to lat/lng ---
-    async function improveStreetView(addr, iframeEl){
+    // --- improved Street View: geocode + multi-variant fallback + external button ---
+    async function improveStreetView(addr, iframeEl, openBtn){
       try{
         if(!addr || !iframeEl) return;
+
         const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}&email=support%40dealbankers.com`;
         const res = await fetch(url, {headers:{'Accept':'application/json'}});
         const data = await res.json();
-        const hit = Array.isArray(data) ? data[0] : null;
-        if(hit && hit.lat && hit.lon){
-          iframeEl.src = `https://www.google.com/maps?output=svembed&layer=c&cbll=${hit.lat},${hit.lon}`;
+        const hit  = Array.isArray(data) ? data[0] : null;
+        if(!hit || !hit.lat || !hit.lon) return;
+
+        const lat = hit.lat, lng = hit.lon;
+
+        const candidates = [
+          `https://www.google.com/maps?output=svembed&layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0`,
+          `https://www.google.com/maps?output=svembed&layer=c&cbll=${lat},${lng}`,
+          `https://maps.google.com/?q=&layer=c&cbll=${lat},${lng}&cbp=12,0,,0,0`
+        ];
+
+        let i = 0;
+        const tryNext = ()=>{ if(i < candidates.length) iframeEl.src = candidates[i++]; };
+        tryNext();
+        setTimeout(tryNext, 2500);
+        setTimeout(tryNext, 5000);
+
+        if(openBtn){
+          openBtn.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${lat},${lng}`;
+          openBtn.style.display = 'inline-flex';
         }
-      }catch(e){ /* silent fallback keeps original q= embed */ }
+      }catch(e){ /* keep silent; original embed remains */ }
     }
-    // ----------------------------------------------------
+    // -------------------------------------------------------------------------------
 
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
@@ -512,7 +530,7 @@
       const phone = phoneOf(lead);
       const addr  = clean(lead?.address||'');
 
-      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Dispo');
+      modeCrumb.textContent = (mode==='acq'?'Acq':'Dispo');
       setStatus(`${mode==='acq'?'Acq':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
 
       const dialMode=getMode();
@@ -544,6 +562,9 @@
             </div>
           </div>
 
+          <div style="display:flex;gap:8px;margin-top:6px">
+            <a id="svOpen" class="btn small btn-ghost" href="#" target="_blank" rel="noopener" style="display:none">Open in Street View</a>
+          </div>
           <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
           <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
         </div>
@@ -555,9 +576,8 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
-      // try to upgrade the Street View embed with cbll=lat,lng
       const svIframe = $('#leadCard .sv');
-      improveStreetView(addr, svIframe);
+      improveStreetView(addr, svIframe, $('#svOpen'));
     }
 
     function doSaveNotes(){
@@ -604,7 +624,7 @@
       // Show or hide dispo-only UI
       $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
 
-      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Dispo');
+      modeCrumb.textContent = (mode==='acq'?'Acq':'Dispo');
 
       if(mode==='acq'){
         if(window.whGate?.acqEnabled){ render(idx); }
