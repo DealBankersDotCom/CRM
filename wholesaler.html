@@ -120,7 +120,6 @@
       <!-- Sticky controls -->
       <div class="sticky">
         <div class="seg" role="tablist" aria-label="Mode">
-          <!-- label now “Acq” per your request -->
           <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
           <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
         </div>
@@ -346,23 +345,43 @@
 
     /* ---------- Dispo items (script + DB merge; Offerings allow PDF memos) ---------- */
     let dispoItems=null, dispoLoaded=false;
+
     const fallbackDispo = [
+      /* NEW: San Luis wholesale (uses your uploaded filenames) */
       {
-  kind: 'deal',
-  id: '4319-san-luis-st',
-  title: '4319 San Luis St, San Antonio, TX 78237',
-  address: '4319 San Luis St, San Antonio, TX 78237',
-  price: '$65,000 ask',
-  terms: 'Wholesale assignment • As-is',
-  memo: 'offering-memo3.html',
-  notes: 'RM-4 zoning • 9,975 sqft lot • small structure 2003 • water on site; electric setup not completed',
-  photos: [
-    'images/deals/san-luis-st/front-1.jpg',
-    'images/deals/san-luis-st/front-2.jpg'
-  ]
-}   
+        kind: 'deal',
+        id: '4319-san-luis-st',
+        title: '4319 San Luis St, San Antonio, TX 78237',
+        address: '4319 San Luis St, San Antonio, TX 78237',
+        price: '$65,000 ask',
+        terms: 'Wholesale assignment • As-is',
+        memo: 'offering-memo3.html',
+        notes: 'RM-4 zoning • 9,975 sqft lot • small structure built 2003 • water on site; electric setup not completed',
+        photos: [
+          'images/deals/san-luis-st/532285905_1525203368622964_6419601791457539095_n.jpg',
+          'images/deals/san-luis-st/532430422_1529678055144004_937426837220792776_n.jpg',
+          'images/deals/san-luis-st/532490619_2500043363693663_3909442154221395932_n.jpg',
+          'images/deals/san-luis-st/533251127_1259617138716800_3246275306679859470_n.jpg',
+          'images/deals/san-luis-st/533367927_1861201098077542_138298872422090400_n.jpg',
+          'images/deals/san-luis-st/533401545_1232983395178499_3448834856308498546_n.jpg',
+          'images/deals/san-luis-st/533461086_1517743442544727_6437480492578431589_n.jpg',
+          'images/deals/san-luis-st/533954852_1756139381929700_9146663009440742970_n.jpg',
+          'images/deals/san-luis-st/533957793_1043892891157948_6687460725094961623_n.jpg',
+          'images/deals/san-luis-st/534146994_1121254369902856_8599715682702529823_n.jpg',
+          'images/deals/san-luis-st/534274626_1465325141273191_3756511487997878319_n.jpg',
+          'images/deals/san-luis-st/534371650_1371007245025655_3036220784647842105_n.jpg',
+          'images/deals/san-luis-st/534681579_1416383389477377_4000173112539682162_n.jpg',
+          'images/deals/san-luis-st/534979928_1700927480622947_2845444756307509404_n.jpg',
+          'images/deals/san-luis-st/535223210_2133973067113201_5017690366641265882_n.jpg',
+          'images/deals/san-luis-st/535467155_1438479670538508_4235579294056462410_n.jpg',
+          'images/deals/san-luis-st/535724533_1653304598682827_5551748086010323051_n.jpg',
+          'images/deals/san-luis-st/536159577_2524052531320708_2500621445002879585_n.jpg'
+        ]
+      },
+      /* Existing examples (non-editable fallback) */
       {
         kind:'deal',
+        id:'3014-el-paso-st',
         title:'3014 El Paso St, San Antonio, TX 78207',
         address:'3014 El Paso St, San Antonio, TX 78207',
         price:'$155,000 ask',
@@ -373,6 +392,7 @@
       },
       {
         kind:'offering',
+        id:'virgin-d6-lift',
         title:'Virgin D6 Lift — FOB Houston',
         address:'—',
         price:'Capital Need $300k',
@@ -385,27 +405,35 @@
 
     async function fetchDbDispo(uidX){
       try{
-        const snap = await gateDb.ref(`deals/${uidX}`).get();
+        // compat SDK: use once('value') instead of ref.get()
+        const snap = await gateDb.ref(`deals/${uidX}`).once('value');
         const obj = snap.val() || {};
-        return Object.entries(obj).map(([id,d])=>({
-          id,
-          kind:    d.kind || 'deal',
-          title:   d.title || d?.['title'] || id,
-          address: d.location || d.address || '',
-          price:   d.price || '',
-          terms:   d.terms || '',
-          memo:    d.memo || '',
-          notes:   d.notes || '',
-          photos:  Array.isArray(d.photos)? d.photos : [],
-          createdBy: d.createdBy || uidX
-        }));
-      }catch{ return []; }
+        return Object.entries(obj).map(([id,d])=>{
+          const safeId = d.id || id || slugify((d.title||d.address||'item'));
+          return {
+            id: safeId,
+            kind:    d.kind || 'deal',
+            title:   d.title || safeId,
+            address: d.location || d.address || '',
+            price:   d.price || '',
+            terms:   d.terms || '',
+            memo:    d.memo || '',
+            notes:   d.notes || '',
+            photos:  Array.isArray(d.photos)? d.photos : [],
+            createdBy: d.createdBy || uidX
+          };
+        });
+      }catch{
+        return [];
+      }
     }
+
     async function mergeDispoData(){
       const dbItems = await fetchDbDispo(uidParam);
       const base = dispoItems || fallbackDispo;
       return [...dbItems, ...base];
     }
+
     function ensureDispoData(cb){
       if(dispoLoaded){ mergeDispoData().then(list=>cb(list)); return; }
       const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
@@ -519,9 +547,10 @@
 
         const fill = (list, gridId) => {
           const grid=$(gridId); grid.innerHTML='';
-          const byId = Object.fromEntries(list.map(i=>[i.id,i]));
+          const byId = Object.fromEntries(list.map(i=>[(i.id || slugify(i.title||i.address||'item')), i]));
           list.forEach(it=>{
             const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
+            const idSafe = it.id || slugify(it.title||it.address||'item');
             const editable = !!(it.createdBy && it.createdBy === uidParam);
             const el=document.createElement('div'); el.className='dealcard';
             el.innerHTML=`
@@ -538,13 +567,13 @@
               <div class="actrow">
                 ${it.memo?`<a class="btn" href="${it.memo}" target="_blank" rel="noopener">Open Memo</a>`:''}
                 <a class="btn" href="${it.share||'https://www.facebook.com/marketplace/create/item'}" target="_blank" rel="noopener">Post / Share</a>
-                ${it.memo?`<button class="btn" data-copy="${location.origin.replace(/\/$/,'')+'/'+it.memo}">Copy Link</button>`:''}
+                ${it.memo?`<button class="btn" data-copy="${new URL(it.memo, location).href}">Copy Link</button>`:''}
                 <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
                 <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
                 <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
                 ${editable ? `
-                  <button class="btn small" data-edit="${it.id}">Edit</button>
-                  <button class="btn small" data-del="${it.id}">Delete</button>
+                  <button class="btn small" data-edit="${idSafe}">Edit</button>
+                  <button class="btn small" data-del="${idSafe}">Delete</button>
                 ` : ``}
               </div>`;
             el.addEventListener('click',e=>{
@@ -593,6 +622,7 @@
 
     /* ---------------- Acquisition render + robust Street View / map ---------------- */
 
+    // geocode via OSM Nominatim (no key)
     async function geocode(addr){
       if(!addr) return null;
       try{
@@ -610,7 +640,9 @@
       const hit = await geocode(addr);
       if(!hit) return;
 
+      // more stable: Street View locked to lat/lng
       svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
+      // reliable map: OpenStreetMap embed
       if(mapIframe) mapIframe.src = osmEmbed(hit.lat, hit.lon, 17);
 
       const a=$('#svOpen'); if(a){
@@ -685,6 +717,7 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
+      // upgrade embeds to precise lat/lng + reliable OSM map
       const svIframe = $('#leadCard .sv');
       const mapIframe= $('#leadCard .map');
       improveStreetViewAndMap(addr, svIframe, mapIframe);
@@ -763,7 +796,7 @@
     // share all
     $('#linkShareAll').addEventListener('click',e=>{
       e.preventDefault();
-      navigator.clipboard.writeText(location.origin).then(()=>toast('Site link copied'));
+      navigator.clipboard.writeText(location.origin+location.pathname.replace(/\/[^/]*$/,'/')).then(()=>toast('Site link copied'));
     });
 
     document.addEventListener('keydown',e=>{
@@ -794,7 +827,7 @@
       $('#niNotes').value = it.notes || '';
       $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[])
         .filter(u=>!/^data:/.test(u)).join(', ');
-      newDlg.dataset.editing = it.id;
+      newDlg.dataset.editing = it.id || slugify(it.title||it.address||'item');
       newDlg.showModal();
     }
 
