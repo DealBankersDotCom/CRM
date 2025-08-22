@@ -241,7 +241,9 @@
         <label>Price <input id="niPrice" class="textarea" style="min-height:auto;height:38px"/></label>
         <label>Terms <input id="niTerms" class="textarea" style="min-height:auto;height:38px"/></label>
       </div>
-      <label>Memo URL (PDF or HTML; Offerings only, optional) <input id="niMemo" class="textarea" style="min-height:auto;height:38px" placeholder="https://...pdf or /offering-memoX.html"/></label>
+      <label>Memo URL (PDF or HTML; Offerings only, optional)
+        <input id="niMemo" class="textarea" style="min-height:auto;height:38px" placeholder="https://...pdf or /offering-memoX.html"/>
+      </label>
       <label>Notes <textarea id="niNotes" rows="3" class="textarea"></textarea></label>
       <label>Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
     </div>
@@ -309,6 +311,7 @@
     function setStatus(t){statusEl.textContent=t;}
     const clean=s=>(s||'').trim();
     const slugify = s => (s||'item').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const esc = (s)=>String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
 
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
     const setMode=m=>localStorage.setItem(MODE_KEY,m);
@@ -405,7 +408,6 @@
 
     async function fetchDbDispo(uidX){
       try{
-        // compat SDK: use once('value') instead of ref.get()
         const snap = await gateDb.ref(`deals/${uidX}`).once('value');
         const obj = snap.val() || {};
         return Object.entries(obj).map(([id,d])=>{
@@ -431,7 +433,12 @@
     async function mergeDispoData(){
       const dbItems = await fetchDbDispo(uidParam);
       const base = dispoItems || fallbackDispo;
-      return [...dbItems, ...base];
+      const byId = new Map();
+      [...dbItems, ...base].forEach(raw=>{
+        const id = raw.id || slugify(raw.title||raw.address||'item');
+        if(!byId.has(id)) byId.set(id, {...raw, id}); // user DB takes precedence
+      });
+      return Array.from(byId.values());
     }
 
     function ensureDispoData(cb){
@@ -467,6 +474,8 @@
 
     let carIdx=0, carTimer=null, carRun=true;
     function renderPreview(it){
+      carIdx = 0;              // reset to first slide each time
+      carRun = true;
       previewItem=it;
       pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
       const photos=getPhotos(it);
@@ -552,28 +561,33 @@
             const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
             const idSafe = it.id || slugify(it.title||it.address||'item');
             const editable = !!(it.createdBy && it.createdBy === uidParam);
+
+            const absMemo = (()=>{ try{
+              return it.memo ? (it.memo.startsWith('http') ? it.memo : new URL(it.memo, location.href).href) : '';
+            } catch(_){ return it.memo||''; } })();
+
             const el=document.createElement('div'); el.className='dealcard';
             el.innerHTML=`
               <div class="dealhdr">
-                <div>${it.title}</div>
-                <div class="dealtype">${kindTag}</div>
+                <div>${esc(it.title)}</div>
+                <div class="dealtype">${esc(kindTag)}</div>
               </div>
               <div class="dealmeta">
-                ${it.price?`<div class="chip">${it.price}</div>`:''}
-                ${it.terms?`<div class="chip">${it.terms}</div>`:''}
-                ${it.address?`<div class="chip">${it.address}</div>`:''}
+                ${it.price?`<div class="chip">${esc(it.price)}</div>`:''}
+                ${it.terms?`<div class="chip">${esc(it.terms)}</div>`:''}
+                ${it.address?`<div class="chip">${esc(it.address)}</div>`:''}
               </div>
-              ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${it.notes}</div>`:''}
+              ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${esc(it.notes)}</div>`:''}
               <div class="actrow">
-                ${it.memo?`<a class="btn" href="${it.memo}" target="_blank" rel="noopener">Open Memo</a>`:''}
-                <a class="btn" href="${it.share||'https://www.facebook.com/marketplace/create/item'}" target="_blank" rel="noopener">Post / Share</a>
-                ${it.memo?`<button class="btn" data-copy="${new URL(it.memo, location).href}">Copy Link</button>`:''}
+                ${it.memo?`<a class="btn" href="${esc(it.memo)}" target="_blank" rel="noopener">Open Memo</a>`:''}
+                <a class="btn" href="${esc(it.share||'https://www.facebook.com/marketplace/create/item')}" target="_blank" rel="noopener">Post / Share</a>
+                ${it.memo?`<button class="btn" data-copy="${esc(absMemo)}">Copy Link</button>`:''}
                 <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
                 <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
                 <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
                 ${editable ? `
-                  <button class="btn small" data-edit="${idSafe}">Edit</button>
-                  <button class="btn small" data-del="${idSafe}">Delete</button>
+                  <button class="btn small" data-edit="${esc(idSafe)}">Edit</button>
+                  <button class="btn small" data-del="${esc(idSafe)}">Delete</button>
                 ` : ``}
               </div>`;
             el.addEventListener('click',e=>{
@@ -680,23 +694,23 @@
       const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
 
       $('#leadCard').innerHTML = `
-        <div class="title">${addr || name}</div>
+        <div class="title">${esc(addr || name)}</div>
         <div class="body">
           <div class="chips">
-            <div class="chip">UID: ${uid.slice(0,8)}</div>
+            <div class="chip">UID: ${esc(uid.slice(0,8))}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
-            <div class="chip">Dial: ${dialMode}</div>
+            <div class="chip">Dial: ${esc(dialMode)}</div>
             <div class="chip">Mode: Acquisition</div>
           </div>
 
-          <h3 style="margin:4px 0 6px;font-size:16px">${name}</h3>
+          <h3 style="margin:4px 0 6px;font-size:16px">${esc(name)}</h3>
 
           <div class="section">
             <div style="font-weight:800;margin-bottom:6px">Lead details</div>
             <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
             <div class="notesRow">
               <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
-              <span id="savedTag" class="savedTag">${lastSavedText}</span>
+              <span id="savedTag" class="savedTag">${esc(lastSavedText)}</span>
             </div>
           </div>
 
@@ -768,6 +782,7 @@
       $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
 
       modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
+      setStatus(mode==='acq' ? 'Acq • Ready' : 'Dispo • Ready');
 
       if(mode==='acq'){
         if(window.whGate?.acqEnabled){ render(idx); }
@@ -796,7 +811,8 @@
     // share all
     $('#linkShareAll').addEventListener('click',e=>{
       e.preventDefault();
-      navigator.clipboard.writeText(location.origin+location.pathname.replace(/\/[^/]*$/,'/')).then(()=>toast('Site link copied'));
+      const root = location.origin + location.pathname.replace(/\/[^/]*$/,'/');
+      navigator.clipboard.writeText(root).then(()=>toast('Site link copied'));
     });
 
     document.addEventListener('keydown',e=>{
@@ -814,6 +830,16 @@
       else { render(0); }
     }
 
+    /* ---- Show/hide Memo row when kind changes (Offerings only) ---- */
+    function updateMemoVisibility(){
+      const kindEl = document.getElementById('niKind');
+      const memoLabel = document.getElementById('niMemo')?.closest('label');
+      if(!kindEl || !memoLabel) return;
+      memoLabel.style.display = (kindEl.value === 'offering') ? 'block' : 'none';
+    }
+    document.addEventListener('DOMContentLoaded', updateMemoVisibility);
+    document.getElementById('niKind').addEventListener('change', updateMemoVisibility);
+
     /* ---- New item (Deal / Offering) wiring ---- */
     const newDlg = $('#newItemDlg');
     function openEditor(it){
@@ -829,10 +855,11 @@
         .filter(u=>!/^data:/.test(u)).join(', ');
       newDlg.dataset.editing = it.id || slugify(it.title||it.address||'item');
       newDlg.showModal();
+      updateMemoVisibility(); // ensure memo row visibility matches kind
     }
 
-    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); };
-    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); };
+    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
     $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
 
     $('#niSave').onclick  = async ()=>{
