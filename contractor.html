@@ -1,4 +1,4 @@
-<!-- ================= contractor.html (Post & Claim Jobs) ================= -->
+<!-- =============== contractor.html (Post, Claim & Photo Uploads) =============== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -26,6 +26,11 @@
     .job{border:1px solid var(--line);border-radius:12px;padding:10px;margin-bottom:10px;background:#0f1a24}
     .job h4{margin:0 0 6px}
     .chip{display:inline-block;padding:6px 10px;border:1px solid var(--line);border-radius:999px;font-size:12px;background:#0e2030;margin-right:6px}
+    .thumbs{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-top:8px}
+    .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:8px;background:#0b141b}
+    dialog{border:none;border-radius:16px;background:#0f1a24;color:#eaf1f6;padding:14px;max-width:900px;width:92%}
+    .gal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+    .gal img{width:100%;aspect-ratio:4/3;object-fit:cover;border-radius:10px;background:#0b141b}
   </style>
 </head>
 <body>
@@ -64,47 +69,95 @@
   </section>
 </div>
 
+<!-- Simple gallery dialog -->
+<dialog id="galDlg">
+  <h3 style="margin:0 0 8px">Job Photos</h3>
+  <div id="galGrid" class="gal"></div>
+  <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+    <button id="galClose" class="btn">Close</button>
+  </div>
+</dialog>
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+<!-- NEW: Storage for photos -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script>
   const config={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"};
   if(!firebase.apps.length) firebase.initializeApp(config);
-  const auth=firebase.auth(), db=firebase.database();
+  const auth=firebase.auth(), db=firebase.database(), storage=firebase.storage();
 
   const $=s=>document.querySelector(s);
   const jobsRef = db.ref('contractor/jobs');
 
-  function renderJobs(listEl, jobs, opts={}){
+  /* ---------- UI helpers ---------- */
+  function msg(el, text){ el.textContent=text; setTimeout(()=>el.textContent='',1600); }
+
+  /* ---------- Render a list of jobs ---------- */
+  function renderJobs(listEl, jobs){
     if(!jobs.length){ listEl.innerHTML='<div class="muted">None.</div>'; return; }
     listEl.innerHTML='';
+    const me=auth.currentUser?.uid;
+
     jobs.forEach(j=>{
-      const div=document.createElement('div'); div.className='job';
-      const me=auth.currentUser?.uid;
       const mine = j.postedBy?.uid===me;
       const claimedByMe = j.claimedBy?.uid===me;
+
+      const div=document.createElement('div'); div.className='job';
       div.innerHTML=`
         <h4>${j.title||'Untitled'}</h4>
         <div class="chip">Loc: ${j.location||'-'}</div>
         <div class="chip">Budget: ${j.budget||'-'}</div>
         <div class="chip">Status: ${j.status||'open'}</div>
         <div style="margin-top:6px" class="muted">${(j.desc||'').replace(/\n/g,'<br>')}</div>
-        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">
+
+        ${(Array.isArray(j.photos) && j.photos.length) ? `
+          <div class="thumbs">
+            ${j.photos.slice(0,3).map(u=>`<img src="${u}" alt="photo" loading="lazy"/>`).join('')}
+          </div>
+        `: ''}
+
+        <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;align-items:center">
           ${(!j.status || j.status==='open')?'<button class="btn blue claim">Claim</button>':''}
           ${(j.status==='claimed' && claimedByMe)?'<button class="btn primary done">Mark Done</button>':''}
+          <button class="btn view">View Photos</button>
+          ${(mine || claimedByMe) ? `
+            <label class="btn">
+              ＋ Add Photos
+              <input type="file" accept="image/*" multiple data-up="${j.id}" style="display:none"/>
+            </label>` : '' }
           ${mine?'<button class="btn" style="border-color:#7b3232" data-del>Delete</button>':''}
         </div>
+
         <div class="muted" style="margin-top:6px">Posted by: ${j.postedBy?.email||j.postedBy?.uid||'unknown'} ${j.claimedBy?('• Claimed by: '+(j.claimedBy.email||j.claimedBy.uid)) : ''}</div>
       `;
-      // wire buttons
+
+      // Wire buttons
       div.querySelector('.claim')?.addEventListener('click',()=>claimJob(j.id));
       div.querySelector('.done')?.addEventListener('click',()=>completeJob(j.id));
       div.querySelector('[data-del]')?.addEventListener('click',()=>deleteJob(j.id));
+      div.querySelector('.view')?.addEventListener('click',()=>openGallery(j));
+
+      const up=div.querySelector('input[type="file"][data-up]');
+      if(up){
+        up.addEventListener('change', async (e)=>{
+          if(!e.target.files?.length) return;
+          up.disabled=true;
+          try{
+            await uploadPhotos(j.id, e.target.files);
+            loadJobs();
+          }catch(err){ alert('Upload failed.'); }
+          finally{ up.value=''; up.disabled=false; }
+        });
+      }
+
       listEl.appendChild(div);
     });
   }
 
+  /* ---------- Actions ---------- */
   async function claimJob(id){
     const me=auth.currentUser; if(!me) return alert('Sign in required');
     await jobsRef.child(id).transaction(j=>{
@@ -113,30 +166,53 @@
       return j;
     });
   }
-  async function completeJob(id){
-    await jobsRef.child(id).update({status:'done'});
-  }
-  async function deleteJob(id){
-    if(!confirm('Delete this job?')) return;
-    await jobsRef.child(id).remove();
+  async function completeJob(id){ await jobsRef.child(id).update({status:'done'}); }
+  async function deleteJob(id){ if(!confirm('Delete this job?')) return; await jobsRef.child(id).remove(); }
+
+  /* ---------- Upload photos to Firebase Storage ---------- */
+  async function uploadPhotos(jobId, fileList){
+    const uploads=[];
+    for(const f of fileList){
+      const safeName = f.name.replace(/[^\w.\-]+/g,'_');
+      const path = `contractor-jobs/${jobId}/${Date.now()}-${safeName}`;
+      const ref = storage.ref().child(path);
+      await ref.put(f);
+      const url = await ref.getDownloadURL();
+      uploads.push(url);
+    }
+    if(uploads.length){
+      await jobsRef.child(jobId).child('photos').transaction(arr=>{
+        arr = Array.isArray(arr)?arr:[];
+        return arr.concat(uploads);
+      });
+      alert(`Uploaded ${uploads.length} photo${uploads.length>1?'s':''}.`);
+    }
   }
 
+  /* ---------- Gallery dialog ---------- */
+  const galDlg = $('#galDlg'), galGrid = $('#galGrid');
+  $('#galClose').onclick = ()=>galDlg.close();
+  function openGallery(job){
+    galGrid.innerHTML = (Array.isArray(job.photos) && job.photos.length)
+      ? job.photos.map(u=>`<img src="${u}" loading="lazy"/>`).join('')
+      : `<div class="muted">No photos yet.</div>`;
+    galDlg.showModal();
+  }
+
+  /* ---------- Load jobs ---------- */
   function loadJobs(){
     jobsRef.orderByChild('ts').limitToLast(200).once('value',snap=>{
       const me=auth.currentUser?.uid;
       const list=[];
-      snap.forEach(ch=>{
-        const j=ch.val(); j.id=ch.key; list.push(j);
-      });
+      snap.forEach(ch=>{ const j=ch.val(); j.id=ch.key; list.push(j); });
       list.sort((a,b)=>b.ts-a.ts);
       renderJobs($('#openJobs'), list.filter(j=>!j.status || j.status==='open' || j.status==='claimed'));
-      renderJobs($('#myJobs'), list.filter(j=>j.postedBy?.uid===me || j.claimedBy?.uid===me));
+      renderJobs($('#myJobs'),   list.filter(j=>j.postedBy?.uid===me || j.claimedBy?.uid===me));
     });
   }
-
   $('#refresh').onclick=loadJobs;
 
-  // post job
+  /* ---------- Post job ---------- */
   $('#postBtn').onclick=async ()=>{
     const me=auth.currentUser; if(!me){ alert('Please sign in.'); return; }
     const j={
@@ -147,20 +223,17 @@
       desc: $('#jobDesc').value.trim(),
       status:'open',
       postedBy:{uid:me.uid,email:me.email||''},
+      photos: [],       // ready for uploads
       ts: Date.now()
     };
     if(!j.title){ alert('Add a title.'); return; }
-    const ref = await jobsRef.push(j);
-    $('#postMsg').textContent='Posted.';
+    await jobsRef.push(j);
+    msg($('#postMsg'),'Posted.');
     $('#jobTitle').value=''; $('#jobLoc').value=''; $('#jobBudget').value=''; $('#jobContact').value=''; $('#jobDesc').value='';
     loadJobs();
-    setTimeout(()=>$('#postMsg').textContent='',1200);
   };
 
-  auth.onAuthStateChanged(u=>{
-    $('#meLine').textContent = u ? (u.email||u.uid) : 'Not signed in';
-    loadJobs();
-  });
+  auth.onAuthStateChanged(u=>{ $('#meLine').textContent = u ? (u.email||u.uid) : 'Not signed in'; loadJobs(); });
 </script>
 </body>
 </html>
