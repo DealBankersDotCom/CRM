@@ -1,4 +1,4 @@
-<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; respects DB gate) ===================== -->
+<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; gate + Capital Console) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -100,9 +100,12 @@
     .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
     .carBtn{border:1px solid rgba(255,255,255,.22);background:#0b1a24;border-radius:999px;padding:6px 10px;color:#eaf6ff}
 
+    /* ---- Toast ---- */
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
 
+    /* ---- Capital Console Modal (dialog uses default btn styles) ---- */
+    dialog::backdrop{background:rgba(0,0,0,.55)}
     @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
   </style>
 </head>
@@ -155,7 +158,10 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <a class="btn small" id="newDealBtn"      href="#">＋ New Deal</a>
               <a class="btn small" id="newOfferingBtn"  href="#">＋ New Offering</a>
+              <!-- keep your existing quick link -->
               <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
+              <!-- NEW: open Capital Console in modal -->
+              <button class="btn btn-green" id="openCapital">🚀 Capital Console</button>
             </div>
           </div>
 
@@ -223,6 +229,18 @@
       <button id="phSave"  class="btn btn-green">Save</button>
       <button id="phClose" class="btn">Close</button>
     </div>
+  </dialog>
+
+  <!-- NEW: Capital Console modal (loads dispo.html inside) -->
+  <dialog id="capitalDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:1200px;width:96%">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+      <div style="font-weight:900">Capital Console</div>
+      <div class="row" style="display:flex;gap:8px">
+        <button id="capPopOut" class="btn small">Open in New Tab</button>
+        <button id="capClose" class="btn small">Close</button>
+      </div>
+    </div>
+    <iframe id="capFrame" title="Capital Console" style="width:100%;height:78vh;border:0;border-radius:12px;background:#0a1620"></iframe>
   </dialog>
 
   <!-- New item dialog (Deals / Offerings) -->
@@ -350,7 +368,6 @@
     let dispoItems=null, dispoLoaded=false;
 
     const fallbackDispo = [
-      /* NEW: San Luis wholesale (uses your uploaded filenames) */
       {
         kind: 'deal',
         id: '4319-san-luis-st',
@@ -381,7 +398,6 @@
           'images/deals/san-luis-st/536159577_2524052531320708_2500621445002879585_n.jpg'
         ]
       },
-      /* Existing examples (non-editable fallback) */
       {
         kind:'deal',
         id:'3014-el-paso-st',
@@ -583,6 +599,10 @@
                 <a class="btn" href="${esc(it.share||'https://www.facebook.com/marketplace/create/item')}" target="_blank" rel="noopener">Post / Share</a>
                 ${it.memo?`<button class="btn" data-copy="${esc(absMemo)}">Copy Link</button>`:''}
                 <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
+
+                <!-- NEW: Capital jump -->
+                <button class="btn" data-capital="${esc(idSafe)}">🚀 Raise Capital</button>
+
                 <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
                 <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
                 ${editable ? `
@@ -621,6 +641,22 @@
                 toast('Deleted');
                 renderDispo();
               }catch{ alert('Could not delete right now.'); }
+            });
+          });
+
+          // NEW: Capital button wiring (open modal with context)
+          grid.querySelectorAll('button[data-capital]').forEach(b=>{
+            b.addEventListener('click', e=>{
+              e.stopPropagation();
+              const it = byId[b.getAttribute('data-capital')];
+              if(!it) return;
+              openCapitalConsole({
+                dealId: it.id,
+                title:  it.title || it.address || '',
+                price:  it.price || '',
+                terms:  it.terms || '',
+                memo:   it.memo  || ''
+              });
             });
           });
         };
@@ -888,6 +924,35 @@
         renderDispo();
       }catch{ alert('Could not save right now.'); }
     };
+
+    /* ---- Capital Console integration (modal + deep link) ---- */
+    const CAPITAL_URL = 'dispo.html';      // your capital console page
+    const DEFAULT_SHEET = 'SA';            // change if you segment by market
+
+    function openCapitalConsole(ctx={}){
+      // Use stored agent name if console has saved it previously
+      const agent = localStorage.getItem('db_agent_name') || '';
+      const sp = new URLSearchParams();
+      sp.set('sheet', DEFAULT_SHEET);
+      if(agent) sp.set('agent', agent);
+      if(uidParam) sp.set('uid', uidParam);
+      if(ctx.dealId) sp.set('dealId', ctx.dealId);
+      if(ctx.title)  sp.set('title',  ctx.title);
+      if(ctx.price)  sp.set('price',  ctx.price);
+      if(ctx.terms)  sp.set('terms',  ctx.terms);
+      if(ctx.memo)   sp.set('memo',   ctx.memo);
+
+      const url = CAPITAL_URL + '?' + sp.toString();
+      const dlg = document.getElementById('capitalDlg');
+      const frame = document.getElementById('capFrame');
+      frame.src = url;
+      dlg.showModal();
+
+      document.getElementById('capPopOut').onclick = ()=> window.open(url, '_blank', 'noopener');
+      document.getElementById('capClose').onclick  = ()=> dlg.close();
+    }
+
+    document.getElementById('openCapital').onclick = ()=> openCapitalConsole({});
   </script>
 </body>
 </html>
