@@ -1,141 +1,538 @@
-<!-- ========================= dispo.html ========================= -->
+<!-- ===================== DealBankers • Capital Console (standalone) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Deal Bankers • Dispo CRM</title>
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-  <style>
-    :root{--bg:#0c151e;--panel:#0f1a24;--line:#24455f;--text:#e9f3ff;--muted:#a9c3db;--btn:#173449;}
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;background:linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);color:var(--text)}
-    header{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border-bottom:1px solid var(--line);padding:12px 16px;display:flex;justify-content:space-between;align-items:center}
-    .menu{cursor:pointer;font-size:22px}
-    .menu-content{display:none;position:absolute;top:56px;right:12px;background:#0f1a24;border:1px solid var(--line);border-radius:10px;box-shadow:0 12px 32px rgba(0,0,0,.45);z-index:10}
-    .menu-content a{display:block;padding:10px 14px;text-decoration:none;color:#cfe3f6}
-    .menu-content a:hover{background:#0e2433}
-    .container{display:flex;flex-direction:column;gap:12px;padding:12px}
-    @media (min-width:780px){ .container{flex-direction:row;height:calc(100vh - 56px)} }
-    .lead-section,.map-section{flex:1;min-width:0}
-    .lead-buttons{display:flex;justify-content:center;gap:10px;margin-bottom:10px;flex-wrap:wrap}
-    .lead-buttons a,.lead-buttons button{font-size:22px;border:1px solid var(--line);border-radius:10px;text-decoration:none;cursor:pointer;padding:8px 12px;color:#fff;background:#0e2433}
-    .lead-buttons .call,.lead-buttons .text{background:linear-gradient(180deg,#ffd36b,#c89b3a);color:#211a05;border:none}
-    .lead-buttons .dirs{background:#0e2433}
-    .lead-card{background:#10222e;border:1px solid var(--line);border-radius:12px;padding:14px;box-shadow:0 14px 36px rgba(0,0,0,.35);margin:0 auto 12px;max-width:560px}
-    .lead-card a{color:#8cc8ff;text-decoration:none}
-    .lead-card a:hover{text-decoration:underline}
-    .lead-card button{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;padding:8px 12px;border:none;border-radius:8px;font-size:14px;margin-top:10px;cursor:pointer}
-    .next-btn{display:block;margin:12px auto;padding:10px 20px;font-size:18px;background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff;border:none;border-radius:10px;cursor:pointer}
-    iframe.map{width:100%;height:320px;border:none;border-radius:12px;background:#fff}
-    @media (min-width:780px){ iframe.map{height:100%} }
-    .modal{display:none;position:fixed;z-index:999;left:0;top:0;width:100vw;height:100vh;background:rgba(0,0,0,.7);justify-content:center;align-items:center}
-    .modal-content{width:92%;height:80%;background:#0f1a24;border-radius:12px;overflow:hidden;position:relative;border:1px solid var(--line)}
-    .modal iframe{width:100%;height:100%;border:none}
-    .close-btn{position:absolute;top:10px;right:15px;font-size:20px;background:#333;color:white;border:none;border-radius:50%;width:34px;height:34px;cursor:pointer}
-    .accordion{margin-top:10px;border-radius:8px;overflow:hidden;border:1px solid var(--line)}
-    .accordion summary{background:#0f2a3a;cursor:pointer;padding:10px;font-weight:700;color:#cfe3f6}
-    .accordion div{padding:10px;background:#0e2433;font-size:14px;color:#cfe3f6}
-  </style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>DealBankers • Capital Console</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
-  <script src="dispo.js"></script>
-  <script>
-    let index = 0;
+<style>
+  :root{
+    /* neon noir (BTTF x John Wick) */
+    --bg:#090d14; --panel:#0d1620; --panel2:#0f1f2b; --line:#1b3245;
+    --text:#eaf1f6; --muted:#98b2c8;
+    --neon:#58c0ff; --neon2:#b56bff; --acid:#26cf84; --warn:#ffd36b; --bad:#ff5870;
+    --shadow:0 30px 80px rgba(0,0,0,.65);
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0; color:var(--text);
+    background:
+      radial-gradient(1200px 560px at 110% -15%, rgba(88,192,255,.20) 0%, transparent 60%),
+      radial-gradient(900px 420px at -10% -10%, rgba(181,107,255,.12) 0%, transparent 58%),
+      linear-gradient(135deg,#090d14 10%, #0a131d 55%, #0c1a27);
+    font-family: system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial, sans-serif;
+  }
 
-    function gmapDir(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`; }
+  header{
+    display:flex; align-items:center; justify-content:space-between; gap:12px;
+    padding:12px 14px; position:sticky; top:0; z-index:6;
+    background:linear-gradient(180deg,rgba(255,255,255,.12),rgba(255,255,255,.04));
+    border-bottom:1px solid rgba(255,255,255,.15);
+    box-shadow: var(--shadow);
+  }
+  .brand{display:flex; gap:10px; align-items:center; font-weight:900; letter-spacing:.02em}
+  .dot{width:10px; height:10px; border-radius:999px; background:var(--neon); box-shadow:0 0 16px var(--neon)}
+  .hdr-right{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+  .chip{border:1px solid var(--line); background:#0e2230; color:#cfe3f7; padding:7px 10px; border-radius:999px; font-weight:700; font-size:12px}
+  .chip.glow{border-color:transparent; background:linear-gradient(180deg,var(--neon),#1c69a6); color:#08121a}
+  .chip.pink{background:linear-gradient(180deg,var(--neon2),#6a2fd9); color:#12081a}
+  .chip.acid{background:linear-gradient(180deg,var(--acid),#128c59); color:#04110a}
 
-    function showLead(lead) {
-      const name = lead.contacts?.[0]?.name || "Unknown";
-      const phone = lead.contacts?.[0]?.phone || "N/A";
-      const notes = lead.notes ? lead.notes.replace(/\n/g, "<br>") : "No deal notes available.";
-      const url = `https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=pp_url&entry.849181096=Dispo&entry.121126280=${encodeURIComponent(name)}&entry.1828741519=${encodeURIComponent(lead.address)}`;
+  .wrap{padding:10px; max-width:1200px; margin:0 auto}
+  .grid{display:grid; grid-template-columns: 1.05fr 1.2fr .95fr; gap:10px}
+  @media (max-width:1080px){ .grid{grid-template-columns:1fr} }
 
-      const dirs = gmapDir(lead.address||'');
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.15); border-radius:var(--r); padding:10px; box-shadow:var(--shadow)}
 
-      document.getElementById("leadCard").innerHTML = `
-        <div class="lead-buttons">
-          <button class="call" onclick="copyToClipboard('${phone}')">📞</button>
-          <a class="text" href="https://www.textnow.com/messaging" target="_blank">💬</a>
-          <a class="dirs" href="${dirs}" target="_blank" title="Directions">🚗</a>
-          <a class="dirs" href="https://drive.google.com" target="_blank" title="Drive">📁</a>
-        </div>
-        <div class="lead-card">
-          <strong>${name}</strong><br/>
-          ${lead.address || ''}<br/>
-          <a href="https://www.textnow.com/messaging" target="_blank">Open TextNow</a><br/>
-          <button onclick="openModal('${url}')">📝 Update Notes</button>
-          <details class="accordion">
-            <summary>📊 Deal Details</summary>
-            <div>${notes}</div>
-          </details>
-        </div>
-      `;
-    }
+  .section-title{display:flex; align-items:center; justify-content:space-between; gap:8px; margin-bottom:8px}
+  .section-title h3{margin:0; font-size:16px}
+  .btn{display:inline-flex; gap:8px; align-items:center; justify-content:center; cursor:pointer;
+    border:1px solid var(--line); border-radius:12px; padding:9px 12px; color:#eaf6ff; background:#0f2332; text-decoration:none; font-weight:800}
+  .btn:hover{filter:brightness(1.08)}
+  .btn.neon{background:linear-gradient(180deg,var(--neon),#1b6aa9); color:#05111a; border:none}
+  .btn.acid{background:linear-gradient(180deg,var(--acid),#158959); color:#02100a; border:none}
+  .btn.warn{background:linear-gradient(180deg,var(--warn),#c89b3a); color:#191204; border:none}
+  .btn.bad{background:linear-gradient(180deg,var(--bad),#b81731); color:#ffeaf0; border:none}
+  .btn.ghost{background:#0e2030}
 
-    function nextLead() {
-      index = (index + 1) % (leads?.length || 1);
-      showLead(leads[index]);
-    }
+  input, select, textarea{
+    width:100%; padding:10px 12px; border-radius:12px; border:1px solid var(--line); background:#0d1c29; color:#eaf6ff;
+  }
+  textarea{min-height:140px; resize:vertical}
 
-    function copyToClipboard(text) {
-      navigator.clipboard.writeText(text).then(() => alert("Copied number: " + text));
-    }
+  /* Left list */
+  .search{display:flex; gap:8px; margin-bottom:8px; flex-wrap:wrap}
+  .list{display:grid; gap:8px; max-height:calc(100vh - 240px); overflow:auto; padding-right:4px}
+  .row{
+    border:1px solid var(--line); border-radius:12px; background:#0f1f2b; padding:10px;
+    display:grid; grid-template-columns: 1fr auto; gap:8px; align-items:center; cursor:pointer;
+  }
+  .row:hover{background:#0f2635}
+  .row .meta{display:flex; gap:6px; flex-wrap:wrap}
+  .tag{font-size:11px; font-weight:800; padding:4px 8px; border-radius:999px; border:1px solid var(--line); background:#0d2434}
+  .row.active{outline:2px solid var(--neon); box-shadow:0 0 0 3px rgba(88,192,255,.2)}
 
-    function openModal(url) {
-      const modal = document.getElementById("formModal");
-      const iframe = document.getElementById("formIframe");
-      iframe.src = url;
-      modal.style.display = "flex";
-    }
+  /* Center – dialer */
+  .dial-grid{display:grid; gap:8px}
+  .big-call{
+    display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;
+  }
+  .big-call .btn{font-size:18px; padding:14px 8px}
+  .stats{display:flex; gap:8px; flex-wrap:wrap}
+  .stat{background:#0f2231; border:1px solid var(--line); border-radius:12px; padding:8px 10px; font-weight:900; color:#cfe3f7}
+  .stat strong{font-size:18px; color:#fff}
 
-    function closeModal() {
-      document.getElementById("formModal").style.display = "none";
-      document.getElementById("formIframe").src = "";
-    }
+  .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:8px}
+  @media (max-width:520px){ .big-call{grid-template-columns:1fr} .grid2{grid-template-columns:1fr} }
 
-    function toggleMenu() {
-      const menu = document.getElementById("menuContent");
-      menu.style.display = menu.style.display === "block" ? "none" : "block";
-    }
+  .kbd{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace; padding:2px 6px; border-radius:6px; background:#0e1c28; border:1px solid var(--line)}
+  .tips{color:var(--muted); font-size:12px}
 
-    window.onload = function () {
-      if (Array.isArray(leads) && leads.length > 0) {
-        index = 0;
-        showLead(leads[index]);
-      } else {
-        document.getElementById("leadCard").innerHTML = `<div class="lead-card">No dispo deals loaded.</div>`;
-      }
-    };
-  </script>
+  /* Right – script & outcomes */
+  .script-tabs{display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px}
+  .script-tabs .btn{padding:6px 10px}
+  .script{border:1px dashed var(--line); border-radius:12px; background:#0e1f2b; padding:10px; color:#d7e8f7; line-height:1.45}
+  .outcomes{display:flex; flex-wrap:wrap; gap:8px; margin-top:8px}
+  .outcomes .btn{padding:8px 10px}
+
+  .footer-actions{display:flex; gap:8px; flex-wrap:wrap; justify-content:flex-end; margin-top:8px}
+
+  /* Import modal */
+  dialog{border:none; border-radius:16px; background:#0f1a24; color:#eaf6ff; padding:14px; max-width:720px; width:92%}
+  dialog::backdrop{background:rgba(0,0,0,.65)}
+  .muted{color:var(--muted)}
+</style>
 </head>
 <body>
-  <header>
-    <div>Deal Bankers • Dispo CRM</div>
-    <div style="position:relative">
-      <div class="menu" onclick="toggleMenu()">☰</div>
-      <div class="menu-content" id="menuContent">
-        <a href="wholesaler.html">Go to Acquisition</a>
+<header>
+  <div class="brand">
+    <div class="dot"></div>
+    <div>DealBankers • <span style="color:#8bd1ff">Capital Console</span></div>
+  </div>
+  <div class="hdr-right">
+    <span class="chip glow" title="Dial Mode" id="modeChip">Device</span>
+    <span class="chip">Hot: <strong id="hotCount">0</strong></span>
+    <span class="chip">Calls: <strong id="callCount">0</strong></span>
+    <button class="btn neon" id="importBtn">⇪ Import</button>
+    <button class="btn acid" id="exportBtn">Export Hotlist</button>
+    <button class="btn ghost" id="modeBtn">⚙ Dial</button>
+  </div>
+</header>
+
+<div class="wrap">
+  <div class="grid">
+    <!-- LEFT: LIST -->
+    <section class="card">
+      <div class="section-title">
+        <h3>Prospects / Buyers</h3>
+        <div class="tips">Search (<span class="kbd">/</span>) • Next (<span class="kbd">→</span>) • Prev (<span class="kbd">←</span>) • Save (<span class="kbd">Ctrl/⌘ S</span>)</div>
       </div>
-    </div>
-  </header>
+      <div class="search">
+        <input id="q" placeholder="Search name, phone, email, notes…"/>
+        <select id="filter">
+          <option value="all">All</option>
+          <option value="interested">Interested</option>
+          <option value="follow-up">Follow-up</option>
+          <option value="bad">Bad Number</option>
+          <option value="dnc">Do Not Call</option>
+          <option value="new">Unworked</option>
+        </select>
+        <button class="btn" id="randBtn">🎲 Random</button>
+      </div>
+      <div id="list" class="list"></div>
+    </section>
 
-  <div class="container">
-    <div class="lead-section">
-      <div id="leadCard"></div>
-      <button class="next-btn" onclick="nextLead()">⏭️ Next Deal</button>
-    </div>
-    <div class="map-section">
-      <iframe class="map"
-        src="https://www.google.com/maps/d/u/0/embed?mid=1C_OfzvCIlHnx-6nLaZ3Y88izZtflM5g&ehbc=2E312F"
-        allowfullscreen></iframe>
-    </div>
-  </div>
+    <!-- CENTER: DIALER -->
+    <section class="card">
+      <div class="section-title"><h3 id="who">No selection</h3><div class="stats">
+        <div class="stat">Status: <strong id="statusText">—</strong></div>
+        <div class="stat">Last: <strong id="lastText">—</strong></div>
+      </div></div>
 
-  <div id="formModal" class="modal">
-    <div class="modal-content">
-      <button class="close-btn" onclick="closeModal()">×</button>
-      <iframe id="formIframe"></iframe>
-    </div>
+      <div class="dial-grid">
+        <div class="big-call">
+          <a id="callBtn" class="btn neon" href="#" target="_blank" rel="noopener">📞 Call</a>
+          <a id="txtBtn"  class="btn warn" href="https://www.textnow.com/messaging" target="_blank" rel="noopener">💬 Text</a>
+          <button id="copyBtn" class="btn ghost">📋 Copy Number</button>
+        </div>
+
+        <div class="grid2">
+          <label>Soft Commit ($)
+            <input id="pledge" placeholder="e.g., 50,000"/>
+          </label>
+          <label>Tag / Status
+            <select id="tag">
+              <option value="">—</option>
+              <option value="interested">Interested</option>
+              <option value="follow-up">Follow-up</option>
+              <option value="bad">Bad Number</option>
+              <option value="dnc">Do Not Call</option>
+            </select>
+          </label>
+        </div>
+
+        <label>Notes
+          <textarea id="notes" placeholder="Quick notes, terms discussed, timing, risk appetite…"></textarea>
+        </label>
+
+        <div class="footer-actions">
+          <button class="btn acid" id="saveBtn">💾 Save</button>
+          <button class="btn" id="prevBtn">◀ Prev</button>
+          <button class="btn" id="nextBtn">Next ▶</button>
+        </div>
+
+        <div class="tips">Dial mode is <span class="kbd" id="modeText">Device</span>. Click ⚙ Dial to switch Device / TextNow / Google Voice. Copy places number on clipboard for web dialers.</div>
+      </div>
+    </section>
+
+    <!-- RIGHT: SCRIPTS + OUTCOMES -->
+    <section class="card">
+      <div class="section-title"><h3>Pitch / Script</h3></div>
+      <div class="script-tabs">
+        <button class="btn ghost" data-script="intro">Intro</button>
+        <button class="btn ghost" data-script="terms">Terms</button>
+        <button class="btn ghost" data-script="sf">Seller Finance</button>
+        <button class="btn ghost" data-script="close">Close</button>
+      </div>
+      <div id="script" class="script">Choose a tab to load a script.</div>
+
+      <div class="outcomes">
+        <button class="btn acid" data-outcome="interested">✔ Interested</button>
+        <button class="btn warn" data-outcome="follow-up">⏰ Follow-up</button>
+        <button class="btn bad"  data-outcome="bad">✖ Bad Number</button>
+        <button class="btn"      data-outcome="dnc">🚫 DNC</button>
+      </div>
+    </section>
   </div>
+</div>
+
+<!-- Dial Preference -->
+<dialog id="dialDlg">
+  <h3 style="margin:0 0 8px">Dial Preference</h3>
+  <label style="display:flex; gap:8px; align-items:center; margin:6px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
+  <label style="display:flex; gap:8px; align-items:center; margin:6px 0"><input type="radio" name="mode" value="textnow"> TextNow (web)</label>
+  <label style="display:flex; gap:8px; align-items:center; margin:6px 0"><input type="radio" name="mode" value="gvoice"> Google Voice (web)</label>
+  <div style="display:flex; gap:8px; margin-top:8px; justify-content:flex-end">
+    <button class="btn" id="dialClose">Close</button>
+    <button class="btn acid" id="dialSave">Save</button>
+  </div>
+</dialog>
+
+<!-- Import Modal -->
+<dialog id="impDlg">
+  <h3 style="margin:0 0 8px">Import Buyers / Prospects</h3>
+  <div class="muted" style="margin-bottom:8px">This page will auto-load <b>buyers.js</b> if present (window.leads = []). You can also import CSV or paste rows.<br>
+  Columns recognized: FirstName, Last Name, Phone, Email, Notes, Mailing (others are ignored).</div>
+  <input type="file" id="file" accept=".csv,.txt,.tsv"/>
+  <div style="margin:8px 0; text-align:center; color:#9fd0ff">— or —</div>
+  <textarea id="paste" rows="6" placeholder="Paste CSV here…"></textarea>
+  <div style="display:flex; gap:8px; justify-content:flex-end; margin-top:8px">
+    <button class="btn" id="impClose">Close</button>
+    <button class="btn neon" id="impRun">Import</button>
+  </div>
+</dialog>
+
+<script>
+/* ================== Data & State ================== */
+const $ = s => document.querySelector(s);
+const listEl = $('#list');
+const qEl = $('#q'); const filterEl = $('#filter');
+const whoEl = $('#who'); const statusText = $('#statusText'); const lastText = $('#lastText');
+const callBtn = $('#callBtn'); const txtBtn = $('#txtBtn'); const copyBtn = $('#copyBtn');
+const pledgeEl = $('#pledge'); const tagEl = $('#tag'); const notesEl = $('#notes');
+const hotCount = $('#hotCount'); const callCountEl = $('#callCount');
+const modeChip = $('#modeChip'); const modeText = $('#modeText');
+
+let MODE = localStorage.getItem('db_dial_mode') || 'device';
+let CALLS = +(localStorage.getItem('db_call_count') || 0);
+let idx = 0;
+let items = [];  // normalized leads
+let filtered = []; // view
+
+const SCRIPTS = {
+  intro: `Hey, this is Bill with DealBankers. We place private capital into quick, secured deals—short terms, strong collateral, and clarity on exit. Are you open to reviewing a couple live opportunities this week?`,
+  terms: `Typical terms: 10–14% APR annualized on short durations (30–120 days) or flat fees on ultra-short (7–21 days). First-lien or recorded security interest. Funds wired to title/escrow. We provide full HUD/closing docs. We keep you senior and safe.`,
+  sf: `We also structure seller-finance notes for end-buyers (wraps / all-inclusive trust deeds). If you prefer a mailbox-money profile, we can place your capital into secured notes with servicing and full transparency.`,
+  close: `Great—I'll text you a link with the current offerings and a 2-minute overview. What’s your soft comfort range right now? (Most of our partners start $25k–$100k).`
+};
+
+function setMode(m){
+  MODE = m; localStorage.setItem('db_dial_mode', MODE);
+  $('#modeChip').textContent = MODELabel(MODE);
+  modeText.textContent = MODELabel(MODE);
+}
+function MODELabel(m){ return m==='device'?'Device': m==='textnow'?'TextNow':'Google Voice'; }
+
+/* ================== Normalization ================== */
+function normFromRaw(raw){
+  // expects window.leads shape OR CSV rows; normalize to {id,name,phone,email,notes,mailing,meta,tag,pledge,last}
+  const c = raw.contacts?.[0] || {};
+  const name = (c.name || raw.name || '').trim() || 'Unknown';
+  const phone = normPhone(c.phone || raw.phone || '');
+  const email = (c.email || raw.email || '').trim();
+  return {
+    id: raw.id || phone || (email ? email.toLowerCase() : Math.random().toString(36).slice(2)),
+    name, phone, email,
+    notes: (raw.notes||'').toString(),
+    mailing: raw.address || raw.mailing || '',
+    meta: raw.meta || {},
+    tag: getSaved(raw, 'tag') || '',
+    pledge: getSaved(raw, 'pledge') || '',
+    last: getSaved(raw, 'last') || 0
+  };
+}
+function normPhone(p){ return (p||'').replace(/[^\d+]/g,''); }
+
+/* ================== Storage per lead ================== */
+function key(id){ return 'db_cap_'+id; }
+function loadSaved(id){
+  try{ return JSON.parse(localStorage.getItem(key(id)) || '{}'); }catch{ return {}; }
+}
+function getSaved(raw, field){
+  const id = raw.id || raw.phone || raw.email || '';
+  const saved = loadSaved(id);
+  return saved[field];
+}
+function saveLeadState(it, patch){
+  const cur = loadSaved(it.id);
+  const next = Object.assign({}, cur, patch);
+  localStorage.setItem(key(it.id), JSON.stringify(next));
+}
+
+/* ================== Rendering ================== */
+function renderList(){
+  const q = (qEl.value||'').toLowerCase();
+  const f = filterEl.value;
+  filtered = items.filter(it=>{
+    const matchQ = !q || [it.name,it.phone,it.email,it.notes,it.mailing].join(' ').toLowerCase().includes(q);
+    const st = (it.tag||'').toLowerCase();
+    const matchF =
+      f==='all' ? true :
+      f==='new' ? !st :
+      st===f;
+    return matchQ && matchF;
+  });
+  listEl.innerHTML = '';
+  if(!filtered.length){ listEl.innerHTML = `<div class="muted">No matches.</div>`; return; }
+  filtered.forEach((it,i)=>{
+    const row=document.createElement('div'); row.className='row'; if(i===idx) row.classList.add('active');
+    row.innerHTML = `
+      <div>
+        <div style="font-weight:900">${escapeHTML(it.name)}</div>
+        <div class="meta">
+          ${it.phone?`<span class="tag">${escapeHTML(it.phone)}</span>`:''}
+          ${it.email?`<span class="tag">${escapeHTML(it.email)}</span>`:''}
+          ${it.tag?`<span class="tag" style="border-color:transparent;background:${tagColor(it.tag)}">${escapeHTML(it.tag)}</span>`:''}
+        </div>
+      </div>
+      <div style="color:#9cc8ff;font-weight:800">${it.pledge?('$'+it.pledge):''}</div>
+    `;
+    row.addEventListener('click',()=>{ idx=i; selectCurrent(); });
+    listEl.appendChild(row);
+  });
+}
+function tagColor(t){
+  if(t==='interested') return 'linear-gradient(180deg,var(--acid),#148c58)';
+  if(t==='follow-up') return 'linear-gradient(180deg,var(--warn),#c89b3a)';
+  if(t==='bad') return 'linear-gradient(180deg,var(--bad),#b81731)';
+  if(t==='dnc') return 'linear-gradient(180deg,#7d8da1,#32485e)';
+  return '#0d2434';
+}
+
+function selectCurrent(){
+  if(!filtered.length){ whoEl.textContent='No selection'; return; }
+  const it = filtered[idx];
+  listEl.querySelectorAll('.row').forEach((r,i)=>r.classList.toggle('active', i===idx));
+  whoEl.textContent = `${it.name}${it.mailing?(' • '+it.mailing):''}`;
+  statusText.textContent = it.tag || '—';
+  lastText.textContent = it.last ? fmtTime(it.last) : '—';
+
+  pledgeEl.value = it.pledge || '';
+  tagEl.value = it.tag || '';
+  notesEl.value = it.notes || '';
+
+  // dial links
+  const phone = it.phone || '';
+  callBtn.href = phoneHref(phone, MODE);
+  txtBtn.href  = 'https://www.textnow.com/messaging';
+  copyBtn.onclick = ()=>navigator.clipboard.writeText(phone).then(()=>toast('Number copied'));
+
+  updateHotCount();
+}
+function fmtTime(ts){ const d=new Date(ts); return (d.getMonth()+1)+'/'+d.getDate()+' '+String(d.getHours()).padStart(2,'0')+':'+String(d.getMinutes()).padStart(2,'0'); }
+
+function phoneHref(number, dialMode){
+  const num=(number||'').replace(/[^\d+]/g,'');
+  if(!num) return '#';
+  if(dialMode==='device') return `tel:${num}`;
+  if(dialMode==='textnow'){ navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging'; }
+  if(dialMode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
+  return `tel:${num}`;
+}
+
+function escapeHTML(s){ return String(s==null?'':s).replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m])); }
+
+/* ================== Actions ================== */
+function saveCurrent(){ if(!filtered.length) return;
+  const it=filtered[idx];
+  it.pledge = pledgeEl.value.trim();
+  it.tag    = tagEl.value.trim();
+  it.notes  = notesEl.value.trim();
+  it.last   = Date.now();
+  saveLeadState(it, { pledge:it.pledge, tag:it.tag, notes:it.notes, last:it.last });
+  statusText.textContent = it.tag || '—';
+  lastText.textContent = fmtTime(it.last);
+  renderList();
+  toast('Saved');
+}
+function outcomeSet(tag){
+  tagEl.value = tag;
+  saveCurrent();
+}
+function toast(t){
+  // quick, minimal toast
+  const d=document.createElement('div');
+  d.textContent=t;
+  Object.assign(d.style,{position:'fixed',left:'50%',bottom:'16px',transform:'translateX(-50%)',background:'#0b1218',color:'#fff',padding:'10px 14px',border:'1px solid rgba(255,255,255,.2)',borderRadius:'12px',boxShadow:'var(--shadow)',zIndex:99});
+  document.body.appendChild(d); setTimeout(()=>d.remove(),1300);
+}
+
+function next(){ if(!filtered.length) return; idx=(idx+1)%filtered.length; selectCurrent(); }
+function prev(){ if(!filtered.length) return; idx=(idx-1+filtered.length)%filtered.length; selectCurrent(); }
+function randomPick(){ if(!filtered.length) return; idx=Math.floor(Math.random()*filtered.length); selectCurrent(); }
+
+function updateHotCount(){
+  const hot = items.filter(it=>(it.tag==='interested'||it.tag==='follow-up'));
+  hotCount.textContent = hot.length;
+}
+
+/* ================== Scripts UI ================== */
+const scriptBox = $('#script');
+document.querySelectorAll('[data-script]').forEach(b=>{
+  b.addEventListener('click',()=>{ const k=b.getAttribute('data-script'); scriptBox.textContent = SCRIPTS[k] || ''; });
+});
+
+/* Outcomes */
+document.querySelectorAll('[data-outcome]').forEach(b=>{
+  b.addEventListener('click',()=>{ outcomeSet(b.getAttribute('data-outcome')); });
+});
+
+/* ================== Import / Export ================== */
+const impDlg = $('#impDlg'); const fileEl = $('#file'); const pasteEl = $('#paste');
+$('#importBtn').onclick = ()=> impDlg.showModal();
+$('#impClose').onclick = ()=> impDlg.close();
+$('#impRun').onclick = async ()=>{
+  let rows = '';
+  if(fileEl.files && fileEl.files[0]) rows = await fileEl.files[0].text();
+  else rows = pasteEl.value || '';
+  const parsed = parseCSV(rows);
+  if(!parsed.length){ toast('Nothing to import'); return; }
+  const mapped = parsed.map(csvRowToLead).filter(Boolean).map(normFromRaw);
+  items = dedupe([...mapped, ...items], (a,b)=> (a.phone && a.phone===b.phone) || (a.email && a.email===b.email));
+  impDlg.close(); qEl.value=''; filterEl.value='all'; idx=0; renderList(); selectCurrent(); toast('Imported '+mapped.length);
+};
+function parseCSV(text){
+  if(!text) return [];
+  // minimal CSV—handles simple quoted commas
+  const lines = text.replace(/\r/g,'').split('\n').filter(x=>x.trim());
+  const head = lines.shift().split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s=>s.replace(/^"|"$|^\s+|\s+$/g,''));
+  const out=[];
+  for(const ln of lines){
+    const cells = ln.split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/).map(s=>s.replace(/^"|"$|^\s+|\s+$/g,''));
+    const row={}; head.forEach((h,i)=>row[h]=cells[i]||''); out.push(row);
+  }
+  return out;
+}
+function csvVal(obj, keys){ for(const k of keys){ if(obj[k]!=null && String(obj[k]).trim()) return String(obj[k]).trim(); } return ''; }
+function csvRowToLead(r){
+  const first = csvVal(r, ['FirstName','First Name','first','First']);
+  const last  = csvVal(r, ['Last Name','LastName','last','Last']);
+  const phone = csvVal(r, ['Phone','phone','Mobile']);
+  const email = csvVal(r, ['Email','E-mail','email']);
+  const notes = csvVal(r, ['Notes','notes','Comment']);
+  const mailing = csvVal(r, ['Mailing','Address','address']);
+  if(!(first||last||phone||email)) return null;
+  return { id: phone || email || undefined, name: [first,last].filter(Boolean).join(' '), phone, email, notes, address: mailing, contacts:[{name:[first,last].filter(Boolean).join(' '),phone,email}] };
+}
+function dedupe(arr, equal){ const out=[]; for(const a of arr){ if(!out.some(b=>equal(a,b))) out.push(a);} return out; }
+
+$('#exportBtn').onclick = ()=>{
+  const hot = items.filter(it=>(it.tag==='interested'||it.tag==='follow-up'));
+  if(!hot.length){ toast('No hot leads'); return; }
+  const rows = [
+    ['Name','Phone','Email','Mailing','Tag','Pledge','Last','Notes'].join(',')
+  ].concat(hot.map(it=>[
+    qcsv(it.name), qcsv(it.phone), qcsv(it.email), qcsv(it.mailing),
+    qcsv(it.tag||''), qcsv(it.pledge||''), qcsv(it.last?new Date(it.last).toISOString():''),
+    qcsv(it.notes||'')
+  ].join(',')));
+  const blob = new Blob([rows.join('\n')], {type:'text/csv'});
+  const url = URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='dealbankers-hotlist.csv'; a.click();
+  URL.revokeObjectURL(url);
+};
+function qcsv(s){ s=String(s||''); if(/[",\n]/.test(s)) return '"'+s.replace(/"/g,'""')+'"'; return s; }
+
+/* ================== Dial Pref ================== */
+const dialDlg=$('#dialDlg'); const modeBtn=$('#modeBtn'); const dialSave=$('#dialSave'); const dialClose=$('#dialClose');
+modeBtn.onclick = ()=>{ dialDlg.showModal(); dialDlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===MODE)); };
+dialClose.onclick = ()=>dialDlg.close();
+dialSave.onclick  = ()=>{ const m=dialDlg.querySelector('input[name="mode"]:checked')?.value||'device'; setMode(m); dialDlg.close(); selectCurrent(); };
+
+/* ================== Header counters ================== */
+function bumpCalls(){ CALLS++; localStorage.setItem('db_call_count', CALLS); callCountEl.textContent = CALLS; }
+
+/* ================== Events ================== */
+$('#saveBtn').onclick = saveCurrent;
+$('#nextBtn').onclick = next;
+$('#prevBtn').onclick = prev;
+$('#randBtn').onclick = randomPick;
+$('#modeChip').textContent = MODELabel(MODE);
+modeText.textContent = MODELabel(MODE);
+callCountEl.textContent = CALLS;
+
+callBtn.addEventListener('click', ()=>{ if(filtered[idx]?.phone) bumpCalls(); });
+
+qEl.addEventListener('input', renderList);
+filterEl.addEventListener('change', ()=>{ idx=0; renderList(); selectCurrent(); });
+
+// shortcuts
+document.addEventListener('keydown',e=>{
+  if(e.key==='/'){ e.preventDefault(); qEl.focus(); qEl.select(); }
+  if(e.key==='ArrowRight'){ e.preventDefault(); next(); }
+  if(e.key==='ArrowLeft'){ e.preventDefault(); prev(); }
+  if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); saveCurrent(); }
+});
+
+/* ================== Boot ================== */
+function boot(){
+  // 1) from buyers.js if present
+  const raw = (window.leads && Array.isArray(window.leads) ? window.leads : []);
+  const base = raw.map(normFromRaw);
+
+  // 2) fallback examples if nothing loaded
+  const sample = (!base.length) ? [
+    {contacts:[{name:'Alex Reyes', phone:'2105550101', email:'alex@example.com'}], notes:'Prefers short-term bridge. $50–100k.'},
+    {contacts:[{name:'Brenda K', phone:'5125550199'}], notes:'Looking for 10–12% annualized; open to seller-finance notes.'},
+    {contacts:[{name:'Caleb & Dana', phone:'8305550117', email:'calebdana@example.com'}], notes:'1031 funds pending; wants lien-first only.'}
+  ].map(normFromRaw) : [];
+
+  items = dedupe([...base, ...sample], (a,b)=> (a.phone && a.phone===b.phone) || (a.email && a.email===b.email));
+  renderList(); idx=0; selectCurrent();
+
+  // Import dialog hint on first load if no buyers.js
+  if(!base.length) setTimeout(()=>impDlg.showModal(), 300);
+}
+boot();
+
+/* ================== Utils ================== */
+function updateHotBadge(){ updateHotCount(); }
+function escapeCSV(s){ return qcsv(s); }
+</script>
 </body>
 </html>
