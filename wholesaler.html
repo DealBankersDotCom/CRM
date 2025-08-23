@@ -1,4 +1,4 @@
-<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; gate + Capital Console) ===================== -->
+<!-- ===================== wholesaler.html (Acq + Dispo; Settings + Capital Console) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -41,7 +41,7 @@
     .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
     .hint.hidden{display:none}
 
-    .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+    .bar{display:grid;grid-template-columns:repeat(7,1fr);gap:8px;margin-top:10px}
     .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
       font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
     .btn:hover{filter:brightness(1.08)}
@@ -69,6 +69,7 @@
       width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
       background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
     }
+    .input{width:100%;height:38px;padding:8px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
@@ -104,7 +105,7 @@
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
 
-    /* ---- Capital Console Modal (dialog uses default btn styles) ---- */
+    /* ---- Dialogs ---- */
     dialog::backdrop{background:rgba(0,0,0,.55)}
     @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
   </style>
@@ -135,7 +136,10 @@
           <a class="btn btn-ghost" href="#" id="actDir"  title="Directions"><span class="ico">🚗</span></a>
           <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
           <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
-          <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
+          <!-- NEW: unified user settings -->
+          <button class="btn btn-ghost" id="actUser" title="User Settings"><span class="ico">⚙️</span></button>
+          <!-- Quick link: Capital Console -->
+          <button class="btn btn-green" id="openCapital" title="Capital Console">🚀</button>
         </div>
 
         <div id="acqNav" class="navrow">
@@ -158,10 +162,8 @@
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <a class="btn small" id="newDealBtn"      href="#">＋ New Deal</a>
               <a class="btn small" id="newOfferingBtn"  href="#">＋ New Offering</a>
-              <!-- keep your existing quick link -->
-              <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
-              <!-- NEW: open Capital Console in modal -->
-              <button class="btn btn-green" id="openCapital">🚀 Capital Console</button>
+              <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener" id="buyersQueue">📞 Buyers List Queue</a>
+              <button class="btn btn-green" id="openCapital2">🚀 Capital Console</button>
             </div>
           </div>
 
@@ -200,15 +202,83 @@
     </section>
   </div>
 
-  <!-- Dial preference dialog -->
-  <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
-    <h3 style="margin:0 0 8px">Phone Link Preference</h3>
-    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
-    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="textnow"> TextNow (web)</label>
-    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="gvoice"> Google Voice (web)</label>
-    <div style="display:flex;gap:8px;margin-top:10px">
-      <button id="saveMode" class="btn" style="flex:1">Save</button>
-      <button id="closeMode" class="btn" style="flex:1">Close</button>
+  <!-- =============== User Settings dialog (Account + Roles + Dial + Behavior) =============== -->
+  <dialog id="userDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:760px;width:96%">
+    <h3 style="margin:0 0 8px">User Settings</h3>
+    <div style="display:grid;gap:12px">
+
+      <fieldset class="section" style="border-radius:12px">
+        <legend style="padding:0 6px;color:#cfe6ff">Account</legend>
+        <label>Display name
+          <input id="uName" class="input" placeholder="Your name as shown to buyers"/>
+        </label>
+        <label>Market / Sheet code (e.g., SA)
+          <input id="uMarket" class="input" placeholder="SA"/>
+        </label>
+        <label>Default Script Tone
+          <select id="uTone" class="input">
+            <option value="belfort">Belfort (direct & decisive)</option>
+            <option value="consult">Consultative (soft open)</option>
+            <option value="finance">Seller Finance (capital-first)</option>
+          </select>
+        </label>
+      </fieldset>
+
+      <fieldset class="section" style="border-radius:12px">
+        <legend style="padding:0 6px;color:#cfe6ff">Roles</legend>
+        <label>Wholesaler type
+          <select id="uWhType" class="input">
+            <option value="both">Both (Acq + Dispo)</option>
+            <option value="acq">Acquisition only</option>
+            <option value="dispo">Disposition only</option>
+            <option value="none">Not wholesaling</option>
+          </select>
+        </label>
+        <div style="display:grid;gap:8px">
+          <label style="display:flex;gap:8px;align-items:center">
+            <input type="checkbox" id="uIsContractor"> I’m also a contractor
+          </label>
+          <label>Primary contractor type
+            <select id="uConType" class="input">
+              <option value="">—</option>
+              <option>General Contractor</option>
+              <option>Painter</option>
+              <option>Roofer</option>
+              <option>Electrician</option>
+              <option>Plumber</option>
+              <option>HVAC</option>
+              <option>Flooring</option>
+              <option>Landscaping</option>
+              <option>Other</option>
+            </select>
+          </label>
+          <label>Specialties (comma separated)
+            <input id="uConSpecs" class="input" placeholder="ex: interior paint, drywall, make-readies"/>
+          </label>
+          <label style="display:flex;gap:8px;align-items:center">
+            <input type="checkbox" id="uIsInvestor"> I’m also an investor / lender
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="section" style="border-radius:12px">
+        <legend style="padding:0 6px;color:#cfe6ff">Dial & Behavior</legend>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <label style="display:flex;gap:8px;align-items:center"><input type="radio" name="dial" value="device"> Device Phone (tel:)</label>
+          <label style="display:flex;gap:8px;align-items:center"><input type="radio" name="dial" value="textnow"> TextNow (web)</label>
+          <label style="display:flex;gap:8px;align-items:center"><input type="radio" name="dial" value="gvoice"> Google Voice (web)</label>
+        </div>
+        <label style="display:flex;gap:8px;align-items:center">
+          <input type="checkbox" id="uHotMode"> Hot mode (auto-advance after save)
+        </label>
+        <small style="color:#9fc2e6">Admin-gated access: Acquisition / Dispo enable is managed by admin; we’ll display your status below.</small>
+        <div id="gateEcho" style="margin-top:6px;color:#b8cbe0"></div>
+      </fieldset>
+    </div>
+
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="uSave" class="btn btn-green">Save</button>
+      <button id="uClose" class="btn">Close</button>
     </div>
   </dialog>
 
@@ -231,7 +301,7 @@
     </div>
   </dialog>
 
-  <!-- NEW: Capital Console modal (loads dispo.html inside) -->
+  <!-- Capital Console modal -->
   <dialog id="capitalDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:1200px;width:96%">
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
       <div style="font-weight:900">Capital Console</div>
@@ -248,19 +318,19 @@
     <h3 id="newItemTitle" style="margin:0 0 8px">New Item</h3>
     <div style="display:grid;gap:8px">
       <label>Kind
-        <select id="niKind" class="textarea" style="min-height:auto;height:38px">
+        <select id="niKind" class="input">
           <option value="deal">Deal</option>
           <option value="offering">Offering</option>
         </select>
       </label>
-      <label>Title <input id="niTitle" class="textarea" style="min-height:auto;height:38px"/></label>
-      <label>Address / Location (optional for Offering) <input id="niAddr" class="textarea" style="min-height:auto;height:38px"/></label>
+      <label>Title <input id="niTitle" class="input"/></label>
+      <label>Address / Location (optional for Offering) <input id="niAddr" class="input"/></label>
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-        <label>Price <input id="niPrice" class="textarea" style="min-height:auto;height:38px"/></label>
-        <label>Terms <input id="niTerms" class="textarea" style="min-height:auto;height:38px"/></label>
+        <label>Price <input id="niPrice" class="input"/></label>
+        <label>Terms <input id="niTerms" class="input"/></label>
       </div>
       <label>Memo URL (PDF or HTML; Offerings only, optional)
-        <input id="niMemo" class="textarea" style="min-height:auto;height:38px" placeholder="https://...pdf or /offering-memoX.html"/>
+        <input id="niMemo" class="input" placeholder="https://...pdf or /offering-memoX.html"/>
       </label>
       <label>Notes <textarea id="niNotes" rows="3" class="textarea"></textarea></label>
       <label>Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
@@ -273,7 +343,7 @@
 
   <div id="toast"></div>
 
-  <!-- Firebase (gate for leads) -->
+  <!-- Firebase (gate + settings) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
@@ -285,7 +355,7 @@
     const params   = new URL(location.href).searchParams;
     const uidParam = params.get('uid') || 'anon';
 
-    // Permission flags available to the rest of the page
+    // Permission flags available to rest of the page
     window.whGate = { acqEnabled:false, dispoEnabled:false };
 
     function loadLeadsJS(){
@@ -296,11 +366,23 @@
       document.head.appendChild(s);
     }
 
-    gateDb.ref(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
-      const g = snap.val() || {};
-      // Back-compat: support old single switches if present
+    // pull both gate + profile in one read
+    gateDb.ref(`userSettings/${uidParam}`).once('value').then(snap=>{
+      const root = snap.val() || {};
+      const g = root.wholesaler || {};
+      const p = root.profile    || {};
+
       window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
       window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
+
+      // apply stored profile to UI defaults (mirrored locally so Capital Console can read)
+      if(p.displayName){ localStorage.setItem('db_agent_name', p.displayName); }
+      if(p.dialMode){    localStorage.setItem('db_phone_link_mode_wh', p.dialMode); }
+      if(p.marketSheet){ localStorage.setItem('db_market_sheet', p.marketSheet); }
+      if(p.scriptTone){  localStorage.setItem('db_script_tone', p.scriptTone); }
+
+      // render gate echo in settings when opened
+      window.__gateEcho = {acq: window.whGate.acqEnabled, dispo: window.whGate.dispoEnabled};
 
       if(!window.whGate.acqEnabled){
         document.getElementById('leadCard').innerHTML =
@@ -308,6 +390,12 @@
         document.getElementById('status').textContent = 'Acq access denied';
       } else {
         loadLeadsJS();
+      }
+
+      // If user's chosen wholesaler type is "dispo", default to Dispo tab on open
+      const whType = (p.roles?.wholesaler) || 'both';
+      if(whType === 'dispo' && window.whGate.dispoEnabled){
+        setTimeout(()=>document.getElementById('tabDispo').click(), 200);
       }
     }).catch(()=>{
       document.getElementById('leadCard').innerHTML =
@@ -319,7 +407,7 @@
   <script>
     const $=s=>document.querySelector(s);
     const statusEl=$('#status'); const toastEl=$('#toast'); const modeCrumb=$('#crumbMode');
-    const dlg=$('#settingsDlg');
+    const userDlg=$('#userDlg');
     let idx=0, currentLead=null, mode='acq';
 
     const uid=new URL(location.href).searchParams.get('uid')||'anon';
@@ -347,7 +435,7 @@
     function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
     function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
-    // --- OpenStreetMap embed around a point
+    // --- OSM embed around a point
     function osmEmbed(lat, lon, zoom=17){
       const d=0.005;
       const left=lon-d, right=lon+d, top=lat+d, bottom=lat-d;
@@ -490,9 +578,7 @@
 
     let carIdx=0, carTimer=null, carRun=true;
     function renderPreview(it){
-      carIdx = 0;              // reset to first slide each time
-      carRun = true;
-      previewItem=it;
+      carIdx = 0; carRun = true; previewItem=it;
       pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
       const photos=getPhotos(it);
       pvCar.innerHTML='';
@@ -502,9 +588,8 @@
         pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`;
         return;
       }
-
       if(!photos.length){
-        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs${it?.memo? ' — memo available via Open Memo button.' : '.'}</div>`;
+        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs${it?.memo? ' — memo available via Open Memo.' : '.'}</div>`;
         return;
       }
       photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo'; if(i===0) img.className='active'; pvCar.appendChild(img); });
@@ -599,360 +684,6 @@
                 <a class="btn" href="${esc(it.share||'https://www.facebook.com/marketplace/create/item')}" target="_blank" rel="noopener">Post / Share</a>
                 ${it.memo?`<button class="btn" data-copy="${esc(absMemo)}">Copy Link</button>`:''}
                 <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
-
-                <!-- NEW: Capital jump -->
                 <button class="btn" data-capital="${esc(idSafe)}">🚀 Raise Capital</button>
-
                 <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
-                <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
-                ${editable ? `
-                  <button class="btn small" data-edit="${esc(idSafe)}">Edit</button>
-                  <button class="btn small" data-del="${esc(idSafe)}">Delete</button>
-                ` : ``}
-              </div>`;
-            el.addEventListener('click',e=>{
-              if(window.matchMedia('(max-width: 980px)').matches) return;
-              if(e.target.closest('.actrow')){
-                if(e.target.matches('button[data-preview]')) { renderPreview(it); }
-                if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
-                return;
-              }
-              renderPreview(it);
-            });
-            grid.appendChild(el);
-          });
-          grid.querySelectorAll('button[data-copy]').forEach(b=>{
-            b.addEventListener('click',e=>{ e.stopPropagation(); navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
-          });
-          grid.querySelectorAll('button[data-edit]').forEach(b=>{
-            b.addEventListener('click',e=>{
-              e.stopPropagation();
-              const it = byId[b.getAttribute('data-edit')];
-              if(it) openEditor(it);
-            });
-          });
-          grid.querySelectorAll('button[data-del]').forEach(b=>{
-            b.addEventListener('click',async e=>{
-              e.stopPropagation();
-              const id=b.getAttribute('data-del');
-              if(!confirm('Delete this item?')) return;
-              try{
-                await gateDb.ref(`deals/${uidParam}/${id}`).remove();
-                toast('Deleted');
-                renderDispo();
-              }catch{ alert('Could not delete right now.'); }
-            });
-          });
-
-          // NEW: Capital button wiring (open modal with context)
-          grid.querySelectorAll('button[data-capital]').forEach(b=>{
-            b.addEventListener('click', e=>{
-              e.stopPropagation();
-              const it = byId[b.getAttribute('data-capital')];
-              if(!it) return;
-              openCapitalConsole({
-                dealId: it.id,
-                title:  it.title || it.address || '',
-                price:  it.price || '',
-                terms:  it.terms || '',
-                memo:   it.memo  || ''
-              });
-            });
-          });
-        };
-
-        fill(deals, '#dealsGrid');
-        fill(offs,  '#offeringsGrid');
-
-        if(!window.matchMedia('(max-width: 980px)').matches){
-          renderPreview(items[0]||null);
-        }
-      });
-    }
-
-    /* ---------------- Acquisition render + robust Street View / map ---------------- */
-
-    // geocode via OSM Nominatim (no key)
-    async function geocode(addr){
-      if(!addr) return null;
-      try{
-        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}&email=support%40dealbankers.com`;
-        const res = await fetch(url, {headers:{'Accept':'application/json'}});
-        const arr = await res.json();
-        if(Array.isArray(arr) && arr[0] && arr[0].lat && arr[0].lon){
-          return {lat:+arr[0].lat, lon:+arr[0].lon};
-        }
-      }catch{}
-      return null;
-    }
-
-    async function improveStreetViewAndMap(addr, svIframe, mapIframe){
-      const hit = await geocode(addr);
-      if(!hit) return;
-
-      // more stable: Street View locked to lat/lng
-      svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
-      // reliable map: OpenStreetMap embed
-      if(mapIframe) mapIframe.src = osmEmbed(hit.lat, hit.lon, 17);
-
-      const a=$('#svOpen'); if(a){
-        a.href = `https://www.google.com/maps/@?api=1&map_action=pano&viewpoint=${hit.lat},${hit.lon}&heading=0&pitch=0&fov=75`;
-        a.style.display='inline-flex';
-      }
-    }
-
-    function render(i){
-      if(!Array.isArray(window.leads)||!window.leads.length){
-        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
-        setStatus('No leads found'); return;
-      }
-      if(i<0) i=window.leads.length-1;
-      if(i>=window.leads.length) i=0;
-      idx=i;
-
-      const lead=window.leads[idx];
-      currentLead=lead;
-
-      const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
-      const phone = phoneOf(lead);
-      const addr  = clean(lead?.address||'');
-
-      // header crumb spelled out
-      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
-      setStatus(`${mode==='acq'?'Acq':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
-
-      const dialMode=getMode();
-      $('#actCall').href = phoneHref(phone, dialMode);
-      $('#actSMS').href  = dialMode==='device' && phone ? `sms:${phone}` : phoneHref(phone, dialMode);
-      $('#actDir').href  = dirHref(addr);
-
-      const lastSaved = saveTimeGet(addr);
-      const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
-
-      $('#leadCard').innerHTML = `
-        <div class="title">${esc(addr || name)}</div>
-        <div class="body">
-          <div class="chips">
-            <div class="chip">UID: ${esc(uid.slice(0,8))}</div>
-            <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
-            <div class="chip">Dial: ${esc(dialMode)}</div>
-            <div class="chip">Mode: Acquisition</div>
-          </div>
-
-          <h3 style="margin:4px 0 6px;font-size:16px">${esc(name)}</h3>
-
-          <div class="section">
-            <div style="font-weight:800;margin-bottom:6px">Lead details</div>
-            <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
-            <div class="notesRow">
-              <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
-              <span id="savedTag" class="savedTag">${esc(lastSavedText)}</span>
-            </div>
-          </div>
-
-          <div class="section">
-            <div class="notesRow" style="justify-content:space-between;margin-bottom:6px">
-              <div style="font-weight:800">Open in Street View</div>
-              <a id="svOpen" class="btn small" target="_blank" rel="noopener" style="display:none">Open in Google Street View</a>
-            </div>
-            <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
-            <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
-          </div>
-        </div>
-      `;
-
-      const ta=$('#noteInput');
-      ta.value = loadNotes(addr) || (lead?.notes || '');
-      autoGrow(ta);
-      ta.addEventListener('input',()=>autoGrow(ta));
-      $('#inlineSave').onclick = ()=>doSaveNotes();
-
-      // upgrade embeds to precise lat/lng + reliable OSM map
-      const svIframe = $('#leadCard .sv');
-      const mapIframe= $('#leadCard .map');
-      improveStreetViewAndMap(addr, svIframe, mapIframe);
-    }
-
-    function doSaveNotes(){
-      const addr = (currentLead?.address)||'';
-      const text = ($('#noteInput')?.value||'').trim();
-      saveNotes(addr, text);
-      const ts=Date.now(); saveTimeSet(addr, ts);
-      const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${fmtTime(ts)}`; tag.style.display='inline'; }
-      toast('Notes saved');
-    }
-
-    // actions
-    $('#btnPrev').onclick   = ()=>render(idx-1);
-    $('#btnNext').onclick   = ()=>render(idx+1);
-    $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
-
-    $('#actCopy').onclick = ()=>{
-      const p=phoneOf(window.leads?.[idx]);
-      if(!p) return alert('No phone on this lead.');
-      navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
-    };
-
-    // dial settings
-    $('#actSettings').onclick = ()=>{
-      dlg.showModal();
-      const cur=getMode();
-      dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur));
-    };
-    $('#saveMode').onclick = ()=>{ const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device'; setMode(m); dlg.close(); render(idx); };
-    $('#closeMode').onclick = ()=>dlg.close();
-
-    // segmented switch
-    function switchTo(modeName){
-      mode = modeName;
-      $('#tabAcq').classList.toggle('active',mode==='acq');
-      $('#tabDispo').classList.toggle('active',mode==='dispo');
-
-      // Hide or show acq-only UI
-      $('#acqBar').classList.toggle('hidden',mode==='dispo');
-      $('#acqNav').classList.toggle('hidden',mode==='dispo');
-      $('#leadCard').classList.toggle('hidden',mode==='dispo');
-      $('#leadHint').classList.toggle('hidden',mode==='dispo');
-
-      // Show or hide dispo-only UI
-      $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
-
-      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
-      setStatus(mode==='acq' ? 'Acq • Ready' : 'Dispo • Ready');
-
-      if(mode==='acq'){
-        if(window.whGate?.acqEnabled){ render(idx); }
-        else{
-          $('#leadCard').classList.remove('hidden');
-          $('#leadCard').innerHTML = '<div class="body">Access to <b>acquisition</b> leads is disabled for this account.</div>';
-          setStatus('Acq access denied');
-        }
-      } else {
-        if(window.whGate?.dispoEnabled){
-          renderDispo();
-        } else {
-          const pane = $('#dispoPane');
-          pane.innerHTML = `
-            <div class="section">
-              <div style="font-weight:800;margin-bottom:6px">Dispo access disabled</div>
-              <div style="color:#cfe3f7">Your account does not currently have access to <b>Dispo</b> leads.</div>
-            </div>`;
-          setStatus('Dispo access denied');
-        }
-      }
-    }
-    $('#tabAcq').onclick  = ()=>switchTo('acq');
-    $('#tabDispo').onclick= ()=>switchTo('dispo');
-
-    // share all
-    $('#linkShareAll').addEventListener('click',e=>{
-      e.preventDefault();
-      const root = location.origin + location.pathname.replace(/\/[^/]*$/,'/');
-      navigator.clipboard.writeText(root).then(()=>toast('Site link copied'));
-    });
-
-    document.addEventListener('keydown',e=>{
-      if(mode==='acq'){
-        if(e.key==='ArrowLeft') return $('#btnPrev').click();
-        if(e.key==='ArrowRight') return $('#btnNext').click();
-        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
-      }
-    });
-
-    window.addEventListener('beforeunload',()=>{ if(mode==='acq' && currentLead){ doSaveNotes(); } });
-
-    function init(){
-      if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
-      else { render(0); }
-    }
-
-    /* ---- Show/hide Memo row when kind changes (Offerings only) ---- */
-    function updateMemoVisibility(){
-      const kindEl = document.getElementById('niKind');
-      const memoLabel = document.getElementById('niMemo')?.closest('label');
-      if(!kindEl || !memoLabel) return;
-      memoLabel.style.display = (kindEl.value === 'offering') ? 'block' : 'none';
-    }
-    document.addEventListener('DOMContentLoaded', updateMemoVisibility);
-    document.getElementById('niKind').addEventListener('change', updateMemoVisibility);
-
-    /* ---- New item (Deal / Offering) wiring ---- */
-    const newDlg = $('#newItemDlg');
-    function openEditor(it){
-      $('#newItemTitle').textContent = (it.kind==='offering' ? 'Edit Offering' : 'Edit Deal');
-      $('#niKind').value  = it.kind || 'deal';
-      $('#niTitle').value = it.title || '';
-      $('#niAddr').value  = it.address || '';
-      $('#niPrice').value = it.price || '';
-      $('#niTerms').value = it.terms || '';
-      $('#niMemo').value  = it.memo  || '';
-      $('#niNotes').value = it.notes || '';
-      $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[])
-        .filter(u=>!/^data:/.test(u)).join(', ');
-      newDlg.dataset.editing = it.id || slugify(it.title||it.address||'item');
-      newDlg.showModal();
-      updateMemoVisibility(); // ensure memo row visibility matches kind
-    }
-
-    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
-    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
-    $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
-
-    $('#niSave').onclick  = async ()=>{
-      const kind  = $('#niKind').value;
-      const title = $('#niTitle').value.trim();
-      if(!title) return alert('Title is required');
-      const addr  = $('#niAddr').value.trim();
-      const price = $('#niPrice').value.trim();
-      const terms = $('#niTerms').value.trim();
-      const memo  = $('#niMemo').value.trim();
-      const notes = $('#niNotes').value.trim();
-      const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
-
-      const editingId = newDlg.dataset.editing || null;
-      const id = editingId || slugify(title || addr || (kind+'-'+Date.now()));
-      const payload = {
-        id, kind, title, address: addr, location: addr,
-        price, terms, memo, notes, photos,
-        status:'active', createdBy: uidParam, updatedAt: Date.now()
-      };
-      try{
-        await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
-        newDlg.dataset.editing='';
-        toast(editingId ? 'Updated' : 'Saved');
-        newDlg.close();
-        renderDispo();
-      }catch{ alert('Could not save right now.'); }
-    };
-
-    /* ---- Capital Console integration (modal + deep link) ---- */
-    const CAPITAL_URL = 'dispo.html';      // your capital console page
-    const DEFAULT_SHEET = 'SA';            // change if you segment by market
-
-    function openCapitalConsole(ctx={}){
-      // Use stored agent name if console has saved it previously
-      const agent = localStorage.getItem('db_agent_name') || '';
-      const sp = new URLSearchParams();
-      sp.set('sheet', DEFAULT_SHEET);
-      if(agent) sp.set('agent', agent);
-      if(uidParam) sp.set('uid', uidParam);
-      if(ctx.dealId) sp.set('dealId', ctx.dealId);
-      if(ctx.title)  sp.set('title',  ctx.title);
-      if(ctx.price)  sp.set('price',  ctx.price);
-      if(ctx.terms)  sp.set('terms',  ctx.terms);
-      if(ctx.memo)   sp.set('memo',   ctx.memo);
-
-      const url = CAPITAL_URL + '?' + sp.toString();
-      const dlg = document.getElementById('capitalDlg');
-      const frame = document.getElementById('capFrame');
-      frame.src = url;
-      dlg.showModal();
-
-      document.getElementById('capPopOut').onclick = ()=> window.open(url, '_blank', 'noopener');
-      document.getElementById('capClose').onclick  = ()=> dlg.close();
-    }
-
-    document.getElementById('openCapital').onclick = ()=> openCapitalConsole({});
-  </script>
-</body>
-</html>
+                <button class="btn desktopOnly" data
