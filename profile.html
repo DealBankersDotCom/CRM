@@ -1,645 +1,138 @@
-<!-- ======================== profile.html (tabs + settings + townhall + offerings) ======================== -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DealBankers • Profile</title>
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-  <meta name="robots" content="noindex"/>
-
-  <style>
-    :root{
-      --bg:#0d1620; --panel:#0f1a24; --line:#1b3245;
-      --text:#eaf1f6; --muted:#9fb3c7; --blue:#2b74ff;
-      --r:18px; --shadow:0 24px 64px rgba(0,0,0,.5);
-      --red:#ff5a5a; --cyan:#47b4ff; --green:#26cf84; --gold:#ffd36b;
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(900px 500px at 90% -10%, #123043 0%, transparent 60%),
-        linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);
-      min-height:100vh; padding:14px;
-    }
-    .shell{max-width:1200px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
-      border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow)}
-    header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
-    .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
-
-    .hdr-actions{display:flex;gap:10px;align-items:center}
-    .pill{
-      width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
-      color:#fff; font-size:20px; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.35)
-    }
-    .pill.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}
-    .pill.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
-    .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
-    .btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a); color:#211a05; border:none; font-weight:800}
-    .btn.green{background:linear-gradient(180deg,var(--green),#1a9b61); color:#fff; border:none; font-weight:800}
-    .btn.ghost{background:#0e2433}
-
-    .tabs{display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap}
-    .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}
-    .tab.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
-    .panel{padding:12px}
-    .card{background:#10222e;border:1px solid var(--line);border-radius:var(--r);padding:12px}
-
-    .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:85vh;min-height:620px}
-    .iframe-wrap iframe{width:100%;height:100%;border:0}
-    @media (max-width:900px){ .iframe-wrap{height:90vh;min-height:680px} }
-
-    /* Overview layout */
-    .overview-grid{display:grid;gap:12px;grid-template-columns:1.1fr 1.4fr}
-    .announce{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));padding:14px}
-    .ann-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
-    .ann-title{margin:0 0 2px}
-    .ann-sub{color:var(--muted);font-size:12px}
-    .kpiRow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
-    .kpi{background:#0f1f2b;border:1px solid var(--line);border-radius:12px;padding:10px}
-    .kLab{font-size:11px;color:#a7bed0;letter-spacing:.06em;text-transform:uppercase}
-    .kVal{margin-top:4px;font-weight:900;font-size:18px}
-    .offerCard{border:1px solid var(--line);background:#0f1a24;border-radius:12px;padding:12px}
-    .offerTitle{font-weight:900;margin:0 0 6px}
-    .offerMeta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-    .offerMeta .chip{background:#0e2231;border-color:#21435a}
-    .ctaRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-    .previewBlock{margin-top:12px}
-    .previewBlock h5{margin:0 0 6px}
-    .facts-preview{width:100%;height:300px;border:0;border-radius:12px;background:#0b141b}
-    @media (max-width:980px){
-      .overview-grid{grid-template-columns:1fr}
-      .kpiRow{grid-template-columns:1fr 1fr 1fr}
-    }
-    @media (max-width:620px){
-      .kpiRow{grid-template-columns:1fr 1fr}
-    }
-
-    /* Townhall */
-    .townhall{display:grid;grid-template-rows:auto 1fr auto; gap:10px; height:62vh; min-height:420px}
-    .th-head{display:flex;align-items:center;justify-content:space-between}
-    .th-body{border:1px solid var(--line);border-radius:14px;background:#0f1a24;overflow:auto;padding:12px}
-    .msg{margin:8px 0;display:grid;gap:4px}
-    .meta{font-size:11px;color:#a7bed0}
-    .bubble{display:inline-block;max-width:min(680px,85%);padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.12);background:#142332}
-    .me .bubble{background:linear-gradient(180deg,#143a2a,#0d291f);border-color:rgba(69,255,169,.25)}
-    .th-input{display:flex;gap:8px}
-    .th-input input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1a24;color:#eaf1f6}
-    .th-input button{min-width:96px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;cursor:pointer}
-
-    /* Settings form */
-    .settings-grid{display:grid;grid-template-columns:1fr 1fr; gap:12px}
-    @media (max-width:960px){ .settings-grid{grid-template-columns:1fr} }
-    .section{border:1px solid var(--line); border-radius:14px; padding:12px; background:#0f1a24}
-    .section h3{margin:0 0 8px}
-    .row{display:grid; grid-template-columns:140px 1fr; gap:10px; align-items:flex-start; margin:8px 0}
-    @media (max-width:640px){ .row{grid-template-columns:1fr} }
-    .chips{display:flex; flex-wrap:wrap; gap:8px}
-    .chip{user-select:none; cursor:pointer; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#0f1a24; color:#d3e3f5; font-size:13px}
-    .chip input{display:none}
-    .chip.active{background:linear-gradient(180deg,#1e3a5f,#0d2136); border-color:#2b74ff}
-    .muted{color:var(--muted); font-size:13px}
-    .inline{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
-    .input, .textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#0c1620; color:#eaf1f6}
-    .textarea{min-height:96px; resize:vertical}
-    .small{font-size:12px; color:#9fb3c7}
-    .badge{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:#0e1b27; font-size:12px}
-  </style>
-</head>
-<body>
-  <div class="shell">
-    <header>
-      <div class="brand">
-        <img src="icon (1).jpg" alt="DealBankers"/>
-        <h1>DEALBANKERS • PROFILE</h1>
-      </div>
-
-      <div class="hdr-actions">
-        <button class="pill red"  id="redPhoneBtn"  title="Immediate Need">☎</button>
-        <button class="pill blue" id="bluePhoneBtn" title="Standard Request">☎</button>
-        <button id="logoutBtn" class="btn">Log Out</button>
-      </div>
-    </header>
-
-    <nav class="tabs" id="tabs">
-      <button class="tab active" data-tab="overview">Overview</button>
-      <button class="tab" data-tab="wholesaler">Wholesaler</button>
-      <button class="tab" data-tab="contractor">Contractor</button>
-      <button class="tab" data-tab="realtor">Realtor</button>
-      <button class="tab" data-tab="investor">Investor</button>
-      <button class="tab" data-tab="settings">Settings</button>
-    </nav>
-
-    <section class="panel">
-      <!-- OVERVIEW -->
-      <div class="card" data-panel="overview">
-        <div class="overview-grid">
-          <!-- Announcements + Active Offerings -->
-          <div class="announce">
-            <div class="ann-head">
-              <div>
-                <h3 class="ann-title">📢 Special Announcements</h3>
-                <div id="meLine" class="ann-sub"></div>
-              </div>
-            </div>
-
-            <div class="kpiRow">
-              <div class="kpi"><div class="kLab">Capital Open</div><div class="kVal">$300k</div></div>
-              <div class="kpi"><div class="kLab">Turn</div><div class="kVal">7–10 days</div></div>
-              <div class="kpi"><div class="kLab">Commodity</div><div class="kVal">D6 • 100M gal</div></div>
-            </div>
-
-            <div class="offerCard">
-              <div class="offerTitle">Virgin D6 Lift — FOB Houston</div>
-              <div class="offerMeta">
-                <span class="chip">Capital Need: <b>$300k</b></span>
-                <span class="chip">Repay: <b>7–10 days</b></span>
-                <span class="chip">Qty: <b>100M gal</b></span>
-              </div>
-              <div class="ctaRow">
-                <a class="btn" href="offering-memo1.html" target="_blank" rel="noopener">Open Memo 1</a>
-                <a class="btn" href="offering-memo2.html" target="_blank" rel="noopener">Open Memo 2</a>
-                <a class="btn green" href="https://docs.google.com/forms/d/e/1FAIpQLScIZ7GX_ga5yOx34817gOL8Bb5m3KFXW8r-5I4taw_-ergOxw/viewform?usp=sf_link" target="_blank" rel="noopener">Submit Interest</a>
-              </div>
-
-              <div class="previewBlock">
-                <h5>Statement of Facts (Inline Preview)</h5>
-                <iframe class="facts-preview" src="offering-memo2.html" title="Offering Memo Preview"></iframe>
-              </div>
-            </div>
-          </div>
-
-          <!-- Townhall -->
-          <div class="townhall">
-            <div class="th-head">
-              <h2 style="margin:0">🏛️ Townhall (All Users)</h2>
-              <div id="presence" class="small">Connecting…</div>
-            </div>
-            <div class="th-body" id="thBody" aria-live="polite"></div>
-            <div class="th-input">
-              <input id="thInput" type="text" placeholder="Say something to the room… (press Enter to send)"/>
-              <button id="thSend">Send</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- WHOLESALER -->
-      <div class="card" data-panel="wholesaler" style="display:none">
-        <div class="small" style="margin:4px 6px 10px">Lead filters live in <b>Settings → Wholesaler</b>.</div>
-        <div class="iframe-wrap"><iframe id="whFrame" src="about:blank" title="Wholesaler Portal"></iframe></div>
-      </div>
-
-      <!-- CONTRACTOR -->
-      <div class="card" data-panel="contractor" style="display:none">
-        <div class="iframe-wrap"><iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe></div>
-      </div>
-
-      <!-- REALTOR / INVESTOR placeholders -->
-      <div class="card" data-panel="realtor"  style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
-      <div class="card" data-panel="investor" style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
-
-      <!-- SETTINGS -->
-      <div class="card" data-panel="settings" style="display:none">
-        <div class="settings-grid">
-          <!-- NEW: User Profile section (Display Name) -->
-          <div class="section" id="profileSettings">
-            <h3>👤 User Profile</h3>
-            <div class="row">
-              <div class="muted">Display name</div>
-              <div class="inline">
-                <input id="displayName" class="input" placeholder="e.g., Alex R."/>
-                <button id="saveProfile" class="btn green">Save Profile</button>
-                <span id="profileSaved" class="small" style="opacity:.8"></span>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Email</div>
-              <div><span id="profileEmail" class="badge">—</span></div>
-            </div>
-          </div>
-
-          <!-- Wholesaler profile -->
-          <div class="section" id="whSettings">
-            <h3>⚙️ Wholesaler Profile</h3>
-            <div class="row">
-              <div class="muted">Asset type</div>
-              <div class="chips" data-name="types">
-                <label class="chip"><input type="checkbox" value="residential">Residential</label>
-                <label class="chip"><input type="checkbox" value="commercial">Commercial</label>
-                <label class="chip"><input type="checkbox" value="land">Land</label>
-                <label class="chip"><input type="checkbox" value="multifamily">Multifamily</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Strategy</div>
-              <div class="chips" data-name="strategy">
-                <label class="chip"><input type="checkbox" value="flip">Flip</label>
-                <label class="chip"><input type="checkbox" value="brrrr">BRRRR</label>
-                <label class="chip"><input type="checkbox" value="buy_hold">Buy & Hold</label>
-                <label class="chip"><input type="checkbox" value="wholesale">Wholesale</label>
-                <label class="chip"><input type="checkbox" value="novation">Novation</label>
-                <label class="chip"><input type="checkbox" value="seller_finance">Seller Finance</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Target price</div>
-              <div class="inline">
-                <input id="whMin" class="input" type="number" placeholder="Min $" style="max-width:160px">
-                <input id="whMax" class="input" type="number" placeholder="Max $" style="max-width:160px">
-                <span class="small">(optional)</span>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Service ZIPs</div>
-              <div><input id="whZips" class="input" placeholder="Comma-separated ZIPs e.g. 77003,77004"></div>
-            </div>
-            <div class="row">
-              <div class="muted">Notes</div>
-              <div><textarea id="whNotes" class="textarea" placeholder="Anything else about how you operate…"></textarea></div>
-            </div>
-            <div class="inline" style="justify-content:flex-end">
-              <span id="whSaved" class="small" style="opacity:.8"></span>
-              <button id="saveWh" class="btn green">Save Wholesaler Profile</button>
-            </div>
-          </div>
-
-          <!-- Contractor profile -->
-          <div class="section" id="ctSettings">
-            <h3>🛠️ Contractor Profile</h3>
-            <div class="row">
-              <div class="muted">Trades</div>
-              <div class="chips" data-name="trades">
-                <label class="chip"><input type="checkbox" value="gc">General Contractor</label>
-                <label class="chip"><input type="checkbox" value="framing">Framing</label>
-                <label class="chip"><input type="checkbox" value="drywall">Drywall</label>
-                <label class="chip"><input type="checkbox" value="paint">Paint</label>
-                <label class="chip"><input type="checkbox" value="roofing">Roofing</label>
-                <label class="chip"><input type="checkbox" value="plumbing">Plumbing</label>
-                <label class="chip"><input type="checkbox" value="electrical">Electrical</label>
-                <label class="chip"><input type="checkbox" value="hvac">HVAC</label>
-                <label class="chip"><input type="checkbox" value="concrete">Concrete</label>
-                <label class="chip"><input type="checkbox" value="landscaping">Landscaping</label>
-                <label class="chip"><input type="checkbox" value="demo">Demo</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Work type</div>
-              <div class="chips" data-name="workType">
-                <label class="chip"><input type="checkbox" value="residential">Residential</label>
-                <label class="chip"><input type="checkbox" value="commercial">Commercial</label>
-                <label class="chip"><input type="checkbox" value="new_build">New Build</label>
-                <label class="chip"><input type="checkbox" value="remodel">Remodel</label>
-                <label class="chip"><input type="checkbox" value="service">Service Calls</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Credentials</div>
-              <div class="chips" data-name="creds">
-                <label class="chip"><input type="checkbox" value="licensed">Licensed</label>
-                <label class="chip"><input type="checkbox" value="insured">Insured</label>
-                <label class="chip"><input type="checkbox" value="bonded">Bonded</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Service ZIPs</div>
-              <div><input id="ctZips" class="input" placeholder="Comma-separated ZIPs"></div>
-            </div>
-            <div class="row">
-              <div class="muted">Availability</div>
-              <div class="chips" data-name="availability">
-                <label class="chip"><input type="checkbox" value="immediate">Immediate</label>
-                <label class="chip"><input type="checkbox" value="1_2_weeks">1–2 weeks</label>
-                <label class="chip"><input type="checkbox" value="booked_out">Booked out</label>
-              </div>
-            </div>
-            <div class="row">
-              <div class="muted">Notes</div>
-              <div><textarea id="ctNotes" class="textarea" placeholder="Lic #, crew size, territory, etc."></textarea></div>
-            </div>
-            <div class="inline" style="justify-content:flex-end">
-              <span id="ctSaved" class="small" style="opacity:.8"></span>
-              <button id="saveCt" class="btn green">Save Contractor Profile</button>
-            </div>
-          </div>
-        </div>
-
-        <!-- God Mode (Admin) -->
-        <div class="section" id="gmCard" style="margin-top:12px; display:none">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
-            <h3 style="margin:0">🧰 God Mode (Admin)</h3>
-            <div class="small muted">Signed in as <b id="gmEmail">—</b> • UID: <code id="gmUid">—</code></div>
-          </div>
-
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
-            <div class="section">
-              <div style="font-weight:800;margin-bottom:6px">Leads for <b>me</b></div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <span class="chip">Acq: <b id="meAcqState">—</b></span>
-                <button class="btn green small" id="meAcqEnable">Enable</button>
-                <button class="btn small"        id="meAcqDisable">Disable</button>
-
-                <span class="chip">Dispo: <b id="meDispoState">—</b></span>
-                <button class="btn green small" id="meDispoEnable">Enable</button>
-                <button class="btn small"        id="meDispoDisable">Disable</button>
-              </div>
-            </div>
-
-            <div class="section">
-              <div style="font-weight:800;margin-bottom:6px">Leads for <b>UID</b></div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
-                <input id="gmTargetUid" class="textarea" style="min-height:auto;height:38px" placeholder="Paste target UID"/>
-                <button class="btn small" id="gmLoad">Load</button>
-              </div>
-              <div style="display:flex;gap:8px;flex-wrap:wrap">
-                <span class="chip">Acq: <b id="uidAcqState">—</b></span>
-                <button class="btn green small" id="uidAcqEnable">Enable</button>
-                <button class="btn small"        id="uidAcqDisable">Disable</button>
-
-                <span class="chip">Dispo: <b id="uidDispoState">—</b></span>
-                <button class="btn green small" id="uidDispoEnable">Enable</button>
-                <button class="btn small"        id="uidDispoDisable">Disable</button>
-              </div>
-            </div>
-          </div>
-        </div>
-        <!-- /God Mode -->
-      </div>
-    </section>
+<!-- ====== GOD MODE (ADMIN DASH) ====== -->
+<div class="section" id="gmCard" style="margin-top:12px; display:none">
+  <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+    <h3 style="margin:0">🧰 God Mode (Admin)</h3>
+    <div class="small muted">Signed in as <b id="gmEmail">—</b> • UID: <code id="gmUid">—</code></div>
   </div>
 
-  <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <!-- Existing ON/OFF controls for diagnostic parity (kept) -->
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+    <div class="section">
+      <div style="font-weight:800;margin-bottom:6px">Leads for <b>me</b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip">Acq: <b id="meAcqState">—</b></span>
+        <button class="btn green small" id="meAcqEnable">Enable</button>
+        <button class="btn small"        id="meAcqDisable">Disable</button>
 
-  <script>
-    // ---- Firebase
-    const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
-    if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth=firebase.auth(); const db=firebase.database();
+        <span class="chip">Dispo: <b id="meDispoState">—</b></span>
+        <button class="btn green small" id="meDispoEnable">Enable</button>
+        <button class="btn small"        id="meDispoDisable">Disable</button>
+      </div>
+    </div>
 
-    // ---- dom helpers
-    const $=s=>document.querySelector(s);
-    const tabs=[...document.querySelectorAll('.tab')];
-    const panels=[...document.querySelectorAll('[data-panel]')];
-    const qs=new URL(location.href).searchParams;
+    <div class="section">
+      <div style="font-weight:800;margin-bottom:6px">Leads for <b>UID</b></div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+        <input id="gmTargetUid" class="textarea" style="min-height:auto;height:38px" placeholder="Paste target UID"/>
+        <button class="btn small" id="gmLoad">Load</button>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="chip">Acq: <b id="uidAcqState">—</b></span>
+        <button class="btn green small" id="uidAcqEnable">Enable</button>
+        <button class="btn small"        id="uidAcqDisable">Disable</button>
 
-    let gProfile=null; // cached profile settings (holds displayName)
+        <span class="chip">Dispo: <b id="uidDispoState">—</b></span>
+        <button class="btn green small" id="uidDispoEnable">Enable</button>
+        <button class="btn small"        id="uidDispoDisable">Disable</button>
+      </div>
+    </div>
+  </div>
 
-    // ---- Tabs + routing
-    function show(name){
-      tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
-      panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
+  <!-- Admin Dashboard -->
+  <div class="section" style="margin-top:10px">
+    <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+      <div style="font-weight:800">Admin Dashboard</div>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button id="gmRefreshAll"  class="btn small">↻ Refresh</button>
+        <button id="gmCopyEmails"  class="btn small">📋 Copy Emails</button>
+        <button id="gmExportCsv"   class="btn small">⬇️ Export CSV</button>
+      </div>
+    </div>
 
-      const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
+    <!-- Topline stats -->
+    <div id="gmStats" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"></div>
 
-      if(name==='wholesaler') ensureWh();
-      if(name==='contractor') ensureCt();
-      if(name==='overview')  ensureOverview();
-    }
-    $('#tabs').addEventListener('click',e=>{
-      const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
-    });
+    <!-- Summaries -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px">
+      <div class="section">
+        <div style="font-weight:800;margin-bottom:6px">Wholesaler Selections</div>
+        <div id="sumWh" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
+      <div class="section">
+        <div style="font-weight:800;margin-bottom:6px">Contractor Selections</div>
+        <div id="sumCt" style="display:grid;grid-template-columns:1fr 1fr;gap:8px"></div>
+      </div>
+    </div>
 
-    // ---- Lazy iframes (now pass display name)
-    let whSet=false, ctSet=false, ovSet=false;
-    function encodedName(){
-      const n = (gProfile?.displayName || auth.currentUser?.displayName || '').trim();
-      return encodeURIComponent(n);
-    }
-    function ensureWh(){
-      if(whSet) return; whSet=true;
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      const name=encodedName();
-      document.getElementById('whFrame').src=`wholesaler.html?uid=${uid}&name=${name}`;
-    }
-    function ensureCt(){
-      if(ctSet) return; ctSet=true;
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      const name=encodedName();
-      document.getElementById('ctFrame').src=`contractor.html?uid=${uid}&name=${name}`;
-    }
-    function ensureOverview(){ if(ovSet) return; ovSet=true; wireTownhall(); }
+    <!-- Directory -->
+    <div class="section" style="margin-top:10px">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">
+        <div style="font-weight:800">User Directory</div>
+        <input id="gmSearch" class="textarea" style="min-height:auto;height:36px;max-width:320px" placeholder="Search name, email, UID, ZIP, selection…"/>
+      </div>
+      <div style="overflow:auto;margin-top:8px">
+        <table id="gmTable" style="width:100%;border-collapse:collapse;font-size:13px">
+          <thead>
+            <tr style="text-align:left">
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">UID</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Name</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Email</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Acq</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Dispo</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Types</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Strategy</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">ZIPs</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Trades</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Work</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Creds</th>
+              <th style="border-bottom:1px solid var(--line);padding:6px 8px">Avail</th>
+            </tr>
+          </thead>
+          <tbody id="gmTBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
 
-    // ---- Townhall chat
-    function wireTownhall(){
-      const body=document.getElementById('thBody'), input=document.getElementById('thInput'), send=document.getElementById('thSend'), presEl=document.getElementById('presence');
-      const scroll=()=>{ body.scrollTop=body.scrollHeight; };
+  <!-- Roles & Branches -->
+  <div class="section" style="margin-top:10px">
+    <div style="font-weight:800;margin-bottom:6px">Roles & Branches</div>
 
-      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
-        const m=snap.val(); if(!m) return;
-        const me=auth.currentUser?.uid===m.uid;
-        const wrap=document.createElement('div'); wrap.className='msg'+(me?' me':'');
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+      <div class="section">
+        <div style="font-weight:700;margin-bottom:6px">Set Role for UID</div>
+        <input id="roleUid" class="textarea" style="min-height:auto;height:38px" placeholder="UID"/>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px">
+          <select id="roleSel" class="textarea" style="min-height:auto;height:38px">
+            <option value="member">member</option>
+            <option value="branch_manager">branch_manager</option>
+            <option value="admin">admin</option>
+          </select>
+          <input id="roleOrg" class="textarea" style="min-height:auto;height:38px" placeholder="org/branch id (optional)"/>
+        </div>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="saveRole" class="btn green small">Save Role</button>
+          <button id="clearRole" class="btn small">Clear Role</button>
+        </div>
+      </div>
 
-        const t=new Date(m.ts||Date.now());
-        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
-
-        const meta=document.createElement('div'); meta.className='meta';
-        meta.textContent=`${m.name||'Someone'} • ${hh}:${mm}`;
-        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
-
-        wrap.append(meta,bubble); body.appendChild(wrap); scroll();
-      });
-
-      const presenceRef=db.ref('townhall/presence'); const myRef=presenceRef.push();
-      db.ref('.info/connected').on('value',snap=>{
-        if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
-      });
-      presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
-
-      const sendMsg=()=>{
-        const txt=(input.value||'').trim(); if(!txt) return;
-        const u=auth.currentUser||{};
-        const name = (gProfile?.displayName || u.displayName || u.email || 'Anon');
-        db.ref('townhall/messages').push({uid:u.uid||'anon',name,text:txt,ts:firebase.database.ServerValue.TIMESTAMP});
-        input.value=''; input.focus();
-      };
-      input.addEventListener('keydown',e=>{ if(e.key==='Enter'){ e.preventDefault(); sendMsg(); }});
-      send.addEventListener('click',sendMsg);
-    }
-
-    // ---- Chip helpers (visual only)
-    function wireChips(root){
-      root.querySelectorAll('.chip').forEach(ch=>{
-        const input=ch.querySelector('input');
-        const sync=()=>{ ch.classList.toggle('active', input.checked); };
-        ch.addEventListener('click', e=>{
-          if(e.target.tagName!=='INPUT'){ input.checked=!input.checked; }
-          sync();
-        });
-        sync();
-      });
-    }
-    function getChipValues(container){ return [...container.querySelectorAll('input:checked')].map(i=>i.value); }
-    function setChipValues(container, arr){
-      const set=new Set(arr||[]);
-      container.querySelectorAll('input').forEach(i=>{
-        i.checked = set.has(i.value);
-        i.closest('.chip')?.classList.toggle('active', i.checked);
-      });
-    }
-
-    // ---- Read/Fill forms
-    function readWhForm(){
-      return {
-        types:     getChipValues(document.getElementById('whSettings').querySelector('[data-name="types"]')),
-        strategy:  getChipValues(document.getElementById('whSettings').querySelector('[data-name="strategy"]')),
-        price:     { min: Number(document.getElementById('whMin').value||0)||null, max: Number(document.getElementById('whMax').value||0)||null },
-        zips:      (document.getElementById('whZips').value||'').trim(),
-        notes:     (document.getElementById('whNotes').value||'').trim(),
-        updatedAt: Date.now()
-      };
-    }
-    function fillWhForm(data={}){
-      setChipValues(document.getElementById('whSettings').querySelector('[data-name="types"]'), data.types);
-      setChipValues(document.getElementById('whSettings').querySelector('[data-name="strategy"]'), data.strategy);
-      document.getElementById('whMin').value = data?.price?.min ?? '';
-      document.getElementById('whMax').value = data?.price?.max ?? '';
-      document.getElementById('whZips').value = data.zips || '';
-      document.getElementById('whNotes').value = data.notes || '';
-      document.getElementById('whSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
-      wireChips(document.getElementById('whSettings'));
-    }
-
-    function readCtForm(){
-      return {
-        trades:   getChipValues(document.getElementById('ctSettings').querySelector('[data-name="trades"]')),
-        workType: getChipValues(document.getElementById('ctSettings').querySelector('[data-name="workType"]')),
-        creds:    getChipValues(document.getElementById('ctSettings').querySelector('[data-name="creds"]')),
-        zips:     (document.getElementById('ctZips').value||'').trim(),
-        availability: getChipValues(document.getElementById('ctSettings').querySelector('[data-name="availability"]')),
-        notes:    (document.getElementById('ctNotes').value||'').trim(),
-        updatedAt: Date.now()
-      };
-    }
-    function fillCtForm(data={}){
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="trades"]'), data.trades);
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="workType"]'), data.workType);
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="creds"]'), data.creds);
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="availability"]'), data.availability);
-      document.getElementById('ctZips').value  = data.zips || '';
-      document.getElementById('ctNotes').value = data.notes || '';
-      document.getElementById('ctSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
-      wireChips(document.getElementById('ctSettings'));
-    }
-
-    async function save(path, obj){ await db.ref(path).set(obj); }
-    async function load(path){ const snap = await db.ref(path).get(); return snap.val() || {}; }
-
-    /* ===== God Mode helpers (split Acq/Dispo) ===== */
-    const gmStatePath = uid => `userSettings/${uid}/wholesaler`;
-    function gmMirrorLegacy(patch){
-      return Object.assign({}, patch, {
-        leadsEnabled:      (patch.acqEnabled ?? false) || (patch.dispoEnabled ?? false),
-        acqLeadsEnabled:   patch.acqEnabled   ?? false,
-        dispoLeadsEnabled: patch.dispoEnabled ?? false,
-        leadsEnabledDispo: patch.dispoEnabled ?? false
-      });
-    }
-    async function gmSet(uid, patch){ await db.ref(gmStatePath(uid)).update(gmMirrorLegacy(patch)); }
-    async function gmGet(uid){
-      const v=(await db.ref(gmStatePath(uid)).get()).val()||{};
-      return {
-        acqEnabled:   !!(v.acqEnabled   ?? v.acqLeadsEnabled   ?? v.leadsEnabled),
-        dispoEnabled: !!(v.dispoEnabled ?? v.dispoLeadsEnabled ?? v.leadsEnabledDispo ?? false)
-      };
-    }
-    function gmShow(sel, on){ const el=$(sel); if(el) el.textContent = on ? 'ON' : 'OFF'; }
-    async function gmRefreshMe(){
-      const meUid = document.getElementById('gmUid').textContent.trim();
-      if(!meUid || meUid==='—') return;
-      const f = await gmGet(meUid);
-      gmShow('#meAcqState',   f.acqEnabled);
-      gmShow('#meDispoState', f.dispoEnabled);
-    }
-    async function gmRefreshTarget(){
-      const uid = document.getElementById('gmTargetUid').value.trim();
-      if(!uid) return;
-      const f = await gmGet(uid);
-      gmShow('#uidAcqState',   f.acqEnabled);
-      gmShow('#uidDispoState', f.dispoEnabled);
-    }
-    /* ===== /God Mode ===== */
-
-    // ---- Auth + initial route
-    auth.onAuthStateChanged(async u=>{
-      if(!u){ location.href='index.html'; return; }
-
-      // Load profile (display name)
-      const prof = await load(`userSettings/${u.uid}/profile`);
-      gProfile = prof || {};
-      const dispName = (gProfile.displayName || u.displayName || '').trim();
-
-      document.getElementById('profileEmail').textContent = u.email || '—';
-      document.getElementById('displayName').value = dispName;
-      document.getElementById('profileSaved').textContent = gProfile.updatedAt ? ('Saved '+new Date(gProfile.updatedAt).toLocaleString()) : '';
-
-      // Overview header line
-      document.getElementById('meLine').textContent = `${dispName || (u.email||'')} — UID: ${u.uid}`;
-
-      // populate settings forms
-      const wh = await load(`userSettings/${u.uid}/wholesaler`); fillWhForm(wh);
-      const ct = await load(`userSettings/${u.uid}/contractor`); fillCtForm(ct);
-
-      // wire saves
-      document.getElementById('saveWh').onclick = async ()=>{
-        const obj = readWhForm();
-        await save(`userSettings/${u.uid}/wholesaler`, obj);
-        fillWhForm(obj);
-      };
-      document.getElementById('saveCt').onclick = async ()=>{
-        const obj = readCtForm();
-        await save(`userSettings/${u.uid}/contractor`, obj);
-        fillCtForm(obj);
-      };
-
-      // NEW: save profile (display name) + push to Auth + refresh iframes
-      document.getElementById('saveProfile').onclick = async ()=>{
-        const name = (document.getElementById('displayName').value || '').trim();
-        const patch = { displayName: name, updatedAt: Date.now() };
-        await save(`userSettings/${u.uid}/profile`, patch);
-        try{ await u.updateProfile({ displayName: name }); }catch{}
-        gProfile = patch;
-        document.getElementById('profileSaved').textContent = 'Saved ' + new Date(patch.updatedAt).toLocaleString();
-        document.getElementById('meLine').textContent = `${name || (u.email||'')} — UID: ${u.uid}`;
-        // refresh iframes to push new name to query param
-        whSet=false; ctSet=false; ensureWh(); ensureCt();
-      };
-
-      // God Mode visibility + wiring
-      const isAdmin = (u.email||'').toLowerCase()==='dealbankers@gmail.com';
-      if(isAdmin){
-        document.getElementById('gmCard').style.display='block';
-        document.getElementById('gmEmail').textContent = u.email||'';
-        document.getElementById('gmUid').textContent   = u.uid;
-
-        await gmRefreshMe();
-
-        document.getElementById('meAcqEnable').onclick   = async()=>{ await gmSet(u.uid,{acqEnabled:true});   gmRefreshMe(); };
-        document.getElementById('meAcqDisable').onclick  = async()=>{ await gmSet(u.uid,{acqEnabled:false});  gmRefreshMe(); };
-        document.getElementById('meDispoEnable').onclick = async()=>{ await gmSet(u.uid,{dispoEnabled:true}); gmRefreshMe(); };
-        document.getElementById('meDispoDisable').onclick= async()=>{ await gmSet(u.uid,{dispoEnabled:false});gmRefreshMe(); };
-
-        document.getElementById('gmLoad').onclick = gmRefreshTarget;
-        document.getElementById('uidAcqEnable').onclick   = async()=>{ const t=document.getElementById('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:true});   gmRefreshTarget(); };
-        document.getElementById('uidAcqDisable').onclick  = async()=>{ const t=document.getElementById('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:false});  gmRefreshTarget(); };
-        document.getElementById('uidDispoEnable').onclick = async()=>{ const t=document.getElementById('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:true}); gmRefreshTarget(); };
-        document.getElementById('uidDispoDisable').onclick= async()=>{ const t=document.getElementById('gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:false});gmRefreshTarget(); };
-      }
-
-      const initial = qs.get('tab') || 'overview';
-      show(initial);
-    });
-
-    // Header request buttons
-    document.getElementById('redPhoneBtn').onclick  = ()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
-    document.getElementById('bluePhoneBtn').onclick = ()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
-    document.getElementById('logoutBtn').onclick    = ()=>auth.signOut().then(()=>location.href='index.html');
-  </script>
-</body>
-</html>
+      <div class="section">
+        <div style="font-weight:700;margin-bottom:6px">Create / Manage Branch</div>
+        <input id="orgName" class="textarea" style="min-height:auto;height:38px" placeholder="Branch name (e.g., Houston)"/>
+        <input id="orgId"   class="textarea" style="min-height:auto;height:38px" placeholder="Branch id (slug) e.g., houston"/>
+        <input id="orgMgr"  class="textarea" style="min-height:auto;height:38px" placeholder="Manager UID (optional)"/>
+        <div style="display:flex;gap:8px;margin-top:8px">
+          <button id="saveOrg" class="btn green small">Save Branch</button>
+          <button id="loadOrg" class="btn small">Load</button>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
+          <input id="orgMemberUid" class="textarea" style="min-height:auto;height:38px" placeholder="Add member UID"/>
+          <button id="addMember" class="btn small">Add</button>
+          <button id="removeMember" class="btn small">Remove</button>
+        </div>
+        <div id="orgInfo" class="small" style="margin-top:6px;opacity:.9"></div>
+      </div>
+    </div>
+  </div>
+</div>
+<!-- ====== /GOD MODE ====== -->
