@@ -1,4 +1,4 @@
-<!-- ======================== profile.html (Overview with Announcements + Live Deals • Full Settings Restored • GM shows user lead prefs) ======================== -->
+<!-- ======================== profile.html (Overview + Announcements + Settings + GM; FIXED chip toggles) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -151,7 +151,6 @@
       <div class="card" data-panel="overview">
         <div class="overview-grid">
           <div>
-            <!-- Announcements (restored) -->
             <div class="announce">
               <div class="ann-head">
                 <div>
@@ -159,7 +158,6 @@
                   <div id="meLine" class="ann-sub">Loading…</div>
                 </div>
               </div>
-
               <div class="kpiRow">
                 <div class="kpi"><div class="kLab">Capital Open</div><div class="kVal">$300k</div></div>
                 <div class="kpi"><div class="kLab">Turn</div><div class="kVal">7–10 days</div></div>
@@ -167,7 +165,6 @@
               </div>
             </div>
 
-            <!-- Live Deals feed -->
             <div class="announce" style="margin-top:10px">
               <h3 style="margin:0 0 6px">🔥 Live Deals</h3>
               <div class="small" id="liveDealsInfo">Loading latest public deals…</div>
@@ -201,7 +198,6 @@
         <div class="iframe-wrap"><iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe></div>
       </div>
 
-      <!-- REALTOR / INVESTOR -->
       <div class="card" data-panel="realtor"  style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
       <div class="card" data-panel="investor" style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
 
@@ -224,12 +220,12 @@
             </div>
           </div>
 
-          <!-- Wholesaler profile — lead-type first -->
+          <!-- Wholesaler profile (lead types) -->
           <div class="section" id="whSettings">
             <h3>⚙️ Wholesaler Profile</h3>
             <div class="row">
               <div class="muted">Lead types</div>
-              <div class="chips" data-name="leads">
+              <div class="chips" data-name="leads" id="whLeadChips">
                 <label class="chipBtn"><input type="checkbox" value="probates">Probates</label>
                 <label class="chipBtn"><input type="checkbox" value="divorce">Divorce</label>
                 <label class="chipBtn"><input type="checkbox" value="foreclosure">Foreclosure</label>
@@ -261,7 +257,7 @@
             <h3>🛠️ Contractor Profile</h3>
             <div class="row">
               <div class="muted">Trades</div>
-              <div class="chips" data-name="trades">
+              <div class="chips" data-name="trades" id="ctTradesChips">
                 <label class="chipBtn"><input type="checkbox" value="gc">General Contractor</label>
                 <label class="chipBtn"><input type="checkbox" value="framing">Framing</label>
                 <label class="chipBtn"><input type="checkbox" value="drywall">Drywall</label>
@@ -277,7 +273,7 @@
             </div>
             <div class="row">
               <div class="muted">Work type</div>
-              <div class="chips" data-name="workType">
+              <div class="chips" data-name="workType" id="ctWorkChips">
                 <label class="chipBtn"><input type="checkbox" value="residential">Residential</label>
                 <label class="chipBtn"><input type="checkbox" value="commercial">Commercial</label>
                 <label class="chipBtn"><input type="checkbox" value="new_build">New Build</label>
@@ -287,7 +283,7 @@
             </div>
             <div class="row">
               <div class="muted">Credentials</div>
-              <div class="chips" data-name="creds">
+              <div class="chips" data-name="creds" id="ctCredsChips">
                 <label class="chipBtn"><input type="checkbox" value="licensed">Licensed</label>
                 <label class="chipBtn"><input type="checkbox" value="insured">Insured</label>
                 <label class="chipBtn"><input type="checkbox" value="bonded">Bonded</label>
@@ -299,7 +295,7 @@
             </div>
             <div class="row">
               <div class="muted">Availability</div>
-              <div class="chips" data-name="availability">
+              <div class="chips" data-name="availability" id="ctAvailChips">
                 <label class="chipBtn"><input type="checkbox" value="immediate">Immediate</label>
                 <label class="chipBtn"><input type="checkbox" value="1_2_weeks">1–2 weeks</label>
                 <label class="chipBtn"><input type="checkbox" value="booked_out">Booked out</label>
@@ -380,7 +376,6 @@
             </div>
           </div>
 
-          <!-- Branding -->
           <div class="section" style="margin-top:10px">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
               <div style="font-weight:800">Branding / Logo</div>
@@ -393,7 +388,6 @@
             </div>
           </div>
 
-          <!-- User Directory -->
           <div class="section" style="margin-top:10px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
               <div style="font-weight:800">User Directory (live)</div>
@@ -421,7 +415,6 @@
             </div>
           </div>
         </div>
-        <!-- /God Mode -->
       </div>
     </section>
   </div>
@@ -433,12 +426,10 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
   <script>
-    // ---- Firebase
     const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
     const auth=firebase.auth(); const db=firebase.database(); const storage=firebase.storage();
 
-    // ---- dom helpers
     const $=s=>document.querySelector(s);
     const tabs=[...document.querySelectorAll('.tab')];
     const panels=[...document.querySelectorAll('[data-panel]')];
@@ -447,13 +438,10 @@
 
     let gProfile=null;
 
-    // ---- Tabs + routing
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
-
       const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
-
       if(name==='wholesaler') ensureWh();
       if(name==='contractor') ensureCt();
       if(name==='overview')  ensureOverview();
@@ -462,7 +450,6 @@
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
-    // ---- Lazy iframes (pass display name)
     let whSet=false, ctSet=false, ovSet=false;
     function encodedName(){
       const n = (gProfile?.displayName || auth.currentUser?.displayName || '').trim();
@@ -481,7 +468,7 @@
       const f=$('#ctFrame'); if(f) f.src=`contractor.html?uid=${uid}&name=${name}`;
     }
 
-    // ===== Overview: Live deals from all users (shareLive=true) =====
+    // Live deals in Overview
     async function fetchLiveDeals(limit=12){
       const snap = await db.ref('dispo/deals').get();
       const all = snap.val()||{};
@@ -524,7 +511,7 @@
     }
     function ensureOverview(){ if(ovSet) return; ovSet=true; renderLiveDeals(); wireTownhall(); }
 
-    // ---- Townhall chat
+    // Townhall
     function wireTownhall(){
       const body=document.getElementById('thBody'), input=document.getElementById('thInput'), send=document.getElementById('thSend'), presEl=document.getElementById('presence');
       if(!body||!input||!send||!presEl) return;
@@ -545,7 +532,6 @@
         wrap.append(meta,bubble); body.appendChild(wrap); scroll();
       });
 
-      // presence
       const presenceRef=db.ref('presence/global'); const myRef=presenceRef.child(auth.currentUser?.uid||'anon');
       db.ref('.info/connected').on('value',snap=>{
         if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
@@ -553,31 +539,49 @@
       presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
     }
 
-    // ---- Chips
-    function wireChips(root){
-      root.querySelectorAll('.chipBtn').forEach(ch=>{
-        const input=ch.querySelector('input');
-        const sync=()=>{ ch.classList.toggle('active', input.checked); };
-        ch.addEventListener('click', e=>{
-          if(e.target.tagName!=='INPUT'){ input.checked=!input.checked; }
-          sync();
-        });
-        sync();
+    // -------- Robust chip wiring (delegated & idempotent) ----------
+    function initChipContainer(container){
+      if(!container || container.dataset.wired==="1") return;
+      container.dataset.wired="1";
+
+      // Click anywhere on the chip toggles the hidden checkbox
+      container.addEventListener('click', (e)=>{
+        const chip = e.target.closest('.chipBtn');
+        if(!chip || !container.contains(chip)) return;
+        const input = chip.querySelector('input[type="checkbox"]');
+        if(!input) return;
+        input.checked = !input.checked;
+        chip.classList.toggle('active', input.checked);
+        e.preventDefault();
+      });
+
+      // Keep visual in sync if checkbox state changes by other means
+      container.addEventListener('change',(e)=>{
+        const input = e.target.closest('input[type="checkbox"]');
+        if(!input || !container.contains(input)) return;
+        input.closest('.chipBtn')?.classList.toggle('active', input.checked);
+      });
+
+      // Initial sync
+      container.querySelectorAll('input[type="checkbox"]').forEach(i=>{
+        i.closest('.chipBtn')?.classList.toggle('active', i.checked);
       });
     }
-    function getChipValues(container){ return [...container.querySelectorAll('input:checked')].map(i=>i.value); }
+
+    function getChipValues(container){ return [...container.querySelectorAll('input[type="checkbox"]:checked')].map(i=>i.value); }
     function setChipValues(container, arr){
       const set=new Set(arr||[]);
-      container.querySelectorAll('input').forEach(i=>{
+      container.querySelectorAll('input[type="checkbox"]').forEach(i=>{
         i.checked = set.has(i.value);
         i.closest('.chipBtn')?.classList.toggle('active', i.checked);
       });
     }
 
-    // ---- Read/Fill forms
+    // Wholesaler form read/fill
     function readWhForm(){
+      const leadBox = document.getElementById('whLeadChips');
       return {
-        leads:    getChipValues(document.getElementById('whSettings').querySelector('[data-name="leads"]')),
+        leads:    getChipValues(leadBox),
         custom:   (document.getElementById('whCustom').value||'').trim(),
         zips:     (document.getElementById('whZips').value||'').trim(),
         notes:    (document.getElementById('whNotes').value||'').trim(),
@@ -585,40 +589,53 @@
       };
     }
     function fillWhForm(data={}){
-      setChipValues(document.getElementById('whSettings').querySelector('[data-name="leads"]'), data.leads);
+      const leadBox = document.getElementById('whLeadChips');
+      setChipValues(leadBox, data.leads);
       document.getElementById('whCustom').value = data.custom || '';
       document.getElementById('whZips').value   = data.zips || '';
       document.getElementById('whNotes').value  = data.notes || '';
       document.getElementById('whSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
-      wireChips(document.getElementById('whSettings'));
+      initChipContainer(leadBox); // ensure wired
     }
 
+    // Contractor form read/fill
     function readCtForm(){
+      const trades = document.getElementById('ctTradesChips');
+      const work   = document.getElementById('ctWorkChips');
+      const creds  = document.getElementById('ctCredsChips');
+      const avail  = document.getElementById('ctAvailChips');
       return {
-        trades:   getChipValues(document.getElementById('ctSettings').querySelector('[data-name="trades"]')),
-        workType: getChipValues(document.getElementById('ctSettings').querySelector('[data-name="workType"]')),
-        creds:    getChipValues(document.getElementById('ctSettings').querySelector('[data-name="creds"]')),
+        trades:   getChipValues(trades),
+        workType: getChipValues(work),
+        creds:    getChipValues(creds),
         zips:     (document.getElementById('ctZips').value||'').trim(),
-        availability: getChipValues(document.getElementById('ctSettings').querySelector('[data-name="availability"]')),
+        availability: getChipValues(avail),
         notes:    (document.getElementById('ctNotes').value||'').trim(),
         updatedAt: Date.now()
       };
     }
     function fillCtForm(data={}){
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="trades"]'), data.trades);
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="workType"]'), data.workType);
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="creds"]'), data.creds);
-      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="availability"]'), data.availability);
+      const trades = document.getElementById('ctTradesChips');
+      const work   = document.getElementById('ctWorkChips');
+      const creds  = document.getElementById('ctCredsChips');
+      const avail  = document.getElementById('ctAvailChips');
+
+      setChipValues(trades, data.trades);
+      setChipValues(work,   data.workType);
+      setChipValues(creds,  data.creds);
+      setChipValues(avail,  data.availability);
+
+      [trades,work,creds,avail].forEach(initChipContainer);
+
       document.getElementById('ctZips').value  = data.zips || '';
       document.getElementById('ctNotes').value = data.notes || '';
       document.getElementById('ctSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
-      wireChips(document.getElementById('ctSettings'));
     }
 
     async function save(path, obj){ await db.ref(path).set(obj); }
     async function load(path){ const snap = await db.ref(path).get(); return snap.val() || {}; }
 
-    /* ===== God Mode helpers ===== */
+    // GM helpers (unchanged except labels ON/off)
     const gmStatePath = uid => `userSettings/${uid}/wholesaler`;
     function gmMirrorLegacy(patch){
       return Object.assign({}, patch, {
@@ -637,24 +654,7 @@
       };
     }
     function gmShow(sel, on){ const el=$(sel); if(el) el.textContent = on ? 'ON' : 'off'; }
-    async function gmRefreshMe(){
-      const meUid = $('#gmUid').textContent.trim();
-      if(!meUid || meUid==='—') return;
-      const f = await gmGet(meUid);
-      gmShow('#meAcqState',   f.acqEnabled);
-      gmShow('#meDispoState', f.dispoEnabled);
-    }
-    async function gmRefreshTarget(){
-      const uid = $('#gmTargetUid').value.trim();
-      if(!uid) return;
-      const f = await gmGet(uid);
-      gmShow('#uidAcqState',   f.acqEnabled);
-      gmShow('#uidDispoState', f.dispoEnabled);
-      const roleSnap = await db.ref(`roles/${uid}`).get();
-      $('#gmTargetRole').value = roleSnap.val() || '';
-    }
 
-    /* ===== Directory + live counts ===== */
     let gmUsers = {};
     function mergeUser(uid, settings){
       const prof = settings?.profile || {};
@@ -699,12 +699,9 @@
         tbody.appendChild(tr);
       });
 
-      const total = Object.keys(gmUsers).length;
-      const acqOn = Object.values(gmUsers).filter(x=>x.acq).length;
-      const disOn = Object.values(gmUsers).filter(x=>x.dispo).length;
-      $('#gmUsersTotal').textContent = total;
-      $('#gmAcqOn').textContent = acqOn;
-      $('#gmDispoOn').textContent = disOn;
+      $('#gmUsersTotal').textContent = Object.keys(gmUsers).length;
+      $('#gmAcqOn').textContent = Object.values(gmUsers).filter(x=>x.acq).length;
+      $('#gmDispoOn').textContent = Object.values(gmUsers).filter(x=>x.dispo).length;
     }
     function wireLiveCounts(){
       db.ref('userSettings').on('value', snap=>{
@@ -719,13 +716,11 @@
       $('#gmFilter').addEventListener('input', renderGMTable);
     }
 
-    // ---- Auth + initial route
+    // Auth + initial route
     auth.onAuthStateChanged(async u=>{
       if(!u){ location.href='index.html'; return; }
 
-      // presence line in overview card
-      const dn = (u.displayName||'').trim();
-      const meLine = $('#meLine'); if(meLine) meLine.textContent = `${dn || (u.email||'')} — UID: ${u.uid}`;
+      const meLine = $('#meLine'); if(meLine) meLine.textContent = `${(u.displayName||u.email||'') } — UID: ${u.uid}`;
 
       try{
         const profSnap = await db.ref(`userSettings/${u.uid}/profile`).get();
@@ -739,18 +734,21 @@
       gProfile = prof || {};
       const dispName = (gProfile.displayName || u.displayName || '').trim();
 
-      const emailEl = $('#profileEmail'); if(emailEl) emailEl.textContent = u.email || '—';
-      const dnEl = $('#displayName');    if(dnEl) dnEl.value = dispName;
-      const psEl = $('#profileSaved');   if(psEl) psEl.textContent = gProfile.updatedAt ? ('Saved '+new Date(gProfile.updatedAt).toLocaleString()) : '';
+      $('#profileEmail').textContent = u.email || '—';
+      $('#displayName').value = dispName;
+      $('#profileSaved').textContent = gProfile.updatedAt ? ('Saved '+new Date(gProfile.updatedAt).toLocaleString()) : '';
+
+      // ensure chip containers are wired even before data fill
+      ['whLeadChips','ctTradesChips','ctWorkChips','ctCredsChips','ctAvailChips'].forEach(id=>initChipContainer(document.getElementById(id)));
 
       const wh = await load(`userSettings/${u.uid}/wholesaler`); fillWhForm(wh);
       const ct = await load(`userSettings/${u.uid}/contractor`); fillCtForm(ct);
 
       const saveWhBtn = $('#saveWh');
-      if(saveWhBtn) saveWhBtn.onclick = async ()=>{ const obj = readWhForm(); await save(`userSettings/${u.uid}/wholesaler`, obj); fillWhForm(obj); };
+      if(saveWhBtn) saveWhBtn.onclick = async ()=>{ const obj = readWhForm(); await save(`userSettings/${u.uid}/wholesaler`, obj); fillWhForm(obj); toast('Wholesaler Profile saved'); };
 
       const saveCtBtn = $('#saveCt');
-      if(saveCtBtn) saveCtBtn.onclick = async ()=>{ const obj = readCtForm(); await save(`userSettings/${u.uid}/contractor`, obj); fillCtForm(obj); };
+      if(saveCtBtn) saveCtBtn.onclick = async ()=>{ const obj = readCtForm(); await save(`userSettings/${u.uid}/contractor`, obj); fillCtForm(obj); toast('Contractor Profile saved'); };
 
       const saveProfBtn = $('#saveProfile');
       if(saveProfBtn) saveProfBtn.onclick = async ()=>{
@@ -759,13 +757,10 @@
         await save(`userSettings/${u.uid}/profile`, patch);
         try{ await u.updateProfile({ displayName: name }); }catch{}
         gProfile = patch;
-        const psEl = $('#profileSaved'); if(psEl) psEl.textContent = 'Saved ' + new Date(patch.updatedAt).toLocaleString();
-        const meLine = $('#meLine'); if(meLine) meLine.textContent = `${name || (u.email||'')} — UID: ${u.uid}`;
-        // refresh iframe params
-        whSet=false; ctSet=false; ensureWh(); ensureCt();
+        $('#profileSaved').textContent = 'Saved ' + new Date(patch.updatedAt).toLocaleString();
+        const ml = $('#meLine'); if(ml) ml.textContent = `${name || (u.email||'')} — UID: ${u.uid}`;
       };
 
-      // roles
       let isAdmin = (u.email||'').toLowerCase()==='dealbankers@gmail.com';
       try{
         const roleSnap = await db.ref(`roles/${u.uid}`).get();
@@ -781,35 +776,34 @@
 
       if(isAdmin){
         const gmCard = $('#gmCard'); if(gmCard) gmCard.style.display='block';
-        const ge=$('#gmEmail'); if(ge) ge.textContent=u.email||''; const gu=$('#gmUid'); if(gu) gu.textContent=u.uid;
+        $('#gmEmail').textContent=u.email||''; $('#gmUid').textContent=u.uid;
 
         await gmRefreshMe();
         wireLiveCounts();
 
-        const a1=$('#meAcqEnable');   if(a1) a1.onclick= async()=>{ await gmSet(u.uid,{acqEnabled:true});   gmRefreshMe(); };
-        const a2=$('#meAcqDisable');  if(a2) a2.onclick= async()=>{ await gmSet(u.uid,{acqEnabled:false});  gmRefreshMe(); };
-        const d1=$('#meDispoEnable'); if(d1) d1.onclick=async()=>{ await gmSet(u.uid,{dispoEnabled:true}); gmRefreshMe(); };
-        const d2=$('#meDispoDisable');if(d2) d2.onclick=async()=>{ await gmSet(u.uid,{dispoEnabled:false});gmRefreshMe(); };
+        $('#meAcqEnable')?.addEventListener('click', async()=>{ await gmSet(u.uid,{acqEnabled:true});   gmRefreshMe(); });
+        $('#meAcqDisable')?.addEventListener('click',async()=>{ await gmSet(u.uid,{acqEnabled:false});  gmRefreshMe(); });
+        $('#meDispoEnable')?.addEventListener('click',async()=>{ await gmSet(u.uid,{dispoEnabled:true}); gmRefreshMe(); });
+        $('#meDispoDisable')?.addEventListener('click',async()=>{ await gmSet(u.uid,{dispoEnabled:false});gmRefreshMe(); });
 
-        const gl=$('#gmLoad'); if(gl) gl.onclick = gmRefreshTarget;
-        const uae=$('#uidAcqEnable');   if(uae) uae.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:true});   gmRefreshTarget(); };
-        const uad=$('#uidAcqDisable');  if(uad) uad.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:false});  gmRefreshTarget(); };
-        const ude=$('#uidDispoEnable'); if(ude) ude.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:true}); gmRefreshTarget(); };
-        const udd=$('#uidDispoDisable');if(udd) udd.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:false});gmRefreshTarget(); };
+        $('#gmLoad')?.addEventListener('click', gmRefreshTarget);
+        $('#uidAcqEnable')?.addEventListener('click', async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:true});   gmRefreshTarget(); });
+        $('#uidAcqDisable')?.addEventListener('click',async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:false});  gmRefreshTarget(); });
+        $('#uidDispoEnable')?.addEventListener('click',async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:true}); gmRefreshTarget(); });
+        $('#uidDispoDisable')?.addEventListener('click',async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:false});gmRefreshTarget(); });
 
-        const gsr=$('#gmSaveRole'); if(gsr) gsr.onclick = async()=>{
+        $('#gmSaveRole')?.addEventListener('click', async()=>{
           const t=$('#gmTargetUid').value.trim(); if(!t) return;
           const role=$('#gmTargetRole').value||'';
           await db.ref(`roles/${t}`).set(role||null);
           toast('Target role saved');
-        };
+        });
 
         try{
           const logoSnap = await db.ref('branding/global/logoUrl').get();
           const url = logoSnap.val()||''; if(url){ const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; } }
         }catch{}
-        const glb=$('#gmSaveLogo');
-        if(glb) glb.onclick = async ()=>{
+        $('#gmSaveLogo')?.addEventListener('click', async ()=>{
           const f = document.getElementById('gmLogoFile').files[0]; if(!f) return toast('Pick a file');
           const ref = storage.ref().child(`branding/global/logo-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
           await ref.put(f);
@@ -817,7 +811,7 @@
           await db.ref('branding/global').update({logoUrl:url, updatedAt: Date.now()});
           const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; }
           const msg=$('#gmLogoMsg'); if(msg) msg.textContent='Uploaded ✔';
-        };
+        });
       }
 
       const initial = qs.get('tab') || 'overview';
@@ -825,10 +819,10 @@
       if(initial==='overview') renderLiveDeals();
     });
 
-    // Header request buttons
-    const red=document.getElementById('redPhoneBtn'); if(red) red.onclick=()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
-    const blue=document.getElementById('bluePhoneBtn'); if(blue) blue.onclick=()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
-    const lo=document.getElementById('logoutBtn'); if(lo) lo.onclick=()=>auth.signOut().then(()=>location.href='index.html');
+    // Header mailto buttons
+    document.getElementById('redPhoneBtn')?.addEventListener('click',()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need');
+    document.getElementById('bluePhoneBtn')?.addEventListener('click',()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request');
+    document.getElementById('logoutBtn')?.addEventListener('click',()=>auth.signOut().then(()=>location.href='index.html'));
   </script>
 
   <!-- Fail-safe banner if Firebase misses -->
