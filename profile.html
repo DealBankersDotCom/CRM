@@ -233,20 +233,10 @@
           <!-- Wholesaler profile -->
           <div class="section" id="whSettings">
             <h3>⚙️ Wholesaler Profile</h3>
-            <div class="row">
-              <div class="muted">Asset type</div>
-              <div class="chips" data-name="types">
-                <label class="chip"><input type="checkbox" value="residential">Residential</label>
-                <label class="chip"><input type="checkbox" value="commercial">Commercial</label>
-                <label class="chip"><input type="checkbox" value="land">Land</label>
-                <label class="chip"><input type="checkbox" value="multifamily">Multifamily</label>
-              </div>
-            </div>
 
-            <!-- CHANGED: Strategy -> Lead sources -->
             <div class="row">
-              <div class="muted">Lead sources</div>
-              <div class="chips" data-name="leadSources">
+              <div class="muted">Lead types</div>
+              <div class="chips" data-name="leadTypes">
                 <label class="chip"><input type="checkbox" value="probates">Probates</label>
                 <label class="chip"><input type="checkbox" value="divorce">Divorce</label>
                 <label class="chip"><input type="checkbox" value="foreclosure">Foreclosure</label>
@@ -255,31 +245,22 @@
                 <label class="chip"><input type="checkbox" value="other">Other</label>
               </div>
             </div>
-            <div class="row">
-              <div class="muted">Custom</div>
-              <div>
-                <input id="leadCustom" class="input" placeholder="Custom lead sources (comma-separated) e.g. water shutoffs, tax liens"/>
-                <div class="small" style="margin-top:6px">We’ll save these alongside your selected lead sources.</div>
-              </div>
-            </div>
-            <!-- /CHANGED -->
 
             <div class="row">
-              <div class="muted">Target price</div>
-              <div class="inline">
-                <input id="whMin" class="input" type="number" placeholder="Min $" style="max-width:160px">
-                <input id="whMax" class="input" type="number" placeholder="Max $" style="max-width:160px">
-                <span class="small">(optional)</span>
-              </div>
+              <div class="muted">Custom source</div>
+              <div><input id="whLeadCustom" class="input" placeholder="Type a requested lead source… (optional)"></div>
             </div>
+
             <div class="row">
               <div class="muted">Service ZIPs</div>
               <div><input id="whZips" class="input" placeholder="Comma-separated ZIPs e.g. 77003,77004"></div>
             </div>
+
             <div class="row">
               <div class="muted">Notes</div>
               <div><textarea id="whNotes" class="textarea" placeholder="Anything else about how you operate…"></textarea></div>
             </div>
+
             <div class="inline" style="justify-content:flex-end">
               <span id="whSaved" class="small" style="opacity:.8"></span>
               <button id="saveWh" class="btn green">Save Wholesaler Profile</button>
@@ -427,7 +408,7 @@
           <div class="section" style="margin-top:10px">
             <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
               <div style="font-weight:800">User Directory (live)</div>
-              <input id="gmFilter" class="input" placeholder="Filter by name/email/uid/zip/type/strategy…" style="max-width:420px"/>
+              <input id="gmFilter" class="input" placeholder="Filter by name/email/uid/zips/leads/trades…" style="max-width:420px"/>
             </div>
             <div style="overflow:auto;margin-top:8px">
               <table class="table" id="gmTable">
@@ -438,11 +419,12 @@
                     <th>Email</th>
                     <th>Acq</th>
                     <th>Dispo</th>
-                    <th>Types</th>
-                    <th>Strategy</th>
+                    <th>WH Leads</th>
+                    <th>WH Custom</th>
                     <th>ZIPs</th>
-                    <th>Trades</th>
-                    <th>Availability</th>
+                    <th>CT Trades</th>
+                    <th>CT Work</th>
+                    <th>CT Availability</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -564,25 +546,16 @@
     // ---- Read/Fill forms
     function readWhForm(){
       return {
-        types:     getChipValues(document.getElementById('whSettings').querySelector('[data-name="types"]')),
-        // NEW FIELDS
-        leadSources: getChipValues(document.getElementById('whSettings').querySelector('[data-name="leadSources"]')),
-        leadCustom:  (document.getElementById('leadCustom').value||'').trim(),
-        // existing
-        price:     { min: Number(document.getElementById('whMin').value||0)||null, max: Number(document.getElementById('whMax').value||0)||null },
-        zips:      (document.getElementById('whZips').value||'').trim(),
-        notes:     (document.getElementById('whNotes').value||'').trim(),
+        leadTypes: getChipValues(document.getElementById('whSettings').querySelector('[data-name="leadTypes"]')),
+        leadCustom: (document.getElementById('whLeadCustom').value||'').trim(),
+        zips: (document.getElementById('whZips').value||'').trim(),
+        notes: (document.getElementById('whNotes').value||'').trim(),
         updatedAt: Date.now()
       };
     }
     function fillWhForm(data={}){
-      setChipValues(document.getElementById('whSettings').querySelector('[data-name="types"]'), data.types);
-      // Back-compat: if legacy "strategy" exists, show it as selected lead sources
-      const src = Array.isArray(data.leadSources) ? data.leadSources : (Array.isArray(data.strategy) ? data.strategy : []);
-      setChipValues(document.getElementById('whSettings').querySelector('[data-name="leadSources"]'), src);
-      document.getElementById('leadCustom').value = data.leadCustom || '';
-      document.getElementById('whMin').value = data?.price?.min ?? '';
-      document.getElementById('whMax').value = data?.price?.max ?? '';
+      setChipValues(document.getElementById('whSettings').querySelector('[data-name="leadTypes"]'), data.leadTypes);
+      document.getElementById('whLeadCustom').value = data.leadCustom || '';
       document.getElementById('whZips').value = data.zips || '';
       document.getElementById('whNotes').value = data.notes || '';
       document.getElementById('whSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
@@ -662,12 +635,12 @@
         email: prof.email||'',
         acq: !!(wh.acqEnabled ?? wh.acqLeadsEnabled ?? wh.leadsEnabled),
         dispo: !!(wh.dispoEnabled ?? wh.dispoLeadsEnabled ?? wh.leadsEnabledDispo),
-        types: Array.isArray(wh.types)? wh.types : [],
-        // show leadSources in Strategy column for backward-compat
-        strategy: Array.isArray(wh.leadSources)? wh.leadSources : (Array.isArray(wh.strategy)? wh.strategy : []),
-        zips: (wh.zips||''),
-        trades: Array.isArray(ct.trades)? ct.trades : [],
-        availability: Array.isArray(ct.availability)? ct.availability : []
+        whLeads: Array.isArray(wh.leadTypes)? wh.leadTypes : [],
+        whCustom: (wh.leadCustom||''),
+        zips: (wh.zips||ct.zips||''),
+        ctTrades: Array.isArray(ct.trades)? ct.trades : [],
+        ctWork: Array.isArray(ct.workType)? ct.workType : [],
+        ctAvail: Array.isArray(ct.availability)? ct.availability : []
       };
     }
     function renderGMTable(){
@@ -677,7 +650,7 @@
       const list = Object.values(gmUsers).sort((a,b)=> (a.name||'').localeCompare(b.name||''));
       tbody.innerHTML = '';
       list.forEach(u=>{
-        const hay = [u.uid,u.name,u.email,u.zips,(u.types||[]).join(','),(u.strategy||[]).join(','),(u.trades||[]).join(','),(u.availability||[]).join(',')].join(' ').toLowerCase();
+        const hay = [u.uid,u.name,u.email,u.zips,(u.whLeads||[]).join(','),(u.whCustom||''),(u.ctTrades||[]).join(','),(u.ctWork||[]).join(','),(u.ctAvail||[]).join(',')].join(' ').toLowerCase();
         if(q && !hay.includes(q)) return;
         const tr=document.createElement('tr');
         tr.innerHTML = `
@@ -686,11 +659,12 @@
           <td>${u.email||'—'}</td>
           <td>${u.acq?'ON':'off'}</td>
           <td>${u.dispo?'ON':'off'}</td>
-          <td>${(u.types||[]).join(', ')||'—'}</td>
-          <td>${(u.strategy||[]).join(', ')||'—'}</td>
+          <td>${(u.whLeads||[]).join(', ')||'—'}</td>
+          <td>${u.whCustom||'—'}</td>
           <td>${u.zips||'—'}</td>
-          <td>${(u.trades||[]).join(', ')||'—'}</td>
-          <td>${(u.availability||[]).join(', ')||'—'}</td>`;
+          <td>${(u.ctTrades||[]).join(', ')||'—'}</td>
+          <td>${(u.ctWork||[]).join(', ')||'—'}</td>
+          <td>${(u.ctAvail||[]).join(', ')||'—'}</td>`;
         tbody.appendChild(tr);
       });
 
