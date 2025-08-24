@@ -1,4 +1,4 @@
-<!-- ======================= DealBankers • Capital Console (Firebase + Push/Pull + Safe Import) ======================= -->
+<!-- ======================= DealBankers • Capital Console (Firebase + Push/Pull + Safe Import + Select All) ======================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -95,6 +95,11 @@ textarea{min-height:120px;resize:vertical}
   <div class="toprow">
     <span class="stat">Queue: <b id="queueState">—</b></span>
     <button id="queueToggle" class="topbtn">Toggle ON/OFF</button>
+
+    <span class="stat" id="selStat">Selected: 0</span>
+    <button id="selectAllBtn" class="topbtn">Select All</button>
+    <button id="clearSelBtn" class="topbtn">Clear Sel</button>
+
     <button id="pullBtn" class="topbtn">Pull</button>
     <button id="pushBtn" class="topbtn">Push</button>
 
@@ -282,12 +287,10 @@ function hotKey(e,k,fn){ if(e.key.toLowerCase()===k && !e.altKey && !e.ctrlKey &
 
 /* CSV/TSV robust parser */
 function parseSeparated(text){
-  // Detect TSV vs CSV by count
   const tabs = (text.match(/\t/g)||[]).length;
   const commas = (text.match(/,/g)||[]).length;
   if(tabs>commas) return text.split(/\r?\n/).filter(x=>x.length).map(r=>r.split("\t"));
 
-  // CSV with quotes
   const rows=[]; let row=[], cell="", inQ=false;
   for(let i=0;i<text.length;i++){
     const c=text[i], n=text[i+1];
@@ -302,10 +305,8 @@ function parseSeparated(text){
     if(c==='\r'){ continue; }
     cell+=c;
   }
-  // flush
   if(cell!==""){ row.push(cell); }
   if(row.length){ rows.push(row); }
-  // drop empty trailing rows
   return rows.filter(r=>r.some(x=>String(x||"").trim()!==""));
 }
 
@@ -347,7 +348,7 @@ function buildPerson(row, idx){
   const age = at('age');
   const contacted = at('contacted');
 
-  if(!name && !phone && !email) return null; // skip empty
+  if(!name && !phone && !email) return null;
   return {
     id: crypto.randomUUID(),
     name, first, last,
@@ -392,6 +393,12 @@ async function cloudDeleteMany(uid, ids){
   await db.ref(buyersPath(uid)).update(patch);
 }
 
+/* ===================== Selection helpers ===================== */
+function updateSelStat(){
+  const el=$("#selStat");
+  if(el) el.textContent = `Selected: ${selected.size}`;
+}
+
 /* ===================== Render ===================== */
 function drawList(){
   const L=$("#list"); if(!L) return;
@@ -400,7 +407,11 @@ function drawList(){
     const d=document.createElement("div"); d.className="item"+(i===cur?" active":"");
     const chk=document.createElement("input"); chk.type="checkbox"; chk.className="chk";
     chk.checked = selected.has(p.id);
-    chk.addEventListener('click', (ev)=>{ ev.stopPropagation(); if(ev.target.checked) selected.add(p.id); else selected.delete(p.id); });
+    chk.addEventListener('click', (ev)=>{
+      ev.stopPropagation();
+      if(ev.target.checked) selected.add(p.id); else selected.delete(p.id);
+      updateSelStat();
+    });
     d.appendChild(chk);
 
     const container=document.createElement("div");
@@ -465,12 +476,10 @@ async function importFlow(){
   }
   if(!out.length){ toast("No valid rows"); return; }
 
-  // Ask target uid (blank = me)
   let target = prompt("Import into which UID? Leave blank for yourself.", myUid) || myUid;
   target = (target||"").trim();
   if(!target){ toast("No UID, canceled"); return; }
 
-  // Deduplicate by phone/email against target’s existing list
   const existingSnap = await db.ref(buyersPath(target)).get();
   const existing = existingSnap.val()||{};
   const seenPhone = new Set(Object.values(existing).map(x=>onlyDigits(x.phone||"")).filter(Boolean));
@@ -489,23 +498,20 @@ async function importFlow(){
   await cloudSaveMany(target, toSave);
   toast(`Imported ${toSave.length} to ${target===myUid?'your list':('UID '+target)}`);
 
-  // If imported to me, refresh UI
   if(target===myUid){
     all = await cloudLoadMine(); filtered=[...all]; cur=filtered.length?0:-1; drawList(); pick();
   }
 }
 
 async function pushFlow(){
-  if(!selected.size){ toast("Select some buyers (checkbox) first."); return; }
-  let target = prompt("Push selected buyers to which UID?","");
-  if(!target) return;
-  target = target.trim();
-  if(!target) return;
+  if(!selected.size){ toast("Select some buyers (checkbox or Select All) first."); return; }
+  let target = prompt("Push selected buyers to which UID?",""); if(!target) return;
+  target = target.trim(); if(!target) return;
 
-  const rows = filtered.filter(p=>selected.has(p.id));
+  // Use *all* selected across the account (not only current filter)
+  const rows = all.filter(p=>selected.has(p.id));
   if(!rows.length){ toast("Nothing selected"); return; }
 
-  // dedupe against target
   const existingSnap = await db.ref(buyersPath(target)).get();
   const existing = existingSnap.val()||{};
   const seenPhone = new Set(Object.values(existing).map(x=>onlyDigits(x.phone||"")).filter(Boolean));
@@ -527,17 +533,14 @@ async function pushFlow(){
 }
 
 async function pullFlow(){
-  let source = prompt("Pull buyers from which UID into your list?","");
-  if(!source) return;
-  source = source.trim();
-  if(!source) return;
+  let source = prompt("Pull buyers from which UID into your list?",""); if(!source) return;
+  source = source.trim(); if(!source) return;
 
   const srcSnap = await db.ref(buyersPath(source)).get();
   const src = Object.values(srcSnap.val()||{});
 
   if(!src.length){ toast("Source empty"); return; }
 
-  // Deduplicate against mine
   const mineSnap = await db.ref(buyersPath(myUid)).get();
   const mine = mineSnap.val()||{};
   const seenPhone = new Set(Object.values(mine).map(x=>onlyDigits(x.phone||"")).filter(Boolean));
@@ -559,7 +562,6 @@ async function pullFlow(){
   await cloudSaveMany(myUid, toSave);
   toast(`Pulled ${toSave.length} from ${source}`);
 
-  // refresh
   all = await cloudLoadMine(); filtered=[...all]; cur=filtered.length?0:-1; drawList(); pick();
 }
 
@@ -577,7 +579,6 @@ async function saveCurrent(){
   p.notes      = notes?.value.trim() ?? "";
   p.updatedAt  = Date.now();
 
-  // reflect in master
   const idx = all.findIndex(x=>x.id===p.id);
   if(idx>=0) all[idx] = {...p};
 
@@ -616,12 +617,25 @@ on("setName","click",async()=>{
   if(nm===null) return;
   agentName = (nm||"").trim();
   localStorage.setItem("db_agent_name", agentName);
-  // (Optionally persist under profile too if you want)
 });
 on("importBtn","click", importFlow);
 on("pushBtn","click",   pushFlow);
 on("pullBtn","click",   pullFlow);
 on("queueToggle","click", toggleQueueFlag);
+
+on("selectAllBtn","click", ()=>{
+  // Select everything currently visible (filtered)
+  filtered.forEach(p=>selected.add(p.id));
+  updateSelStat();
+  drawList();
+  toast(`Selected ${filtered.length} visible`);
+});
+on("clearSelBtn","click", ()=>{
+  selected.clear();
+  updateSelStat();
+  drawList();
+  toast("Selection cleared");
+});
 
 const searchEl = $("#search");
 if(searchEl){
@@ -631,8 +645,9 @@ if(searchEl){
       const hay = [p.name,p.phone,p.email,p.notes].join(" ").toLowerCase();
       return !q || hay.includes(q);
     });
+    // keep existing selections, just change view
     cur = filtered.length?0:-1;
-    drawList(); pick();
+    drawList(); if(cur>=0) pick();
   });
 }
 on("clearFilter","click",()=>{ if(!searchEl) return; searchEl.value=""; filtered=[...all]; cur=0; drawList(); pick(); });
@@ -679,7 +694,6 @@ async function boot(){
   setDialMode(dialMode);
   const cs=$("#callsStat"); if(cs) cs.textContent = "Calls: " + calls;
 
-  // if uid not in URL, try auth
   if(!myUid){
     await new Promise(res=>{
       auth.onAuthStateChanged(u=>{ if(u){ myUid=u.uid; } res(); });
@@ -694,7 +708,8 @@ async function boot(){
   all = await cloudLoadMine();
   filtered=[...all];
   cur = filtered.length?0:-1;
-  drawList(); pick();
+  updateSelStat();
+  drawList(); if(cur>=0) pick();
 }
 boot();
 </script>
