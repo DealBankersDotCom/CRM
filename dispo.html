@@ -1,4 +1,4 @@
-<!-- ======================= DealBankers • Capital Console (with Firebase queue, ON/OFF, admin staging) ======================= -->
+<!-- ======================= DealBankers • Capital Console (Firebase + Push/Pull + Safe Import) ======================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -28,10 +28,13 @@ header{
 .brand{display:flex;gap:10px;align-items:center;font-weight:900;letter-spacing:.3px}
 .badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a;color:#cfe3f6}
 .kb{opacity:.8}
+.toprow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 .topbtn{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#0e2433;color:#cfe3f6;text-decoration:none;cursor:pointer}
 .topbtn.primary{background:linear-gradient(180deg,var(--blue),#0a58ca);border:none;color:#fff}
 .topbtn.green{background:linear-gradient(180deg,var(--green),#1a9b61);border:none;color:#fff}
-.topbtn.red{background:linear-gradient(180deg,#ff7b85,#d24652);border:none;color:#fff}
+.topbtn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
+.stat{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a;font-size:12px}
+
 .wrap{padding:12px}
 .grid{display:grid;gap:12px;grid-template-columns:1.1fr 1fr 1fr}
 @media (max-width:1080px){ .grid{grid-template-columns:1fr} }
@@ -57,10 +60,12 @@ textarea{min-height:120px;resize:vertical}
 .tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0f2a3a;border:1px solid var(--line);font-size:12px}
 
 .list{display:flex;flex-direction:column;gap:8px;max-height:66vh;overflow:auto;padding:10px}
-.item{border:1px solid var(--line);border-radius:12px;background:#0f1a24;padding:10px;cursor:pointer}
+.item{border:1px solid var(--line);border-radius:12px;background:#0f1a24;padding:10px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
 .item.active{outline:2px solid #52a6ff}
 .item .name{font-weight:800}
-.muted{color:var(--muted)}
+.item .muted{color:var(--muted)}
+.chk{margin-top:3px}
+
 .kbd{font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:#0b1a24;color:#cfe3f6}
 .right{justify-content:flex-end}
 
@@ -72,12 +77,6 @@ textarea{min-height:120px;resize:vertical}
 .statusDot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#718aa1}
 .statusDot.hot{background:#ffb34f}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;padding:10px 14px;border-radius:12px;background:#0b1218;border:1px solid rgba(255,255,255,.2);display:none;z-index:40}
-
-/* Admin bar */
-.adminbar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px dashed var(--line);background:#0b1a24}
-.adminbar input{min-width:320px}
-.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a}
-.warn{color:#ffd36b}
 </style>
 
 <!-- Firebase -->
@@ -93,29 +92,18 @@ textarea{min-height:120px;resize:vertical}
     <span class="badge">Capital Console</span>
     <span class="kb">Search <span class="kbd">/</span> • Next <span class="kbd">N</span> • Save <span class="kbd">S</span></span>
   </div>
-  <div class="row">
+  <div class="toprow">
+    <span class="stat">Queue: <b id="queueState">—</b></span>
+    <button id="queueToggle" class="topbtn">Toggle ON/OFF</button>
+    <button id="pullBtn" class="topbtn">Pull</button>
+    <button id="pushBtn" class="topbtn">Push</button>
+
     <button id="dialModeBtn" class="topbtn">Device</button>
-    <button id="importBtn" class="topbtn">⬆️ Import</button>
-    <button id="exportHot" class="topbtn">Export Hotlist</button>
-    <button id="setName" class="topbtn">Set My Name</button>
+    <button id="importBtn"  class="topbtn">⬆️ Import</button>
+    <button id="exportHot"  class="topbtn">Export Hotlist</button>
+    <button id="setName"    class="topbtn">Set My Name</button>
   </div>
 </header>
-
-<!-- Queue/Admin bar (shows for everyone; target UID controls only visible for admins) -->
-<div id="qbar" class="adminbar" style="display:flex">
-  <span class="badge">Queue</span>
-  <span class="pill">State: <b id="queueState">—</b></span>
-  <button id="toggleQueue" class="topbtn small">Toggle ON/OFF</button>
-  <button id="pullCloud" class="topbtn small">Pull</button>
-  <button id="pushCloud" class="topbtn small green">Push</button>
-  <span id="stagingMsg" class="kb warn" style="display:none">Staging mode (edits stay local until Push)</span>
-  <span style="flex:1"></span>
-  <span id="adminOnly" style="display:none" class="row">
-    <span class="badge">Admin</span>
-    <input id="targetUid" placeholder="Target UID (leave blank for yourself)"/>
-    <button id="loadTarget" class="topbtn small">Load</button>
-  </span>
-</div>
 
 <div class="wrap">
   <div class="grid">
@@ -148,7 +136,6 @@ textarea{min-height:120px;resize:vertical}
         </div>
       </div>
       <div class="body">
-
         <div class="row">
           <button id="callBtn" class="btn gold">📞 Call</button>
           <button id="textBtn" class="btn gold">💬 Text</button>
@@ -158,25 +145,18 @@ textarea{min-height:120px;resize:vertical}
         <div class="row" style="margin-top:10px">
           <div style="flex:1">
             <label>Name</label>
-            <input id="name" placeholder="Name"/>
+            <input id="nameField" placeholder="Name"/>
           </div>
           <div style="flex:1">
             <label>Phone</label>
-            <input id="phone" placeholder="Phone"/>
+            <input id="phoneField" placeholder="Phone"/>
           </div>
         </div>
 
-        <div class="row" style="margin-top:8px">
+        <div class="row" style="margin-top:10px">
           <div style="flex:1">
             <label>Email</label>
-            <input id="email" placeholder="Email"/>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:8px">
-          <div style="flex:1">
-            <label>Soft Commit ($)</label>
-            <input id="softCommit" placeholder="e.g., 50,000"/>
+            <input id="emailField" placeholder="Email"/>
           </div>
           <div style="flex:1">
             <label>Tag / Status</label>
@@ -187,6 +167,13 @@ textarea{min-height:120px;resize:vertical}
               <option>Bad Number</option>
               <option>DNC</option>
             </select>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div style="flex:1">
+            <label>Soft Commit ($)</label>
+            <input id="softCommit" placeholder="e.g., 50,000"/>
           </div>
         </div>
 
@@ -235,23 +222,16 @@ textarea{min-height:120px;resize:vertical}
 <div id="toast" class="toast"></div>
 
 <script>
-/* ===================== CONFIG ===================== */
-/* Optional: keep these blank if you don't use a Google Sheet */
-const DATA_ENDPOINT = "";        // GET buyers list (Apps Script Web App), optional
-const LOG_ENDPOINT  = "";        // POST logs back to Apps Script, optional
-const SHEET_TAB     = "SA";
-const PAGE_SIZE     = 1000;
-
-/* Firebase */
+/* ===================== Firebase ===================== */
 const firebaseConfig = {
   apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
   authDomain:"deal-bankers.firebaseapp.com",
   databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",
   projectId:"deal-bankers"
 };
-if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth = firebase.auth();
-const db   = firebase.database();
+if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth=firebase.auth();
+const db=firebase.database();
 
 /* ===================== STATE ===================== */
 const $ = s => document.querySelector(s);
@@ -259,20 +239,15 @@ const on = (id, ev, fn)=>{ const el=document.getElementById(id); if(el) el.addEv
 const toast = msg => { const t=$("#toast"); if(!t) return; t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",1400); };
 
 const params   = new URL(location.href).searchParams;
-const uidParam = params.get("uid") || "";
-const urlName  = (params.get("name")||"").trim();
-
-let currentUid = "";      // signed in user
-let targetUid  = "";      // whose queue we are viewing/editing
-let isAdmin    = false;
-let staging    = false;   // true when admin editing another user's queue
-
-let agentName = localStorage.getItem("db_agent_name") || "";
-let dialMode  = localStorage.getItem("db_dial_mode") || "device";
-let all = [];          // all prospects
+let myUid      = params.get("uid") || "";
+let agentName  = localStorage.getItem("db_agent_name") || (params.get("name")||"").trim() || "DealBankers";
+let dialMode   = localStorage.getItem("db_dial_mode") || "device"; // device|textnow|gvoice
+let all = [];          // all prospects (current user's)
 let filtered = [];     // filtered list
 let cur = -1;          // index into filtered
 let calls = Number(localStorage.getItem("db_call_count")||0);
+const selected = new Set(); // row ids for Push
+let queueEnabled = false;
 
 const Scripts = {
   intro:  "Hey, this is {{agent}} with DealBankers. We place private capital into quick, secured deals—short terms, strong collateral, and clarity on exit. Are you open to reviewing a couple live opportunities this week?",
@@ -281,6 +256,7 @@ const Scripts = {
   close:  "I’ll send a one-pager with the next two deals. What’s the best email, and do you prefer daily or weekly inventory updates?"
 };
 
+/* ===================== Helpers ===================== */
 const onlyDigits = s => (s||"").replace(/[^\d+]/g,"");
 const fmtPhone   = s => {
   const d = (s||"").replace(/[^\d]/g,"");
@@ -296,10 +272,6 @@ const phoneHref = (number) => {
   if(dialMode==="gvoice"){ navigator.clipboard.writeText(num); return "https://voice.google.com/u/0/messages"; }
   return `tel:${num}`;
 };
-function scriptText(key, prospect){
-  const first = (prospect?.first||"").trim() || (prospect?.name||"").split(" ")[0] || "there";
-  return (Scripts[key]||"").replace(/\{\{agent\}\}/g, agentName || "our team").replace(/\{\{first\}\}/g, first);
-}
 function setDialMode(m){
   dialMode = m; localStorage.setItem("db_dial_mode",m);
   const btn=$("#dialModeBtn"); const txt=$("#dialModeText");
@@ -308,44 +280,167 @@ function setDialMode(m){
 }
 function hotKey(e,k,fn){ if(e.key.toLowerCase()===k && !e.altKey && !e.ctrlKey && !e.metaKey){ e.preventDefault(); fn(); }}
 
-/* Drafts (local, per target) */
-const draftKey = uid => `db_queue_draft_${uid}`;
-function saveDraft(){ try{ localStorage.setItem(draftKey(targetUid||"anon"), JSON.stringify(all)); }catch{} }
-function loadDraft(){ try{ return JSON.parse(localStorage.getItem(draftKey(targetUid||"anon"))||"[]"); }catch{return [];} }
+/* CSV/TSV robust parser */
+function parseSeparated(text){
+  // Detect TSV vs CSV by count
+  const tabs = (text.match(/\t/g)||[]).length;
+  const commas = (text.match(/,/g)||[]).length;
+  if(tabs>commas) return text.split(/\r?\n/).filter(x=>x.length).map(r=>r.split("\t"));
 
-/* ===================== RENDER ===================== */
+  // CSV with quotes
+  const rows=[]; let row=[], cell="", inQ=false;
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(inQ){
+      if(c==='"' && n==='"'){ cell+='"'; i++; continue; }
+      if(c==='"'){ inQ=false; continue; }
+      cell+=c; continue;
+    }
+    if(c==='"'){ inQ=true; continue; }
+    if(c===','){ row.push(cell); cell=""; continue; }
+    if(c==='\n'){ row.push(cell); rows.push(row); row=[]; cell=""; continue; }
+    if(c==='\r'){ continue; }
+    cell+=c;
+  }
+  // flush
+  if(cell!==""){ row.push(cell); }
+  if(row.length){ rows.push(row); }
+  // drop empty trailing rows
+  return rows.filter(r=>r.some(x=>String(x||"").trim()!==""));
+}
+
+/* Header mapping */
+function normalizeHeader(h){
+  h = (h||"").toString().trim().toLowerCase();
+  return h
+    .replace(/\s+/g,' ')
+    .replace(/[-_]+/g,' ')
+    .replace(/[^a-z0-9 ]/g,'')
+    .trim();
+}
+function mapHeaders(headers){
+  const idx = {};
+  headers.forEach((h,i)=>{
+    const n=normalizeHeader(h);
+    if(['firstname','first name','first'].includes(n)) idx.first=i;
+    else if(['lastname','last name','last','surname','family name'].includes(n)) idx.last=i;
+    else if(['name','fullname','full name'].includes(n)) idx.name=i;
+    else if(['phone','phone number','tel','telephone','mobile','cell'].includes(n)) idx.phone=i;
+    else if(['email','e mail'].includes(n)) idx.email=i;
+    else if(['notes','note','potential notes','potential','comments'].includes(n)) idx.notes=i;
+    else if(['location','mailing','address','addr'].includes(n)) idx.mailing=i;
+    else if(['age'].includes(n)) idx.age=i;
+    else if(['contacted','contact'].includes(n)) idx.contacted=i;
+  });
+  return idx;
+}
+
+/* Compose person from row */
+function buildPerson(row, idx){
+  const at = (k)=> (idx[k]!==undefined ? (row[idx[k]]||"").toString().trim() : "");
+  const first = at('first'), last=at('last'), nm = at('name');
+  const name = (nm || `${first} ${last}`.trim()).replace(/\s+/g,' ').trim();
+  const phone = at('phone');
+  const email = at('email');
+  const notes = [at('notes'), at('mailing')].filter(Boolean).join(' — ');
+  const mailing = at('mailing');
+  const age = at('age');
+  const contacted = at('contacted');
+
+  if(!name && !phone && !email) return null; // skip empty
+  return {
+    id: crypto.randomUUID(),
+    name, first, last,
+    phone: phone,
+    email: email,
+    notes: notes,
+    mailing,
+    age,
+    contacted,
+    status:"",
+    softCommit:"",
+    updatedAt:0
+  };
+}
+
+/* Firebase paths */
+const buyersPath = (uid)=> `capital/buyers/${uid}`;
+const queueFlagPath = (uid)=> `userSettings/${uid}/queueEnabled`;
+
+/* ===================== Cloud I/O ===================== */
+async function cloudLoadMine(){
+  const snap = await db.ref(buyersPath(myUid)).get();
+  const v = snap.val()||{};
+  const list = Object.values(v);
+  list.sort((a,b)=> (b.updatedAt||0)-(a.updatedAt||0));
+  return list;
+}
+async function cloudSaveOne(uid, person){
+  const id = person.id || crypto.randomUUID();
+  await db.ref(`${buyersPath(uid)}/${id}`).set({...person, id});
+}
+async function cloudSaveMany(uid, rows){
+  const patch={};
+  rows.forEach(p=>{
+    const id=p.id||crypto.randomUUID();
+    patch[id] = {...p, id};
+  });
+  if(Object.keys(patch).length) await db.ref(buyersPath(uid)).update(patch);
+}
+async function cloudDeleteMany(uid, ids){
+  const patch={}; ids.forEach(id=>patch[id]=null);
+  await db.ref(buyersPath(uid)).update(patch);
+}
+
+/* ===================== Render ===================== */
 function drawList(){
   const L=$("#list"); if(!L) return;
   L.innerHTML="";
   filtered.forEach((p,i)=>{
     const d=document.createElement("div"); d.className="item"+(i===cur?" active":"");
-    d.innerHTML = `<div class="name">${p.name||"Unknown"}</div>
-                   <div class="muted">${fmtPhone(p.phone)} ${p.email?(" • "+p.email):""}</div>`;
+    const chk=document.createElement("input"); chk.type="checkbox"; chk.className="chk";
+    chk.checked = selected.has(p.id);
+    chk.addEventListener('click', (ev)=>{ ev.stopPropagation(); if(ev.target.checked) selected.add(p.id); else selected.delete(p.id); });
+    d.appendChild(chk);
+
+    const container=document.createElement("div");
+    container.innerHTML = `
+      <div class="name">${p.name||"Unknown"}</div>
+      <div class="muted">${fmtPhone(p.phone)} ${p.email?(" • "+p.email):""}${p.notes?(" • "+p.notes):""}</div>`;
+    d.appendChild(container);
+
     d.onclick=()=>{ cur=i; pick(); };
     L.appendChild(d);
   });
 }
+function scriptText(key, prospect){
+  const first = (prospect?.first||"").trim() || (prospect?.name||"").split(" ")[0] || "there";
+  return (Scripts[key]||"").replace(/\{\{agent\}\}/g, agentName || "our team").replace(/\{\{first\}\}/g, first);
+}
 function pick(){
-  const p = filtered[cur];
+  const p = filtered[cur]; 
   const curName=$("#curName"), curStatus=$("#curStatus"), lastSeen=$("#lastSeen"),
-        name=$("#name"), phone=$("#phone"), email=$("#email"),
         soft=$("#softCommit"), statSel=$("#statusSel"), notes=$("#notes"),
-        box=$("#scriptBox");
+        box=$("#scriptBox"),
+        nameField=$("#nameField"), phoneField=$("#phoneField"), emailField=$("#emailField");
   if(!p || !curName) return;
+
   curName.textContent = p.name||"—";
   curStatus.textContent = "Status: " + (p.status||"—");
   lastSeen.textContent  = "Last: " + (p.updatedAt? new Date(p.updatedAt).toLocaleString() : "—");
-  name.value  = p.name||"";
-  phone.value = p.phone||"";
-  email.value = p.email||"";
-  soft.value  = p.softCommit||"";
+  nameField.value  = p.name||"";
+  phoneField.value = p.phone||"";
+  emailField.value = p.email||"";
+  soft.value = p.softCommit||"";
   statSel.value  = p.status||"";
   notes.value    = p.notes||"";
 
   document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
-  const introBtn = document.querySelector('.tab[data-k="intro"]'); if(introBtn) introBtn.classList.add("active");
-  if(box) box.textContent = scriptText("intro",p);
-  drawList();
+  const introBtn = document.querySelector('.tab[data-k="intro"]');
+  if(introBtn){ introBtn.classList.add("active"); }
+  box.textContent = scriptText("intro",p);
+
+  drawList(); // refresh highlight
 }
 function next(d=+1){
   if(!filtered.length) return;
@@ -353,158 +448,180 @@ function next(d=+1){
   pick();
 }
 
-/* ===================== CLOUD (Firebase) ===================== */
-const qPath = uid => `queues/${uid}`;
-const itemsPath = uid => `${qPath(uid)}/items`;
-const enabledPath = uid => `${qPath(uid)}/enabled`;
+/* ===================== Import / Export / Push / Pull ===================== */
+async function importFlow(){
+  const text = prompt("Paste CSV/TSV from your sheet.\nHeaders should include FirstName, Last Name, Phone, Email, Notes/Location, etc.","");
+  if(!text) return;
 
-async function getRole(uid){
-  try{ const snap = await db.ref(`roles/${uid}`).get(); return snap.val()||""; }
-  catch{ return ""; }
-}
-async function loadQueue(uid){
-  // enabled state
-  try{
-    const en = (await db.ref(enabledPath(uid)).get()).val();
-    $("#queueState").textContent = en ? "ON" : "OFF";
-  }catch{ $("#queueState").textContent="—"; }
+  const rows = parseSeparated(text);
+  if(!rows.length){ toast("Nothing to import"); return; }
+  const headers = rows[0];
+  const idx = mapHeaders(headers);
 
-  // items
-  try{
-    const snap = await db.ref(itemsPath(uid)).get();
-    const obj = snap.val()||{};
-    const arr = Object.keys(obj).map(id=>({ id, ...obj[id] }));
-    if(arr.length){
-      all = arr;
-      filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
-      return;
-    }
-  }catch(e){ console.warn("loadQueue failed", e); }
-  // If no cloud items, try local draft
-  const draft = loadDraft();
-  all = Array.isArray(draft)? draft : [];
-  filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
-}
-async function pushQueue(uid){
-  const map={};
-  all.forEach(p=>{ const id=p.id||(p.id=crypto.randomUUID()); map[id]=p; });
-  await db.ref(itemsPath(uid)).set(map);
-  await db.ref(qPath(uid)).update({ updatedAt: Date.now() });
-  toast("Pushed to cloud");
-}
-async function pullQueue(uid){ await loadQueue(uid); toast("Pulled from cloud"); }
-async function setQueueEnabled(uid, on){
-  await db.ref(enabledPath(uid)).set(!!on);
-  $("#queueState").textContent = on ? "ON" : "OFF";
-}
+  const out=[];
+  for(let i=1;i<rows.length;i++){
+    const p = buildPerson(rows[i], idx);
+    if(p) out.push(p);
+  }
+  if(!out.length){ toast("No valid rows"); return; }
 
-/* When saving a single row: push immediately unless we're staging (admin on someone else) */
-async function saveOneToCloud(uid, p){
-  if(staging) return; // keep local until Push
-  const id = p.id || (p.id=crypto.randomUUID());
-  await db.ref(`${itemsPath(uid)}/${id}`).set(p);
-  await db.ref(qPath(uid)).update({ updatedAt: Date.now() });
+  // Ask target uid (blank = me)
+  let target = prompt("Import into which UID? Leave blank for yourself.", myUid) || myUid;
+  target = (target||"").trim();
+  if(!target){ toast("No UID, canceled"); return; }
+
+  // Deduplicate by phone/email against target’s existing list
+  const existingSnap = await db.ref(buyersPath(target)).get();
+  const existing = existingSnap.val()||{};
+  const seenPhone = new Set(Object.values(existing).map(x=>onlyDigits(x.phone||"")).filter(Boolean));
+  const seenEmail = new Set(Object.values(existing).map(x=>String(x.email||"").toLowerCase()).filter(Boolean));
+
+  const toSave = out.filter(p=>{
+    const ph = onlyDigits(p.phone||"");
+    const em = String(p.email||"").toLowerCase();
+    if(ph && seenPhone.has(ph)) return false;
+    if(em && seenEmail.has(em)) return false;
+    if(ph) seenPhone.add(ph);
+    if(em) seenEmail.add(em);
+    return true;
+  });
+
+  await cloudSaveMany(target, toSave);
+  toast(`Imported ${toSave.length} to ${target===myUid?'your list':('UID '+target)}`);
+
+  // If imported to me, refresh UI
+  if(target===myUid){
+    all = await cloudLoadMine(); filtered=[...all]; cur=filtered.length?0:-1; drawList(); pick();
+  }
 }
 
-/* ===================== AGENT NAME ===================== */
-async function initAgentName(){
-  if(urlName){ agentName=urlName; localStorage.setItem("db_agent_name",agentName); return; }
-  if(agentName){ return; }
-  try{
-    if(currentUid){
-      const snap = await db.ref(`userSettings/${currentUid}/profile`).get();
-      const v = snap.val()||{};
-      const cloud = (v.displayName||"").trim() || (v.email||"").split("@")[0] || "";
-      if(cloud){ agentName=cloud; localStorage.setItem("db_agent_name",agentName); return; }
-    }
-  }catch(e){ console.warn("name load failed", e); }
-  agentName = "DealBankers";
-  localStorage.setItem("db_agent_name", agentName);
+async function pushFlow(){
+  if(!selected.size){ toast("Select some buyers (checkbox) first."); return; }
+  let target = prompt("Push selected buyers to which UID?","");
+  if(!target) return;
+  target = target.trim();
+  if(!target) return;
+
+  const rows = filtered.filter(p=>selected.has(p.id));
+  if(!rows.length){ toast("Nothing selected"); return; }
+
+  // dedupe against target
+  const existingSnap = await db.ref(buyersPath(target)).get();
+  const existing = existingSnap.val()||{};
+  const seenPhone = new Set(Object.values(existing).map(x=>onlyDigits(x.phone||"")).filter(Boolean));
+  const seenEmail = new Set(Object.values(existing).map(x=>String(x.email||"").toLowerCase()).filter(Boolean));
+  const toSave = rows.filter(p=>{
+    const ph = onlyDigits(p.phone||"");
+    const em = String(p.email||"").toLowerCase();
+    if(ph && seenPhone.has(ph)) return false;
+    if(em && seenEmail.has(em)) return false;
+    if(ph) seenPhone.add(ph);
+    if(em) seenEmail.add(em);
+    p.assignedBy = myUid;
+    p.updatedAt = Date.now();
+    return true;
+  });
+
+  await cloudSaveMany(target, toSave);
+  toast(`Pushed ${toSave.length} to ${target}`);
 }
 
-/* ===================== DATA (optional sheet source) ===================== */
-async function loadFromSheet(){
-  let url = DATA_ENDPOINT;
-  if(!url){ demo(); return; }
-  const q = new URLSearchParams({ sheet: SHEET_TAB, limit: PAGE_SIZE });
-  url += (url.includes("?")?"&":"?")+q.toString();
-  try{
-    const res = await fetch(url,{mode:"cors"}); const json = await res.json();
-    all = (json.rows||[]).map(r=>({
-      id: r.id || r.row || r._id || crypto.randomUUID(),
-      first: r.first || r.FirstName || "",
-      last:  r.last  || r.LastName  || r["Last Name"] || "",
-      name:  (r.name || `${r.FirstName||r.first||""} ${r["Last Name"]||r.last||""}`).trim(),
-      phone: r.phone || r.Phone || "",
-      email: r.email || r.Email || "",
-      notes: r.notes || r.Notes || "",
-      mailing: r.mailing || r.Mailing || "",
-      status: r.status || r.Status || "",
-      softCommit: r.softCommit || "",
-      updatedAt: r.updatedAt || 0
-    }));
-    filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
-  }catch(err){ console.error(err); demo(); }
-}
-function demo(){
-  all = [
-    {id:"1",name:"Alex Reyes", phone:"2105550101", email:"alex@example.com", notes:"TX based.", status:"", softCommit:""},
-    {id:"2",name:"Brenda K",   phone:"5125550199", email:"", notes:"Likes 1st lien.", status:"", softCommit:""},
-    {id:"3",name:"Caleb & Dana", phone:"8305550117", email:"calebdana@example.com", notes:"1031 funds pending; wants lien-first only.", status:"", softCommit:""}
-  ];
-  filtered=[...all]; cur=0; drawList(); pick();
+async function pullFlow(){
+  let source = prompt("Pull buyers from which UID into your list?","");
+  if(!source) return;
+  source = source.trim();
+  if(!source) return;
+
+  const srcSnap = await db.ref(buyersPath(source)).get();
+  const src = Object.values(srcSnap.val()||{});
+
+  if(!src.length){ toast("Source empty"); return; }
+
+  // Deduplicate against mine
+  const mineSnap = await db.ref(buyersPath(myUid)).get();
+  const mine = mineSnap.val()||{};
+  const seenPhone = new Set(Object.values(mine).map(x=>onlyDigits(x.phone||"")).filter(Boolean));
+  const seenEmail = new Set(Object.values(mine).map(x=>String(x.email||"").toLowerCase()).filter(Boolean));
+
+  const toSave = src.filter(p=>{
+    const ph = onlyDigits(p.phone||"");
+    const em = String(p.email||"").toLowerCase();
+    if(ph && seenPhone.has(ph)) return false;
+    if(em && seenEmail.has(em)) return false;
+    if(ph) seenPhone.add(ph);
+    if(em) seenEmail.add(em);
+    p.assignedBy = source;
+    p.updatedAt = Date.now();
+    p.id = crypto.randomUUID();
+    return true;
+  });
+
+  await cloudSaveMany(myUid, toSave);
+  toast(`Pulled ${toSave.length} from ${source}`);
+
+  // refresh
+  all = await cloudLoadMine(); filtered=[...all]; cur=filtered.length?0:-1; drawList(); pick();
 }
 
-/* ===================== EVENTS ===================== */
+/* ===================== Save ===================== */
+async function saveCurrent(){
+  const p = filtered[cur]; if(!p) return;
+  const soft=$("#softCommit"), statSel=$("#statusSel"), notes=$("#notes");
+  const nm=$("#nameField"), ph=$("#phoneField"), em=$("#emailField");
+
+  p.name       = (nm?.value||"").trim();
+  p.phone      = (ph?.value||"").trim();
+  p.email      = (em?.value||"").trim();
+  p.softCommit = soft?.value.trim() ?? "";
+  p.status     = statSel?.value.trim() ?? "";
+  p.notes      = notes?.value.trim() ?? "";
+  p.updatedAt  = Date.now();
+
+  // reflect in master
+  const idx = all.findIndex(x=>x.id===p.id);
+  if(idx>=0) all[idx] = {...p};
+
+  await cloudSaveOne(myUid, p);
+
+  const curStatus=$("#curStatus"), lastSeen=$("#lastSeen");
+  if(curStatus) curStatus.textContent = "Status: "+(p.status||"—");
+  if(lastSeen)  lastSeen.textContent  = "Last: "+new Date(p.updatedAt).toLocaleString();
+  toast("Saved");
+}
+
+/* ===================== Queue toggle ===================== */
+function renderQueue(){
+  $("#queueState").textContent = queueEnabled ? "ON" : "OFF";
+}
+async function loadQueueFlag(){
+  const snap = await db.ref(queueFlagPath(myUid)).get();
+  queueEnabled = !!snap.val();
+  renderQueue();
+}
+async function toggleQueueFlag(){
+  queueEnabled = !queueEnabled;
+  await db.ref(queueFlagPath(myUid)).set(queueEnabled);
+  renderQueue();
+  toast(queueEnabled?"Queue ON":"Queue OFF");
+}
+
+/* ===================== Events ===================== */
 on("dialModeBtn","click",()=>{
   const order = ["device","textnow","gvoice"];
   const i = order.indexOf(dialMode);
   setDialMode(order[(i+1)%order.length]);
 });
-
 on("setName","click",async()=>{
   const nm = prompt("Set your display name (shown in script):", agentName||"");
   if(nm===null) return;
   agentName = (nm||"").trim();
   localStorage.setItem("db_agent_name", agentName);
-  if(currentUid){
-    try{ await db.ref(`userSettings/${currentUid}/profile/displayName`).set(agentName); }catch(e){ console.warn("displayName save failed", e); }
-  }
-  if(cur>=0){
-    const activeKey=document.querySelector(".tab.active")?.dataset.k || "intro";
-    const box=$("#scriptBox"); if(box) box.textContent = scriptText(activeKey, filtered[cur]);
-  }
+  // (Optionally persist under profile too if you want)
 });
-
-on("importBtn","click",async()=>{
-  const csv = prompt("Paste CSV (FirstName,Last Name,Phone,Email,Notes):","");
-  if(!csv) return;
-  const rows = csv.split(/\r?\n/).map(r=>r.split(","));
-  rows.forEach(r=>{
-    const [f,l,p,e,n]=r;
-    if((f||l||p||e||n) && r.length>=1){
-      const name = (`${f||""} ${l||""}`).trim() || (p?`Buyer ${onlyDigits(p).slice(-4)}`:"");
-      all.push({id:crypto.randomUUID(), first:f, last:l, name, phone:p||"", email:e||"", notes:n||"", status:"", softCommit:""});
-    }
-  });
-  filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
-  saveDraft();
-  toast(staging ? "Imported (staged). Press Push to publish." : "Imported");
-});
-on("exportHot","click",()=>{
-  const rows = all.filter(p=>p.status==="Interested"||p.status==="Follow-up");
-  const header = ["Name","Phone","Email","Status","SoftCommit","Notes"];
-  const lines = [header.join(",")].concat(rows.map(p=>[
-    (p.name||"").replace(/,/g," "),
-    (p.phone||""),
-    (p.email||""),
-    p.status||"",
-    (p.softCommit||"").toString().replace(/,/g,""),
-    (p.notes||"").replace(/[\r\n,]+/g," ")
-  ].join(",")));
-  const blob = new Blob([lines.join("\n")],{type:"text/csv"}); const url  = URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download="hotlist.csv"; a.click(); URL.revokeObjectURL(url);
-});
+on("importBtn","click", importFlow);
+on("pushBtn","click",   pushFlow);
+on("pullBtn","click",   pullFlow);
+on("queueToggle","click", toggleQueueFlag);
 
 const searchEl = $("#search");
 if(searchEl){
@@ -528,7 +645,10 @@ on("callBtn","click",()=>{
   window.open(phoneHref(p.phone), "_blank");
 });
 on("textBtn","click",()=>{ window.open("https://www.textnow.com/messaging","_blank"); });
-on("copyBtn","click",()=>{ const p = filtered[cur]; if(!p) return; navigator.clipboard.writeText(onlyDigits(p.phone)).then(()=>toast("Number copied")); });
+on("copyBtn","click",()=>{
+  const p = filtered[cur]; if(!p) return;
+  navigator.clipboard.writeText(onlyDigits(p.phone)).then(()=>toast("Number copied"));
+});
 
 on("saveBtn","click",saveCurrent);
 on("prevBtn","click",()=>next(-1));
@@ -541,7 +661,6 @@ document.querySelectorAll(".tab").forEach(b=>{
     const box=$("#scriptBox"); if(box) box.textContent = scriptText(b.dataset.k, filtered[cur]);
   });
 });
-
 on("flagInterested","click",()=>{ const s=$("#statusSel"); if(s){ s.value="Interested"; } saveCurrent(); });
 on("flagFollow","click",    ()=>{ const s=$("#statusSel"); if(s){ s.value="Follow-up";  } saveCurrent(); });
 on("flagBad","click",       ()=>{ const s=$("#statusSel"); if(s){ s.value="Bad Number"; } saveCurrent(); });
@@ -555,91 +674,29 @@ document.addEventListener("keydown",(e)=>{
   hotKey(e,"s",()=>saveCurrent());
 });
 
-/* Queue/Admin bar */
-on("pullCloud","click",()=>pullQueue(targetUid));
-on("pushCloud","click",()=>pushQueue(targetUid));
-on("toggleQueue","click",async()=>{
-  try{
-    const snap = await db.ref(enabledPath(targetUid)).get();
-    await setQueueEnabled(targetUid, !(snap.val()===true));
-  }catch{ await setQueueEnabled(targetUid, true); }
-});
-on("loadTarget","click",()=>boot(targetUidInput()));
-function targetUidInput(){ return ($("#targetUid")?.value||"").trim(); }
-
-/* ===================== SAVE ===================== */
-async function saveCurrent(){
-  const p = filtered[cur]; if(!p) return;
-  const name=$("#name"), phone=$("#phone"), email=$("#email"),
-        soft=$("#softCommit"), statSel=$("#statusSel"), notes=$("#notes");
-  p.name       = (name?.value||"").trim();
-  p.phone      = (phone?.value||"").trim();
-  p.email      = (email?.value||"").trim();
-  p.softCommit = soft?.value.trim() ?? "";
-  p.status     = statSel?.value.trim() ?? "";
-  p.notes      = notes?.value.trim() ?? "";
-  p.updatedAt  = Date.now();
-
-  const idx = all.findIndex(x=>x.id===p.id);
-  if(idx>=0) all[idx] = {...p};
-
-  const curStatus=$("#curStatus"), lastSeen=$("#lastSeen");
-  if(curStatus) curStatus.textContent = "Status: "+(p.status||"—");
-  if(lastSeen)  lastSeen.textContent  = "Last: "+new Date(p.updatedAt).toLocaleString();
-
-  saveDraft();
-  await saveOneToCloud(targetUid, p);
-
-  if(LOG_ENDPOINT){
-    try{
-      await fetch(LOG_ENDPOINT,{
-        method:"POST", headers:{"Content-Type":"application/json"},
-        body:JSON.stringify({
-          action:"log",
-          rowId:p.id, name:p.name, phone:p.phone, email:p.email,
-          status:p.status, softCommit:p.softCommit, notes:p.notes,
-          agent:agentName, ts:p.updatedAt, uid:targetUid
-        })
-      });
-    }catch(e){ console.warn("log failed",e); }
-  }
-  toast(staging ? "Saved (local only). Push to publish." : "Saved");
-}
-
-/* ===================== BOOT ===================== */
-function setStaging(){
-  staging = isAdmin && targetUid && currentUid && targetUid !== currentUid;
-  $("#stagingMsg").style.display = staging ? "inline-block" : "none";
-}
-async function boot(forceUid){
-  targetUid = (forceUid || targetUid || "").trim() || currentUid || uidParam || "anon";
-  setStaging();
-  saveDraft(); // keep previous target's draft before switching
-  $("#callsStat").textContent = "Calls: " + calls;
-  $("#queueState").textContent = "…";
-  await loadQueue(targetUid);
-}
-
-auth.onAuthStateChanged(async u=>{
-  currentUid = u?.uid || uidParam || "";
-  // Admin check: email or role
-  isAdmin = (u?.email||"").toLowerCase()==="dealbankers@gmail.com";
-  if(!isAdmin && currentUid){
-    try{ isAdmin = (await getRole(currentUid))==="admin"; }catch{}
-  }
-  // Show admin controls if admin
-  if(isAdmin){ $("#adminOnly").style.display=""; } else { $("#adminOnly").style.display="none"; }
-
-  await initAgentName();
-  await boot();
-
-  // dial mode / calls UI
+/* ===================== Auth + Init ===================== */
+async function boot(){
   setDialMode(dialMode);
-  $("#callsStat").textContent = "Calls: " + calls;
-});
+  const cs=$("#callsStat"); if(cs) cs.textContent = "Calls: " + calls;
 
-/* fallback if auth never fires (rare) */
-setTimeout(()=>{ if(!currentUid){ currentUid = uidParam || "anon"; boot(); } }, 1500);
+  // if uid not in URL, try auth
+  if(!myUid){
+    await new Promise(res=>{
+      auth.onAuthStateChanged(u=>{ if(u){ myUid=u.uid; } res(); });
+    });
+  }
+  if(!myUid){
+    alert("No UID. Open from profile (which passes uid) or sign in first.");
+    return;
+  }
+
+  await loadQueueFlag();
+  all = await cloudLoadMine();
+  filtered=[...all];
+  cur = filtered.length?0:-1;
+  drawList(); pick();
+}
+boot();
 </script>
 </body>
 </html>
