@@ -1,4 +1,4 @@
-<!-- ======================= DealBankers • Capital Console (Firebase + Push/Pull + Safe Import + Select All) ======================= -->
+<!-- ======================= DealBankers • Capital Console (Firebase + Push/Pull + Safe Import + Select All + Admin Gate) ======================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +34,9 @@ header{
 .topbtn.green{background:linear-gradient(180deg,var(--green),#1a9b61);border:none;color:#fff}
 .topbtn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
 .stat{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a;font-size:12px}
+
+/* Admin-only elements are hidden by default to prevent flash before auth resolves. */
+.admin-only{display:none !important;}
 
 .wrap{padding:12px}
 .grid{display:grid;gap:12px;grid-template-columns:1.1fr 1fr 1fr}
@@ -96,12 +99,12 @@ textarea{min-height:120px;resize:vertical}
     <span class="stat">Queue: <b id="queueState">—</b></span>
     <button id="queueToggle" class="topbtn">Toggle ON/OFF</button>
 
-    <span class="stat" id="selStat">Selected: 0</span>
-    <button id="selectAllBtn" class="topbtn">Select All</button>
-    <button id="clearSelBtn" class="topbtn">Clear Sel</button>
+    <span class="stat admin-only" id="selStat">Selected: 0</span>
+    <button id="selectAllBtn" class="topbtn admin-only">Select All</button>
+    <button id="clearSelBtn" class="topbtn admin-only">Clear Sel</button>
 
-    <button id="pullBtn" class="topbtn">Pull</button>
-    <button id="pushBtn" class="topbtn">Push</button>
+    <button id="pullBtn" class="topbtn admin-only">Pull</button>
+    <button id="pushBtn" class="topbtn admin-only">Push</button>
 
     <button id="dialModeBtn" class="topbtn">Device</button>
     <button id="importBtn"  class="topbtn">⬆️ Import</button>
@@ -241,10 +244,13 @@ const db=firebase.database();
 /* ===================== STATE ===================== */
 const $ = s => document.querySelector(s);
 const on = (id, ev, fn)=>{ const el=document.getElementById(id); if(el) el.addEventListener(ev, fn); };
-const toast = msg => { const t=$("#toast"); if(!t) return; t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",1400); };
+const toast = msg => { const t=$("#toast"); if(!t) return; t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",1600); };
 
 const params   = new URL(location.href).searchParams;
 let myUid      = params.get("uid") || "";
+let myEmail    = "";
+let isGod      = false;
+
 let agentName  = localStorage.getItem("db_agent_name") || (params.get("name")||"").trim() || "DealBankers";
 let dialMode   = localStorage.getItem("db_dial_mode") || "device"; // device|textnow|gvoice
 let all = [];          // all prospects (current user's)
@@ -254,12 +260,7 @@ let calls = Number(localStorage.getItem("db_call_count")||0);
 const selected = new Set(); // row ids for Push
 let queueEnabled = false;
 
-const Scripts = {
-  intro:  "Hey, this is {{agent}} with DealBankers. We place private capital into quick, secured deals—short terms, strong collateral, and clarity on exit. Are you open to reviewing a couple live opportunities this week?",
-  terms:  "We target 8–12% effective returns on short paper (30–180 days) or profit-share on highly secured flips. First-lien or JV, you choose. Funds are wired to title/escrow only.",
-  seller: "We also structure clean seller-finance exits for retail buyers. If you like paper, we’ll place you in 1st position with conservative LTV and real security.",
-  close:  "I’ll send a one-pager with the next two deals. What’s the best email, and do you prefer daily or weekly inventory updates?"
-};
+const GOD_EMAIL = "dealbankers@gmail.com";   // admin email (case-insensitive)
 
 /* ===================== Helpers ===================== */
 const onlyDigits = s => (s||"").replace(/[^\d+]/g,"");
@@ -313,11 +314,7 @@ function parseSeparated(text){
 /* Header mapping */
 function normalizeHeader(h){
   h = (h||"").toString().trim().toLowerCase();
-  return h
-    .replace(/\s+/g,' ')
-    .replace(/[-_]+/g,' ')
-    .replace(/[^a-z0-9 ]/g,'')
-    .trim();
+  return h.replace(/\s+/g,' ').replace(/[-_]+/g,' ').replace(/[^a-z0-9 ]/g,'').trim();
 }
 function mapHeaders(headers){
   const idx = {};
@@ -352,20 +349,13 @@ function buildPerson(row, idx){
   return {
     id: crypto.randomUUID(),
     name, first, last,
-    phone: phone,
-    email: email,
-    notes: notes,
-    mailing,
-    age,
-    contacted,
-    status:"",
-    softCommit:"",
-    updatedAt:0
+    phone, email, notes, mailing, age, contacted,
+    status:"", softCommit:"", updatedAt:0
   };
 }
 
 /* Firebase paths */
-const buyersPath = (uid)=> `capital/buyers/${uid}`;
+const buyersPath    = (uid)=> `capital/buyers/${uid}`;
 const queueFlagPath = (uid)=> `userSettings/${uid}/queueEnabled`;
 
 /* ===================== Cloud I/O ===================== */
@@ -394,10 +384,7 @@ async function cloudDeleteMany(uid, ids){
 }
 
 /* ===================== Selection helpers ===================== */
-function updateSelStat(){
-  const el=$("#selStat");
-  if(el) el.textContent = `Selected: ${selected.size}`;
-}
+function updateSelStat(){ const el=$("#selStat"); if(el) el.textContent = `Selected: ${selected.size}`; }
 
 /* ===================== Render ===================== */
 function drawList(){
@@ -459,6 +446,16 @@ function next(d=+1){
   pick();
 }
 
+/* ===================== Admin guard ===================== */
+function applyGodModeUI(){
+  const els = document.querySelectorAll(".admin-only");
+  els.forEach(el=> el.style.display = isGod ? "" : "none");
+}
+function requireGod(){
+  if(!isGod){ toast("Only admin can do that."); return false; }
+  return true;
+}
+
 /* ===================== Import / Export / Push / Pull ===================== */
 async function importFlow(){
   const text = prompt("Paste CSV/TSV from your sheet.\nHeaders should include FirstName, Last Name, Phone, Email, Notes/Location, etc.","");
@@ -476,9 +473,12 @@ async function importFlow(){
   }
   if(!out.length){ toast("No valid rows"); return; }
 
-  let target = prompt("Import into which UID? Leave blank for yourself.", myUid) || myUid;
-  target = (target||"").trim();
-  if(!target){ toast("No UID, canceled"); return; }
+  // Non-admins can import ONLY into themselves; admin can choose target UID.
+  let target = myUid;
+  if(isGod){
+    const ans = prompt("Import into which UID? Leave blank for yourself.", myUid) || myUid;
+    target = (ans||"").trim() || myUid;
+  }
 
   const existingSnap = await db.ref(buyersPath(target)).get();
   const existing = existingSnap.val()||{};
@@ -504,11 +504,11 @@ async function importFlow(){
 }
 
 async function pushFlow(){
+  if(!requireGod()) return;
   if(!selected.size){ toast("Select some buyers (checkbox or Select All) first."); return; }
   let target = prompt("Push selected buyers to which UID?",""); if(!target) return;
   target = target.trim(); if(!target) return;
 
-  // Use *all* selected across the account (not only current filter)
   const rows = all.filter(p=>selected.has(p.id));
   if(!rows.length){ toast("Nothing selected"); return; }
 
@@ -533,6 +533,7 @@ async function pushFlow(){
 }
 
 async function pullFlow(){
+  if(!requireGod()) return;
   let source = prompt("Pull buyers from which UID into your list?",""); if(!source) return;
   source = source.trim(); if(!source) return;
 
@@ -591,9 +592,7 @@ async function saveCurrent(){
 }
 
 /* ===================== Queue toggle ===================== */
-function renderQueue(){
-  $("#queueState").textContent = queueEnabled ? "ON" : "OFF";
-}
+function renderQueue(){ $("#queueState").textContent = queueEnabled ? "ON" : "OFF"; }
 async function loadQueueFlag(){
   const snap = await db.ref(queueFlagPath(myUid)).get();
   queueEnabled = !!snap.val();
@@ -624,13 +623,14 @@ on("pullBtn","click",   pullFlow);
 on("queueToggle","click", toggleQueueFlag);
 
 on("selectAllBtn","click", ()=>{
-  // Select everything currently visible (filtered)
+  if(!requireGod()) return;
   filtered.forEach(p=>selected.add(p.id));
   updateSelStat();
   drawList();
   toast(`Selected ${filtered.length} visible`);
 });
 on("clearSelBtn","click", ()=>{
+  if(!requireGod()) return;
   selected.clear();
   updateSelStat();
   drawList();
@@ -645,7 +645,6 @@ if(searchEl){
       const hay = [p.name,p.phone,p.email,p.notes].join(" ").toLowerCase();
       return !q || hay.includes(q);
     });
-    // keep existing selections, just change view
     cur = filtered.length?0:-1;
     drawList(); if(cur>=0) pick();
   });
@@ -694,11 +693,18 @@ async function boot(){
   setDialMode(dialMode);
   const cs=$("#callsStat"); if(cs) cs.textContent = "Calls: " + calls;
 
-  if(!myUid){
-    await new Promise(res=>{
-      auth.onAuthStateChanged(u=>{ if(u){ myUid=u.uid; } res(); });
+  // Always listen for auth (to determine admin email) — even if UID was passed via URL.
+  await new Promise(res=>{
+    auth.onAuthStateChanged(u=>{
+      myEmail = ((u && u.email) || "").toLowerCase();
+      isGod   = (myEmail === GOD_EMAIL);
+      // If uid not supplied via URL, adopt signed-in user's UID for their own list.
+      if(!myUid && u) myUid = u.uid;
+      applyGodModeUI();   // reveal admin-only buttons if applicable
+      res();
     });
-  }
+  });
+
   if(!myUid){
     alert("No UID. Open from profile (which passes uid) or sign in first.");
     return;
