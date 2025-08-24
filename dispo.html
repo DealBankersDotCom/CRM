@@ -241,6 +241,23 @@ if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
 const auth=firebase.auth();
 const db=firebase.database();
 
+/* ===================== DEFAULT SCRIPTS (prevents undefined errors; your external Scripts can override) ===================== */
+(function ensureScripts(){
+  const defaults = {
+    intro:  "Hey {{first}}, this is {{agent}} with DealBankers. Do you have a quick second?",
+    terms:  "We typically look at price, timing, and any special terms you care about. What are you aiming for?",
+    seller: "We can do seller finance if it helps — low down, flexible terms. What would make this a win for you?",
+    close:  "Sounds good. I’ll follow up with next steps. Best number to text a quick summary?"
+  };
+  if (!window.Scripts) window.Scripts = defaults;
+  else {
+    // Fill any missing keys so scriptText never crashes.
+    for (const k of ["intro","terms","seller","close"]) {
+      if (typeof window.Scripts[k] !== "string") window.Scripts[k] = defaults[k];
+    }
+  }
+})();
+
 /* ===================== STATE ===================== */
 const $ = s => document.querySelector(s);
 const on = (id, ev, fn)=>{ const el=document.getElementById(id); if(el) el.addEventListener(ev, fn); };
@@ -347,7 +364,7 @@ function buildPerson(row, idx){
 
   if(!name && !phone && !email) return null;
   return {
-    id: crypto.randomUUID(),
+    id: (crypto && crypto.randomUUID ? crypto.randomUUID() : ('id-'+Math.random().toString(36).slice(2))),
     name, first, last,
     phone, email, notes, mailing, age, contacted,
     status:"", softCommit:"", updatedAt:0
@@ -367,13 +384,13 @@ async function cloudLoadMine(){
   return list;
 }
 async function cloudSaveOne(uid, person){
-  const id = person.id || crypto.randomUUID();
+  const id = person.id || (crypto.randomUUID ? crypto.randomUUID() : ('id-'+Math.random().toString(36).slice(2)));
   await db.ref(`${buyersPath(uid)}/${id}`).set({...person, id});
 }
 async function cloudSaveMany(uid, rows){
   const patch={};
   rows.forEach(p=>{
-    const id=p.id||crypto.randomUUID();
+    const id=p.id || (crypto.randomUUID ? crypto.randomUUID() : ('id-'+Math.random().toString(36).slice(2)));
     patch[id] = {...p, id};
   });
   if(Object.keys(patch).length) await db.ref(buyersPath(uid)).update(patch);
@@ -413,7 +430,7 @@ function drawList(){
 }
 function scriptText(key, prospect){
   const first = (prospect?.first||"").trim() || (prospect?.name||"").split(" ")[0] || "there";
-  return (Scripts[key]||"").replace(/\{\{agent\}\}/g, agentName || "our team").replace(/\{\{first\}\}/g, first);
+  return (window.Scripts && window.Scripts[key]) ? window.Scripts[key].replace(/\{\{agent\}\}/g, agentName || "our team").replace(/\{\{first\}\}/g, first) : "";
 }
 function pick(){
   const p = filtered[cur]; 
@@ -448,8 +465,11 @@ function next(d=+1){
 
 /* ===================== Admin guard ===================== */
 function applyGodModeUI(){
-  const els = document.querySelectorAll(".admin-only");
-  els.forEach(el=> el.style.display = isGod ? "" : "none");
+  // Inline style cannot beat stylesheet !important, so toggle a helper attribute instead.
+  document.querySelectorAll(".admin-only").forEach(el=>{
+    if (isGod) el.removeAttribute("style");
+    else el.setAttribute("style","display:none;");
+  });
 }
 function requireGod(){
   if(!isGod){ toast("Only admin can do that."); return false; }
@@ -556,7 +576,7 @@ async function pullFlow(){
     if(em) seenEmail.add(em);
     p.assignedBy = source;
     p.updatedAt = Date.now();
-    p.id = crypto.randomUUID();
+    p.id = (crypto.randomUUID ? crypto.randomUUID() : ('id-'+Math.random().toString(36).slice(2)));
     return true;
   });
 
