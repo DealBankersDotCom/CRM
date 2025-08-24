@@ -97,7 +97,8 @@ textarea{min-height:120px;resize:vertical}
   </div>
   <div class="toprow">
     <span class="stat">Queue: <b id="queueState">—</b></span>
-    <button id="queueToggle" class="topbtn">Toggle ON/OFF</button>
+    <!-- Icon-only First-Up toggle -->
+    <button id="firstUpToggle" class="topbtn" title="First-Up: —" aria-label="First-Up">⚫</button>
 
     <span class="stat admin-only" id="selStat">Selected: 0</span>
     <button id="selectAllBtn" class="topbtn admin-only">Select All</button>
@@ -251,7 +252,6 @@ const db=firebase.database();
   };
   if (!window.Scripts) window.Scripts = defaults;
   else {
-    // Fill any missing keys so scriptText never crashes.
     for (const k of ["intro","terms","seller","close"]) {
       if (typeof window.Scripts[k] !== "string") window.Scripts[k] = defaults[k];
     }
@@ -275,9 +275,9 @@ let filtered = [];     // filtered list
 let cur = -1;          // index into filtered
 let calls = Number(localStorage.getItem("db_call_count")||0);
 const selected = new Set(); // row ids for Push
-let queueEnabled = false;
+let firstUpEnabled = false; // renamed UI concept
 
-const GOD_EMAIL = "dealbankers@gmail.com";   // admin email (case-insensitive)
+const GOD_EMAIL = "dealbankers@gmail.com";
 
 /* ===================== Helpers ===================== */
 const onlyDigits = s => (s||"").replace(/[^\d+]/g,"");
@@ -371,9 +371,9 @@ function buildPerson(row, idx){
   };
 }
 
-/* Firebase paths */
+/* Firebase paths (kept the original key name for compatibility) */
 const buyersPath    = (uid)=> `capital/buyers/${uid}`;
-const queueFlagPath = (uid)=> `userSettings/${uid}/queueEnabled`;
+const firstUpFlagPath = (uid)=> `userSettings/${uid}/queueEnabled`;
 
 /* ===================== Cloud I/O ===================== */
 async function cloudLoadMine(){
@@ -394,10 +394,6 @@ async function cloudSaveMany(uid, rows){
     patch[id] = {...p, id};
   });
   if(Object.keys(patch).length) await db.ref(buyersPath(uid)).update(patch);
-}
-async function cloudDeleteMany(uid, ids){
-  const patch={}; ids.forEach(id=>patch[id]=null);
-  await db.ref(buyersPath(uid)).update(patch);
 }
 
 /* ===================== Selection helpers ===================== */
@@ -455,7 +451,7 @@ function pick(){
   if(introBtn){ introBtn.classList.add("active"); }
   box.textContent = scriptText("intro",p);
 
-  drawList(); // refresh highlight
+  drawList();
 }
 function next(d=+1){
   if(!filtered.length) return;
@@ -465,7 +461,6 @@ function next(d=+1){
 
 /* ===================== Admin guard ===================== */
 function applyGodModeUI(){
-  // Inline style cannot beat stylesheet !important, so toggle a helper attribute instead.
   document.querySelectorAll(".admin-only").forEach(el=>{
     if (isGod) el.removeAttribute("style");
     else el.setAttribute("style","display:none;");
@@ -493,7 +488,6 @@ async function importFlow(){
   }
   if(!out.length){ toast("No valid rows"); return; }
 
-  // Non-admins can import ONLY into themselves; admin can choose target UID.
   let target = myUid;
   if(isGod){
     const ans = prompt("Import into which UID? Leave blank for yourself.", myUid) || myUid;
@@ -611,18 +605,27 @@ async function saveCurrent(){
   toast("Saved");
 }
 
-/* ===================== Queue toggle ===================== */
-function renderQueue(){ $("#queueState").textContent = queueEnabled ? "ON" : "OFF"; }
-async function loadQueueFlag(){
-  const snap = await db.ref(queueFlagPath(myUid)).get();
-  queueEnabled = !!snap.val();
-  renderQueue();
+/* ===================== First-Up toggle (icon only) ===================== */
+function renderFirstUp(){
+  const pill = $("#queueState");
+  const btn  = $("#firstUpToggle");
+  if(pill) pill.textContent = firstUpEnabled ? "ON" : "OFF";
+  if(btn){
+    btn.textContent = firstUpEnabled ? "🟢" : "⚫";
+    btn.title = `First-Up: ${firstUpEnabled ? "ON" : "OFF"} (click to toggle)`;
+    btn.setAttribute("aria-pressed", String(!!firstUpEnabled));
+  }
 }
-async function toggleQueueFlag(){
-  queueEnabled = !queueEnabled;
-  await db.ref(queueFlagPath(myUid)).set(queueEnabled);
-  renderQueue();
-  toast(queueEnabled?"Queue ON":"Queue OFF");
+async function loadFirstUpFlag(){
+  const snap = await db.ref(firstUpFlagPath(myUid)).get();
+  firstUpEnabled = !!snap.val();
+  renderFirstUp();
+}
+async function toggleFirstUp(){
+  firstUpEnabled = !firstUpEnabled;
+  await db.ref(firstUpFlagPath(myUid)).set(firstUpEnabled);
+  renderFirstUp();
+  toast(firstUpEnabled?"First-Up ON":"First-Up OFF");
 }
 
 /* ===================== Events ===================== */
@@ -640,7 +643,7 @@ on("setName","click",async()=>{
 on("importBtn","click", importFlow);
 on("pushBtn","click",   pushFlow);
 on("pullBtn","click",   pullFlow);
-on("queueToggle","click", toggleQueueFlag);
+on("firstUpToggle","click", toggleFirstUp);
 
 on("selectAllBtn","click", ()=>{
   if(!requireGod()) return;
@@ -713,14 +716,12 @@ async function boot(){
   setDialMode(dialMode);
   const cs=$("#callsStat"); if(cs) cs.textContent = "Calls: " + calls;
 
-  // Always listen for auth (to determine admin email) — even if UID was passed via URL.
   await new Promise(res=>{
     auth.onAuthStateChanged(u=>{
       myEmail = ((u && u.email) || "").toLowerCase();
       isGod   = (myEmail === GOD_EMAIL);
-      // If uid not supplied via URL, adopt signed-in user's UID for their own list.
       if(!myUid && u) myUid = u.uid;
-      applyGodModeUI();   // reveal admin-only buttons if applicable
+      applyGodModeUI();
       res();
     });
   });
@@ -730,7 +731,7 @@ async function boot(){
     return;
   }
 
-  await loadQueueFlag();
+  await loadFirstUpFlag();
   all = await cloudLoadMine();
   filtered=[...all];
   cur = filtered.length?0:-1;
