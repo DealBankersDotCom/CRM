@@ -242,17 +242,28 @@
                 <label class="chip"><input type="checkbox" value="multifamily">Multifamily</label>
               </div>
             </div>
+
+            <!-- CHANGED: Strategy -> Lead sources -->
             <div class="row">
-              <div class="muted">Strategy</div>
-              <div class="chips" data-name="strategy">
-                <label class="chip"><input type="checkbox" value="flip">Flip</label>
-                <label class="chip"><input type="checkbox" value="brrrr">BRRRR</label>
-                <label class="chip"><input type="checkbox" value="buy_hold">Buy & Hold</label>
-                <label class="chip"><input type="checkbox" value="wholesale">Wholesale</label>
-                <label class="chip"><input type="checkbox" value="novation">Novation</label>
-                <label class="chip"><input type="checkbox" value="seller_finance">Seller Finance</label>
+              <div class="muted">Lead sources</div>
+              <div class="chips" data-name="leadSources">
+                <label class="chip"><input type="checkbox" value="probates">Probates</label>
+                <label class="chip"><input type="checkbox" value="divorce">Divorce</label>
+                <label class="chip"><input type="checkbox" value="foreclosure">Foreclosure</label>
+                <label class="chip"><input type="checkbox" value="code_violations">Code Violations</label>
+                <label class="chip"><input type="checkbox" value="city_liens">City Liens</label>
+                <label class="chip"><input type="checkbox" value="other">Other</label>
               </div>
             </div>
+            <div class="row">
+              <div class="muted">Custom</div>
+              <div>
+                <input id="leadCustom" class="input" placeholder="Custom lead sources (comma-separated) e.g. water shutoffs, tax liens"/>
+                <div class="small" style="margin-top:6px">We’ll save these alongside your selected lead sources.</div>
+              </div>
+            </div>
+            <!-- /CHANGED -->
+
             <div class="row">
               <div class="muted">Target price</div>
               <div class="inline">
@@ -554,7 +565,10 @@
     function readWhForm(){
       return {
         types:     getChipValues(document.getElementById('whSettings').querySelector('[data-name="types"]')),
-        strategy:  getChipValues(document.getElementById('whSettings').querySelector('[data-name="strategy"]')),
+        // NEW FIELDS
+        leadSources: getChipValues(document.getElementById('whSettings').querySelector('[data-name="leadSources"]')),
+        leadCustom:  (document.getElementById('leadCustom').value||'').trim(),
+        // existing
         price:     { min: Number(document.getElementById('whMin').value||0)||null, max: Number(document.getElementById('whMax').value||0)||null },
         zips:      (document.getElementById('whZips').value||'').trim(),
         notes:     (document.getElementById('whNotes').value||'').trim(),
@@ -563,7 +577,10 @@
     }
     function fillWhForm(data={}){
       setChipValues(document.getElementById('whSettings').querySelector('[data-name="types"]'), data.types);
-      setChipValues(document.getElementById('whSettings').querySelector('[data-name="strategy"]'), data.strategy);
+      // Back-compat: if legacy "strategy" exists, show it as selected lead sources
+      const src = Array.isArray(data.leadSources) ? data.leadSources : (Array.isArray(data.strategy) ? data.strategy : []);
+      setChipValues(document.getElementById('whSettings').querySelector('[data-name="leadSources"]'), src);
+      document.getElementById('leadCustom').value = data.leadCustom || '';
       document.getElementById('whMin').value = data?.price?.min ?? '';
       document.getElementById('whMax').value = data?.price?.max ?? '';
       document.getElementById('whZips').value = data.zips || '';
@@ -646,7 +663,8 @@
         acq: !!(wh.acqEnabled ?? wh.acqLeadsEnabled ?? wh.leadsEnabled),
         dispo: !!(wh.dispoEnabled ?? wh.dispoLeadsEnabled ?? wh.leadsEnabledDispo),
         types: Array.isArray(wh.types)? wh.types : [],
-        strategy: Array.isArray(wh.strategy)? wh.strategy : [],
+        // show leadSources in Strategy column for backward-compat
+        strategy: Array.isArray(wh.leadSources)? wh.leadSources : (Array.isArray(wh.strategy)? wh.strategy : []),
         zips: (wh.zips||''),
         trades: Array.isArray(ct.trades)? ct.trades : [],
         availability: Array.isArray(ct.availability)? ct.availability : []
@@ -696,7 +714,7 @@
       $('#gmFilter').addEventListener('input', renderGMTable);
     }
 
-    // ---- Auth + initial route (renders UI even if auth is slow)
+    // ---- Auth + initial route
     auth.onAuthStateChanged(async u=>{
       if(!u){ location.href='index.html'; return; }
 
