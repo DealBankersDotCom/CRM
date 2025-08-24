@@ -1,4 +1,4 @@
-<!-- ======================= DealBankers • Capital Console (admin queue control, per-user import, local+cloud persistence) ======================= -->
+<!-- ======================= DealBankers • Capital Console (with Firebase queue, ON/OFF, admin staging) ======================= -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,7 +6,6 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DealBankers • Capital Console</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-
 <style>
 :root{
   --bg:#0b1118; --bg2:#0f1a24; --panel:#0f1f2b; --line:#254a63;
@@ -35,7 +34,7 @@ header{
 .topbtn.red{background:linear-gradient(180deg,#ff7b85,#d24652);border:none;color:#fff}
 .wrap{padding:12px}
 .grid{display:grid;gap:12px;grid-template-columns:1.1fr 1fr 1fr}
-@media (max-width:1200px){ .grid{grid-template-columns:1fr} }
+@media (max-width:1080px){ .grid{grid-template-columns:1fr} }
 
 .card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
   border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
@@ -75,12 +74,10 @@ textarea{min-height:120px;resize:vertical}
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;padding:10px 14px;border-radius:12px;background:#0b1218;border:1px solid rgba(255,255,255,.2);display:none;z-index:40}
 
 /* Admin bar */
-.adminBar{display:none;gap:8px;align-items:center;flex-wrap:wrap;padding:8px 12px;border-bottom:1px dashed var(--line);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
-.adminBar .seg{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.adminBar input[type="text"]{height:38px}
-
-/* Disabled overlay for non-admin users */
-.disabledNote{margin:12px 0;padding:10px 12px;border-radius:10px;border:1px dashed #6d2d2d;background:#1a0f12;color:#ffb4b4;display:none}
+.adminbar{display:flex;gap:8px;align-items:center;padding:8px 12px;border-bottom:1px dashed var(--line);background:#0b1a24}
+.adminbar input{min-width:320px}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a}
+.warn{color:#ffd36b}
 </style>
 
 <!-- Firebase -->
@@ -104,23 +101,23 @@ textarea{min-height:120px;resize:vertical}
   </div>
 </header>
 
-<!-- ADMIN BAR (only visible to admins) -->
-<div id="adminBar" class="adminBar">
-  <div class="seg">
+<!-- Queue/Admin bar (shows for everyone; target UID controls only visible for admins) -->
+<div id="qbar" class="adminbar" style="display:flex">
+  <span class="badge">Queue</span>
+  <span class="pill">State: <b id="queueState">—</b></span>
+  <button id="toggleQueue" class="topbtn small">Toggle ON/OFF</button>
+  <button id="pullCloud" class="topbtn small">Pull</button>
+  <button id="pushCloud" class="topbtn small green">Push</button>
+  <span id="stagingMsg" class="kb warn" style="display:none">Staging mode (edits stay local until Push)</span>
+  <span style="flex:1"></span>
+  <span id="adminOnly" style="display:none" class="row">
     <span class="badge">Admin</span>
-    <input id="targetUid" type="text" placeholder="Target UID (leave blank for me)" style="min-width:340px"/>
-    <button id="loadTarget" class="topbtn">Load</button>
-  </div>
-  <div class="seg">
-    <button id="toggleQueue" class="topbtn">Queue: —</button>
-    <button id="pushCloud" class="topbtn">Push to Cloud</button>
-    <button id="pullCloud" class="topbtn">Pull from Cloud</button>
-  </div>
+    <input id="targetUid" placeholder="Target UID (leave blank for yourself)"/>
+    <button id="loadTarget" class="topbtn small">Load</button>
+  </span>
 </div>
 
 <div class="wrap">
-  <div id="disabledNote" class="disabledNote">This buyer queue is currently <b>OFF</b> for your account. Ask an admin to enable it.</div>
-
   <div class="grid">
     <!-- LEFT: Prospects -->
     <section class="card">
@@ -151,29 +148,32 @@ textarea{min-height:120px;resize:vertical}
         </div>
       </div>
       <div class="body">
+
         <div class="row">
           <button id="callBtn" class="btn gold">📞 Call</button>
           <button id="textBtn" class="btn gold">💬 Text</button>
           <button id="copyBtn" class="btn">📋 Copy Number</button>
         </div>
 
-        <!-- Basic identity edits (added so you can clean entries after import) -->
         <div class="row" style="margin-top:10px">
-          <div style="flex:1;min-width:220px">
+          <div style="flex:1">
             <label>Name</label>
-            <input id="editName" placeholder="Name"/>
+            <input id="name" placeholder="Name"/>
           </div>
-          <div style="flex:1;min-width:180px">
+          <div style="flex:1">
             <label>Phone</label>
-            <input id="editPhone" placeholder="Phone"/>
-          </div>
-          <div style="flex:1;min-width:220px">
-            <label>Email</label>
-            <input id="editEmail" placeholder="Email"/>
+            <input id="phone" placeholder="Phone"/>
           </div>
         </div>
 
-        <div class="row" style="margin-top:10px">
+        <div class="row" style="margin-top:8px">
+          <div style="flex:1">
+            <label>Email</label>
+            <input id="email" placeholder="Email"/>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:8px">
           <div style="flex:1">
             <label>Soft Commit ($)</label>
             <input id="softCommit" placeholder="e.g., 50,000"/>
@@ -236,10 +236,9 @@ textarea{min-height:120px;resize:vertical}
 
 <script>
 /* ===================== CONFIG ===================== */
-// Optional: Apps Script GET/POST (kept here if you still want a sheet pull)
-// Leave blank "" to skip.
-const DATA_ENDPOINT = "";          // e.g. https://script.google.com/.../exec
-const LOG_ENDPOINT  = "";          // POST edits if you want a server log
+/* Optional: keep these blank if you don't use a Google Sheet */
+const DATA_ENDPOINT = "";        // GET buyers list (Apps Script Web App), optional
+const LOG_ENDPOINT  = "";        // POST logs back to Apps Script, optional
 const SHEET_TAB     = "SA";
 const PAGE_SIZE     = 1000;
 
@@ -250,23 +249,26 @@ const firebaseConfig = {
   databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",
   projectId:"deal-bankers"
 };
-let app = null, auth = null, db = null;
-try{ app=firebase.initializeApp(firebaseConfig, "cc"); auth=app.auth(); db=app.database(); }catch(_){}
+if(!firebase.apps.length) firebase.initializeApp(firebaseConfig);
+const auth = firebase.auth();
+const db   = firebase.database();
 
 /* ===================== STATE ===================== */
 const $ = s => document.querySelector(s);
 const on = (id, ev, fn)=>{ const el=document.getElementById(id); if(el) el.addEventListener(ev, fn); };
 const toast = msg => { const t=$("#toast"); if(!t) return; t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",1400); };
+
 const params   = new URL(location.href).searchParams;
+const uidParam = params.get("uid") || "";
+const urlName  = (params.get("name")||"").trim();
 
-let meUid = "", meEmail = "";
-let isAdmin = false;
+let currentUid = "";      // signed in user
+let targetUid  = "";      // whose queue we are viewing/editing
+let isAdmin    = false;
+let staging    = false;   // true when admin editing another user's queue
 
-let workUid = "";             // whose queue we're editing/using
-let queueEnabled = false;
-
-let agentName = localStorage.getItem("db_agent_name") || (params.get("name")||"").trim() || "DealBankers";
-let dialMode  = localStorage.getItem("db_dial_mode") || "device"; // device|textnow|gvoice
+let agentName = localStorage.getItem("db_agent_name") || "";
+let dialMode  = localStorage.getItem("db_dial_mode") || "device";
 let all = [];          // all prospects
 let filtered = [];     // filtered list
 let cur = -1;          // index into filtered
@@ -279,7 +281,6 @@ const Scripts = {
   close:  "I’ll send a one-pager with the next two deals. What’s the best email, and do you prefer daily or weekly inventory updates?"
 };
 
-/* ===================== HELPERS ===================== */
 const onlyDigits = s => (s||"").replace(/[^\d+]/g,"");
 const fmtPhone   = s => {
   const d = (s||"").replace(/[^\d]/g,"");
@@ -295,63 +296,22 @@ const phoneHref = (number) => {
   if(dialMode==="gvoice"){ navigator.clipboard.writeText(num); return "https://voice.google.com/u/0/messages"; }
   return `tel:${num}`;
 };
-const scriptText = (key, p) => (Scripts[key]||"").replace(/\{\{agent\}\}/g, agentName || "our team").replace(/\{\{first\}\}/g, ((p?.first||"").trim() || (p?.name||"there").split(" ")[0]));
-
-/* Local storage (per user queue) */
-const STORE_KEY = uid => `db_cc_queue_${uid||'anon'}`;
-function loadLocal(uid){
-  try{ const raw = localStorage.getItem(STORE_KEY(uid)); if(!raw) return false;
-       const arr = JSON.parse(raw); if(Array.isArray(arr)){ all = arr; filtered=[...all]; cur=filtered.length?0:-1; drawList(); pick(); return true; }
-  }catch(e){ console.warn("Local load failed",e); }
-  return false;
+function scriptText(key, prospect){
+  const first = (prospect?.first||"").trim() || (prospect?.name||"").split(" ")[0] || "there";
+  return (Scripts[key]||"").replace(/\{\{agent\}\}/g, agentName || "our team").replace(/\{\{first\}\}/g, first);
 }
-function persistLocal(uid){ try{ localStorage.setItem(STORE_KEY(uid), JSON.stringify(all)); }catch(e){ console.warn("Persist failed", e); } }
-
-/* Cloud paths */
-const Q_PATH = uid => `capitalConsole/${uid}/queue`;
-const E_PATH = uid => `capitalConsole/${uid}/enabled`;
-const R_PATH = uid => `roles/${uid}`;
-
-async function cloudLoad(uid){
-  if(!db || !uid) return {enabled:false, rows:[]};
-  const [q,e] = await Promise.all([db.ref(Q_PATH(uid)).get(), db.ref(E_PATH(uid)).get()]);
-  const obj = q.val()||{};
-  const rows = Object.keys(obj).map(k=>({...obj[k], id:k}));
-  return {enabled: !!e.val(), rows};
-}
-async function cloudSave(uid){
-  if(!db || !uid) return;
-  const obj={}; for(const r of all){ obj[r.id||crypto.randomUUID()] = {...r, id: undefined}; }
-  await db.ref(Q_PATH(uid)).set(obj);
-}
-async function cloudSetEnabled(uid, val){
-  if(!db || !uid) return;
-  await db.ref(E_PATH(uid)).set(!!val);
-}
-
-/* debounce */
-function debounce(fn, ms){ let t=null; return (...a)=>{ clearTimeout(t); t=setTimeout(()=>fn(...a), ms); }; }
-const saveCloudDebounced = debounce(()=>cloudSave(workUid).catch(()=>{}), 600);
-
-/* UI state */
 function setDialMode(m){
   dialMode = m; localStorage.setItem("db_dial_mode",m);
   const btn=$("#dialModeBtn"); const txt=$("#dialModeText");
   const label = m==="device"?"Device":(m==="textnow"?"TextNow":"Google Voice");
   if(btn) btn.textContent = label; if(txt) txt.textContent = label;
 }
-function updateAdminBar(){
-  const bar=$("#adminBar"); if(!bar) return;
-  bar.style.display = isAdmin ? "flex" : "none";
-  const tgt=$("#targetUid"); if(tgt && workUid) tgt.value = workUid===meUid? "": workUid;
-  const tbtn=$("#toggleQueue"); if(tbtn) tbtn.textContent = `Queue: ${queueEnabled ? "ON" : "OFF"}`;
-}
-function updateDisabledNote(){
-  const note=$("#disabledNote");
-  if(!note) return;
-  const iAmWorkingOnMe = (workUid===meUid);
-  note.style.display = (!isAdmin && iAmWorkingOnMe && !queueEnabled) ? "block" : "none";
-}
+function hotKey(e,k,fn){ if(e.key.toLowerCase()===k && !e.altKey && !e.ctrlKey && !e.metaKey){ e.preventDefault(); fn(); }}
+
+/* Drafts (local, per target) */
+const draftKey = uid => `db_queue_draft_${uid}`;
+function saveDraft(){ try{ localStorage.setItem(draftKey(targetUid||"anon"), JSON.stringify(all)); }catch{} }
+function loadDraft(){ try{ return JSON.parse(localStorage.getItem(draftKey(targetUid||"anon"))||"[]"); }catch{return [];} }
 
 /* ===================== RENDER ===================== */
 function drawList(){
@@ -359,10 +319,8 @@ function drawList(){
   L.innerHTML="";
   filtered.forEach((p,i)=>{
     const d=document.createElement("div"); d.className="item"+(i===cur?" active":"");
-    d.innerHTML = `
-      <div class="name">${p.name||"Unknown"}</div>
-      <div class="muted">${fmtPhone(p.phone)} ${p.email?(" • "+p.email):""}</div>
-    `;
+    d.innerHTML = `<div class="name">${p.name||"Unknown"}</div>
+                   <div class="muted">${fmtPhone(p.phone)} ${p.email?(" • "+p.email):""}</div>`;
     d.onclick=()=>{ cur=i; pick(); };
     L.appendChild(d);
   });
@@ -370,28 +328,24 @@ function drawList(){
 function pick(){
   const p = filtered[cur];
   const curName=$("#curName"), curStatus=$("#curStatus"), lastSeen=$("#lastSeen"),
+        name=$("#name"), phone=$("#phone"), email=$("#email"),
         soft=$("#softCommit"), statSel=$("#statusSel"), notes=$("#notes"),
-        box=$("#scriptBox"), nameEl=$("#editName"), phoneEl=$("#editPhone"), emailEl=$("#editEmail");
-
-  if(!p){ if(curName) curName.textContent="—"; return; }
-
+        box=$("#scriptBox");
+  if(!p || !curName) return;
   curName.textContent = p.name||"—";
   curStatus.textContent = "Status: " + (p.status||"—");
   lastSeen.textContent  = "Last: " + (p.updatedAt? new Date(p.updatedAt).toLocaleString() : "—");
-
-  nameEl.value  = p.name  || "";
-  phoneEl.value = p.phone || "";
-  emailEl.value = p.email || "";
-
-  soft.value = p.softCommit||"";
+  name.value  = p.name||"";
+  phone.value = p.phone||"";
+  email.value = p.email||"";
+  soft.value  = p.softCommit||"";
   statSel.value  = p.status||"";
   notes.value    = p.notes||"";
 
   document.querySelectorAll(".tab").forEach(b=>b.classList.remove("active"));
   const introBtn = document.querySelector('.tab[data-k="intro"]'); if(introBtn) introBtn.classList.add("active");
-  box.textContent = scriptText("intro",p);
-
-  drawList(); // refresh highlight
+  if(box) box.textContent = scriptText("intro",p);
+  drawList();
 }
 function next(d=+1){
   if(!filtered.length) return;
@@ -399,78 +353,104 @@ function next(d=+1){
   pick();
 }
 
-/* ===================== DATA LOADING ===================== */
-async function loadWorkUid(uid){
-  workUid = uid || meUid || "";
-  if(!workUid) return;
+/* ===================== CLOUD (Firebase) ===================== */
+const qPath = uid => `queues/${uid}`;
+const itemsPath = uid => `${qPath(uid)}/items`;
+const enabledPath = uid => `${qPath(uid)}/enabled`;
 
-  // 1) Try cloud
+async function getRole(uid){
+  try{ const snap = await db.ref(`roles/${uid}`).get(); return snap.val()||""; }
+  catch{ return ""; }
+}
+async function loadQueue(uid){
+  // enabled state
   try{
-    const c = await cloudLoad(workUid);
-    queueEnabled = !!c.enabled;
-    if(c.rows && c.rows.length){
-      all = c.rows.map(r=>({ id:r.id || crypto.randomUUID(), ...r }));
-      filtered=[...all]; cur=filtered.length?0:-1;
-      drawList(); pick();
-      updateAdminBar(); updateDisabledNote();
-      persistLocal(workUid);
+    const en = (await db.ref(enabledPath(uid)).get()).val();
+    $("#queueState").textContent = en ? "ON" : "OFF";
+  }catch{ $("#queueState").textContent="—"; }
+
+  // items
+  try{
+    const snap = await db.ref(itemsPath(uid)).get();
+    const obj = snap.val()||{};
+    const arr = Object.keys(obj).map(id=>({ id, ...obj[id] }));
+    if(arr.length){
+      all = arr;
+      filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
       return;
     }
-  }catch(e){ console.warn("cloud load failed", e); }
-
-  // 2) Try local
-  if(loadLocal(workUid)){ updateAdminBar(); updateDisabledNote(); return; }
-
-  // 3) Optional sheet
-  if(DATA_ENDPOINT){
-    await loadFromSheet();
-    persistLocal(workUid);
-    updateAdminBar(); updateDisabledNote();
-    return;
-  }
-
-  // 4) Demo
-  demo();
-  persistLocal(workUid);
-  updateAdminBar(); updateDisabledNote();
+  }catch(e){ console.warn("loadQueue failed", e); }
+  // If no cloud items, try local draft
+  const draft = loadDraft();
+  all = Array.isArray(draft)? draft : [];
+  filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
+}
+async function pushQueue(uid){
+  const map={};
+  all.forEach(p=>{ const id=p.id||(p.id=crypto.randomUUID()); map[id]=p; });
+  await db.ref(itemsPath(uid)).set(map);
+  await db.ref(qPath(uid)).update({ updatedAt: Date.now() });
+  toast("Pushed to cloud");
+}
+async function pullQueue(uid){ await loadQueue(uid); toast("Pulled from cloud"); }
+async function setQueueEnabled(uid, on){
+  await db.ref(enabledPath(uid)).set(!!on);
+  $("#queueState").textContent = on ? "ON" : "OFF";
 }
 
+/* When saving a single row: push immediately unless we're staging (admin on someone else) */
+async function saveOneToCloud(uid, p){
+  if(staging) return; // keep local until Push
+  const id = p.id || (p.id=crypto.randomUUID());
+  await db.ref(`${itemsPath(uid)}/${id}`).set(p);
+  await db.ref(qPath(uid)).update({ updatedAt: Date.now() });
+}
+
+/* ===================== AGENT NAME ===================== */
+async function initAgentName(){
+  if(urlName){ agentName=urlName; localStorage.setItem("db_agent_name",agentName); return; }
+  if(agentName){ return; }
+  try{
+    if(currentUid){
+      const snap = await db.ref(`userSettings/${currentUid}/profile`).get();
+      const v = snap.val()||{};
+      const cloud = (v.displayName||"").trim() || (v.email||"").split("@")[0] || "";
+      if(cloud){ agentName=cloud; localStorage.setItem("db_agent_name",agentName); return; }
+    }
+  }catch(e){ console.warn("name load failed", e); }
+  agentName = "DealBankers";
+  localStorage.setItem("db_agent_name", agentName);
+}
+
+/* ===================== DATA (optional sheet source) ===================== */
 async function loadFromSheet(){
   let url = DATA_ENDPOINT;
+  if(!url){ demo(); return; }
   const q = new URLSearchParams({ sheet: SHEET_TAB, limit: PAGE_SIZE });
   url += (url.includes("?")?"&":"?")+q.toString();
   try{
-    const res = await fetch(url,{mode:"cors"});
-    const json = await res.json();
-    all = (json.rows||[]).map(r=>{
-      const id = r.id || r.row || r._id || crypto.randomUUID();
-      const first = r.first || r.FirstName || "";
-      const last  = r.last  || r.LastName  || r["Last Name"] || "";
-      const name  = (r.name || `${first} ${last}`).trim();
-      return {
-        id, first, last, name,
-        phone: r.phone || r.Phone || "",
-        email: r.email || r.Email || "",
-        notes: r.notes || r.Notes || "",
-        mailing: r.mailing || r.Mailing || "",
-        status: r.status || r.Status || "",
-        softCommit: r.softCommit || "",
-        updatedAt: r.updatedAt || 0
-      };
-    });
-    filtered=[...all];
-    cur = filtered.length?0:-1;
-    drawList(); pick();
-    toast("Loaded from sheet");
-  }catch(err){
-    console.error(err); demo();
-  }
+    const res = await fetch(url,{mode:"cors"}); const json = await res.json();
+    all = (json.rows||[]).map(r=>({
+      id: r.id || r.row || r._id || crypto.randomUUID(),
+      first: r.first || r.FirstName || "",
+      last:  r.last  || r.LastName  || r["Last Name"] || "",
+      name:  (r.name || `${r.FirstName||r.first||""} ${r["Last Name"]||r.last||""}`).trim(),
+      phone: r.phone || r.Phone || "",
+      email: r.email || r.Email || "",
+      notes: r.notes || r.Notes || "",
+      mailing: r.mailing || r.Mailing || "",
+      status: r.status || r.Status || "",
+      softCommit: r.softCommit || "",
+      updatedAt: r.updatedAt || 0
+    }));
+    filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
+  }catch(err){ console.error(err); demo(); }
 }
 function demo(){
   all = [
-    {id:"1",name:"Alex Reyes",    phone:"2105550101", email:"alex@example.com", notes:"TX based.",                                    status:"", softCommit:""},
-    {id:"2",name:"Brenda K",      phone:"5125550199", email:"",                 notes:"Likes 1st lien.",                               status:"", softCommit:""},
-    {id:"3",name:"Caleb & Dana",  phone:"8305550117", email:"calebdana@example.com", notes:"1031 funds; lien-first only.",           status:"", softCommit:""}
+    {id:"1",name:"Alex Reyes", phone:"2105550101", email:"alex@example.com", notes:"TX based.", status:"", softCommit:""},
+    {id:"2",name:"Brenda K",   phone:"5125550199", email:"", notes:"Likes 1st lien.", status:"", softCommit:""},
+    {id:"3",name:"Caleb & Dana", phone:"8305550117", email:"calebdana@example.com", notes:"1031 funds pending; wants lien-first only.", status:"", softCommit:""}
   ];
   filtered=[...all]; cur=0; drawList(); pick();
 }
@@ -487,6 +467,9 @@ on("setName","click",async()=>{
   if(nm===null) return;
   agentName = (nm||"").trim();
   localStorage.setItem("db_agent_name", agentName);
+  if(currentUid){
+    try{ await db.ref(`userSettings/${currentUid}/profile/displayName`).set(agentName); }catch(e){ console.warn("displayName save failed", e); }
+  }
   if(cur>=0){
     const activeKey=document.querySelector(".tab.active")?.dataset.k || "intro";
     const box=$("#scriptBox"); if(box) box.textContent = scriptText(activeKey, filtered[cur]);
@@ -494,50 +477,33 @@ on("setName","click",async()=>{
 });
 
 on("importBtn","click",async()=>{
-  // If admin, we import into current workUid (can be your own or target)
-  const csv = prompt("Paste CSV. Columns supported:\nFirstName, Last Name, Phone, Email, Notes (order flexible).\nOne contact per line.");
+  const csv = prompt("Paste CSV (FirstName,Last Name,Phone,Email,Notes):","");
   if(!csv) return;
-
-  // super-lightweight split (CSV or TSV)
-  const lines = csv.split(/\r?\n/).filter(l=>l.trim().length);
-  const parse = (s)=> s.split(/\t|,/); // allow comma OR tab
-  lines.forEach(raw=>{
-    const r=parse(raw);
-    // Try to auto-detect
-    let f="", l="", p="", e="", n="";
-    if(r.length>=5){ [f,l,p,e,n] = r; }
-    else if(r.length===4){ [f,l,p,e]=r; }
-    else if(r.length===3){ [f,l,p]=r; }
-    else { [f,p,e]=[r[0]||"",r[1]||"",r[2]||""]; }
-
-    const name = (`${(f||"").trim()} ${(l||"").trim()}`).trim() || (e||p||"New Contact");
-    all.push({
-      id: crypto.randomUUID(),
-      first:f||"", last:l||"", name,
-      phone: (p||"").trim(), email:(e||"").trim(), notes:(n||"").trim(),
-      status:"", softCommit:"", updatedAt: 0
-    });
+  const rows = csv.split(/\r?\n/).map(r=>r.split(","));
+  rows.forEach(r=>{
+    const [f,l,p,e,n]=r;
+    if((f||l||p||e||n) && r.length>=1){
+      const name = (`${f||""} ${l||""}`).trim() || (p?`Buyer ${onlyDigits(p).slice(-4)}`:"");
+      all.push({id:crypto.randomUUID(), first:f, last:l, name, phone:p||"", email:e||"", notes:n||"", status:"", softCommit:""});
+    }
   });
-
-  filtered=[...all]; cur = filtered.length? (filtered.length-1) : -1;
-  drawList(); pick();
-  persistLocal(workUid);
-  saveCloudDebounced();          // queue stays OFF until you toggle it
-  toast("Imported");
+  filtered=[...all]; cur = filtered.length?0:-1; drawList(); pick();
+  saveDraft();
+  toast(staging ? "Imported (staged). Press Push to publish." : "Imported");
 });
-
 on("exportHot","click",()=>{
   const rows = all.filter(p=>p.status==="Interested"||p.status==="Follow-up");
   const header = ["Name","Phone","Email","Status","SoftCommit","Notes"];
   const lines = [header.join(",")].concat(rows.map(p=>[
-    p.name, p.phone, p.email, p.status||"",
+    (p.name||"").replace(/,/g," "),
+    (p.phone||""),
+    (p.email||""),
+    p.status||"",
     (p.softCommit||"").toString().replace(/,/g,""),
     (p.notes||"").replace(/[\r\n,]+/g," ")
   ].join(",")));
-  const blob = new Blob([lines.join("\n")],{type:"text/csv"});
-  const url  = URL.createObjectURL(blob);
-  const a=document.createElement("a"); a.href=url; a.download="hotlist.csv"; a.click();
-  URL.revokeObjectURL(url);
+  const blob = new Blob([lines.join("\n")],{type:"text/csv"}); const url  = URL.createObjectURL(blob);
+  const a=document.createElement("a"); a.href=url; a.download="hotlist.csv"; a.click(); URL.revokeObjectURL(url);
 });
 
 const searchEl = $("#search");
@@ -584,119 +550,96 @@ on("flagDnc","click",       ()=>{ const s=$("#statusSel"); if(s){ s.value="DNC";
 document.addEventListener("keydown",(e)=>{
   if(document.activeElement===searchEl){ if(e.key==="Escape"){ searchEl.blur(); } return; }
   if(e.key==="/"){ e.preventDefault(); if(searchEl) searchEl.focus(); return; }
-  const hot=(k,fn)=>{ if(e.key.toLowerCase()===k && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); fn(); } };
-  hot("n",()=>next(+1));
-  hot("p",()=>next(-1));
-  hot("s",()=>saveCurrent());
+  hotKey(e,"n",()=>next(+1));
+  hotKey(e,"p",()=>next(-1));
+  hotKey(e,"s",()=>saveCurrent());
 });
 
-/* ===================== SAVE / POST ===================== */
+/* Queue/Admin bar */
+on("pullCloud","click",()=>pullQueue(targetUid));
+on("pushCloud","click",()=>pushQueue(targetUid));
+on("toggleQueue","click",async()=>{
+  try{
+    const snap = await db.ref(enabledPath(targetUid)).get();
+    await setQueueEnabled(targetUid, !(snap.val()===true));
+  }catch{ await setQueueEnabled(targetUid, true); }
+});
+on("loadTarget","click",()=>boot(targetUidInput()));
+function targetUidInput(){ return ($("#targetUid")?.value||"").trim(); }
+
+/* ===================== SAVE ===================== */
 async function saveCurrent(){
   const p = filtered[cur]; if(!p) return;
-
-  const nameEl=$("#editName"), phoneEl=$("#editPhone"), emailEl=$("#editEmail");
-  const soft=$("#softCommit"), statSel=$("#statusSel"), notes=$("#notes");
-
-  p.name       = nameEl?.value.trim()   ?? p.name;
-  p.phone      = phoneEl?.value.trim()  ?? p.phone;
-  p.email      = emailEl?.value.trim()  ?? p.email;
-  p.softCommit = soft?.value.trim()     ?? p.softCommit;
-  p.status     = statSel?.value.trim()  ?? p.status;
-  p.notes      = notes?.value.trim()    ?? p.notes;
+  const name=$("#name"), phone=$("#phone"), email=$("#email"),
+        soft=$("#softCommit"), statSel=$("#statusSel"), notes=$("#notes");
+  p.name       = (name?.value||"").trim();
+  p.phone      = (phone?.value||"").trim();
+  p.email      = (email?.value||"").trim();
+  p.softCommit = soft?.value.trim() ?? "";
+  p.status     = statSel?.value.trim() ?? "";
+  p.notes      = notes?.value.trim() ?? "";
   p.updatedAt  = Date.now();
 
-  // reflect in master
   const idx = all.findIndex(x=>x.id===p.id);
   if(idx>=0) all[idx] = {...p};
 
   const curStatus=$("#curStatus"), lastSeen=$("#lastSeen");
   if(curStatus) curStatus.textContent = "Status: "+(p.status||"—");
   if(lastSeen)  lastSeen.textContent  = "Last: "+new Date(p.updatedAt).toLocaleString();
-  drawList(); // update left panel with name/phone
-  toast("Saved");
 
-  persistLocal(workUid);
-  saveCloudDebounced();
+  saveDraft();
+  await saveOneToCloud(targetUid, p);
 
   if(LOG_ENDPOINT){
     try{
       await fetch(LOG_ENDPOINT,{
-        method:"POST",
-        headers:{"Content-Type":"application/json"},
+        method:"POST", headers:{"Content-Type":"application/json"},
         body:JSON.stringify({
           action:"log",
           rowId:p.id, name:p.name, phone:p.phone, email:p.email,
           status:p.status, softCommit:p.softCommit, notes:p.notes,
-          agent:agentName, ts:p.updatedAt, workUid
+          agent:agentName, ts:p.updatedAt, uid:targetUid
         })
       });
     }catch(e){ console.warn("log failed",e); }
   }
+  toast(staging ? "Saved (local only). Push to publish." : "Saved");
 }
 
-/* ===================== ADMIN CONTROLS ===================== */
-on("loadTarget","click",async()=>{
-  const t = ($("#targetUid")?.value||"").trim();
-  await loadWorkUid(t || meUid);
-});
-
-on("toggleQueue","click",async()=>{
-  queueEnabled = !queueEnabled;
-  try{ await cloudSetEnabled(workUid, queueEnabled); }catch(e){ console.warn(e); }
-  updateAdminBar(); updateDisabledNote();
-  toast(queueEnabled? "Queue enabled" : "Queue disabled");
-});
-
-on("pushCloud","click",async()=>{
-  try{ await cloudSave(workUid); toast("Pushed to cloud"); }
-  catch(e){ console.warn(e); toast("Push failed"); }
-});
-
-on("pullCloud","click",async()=>{
-  try{
-    const c = await cloudLoad(workUid);
-    queueEnabled = !!c.enabled;
-    all = (c.rows||[]).map(r=>({id:r.id||crypto.randomUUID(),...r}));
-    filtered=[...all]; cur=filtered.length?0:-1;
-    drawList(); pick();
-    persistLocal(workUid);
-    updateAdminBar(); updateDisabledNote();
-    toast("Pulled from cloud");
-  }catch(e){ console.warn(e); toast("Pull failed"); }
-});
-
-/* ===================== INIT (auth + choose workUid) ===================== */
-function setDialAndCalls(){ setDialMode(dialMode); const cs=$("#callsStat"); if(cs) cs.textContent = "Calls: " + calls; }
-setDialAndCalls();
-
-if(auth){
-  auth.onAuthStateChanged(async u=>{
-    if(!u){ // if not signed in, run in local/offline mode
-      meUid = ""; meEmail = ""; isAdmin=false;
-      await loadWorkUid(meUid);
-      return;
-    }
-    meUid   = u.uid;
-    meEmail = (u.email||"").toLowerCase();
-
-    // admin check
-    isAdmin = (meEmail==="dealbankers@gmail.com");
-    try{
-      const r = await db.ref(R_PATH(meUid)).get();
-      if((r.val()||"")==="admin") isAdmin = true;
-    }catch(_){}
-
-    // choose initial workUid (query ?uid= overrides if admin)
-    const qUid = (params.get("uid")||"").trim();
-    workUid = (isAdmin && qUid) ? qUid : meUid;
-
-    updateAdminBar();
-    await loadWorkUid(workUid);
-  });
-}else{
-  // no auth available
-  (async()=>{ await loadWorkUid(""); })();
+/* ===================== BOOT ===================== */
+function setStaging(){
+  staging = isAdmin && targetUid && currentUid && targetUid !== currentUid;
+  $("#stagingMsg").style.display = staging ? "inline-block" : "none";
 }
+async function boot(forceUid){
+  targetUid = (forceUid || targetUid || "").trim() || currentUid || uidParam || "anon";
+  setStaging();
+  saveDraft(); // keep previous target's draft before switching
+  $("#callsStat").textContent = "Calls: " + calls;
+  $("#queueState").textContent = "…";
+  await loadQueue(targetUid);
+}
+
+auth.onAuthStateChanged(async u=>{
+  currentUid = u?.uid || uidParam || "";
+  // Admin check: email or role
+  isAdmin = (u?.email||"").toLowerCase()==="dealbankers@gmail.com";
+  if(!isAdmin && currentUid){
+    try{ isAdmin = (await getRole(currentUid))==="admin"; }catch{}
+  }
+  // Show admin controls if admin
+  if(isAdmin){ $("#adminOnly").style.display=""; } else { $("#adminOnly").style.display="none"; }
+
+  await initAgentName();
+  await boot();
+
+  // dial mode / calls UI
+  setDialMode(dialMode);
+  $("#callsStat").textContent = "Calls: " + calls;
+});
+
+/* fallback if auth never fires (rare) */
+setTimeout(()=>{ if(!currentUid){ currentUid = uidParam || "anon"; boot(); } }, 1500);
 </script>
 </body>
 </html>
