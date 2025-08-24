@@ -1,699 +1,875 @@
-<!-- =============== Wholesaler Portal (Acq/Dispo, live settings, CSV, add leads/offerings, photos+carousel, Reload/Reset, Posting Console first, 2025 workstation theme) =============== -->
+<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; respects DB gate) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8"/><meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Wholesaler Portal</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-<style>
-  /* ====== Theme: “Retro Bond Workstation” ====== */
-  :root{
-    --bg1:#0a0f16;--bg2:#102131;--bg3:#14354c;
-    --text:#e9f3ff;--muted:#a6c2d7;--gold:#ffd36b;--green:#25d18f;--line:#2a5a78;
-    --accent:#52c8ff;--accent2:#9ae6ff;--panel:#0e2433;--glass:rgba(255,255,255,.06);
-  }
-  *{box-sizing:border-box}
-  body{
-    margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-    background:
-      radial-gradient(1200px 520px at 92% -12%, rgba(86,214,255,.22) 0%, transparent 60%),
-      linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-    padding:10px;
-  }
-  @media (min-width:1000px){
-    body::before{
-      content:"";position:fixed;inset:0;pointer-events:none;
-      background:
-        linear-gradient(transparent 31px, rgba(82,200,255,.06) 32px),
-        linear-gradient(90deg, transparent 31px, rgba(82,200,255,.06) 32px);
-      background-size:32px 32px;
-      mask-image:radial-gradient(1200px 520px at 85% -10%, black 35%, transparent 70%);
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Wholesaler • Portal</title>
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+
+  <style>
+    :root{
+      --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
+      --panel:#0f1f2b; --line:#254a63;
+      --text:#f1f7fb; --muted:#c5d3e1;
+      --blue:#47b4ff; --green:#26cf84; --gold:#ffd36b;
+      --shadow:0 28px 70px rgba(0,0,0,.55);
+      --r:16px;
     }
-  }
+    *{box-sizing:border-box}
+    body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+      padding:10px}
+    .wrap{max-width:1100px;margin:0 auto}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
 
-  .wrap{max-width:1180px;margin:0 auto}
-  .card{
-    border:1px solid rgba(255,255,255,.18);
-    border-radius:20px;
-    background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
-    overflow:hidden;position:relative;
-  }
-  .card::after{content:"";position:absolute;inset:-1px;border-radius:20px;border:1px solid rgba(146,233,255,.2);pointer-events:none;}
+    .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
+      background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px}
+    .crumbs{display:flex;gap:10px;align-items:center;color:var(--muted)}
+    .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
+    .status{font-size:12px;color:#e8f7ff}
 
-  .top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(0,0,0,.18),rgba(255,255,255,.05));}
-  .crumbs{display:flex;gap:8px;align-items:center;color:var(--muted);font-weight:600}
-  .status{font-size:12px;color:#e8f7ff;opacity:.9}
+    .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+    .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
+    .seg button{padding:8px 12px;background:#0e2332;border:0;color:#cfe6ff;cursor:pointer}
+    .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
 
-  .sticky{position:sticky;top:0;padding:10px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06));z-index:5}
-  .actions{display:grid;grid-template-columns:repeat(11,1fr);gap:8px}
-  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:var(--panel);color:#eaf6ff;cursor:pointer;text-decoration:none;transition:transform .05s ease, box-shadow .15s ease;}
-  .btn:active{transform:translateY(1px)}
-  .btn:hover{box-shadow:0 0 0 1px rgba(154,230,255,.18) inset, 0 0 18px rgba(82,200,255,.18)}
-  .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
-  .btn-green{background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;border:none}
-  .btn-ghost{background:var(--glass)}
-  .btn-small{padding:8px 10px;font-size:12px}
+    .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
+    .hint.hidden{display:none}
 
-  /* Lead */
-  .lead{margin:12px;border:1px solid rgba(255,255,255,.22);border-radius:16px;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));overflow:hidden}
-  .title{padding:12px 14px;font-weight:900;border-bottom:1px solid rgba(255,255,255,.18)}
-  .body{padding:12px 14px}
-  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-  .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
-  .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}.sv{height:260px;margin-top:6px}.map{height:220px;margin:8px 0}
-  .textarea{width:100%;min-height:120px;resize:vertical;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+    .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
+      font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
+    .btn:hover{filter:brightness(1.08)}
+    .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
+    .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
+    .btn-ghost{background:#0f2a3a}
+    .ico{font-size:20px}
+    .small{min-height:34px;padding:6px 10px;font-weight:700}
 
-  /* Lead source chooser */
-  .chooser{padding:16px;display:grid;gap:10px}
-  .grid4{display:grid;grid-template-columns:repeat(2,minmax(200px,1fr));gap:10px}
-  @media (min-width:860px){.grid4{grid-template-columns:repeat(4,1fr)}}
-  .choice{border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px;background:#0e2233}
-  .choice h4{margin:0 0 6px}.muted{color:var(--muted);font-size:13px}
-  .input{width:100%;padding:10px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+    .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
+    .hidden{display:none !important}
 
-  /* Dispo */
-  .offerCard{display:flex;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.18);background:#0f2a3a;border-radius:12px;padding:10px;cursor:pointer}
-  .badge{font-size:11px;padding:4px 8px;border:1px solid rgba(255,255,255,.18);border-radius:999px;background:#0c1f2d;color:#cfe7ff}
-  .postPanel{margin-bottom:12px;border:1px dashed rgba(154,230,255,.4);border-radius:14px;padding:12px;background:rgba(12,31,45,.4)}
-  .postGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:8px}
-  @media (min-width:860px){.postGrid{grid-template-columns:repeat(4,1fr)}}
-  .previewTitle{font-weight:800;margin:0 0 6px;color:var(--accent2)}
+    .lead-wrap{padding:12px}
+    .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
+    .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
+      background:linear-gradient(90deg,rgba(255,211,107,.18),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
+    .body{padding:12px 14px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+    .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
+    .section{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#0f1f2b;padding:10px;margin-top:10px}
+    .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
+    .sv{height:260px;margin-top:6px}
+    .map{height:220px;margin-top:8px}
+    .textarea{
+      width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+      background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
+    }
+    .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-  /* Footer */
-  footer{max-width:1180px;margin:14px auto 6px;color:var(--muted);font-size:12px;display:flex;justify-content:space-between;gap:8px}
-  footer a{color:var(--accent2);text-decoration:none}
-  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);display:none}
+    /* ---------- Dispo-only UI ---------- */
+    .dispoHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
+    .dispoCTA{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .dealgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+    .group{margin-top:14px}
+    .group h4{margin:0 0 8px;color:#d9e9f8}
+    .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;cursor:pointer}
+    .dealhdr{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
+    .dealtype{font-size:11px;padding:3px 8px;border-radius:999px;background:#103043;border:1px solid rgba(255,255,255,.18)}
+    .dealmeta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+    .dealmeta .chip{background:#0d2a3c}
+    .actrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+    @media (max-width:760px){ .dealgrid{grid-template-columns:1fr} }
 
-  /* Modal / carousel */
-  dialog{border:1px solid rgba(154,230,255,.25);border-radius:16px;background:#0c1f2d;color:var(--text);max-width:720px;width:96%}
-  dialog::backdrop{background:rgba(0,0,0,.5)}
-  .modal-head{display:flex;justify-content:space-between;align-items:center;padding:8px 6px 0 6px}
-  .modal-body{padding:8px 6px 12px 6px}
-  .carousel{position:relative;display:flex;align-items:center;justify-content:center;min-height:260px;background:#06141f;border-radius:12px;overflow:hidden}
-  .carousel img{max-height:70vh;max-width:100%}
-  .thumbs{display:flex;gap:6px;overflow:auto;padding:6px;margin-top:6px}
-  .thumbs img{height:64px;width:96px;object-fit:cover;border-radius:8px;border:1px solid rgba(255,255,255,.2);cursor:pointer}
-  .progressRow{display:grid;gap:6px;margin-top:8px}
-  .progressItem{font-size:12px;color:var(--muted)}
-  .bar{height:6px;background:#0b2130;border-radius:6px;overflow:hidden}
-  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#56ddff,#1fb880)}
-</style>
+    /* Desktop-only preview column */
+    .desktopOnly{display:inline-flex}
+    @media (max-width:980px){ .desktopOnly{display:none !important} }
+    .dispoLayout{display:grid;grid-template-columns:1.1fr .9fr;gap:10px}
+    @media (max-width:980px){ .dispoLayout{display:block} }
+    .preview{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;min-height:420px}
+    .pvHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+    .pvTitle{font-weight:900}
+    .carousel{position:relative;width:100%;height:340px;border-radius:12px;overflow:hidden;background:#08121a}
+    .carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
+    .carousel img.active{opacity:1}
+    .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
+    .carBtn{border:1px solid rgba(255,255,255,.22);background:#0b1a24;border-radius:999px;padding:6px 10px;color:#eaf6ff}
+
+    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
+      color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
+
+    @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
+  </style>
 </head>
 <body>
   <div class="wrap">
     <section class="card">
+      <!-- Header -->
       <div class="top">
-        <div class="crumbs"><span>Wholesaler</span><span>•</span><span id="crumb">Acquisition</span></div>
-        <div id="status" class="status">Loading…</div>
-      </div>
-
-      <!-- Toolbar (Acq) -->
-      <div class="sticky" id="acqBar" style="display:none">
-        <div class="actions">
-          <a class="btn btn-gold" id="actCall">📞 Call</a>
-          <a class="btn btn-gold" id="actSMS">💬 Text</a>
-          <a class="btn" id="actDirections" target="_blank" rel="noopener">🧭 Directions</a>
-          <button class="btn" id="actCopy">📋 Copy</button>
-          <button class="btn" id="actSettings">⚙️ Dial Pref</button>
-          <button class="btn" id="leadPhotos">📷 Photos</button>
-          <button class="btn btn-green" id="addLead">➕ Lead</button>
-          <button class="btn btn-ghost btn-small" id="reloadLeads">🔄 Reload</button>
-          <button class="btn btn-ghost btn-small" id="resetFilters">♻️ Reset Filters</button>
-          <button class="btn btn-ghost" id="prevLead">⬅️ Prev</button>
-          <button class="btn btn-green" id="nextLead">➡️ Next</button>
+        <div class="crumbs">
+          <span>Wholesaler</span><span class="dot"></span><span id="crumbMode">Acquisition</span>
         </div>
-        <div id="telemetry" class="muted" style="margin-top:6px;font-size:12px"></div>
+        <div class="status" id="status">Loading…</div>
       </div>
 
-      <!-- ACQ lead card -->
-      <div id="acqWrap" style="display:none">
-        <div id="leadCard" class="lead"><div class="body">Initializing…</div></div>
-      </div>
+      <!-- Sticky controls -->
+      <div class="sticky">
+        <div class="seg" role="tablist" aria-label="Mode">
+          <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
+          <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
+        </div>
+        <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
 
-      <!-- Lead Source Chooser -->
-      <div id="chooser" class="chooser" style="display:none">
-        <h3 style="margin:0">Pick how you want to work leads</h3>
-        <div class="muted">We’ll notify admin and turn on the right feed. You can also upload a CSV to start immediately.</div>
-        <div class="grid4">
-          <div class="choice"><h4>Street Leads</h4><div class="muted">Door-knock, driving for dollars. We curate by ZIP.</div><button class="btn btn-green" data-req="Street Leads">Request Street Leads</button></div>
-          <div class="choice"><h4>Web Leads</h4><div class="muted">Inbound web form / PPC / site capture.</div><button class="btn btn-green" data-req="Web Leads">Request Web Leads</button></div>
-          <div class="choice"><h4>Live Leads</h4><div class="muted">Live transfer / warm handoff.</div><button class="btn btn-green" data-req="Live Leads">Request Live Leads</button></div>
-          <div class="choice"><h4>Use Your CRM</h4><div class="muted">Give us API/CSV; we’ll sync.</div><button class="btn btn-green" data-req="Use Own CRM">Connect My CRM</button></div>
+        <!-- Acq-only toolbars -->
+        <div id="acqBar" class="bar" aria-label="Actions">
+          <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
+          <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
+          <a class="btn btn-ghost" href="#" id="actDir"  title="Directions"><span class="ico">🚗</span></a>
+          <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
+          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
+          <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
         </div>
 
-        <div class="choice" style="margin-top:10px">
-          <h4>Upload your own leads (CSV)</h4>
-          <div class="muted" style="margin-bottom:6px">Columns accepted: <b>address</b>, name, phone, notes</div>
-          <input id="csv" type="file" accept=".csv" class="input"/>
-          <div class="muted" id="csvMsg" style="margin-top:8px"></div>
+        <div id="acqNav" class="navrow">
+          <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
+          <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
+          <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
         </div>
       </div>
 
-      <!-- DISPO: Posting Console ABOVE offerings + preview -->
-      <div id="dispoWrap" style="display:none;padding:12px">
-        <div style="display:grid;grid-template-columns:1.1fr .9fr;gap:12px">
-          <!-- Left Column -->
-          <div>
-            <!-- Posting Console FIRST -->
-            <div class="postPanel">
-              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-                <div style="font-weight:800">Posting Console (TPE pass-through)</div>
-                <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button class="btn btn-green" id="addOffering">➕ Offering</button>
-                  <button class="btn" id="offeringPhotos">📷 Photos</button>
-                </div>
-              </div>
-              <div class="postGrid">
-                <a class="btn" id="postCraigslist" target="_blank" rel="noopener">🅒 Post to Craigslist</a>
-                <a class="btn" id="postFBM" target="_blank" rel="noopener">📦 Post to FB Marketplace</a>
-                <a class="btn" id="emailBlast" target="_blank" rel="noopener">✉️ Email Blast</a>
-                <a class="btn" id="buyersActive" target="_blank" rel="noopener">🗂️ Active Buyers DB</a>
-                <a class="btn" id="buyersAll" target="_blank" rel="noopener">📚 Entire Buyers DB</a>
-                <a class="btn" id="townHall" target="_blank" rel="noopener">🏛️ Town Hall</a>
-              </div>
-              <div class="muted" style="margin-top:6px">These are placeholders; backend TPE automation will relay and post on your behalf.</div>
-            </div>
+      <div class="lead-wrap">
+        <!-- Acquisition panel -->
+        <div id="leadCard" class="lead">
+          <div class="body">Initializing…</div>
+        </div>
 
-            <!-- Offerings list -->
-            <div id="offerList" style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
-              <h3 style="margin:0 0 8px">Active Offerings</h3>
-              <div id="offerCards" style="display:grid;gap:10px"></div>
+        <!-- Disposition panel -->
+        <div id="dispoPane" class="section hidden" aria-live="polite">
+          <div class="dispoHead">
+            <h3 style="margin:2px 0">📦 Disposition</h3>
+            <div style="display:flex;gap:8px;flex-wrap:wrap">
+              <a class="btn small" id="newDealBtn"      href="#">＋ New Deal</a>
+              <a class="btn small" id="newOfferingBtn"  href="#">＋ New Offering</a>
+              <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
             </div>
           </div>
 
-          <!-- Right Column -->
-          <div style="border:1px solid rgba(255,255,255,.18);border-radius:16px;padding:12px">
-            <h3 class="previewTitle" id="previewTitle">Statement of Facts (Preview)</h3>
-            <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px">
-              <a id="btnOpenMemo" class="btn btn-gold" target="_blank" rel="noopener">Open Offering Memo</a>
-              <a id="btnInterest" class="btn" target="_blank" rel="noopener">Submit Interest</a>
+          <div class="dispoCTA">
+            <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Post to Craigslist</a>
+            <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">Post to FB Marketplace</a>
+            <a class="btn" id="linkShareAll" href="#" title="Copy a shareable link">Link Share</a>
+          </div>
+
+          <!-- Desktop-only 2-col layout: left cards, right preview -->
+          <div class="dispoLayout">
+            <div id="dispoLeft">
+              <div class="group" id="dealsGroup">
+                <h4>Deals</h4>
+                <div id="dealsGrid" class="dealgrid"></div>
+              </div>
+              <div class="group" id="offeringsGroup">
+                <h4>Offerings</h4>
+                <div id="offeringsGrid" class="dealgrid"></div>
+              </div>
             </div>
-            <iframe id="sofPreview" title="SOF preview" style="width:100%;height:520px;border:0;border-radius:12px;background:#fff"></iframe>
+
+            <div id="dispoPreview" class="preview desktopOnly">
+              <div class="pvHead">
+                <div class="pvTitle" id="pvTitle">Photo / Memo Preview</div>
+                <div style="display:flex;gap:6px">
+                  <button id="pvAdd"  class="btn small">＋ Add Photo</button>
+                  <button id="pvEdit" class="btn small">✎ Edit Photos</button>
+                </div>
+              </div>
+              <div class="carousel" id="pvCarousel"></div>
+            </div>
           </div>
         </div>
       </div>
     </section>
   </div>
 
-  <footer>
-    <div>© 2025 DealBankers.com — All rights reserved.</div>
-    <div>v1.10 “Bond Workstation”</div>
-  </footer>
+  <!-- Dial preference dialog -->
+  <dialog id="settingsDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:520px;width:92%">
+    <h3 style="margin:0 0 8px">Phone Link Preference</h3>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="device"> Device Phone (tel:)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="textnow"> TextNow (web)</label>
+    <label style="display:flex;gap:8px;align-items:center;margin:8px 0"><input type="radio" name="mode" value="gvoice"> Google Voice (web)</label>
+    <div style="display:flex;gap:8px;margin-top:10px">
+      <button id="saveMode" class="btn" style="flex:1">Save</button>
+      <button id="closeMode" class="btn" style="flex:1">Close</button>
+    </div>
+  </dialog>
+
+  <!-- Photo manager dialog (desktop-only) -->
+  <dialog id="photoDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:720px;width:92%">
+    <h3 style="margin:0 0 8px">Manage Photos</h3>
+    <div style="display:grid;gap:8px">
+      <label>Photo URLs (comma separated)
+        <textarea id="phUrls" rows="3" class="textarea" placeholder="https://...jpg, https://...png"></textarea>
+      </label>
+      <label>Upload Photos
+        <input id="phFiles" type="file" accept="image/*" multiple style="display:block;margin-top:6px"/>
+      </label>
+    </div>
+    <div id="phThumbs" style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px"></div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="phClear" class="btn">Clear All</button>
+      <button id="phSave"  class="btn btn-green">Save</button>
+      <button id="phClose" class="btn">Close</button>
+    </div>
+  </dialog>
+
+  <!-- New item dialog (Deals / Offerings) -->
+  <dialog id="newItemDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:640px;width:92%">
+    <h3 id="newItemTitle" style="margin:0 0 8px">New Item</h3>
+    <div style="display:grid;gap:8px">
+      <label>Kind
+        <select id="niKind" class="textarea" style="min-height:auto;height:38px">
+          <option value="deal">Deal</option>
+          <option value="offering">Offering</option>
+        </select>
+      </label>
+      <label>Title <input id="niTitle" class="textarea" style="min-height:auto;height:38px"/></label>
+      <label>Address / Location (optional for Offering) <input id="niAddr" class="textarea" style="min-height:auto;height:38px"/></label>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <label>Price <input id="niPrice" class="textarea" style="min-height:auto;height:38px"/></label>
+        <label>Terms <input id="niTerms" class="textarea" style="min-height:auto;height:38px"/></label>
+      </div>
+      <label>Memo URL (PDF or HTML; Offerings only, optional)
+        <input id="niMemo" class="textarea" style="min-height:auto;height:38px" placeholder="https://...pdf or /offering-memoX.html"/>
+      </label>
+      <label>Notes <textarea id="niNotes" rows="3" class="textarea"></textarea></label>
+      <label>Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
+      <button id="niSave"  class="btn btn-green">Save</button>
+      <button id="niClose" class="btn">Close</button>
+    </div>
+  </dialog>
 
   <div id="toast"></div>
 
-  <!-- Firebase -->
+  <!-- Firebase (gate for leads) -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
   <script>
-    // Firebase (isolated app for this page)
-    const app=firebase.initializeApp(
+    const gateApp = firebase.initializeApp(
       {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
       "whGate"
     );
-    const db=app.database();
-    const storage=firebase.storage(app);
+    const gateDb   = gateApp.database();
+    const params   = new URL(location.href).searchParams;
+    const uidParam = params.get('uid') || 'anon';
 
-    // URL params
-    const p=new URL(location.href).searchParams;
-    const sub=(p.get('sub')||p.get('mode')||'acq').toLowerCase(); // 'acq' | 'dispo'
-    const uid=p.get('uid')||'anon';
+    // Permission flags available to the rest of the page
+    window.whGate = { acqEnabled:false, dispoEnabled:false };
 
-    // URL overrides (session only)
-    let urlTypes=(p.get('whTypes')||'').split(',').map(s=>s.trim().toLowerCase()).filter(Boolean);
-    let urlZips=(p.get('whZips')||'').split(',').map(s=>s.trim()).filter(Boolean);
-    let useUrlOverrides = urlTypes.length||urlZips.length;
-
-    // Live settings (source of truth)
-    let settingsFilters={types:[], zips:[], version:0};
-    db.ref(`userSettings/${uid}/wholesaler`).on('value', snap=>{
-      const v=snap.val()||{};
-      settingsFilters.types = Array.isArray(v.types)? v.types.map(s=>String(s).toLowerCase()) : [];
-      settingsFilters.zips  = Array.isArray(v.zips)? v.zips.map(String) : [];
-      settingsFilters.version = v.settingsVersion||0;
-      recomputeFiltersAndRender();
-    });
-
-    // Helpers
-    const $=s=>document.querySelector(s);
-    function setStatus(t){$('#status').textContent=t}
-    function toast(t){const el=$('#toast'); el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1600)}
-    const slug = s => String(s||'').toLowerCase().trim().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
-
-    function activeFilters(){
-      const types = useUrlOverrides ? urlTypes : settingsFilters.types;
-      const zips  = useUrlOverrides ? urlZips  : settingsFilters.zips;
-      return { types, zips, hasType: types.length>0, hasZips: zips.length>0,
-               typeSet:new Set(types), zipSet:new Set(zips) };
+    function loadLeadsJS(){
+      const s=document.createElement('script');
+      s.src='leads.js?v='+Date.now();
+      s.onload=()=>{ window.leads = window.leads || []; init(); };
+      s.onerror=()=>document.getElementById('status').textContent='Could not load leads.js';
+      document.head.appendChild(s);
     }
 
-    // Mode switch
-    function showAcq(){ $('#crumb').textContent='Acquisition'; $('#acqBar').style.display='block'; $('#acqWrap').style.display='block'; $('#dispoWrap').style.display='none'; }
-    function showDispo(){ $('#crumb').textContent='Dispo'; $('#acqBar').style.display='none'; $('#acqWrap').style.display='none'; $('#dispoWrap').style.display='block'; }
-    if(sub==='dispo') showDispo(); else showAcq();
+    gateDb.ref(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
+      const g = snap.val() || {};
+      // Back-compat: support old single switches if present
+      window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
+      window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
 
-    // ------- Lead gate and chooser (Acq) -------
-    if(sub==='acq'){
-      setStatus('Checking access…');
-      db.ref(`userSettings/${uid}/wholesaler`).once('value').then(s=>{
-        const v=s.val()||{}; const allowed=!!v.leadsEnabled;
-        if(!allowed){ renderChooser('Access to leads is not enabled yet.'); return; }
-        loadLeadsScript();
-      }).catch(()=>renderChooser('Could not verify access right now.'));
-    }
-
-    function renderChooser(reason){
-      showAcq(); $('#chooser').style.display='block'; $('#acqWrap').style.display='none'; setStatus(reason||'Pick a lead source');
-      $('#chooser').addEventListener('click',async e=>{
-        const btn=e.target.closest('[data-req]'); if(!btn) return;
-        const type=btn.getAttribute('data-req');
-        const payload={uid, email:'', name:'', type:`Lead Access: ${type}`, contact:'', subject:'', message:`User requested: ${type}`, status:'new', ts:Date.now()};
-        try{await db.ref('requests').push(payload); toast('Request sent'); setStatus('Request sent — we’ll enable your feed.');}
-        catch{toast('Could not send request');}
-      });
-      $('#csv').addEventListener('change', handleCSV);
-    }
-
-    // Robust /leads.js loader with fallback path and timeout
-    function loadLeadsScript(bust=true){
-      const finished=()=>{ if(Array.isArray(window.leads)&&window.leads.length){ initAcq(); }
-                           else { renderChooser('No leads loaded yet. You can request a source or upload CSV.'); } };
-      let settled=false;
-      function trySrc(src){
-        const s=document.createElement('script'); s.src=src;
-        s.onload=()=>{ if(!settled){ settled=true; finished(); } };
-        s.onerror=()=>{ if(!settled){ tryNext(); } };
-        document.head.appendChild(s);
+      if(!window.whGate.acqEnabled){
+        document.getElementById('leadCard').innerHTML =
+          '<div class="body">Access to <b>acquisition</b> leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
+        document.getElementById('status').textContent = 'Acq access denied';
+      } else {
+        loadLeadsJS();
       }
-      const q=bust?('?v=' + Date.now()):'';
-      const sources=['/leads.js'+q,'leads.js'+q];
-      function tryNext(){ const next=sources.shift(); if(next) trySrc(next); else if(!settled){ settled=true; renderChooser('Could not load leads.js'); } }
-      setTimeout(()=>{ if(!settled){ settled=true; renderChooser('Leads loader timed out'); } }, 7000);
-      tryNext();
-    }
+    }).catch(()=>{
+      document.getElementById('leadCard').innerHTML =
+        '<div class="body">Could not verify access right now. Try again shortly.</div>';
+      document.getElementById('status').textContent = 'Gate check failed';
+    });
+  </script>
 
-    // --------- ACQ: classify, filter, render -----------
-    let idx=0, current=null; const MODE_KEY='db_phone_link_mode_wh';
-    const getMode=()=>localStorage.getItem(MODE_KEY)||'device'; const setMode=m=>localStorage.setItem(MODE_KEY,m);
-    const clean=s=>(s||'').toString().trim();
-    const phoneOf=l=>clean(l?.contacts?.[0]?.phone||'');
-    function phoneHref(number,mode){
-      const num=(number||'').replace(/[^\d+]/g,''); if(!num) return '#';
-      if(mode==='device') return `tel:${num}`;
-      if(mode==='textnow'){navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging';}
-      if(mode==='gvoice'){navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages';}
+  <script>
+    const $=s=>document.querySelector(s);
+    const statusEl=$('#status'); const toastEl=$('#toast'); const modeCrumb=$('#crumbMode');
+    const dlg=$('#settingsDlg');
+    let idx=0, currentLead=null, mode='acq';
+
+    const uid=new URL(location.href).searchParams.get('uid')||'anon';
+    const MODE_KEY='db_phone_link_mode_wh';
+
+    function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
+    function setStatus(t){statusEl.textContent=t;}
+    const clean=s=>(s||'').trim();
+    const slugify = s => (s||'item').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
+    const esc = (s)=>String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+
+    const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
+    const setMode=m=>localStorage.setItem(MODE_KEY,m);
+
+    function phoneOf(l){ return clean(l?.contacts?.[0]?.phone||''); }
+    function phoneHref(number, dialMode){
+      const num=(number||'').replace(/[^\d+]/g,'');
+      if(!num) return '#';
+      if(dialMode==='device') return `tel:${num}`;
+      if(dialMode==='textnow'){ navigator.clipboard?.writeText(num); return 'https://www.textnow.com/messaging'; }
+      if(dialMode==='gvoice'){ navigator.clipboard?.writeText(num); return 'https://voice.google.com/u/0/messages'; }
       return `tel:${num}`;
     }
-    const extractZip=addr=>{const m=String(addr||'').match(/\b\d{5}\b/); return m?m[0]:'';}
-    function classifyLead(lead){
-      const bag=[lead?.type,lead?.category,lead?.tags,lead?.notes,lead?.details,lead?.description,lead?.zoning,lead?.use].map(clean).join(' ').toLowerCase();
-      const isLand=/\b(vacant|raw|unimproved)\s+(lot|land)\b/.test(bag)||/\blot\b/.test(bag)||/\bacre(s)?\b/.test(bag);
-      const isComm=!isLand && (/\b(commercial|retail|industrial|warehouse|office|restaurant|hotel|motel|c[- ]?store|gas|shopping|mall|strip|mixed[- ]use|cap ?rate|triple ?net|nnn|flex|medical office|clinic|self[ -]?storage|automotive|dealership|multifamily(?!\s*residential))\b/.test(bag)||/\bzoned\s*[cbi]\b/.test(bag));
-      const isResi=!isLand && /\b(residential|single[- ]family|sfh|house|duplex|triplex|quadplex|apartment|condo|townhome|mobile home|mh)\b/.test(bag);
-      if(isComm) return 'commercial'; if(isResi) return 'residential'; if(isLand) return 'land'; return '';
-    }
+    function dirHref(addr){ return `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr||'')}`; }
+    function svSrc(addr){ return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(addr)}`; }
+    function mapSrc(addr){ return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(addr)}`; }
 
-    function computeFiltered(all){
-      const {typeSet, zipSet, hasType, hasZips} = activeFilters();
-      let arr = all.slice();
-      if(hasType){
-        arr=arr.filter(l=>{
-          const t=classifyLead(l);
-          if(t==='') return false;
-          if(t==='land') return typeSet.has('land');
-          return typeSet.has(t);
-        });
+    const noteKey = addr => 'db_notes_'+(addr||'').toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    const loadNotes = addr => localStorage.getItem(noteKey(addr)) || '';
+    const saveNotes = (addr,text)=>localStorage.setItem(noteKey(addr), text||'');
+    const saveTimeKey = addr => noteKey(addr)+'_ts';
+    const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
+    const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
+
+    function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
+    function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
+
+    /* ---------- Dispo items (script + DB merge; Offerings allow PDF memos) ---------- */
+    let dispoItems=null, dispoLoaded=false;
+
+    const fallbackDispo = [
+      {
+        kind: 'deal',
+        id: '4319-san-luis-st',
+        title: '4319 San Luis St, San Antonio, TX 78237',
+        address: '4319 San Luis St, San Antonio, TX 78237',
+        price: '$65,000 ask',
+        terms: 'Wholesale assignment • As-is',
+        memo: 'offering-memo3.html',
+        notes: 'RM-4 zoning • 9,975 sqft lot • small structure built 2003 • water on site; electric setup not completed',
+        photos: [
+          'images/deals/san-luis-st/532285905_1525203368622964_6419601791457539095_n.jpg',
+          'images/deals/san-luis-st/532430422_1529678055144004_937426837220792776_n.jpg',
+          'images/deals/san-luis-st/532490619_2500043363693663_3909442154221395932_n.jpg',
+          'images/deals/san-luis-st/533251127_1259617138716800_3246275306679859470_n.jpg',
+          'images/deals/san-luis-st/533367927_1861201098077542_138298872422090400_n.jpg',
+          'images/deals/san-luis-st/533401545_1232983395178499_3448834856308498546_n.jpg',
+          'images/deals/san-luis-st/533461086_1517743442544727_6437480492578431589_n.jpg',
+          'images/deals/san-luis-st/533954852_1756139381929700_9146663009440742970_n.jpg',
+          'images/deals/san-luis-st/533957793_1043892891157948_6687460725094961623_n.jpg',
+          'images/deals/san-luis-st/534146994_1121254369902856_8599715682702529823_n.jpg',
+          'images/deals/san-luis-st/534274626_1465325141273191_3756511487997878319_n.jpg',
+          'images/deals/san-luis-st/534371650_1371007245025655_3036220784647842105_n.jpg',
+          'images/deals/san-luis-st/534681579_1416383389477377_4000173112539682162_n.jpg',
+          'images/deals/san-luis-st/534979928_1700927480622947_2845444756307509404_n.jpg',
+          'images/deals/san-luis-st/535223210_2133973067113201_5017690366641265882_n.jpg',
+          'images/deals/san-luis-st/535467155_1438479670538508_4235579294056462410_n.jpg',
+          'images/deals/san-luis-st/535724533_1653304598682827_5551748086010323051_n.jpg',
+          'images/deals/san-luis-st/536159577_2524052531320708_2500621445002879585_n.jpg'
+        ]
+      },
+      {
+        kind:'deal',
+        id:'3014-el-paso-st',
+        title:'3014 El Paso St, San Antonio, TX 78207',
+        address:'3014 El Paso St, San Antonio, TX 78207',
+        price:'$155,000 ask',
+        terms:'Assignment $12k • As-is',
+        memo:'offering-memo2.html',
+        share:'https://www.facebook.com/marketplace/create/item',
+        notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
+      },
+      {
+        kind:'offering',
+        id:'virgin-d6-lift',
+        title:'Virgin D6 Lift — FOB Houston',
+        address:'—',
+        price:'Capital Need $300k',
+        terms:'Repay 7–10 days • 100M gal',
+        memo:'offering-memo1.html',
+        share:'https://www.craigslist.org/',
+        notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.'
       }
-      if(hasZips){arr=arr.filter(l=>{const z=extractZip(l?.address||''); return z && zipSet.has(z);});}
-      return arr;
+    ];
+
+    async function fetchDbDispo(uidX){
+      try{
+        const snap = await gateDb.ref(`deals/${uidX}`).once('value');
+        const obj = snap.val() || {};
+        return Object.entries(obj).map(([id,d])=>{
+          const safeId = d.id || id || slugify((d.title||d.address||'item'));
+          return {
+            id: safeId,
+            kind:    d.kind || 'deal',
+            title:   d.title || safeId,
+            address: d.location || d.address || '',
+            price:   d.price || '',
+            terms:   d.terms || '',
+            memo:    d.memo || '',
+            notes:   d.notes || '',
+            photos:  Array.isArray(d.photos)? d.photos : [],
+            createdBy: d.createdBy || uidX
+          };
+        });
+      }catch{
+        return [];
+      }
     }
 
-    function telemetry(allCount, filteredCount){
-      const f=activeFilters();
-      $('#telemetry').textContent =
-        `Feed loaded: ${allCount} • After filter: ${filteredCount}` +
-        (f.hasType?` • types: ${[...f.typeSet].join(',')}`:'') +
-        (f.hasZips?` • zips: ${[...f.zipSet].join(',')}`:'') +
-        (settingsFilters.version?` • settings v${settingsFilters.version}`:'');
+    async function mergeDispoData(){
+      const dbItems = await fetchDbDispo(uidParam);
+      const base = dispoItems || fallbackDispo;
+      const byId = new Map();
+      [...dbItems, ...base].forEach(raw=>{
+        const id = raw.id || slugify(raw.title||raw.address||'item');
+        if(!byId.has(id)) byId.set(id, {...raw, id}); // user DB takes precedence
+      });
+      return Array.from(byId.values());
     }
 
-    function recomputeFiltersAndRender(){
-      if(!Array.isArray(window.leads) || !window.leads.length) return;
-      const filtered = computeFiltered(window.leads);
-      window.__filteredLeads = filtered;
-      setStatus(`Loaded ${filtered.length} lead(s)`);
-      telemetry(window.leads.length, filtered.length);
-      if(!filtered.length){
-        $('#leadCard').innerHTML='<div class="body"><b>No leads match your filters.</b></div>';
+    function ensureDispoData(cb){
+      if(dispoLoaded){ mergeDispoData().then(list=>cb(list)); return; }
+      const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
+      s.onload = async ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(await mergeDispoData()); };
+      s.onerror = async ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(await mergeDispoData()); };
+      document.head.appendChild(s);
+    }
+
+    /* ---------------- Desktop-only photo / memo preview & manager ---------------- */
+    const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
+          phUrls=$('#phUrls'), phFiles=$('#phFiles'), phThumbs=$('#phThumbs'),
+          pvAdd=$('#pvAdd'), pvEdit=$('#pvEdit');
+    let previewItem=null;
+
+    function slugFor(it){
+      const base=(it?.memo||'') || (it?.title||'') || (it?.address||'item');
+      return String(base).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    }
+    const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
+    function getPhotos(it){
+      try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
+      return Array.isArray(it?.photos)?it.photos:[]; // optional photos from script or DB
+    }
+    function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
+
+    function isPdf(url){ try{ return /\.pdf($|\?)/i.test(new URL(url, location.href).pathname); }catch{return /\.pdf($|\?)/i.test(url||'');} }
+    function memoViewer(url){
+      if(isPdf(url)) return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
+      return url; // assume HTML memo page
+    }
+
+    let carIdx=0, carTimer=null, carRun=true;
+    function renderPreview(it){
+      carIdx = 0;
+      carRun = true;
+      previewItem=it;
+      pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
+      const photos=getPhotos(it);
+      pvCar.innerHTML='';
+
+      if(!photos.length && it?.memo){
+        const src = memoViewer(it.memo);
+        pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`;
         return;
       }
-      if(idx>=filtered.length) idx=0;
-      render(idx);
-    }
 
-    function initAcq(){
-      showAcq();
-      if(!Array.isArray(window.leads)||!window.leads.length){
-        $('#leadCard').innerHTML='<div class="body"><b>No leads loaded.</b></div>'; return;
+      if(!photos.length){
+        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs${it?.memo? ' — memo available via Open Memo button.' : '.'}</div>`;
+        return;
       }
-      recomputeFiltersAndRender();
+      photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo'; if(i===0) img.className='active'; pvCar.appendChild(img); });
+      const ctr=document.createElement('div'); ctr.className='carBtns';
+      const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
+      const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
+      const next=document.createElement('button'); next.className='carBtn'; next.textContent='▶';
+      ctr.append(prev,pause,next); pvCar.appendChild(ctr);
+      prev.onclick=()=>{ carRun=false; setSlide(-1); };
+      next.onclick=()=>{ carRun=false; setSlide(+1); };
+      pause.onclick=()=>{ carRun=!carRun; if(carRun) startCar(); else stopCar(); };
+      startCar();
+    }
+    function setSlide(d){
+      const imgs=[...pvCar.querySelectorAll('img')]; if(!imgs.length) return;
+      imgs[carIdx]?.classList.remove('active');
+      carIdx=(carIdx+d+imgs.length)%imgs.length;
+      imgs[carIdx]?.classList.add('active');
+    }
+    function startCar(){ stopCar(); carTimer=setInterval(()=>{ if(carRun) setSlide(+1); },2800); }
+    function stopCar(){ if(carTimer){ clearInterval(carTimer); carTimer=null; } }
+
+    function openPhotoMgr(){
+      const it=previewItem; if(!it) return;
+      const arr=getPhotos(it);
+      phUrls.value = arr.filter(u=>!/^data:/.test(u)).join(', ');
+      drawThumbs(arr);
+      photoDlg.showModal();
+    }
+    function drawThumbs(arr){
+      phThumbs.innerHTML='';
+      arr.forEach((src,i)=>{
+        const d=document.createElement('div');
+        d.innerHTML=`<img src="${src}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px"/><button class="btn small" data-i="${i}" style="margin-top:4px">Remove</button>`;
+        phThumbs.appendChild(d);
+      });
+      phThumbs.querySelectorAll('button[data-i]').forEach(b=>{
+        b.onclick=()=>{ const i=+b.dataset.i; const cur=getPhotos(previewItem); cur.splice(i,1); savePhotos(previewItem,cur); drawThumbs(cur); renderPreview(previewItem); };
+      });
+    }
+    async function readUploads(files){
+      const out=[];
+      for(const f of files){
+        const data=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+        out.push(data);
+      }
+      return out;
+    }
+    $('#phSave').onclick = async ()=>{
+      if(!previewItem) return;
+      const urls=phUrls.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const ups = await readUploads(phFiles.files||[]);
+      const final=[...urls,...ups];
+      savePhotos(previewItem,final); renderPreview(previewItem); photoDlg.close(); phFiles.value=''; phUrls.value='';
+    };
+    $('#phClear').onclick = ()=>{ if(!previewItem) return; savePhotos(previewItem,[]); drawThumbs([]); renderPreview(previewItem); };
+    $('#phClose').onclick = ()=>photoDlg.close();
+    pvAdd.onclick = openPhotoMgr; pvEdit.onclick = openPhotoMgr;
+
+    /* ---------------- Dispo list rendering ---------------- */
+    function renderDispo(){
+      ensureDispoData(items=>{
+        const deals = items.filter(i=>i.kind!=='offering');
+        const offs  = items.filter(i=>i.kind==='offering');
+
+        const fill = (list, gridId) => {
+          const grid=$(gridId); grid.innerHTML='';
+          const byId = Object.fromEntries(list.map(i=>[(i.id || slugify(i.title||i.address||'item')), i]));
+          list.forEach(it=>{
+            const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
+            const idSafe = it.id || slugify(it.title||it.address||'item');
+            const editable = !!(it.createdBy && it.createdBy === uidParam);
+
+            const absMemo = (()=>{ try{
+              return it.memo ? (it.memo.startsWith('http') ? it.memo : new URL(it.memo, location.href).href) : '';
+            } catch(_){ return it.memo||''; } })();
+
+            const el=document.createElement('div'); el.className='dealcard';
+            el.innerHTML=`
+              <div class="dealhdr">
+                <div>${esc(it.title)}</div>
+                <div class="dealtype">${esc(kindTag)}</div>
+              </div>
+              <div class="dealmeta">
+                ${it.price?`<div class="chip">${esc(it.price)}</div>`:''}
+                ${it.terms?`<div class="chip">${esc(it.terms)}</div>`:''}
+                ${it.address?`<div class="chip">${esc(it.address)}</div>`:''}
+              </div>
+              ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${esc(it.notes)}</div>`:''}
+              <div class="actrow">
+                ${it.memo?`<a class="btn" href="${esc(it.memo)}" target="_blank" rel="noopener">Open Memo</a>`:''}
+                <a class="btn" href="${esc(it.share||'https://www.facebook.com/marketplace/create/item')}" target="_blank" rel="noopener">Post / Share</a>
+                ${it.memo?`<button class="btn" data-copy="${esc(absMemo)}">Copy Link</button>`:''}
+                <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
+                <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
+                <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
+                ${editable ? `
+                  <button class="btn small" data-edit="${esc(idSafe)}">Edit</button>
+                  <button class="btn small" data-del="${esc(idSafe)}">Delete</button>
+                ` : ``}
+              </div>`;
+            el.addEventListener('click',e=>{
+              if(window.matchMedia('(max-width: 980px)').matches) return;
+              if(e.target.closest('.actrow')){
+                if(e.target.matches('button[data-preview]')) { renderPreview(it); }
+                if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
+                return;
+              }
+              renderPreview(it);
+            });
+            grid.appendChild(el);
+          });
+          grid.querySelectorAll('button[data-copy]').forEach(b=>{
+            b.addEventListener('click',e=>{ e.stopPropagation(); navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
+          });
+          grid.querySelectorAll('button[data-edit]').forEach(b=>{
+            b.addEventListener('click',e=>{
+              e.stopPropagation();
+              const it = byId[b.getAttribute('data-edit')];
+              if(it) openEditor(it);
+            });
+          });
+          grid.querySelectorAll('button[data-del]').forEach(b=>{
+            b.addEventListener('click',async e=>{
+              e.stopPropagation();
+              const id=b.getAttribute('data-del');
+              if(!confirm('Delete this item?')) return;
+              try{
+                await gateDb.ref(`deals/${uidParam}/${id}`).remove();
+                toast('Deleted');
+                renderDispo();
+              }catch{ alert('Could not delete right now.'); }
+            });
+          });
+        };
+
+        fill(deals, '#dealsGrid');
+        fill(offs,  '#offeringsGrid');
+
+        if(!window.matchMedia('(max-width: 980px)').matches){
+          renderPreview(items[0]||null);
+        }
+      });
     }
 
-    function svSrc(a){return `https://www.google.com/maps?output=svembed&layer=c&q=${encodeURIComponent(a||'')}`;}
-    function mapSrc(a){return `https://www.google.com/maps?output=embed&q=${encodeURIComponent(a||'')}`;}
+    /* ---------------- Acquisition render + Street View (inline) + Google map ---------------- */
+
+    // geocode via OSM Nominatim (no key) to lock SV to lat/lng
+    async function geocode(addr){
+      if(!addr) return null;
+      try{
+        const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}&email=support%40dealbankers.com`;
+        const res = await fetch(url, {headers:{'Accept':'application/json'}});
+        const arr = await res.json();
+        if(Array.isArray(arr) && arr[0] && arr[0].lat && arr[0].lon){
+          return {lat:+arr[0].lat, lon:+arr[0].lon};
+        }
+      }catch{}
+      return null;
+    }
+
+    async function improveStreetViewAndMap(addr, svIframe, mapIframe){
+      const hit = await geocode(addr);
+      if(!hit) return; // keep address-based fallback
+
+      // Inline Street View with precise viewpoint (no button)
+      svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
+
+      // Keep Google map embed, but resolve to coords for stability
+      if(mapIframe){
+        mapIframe.src = `https://www.google.com/maps?output=embed&q=${encodeURIComponent(hit.lat+','+hit.lon)}&z=17`;
+      }
+    }
 
     function render(i){
-      const arr=window.__filteredLeads||[]; if(!arr.length){$('#leadCard').innerHTML='<div class="body">No leads.</div>'; return;}
-      if(i<0) i=arr.length-1; if(i>=arr.length) i=0; idx=i; current=arr[idx];
+      if(!Array.isArray(window.leads)||!window.leads.length){
+        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
+        setStatus('No leads found'); return;
+      }
+      if(i<0) i=window.leads.length-1;
+      if(i>=window.leads.length) i=0;
+      idx=i;
 
-      const name=clean(current?.contacts?.[0]?.name||'Unknown');
-      const phone=phoneOf(current);
-      const addr=clean(current?.address||'');
-      const mode=getMode();
+      const lead=window.leads[idx];
+      currentLead=lead;
 
-      $('#actCall').href=phoneHref(phone,mode);
-      $('#actSMS').href=mode==='device'&&phone?`sms:${phone}`:phoneHref(phone,mode);
-      $('#actDirections').href=addr?`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(addr)}`:'#';
+      const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
+      const phone = phoneOf(lead);
+      const addr  = clean(lead?.address||'');
 
-      $('#leadCard').innerHTML=`
-        <div class="title">${addr||name}</div>
+      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
+      setStatus(`${mode==='acq'?'Acq':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
+
+      const dialMode=getMode();
+      $('#actCall').href = phoneHref(phone, dialMode);
+      $('#actSMS').href  = dialMode==='device' && phone ? `sms:${phone}` : phoneHref(phone, dialMode);
+      $('#actDir').href  = dirHref(addr);
+
+      const lastSaved = saveTimeGet(addr);
+      const lastSavedText = lastSaved ? `Saved ${fmtTime(lastSaved)}` : 'Not saved yet';
+
+      $('#leadCard').innerHTML = `
+        <div class="title">${esc(addr || name)}</div>
         <div class="body">
-          <div style="margin-bottom:6px;font-weight:800">${name}</div>
           <div class="chips">
-            <div class="chip">UID: ${(uid||'anon').slice(0,8)}</div>
-            <div class="chip">${phone?'Phone on file':'Phone missing'}</div>
-            <div class="chip">Dial: ${mode}</div>
-            ${activeFilters().hasType?`<div class="chip">Type: ${classifyLead(current)||'n/a'}</div>`:''}
-            ${activeFilters().hasZips?`<div class="chip">ZIP: ${addr.match(/\b\d{5}\b/)?.[0]||'n/a'}</div>`:''}
+            <div class="chip">UID: ${esc(uid.slice(0,8))}</div>
+            <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
+            <div class="chip">Dial: ${esc(dialMode)}</div>
+            <div class="chip">Mode: Acquisition</div>
           </div>
-          <h3 style="margin:10px 0 6px;font-size:16px">Lead details</h3>
-          <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
-          <div style="margin-top:8px"><button id="saveNotes" class="btn btn-gold">💾 Save Notes</button></div>
-          <iframe class="sv" src="${svSrc(addr)}" loading="lazy"></iframe>
-          <iframe class="map" src="${mapSrc(addr)}" loading="lazy"></iframe>
-        </div>`;
 
-      const key='db_notes_'+addr.toLowerCase().replace(/[^a-z0-9]+/g,'-');
-      const ta=$('#noteInput'); ta.value=localStorage.getItem(key)||current?.notes||'';
-      $('#saveNotes').onclick=()=>{localStorage.setItem(key,ta.value.trim()); toast('Notes saved');};
+          <h3 style="margin:4px 0 6px;font-size:16px">${esc(name)}</h3>
 
-      $('#prevLead').onclick=()=>render(idx-1);
-      $('#nextLead').onclick=()=>render(idx+1);
-      document.onkeydown=(e)=>{ if(e.key==='ArrowLeft') render(idx-1); if(e.key==='ArrowRight') render(idx+1);};
+          <div class="section">
+            <div style="font-weight:800;margin-bottom:6px">Lead details</div>
+            <textarea id="noteInput" class="textarea" placeholder="Type notes here…"></textarea>
+            <div class="notesRow">
+              <button id="inlineSave" class="btn btn-gold"><span class="ico">💾</span> Save Notes</button>
+              <span id="savedTag" class="savedTag">${esc(lastSavedText)}</span>
+            </div>
+          </div>
 
-      $('#actCopy').onclick=()=>{ if(!phone) return alert('No phone on this lead.'); navigator.clipboard.writeText(phone).then(()=>toast('Phone copied')); };
+          <div class="section">
+            <iframe class="sv"  src="${svSrc(addr)}"   loading="lazy" allowfullscreen referrerpolicy="no-referrer-when-downgrade" title="Street View"></iframe>
+            <iframe class="map" src="${mapSrc(addr)}"  loading="lazy" referrerpolicy="no-referrer-when-downgrade" title="Map"></iframe>
+          </div>
+        </div>
+      `;
 
-      $('#actSettings').onclick=()=>{ const cur=getMode(); const next=cur==='device'?'textnow':cur==='textnow'?'gvoice':'device'; setMode(next); toast(`Dial mode: ${next}`); render(idx); };
+      const ta=$('#noteInput');
+      ta.value = loadNotes(addr) || (lead?.notes || '');
+      autoGrow(ta);
+      ta.addEventListener('input',()=>autoGrow(ta));
+      $('#inlineSave').onclick = ()=>doSaveNotes();
 
-      // Photos quick action (lead)
-      $('#leadPhotos').onclick=()=>openPhotos('lead', current.id || slug(addr));
+      // upgrade embeds to precise lat/lng (SV + Google map), seamlessly
+      const svIframe = $('#leadCard .sv');
+      const mapIframe= $('#leadCard .map');
+      improveStreetViewAndMap(addr, svIframe, mapIframe);
     }
 
-    // CSV uploader
-    function handleCSV(ev){
-      const f=ev.target.files?.[0]; if(!f) return;
-      const r=new FileReader();
-      r.onload=()=>{
-        const txt=String(r.result||''); const rows=txt.split(/\r?\n/).filter(Boolean);
-        const hdr=(rows.shift()||'').split(',').map(s=>s.trim().toLowerCase());
-        const ix=n=>hdr.findIndex(h=>h===n);
-        const iAddr=ix('address'), iName=ix('name'), iPhone=ix('phone'), iNotes=ix('notes');
-        const arr=rows.map(line=>{
-          const cols=line.split(',');
-          return {id: slug(cols[iAddr]||('lead-'+Date.now()+Math.random().toString(16).slice(2))),
-                  address:cols[iAddr]||'', contacts:[{name:cols[iName]||'', phone:cols[iPhone]||''}], notes:cols[iNotes]||''};
-        });
-        window.leads = (window.leads||[]).concat(arr);
-        $('#csvMsg').textContent=`Loaded ${arr.length} lead(s) from CSV.`;
-        $('#chooser').style.display='none'; $('#acqWrap').style.display='block';
-        recomputeFiltersAndRender();
-      };
-      r.readAsText(f);
+    function doSaveNotes(){
+      const addr = (currentLead?.address)||'';
+      const text = ($('#noteInput')?.value||'').trim();
+      saveNotes(addr, text);
+      const ts=Date.now(); saveTimeSet(addr, ts);
+      const tag=$('#savedTag'); if(tag){ tag.textContent=`Saved ${fmtTime(ts)}`; tag.style.display='inline'; }
+      toast('Notes saved');
     }
 
-    // Add Lead
-    $('#addLead').onclick=()=>{
-      const d = buildLeadForm();
-      d.showModal();
+    // actions
+    $('#btnPrev').onclick   = ()=>render(idx-1);
+    $('#btnNext').onclick   = ()=>render(idx+1);
+    $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
+
+    $('#actCopy').onclick = ()=>{
+      const p=phoneOf(window.leads?.[idx]);
+      if(!p) return alert('No phone on this lead.');
+      navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
     };
 
-    function buildLeadForm(){
-      const d=document.createElement('dialog');
-      d.innerHTML=`
-        <div class="modal-head"><strong>New Lead</strong><button class="btn btn-ghost btn-small" id="x">✖</button></div>
-        <div class="modal-body">
-          <div style="display:grid;gap:8px">
-            <input id="fAddr" class="input" placeholder="Address"/>
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
-              <input id="fName" class="input" placeholder="Contact name"/>
-              <input id="fPhone" class="input" placeholder="Phone"/>
-            </div>
-            <select id="fType" class="input">
-              <option value="">Type (optional)</option>
-              <option>residential</option><option>land</option><option>commercial</option>
-            </select>
-            <textarea id="fNotes" class="textarea" placeholder="Notes"></textarea>
-            <input id="fPhotos" type="file" accept="image/*" multiple capture="environment"/>
-            <div style="display:flex;gap:8px;justify-content:flex-end">
-              <button class="btn btn-ghost" id="cancel">Cancel</button>
-              <button class="btn btn-green" id="save">Save Lead</button>
-            </div>
-          </div>
-          <div class="progressRow" id="upProgress" style="display:none"></div>
-        </div>`;
-      document.body.appendChild(d);
-      d.querySelector('#x').onclick=d.close.bind(d);
-      d.querySelector('#cancel').onclick=d.close.bind(d);
-      d.addEventListener('close', ()=>d.remove());
-      d.querySelector('#save').onclick=async ()=>{
-        const address=d.querySelector('#fAddr').value.trim();
-        if(!address){ alert('Address required'); return; }
-        const leadId = slug(address) || ('lead-'+Date.now());
-        const lead = {
-          id:leadId, address,
-          contacts:[{name:d.querySelector('#fName').value.trim(), phone:d.querySelector('#fPhone').value.trim()}],
-          type:d.querySelector('#fType').value.trim(), notes:d.querySelector('#fNotes').value.trim(),
-          createdAt:Date.now(), createdBy:uid, status:'acq'
-        };
-        try{
-          await db.ref(`leads/${uid}/${leadId}`).set(lead);
-          window.leads = (window.leads||[]); window.leads.unshift(lead);
-          recomputeFiltersAndRender();
-          const files = d.querySelector('#fPhotos').files;
-          if(files && files.length) await uploadFilesWithBar(files, 'lead', leadId, d.querySelector('#upProgress'));
-          toast('Lead added'); d.close();
-        }catch(e){ console.error(e); alert('Could not save lead'); }
-      };
-      return d;
-    }
+    // dial settings
+    $('#actSettings').onclick = ()=>{
+      dlg.showModal();
+      const cur=getMode();
+      dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur));
+    };
+    $('#saveMode').onclick = ()=>{ const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device'; setMode(m); dlg.close(); render(idx); };
+    $('#closeMode').onclick = ()=>dlg.close();
 
-    // -------------------- Photos (Storage + Carousel) --------------------
-    async function uploadFilesWithBar(fileList, context, entityId, progressEl){
-      progressEl.style.display='grid'; progressEl.innerHTML='';
-      const tasks=[...fileList].map(async (file, ix)=>{
-        const compressed = await compressImage(file, 1600);
-        const key = Date.now()+'-'+ix+'-'+Math.random().toString(16).slice(2);
-        const path = `photos/${uid}/${context}/${entityId}/${key}`;
-        const ref = storage.ref().child(path);
-        const row=document.createElement('div'); row.className='progressItem';
-        row.innerHTML=`${file.name}<div class="bar"><i style="width:0%"></i></div>`;
-        progressEl.appendChild(row);
-        await ref.put(compressed);
-        const url = await ref.getDownloadURL();
-        const meta = {url, storagePath:path, bytes:compressed.size, createdAt:Date.now(), order:ix};
-        await db.ref(`photosIndex/${uid}/${context}/${entityId}/${key}`).set(meta);
-        row.querySelector('i').style.width='100%';
-      });
-      await Promise.all(tasks);
-    }
+    // segmented switch
+    function switchTo(modeName){
+      mode = modeName;
+      $('#tabAcq').classList.toggle('active',mode==='acq');
+      $('#tabDispo').classList.toggle('active',mode==='dispo');
 
-    function compressImage(file, maxSide){
-      return new Promise((resolve,reject)=>{
-        if(!/^image\//.test(file.type)) return resolve(file);
-        const img=new Image();
-        img.onload=()=>{
-          const c=document.createElement('canvas'); const ctx=c.getContext('2d');
-          let {width:w, height:h}=img; const scale = Math.min(1, maxSide/Math.max(w,h));
-          c.width=w*scale; c.height=h*scale; ctx.drawImage(img,0,0,c.width,c.height);
-          c.toBlob(b=>b?resolve(new File([b], file.name, {type:'image/jpeg'})):resolve(file),'image/jpeg',0.85);
-        };
-        img.onerror=()=>resolve(file);
-        const fr=new FileReader(); fr.onload=()=>{ img.src=fr.result; }; fr.readAsDataURL(file);
-      });
-    }
+      $('#acqBar').classList.toggle('hidden',mode==='dispo');
+      $('#acqNav').classList.toggle('hidden',mode==='dispo');
+      $('#leadCard').classList.toggle('hidden',mode==='dispo');
+      $('#leadHint').classList.toggle('hidden',mode==='dispo');
 
-    async function openPhotos(context, entityId){
-      const d=document.createElement('dialog');
-      d.innerHTML=`
-        <div class="modal-head"><strong>Photos</strong><button class="btn btn-ghost btn-small" id="x">✖</button></div>
-        <div class="modal-body">
-          <div class="carousel" id="car"></div>
-          <div class="thumbs" id="thumbs"></div>
-          <div style="display:flex;gap:8px;align-items:center;margin-top:8px">
-            <input id="up" type="file" accept="image/*" multiple capture="environment"/>
-            <button class="btn" id="refresh">↻ Refresh</button>
-          </div>
-          <div class="progressRow" id="bar" style="display:none"></div>
-        </div>`;
-      document.body.appendChild(d);
-      const car=d.querySelector('#car'), thumbs=d.querySelector('#thumbs'), bar=d.querySelector('#bar');
-      let list=[];
-      const setActive=i=>{
-        if(!list.length) { car.innerHTML='<div style="opacity:.7;padding:12px">No photos yet</div>'; return;}
-        i=(i+list.length)%list.length; car.innerHTML=`<img src="${list[i].url}" alt="photo ${i+1}"/>`; currentIx=i;
-      };
-      async function load(){
-        const snap = await db.ref(`photosIndex/${uid}/${context}/${entityId}`).get();
-        const obj = snap.val()||{}; list=Object.values(obj).sort((a,b)=>(a.order||0)-(b.order||0));
-        thumbs.innerHTML=list.map((m,i)=>`<img data-i="${i}" src="${m.url}"/>`).join('');
-        thumbs.onclick=e=>{ const t=e.target.closest('img'); if(!t) return; setActive(+t.dataset.i); };
-        setActive(0);
+      $('#dispoPane').classList.toggle('hidden',mode!=='dispo');
+
+      modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
+      setStatus(mode==='acq' ? 'Acq • Ready' : 'Dispo • Ready');
+
+      if(mode==='acq'){
+        if(window.whGate?.acqEnabled){ render(idx); }
+        else{
+          $('#leadCard').classList.remove('hidden');
+          $('#leadCard').innerHTML = '<div class="body">Access to <b>acquisition</b> leads is disabled for this account.</div>';
+          setStatus('Acq access denied');
+        }
+      } else {
+        if(window.whGate?.dispoEnabled){
+          renderDispo();
+        } else {
+          const pane = $('#dispoPane');
+          pane.innerHTML = `
+            <div class="section">
+              <div style="font-weight:800;margin-bottom:6px">Dispo access disabled</div>
+              <div style="color:#cfe3f7">Your account does not currently have access to <b>Dispo</b> leads.</div>
+            </div>`;
+          setStatus('Dispo access denied');
+        }
       }
-      await load();
-      d.querySelector('#x').onclick=d.close.bind(d); d.addEventListener('close', ()=>d.remove());
-      d.querySelector('#refresh').onclick=load;
-      d.querySelector('#up').onchange=async (ev)=>{
-        const files=ev.target.files; if(!files||!files.length) return;
-        await uploadFilesWithBar(files, context, entityId, bar);
-        await load();
-      };
-      d.showModal();
     }
+    $('#tabAcq').onclick  = ()=>switchTo('acq');
+    $('#tabDispo').onclick= ()=>switchTo('dispo');
 
-    // Reload + Reset buttons
-    $('#reloadLeads').onclick=()=>{ window.leads=[]; window.__filteredLeads=[]; loadLeadsScript(true); toast('Reloading leads…'); };
-    $('#resetFilters').onclick=()=>{ useUrlOverrides=false; urlTypes=[]; urlZips=[]; recomputeFiltersAndRender(); toast('Filters reset'); };
+    // share all
+    $('#linkShareAll').addEventListener('click',e=>{
+      e.preventDefault();
+      const root = location.origin + location.pathname.replace(/\/[^/]*$/,'/');
+      navigator.clipboard.writeText(root).then(()=>toast('Site link copied'));
+    });
 
-    // -------------------- DISPO --------------------
-    function memoUrl(page, sof){
-      const p = page || 'offering-memo2.html';
-      return p + (sof ? ('?sof=' + encodeURIComponent(sof)) : '');
-    }
-    function setPreview(offer){
-      const url = offer.sof || offer.sofUrl || 'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview';
-      $('#sofPreview').src = url;
-      $('#previewTitle').textContent = offer.title ? `Viewing: ${offer.title}` : 'Statement of Facts (Preview)';
-      currentOffer = offer;
-    }
-
-    let currentOffer=null;
-
-    async function loadDispoOfferings(){
-      setStatus('Loading offerings…');
-      const wrap = $('#offerCards'); wrap.innerHTML = '<div class="muted">Loading…</div>';
-
-      const [gSnap, uSnap] = await Promise.all([
-        db.ref('offerings/global').get().catch(()=>({val:()=>null})),
-        db.ref(`offerings/${uid}`).get().catch(()=>({val:()=>null}))
-      ]);
-      const toArr = o => o ? Object.values(o) : [];
-      let items = [...toArr(gSnap.val()), ...toArr(uSnap.val())];
-
-      if(!items.length){
-        items = [
-          { id:'booth', title:'Booth St. — Offering Memorandum',
-            page:'offering-memo1.html',
-            sof:'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview',
-            badges:['Target: $30k','Term: 3–6 months','30% return'],
-            icon:'🏠'},
-          { id:'d6', title:'Virgin D6 Lift — FOB Houston',
-            page:'offering-memo2.html',
-            sof:'https://drive.google.com/file/d/1GybST-_K4XW3Q3H6QNd6cdPGw8J5XVtT/preview',
-            badges:['Capital: $300k','Repay: 7–10 days','100M gallons'],
-            icon:'🛢️'}
-        ];
+    document.addEventListener('keydown',e=>{
+      if(mode==='acq'){
+        if(e.key==='ArrowLeft') return $('#btnPrev').click();
+        if(e.key==='ArrowRight') return $('#btnNext').click();
+        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
       }
+    });
 
-      // augment with photo counts
-      async function countPhotosFor(id){
-        const s=await db.ref(`photosIndex/${uid}/offering/${id}`).get(); const v=s.val(); return v?Object.keys(v).length:0;
-      }
-      const counts = await Promise.all(items.map(o=>countPhotosFor(o.id||slug(o.title))));
-      wrap.innerHTML = '';
-      items.forEach((o,i)=>{
-        o.id = o.id || slug(o.title||('off-'+i));
-        const pc = counts[i]||0;
-        const card = document.createElement('div');
-        card.className='offerCard';
-        card.innerHTML = `
-          <div style="font-size:24px">${o.icon||'📄'}</div>
-          <div style="flex:1">
-            <div style="font-weight:900;display:flex;align-items:center;gap:8px">
-              <span>${o.title||'Untitled Offering'}</span>
-              ${pc?`<span class="badge">📷 ${pc}</span>`:''}
-            </div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:6px">
-              ${(o.badges||[]).map(b=>`<span class="badge">${b}</span>`).join('')}
-            </div>
-          </div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.page,o.sof)}">Open</a>
-            <a class="btn" target="_blank" rel="noopener" href="${memoUrl(o.page,o.sof)}#interest">Interest</a>
-          </div>`;
-        card.addEventListener('click', ()=>{ setPreview(o); $('#btnOpenMemo').href = memoUrl(o.page,o.sof); $('#btnInterest').href = memoUrl(o.page,o.sof) + '#interest'; });
-        wrap.appendChild(card);
-        if(i===0){ setPreview(o); $('#btnOpenMemo').href=memoUrl(o.page,o.sof); $('#btnInterest').href=memoUrl(o.page,o.sof)+'#interest'; }
-      });
+    window.addEventListener('beforeunload',()=>{ if(mode==='acq' && currentLead){ doSaveNotes(); } });
 
-      // Posting console links
-      const setHref=(id,url)=>{ const el=$(id); if(el) el.href=url; };
-      setHref('#postCraigslist','https://accounts.craigslist.org/login');
-      setHref('#postFBM','https://www.facebook.com/marketplace/create/item');
-      setHref('#emailBlast','mailto:?subject=DealBankers%20Offering&body=Reply%20to%20be%20added%20to%20buyers%20list');
-      setHref('#buyersActive','#buyers-active');
-      setHref('#buyersAll','#buyers-all');
-      setHref('#townHall','chat.html?tab=townhall');
-
-      // offering photos quick action
-      $('#offeringPhotos').onclick=()=>{
-        if(!currentOffer){ toast('Select an offering first'); return; }
-        openPhotos('offering', currentOffer.id||slug(currentOffer.title));
-      };
-
-      // add offering form
-      $('#addOffering').onclick=()=>{
-        const d=document.createElement('dialog');
-        d.innerHTML=`
-          <div class="modal-head"><strong>New Offering</strong><button class="btn btn-ghost btn-small" id="x">✖</button></div>
-          <div class="modal-body">
-            <div style="display:grid;gap:8px">
-              <input id="t" class="input" placeholder="Title (e.g., Booth St. — Offering Memorandum)"/>
-              <input id="sof" class="input" placeholder="SOF preview URL (optional)"/>
-              <textarea id="notes" class="textarea" placeholder="Notes / Terms (optional)"></textarea>
-              <input id="photos" type="file" accept="image/*" multiple capture="environment"/>
-              <div style="display:flex;gap:8px;justify-content:flex-end">
-                <button class="btn btn-ghost" id="cancel">Cancel</button>
-                <button class="btn btn-green" id="save">Save Offering</button>
-              </div>
-            </div>
-            <div class="progressRow" id="bar" style="display:none"></div>
-          </div>`;
-        document.body.appendChild(d);
-        d.querySelector('#x').onclick=d.close.bind(d);
-        d.querySelector('#cancel').onclick=d.close.bind(d);
-        d.addEventListener('close', ()=>d.remove());
-        d.querySelector('#save').onclick=async ()=>{
-          const title=d.querySelector('#t').value.trim(); if(!title){ alert('Title required'); return; }
-          const id=slug(title); const sof=d.querySelector('#sof').value.trim();
-          const off={id,title,sof,icon:'📄',badges:[],createdAt:Date.now(),createdBy:uid,status:'active'};
-          try{
-            await db.ref(`offerings/${uid}/${id}`).set(off);
-            const files=d.querySelector('#photos').files;
-            if(files && files.length) await uploadFilesWithBar(files,'offering',id,d.querySelector('#bar'));
-            toast('Offering added'); d.close(); loadDispoOfferings();
-          }catch(e){ console.error(e); alert('Could not save offering'); }
-        };
-        d.showModal();
-      };
-
-      setStatus('Offerings');
+    function init(){
+      if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
+      else { render(0); }
     }
 
-    if(sub==='dispo'){ loadDispoOfferings(); }
+    /* ---- Show/hide Memo row when kind changes (Offerings only) ---- */
+    function updateMemoVisibility(){
+      const kindEl = document.getElementById('niKind');
+      const memoLabel = document.getElementById('niMemo')?.closest('label');
+      if(!kindEl || !memoLabel) return;
+      memoLabel.style.display = (kindEl.value === 'offering') ? 'block' : 'none';
+    }
+    document.addEventListener('DOMContentLoaded', updateMemoVisibility);
+    document.getElementById('niKind').addEventListener('change', updateMemoVisibility);
 
-    // Photos quick action in ACQ toolbar
-    $('#leadPhotos').onclick=()=>{ if(!current){ toast('Open a lead first'); return; } openPhotos('lead', current.id || slug(current.address||'')); };
+    /* ---- New item (Deal / Offering) wiring ---- */
+    const newDlg = $('#newItemDlg');
+    function openEditor(it){
+      $('#newItemTitle').textContent = (it.kind==='offering' ? 'Edit Offering' : 'Edit Deal');
+      $('#niKind').value  = it.kind || 'deal';
+      $('#niTitle').value = it.title || '';
+      $('#niAddr').value  = it.address || '';
+      $('#niPrice').value = it.price || '';
+      $('#niTerms').value = it.terms || '';
+      $('#niMemo').value  = it.memo  || '';
+      $('#niNotes').value = it.notes || '';
+      $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[])
+        .filter(u=>!/^data:/.test(u)).join(', ');
+      newDlg.dataset.editing = it.id || slugify(it.title||it.address||'item');
+      newDlg.showModal();
+      updateMemoVisibility();
+    }
+
+    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+    $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
+
+    $('#niSave').onclick  = async ()=>{
+      const kind  = $('#niKind').value;
+      const title = $('#niTitle').value.trim();
+      if(!title) return alert('Title is required');
+      const addr  = $('#niAddr').value.trim();
+      const price = $('#niPrice').value.trim();
+      const terms = $('#niTerms').value.trim();
+      const memo  = $('#niMemo').value.trim();
+      const notes = $('#niNotes').value.trim();
+      const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
+
+      const editingId = newDlg.dataset.editing || null;
+      const id = editingId || slugify(title || addr || (kind+'-'+Date.now()));
+      const payload = {
+        id, kind, title, address: addr, location: addr,
+        price, terms, memo, notes, photos,
+        status:'active', createdBy: uidParam, updatedAt: Date.now()
+      };
+      try{
+        await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
+        newDlg.dataset.editing='';
+        toast(editingId ? 'Updated' : 'Saved');
+        newDlg.close();
+        renderDispo();
+      }catch{ alert('Could not save right now.'); }
+    };
   </script>
 </body>
 </html>
