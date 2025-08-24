@@ -1,4 +1,4 @@
-<!-- ======================== DealBankers • Profile (Overview pulls live dispo; rest unchanged) ======================== -->
+<!-- ======================== profile.html (Overview with Announcements + Live Deals • Full Settings Restored • GM shows user lead prefs) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,6 +7,7 @@
   <title>DealBankers • Profile</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <meta name="robots" content="noindex"/>
+
   <style>
     :root{
       --bg:#0d1620; --panel:#0f1a24; --line:#1b3245;
@@ -29,32 +30,59 @@
     .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
     .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
+
     .hdr-actions{display:flex;gap:10px;align-items:center}
-    .pill{width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .pill{
+      width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
+      color:#fff; font-size:20px; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.35)
+    }
     .pill.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}
     .pill.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
     .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
     .btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a); color:#211a05; border:none; font-weight:800}
     .btn.green{background:linear-gradient(180deg,var(--green),#1a9b61); color:#fff; border:none; font-weight:800}
     .btn.ghost{background:#0e2433}
+
     .tabs{display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}
     .tab.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
     .panel{padding:12px}
     .card{background:#10222e;border:1px solid var(--line);border-radius:var(--r);padding:12px}
+
     .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:85vh;min-height:620px}
     .iframe-wrap iframe{width:100%;height:100%;border:0}
-    .overview-grid{display:grid;gap:12px;grid-template-columns:1.2fr 1fr}
-    @media (max-width:980px){ .overview-grid{grid-template-columns:1fr} }
+    @media (max-width:900px){ .iframe-wrap{height:90vh;min-height:680px} }
+
+    /* Overview layout */
+    .overview-grid{display:grid;gap:12px;grid-template-columns:1.1fr 1.4fr}
     .announce{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));padding:14px}
-    .offerList{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}
-    .offer{border:1px solid var(--line);border-radius:12px;background:#0f1a24;padding:10px}
+    .ann-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+    .ann-title{margin:0 0 2px}
+    .ann-sub{color:var(--muted);font-size:12px}
+    .kpiRow{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:12px 0}
+    .kpi{background:#0f1f2b;border:1px solid var(--line);border-radius:12px;padding:10px}
+    .kLab{font-size:11px;color:#a7bed0;letter-spacing:.06em;text-transform:uppercase}
+    .kVal{margin-top:4px;font-weight:900;font-size:18px}
+    .offerCard{border:1px solid var(--line);background:#0f1a24;border-radius:12px;padding:12px}
     .offerTitle{font-weight:900;margin:0 0 6px}
     .offerMeta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-    .chip{user-select:none;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0e2231;font-size:12px}
+    .offerMeta .chip{background:#0e2231;border-color:#21435a}
+    .chip{user-select:none; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#0e2231; font-size:12px}
+    .ctaRow{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
     .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
     .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#0b141b}
-    .small{font-size:12px;color:#9fb3c7}
+    .previewBlock{margin-top:12px}
+    .previewBlock h5{margin:0 0 6px}
+    .facts-preview{width:100%;height:300px;border:0;border-radius:12px;background:#0b141b}
+    @media (max-width:980px){
+      .overview-grid{grid-template-columns:1fr}
+      .kpiRow{grid-template-columns:1fr 1fr 1fr}
+    }
+    @media (max-width:620px){
+      .kpiRow{grid-template-columns:1fr 1fr}
+    }
+
+    /* Townhall */
     .townhall{display:grid;grid-template-rows:auto 1fr auto; gap:10px; height:62vh; min-height:420px}
     .th-head{display:flex;align-items:center;justify-content:space-between}
     .th-body{border:1px solid var(--line);border-radius:14px;background:#0f1a24;overflow:auto;padding:12px}
@@ -65,8 +93,33 @@
     .th-input{display:flex;gap:8px}
     .th-input input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1a24;color:#eaf1f6}
     .th-input button{min-width:96px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;cursor:pointer}
+
+    /* Settings form */
     .settings-grid{display:grid;grid-template-columns:1fr 1fr; gap:12px}
     @media (max-width:960px){ .settings-grid{grid-template-columns:1fr} }
+    .section{border:1px solid var(--line); border-radius:14px; padding:12px; background:#0f1a24}
+    .section h3{margin:0 0 8px}
+    .row{display:grid; grid-template-columns:140px 1fr; gap:10px; align-items:flex-start; margin:8px 0}
+    @media (max-width:640px){ .row{grid-template-columns:1fr} }
+    .chips{display:flex; flex-wrap:wrap; gap:8px}
+    .chipBtn{user-select:none; cursor:pointer; padding:8px 12px; border-radius:999px; border:1px solid var(--line); background:#0f1a24; color:#d3e3f5; font-size:13px}
+    .chipBtn input{display:none}
+    .chipBtn.active{background:linear-gradient(180deg,#1e3a5f,#0d2136); border-color:#2b74ff}
+    .muted{color:var(--muted); font-size:13px}
+    .inline{display:flex; gap:8px; flex-wrap:wrap; align-items:center}
+    .input, .textarea{width:100%; padding:10px 12px; border-radius:10px; border:1px solid var(--line); background:#0c1620; color:#eaf1f6}
+    .textarea{min-height:96px; resize:vertical}
+    .small{font-size:12px; color:#9fb3c7}
+    .badge{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:#0e1b27; font-size:12px}
+
+    /* GM table */
+    .table{width:100%;border-collapse:collapse}
+    .table th,.table td{border:1px solid var(--line);padding:8px;text-align:left;font-size:13px}
+    .table th{background:#0f2434}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:900px){ .grid2{grid-template-columns:1fr} }
+    .stats{display:flex;flex-wrap:wrap;gap:8px}
+    .stat{background:#0e2231;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-weight:800}
   </style>
 </head>
 <body>
@@ -76,6 +129,7 @@
         <img src="icon (1).jpg" alt="DealBankers"/>
         <h1>DEALBANKERS • PROFILE</h1>
       </div>
+
       <div class="hdr-actions">
         <button class="pill red"  id="redPhoneBtn"  title="Immediate Need">☎</button>
         <button class="pill blue" id="bluePhoneBtn" title="Standard Request">☎</button>
@@ -96,10 +150,29 @@
       <!-- OVERVIEW -->
       <div class="card" data-panel="overview">
         <div class="overview-grid">
-          <div class="announce">
-            <h3 style="margin:0 0 6px">🔥 Live Deals</h3>
-            <div class="small" id="liveDealsInfo">Loading latest public deals…</div>
-            <div id="liveDeals" class="offerList"></div>
+          <div>
+            <!-- Announcements (restored) -->
+            <div class="announce">
+              <div class="ann-head">
+                <div>
+                  <h3 class="ann-title">📢 Special Announcements</h3>
+                  <div id="meLine" class="ann-sub">Loading…</div>
+                </div>
+              </div>
+
+              <div class="kpiRow">
+                <div class="kpi"><div class="kLab">Capital Open</div><div class="kVal">$300k</div></div>
+                <div class="kpi"><div class="kLab">Turn</div><div class="kVal">7–10 days</div></div>
+                <div class="kpi"><div class="kLab">Commodity</div><div class="kVal">—</div></div>
+              </div>
+            </div>
+
+            <!-- Live Deals feed -->
+            <div class="announce" style="margin-top:10px">
+              <h3 style="margin:0 0 6px">🔥 Live Deals</h3>
+              <div class="small" id="liveDealsInfo">Loading latest public deals…</div>
+              <div id="liveDeals"></div>
+            </div>
           </div>
 
           <!-- Townhall -->
@@ -132,10 +205,223 @@
       <div class="card" data-panel="realtor"  style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
       <div class="card" data-panel="investor" style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
 
-      <!-- SETTINGS + GOD MODE (unchanged UI you already have) -->
-      <!-- (use your current file’s Settings markup here if you’ve customized; functionality unchanged) -->
+      <!-- SETTINGS + GOD MODE -->
       <div class="card" data-panel="settings" style="display:none">
-        <p class="small" style="margin:0">Settings unchanged. (Wholesaler/Contractor same as your last working version.)</p>
+        <div class="settings-grid">
+          <div class="section" id="profileSettings">
+            <h3>👤 User Profile</h3>
+            <div class="row">
+              <div class="muted">Display name</div>
+              <div class="inline">
+                <input id="displayName" class="input" placeholder="e.g., Alex R."/>
+                <button id="saveProfile" class="btn green">Save Profile</button>
+                <span id="profileSaved" class="small" style="opacity:.8"></span>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Email</div>
+              <div><span id="profileEmail" class="badge">—</span></div>
+            </div>
+          </div>
+
+          <!-- Wholesaler profile — lead-type first -->
+          <div class="section" id="whSettings">
+            <h3>⚙️ Wholesaler Profile</h3>
+            <div class="row">
+              <div class="muted">Lead types</div>
+              <div class="chips" data-name="leads">
+                <label class="chipBtn"><input type="checkbox" value="probates">Probates</label>
+                <label class="chipBtn"><input type="checkbox" value="divorce">Divorce</label>
+                <label class="chipBtn"><input type="checkbox" value="foreclosure">Foreclosure</label>
+                <label class="chipBtn"><input type="checkbox" value="code_violations">Code Violations</label>
+                <label class="chipBtn"><input type="checkbox" value="city_liens">City Liens</label>
+                <label class="chipBtn"><input type="checkbox" value="other">Other</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Custom source</div>
+              <div><input id="whCustom" class="input" placeholder="Type a requested lead source… (optional)"></div>
+            </div>
+            <div class="row">
+              <div class="muted">Service ZIPs</div>
+              <div><input id="whZips" class="input" placeholder="Comma-separated ZIPs e.g. 77003,77004"></div>
+            </div>
+            <div class="row">
+              <div class="muted">Notes</div>
+              <div><textarea id="whNotes" class="textarea" placeholder="Anything else about how you operate…"></textarea></div>
+            </div>
+            <div class="inline" style="justify-content:flex-end">
+              <span id="whSaved" class="small" style="opacity:.8"></span>
+              <button id="saveWh" class="btn green">Save Wholesaler Profile</button>
+            </div>
+          </div>
+
+          <!-- Contractor profile -->
+          <div class="section" id="ctSettings">
+            <h3>🛠️ Contractor Profile</h3>
+            <div class="row">
+              <div class="muted">Trades</div>
+              <div class="chips" data-name="trades">
+                <label class="chipBtn"><input type="checkbox" value="gc">General Contractor</label>
+                <label class="chipBtn"><input type="checkbox" value="framing">Framing</label>
+                <label class="chipBtn"><input type="checkbox" value="drywall">Drywall</label>
+                <label class="chipBtn"><input type="checkbox" value="paint">Paint</label>
+                <label class="chipBtn"><input type="checkbox" value="roofing">Roofing</label>
+                <label class="chipBtn"><input type="checkbox" value="plumbing">Plumbing</label>
+                <label class="chipBtn"><input type="checkbox" value="electrical">Electrical</label>
+                <label class="chipBtn"><input type="checkbox" value="hvac">HVAC</label>
+                <label class="chipBtn"><input type="checkbox" value="concrete">Concrete</label>
+                <label class="chipBtn"><input type="checkbox" value="landscaping">Landscaping</label>
+                <label class="chipBtn"><input type="checkbox" value="demo">Demo</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Work type</div>
+              <div class="chips" data-name="workType">
+                <label class="chipBtn"><input type="checkbox" value="residential">Residential</label>
+                <label class="chipBtn"><input type="checkbox" value="commercial">Commercial</label>
+                <label class="chipBtn"><input type="checkbox" value="new_build">New Build</label>
+                <label class="chipBtn"><input type="checkbox" value="remodel">Remodel</label>
+                <label class="chipBtn"><input type="checkbox" value="service">Service Calls</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Credentials</div>
+              <div class="chips" data-name="creds">
+                <label class="chipBtn"><input type="checkbox" value="licensed">Licensed</label>
+                <label class="chipBtn"><input type="checkbox" value="insured">Insured</label>
+                <label class="chipBtn"><input type="checkbox" value="bonded">Bonded</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Service ZIPs</div>
+              <div><input id="ctZips" class="input" placeholder="Comma-separated ZIPs"></div>
+            </div>
+            <div class="row">
+              <div class="muted">Availability</div>
+              <div class="chips" data-name="availability">
+                <label class="chipBtn"><input type="checkbox" value="immediate">Immediate</label>
+                <label class="chipBtn"><input type="checkbox" value="1_2_weeks">1–2 weeks</label>
+                <label class="chipBtn"><input type="checkbox" value="booked_out">Booked out</label>
+              </div>
+            </div>
+            <div class="row">
+              <div class="muted">Notes</div>
+              <div><textarea id="ctNotes" class="textarea" placeholder="Lic #, crew size, territory, etc."></textarea></div>
+            </div>
+            <div class="inline" style="justify-content:flex-end">
+              <span id="ctSaved" class="small" style="opacity:.8"></span>
+              <button id="saveCt" class="btn green">Save Contractor Profile</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- God Mode (Admin) -->
+        <div class="section" id="gmCard" style="margin-top:12px; display:none">
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+            <h3 style="margin:0">🧰 God Mode (Admin)</h3>
+            <div class="small muted">Signed in as <b id="gmEmail">—</b> • UID: <code id="gmUid">—</code></div>
+          </div>
+
+          <div class="stats" style="margin:10px 0">
+            <div class="stat">Users (total): <span id="gmUsersTotal">—</span></div>
+            <div class="stat">Online now: <span id="gmUsersOnline">—</span></div>
+            <div class="stat">Acq ON: <span id="gmAcqOn">—</span></div>
+            <div class="stat">Dispo ON: <span id="gmDispoOn">—</span></div>
+          </div>
+
+          <div class="grid2">
+            <div class="section" style="margin:0">
+              <div style="font-weight:800;margin-bottom:6px">Roles & Toggles (me)</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                <label class="badge">Role:
+                  <select id="meRole" class="input" style="min-height:auto;height:34px;margin-left:8px;width:auto">
+                    <option value="">—</option>
+                    <option value="admin">admin</option>
+                    <option value="branch">branch</option>
+                    <option value="member">member</option>
+                  </select>
+                </label>
+                <button class="btn small" id="meRoleSave">Save Role</button>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="chip">Acq: <b id="meAcqState">—</b></span>
+                <button class="btn green small" id="meAcqEnable">Enable</button>
+                <button class="btn small"        id="meAcqDisable">Disable</button>
+
+                <span class="chip">Dispo: <b id="meDispoState">—</b></span>
+                <button class="btn green small" id="meDispoEnable">Enable</button>
+                <button class="btn small"        id="meDispoDisable">Disable</button>
+              </div>
+            </div>
+
+            <div class="section" style="margin:0">
+              <div style="font-weight:800;margin-bottom:6px">Roles & Toggles (by UID)</div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+                <input id="gmTargetUid" class="textarea" style="min-height:auto;height:38px" placeholder="Paste target UID"/>
+                <button class="btn small" id="gmLoad">Load</button>
+                <select id="gmTargetRole" class="input" style="min-height:auto;height:34px;width:auto">
+                  <option value="">—</option>
+                  <option value="admin">admin</option>
+                  <option value="branch">branch</option>
+                  <option value="member">member</option>
+                </select>
+                <button class="btn small" id="gmSaveRole">Save Role</button>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap">
+                <span class="chip">Acq: <b id="uidAcqState">—</b></span>
+                <button class="btn green small" id="uidAcqEnable">Enable</button>
+                <button class="btn small"        id="uidAcqDisable">Disable</button>
+
+                <span class="chip">Dispo: <b id="uidDispoState">—</b></span>
+                <button class="btn green small" id="uidDispoEnable">Enable</button>
+                <button class="btn small"        id="uidDispoDisable">Disable</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Branding -->
+          <div class="section" style="margin-top:10px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
+              <div style="font-weight:800">Branding / Logo</div>
+              <img id="gmLogoPrev" src="" alt="" style="height:36px;display:none;border-radius:8px;border:1px solid var(--line)"/>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px">
+              <input id="gmLogoFile" type="file" accept="image/*"/>
+              <button class="btn" id="gmSaveLogo">Upload Logo</button>
+              <span id="gmLogoMsg" class="small"></span>
+            </div>
+          </div>
+
+          <!-- User Directory -->
+          <div class="section" style="margin-top:10px">
+            <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+              <div style="font-weight:800">User Directory (live)</div>
+              <input id="gmFilter" class="input" placeholder="Filter by name/email/uid/zip/leads/trades…" style="max-width:420px"/>
+            </div>
+            <div style="overflow:auto;margin-top:8px">
+              <table class="table" id="gmTable">
+                <thead>
+                  <tr>
+                    <th>UID</th>
+                    <th>Name</th>
+                    <th>Email</th>
+                    <th>Acq</th>
+                    <th>Dispo</th>
+                    <th>WH Leads</th>
+                    <th>WH Custom</th>
+                    <th>ZIPs</th>
+                    <th>CT Trades</th>
+                    <th>CT Work</th>
+                    <th>CT Availability</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+        <!-- /God Mode -->
       </div>
     </section>
   </div>
@@ -144,32 +430,43 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
   <script>
+    // ---- Firebase
     const firebaseConfig={apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",projectId:"deal-bankers",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com"};
     if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-    const auth=firebase.auth(); const db=firebase.database();
+    const auth=firebase.auth(); const db=firebase.database(); const storage=firebase.storage();
 
+    // ---- dom helpers
     const $=s=>document.querySelector(s);
     const tabs=[...document.querySelectorAll('.tab')];
     const panels=[...document.querySelectorAll('[data-panel]')];
     const qs=new URL(location.href).searchParams;
+    const toast=(t)=>{ let el=document.getElementById('gmToast'); if(!el){ el=document.createElement('div'); el.id='gmToast'; el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);z-index:9999;display:none'; document.body.appendChild(el); } el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1500); };
 
+    let gProfile=null;
+
+    // ---- Tabs + routing
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
+
       const url=new URL(location.href); url.searchParams.set('tab',name); history.replaceState(null,'',url);
+
       if(name==='wholesaler') ensureWh();
       if(name==='contractor') ensureCt();
       if(name==='overview')  ensureOverview();
     }
-    document.getElementById('tabs').addEventListener('click',e=>{
+    $('#tabs').addEventListener('click',e=>{
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
+    // ---- Lazy iframes (pass display name)
     let whSet=false, ctSet=false, ovSet=false;
     function encodedName(){
-      const n=(auth.currentUser?.displayName||'').trim(); return encodeURIComponent(n);
+      const n = (gProfile?.displayName || auth.currentUser?.displayName || '').trim();
+      return encodeURIComponent(n);
     }
     function ensureWh(){
       if(whSet) return; whSet=true;
@@ -201,14 +498,14 @@
     }
     async function renderLiveDeals(){
       const list = await fetchLiveDeals();
-      const wrap = document.getElementById('liveDeals');
-      const info = document.getElementById('liveDealsInfo');
+      const wrap = $('#liveDeals');
+      const info = $('#liveDealsInfo');
       wrap.innerHTML="";
       if(!list.length){ info.textContent="No live deals yet."; return; }
       info.textContent = `Showing ${list.length} most recent live deals`;
       list.forEach(d=>{
         const div=document.createElement('div');
-        div.className='offer';
+        div.className='offerCard';
         div.innerHTML = `
           <div class="offerTitle">${(d.title||'Untitled')}</div>
           <div class="offerMeta">
@@ -225,20 +522,333 @@
         wrap.appendChild(div);
       });
     }
-    function ensureOverview(){ if(ovSet) return; ovSet=true; renderLiveDeals(); }
+    function ensureOverview(){ if(ovSet) return; ovSet=true; renderLiveDeals(); wireTownhall(); }
 
-    // ---- Auth & initial route
+    // ---- Townhall chat
+    function wireTownhall(){
+      const body=document.getElementById('thBody'), input=document.getElementById('thInput'), send=document.getElementById('thSend'), presEl=document.getElementById('presence');
+      if(!body||!input||!send||!presEl) return;
+      const scroll=()=>{ body.scrollTop=body.scrollHeight; };
+
+      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
+        const m=snap.val(); if(!m) return;
+        const me=auth.currentUser?.uid===m.uid;
+        const wrap=document.createElement('div'); wrap.className='msg'+(me?' me':'');
+
+        const t=new Date(m.ts||Date.now());
+        const hh=String(t.getHours()).padStart(2,'0'), mm=String(t.getMinutes()).padStart(2,'0');
+
+        const meta=document.createElement('div'); meta.className='meta';
+        meta.textContent=`${m.name||'Someone'} • ${hh}:${mm}`;
+        const bubble=document.createElement('div'); bubble.className='bubble'; bubble.textContent=m.text||'';
+
+        wrap.append(meta,bubble); body.appendChild(wrap); scroll();
+      });
+
+      // presence
+      const presenceRef=db.ref('presence/global'); const myRef=presenceRef.child(auth.currentUser?.uid||'anon');
+      db.ref('.info/connected').on('value',snap=>{
+        if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
+      });
+      presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
+    }
+
+    // ---- Chips
+    function wireChips(root){
+      root.querySelectorAll('.chipBtn').forEach(ch=>{
+        const input=ch.querySelector('input');
+        const sync=()=>{ ch.classList.toggle('active', input.checked); };
+        ch.addEventListener('click', e=>{
+          if(e.target.tagName!=='INPUT'){ input.checked=!input.checked; }
+          sync();
+        });
+        sync();
+      });
+    }
+    function getChipValues(container){ return [...container.querySelectorAll('input:checked')].map(i=>i.value); }
+    function setChipValues(container, arr){
+      const set=new Set(arr||[]);
+      container.querySelectorAll('input').forEach(i=>{
+        i.checked = set.has(i.value);
+        i.closest('.chipBtn')?.classList.toggle('active', i.checked);
+      });
+    }
+
+    // ---- Read/Fill forms
+    function readWhForm(){
+      return {
+        leads:    getChipValues(document.getElementById('whSettings').querySelector('[data-name="leads"]')),
+        custom:   (document.getElementById('whCustom').value||'').trim(),
+        zips:     (document.getElementById('whZips').value||'').trim(),
+        notes:    (document.getElementById('whNotes').value||'').trim(),
+        updatedAt: Date.now()
+      };
+    }
+    function fillWhForm(data={}){
+      setChipValues(document.getElementById('whSettings').querySelector('[data-name="leads"]'), data.leads);
+      document.getElementById('whCustom').value = data.custom || '';
+      document.getElementById('whZips').value   = data.zips || '';
+      document.getElementById('whNotes').value  = data.notes || '';
+      document.getElementById('whSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
+      wireChips(document.getElementById('whSettings'));
+    }
+
+    function readCtForm(){
+      return {
+        trades:   getChipValues(document.getElementById('ctSettings').querySelector('[data-name="trades"]')),
+        workType: getChipValues(document.getElementById('ctSettings').querySelector('[data-name="workType"]')),
+        creds:    getChipValues(document.getElementById('ctSettings').querySelector('[data-name="creds"]')),
+        zips:     (document.getElementById('ctZips').value||'').trim(),
+        availability: getChipValues(document.getElementById('ctSettings').querySelector('[data-name="availability"]')),
+        notes:    (document.getElementById('ctNotes').value||'').trim(),
+        updatedAt: Date.now()
+      };
+    }
+    function fillCtForm(data={}){
+      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="trades"]'), data.trades);
+      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="workType"]'), data.workType);
+      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="creds"]'), data.creds);
+      setChipValues(document.getElementById('ctSettings').querySelector('[data-name="availability"]'), data.availability);
+      document.getElementById('ctZips').value  = data.zips || '';
+      document.getElementById('ctNotes').value = data.notes || '';
+      document.getElementById('ctSaved').textContent = data.updatedAt ? ('Saved '+new Date(data.updatedAt).toLocaleString()) : '';
+      wireChips(document.getElementById('ctSettings'));
+    }
+
+    async function save(path, obj){ await db.ref(path).set(obj); }
+    async function load(path){ const snap = await db.ref(path).get(); return snap.val() || {}; }
+
+    /* ===== God Mode helpers ===== */
+    const gmStatePath = uid => `userSettings/${uid}/wholesaler`;
+    function gmMirrorLegacy(patch){
+      return Object.assign({}, patch, {
+        leadsEnabled:      (patch.acqEnabled ?? false) || (patch.dispoEnabled ?? false),
+        acqLeadsEnabled:   patch.acqEnabled   ?? false,
+        dispoLeadsEnabled: patch.dispoEnabled ?? false,
+        leadsEnabledDispo: patch.dispoEnabled ?? false
+      });
+    }
+    async function gmSet(uid, patch){ await db.ref(gmStatePath(uid)).update(gmMirrorLegacy(patch)); }
+    async function gmGet(uid){
+      const v=(await db.ref(gmStatePath(uid)).get()).val()||{};
+      return {
+        acqEnabled:   !!(v.acqEnabled   ?? v.acqLeadsEnabled   ?? v.leadsEnabled),
+        dispoEnabled: !!(v.dispoEnabled ?? v.dispoLeadsEnabled ?? v.leadsEnabledDispo ?? false)
+      };
+    }
+    function gmShow(sel, on){ const el=$(sel); if(el) el.textContent = on ? 'ON' : 'off'; }
+    async function gmRefreshMe(){
+      const meUid = $('#gmUid').textContent.trim();
+      if(!meUid || meUid==='—') return;
+      const f = await gmGet(meUid);
+      gmShow('#meAcqState',   f.acqEnabled);
+      gmShow('#meDispoState', f.dispoEnabled);
+    }
+    async function gmRefreshTarget(){
+      const uid = $('#gmTargetUid').value.trim();
+      if(!uid) return;
+      const f = await gmGet(uid);
+      gmShow('#uidAcqState',   f.acqEnabled);
+      gmShow('#uidDispoState', f.dispoEnabled);
+      const roleSnap = await db.ref(`roles/${uid}`).get();
+      $('#gmTargetRole').value = roleSnap.val() || '';
+    }
+
+    /* ===== Directory + live counts ===== */
+    let gmUsers = {};
+    function mergeUser(uid, settings){
+      const prof = settings?.profile || {};
+      const wh   = settings?.wholesaler || {};
+      const ct   = settings?.contractor || {};
+      gmUsers[uid] = {
+        uid,
+        name: (prof.displayName||'').trim() || uid.slice(0,8),
+        email: prof.email||'',
+        acq: !!(wh.acqEnabled ?? wh.acqLeadsEnabled ?? wh.leadsEnabled),
+        dispo: !!(wh.dispoEnabled ?? wh.dispoLeadsEnabled ?? wh.leadsEnabledDispo),
+        whLeads: Array.isArray(wh.leads)? wh.leads : [],
+        whCustom: wh.custom || '',
+        zips: (wh.zips||''),
+        trades: Array.isArray(ct.trades)? ct.trades : [],
+        workType: Array.isArray(ct.workType)? ct.workType : [],
+        availability: Array.isArray(ct.availability)? ct.availability : []
+      };
+    }
+    function renderGMTable(){
+      const tbody = document.querySelector('#gmTable tbody');
+      if(!tbody) return;
+      const q = ($('#gmFilter').value||'').toLowerCase().trim();
+      const list = Object.values(gmUsers).sort((a,b)=> (a.name||'').localeCompare(b.name||''));
+      tbody.innerHTML = '';
+      list.forEach(u=>{
+        const hay = [u.uid,u.name,u.email,u.zips,(u.whLeads||[]).join(','),(u.trades||[]).join(','),(u.workType||[]).join(','),(u.availability||[]).join(','),(u.whCustom||'')].join(' ').toLowerCase();
+        if(q && !hay.includes(q)) return;
+        const tr=document.createElement('tr');
+        tr.innerHTML = `
+          <td>${u.uid}</td>
+          <td>${u.name}</td>
+          <td>${u.email||'—'}</td>
+          <td>${u.acq?'ON':'off'}</td>
+          <td>${u.dispo?'ON':'off'}</td>
+          <td>${(u.whLeads||[]).join(', ')||'—'}</td>
+          <td>${u.whCustom||'—'}</td>
+          <td>${u.zips||'—'}</td>
+          <td>${(u.trades||[]).join(', ')||'—'}</td>
+          <td>${(u.workType||[]).join(', ')||'—'}</td>
+          <td>${(u.availability||[]).join(', ')||'—'}</td>`;
+        tbody.appendChild(tr);
+      });
+
+      const total = Object.keys(gmUsers).length;
+      const acqOn = Object.values(gmUsers).filter(x=>x.acq).length;
+      const disOn = Object.values(gmUsers).filter(x=>x.dispo).length;
+      $('#gmUsersTotal').textContent = total;
+      $('#gmAcqOn').textContent = acqOn;
+      $('#gmDispoOn').textContent = disOn;
+    }
+    function wireLiveCounts(){
+      db.ref('userSettings').on('value', snap=>{
+        const all = snap.val()||{};
+        gmUsers = {};
+        Object.keys(all).forEach(uid=>mergeUser(uid, all[uid]));
+        renderGMTable();
+      });
+      db.ref('presence/global').on('value', snap=>{
+        $('#gmUsersOnline').textContent = snap.numChildren();
+      });
+      $('#gmFilter').addEventListener('input', renderGMTable);
+    }
+
+    // ---- Auth + initial route
     auth.onAuthStateChanged(async u=>{
       if(!u){ location.href='index.html'; return; }
+
+      // presence line in overview card
+      const dn = (u.displayName||'').trim();
+      const meLine = $('#meLine'); if(meLine) meLine.textContent = `${dn || (u.email||'')} — UID: ${u.uid}`;
+
+      try{
+        const profSnap = await db.ref(`userSettings/${u.uid}/profile`).get();
+        const cur = profSnap.val()||{};
+        if(!cur.email && u.email){
+          await db.ref(`userSettings/${u.uid}/profile`).update({ email: u.email });
+        }
+      }catch{}
+
+      const prof = await load(`userSettings/${u.uid}/profile`);
+      gProfile = prof || {};
+      const dispName = (gProfile.displayName || u.displayName || '').trim();
+
+      const emailEl = $('#profileEmail'); if(emailEl) emailEl.textContent = u.email || '—';
+      const dnEl = $('#displayName');    if(dnEl) dnEl.value = dispName;
+      const psEl = $('#profileSaved');   if(psEl) psEl.textContent = gProfile.updatedAt ? ('Saved '+new Date(gProfile.updatedAt).toLocaleString()) : '';
+
+      const wh = await load(`userSettings/${u.uid}/wholesaler`); fillWhForm(wh);
+      const ct = await load(`userSettings/${u.uid}/contractor`); fillCtForm(ct);
+
+      const saveWhBtn = $('#saveWh');
+      if(saveWhBtn) saveWhBtn.onclick = async ()=>{ const obj = readWhForm(); await save(`userSettings/${u.uid}/wholesaler`, obj); fillWhForm(obj); };
+
+      const saveCtBtn = $('#saveCt');
+      if(saveCtBtn) saveCtBtn.onclick = async ()=>{ const obj = readCtForm(); await save(`userSettings/${u.uid}/contractor`, obj); fillCtForm(obj); };
+
+      const saveProfBtn = $('#saveProfile');
+      if(saveProfBtn) saveProfBtn.onclick = async ()=>{
+        const name = ($('#displayName').value || '').trim();
+        const patch = { displayName: name, email: u.email||'', updatedAt: Date.now() };
+        await save(`userSettings/${u.uid}/profile`, patch);
+        try{ await u.updateProfile({ displayName: name }); }catch{}
+        gProfile = patch;
+        const psEl = $('#profileSaved'); if(psEl) psEl.textContent = 'Saved ' + new Date(patch.updatedAt).toLocaleString();
+        const meLine = $('#meLine'); if(meLine) meLine.textContent = `${name || (u.email||'')} — UID: ${u.uid}`;
+        // refresh iframe params
+        whSet=false; ctSet=false; ensureWh(); ensureCt();
+      };
+
+      // roles
+      let isAdmin = (u.email||'').toLowerCase()==='dealbankers@gmail.com';
+      try{
+        const roleSnap = await db.ref(`roles/${u.uid}`).get();
+        if((roleSnap.val()||'')==='admin') isAdmin = true;
+        const rSel = $('#meRole'); if(rSel) rSel.value = roleSnap.val() || '';
+      }catch{}
+      const meRoleSave = $('#meRoleSave');
+      if(meRoleSave) meRoleSave.onclick = async ()=>{
+        const role = $('#meRole').value || '';
+        await db.ref(`roles/${u.uid}`).set(role||null);
+        toast('Role saved');
+      };
+
+      if(isAdmin){
+        const gmCard = $('#gmCard'); if(gmCard) gmCard.style.display='block';
+        const ge=$('#gmEmail'); if(ge) ge.textContent=u.email||''; const gu=$('#gmUid'); if(gu) gu.textContent=u.uid;
+
+        await gmRefreshMe();
+        wireLiveCounts();
+
+        const a1=$('#meAcqEnable');   if(a1) a1.onclick= async()=>{ await gmSet(u.uid,{acqEnabled:true});   gmRefreshMe(); };
+        const a2=$('#meAcqDisable');  if(a2) a2.onclick= async()=>{ await gmSet(u.uid,{acqEnabled:false});  gmRefreshMe(); };
+        const d1=$('#meDispoEnable'); if(d1) d1.onclick=async()=>{ await gmSet(u.uid,{dispoEnabled:true}); gmRefreshMe(); };
+        const d2=$('#meDispoDisable');if(d2) d2.onclick=async()=>{ await gmSet(u.uid,{dispoEnabled:false});gmRefreshMe(); };
+
+        const gl=$('#gmLoad'); if(gl) gl.onclick = gmRefreshTarget;
+        const uae=$('#uidAcqEnable');   if(uae) uae.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:true});   gmRefreshTarget(); };
+        const uad=$('#uidAcqDisable');  if(uad) uad.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:false});  gmRefreshTarget(); };
+        const ude=$('#uidDispoEnable'); if(ude) ude.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:true}); gmRefreshTarget(); };
+        const udd=$('#uidDispoDisable');if(udd) udd.onclick=async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:false});gmRefreshTarget(); };
+
+        const gsr=$('#gmSaveRole'); if(gsr) gsr.onclick = async()=>{
+          const t=$('#gmTargetUid').value.trim(); if(!t) return;
+          const role=$('#gmTargetRole').value||'';
+          await db.ref(`roles/${t}`).set(role||null);
+          toast('Target role saved');
+        };
+
+        try{
+          const logoSnap = await db.ref('branding/global/logoUrl').get();
+          const url = logoSnap.val()||''; if(url){ const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; } }
+        }catch{}
+        const glb=$('#gmSaveLogo');
+        if(glb) glb.onclick = async ()=>{
+          const f = document.getElementById('gmLogoFile').files[0]; if(!f) return toast('Pick a file');
+          const ref = storage.ref().child(`branding/global/logo-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+          await ref.put(f);
+          const url = await ref.getDownloadURL();
+          await db.ref('branding/global').update({logoUrl:url, updatedAt: Date.now()});
+          const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; }
+          const msg=$('#gmLogoMsg'); if(msg) msg.textContent='Uploaded ✔';
+        };
+      }
+
       const initial = qs.get('tab') || 'overview';
       show(initial);
       if(initial==='overview') renderLiveDeals();
     });
 
-    // Header buttons
+    // Header request buttons
     const red=document.getElementById('redPhoneBtn'); if(red) red.onclick=()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need';
     const blue=document.getElementById('bluePhoneBtn'); if(blue) blue.onclick=()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request';
     const lo=document.getElementById('logoutBtn'); if(lo) lo.onclick=()=>auth.signOut().then(()=>location.href='index.html');
+  </script>
+
+  <!-- Fail-safe banner if Firebase misses -->
+  <script>
+  (function () {
+    function banner(msg){
+      try{ document.body.insertAdjacentHTML(
+        'afterbegin',
+        '<div style="position:fixed;left:0;right:0;top:0;padding:8px 12px;background:#7a1020;color:#fff;z-index:99999;font:13px/1.3 system-ui">'+
+        'GM error: '+ String(msg).replace(/[<>&]/g, s=>({ '<':'&lt;','>':'&gt;','&':'&amp;' }[s])) +
+        '</div>'
+      ); }catch(_){}
+    }
+    try{
+      const ok = !!(window.firebase && firebase.apps && firebase.apps.length);
+      if(!ok) { banner('Firebase not initialized'); return; }
+      const auth = firebase.auth?.(); const db = firebase.database?.();
+      if(!auth || !db){ banner('auth/db missing'); return; }
+    }catch(e){ banner(e.message); console.error(e); }
+  })();
   </script>
 </body>
 </html>
