@@ -39,9 +39,13 @@
 
   .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.18);
     background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+
+  /* row with tabs left, new-item buttons right */
+  .segRow{display:flex;align-items:center;justify-content:space-between;gap:10px}
   .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
   .seg button{padding:8px 12px;background:#0e2332;border:0;color:#cfe6ff;cursor:pointer}
   .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
+  .segActions{display:flex;gap:8px;flex-wrap:wrap}
 
   .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
   .hint.hidden{display:none}
@@ -59,8 +63,9 @@
   .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
   .hidden{display:none !important}
 
-  /* top-right add-ons you asked for */
-  .barAdd{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+  /* show an element only on small screens */
+  .mobileOnly{display:none !important}
+  @media (max-width:980px){ .mobileOnly{display:inline-flex !important} }
 
   .lead-wrap{padding:12px}
   .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
@@ -127,10 +132,18 @@
 
       <!-- Sticky controls -->
       <div class="sticky">
-        <div class="seg" role="tablist" aria-label="Mode">
-          <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
-          <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
+        <!-- Tabs + New buttons in one line -->
+        <div class="segRow">
+          <div class="seg" role="tablist" aria-label="Mode">
+            <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
+            <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
+          </div>
+          <div class="segActions">
+            <button id="whNewDeal" class="btn small">＋ New Deal</button>
+            <button id="whNewOffering" class="btn small">＋ New Offering</button>
+          </div>
         </div>
+
         <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
 
         <!-- Acq-only toolbars -->
@@ -139,14 +152,9 @@
           <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
           <a class="btn btn-ghost" href="#" id="actDir"  title="Directions"><span class="ico">🚗</span></a>
           <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
-          <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
+          <!-- Hidden on desktop per request; available on mobile if you want it -->
+          <a class="btn btn-ghost mobileOnly" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
           <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
-        </div>
-
-        <!-- Your request: top-right New buttons (doesn't move existing icons) -->
-        <div class="barAdd">
-          <button id="whNewDeal" class="btn small">＋ New Deal</button>
-          <button id="whNewOffering" class="btn small">＋ New Offering</button>
         </div>
 
         <div id="acqNav" class="navrow">
@@ -162,7 +170,7 @@
           <div class="body">Initializing…</div>
         </div>
 
-        <!-- Disposition panel (preview & quick-edit; no layout moves) -->
+        <!-- Disposition panel (preview & quick-edit; unchanged) -->
         <div id="dispoPane" class="section hidden" aria-live="polite">
           <div class="dispoHead">
             <h3 style="margin:2px 0">📦 Disposition</h3>
@@ -375,7 +383,6 @@
 
     async function fetchDbDispo(uidX){
       try{
-        // ✅ canonical path
         const snap = await gateDb.ref(`dispo/deals/${uidX}`).once('value');
         const obj = snap.val() || {};
         return Object.entries(obj).map(([id,d])=>{
@@ -587,7 +594,6 @@
               const id=b.getAttribute('data-del');
               if(!confirm('Delete this item?')) return;
               try{
-                // ✅ canonical path
                 await gateDb.ref(`dispo/deals/${uidParam}/${id}`).remove();
                 toast('Deleted');
                 renderDispo();
@@ -606,8 +612,6 @@
     }
 
     /* ---------------- Acquisition render + Street View (inline) + Google map ---------------- */
-
-    // geocode via OSM Nominatim (no key) to lock SV to lat/lng
     async function geocode(addr){
       if(!addr) return null;
       try{
@@ -623,12 +627,10 @@
 
     async function improveStreetViewAndMap(addr, svIframe, mapIframe){
       const hit = await geocode(addr);
-      if(!hit) return; // keep address-based fallback
+      if(!hit) return;
 
-      // Inline Street View with precise viewpoint (no button)
       svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
 
-      // Keep Google map embed, but resolve to coords for stability
       if(mapIframe){
         mapIframe.src = `https://www.google.com/maps?output=embed&q=${encodeURIComponent(hit.lat+','+hit.lon)}&z=17`;
       }
@@ -695,7 +697,6 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
-      // upgrade embeds to precise lat/lng (SV + Google map), seamlessly
       const svIframe = $('#leadCard .sv');
       const mapIframe= $('#leadCard .map');
       improveStreetViewAndMap(addr, svIframe, mapIframe);
@@ -849,9 +850,7 @@
         status:'active', createdBy: uidParam, updatedAt: Date.now(), createdAt: editingId? undefined : Date.now()
       };
       try{
-        // ✅ canonical path
         await gateDb.ref(`dispo/deals/${uidParam}/${id}`).set(payload);
-        // Admin inbox log
         await gateDb.ref('admin/inbox').push({
           ts: Date.now(),
           type: (kind==='offering' ? 'newOffering' : 'newDeal'),
