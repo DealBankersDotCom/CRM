@@ -128,45 +128,7 @@
     .stat{background:#0e2231;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-weight:800}
   </style>
 
-<!-- DealBankers Firebase bootstrap (compat, token refresh) -->
-<script>
-(function(){
-  // If modular SDK got loaded accidentally, stop and warn.
-  try {
-    if (typeof firebase === 'undefined' || !firebase?.auth) {
-      console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
-    }
-  } catch(e) {}
 
-  // Guard init: expect window.firebaseConfig to be defined in each page (already present in your app).
-  if (!window.firebase?.apps?.length) {
-    if (window.firebaseConfig) {
-      firebase.initializeApp(window.firebaseConfig);
-    } else {
-      console.error('[DealBankers] Missing window.firebaseConfig — set your firebaseConfig before this script.');
-    }
-  }
-
-  // Token refresh once on boot and on visibility changes
-  function refreshToken(){
-    var u = firebase.auth().currentUser;
-    if (u && u.getIdToken) {
-      u.getIdToken(true).catch(function(e){ console.warn('Token refresh error', e); });
-    }
-  }
-  firebase.auth().onAuthStateChanged(function(user){
-    if (user) refreshToken();
-  });
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) refreshToken();
-  });
-
-  // Simple helpers globally
-  window.db = firebase.database();
-  window.rtdbRef = function(path){ return window.db.ref(path); };
-
-})();
-</script>
 
 \1
 <body>
@@ -961,5 +923,59 @@
     }catch(e){ banner(e.message); console.error(e); }
   })();
   </script>
+<script src="config.js"></script>
+<!-- DealBankers Firebase bootstrap (compat, token refresh) -->
+<script>
+(function(){
+  // If modular SDK got loaded accidentally, stop and warn.
+  try {
+    if (typeof firebase === 'undefined' || !firebase?.auth) {
+      console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
+    }
+  } catch(e) {}
+
+  // Guard init: expect window.firebaseConfig to be defined in each page (already present in your app).
+  if (!window.firebase?.apps?.length) {
+    function initNow(){
+      try{
+        firebase.initializeApp(window.firebaseConfig);
+      }catch(e){ console.error('[DealBankers] init error', e); }
+    }
+    if (window.firebaseConfig) {
+      initNow();
+    } else {
+      // wait up to 5 seconds for config to appear
+      var tries=0, t=setInterval(function(){
+        if (window.firebaseConfig){ clearInterval(t); initNow(); }
+        if (++tries>50){ clearInterval(t); console.error('[DealBankers] Missing window.firebaseConfig after waiting.'); }
+      },100);
+    }
+    if (window.firebaseConfig) {
+      firebase.initializeApp(window.firebaseConfig);
+    } else {
+      console.error('[DealBankers] Missing window.firebaseConfig — set your firebaseConfig before this script.');
+    }
+  }
+
+  // Token refresh once on boot and on visibility changes
+  function refreshToken(){
+    var u = firebase.auth().currentUser;
+    if (u && u.getIdToken) {
+      u.getIdToken(true).catch(function(e){ console.warn('Token refresh error', e); });
+    }
+  }
+  firebase.auth().onAuthStateChanged(function(user){
+    if (user) refreshToken();
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) refreshToken();
+  });
+
+  // Simple helpers globally
+  window.db = firebase.database();
+  window.rtdbRef = function(path){ return window.db.ref(path); };
+
+})();
+</script>
 </body>
 </html>
