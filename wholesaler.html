@@ -1,4 +1,4 @@
-<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; respects DB gate) ===================== -->
+<!-- ===================== wholesaler.html (Acq + Dispo; unified New Item; capital console; mobile-aware) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -33,12 +33,14 @@
     .status{font-size:12px;color:#e8f7ff}
 
     .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.18);
-      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06)); display:flex;gap:10px;align-items:center;justify-content:space-between}
+    .segWrap{display:flex;gap:10px;align-items:center}
     .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
     .seg button{padding:8px 12px;background:#0e2332;border:0;color:#cfe6ff;cursor:pointer}
     .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
+    .newBtn{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;font-weight:900;cursor:pointer}
 
-    .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
+    .hint{font-size:12px;color:#b8cbe0}
     .hint.hidden{display:none}
 
     .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
@@ -72,6 +74,12 @@
     .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
     .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
+    /* ---------- Capital console ---------- */
+    .capWrap{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:10px 0}
+    .capCard{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#0e2231;padding:10px}
+    .capLabel{font-size:12px;color:#bcd3e7}
+    .capValue{font-weight:900;font-size:18px}
+
     /* ---------- Dispo-only UI ---------- */
     .dispoHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
     .dispoCTA{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
@@ -103,6 +111,10 @@
     #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
       color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
 
+    /* Hide directions button on desktop; show only on mobile/tablet */
+    @media (min-width:981px){ #actDir{display:none !important} }
+    @media (max-width:980px){ #actDir{display:inline-flex} }
+
     @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
   </style>
 </head>
@@ -119,13 +131,18 @@
 
       <!-- Sticky controls -->
       <div class="sticky">
-        <div class="seg" role="tablist" aria-label="Mode">
-          <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
-          <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
+        <div class="segWrap">
+          <div class="seg" role="tablist" aria-label="Mode">
+            <button id="tabAcq"  class="active" role="tab" aria-selected="true">Acq</button>
+            <button id="tabDispo" role="tab" aria-selected="false">Dispo</button>
+          </div>
+          <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>.</div>
         </div>
-        <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
+        <button id="newItemTop" class="newBtn" title="Create new Deal or Offering">＋ New Item</button>
+      </div>
 
-        <!-- Acq-only toolbars -->
+      <!-- Acq toolbars -->
+      <div class="lead-wrap">
         <div id="acqBar" class="bar" aria-label="Actions">
           <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
           <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
@@ -134,15 +151,12 @@
           <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
           <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
         </div>
-
         <div id="acqNav" class="navrow">
           <button class="btn btn-ghost" id="btnPrev"   title="Prev">◀</button>
           <button class="btn btn-ghost" id="btnRandom" title="Random">🎲</button>
           <button class="btn btn-green" id="btnNext"   title="Next">▶</button>
         </div>
-      </div>
 
-      <div class="lead-wrap">
         <!-- Acquisition panel -->
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
@@ -153,16 +167,18 @@
           <div class="dispoHead">
             <h3 style="margin:2px 0">📦 Disposition</h3>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <a class="btn small" id="newDealBtn"      href="#">＋ New Deal</a>
-              <a class="btn small" id="newOfferingBtn"  href="#">＋ New Offering</a>
+              <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Post to Craigslist</a>
+              <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">Post to FB Marketplace</a>
+              <a class="btn" id="linkShareAll" href="#" title="Copy a shareable link">Link Share</a>
               <a class="btn btn-green" href="dispo.html" target="_blank" rel="noopener">📞 Buyers List Queue</a>
             </div>
           </div>
 
-          <div class="dispoCTA">
-            <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Post to Craigslist</a>
-            <a class="btn" href="https://www.facebook.com/marketplace/create/item" target="_blank" rel="noopener">Post to FB Marketplace</a>
-            <a class="btn" id="linkShareAll" href="#" title="Copy a shareable link">Link Share</a>
+          <!-- Capital Console (top of Dispo) -->
+          <div id="capConsole" class="capWrap">
+            <div class="capCard"><div class="capLabel">Capital Open</div><div id="capOpen" class="capValue">$—</div></div>
+            <div class="capCard"><div class="capLabel">Turn</div><div id="capTurn" class="capValue">—</div></div>
+            <div class="capCard"><div class="capLabel">Commodity</div><div id="capComm" class="capValue">—</div></div>
           </div>
 
           <!-- Desktop-only 2-col layout: left cards, right preview -->
@@ -231,8 +247,8 @@
     <div style="display:grid;gap:8px">
       <label>Kind
         <select id="niKind" class="textarea" style="min-height:auto;height:38px">
-          <option value="deal">Deal</option>
-          <option value="offering">Offering</option>
+          <option value="deal">Deal (needs photos)</option>
+          <option value="offering">Offering (PDF/HTML memo)</option>
         </select>
       </label>
       <label>Title <input id="niTitle" class="textarea" style="min-height:auto;height:38px"/></label>
@@ -241,11 +257,11 @@
         <label>Price <input id="niPrice" class="textarea" style="min-height:auto;height:38px"/></label>
         <label>Terms <input id="niTerms" class="textarea" style="min-height:auto;height:38px"/></label>
       </div>
-      <label>Memo URL (PDF or HTML; Offerings only, optional)
+      <label id="memoRow">Memo URL (PDF or HTML; Offerings only, optional)
         <input id="niMemo" class="textarea" style="min-height:auto;height:38px" placeholder="https://...pdf or /offering-memoX.html"/>
       </label>
-      <label>Notes <textarea id="niNotes" rows="3" class="textarea"></textarea></label>
-      <label>Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
+      <label id="photoRow">Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
+      <label>Notes <textarea id="niNotes" rows="3" class="textarea" placeholder="What makes this compelling?"></textarea></label>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button id="niSave"  class="btn btn-green">Save</button>
@@ -291,6 +307,18 @@
       } else {
         loadLeadsJS();
       }
+
+      // Capital console fetch (optional)
+      gateDb.ref('capital/summary').once('value').then(s=>{
+        const v=s.val()||{};
+        document.getElementById('capOpen').textContent = v.open || '$300k';
+        document.getElementById('capTurn').textContent = v.turn || '7–10 days';
+        document.getElementById('capComm').textContent = v.commodity || '—';
+      }).catch(()=>{
+        document.getElementById('capOpen').textContent='$300k';
+        document.getElementById('capTurn').textContent='7–10 days';
+        document.getElementById('capComm').textContent='—';
+      });
     }).catch(()=>{
       document.getElementById('leadCard').innerHTML =
         '<div class="body">Could not verify access right now. Try again shortly.</div>';
@@ -339,62 +367,21 @@
     function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
-    /* ---------- Dispo items (script + DB merge; Offerings allow PDF memos) ---------- */
+    /* ---------- Dispo items (script + DB merge) ---------- */
     let dispoItems=null, dispoLoaded=false;
 
     const fallbackDispo = [
-      {
-        kind: 'deal',
-        id: '4319-san-luis-st',
-        title: '4319 San Luis St, San Antonio, TX 78237',
-        address: '4319 San Luis St, San Antonio, TX 78237',
-        price: '$65,000 ask',
-        terms: 'Wholesale assignment • As-is',
-        memo: 'offering-memo3.html',
-        notes: 'RM-4 zoning • 9,975 sqft lot • small structure built 2003 • water on site; electric setup not completed',
-        photos: [
+      { kind:'deal', id:'4319-san-luis-st', title:'4319 San Luis St, San Antonio, TX 78237', address:'4319 San Luis St, San Antonio, TX 78237', price:'$65,000 ask', terms:'Wholesale assignment • As-is', memo:'offering-memo3.html',
+        notes:'RM-4 zoning • 9,975 sqft lot • small structure built 2003 • water on site; electric setup not completed',
+        photos:[
           'images/deals/san-luis-st/532285905_1525203368622964_6419601791457539095_n.jpg',
-          'images/deals/san-luis-st/532430422_1529678055144004_937426837220792776_n.jpg',
-          'images/deals/san-luis-st/532490619_2500043363693663_3909442154221395932_n.jpg',
-          'images/deals/san-luis-st/533251127_1259617138716800_3246275306679859470_n.jpg',
-          'images/deals/san-luis-st/533367927_1861201098077542_138298872422090400_n.jpg',
-          'images/deals/san-luis-st/533401545_1232983395178499_3448834856308498546_n.jpg',
-          'images/deals/san-luis-st/533461086_1517743442544727_6437480492578431589_n.jpg',
-          'images/deals/san-luis-st/533954852_1756139381929700_9146663009440742970_n.jpg',
-          'images/deals/san-luis-st/533957793_1043892891157948_6687460725094961623_n.jpg',
-          'images/deals/san-luis-st/534146994_1121254369902856_8599715682702529823_n.jpg',
-          'images/deals/san-luis-st/534274626_1465325141273191_3756511487997878319_n.jpg',
-          'images/deals/san-luis-st/534371650_1371007245025655_3036220784647842105_n.jpg',
-          'images/deals/san-luis-st/534681579_1416383389477377_4000173112539682162_n.jpg',
-          'images/deals/san-luis-st/534979928_1700927480622947_2845444756307509404_n.jpg',
-          'images/deals/san-luis-st/535223210_2133973067113201_5017690366641265882_n.jpg',
-          'images/deals/san-luis-st/535467155_1438479670538508_4235579294056462410_n.jpg',
-          'images/deals/san-luis-st/535724533_1653304598682827_5551748086010323051_n.jpg',
-          'images/deals/san-luis-st/536159577_2524052531320708_2500621445002879585_n.jpg'
-        ]
-      },
-      {
-        kind:'deal',
-        id:'3014-el-paso-st',
-        title:'3014 El Paso St, San Antonio, TX 78207',
-        address:'3014 El Paso St, San Antonio, TX 78207',
-        price:'$155,000 ask',
-        terms:'Assignment $12k • As-is',
-        memo:'offering-memo2.html',
-        share:'https://www.facebook.com/marketplace/create/item',
-        notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024'
-      },
-      {
-        kind:'offering',
-        id:'virgin-d6-lift',
-        title:'Virgin D6 Lift — FOB Houston',
-        address:'—',
-        price:'Capital Need $300k',
-        terms:'Repay 7–10 days • 100M gal',
-        memo:'offering-memo1.html',
-        share:'https://www.craigslist.org/',
-        notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.'
-      }
+          'images/deals/san-luis-st/533401545_1232983395178499_3448834856308498546_n.jpg'
+        ]},
+      { kind:'deal', id:'3014-el-paso-st', title:'3014 El Paso St, San Antonio, TX 78207', address:'3014 El Paso St, San Antonio, TX 78207',
+        price:'$155,000 ask', terms:'Assignment $12k • As-is', memo:'offering-memo2.html',
+        notes:'2/1 • 948 sqft • 1945 build • pier foundation • recent remodel 2024' },
+      { kind:'offering', id:'virgin-d6-lift', title:'Virgin D6 Lift — FOB Houston', address:'—', price:'Capital Need $300k', terms:'Repay 7–10 days • 100M gal',
+        memo:'offering-memo1.html', notes:'Private money / fuel trade offering. Use Submit Interest for soft commits.' }
     ];
 
     async function fetchDbDispo(uidX){
@@ -416,9 +403,7 @@
             createdBy: d.createdBy || uidX
           };
         });
-      }catch{
-        return [];
-      }
+      }catch{ return []; }
     }
 
     async function mergeDispoData(){
@@ -427,7 +412,7 @@
       const byId = new Map();
       [...dbItems, ...base].forEach(raw=>{
         const id = raw.id || slugify(raw.title||raw.address||'item');
-        if(!byId.has(id)) byId.set(id, {...raw, id}); // user DB takes precedence
+        if(!byId.has(id)) byId.set(id, {...raw, id});
       });
       return Array.from(byId.values());
     }
@@ -453,31 +438,27 @@
     const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
     function getPhotos(it){
       try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
-      return Array.isArray(it?.photos)?it.photos:[]; // optional photos from script or DB
+      return Array.isArray(it?.photos)?it.photos:[];
     }
     function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
 
     function isPdf(url){ try{ return /\.pdf($|\?)/i.test(new URL(url, location.href).pathname); }catch{return /\.pdf($|\?)/i.test(url||'');} }
     function memoViewer(url){
       if(isPdf(url)) return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
-      return url; // assume HTML memo page
+      return url;
     }
 
     let carIdx=0, carTimer=null, carRun=true;
     function renderPreview(it){
-      carIdx = 0;
-      carRun = true;
-      previewItem=it;
+      carIdx = 0; carRun = true; previewItem=it;
       pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
-      const photos=getPhotos(it);
-      pvCar.innerHTML='';
+      const photos=getPhotos(it); pvCar.innerHTML='';
 
       if(!photos.length && it?.memo){
         const src = memoViewer(it.memo);
         pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`;
         return;
       }
-
       if(!photos.length){
         pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs${it?.memo? ' — memo available via Open Memo button.' : '.'}</div>`;
         return;
@@ -555,7 +536,7 @@
 
             const absMemo = (()=>{ try{
               return it.memo ? (it.memo.startsWith('http') ? it.memo : new URL(it.memo, location.href).href) : '';
-            } catch(_){ return it.memo||''; } })<>();
+            } catch(_){ return it.memo||''; } })();
 
             const el=document.createElement('div'); el.className='dealcard';
             el.innerHTML=`
@@ -609,8 +590,7 @@
               if(!confirm('Delete this item?')) return;
               try{
                 await gateDb.ref(`deals/${uidParam}/${id}`).remove();
-                toast('Deleted');
-                renderDispo();
+                toast('Deleted'); renderDispo();
               }catch{ alert('Could not delete right now.'); }
             });
           });
@@ -625,9 +605,7 @@
       });
     }
 
-    /* ---------------- Acquisition render + Street View (inline) + Google map ---------------- */
-
-    // geocode via OSM Nominatim (no key) to lock SV to lat/lng
+    /* ---------------- Acquisition render + Street View + Google map ---------------- */
     async function geocode(addr){
       if(!addr) return null;
       try{
@@ -643,7 +621,7 @@
 
     async function improveStreetViewAndMap(addr, svIframe, mapIframe){
       const hit = await geocode(addr);
-      if(!hit) return; // keep address-based fallback
+      if(!hit) return;
       svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
       if(mapIframe){
         mapIframe.src = `https://www.google.com/maps?output=embed&q=${encodeURIComponent(hit.lat+','+hit.lon)}&z=17`;
@@ -785,6 +763,53 @@
     $('#tabAcq').onclick  = ()=>switchTo('acq');
     $('#tabDispo').onclick= ()=>switchTo('dispo');
 
+    // "New Item" top button opens editor (Deal/Offering)
+    const newDlg = $('#newItemDlg');
+    function openEditor(it){
+      $('#newItemTitle').textContent = it?.id ? (it.kind==='offering' ? 'Edit Offering' : 'Edit Deal') : 'New Item';
+      $('#niKind').value  = it?.kind || 'deal';
+      $('#niTitle').value = it?.title || '';
+      $('#niAddr').value  = it?.address || '';
+      $('#niPrice').value = it?.price || '';
+      $('#niTerms').value = it?.terms || '';
+      $('#niMemo').value  = it?.memo  || '';
+      $('#niNotes').value = it?.notes || '';
+      $('#niPhotos').value = (Array.isArray(it?.photos)?it.photos:[]).filter(u=>!/^data:/.test(u)).join(', ');
+      newDlg.dataset.editing = it?.id || '';
+      updateKindRows();
+      newDlg.showModal();
+    }
+    function updateKindRows(){
+      const k=$('#niKind').value;
+      $('#memoRow').style.display  = (k==='offering')?'block':'none';
+      $('#photoRow').style.display = (k==='deal')?'block':'none';
+    }
+    document.getElementById('niKind').addEventListener('change', updateKindRows);
+
+    document.getElementById('newItemTop').onclick = ()=>openEditor(null);
+    document.getElementById('niClose').onclick    = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
+
+    $('#niSave').onclick  = async ()=>{
+      const kind  = $('#niKind').value;
+      const title = $('#niTitle').value.trim();
+      if(!title) return alert('Title is required');
+      const addr  = $('#niAddr').value.trim();
+      const price = $('#niPrice').value.trim();
+      const terms = $('#niTerms').value.trim();
+      const memo  = $('#niMemo').value.trim();
+      const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
+      const notes = $('#niNotes').value.trim();
+
+      const editingId = newDlg.dataset.editing || null;
+      const id = editingId || slugify(title || addr || (kind+'-'+Date.now()));
+      const payload = { id, kind, title, address: addr, location: addr, price, terms, memo, photos, notes, status:'active', createdBy: uidParam, updatedAt: Date.now() };
+      try{
+        await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
+        newDlg.dataset.editing=''; toast(editingId ? 'Updated' : 'Saved'); newDlg.close();
+        if(mode==='dispo') renderDispo();
+      }catch{ alert('Could not save right now.'); }
+    };
+
     // share all
     $('#linkShareAll').addEventListener('click',e=>{
       e.preventDefault();
@@ -806,65 +831,6 @@
       if(document.readyState==='loading'){ document.addEventListener('DOMContentLoaded',()=>render(0)); }
       else { render(0); }
     }
-
-    /* ---- Show/hide Memo row when kind changes (Offerings only) ---- */
-    function updateMemoVisibility(){
-      const kindEl = document.getElementById('niKind');
-      const memoLabel = document.getElementById('niMemo')?.closest('label');
-      if(!kindEl || !memoLabel) return;
-      memoLabel.style.display = (kindEl.value === 'offering') ? 'block' : 'none';
-    }
-    document.addEventListener('DOMContentLoaded', updateMemoVisibility);
-    document.getElementById('niKind').addEventListener('change', updateMemoVisibility);
-
-    /* ---- New item (Deal / Offering) wiring ---- */
-    const newDlg = $('#newItemDlg');
-    function openEditor(it){
-      $('#newItemTitle').textContent = (it.kind==='offering' ? 'Edit Offering' : 'Edit Deal');
-      $('#niKind').value  = it.kind || 'deal';
-      $('#niTitle').value = it.title || '';
-      $('#niAddr').value  = it.address || '';
-      $('#niPrice').value = it.price || '';
-      $('#niTerms').value = it.terms || '';
-      $('#niMemo').value  = it.memo  || '';
-      $('#niNotes').value = it.notes || '';
-      $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[])
-        .filter(u=>!/^data:/.test(u)).join(', ');
-      newDlg.dataset.editing = it.id || slugify(it.title||it.address||'item');
-      newDlg.showModal();
-      updateMemoVisibility();
-    }
-
-    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
-    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
-    $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
-
-    $('#niSave').onclick  = async ()=>{
-      const kind  = $('#niKind').value;
-      const title = $('#niTitle').value.trim();
-      if(!title) return alert('Title is required');
-      const addr  = $('#niAddr').value.trim();
-      const price = $('#niPrice').value.trim();
-      const terms = $('#niTerms').value.trim();
-      const memo  = $('#niMemo').value.trim();
-      const notes = $('#niNotes').value.trim();
-      const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
-
-      const editingId = newDlg.dataset.editing || null;
-      const id = editingId || slugify(title || addr || (kind+'-'+Date.now()));
-      const payload = {
-        id, kind, title, address: addr, location: addr,
-        price, terms, memo, notes, photos,
-        status:'active', createdBy: uidParam, updatedAt: Date.now()
-      };
-      try{
-        await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
-        newDlg.dataset.editing='';
-        toast(editingId ? 'Updated' : 'Saved');
-        newDlg.close();
-        renderDispo();
-      }catch{ alert('Could not save right now.'); }
-    };
   </script>
 </body>
 </html>
