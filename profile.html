@@ -1,4 +1,4 @@
-<!-- ======================== profile.html (Overview + Announcements + Settings + GM) ======================== -->
+<!-- ======================== profile.html (Overview + Portals + Settings + Admin Directory) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -8,13 +8,14 @@
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <meta name="robots" content="noindex"/>
 
-  <!-- Firebase compat SDKs -->
+  <!-- Firebase compat SDKs (pin one version across app) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-  <!-- Your config (MUST be before our code) -->
-  <script src="config.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
+
+  <!-- Your firebaseConfig MUST define window.firebaseConfig -->
+  <script src="config.js?v=2025-08-25"></script>
 
   <style>
     :root{
@@ -32,28 +33,41 @@
         linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);
       min-height:100vh; padding:14px;
     }
+    #fbBanner{
+      position:fixed; left:0; right:0; top:0; padding:8px 12px;
+      background:#7a1020; color:#fff; z-index:9999; font:13px/1.3 system-ui;
+      display:none
+    }
     .shell{max-width:1200px;margin:0 auto;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
       border:1px solid var(--line); border-radius:20px; box-shadow:var(--shadow)}
     header{display:flex;align-items:center;justify-content:space-between;padding:12px 14px;border-bottom:1px solid var(--line)}
     .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:40px;height:40px;border-radius:10px;object-fit:cover}
     .brand h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe0f2}
+
     .hdr-actions{display:flex;gap:10px;align-items:center}
-    .pill{width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;color:#fff;font-size:20px;cursor:pointer;box-shadow:0 8px 24px rgba(0,0,0,.35)}
+    .pill{
+      width:44px;height:44px;border-radius:50%;border:none;display:inline-flex;align-items:center;justify-content:center;
+      color:#fff; font-size:20px; cursor:pointer; box-shadow:0 8px 24px rgba(0,0,0,.35)
+    }
     .pill.red{background:linear-gradient(180deg,#ff3b3b,#b30000)}
     .pill.blue{background:linear-gradient(180deg,#3b9eff,#0049b3)}
     .btn{padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:#0f1a24;color:#cfe2f3;cursor:pointer}
     .btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a); color:#211a05; border:none; font-weight:800}
     .btn.green{background:linear-gradient(180deg,#26cf84,#1a9b61); color:#fff; border:none; font-weight:800}
     .btn.ghost{background:#0e2433}
+
     .tabs{display:flex;gap:8px;padding:10px 12px 0;flex-wrap:wrap}
     .tab{padding:10px 14px;border-radius:999px;border:1px solid var(--line);background:#0f1a24;color:#cde1f3;cursor:pointer}
     .tab.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
     .panel{padding:12px}
     .card{background:#10222e;border:1px solid var(--line);border-radius:var(--r);padding:12px}
+
     .iframe-wrap{border:1px solid var(--line);border-radius:var(--r);overflow:hidden;background:#0b141b;height:85vh;min-height:620px}
     .iframe-wrap iframe{width:100%;height:100%;border:0}
     @media (max-width:900px){ .iframe-wrap{height:90vh;min-height:680px} }
+
+    /* Overview */
     .overview-grid{display:grid;gap:12px;grid-template-columns:1.1fr 1.4fr}
     .announce{border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.025));padding:14px}
     .ann-head{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -68,6 +82,12 @@
     .offerMeta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
     .offerMeta .chip{background:#0e2231;border-color:#21435a}
     .chip{user-select:none; padding:6px 10px; border-radius:999px; border:1px solid var(--line); background:#0e2231; font-size:12px}
+    .thumbs{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px}
+    .thumbs img{width:100%;height:90px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#0b141b}
+    @media (max-width:980px){ .overview-grid{grid-template-columns:1fr} .kpiRow{grid-template-columns:1fr 1fr 1fr} }
+    @media (max-width:620px){ .kpiRow{grid-template-columns:1fr 1fr} }
+
+    /* Townhall */
     .townhall{display:grid;grid-template-rows:auto 1fr auto; gap:10px; height:62vh; min-height:420px}
     .th-head{display:flex;align-items:center;justify-content:space-between}
     .th-body{border:1px solid var(--line);border-radius:14px;background:#0f1a24;overflow:auto;padding:12px}
@@ -78,6 +98,8 @@
     .th-input{display:flex;gap:8px}
     .th-input input{flex:1;border:1px solid var(--line);border-radius:12px;padding:12px;background:#0f1a24;color:#eaf1f6}
     .th-input button{min-width:96px;border-radius:12px;border:1px solid var(--line);background:linear-gradient(180deg,#26cf84,#1a9b61);color:#fff;cursor:pointer}
+
+    /* Settings form */
     .settings-grid{display:grid;grid-template-columns:1fr 1fr; gap:12px}
     @media (max-width:960px){ .settings-grid{grid-template-columns:1fr} }
     .section{border:1px solid var(--line); border-radius:14px; padding:12px; background:#0f1a24}
@@ -94,6 +116,8 @@
     .textarea{min-height:96px; resize:vertical}
     .small{font-size:12px; color:#9fb3c7}
     .badge{display:inline-flex; align-items:center; gap:6px; border:1px solid var(--line); border-radius:999px; padding:6px 10px; background:#0e1b27; font-size:12px}
+
+    /* GM table */
     .table{width:100%;border-collapse:collapse}
     .table th,.table td{border:1px solid var(--line);padding:8px;text-align:left;font-size:13px}
     .table th{background:#0f2434}
@@ -103,13 +127,17 @@
     .stat{background:#0e2231;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-weight:800}
   </style>
 </head>
+
 <body>
+  <div id="fbBanner"></div>
+
   <div class="shell">
     <header>
       <div class="brand">
         <img src="icon (1).jpg" alt="DealBankers"/>
         <h1>DEALBANKERS • PROFILE</h1>
       </div>
+
       <div class="hdr-actions">
         <button class="pill red"  id="redPhoneBtn"  title="Immediate Need">☎</button>
         <button class="pill blue" id="bluePhoneBtn" title="Standard Request">☎</button>
@@ -121,8 +149,6 @@
       <button class="tab active" data-tab="overview">Overview</button>
       <button class="tab" data-tab="wholesaler">Wholesaler</button>
       <button class="tab" data-tab="contractor">Contractor</button>
-      <button class="tab" data-tab="realtor">Realtor</button>
-      <button class="tab" data-tab="investor">Investor</button>
       <button class="tab" data-tab="settings">Settings</button>
     </nav>
 
@@ -178,9 +204,6 @@
         <div class="iframe-wrap"><iframe id="ctFrame" src="about:blank" title="Contractor Portal"></iframe></div>
       </div>
 
-      <div class="card" data-panel="realtor"  style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Realtor portal coming soon.</p></div>
-      <div class="card" data-panel="investor" style="display:none"><p class="small" style="margin:0;color:#9fb3c7">Investor portal coming soon.</p></div>
-
       <!-- SETTINGS + GOD MODE -->
       <div class="card" data-panel="settings" style="display:none">
         <div class="settings-grid">
@@ -200,7 +223,7 @@
             </div>
           </div>
 
-          <!-- Wholesaler profile -->
+          <!-- Wholesaler profile (user-facing) -->
           <div class="section" id="whSettings">
             <h3>⚙️ Wholesaler Profile</h3>
             <div class="row">
@@ -232,7 +255,7 @@
             </div>
           </div>
 
-          <!-- Contractor profile -->
+          <!-- Contractor profile (user-facing) -->
           <div class="section" id="ctSettings">
             <h3>🛠️ Contractor Profile</h3>
             <div class="row">
@@ -292,7 +315,7 @@
           </div>
         </div>
 
-        <!-- God Mode (Admin) – no wholesaler/contractor edit forms here, just roles/toggles + directory -->
+        <!-- God Mode (Admin) -->
         <div class="section" id="gmCard" style="margin-top:12px; display:none">
           <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap">
             <h3 style="margin:0">🧰 God Mode (Admin)</h3>
@@ -400,23 +423,25 @@
   </div>
 
   <script>
-    // ---------- ONE guarded Firebase init (prevents flashing) ----------
-    (function initFirebaseOnce(){
-      if(!window.firebaseConfig){ console.error('Missing firebaseConfig'); return; }
-      if(!firebase.apps.length){ firebase.initializeApp(window.firebaseConfig); }
+    /* ---------- Firebase init (compat) ---------- */
+    (function initFirebase(){
+      const banner = document.getElementById('fbBanner');
+      const say = (msg)=>{ banner.textContent = 'Firebase init error: ' + msg; banner.style.display='block'; };
+      try{
+        if(!window.firebaseConfig){ say('Missing window.firebaseConfig — check config.js'); return; }
+        if(!firebase?.apps?.length){ firebase.initializeApp(window.firebaseConfig); }
+        window.auth = firebase.auth();
+        window.db   = firebase.database();
+        window.store= firebase.storage();
+      }catch(e){ console.error(e); say(e.message||String(e)); }
     })();
 
-    const auth = firebase.auth();
-    const db   = firebase.database();
-    const storage = firebase.storage();
-
+    /* ---------- Small helpers ---------- */
     const $=s=>document.querySelector(s);
     const tabs=[...document.querySelectorAll('.tab')];
     const panels=[...document.querySelectorAll('[data-panel]')];
     const qs=new URL(location.href).searchParams;
     const toast=(t)=>{ let el=document.getElementById('gmToast'); if(!el){ el=document.createElement('div'); el.id='gmToast'; el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);z-index:9999;display:none'; document.body.appendChild(el); } el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1500); };
-
-    let gProfile=null;
 
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
@@ -430,38 +455,29 @@
       const b=e.target.closest('.tab'); if(!b) return; show(b.dataset.tab);
     });
 
-    let whSet=false, ctSet=false, ovSet=false;
-    function encodedName(){
+    let gProfile=null, whSet=false, ctSet=false, ovSet=false;
+
+    function safeUid(){ return auth.currentUser?.uid ? encodeURIComponent(auth.currentUser.uid) : 'anon'; }
+    function safeName(){
       const n = (gProfile?.displayName || auth.currentUser?.displayName || '').trim();
-      return encodeURIComponent(n);
+      return encodeURIComponent(n || 'User');
     }
     function ensureWh(){
-      if(whSet) return; whSet=true;
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      const name=encodedName();
-      const f=$('#whFrame'); if(f) f.src=`wholesaler.html?uid=${uid}&name=${name}`;
+      if(whSet || !auth.currentUser) return; whSet=true;
+      const f=$('#whFrame'); if(f) f.src=`wholesaler.html?uid=${safeUid()}&name=${safeName()}`;
     }
     function ensureCt(){
-      if(ctSet) return; ctSet=true;
-      const uid=encodeURIComponent(auth.currentUser?.uid||'anon');
-      const name=encodedName();
-      const f=$('#ctFrame'); if(f) f.src=`contractor.html?uid=${uid}&name=${name}`;
+      if(ctSet || !auth.currentUser) return; ctSet=true;
+      const f=$('#ctFrame'); if(f) f.src=`contractor.html?uid=${safeUid()}&name=${safeName()}`;
     }
 
-    // Live deals in Overview
+    /* ---------- Live deals on Overview (PUBLIC FEED) ---------- */
     async function fetchLiveDeals(limit=12){
-      const snap = await db.ref('dispo/deals').get();
+      const snap = await db.ref('live/deals').get();
       const all = snap.val()||{};
-      const flat=[];
-      Object.keys(all).forEach(uid=>{
-        const o=all[uid]||{};
-        Object.keys(o).forEach(id=>{
-          const d=o[id];
-          if(d && d.shareLive){ flat.push({...d, uid}); }
-        });
-      });
-      flat.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-      return flat.slice(0,limit);
+      const list = Object.keys(all).map(id => ({ id, ...all[id] }));
+      list.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+      return list.slice(0,limit);
     }
     async function renderLiveDeals(){
       const list = await fetchLiveDeals();
@@ -477,9 +493,9 @@
           <div class="offerTitle">${(d.title||'Untitled')}</div>
           <div class="offerMeta">
             ${d.price?`<span class="chip">${d.price}</span>`:''}
-            ${d.addr?`<span class="chip">${d.addr}</span>`:''}
-            <span class="chip">${d.type||'deal'}</span>
-            <span class="chip">${d.shareLive?'LIVE':'—'}</span>
+            ${d.address?`<span class="chip">${d.address}</span>`:''}
+            <span class="chip">${d.kind||'deal'}</span>
+            <span class="chip">${'LIVE'}</span>
           </div>
           ${Array.isArray(d.photos)&&d.photos.length?`
             <div class="thumbs">
@@ -491,13 +507,15 @@
     }
     function ensureOverview(){ if(ovSet) return; ovSet=true; renderLiveDeals(); wireTownhall(); }
 
-    // Townhall
+    /* ---------- Townhall + Presence ---------- */
     function wireTownhall(){
       const body=document.getElementById('thBody'), input=document.getElementById('thInput'), send=document.getElementById('thSend'), presEl=document.getElementById('presence');
       if(!body||!input||!send||!presEl) return;
       const scroll=()=>{ body.scrollTop=body.scrollHeight; };
 
-      db.ref('townhall/messages').limitToLast(100).on('child_added',snap=>{
+      // Messages (read)
+      const roomRef = db.ref('townhall/messages');
+      roomRef.limitToLast(100).on('child_added',snap=>{
         const m=snap.val(); if(!m) return;
         const me=auth.currentUser?.uid===m.uid;
         const wrap=document.createElement('div'); wrap.className='msg'+(me?' me':'');
@@ -512,6 +530,26 @@
         wrap.append(meta,bubble); body.appendChild(wrap); scroll();
       });
 
+      // Send (button + Enter) with light throttling
+      let lastSend=0;
+      function sendMessage(){
+        const u=auth.currentUser;
+        const text=(input.value||'').trim();
+        if(!u || !text) return;
+        const now=Date.now();
+        if(now-lastSend<800) return;
+        lastSend=now;
+        roomRef.push({
+          uid:u.uid,
+          name:(u.displayName||u.email||'Anon'),
+          text,
+          ts:firebase.database.ServerValue.TIMESTAMP
+        }).then(()=>{ input.value=''; });
+      }
+      send.addEventListener('click', sendMessage);
+      input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
+
+      // Presence
       const presenceRef=db.ref('presence/global'); const myRef=presenceRef.child(auth.currentUser?.uid||'anon');
       db.ref('.info/connected').on('value',snap=>{
         if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
@@ -519,7 +557,7 @@
       presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
     }
 
-    // -------- Robust chip wiring ----------
+    /* ---------- Robust chip wiring ---------- */
     function initChipContainer(container){
       if(!container || container.dataset.wired==="1") return;
       container.dataset.wired="1";
@@ -544,7 +582,6 @@
         i.closest('.chipBtn')?.classList.toggle('active', i.checked);
       });
     }
-
     function getChipValues(container){ return [...container.querySelectorAll('input[type="checkbox"]:checked')].map(i=>i.value); }
     function setChipValues(container, arr){
       const set=new Set(arr||[]);
@@ -554,7 +591,7 @@
       });
     }
 
-    // Wholesaler form read/fill
+    /* ---------- Forms (read/fill) ---------- */
     function readWhForm(){
       const leadBox = document.getElementById('whLeadChips');
       return {
@@ -575,7 +612,6 @@
       initChipContainer(leadBox);
     }
 
-    // Contractor form read/fill
     function readCtForm(){
       const trades = document.getElementById('ctTradesChips');
       const work   = document.getElementById('ctWorkChips');
@@ -612,7 +648,7 @@
     async function save(path, obj){ await db.ref(path).set(obj); }
     async function load(path){ const snap = await db.ref(path).get(); return snap.val() || {}; }
 
-    /* ===== God Mode helpers ===== */
+    /* ---------- God Mode helpers (no profile editors here) ---------- */
     const gmStatePath = uid => `userSettings/${uid}/wholesaler`;
     function gmMirrorLegacy(patch){
       return Object.assign({}, patch, {
@@ -672,7 +708,7 @@
       }catch(e){ console.warn(e); }
     }
 
-    /* ===== Directory + live counts (shows the chosen settings) ===== */
+    /* ---------- Directory + live counts ---------- */
     let gmUsers = {};
     function mergeUser(uid, settings){
       const prof = settings?.profile || {};
@@ -732,14 +768,23 @@
         $('#gmUsersOnline').textContent = snap.numChildren();
       });
       $('#gmFilter').addEventListener('input', renderGMTable);
+
+      // Click UID to load into the "by UID" editor
+      document.getElementById('gmTable').addEventListener('click', (e)=>{
+        const cell = e.target.closest('td'); if(!cell) return;
+        const row = cell.parentElement;
+        const uid = row.firstElementChild?.textContent?.trim();
+        if (uid) { $('#gmTargetUid').value = uid; gmRefreshTarget(); toast(`Loaded ${uid.slice(0,8)}`); }
+      });
     }
 
-    // Auth + initial route
+    /* ---------- Auth + initial route ---------- */
     auth.onAuthStateChanged(async u=>{
       if(!u){ location.href='index.html'; return; }
 
-      const meLine = $('#meLine'); if(meLine) meLine.textContent = `${(u.displayName||u.email||'') } — UID: ${u.uid}`;
+      const meLine = $('#meLine'); if(meLine) meLine.textContent = `${(u.displayName||u.email||'')} — UID: ${u.uid}`;
 
+      // Store email in profile once
       try{
         const profSnap = await db.ref(`userSettings/${u.uid}/profile`).get();
         const cur = profSnap.val()||{};
@@ -761,9 +806,15 @@
       const wh = await load(`userSettings/${u.uid}/wholesaler`); fillWhForm(wh);
       const ct = await load(`userSettings/${u.uid}/contractor`); fillCtForm(ct);
 
-      $('#saveWh').onclick = async ()=>{ try{ const obj=readWhForm(); await save(`userSettings/${u.uid}/wholesaler`, obj); fillWhForm(obj); toast('Wholesaler Profile saved'); }catch(e){ toast('Save failed: '+(e.message||e)); } };
-      $('#saveCt').onclick = async ()=>{ try{ const obj=readCtForm(); await save(`userSettings/${u.uid}/contractor`, obj); fillCtForm(obj); toast('Contractor Profile saved'); }catch(e){ toast('Save failed: '+(e.message||e)); } };
-      $('#saveProfile').onclick = async ()=>{
+      $('#saveWh')?.addEventListener('click', async ()=>{
+        try{ const obj = readWhForm(); await save(`userSettings/${u.uid}/wholesaler`, obj); fillWhForm(obj); toast('Wholesaler Profile saved'); }
+        catch(e){ toast('Save failed: '+(e.message||e)); }
+      });
+      $('#saveCt')?.addEventListener('click', async ()=>{
+        try{ const obj = readCtForm(); await save(`userSettings/${u.uid}/contractor`, obj); fillCtForm(obj); toast('Contractor Profile saved'); }
+        catch(e){ toast('Save failed: '+(e.message||e)); }
+      });
+      $('#saveProfile')?.addEventListener('click', async ()=>{
         const name = ($('#displayName').value || '').trim();
         const patch = { displayName: name, email: u.email||'', updatedAt: Date.now() };
         await save(`userSettings/${u.uid}/profile`, patch);
@@ -771,23 +822,19 @@
         gProfile = patch;
         $('#profileSaved').textContent = 'Saved ' + new Date(patch.updatedAt).toLocaleString();
         const ml = $('#meLine'); if(ml) ml.textContent = `${name || (u.email||'')} — UID: ${u.uid}`;
-      };
+      });
 
+      // Roles / Admin
       let isAdmin = (u.email||'').toLowerCase()==='dealbankers@gmail.com';
       try{
         const roleSnap = await db.ref(`roles/${u.uid}`).get();
         if((roleSnap.val()||'')==='admin') isAdmin = true;
-        $('#meRole').value = roleSnap.val() || '';
+        const rSel = $('#meRole'); if(rSel) rSel.value = roleSnap.val() || '';
       }catch{}
-      $('#meRoleSave').onclick = async ()=>{
-        try{
-          const role = $('#meRole').value || '';
-          await db.ref(`roles/${u.uid}`).set(role||null);
-          toast(`My role saved: ${role || '—'} ✔`);
-        }catch(e){
-          toast('Role save failed: '+(e.message||e));
-        }
-      };
+      $('#meRoleSave')?.addEventListener('click', async ()=>{
+        try{ const role = $('#meRole').value || ''; await db.ref(`roles/${u.uid}`).set(role||null); toast(`My role saved: ${role || '—'} ✔`); }
+        catch(e){ toast('Role save failed: '+(e.message||e)); }
+      });
 
       if(isAdmin){
         $('#gmCard').style.display='block';
@@ -797,39 +844,27 @@
         wireLiveCounts();
 
         // Me toggles
-        $('#meAcqEnable').addEventListener('click', ()=> setFlag(u.uid,{acqEnabled:true},  'Acq ON (me)',   '#meAcqState'));
-        $('#meAcqDisable').addEventListener('click',()=> setFlag(u.uid,{acqEnabled:false}, 'Acq OFF (me)',  '#meAcqState'));
-        $('#meDispoEnable').addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:true},'Dispo ON (me)','#meDispoState'));
-        $('#meDispoDisable').addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:false},'Dispo OFF (me)','#meDispoState'));
+        $('#meAcqEnable')?.addEventListener('click', ()=> setFlag(u.uid,{acqEnabled:true},  'Acq ON (me)',   '#meAcqState'));
+        $('#meAcqDisable')?.addEventListener('click',()=> setFlag(u.uid,{acqEnabled:false}, 'Acq OFF (me)',  '#meAcqState'));
+        $('#meDispoEnable')?.addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:true},'Dispo ON (me)','#meDispoState'));
+        $('#meDispoDisable')?.addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:false},'Dispo OFF (me)','#meDispoState'));
 
-        // Target user
-        $('#gmLoad').addEventListener('click', async()=>{ await gmRefreshTarget(); const t=$('#gmTargetUid').value.trim(); if(t) toast(`Loaded ${short(t)}`); });
+        // Target load + role + toggles
+        $('#gmLoad')?.addEventListener('click', async()=>{ await gmRefreshTarget(); const t=$('#gmTargetUid').value.trim(); if(t) toast(`Loaded ${short(t)}`); });
+        $('#uidAcqEnable')?.addEventListener('click', ()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:true},  'Acq ON',   '#uidAcqState'); });
+        $('#uidAcqDisable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:false}, 'Acq OFF',  '#uidAcqState'); });
+        $('#uidDispoEnable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:true},'Dispo ON', '#uidDispoState'); });
+        $('#uidDispoDisable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:false},'Dispo OFF','#uidDispoState'); });
 
-        $('#uidAcqEnable').addEventListener('click', ()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:true},  'Acq ON',   '#uidAcqState'); });
-        $('#uidAcqDisable').addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:false}, 'Acq OFF',  '#uidAcqState'); });
-        $('#uidDispoEnable').addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:true},'Dispo ON', '#uidDispoState'); });
-        $('#uidDispoDisable').addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:false},'Dispo OFF','#uidDispoState'); });
-
-        $('#gmSaveRole').addEventListener('click', async()=>{
-          const t=$('#gmTargetUid').value.trim(); if(!t) return;
-          const role=$('#gmTargetRole').value||'';
-          try{
-            await db.ref(`roles/${t}`).set(role||null);
-            toast(`Role for ${short(t)} saved: ${role || '—'} ✔`);
-            await gmRefreshTarget();
-          }catch(e){
-            toast('Target role save failed: '+(e.message||e));
-          }
-        });
-
+        // Branding
         try{
           const logoSnap = await db.ref('branding/global/logoUrl').get();
           const url = logoSnap.val()||''; if(url){ const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; } }
         }catch{}
-        $('#gmSaveLogo').addEventListener('click', async ()=>{
+        $('#gmSaveLogo')?.addEventListener('click', async ()=>{
           const f = document.getElementById('gmLogoFile').files[0]; if(!f) return toast('Pick a file');
           try{
-            const ref = storage.ref().child(`branding/global/logo-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+            const ref = store.ref().child(`branding/global/logo-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
             await ref.put(f);
             const url = await ref.getDownloadURL();
             await db.ref('branding/global').update({logoUrl:url, updatedAt: Date.now()});
@@ -847,7 +882,7 @@
       if(initial==='overview') renderLiveDeals();
     });
 
-    // Header mailto buttons
+    // Header support buttons
     document.getElementById('redPhoneBtn')?.addEventListener('click',()=>location.href='mailto:support@dealbankers.com?subject=Immediate%20Need');
     document.getElementById('bluePhoneBtn')?.addEventListener('click',()=>location.href='mailto:support@dealbankers.com?subject=Funding%20Request');
     document.getElementById('logoutBtn')?.addEventListener('click',()=>auth.signOut().then(()=>location.href='index.html'));
