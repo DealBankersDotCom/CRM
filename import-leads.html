@@ -1,0 +1,53 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Import Leads</title>
+  <meta name="robots" content="noindex"/>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+  <!-- pulls your existing static array -->
+  <script src="leads.js"></script>
+  <style>body{font:14px system-ui;margin:20px}button{padding:8px 12px}</style>
+</head>
+<body>
+  <h1>Import Leads → RTDB</h1>
+  <p>This will write the <code>leads</code> array from <b>leads.js</b> to <code>acq/{yourUid}/leads</code>.</p>
+  <button id="signIn">Sign in with Google</button>
+  <button id="go" disabled>Import</button>
+  <div id="log"></div>
+
+  <script>
+    const app = firebase.initializeApp(window.firebaseConfig);
+    const auth = firebase.auth();
+    const db   = firebase.database();
+    const log  = (m)=>{ const d=document.getElementById('log'); d.innerHTML += `<div>${m}</div>`; };
+
+    document.getElementById('signIn').onclick = async ()=>{
+      try{
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+        document.getElementById('go').disabled = false;
+        log('Signed in as ' + (auth.currentUser.email || auth.currentUser.uid));
+      }catch(e){ log('Sign-in error: '+(e.message||e)); }
+    };
+
+    document.getElementById('go').onclick = async ()=>{
+      try{
+        const u = auth.currentUser; if(!u){ log('Please sign in'); return; }
+        if(!Array.isArray(window.leads)){ log('No leads array found in leads.js'); return; }
+
+        const base = db.ref('acq/'+u.uid+'/leads');
+        const updates = {};
+        window.leads.forEach((L)=>{
+          const id = base.push().key;
+          updates[id] = L;
+        });
+        await base.update(updates);
+        log('Imported '+ window.leads.length + ' leads ✔');
+      }catch(e){ log('Import failed: '+(e.message||e)); }
+    };
+  </script>
+</body>
+</html>
