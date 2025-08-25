@@ -653,6 +653,28 @@
     }
     function gmShow(sel, on){ const el=$(sel); if(el) el.textContent = on ? 'ON' : 'off'; }
 
+    // NEW: visual helpers for admin actions
+    const short = (u)=> (u||'').slice(0,8);
+    function flash(sel){
+      const el=$(sel); if(!el) return;
+      const prev=el.style.outline; el.style.outline='2px solid var(--green)';
+      setTimeout(()=>{ el.style.outline=prev||'none'; }, 700);
+    }
+    async function setFlag(uid, patch, label, stateSel){
+      try{
+        if(!uid) { toast('No UID provided'); return; }
+        await gmSet(uid, patch);
+        toast(`${label} updated for ${short(uid)} ✔`);
+        if(stateSel) flash(stateSel);
+        // refresh both panes in case the target is me or someone else
+        await gmRefreshMe();
+        await gmRefreshTarget();
+      }catch(e){
+        toast(`${label} failed: ${e && e.message || e}`);
+        console.error(e);
+      }
+    }
+
     // NEW: add the missing refresh helpers
     async function gmRefreshMe(){
       try{
@@ -803,9 +825,13 @@
       }catch{}
       const meRoleSave = $('#meRoleSave');
       if(meRoleSave) meRoleSave.onclick = async ()=>{
-        const role = $('#meRole').value || '';
-        await db.ref(`roles/${u.uid}`).set(role||null);
-        toast('Role saved');
+        try{
+          const role = $('#meRole').value || '';
+          await db.ref(`roles/${u.uid}`).set(role||null);
+          toast(`My role saved: ${role || '—'} ✔`);
+        }catch(e){
+          toast('Role save failed: '+(e.message||e));
+        }
       };
 
       if(isAdmin){
@@ -815,22 +841,30 @@
         await gmRefreshMe();
         wireLiveCounts();
 
-        $('#meAcqEnable')?.addEventListener('click', async()=>{ await gmSet(u.uid,{acqEnabled:true});   gmRefreshMe(); });
-        $('#meAcqDisable')?.addEventListener('click',async()=>{ await gmSet(u.uid,{acqEnabled:false});  gmRefreshMe(); });
-        $('#meDispoEnable')?.addEventListener('click',async()=>{ await gmSet(u.uid,{dispoEnabled:true}); gmRefreshMe(); });
-        $('#meDispoDisable')?.addEventListener('click',async()=>{ await gmSet(u.uid,{dispoEnabled:false});gmRefreshMe(); });
+        // Me toggles (wrapped)
+        $('#meAcqEnable')?.addEventListener('click', ()=> setFlag(u.uid,{acqEnabled:true},  'Acq ON (me)',   '#meAcqState'));
+        $('#meAcqDisable')?.addEventListener('click',()=> setFlag(u.uid,{acqEnabled:false}, 'Acq OFF (me)',  '#meAcqState'));
+        $('#meDispoEnable')?.addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:true},'Dispo ON (me)','#meDispoState'));
+        $('#meDispoDisable')?.addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:false},'Dispo OFF (me)','#meDispoState'));
 
-        $('#gmLoad')?.addEventListener('click', gmRefreshTarget);
-        $('#uidAcqEnable')?.addEventListener('click', async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:true});   gmRefreshTarget(); });
-        $('#uidAcqDisable')?.addEventListener('click',async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{acqEnabled:false});  gmRefreshTarget(); });
-        $('#uidDispoEnable')?.addEventListener('click',async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:true}); gmRefreshTarget(); });
-        $('#uidDispoDisable')?.addEventListener('click',async()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; await gmSet(t,{dispoEnabled:false});gmRefreshTarget(); });
+        // Target load + role + toggles (wrapped)
+        $('#gmLoad')?.addEventListener('click', async()=>{ await gmRefreshTarget(); const t=$('#gmTargetUid').value.trim(); if(t) toast(`Loaded ${short(t)}`); });
+
+        $('#uidAcqEnable')?.addEventListener('click', ()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:true},  'Acq ON',   '#uidAcqState'); });
+        $('#uidAcqDisable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:false}, 'Acq OFF',  '#uidAcqState'); });
+        $('#uidDispoEnable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:true},'Dispo ON', '#uidDispoState'); });
+        $('#uidDispoDisable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:false},'Dispo OFF','#uidDispoState'); });
 
         $('#gmSaveRole')?.addEventListener('click', async()=>{
           const t=$('#gmTargetUid').value.trim(); if(!t) return;
           const role=$('#gmTargetRole').value||'';
-          await db.ref(`roles/${t}`).set(role||null);
-          toast('Target role saved');
+          try{
+            await db.ref(`roles/${t}`).set(role||null);
+            toast(`Role for ${short(t)} saved: ${role || '—'} ✔`);
+            await gmRefreshTarget();
+          }catch(e){
+            toast('Target role save failed: '+(e.message||e));
+          }
         });
 
         try{
@@ -839,12 +873,17 @@
         }catch{}
         $('#gmSaveLogo')?.addEventListener('click', async ()=>{
           const f = document.getElementById('gmLogoFile').files[0]; if(!f) return toast('Pick a file');
-          const ref = storage.ref().child(`branding/global/logo-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
-          await ref.put(f);
-          const url = await ref.getDownloadURL();
-          await db.ref('branding/global').update({logoUrl:url, updatedAt: Date.now()});
-          const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; }
-          const msg=$('#gmLogoMsg'); if(msg) msg.textContent='Uploaded ✔';
+          try{
+            const ref = storage.ref().child(`branding/global/logo-${Date.now()}-${Math.random().toString(16).slice(2)}.png`);
+            await ref.put(f);
+            const url = await ref.getDownloadURL();
+            await db.ref('branding/global').update({logoUrl:url, updatedAt: Date.now()});
+            const img=$('#gmLogoPrev'); if(img){ img.src=url; img.style.display='block'; }
+            const msg=$('#gmLogoMsg'); if(msg) msg.textContent='Uploaded ✔';
+            toast('Logo uploaded ✔');
+          }catch(e){
+            toast('Logo upload failed: '+(e.message||e));
+          }
         });
       }
 
