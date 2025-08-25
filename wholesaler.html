@@ -1,115 +1,118 @@
-<!-- ===================== wholesaler.html (Acq + Dispo; uses RTDB + Auth-ready gate) ===================== -->
+<!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; respects DB gate) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
-  <!-- Firebase compat SDKs (keep compat only) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <meta charset="UTF-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Wholesaler • Portal</title>
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <style>
-    :root{
-      --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
-      --panel:#0f1f2b; --line:#254a63;
-      --text:#f1f7fb; --muted:#c5d3e1;
-      --blue:#47b4ff; --green:#26cf84; --gold:#ffd36b;
-      --shadow:0 28px 70px rgba(0,0,0,.55);
-      --r:16px;
-    }
-    *{box-sizing:border-box}
-    body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-      background:
-        radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
-        linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-      padding:10px}
-    .wrap{max-width:1100px;margin:0 auto}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
-      border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Wholesaler • Portal</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
-    .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
-      background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px}
-    .crumbs{display:flex;gap:10px;align-items:center;color:var(--muted)}
-    .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
-    .status{font-size:12px;color:#e8f7ff}
+<style>
+  :root{
+    --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
+    --panel:#0f1f2b; --line:#254a63;
+    --text:#f1f7fb; --muted:#c5d3e1;
+    --blue:#47b4ff; --green:#26cf84; --gold:#ffd36b;
+    --shadow:0 28px 70px rgba(0,0,0,.55);
+    --r:16px;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+    background:
+      radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
+      linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+    padding:10px}
+  .wrap{max-width:1100px;margin:0 auto}
+  .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+    border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
 
-    .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.18);
-      background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
-    .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
-    .seg button{padding:8px 12px;background:#0e2332;border:0;color:#cfe6ff;cursor:pointer}
-    .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
+  .top{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.2);
+    background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06)); font-size:14px}
+  .crumbs{display:flex;gap:10px;align-items:center;color:var(--muted)}
+  .dot{width:7px;height:7px;border-radius:999px;background:var(--blue);box-shadow:0 0 14px rgba(93,224,255,.9)}
+  .status{font-size:12px;color:#e8f7ff}
 
-    .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
-    .hint.hidden{display:none}
+  .sticky{position:sticky;top:0;z-index:8;padding:10px;border-bottom:1px solid rgba(255,255,255,.18);
+    background:linear-gradient(180deg,rgba(0,0,0,.15),rgba(255,255,255,.06))}
+  .seg{display:inline-flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
+  .seg button{padding:8px 12px;background:#0e2332;border:0;color:#cfe6ff;cursor:pointer}
+  .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
 
-    .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
-      font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
-    .btn:hover{filter:brightness(1.08)}
-    .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
-    .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
-    .btn-ghost{background:#0f2a3a}
-    .ico{font-size:20px}
-    .small{min-height:34px;padding:6px 10px;font-weight:700}
+  .hint{margin-top:8px;font-size:12px;color:#b8cbe0}
+  .hint.hidden{display:none}
 
-    .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
-    .hidden{display:none !important}
+  .bar{display:grid;grid-template-columns:repeat(6,1fr);gap:8px;margin-top:10px}
+  .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px;border-radius:12px;
+    font-weight:800;border:1px solid rgba(255,255,255,.22);background:#0e2433;color:#eaf6ff;cursor:pointer;min-height:44px;text-decoration:none}
+  .btn:hover{filter:brightness(1.08)}
+  .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#211a05;border:none}
+  .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);color:#fff;border:none}
+  .btn-ghost{background:#0f2a3a}
+  .ico{font-size:20px}
+  .small{min-height:34px;padding:6px 10px;font-weight:700}
 
-    .lead-wrap{padding:12px}
-    .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
-    .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
-      background:linear-gradient(90deg,rgba(255,211,107,.18),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
-    .body{padding:12px 14px}
-    .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-    .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
-    .section{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#0f1f2b;padding:10px;margin-top:10px}
-    .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
-    .sv{height:260px;margin-top:6px}
-    .map{height:220px;margin-top:8px}
-    .textarea{
-      width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
-      background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
-    }
-    .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
+  .navrow{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0}
+  .hidden{display:none !important}
 
-    /* ---------- Dispo-only UI (moved here from Capital Console) ---------- */
-    .dispoHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
-    .dispoCTA{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
-    .dealgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
-    .group{margin-top:14px}
-    .group h4{margin:0 0 8px;color:#d9e9f8}
-    .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;cursor:pointer}
-    .dealhdr{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
-    .dealtype{font-size:11px;padding:3px 8px;border-radius:999px;background:#103043;border:1px solid rgba(255,255,255,.18)}
-    .dealmeta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
-    .dealmeta .chip{background:#0d2a3c}
-    .actrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
-    @media (max-width:760px){ .dealgrid{grid-template-columns:1fr} }
+  /* top-right add-ons you asked for */
+  .barAdd{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
 
-    .desktopOnly{display:inline-flex}
-    @media (max-width:980px){ .desktopOnly{display:none !important} }
-    .dispoLayout{display:grid;grid-template-columns:1.1fr .9fr;gap:10px}
-    @media (max-width:980px){ .dispoLayout{display:block} }
-    .preview{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;min-height:420px}
-    .pvHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-    .pvTitle{font-weight:900}
-    .carousel{position:relative;width:100%;height:340px;border-radius:12px;overflow:hidden;background:#08121a}
-    .carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
-    .carousel img.active{opacity:1}
-    .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
-    .carBtn{border:1px solid rgba(255,255,255,.22);background:#0b1a24;border-radius:999px;padding:6px 10px;color:#eaf6ff}
+  .lead-wrap{padding:12px}
+  .lead{border:1px solid rgba(255,255,255,.22);border-radius:16px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03))}
+  .title{padding:12px 14px;font-weight:900;letter-spacing:.02em;font-size:18px;border-bottom:1px solid rgba(255,255,255,.18);
+    background:linear-gradient(90deg,rgba(255,211,107,.18),transparent 45%),linear-gradient(180deg,rgba(0,0,0,.15),transparent)}
+  .body{padding:12px 14px}
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+  .chip{font-size:12px;font-weight:700;padding:7px 11px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:#0f2c3e}
+  .section{border:1px solid rgba(255,255,255,.18);border-radius:14px;background:#0f1f2b;padding:10px;margin-top:10px}
+  .sv,.map{width:100%;border:0;border-radius:14px;background:#fff}
+  .sv{height:260px;margin-top:6px}
+  .map{height:220px;margin-top:8px}
+  .textarea{
+    width:100%;min-height:120px;resize:vertical;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.2);
+    background:#0d2130;color:#eaf6ff;font-size:14px;line-height:1.4
+  }
+  .notesRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .savedTag{font-size:12px;color:#bfe9c9;opacity:.9;display:none}
 
-    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
-      color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
+  /* ---------- Dispo-only UI (for preview and quick edits) ---------- */
+  .dispoHead{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:space-between}
+  .dispoCTA{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+  .dealgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:10px}
+  .group{margin-top:14px}
+  .group h4{margin:0 0 8px;color:#d9e9f8}
+  .dealcard{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;cursor:pointer}
+  .dealhdr{display:flex;justify-content:space-between;align-items:center;font-weight:800;margin-bottom:6px}
+  .dealtype{font-size:11px;padding:3px 8px;border-radius:999px;background:#103043;border:1px solid rgba(255,255,255,.18)}
+  .dealmeta{display:flex;gap:8px;flex-wrap:wrap;margin:6px 0}
+  .dealmeta .chip{background:#0d2a3c}
+  .actrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+  @media (max-width:760px){ .dealgrid{grid-template-columns:1fr} }
 
-    @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
-  </style>
-</head>
+  /* Desktop-only preview column */
+  .desktopOnly{display:inline-flex}
+  @media (max-width:980px){ .desktopOnly{display:none !important} }
+  .dispoLayout{display:grid;grid-template-columns:1.1fr .9fr;gap:10px}
+  @media (max-width:980px){ .dispoLayout{display:block} }
+  .preview{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0e2231;padding:10px;min-height:420px}
+  .pvHead{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+  .pvTitle{font-weight:900}
+  .carousel{position:relative;width:100%;height:340px;border-radius:12px;overflow:hidden;background:#08121a}
+  .carousel img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0;transition:opacity .35s ease}
+  .carousel img.active{opacity:1}
+  .carBtns{position:absolute;inset:auto 0 8px 0;display:flex;justify-content:center;gap:8px}
+  .carBtn{border:1px solid rgba(255,255,255,.22);background:#0b1a24;border-radius:999px;padding:6px 10px;color:#eaf6ff}
+
+  #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;
+    color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:var(--shadow);font-size:14px;display:none;z-index:70}
+
+  @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
+</style>
 
 <body>
   <div class="wrap">
@@ -130,7 +133,7 @@
         </div>
         <div id="leadHint" class="hint">Lead filters live in <b>Profile → Settings → Wholesaler</b>. No self-enable switch here.</div>
 
-        <!-- Acq toolbar (kept pixel position) -->
+        <!-- Acq-only toolbars -->
         <div id="acqBar" class="bar" aria-label="Actions">
           <a class="btn btn-gold" href="#" id="actCall"  title="Call"><span class="ico">📞</span></a>
           <a class="btn btn-gold" href="#" id="actSMS"   title="Text"><span class="ico">💬</span></a>
@@ -138,6 +141,12 @@
           <button class="btn btn-ghost" id="actCopy"     title="Copy number"><span class="ico">📋</span></button>
           <a class="btn btn-ghost" href="https://drive.google.com" target="_blank" rel="noopener" title="Drive"><span class="ico">📁</span></a>
           <button class="btn btn-ghost" id="actSettings" title="Dial preference"><span class="ico">⚙️</span></button>
+        </div>
+
+        <!-- Your request: top-right New buttons (doesn't move existing icons) -->
+        <div class="barAdd">
+          <button id="whNewDeal" class="btn small">＋ New Deal</button>
+          <button id="whNewOffering" class="btn small">＋ New Offering</button>
         </div>
 
         <div id="acqNav" class="navrow">
@@ -148,12 +157,12 @@
       </div>
 
       <div class="lead-wrap">
-        <!-- Acquisition -->
+        <!-- Acquisition panel -->
         <div id="leadCard" class="lead">
           <div class="body">Initializing…</div>
         </div>
 
-        <!-- Disposition (moved here) -->
+        <!-- Disposition panel (preview & quick-edit; no layout moves) -->
         <div id="dispoPane" class="section hidden" aria-live="polite">
           <div class="dispoHead">
             <h3 style="margin:2px 0">📦 Disposition</h3>
@@ -170,6 +179,7 @@
             <a class="btn" id="linkShareAll" href="#" title="Copy a shareable link">Link Share</a>
           </div>
 
+          <!-- Desktop-only 2-col layout: left cards, right preview -->
           <div class="dispoLayout">
             <div id="dispoLeft">
               <div class="group" id="dealsGroup">
@@ -210,7 +220,7 @@
     </div>
   </dialog>
 
-  <!-- Photo manager dialog -->
+  <!-- Photo manager dialog (desktop-only) -->
   <dialog id="photoDlg" style="border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:14px;max-width:720px;width:92%">
     <h3 style="margin:0 0 8px">Manage Photos</h3>
     <div style="display:grid;gap:8px">
@@ -250,6 +260,9 @@
       </label>
       <label>Notes <textarea id="niNotes" rows="3" class="textarea"></textarea></label>
       <label>Photo URLs (comma separated) <textarea id="niPhotos" rows="2" class="textarea" placeholder="https://...jpg, https://...png"></textarea></label>
+      <label style="display:flex;gap:8px;align-items:center">
+        <input id="niLive" type="checkbox"/> Share Live (public Live Deals feed)
+      </label>
     </div>
     <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:10px">
       <button id="niSave"  class="btn btn-green">Save</button>
@@ -259,103 +272,64 @@
 
   <div id="toast"></div>
 
-  <!-- Page logic -->
+  <!-- Firebase (gate for leads) -->
   <script>
-    // ===== Helpers =====
+    const gateApp = firebase.initializeApp(
+      {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
+      "whGate"
+    );
+    const gateDb   = gateApp.database();
+    const params   = new URL(location.href).searchParams;
+    const uidParam = params.get('uid') || 'anon';
+
+    // Permission flags available to the rest of the page
+    window.whGate = { acqEnabled:false, dispoEnabled:false };
+
+    function loadLeadsJS(){
+      const s=document.createElement('script');
+      s.src='leads.js?v='+Date.now();
+      s.onload=()=>{ window.leads = window.leads || []; init(); };
+      s.onerror=()=>document.getElementById('status').textContent='Could not load leads.js';
+      document.head.appendChild(s);
+    }
+
+    gateDb.ref(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
+      const g = snap.val() || {};
+      // Back-compat: support old single switches if present
+      window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
+      window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
+
+      if(!window.whGate.acqEnabled){
+        document.getElementById('leadCard').innerHTML =
+          '<div class="body">Access to <b>acquisition</b> leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
+        document.getElementById('status').textContent = 'Acq access denied';
+      } else {
+        loadLeadsJS();
+      }
+    }).catch(()=>{
+      document.getElementById('leadCard').innerHTML =
+        '<div class="body">Could not verify access right now. Try again shortly.</div>';
+      document.getElementById('status').textContent = 'Gate check failed';
+    });
+  </script>
+
+  <script>
     const $=s=>document.querySelector(s);
     const statusEl=$('#status'); const toastEl=$('#toast'); const modeCrumb=$('#crumbMode');
     const dlg=$('#settingsDlg');
     let idx=0, currentLead=null, mode='acq';
-    const params   = new URL(location.href).searchParams;
-    const uidParam = params.get('uid') || 'anon';
+
+    const uid=new URL(location.href).searchParams.get('uid')||'anon';
     const MODE_KEY='db_phone_link_mode_wh';
+
     function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
     function setStatus(t){statusEl.textContent=t;}
     const clean=s=>(s||'').trim();
     const slugify = s => (s||'item').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,'');
     const esc = (s)=>String(s??'').replace(/[&<>"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;' }[m]));
+
     const getMode=()=>localStorage.getItem(MODE_KEY)||'device';
     const setMode=m=>localStorage.setItem(MODE_KEY,m);
-
-    // RTDB gate flags
-    window.whGate = { acqEnabled:false, dispoEnabled:false };
-
-    // ===== Boot Firebase (default app only) =====
-    // config.js defines window.firebaseConfig
-  </script>
-  <script src="config.js"></script>
-  <script>
-    (function boot(){
-      if(!window.firebase?.apps?.length){
-        if(window.firebaseConfig){
-          firebase.initializeApp(window.firebaseConfig);
-        }else{
-          console.error('[DealBankers] Missing window.firebaseConfig'); return;
-        }
-      }
-
-      // Wait for Auth before any gated reads
-      firebase.auth().onAuthStateChanged(async function(user){
-        if(!user){ setStatus('Not signed in'); return; }
-
-        const db = firebase.database();
-
-        // Read Wholesaler gate (same uid or admin can read)
-        try{
-          const snap = await db.ref(`userSettings/${uidParam}/wholesaler`).get();
-          const g = snap.val() || {};
-          window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
-          window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
-        }catch(e){
-          console.warn('Gate read error', e);
-          setStatus('Gate check failed');
-          $('#leadCard').innerHTML = '<div class="body">Could not verify access right now. Try again shortly.</div>';
-          return;
-        }
-
-        // Load acquisition leads from RTDB (no leads.js needed)
-        if(window.whGate.acqEnabled){
-          loadAcqLeads(db);
-        }else{
-          $('#leadCard').innerHTML =
-            '<div class="body">Access to <b>acquisition</b> leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
-          setStatus('Acq access denied');
-        }
-
-        // Prepare Dispo pane right away (reads user-owned deals at /deals/{uid})
-        if(window.whGate.dispoEnabled){
-          prepareDispo(db);
-        }else{
-          // keep panel but show locked message if user flips to it
-        }
-      });
-    })();
-
-    // ====== ACQ: load + render leads from RTDB ======
-    async function loadAcqLeads(db){
-      try{
-        const snap = await db.ref(`acq/leads/${uidParam}`).get();
-        const obj = snap.val() || {};
-        const list = Object.values(obj).map(l => ({
-          address: l.address || '',
-          ownerName: l.ownerName || '',
-          contactName: l.contactName || '',
-          contacts: [{ name: l.contactName || l.ownerName || '', phone: l.phone || '' }],
-          notes: l.notes || '',
-          tags: Array.isArray(l.tags) ? l.tags : [],
-          leadSource: l.leadSource || '',
-          sourceTab: l.sourceTab || '',
-          status: l.status || 'new',
-          city: l.city || '', state: l.state || '', zip: l.zip || ''
-        }));
-        window.leads = list;
-        init();            // first render
-      }catch(e){
-        console.error('Leads load error', e);
-        $('#leadCard').innerHTML = '<div class="body">Could not load leads right now.</div>';
-        setStatus('Leads load failed');
-      }
-    }
 
     function phoneOf(l){ return clean(l?.contacts?.[0]?.phone||''); }
     function phoneHref(number, dialMode){
@@ -376,9 +350,264 @@
     const saveTimeKey = addr => noteKey(addr)+'_ts';
     const saveTimeSet = (addr,ts)=>localStorage.setItem(saveTimeKey(addr), String(ts));
     const saveTimeGet = addr => Number(localStorage.getItem(saveTimeKey(addr))||0);
+
     function fmtTime(ts){ const d=new Date(ts); const pad=n=>String(n).padStart(2,'0'); return `${d.getMonth()+1}/${d.getDate()} ${pad(d.getHours())}:${pad(d.getMinutes())}`; }
     function autoGrow(el){ el.style.height='auto'; el.style.height=(el.scrollHeight+6)+'px'; }
 
+    /* ---------- Dispo items (script + DB merge; Offerings allow PDF memos) ---------- */
+    let dispoItems=null, dispoLoaded=false;
+
+    const fallbackDispo = [
+      {
+        kind: 'deal',
+        id: '4319-san-luis-st',
+        title: '4319 San Luis St, San Antonio, TX 78237',
+        address: '4319 San Luis St, San Antonio, TX 78237',
+        price: '$65,000 ask',
+        terms: 'Wholesale assignment • As-is',
+        memo: 'offering-memo3.html',
+        notes: 'RM-4 zoning • 9,975 sqft lot • small structure built 2003 • water on site; electric setup not completed',
+        photos: [
+          'images/deals/san-luis-st/532285905_1525203368622964_6419601791457539095_n.jpg'
+        ]
+      }
+    ];
+
+    async function fetchDbDispo(uidX){
+      try{
+        // ✅ canonical path
+        const snap = await gateDb.ref(`dispo/deals/${uidX}`).once('value');
+        const obj = snap.val() || {};
+        return Object.entries(obj).map(([id,d])=>{
+          const safeId = d.id || id || slugify((d.title||d.address||'item'));
+          return {
+            id: safeId,
+            kind:    d.kind || 'deal',
+            title:   d.title || safeId,
+            address: d.location || d.address || '',
+            price:   d.price || '',
+            terms:   d.terms || '',
+            memo:    d.memo || '',
+            notes:   d.notes || '',
+            photos:  Array.isArray(d.photos)? d.photos : [],
+            shareLive: !!d.shareLive,
+            createdBy: d.createdBy || uidX
+          };
+        });
+      }catch{
+        return [];
+      }
+    }
+
+    async function mergeDispoData(){
+      const dbItems = await fetchDbDispo(uidParam);
+      const base = dispoItems || fallbackDispo;
+      const byId = new Map();
+      [...dbItems, ...base].forEach(raw=>{
+        const id = raw.id || slugify(raw.title||raw.address||'item');
+        if(!byId.has(id)) byId.set(id, {...raw, id}); // user DB takes precedence
+      });
+      return Array.from(byId.values());
+    }
+
+    function ensureDispoData(cb){
+      if(dispoLoaded){ mergeDispoData().then(list=>cb(list)); return; }
+      const s=document.createElement('script'); s.src='dispo-data.js?v='+Date.now();
+      s.onload = async ()=>{ dispoLoaded=true; dispoItems=window.dispoItems||fallbackDispo; cb(await mergeDispoData()); };
+      s.onerror = async ()=>{ dispoLoaded=true; dispoItems=fallbackDispo; cb(await mergeDispoData()); };
+      document.head.appendChild(s);
+    }
+
+    /* ---------------- Desktop-only photo / memo preview & manager ---------------- */
+    const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
+          phUrls=$('#phUrls'), phFiles=$('#phFiles'), phThumbs=$('#phThumbs'),
+          pvAdd=$('#pvAdd'), pvEdit=$('#pvEdit');
+    let previewItem=null;
+
+    function slugFor(it){
+      const base=(it?.memo||'') || (it?.title||'') || (it?.address||'item');
+      return String(base).toLowerCase().replace(/[^a-z0-9]+/g,'-');
+    }
+    const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
+    function getPhotos(it){
+      try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{}
+      return Array.isArray(it?.photos)?it.photos:[]; // optional photos from script or DB
+    }
+    function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
+
+    function isPdf(url){ try{ return /\.pdf($|\?)/i.test(new URL(url, location.href).pathname); }catch{return /\.pdf($|\?)/i.test(url||'');} }
+    function memoViewer(url){
+      if(isPdf(url)) return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
+      return url; // assume HTML memo page
+    }
+
+    let carIdx=0, carTimer=null, carRun=true;
+    function renderPreview(it){
+      carIdx = 0;
+      carRun = true;
+      previewItem=it;
+      pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
+      const photos=getPhotos(it);
+      pvCar.innerHTML='';
+
+      if(!photos.length && it?.memo){
+        const src = memoViewer(it.memo);
+        pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`;
+        return;
+      }
+
+      if(!photos.length){
+        pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs${it?.memo? ' — memo available via Open Memo button.' : '.'}</div>`;
+        return;
+      }
+      photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo'; if(i===0) img.className='active'; pvCar.appendChild(img); });
+      const ctr=document.createElement('div'); ctr.className='carBtns';
+      const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
+      const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
+      const next=document.createElement('button'); next.className='carBtn'; next.textContent='▶';
+      ctr.append(prev,pause,next); pvCar.appendChild(ctr);
+      prev.onclick=()=>{ carRun=false; setSlide(-1); };
+      next.onclick=()=>{ carRun=false; setSlide(+1); };
+      pause.onclick=()=>{ carRun=!carRun; if(carRun) startCar(); else stopCar(); };
+      startCar();
+    }
+    function setSlide(d){
+      const imgs=[...pvCar.querySelectorAll('img')]; if(!imgs.length) return;
+      imgs[carIdx]?.classList.remove('active');
+      carIdx=(carIdx+d+imgs.length)%imgs.length;
+      imgs[carIdx]?.classList.add('active');
+    }
+    function startCar(){ stopCar(); carTimer=setInterval(()=>{ if(carRun) setSlide(+1); },2800); }
+    function stopCar(){ if(carTimer){ clearInterval(carTimer); carTimer=null; } }
+
+    function openPhotoMgr(){
+      const it=previewItem; if(!it) return;
+      const arr=getPhotos(it);
+      phUrls.value = arr.filter(u=>!/^data:/.test(u)).join(', ');
+      drawThumbs(arr);
+      photoDlg.showModal();
+    }
+    function drawThumbs(arr){
+      phThumbs.innerHTML='';
+      arr.forEach((src,i)=>{
+        const d=document.createElement('div');
+        d.innerHTML=`<img src="${src}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px"/><button class="btn small" data-i="${i}" style="margin-top:4px">Remove</button>`;
+        phThumbs.appendChild(d);
+      });
+      phThumbs.querySelectorAll('button[data-i]').forEach(b=>{
+        b.onclick=()=>{ const i=+b.dataset.i; const cur=getPhotos(previewItem); cur.splice(i,1); savePhotos(previewItem,cur); drawThumbs(cur); renderPreview(previewItem); };
+      });
+    }
+    async function readUploads(files){
+      const out=[];
+      for(const f of files){
+        const data=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); });
+        out.push(data);
+      }
+      return out;
+    }
+    $('#phSave').onclick = async ()=>{
+      if(!previewItem) return;
+      const urls=phUrls.value.split(',').map(s=>s.trim()).filter(Boolean);
+      const ups = await readUploads(phFiles.files||[]);
+      const final=[...urls,...ups];
+      savePhotos(previewItem,final); renderPreview(previewItem); photoDlg.close(); phFiles.value=''; phUrls.value='';
+    };
+    $('#phClear').onclick = ()=>{ if(!previewItem) return; savePhotos(previewItem,[]); drawThumbs([]); renderPreview(previewItem); };
+    $('#phClose').onclick = ()=>photoDlg.close();
+    pvAdd.onclick = openPhotoMgr; pvEdit.onclick = openPhotoMgr;
+
+    /* ---------------- Dispo list rendering ---------------- */
+    function renderDispo(){
+      ensureDispoData(items=>{
+        const deals = items.filter(i=>i.kind!=='offering');
+        const offs  = items.filter(i=>i.kind==='offering');
+
+        const fill = (list, gridId) => {
+          const grid=$(gridId); grid.innerHTML='';
+          const byId = Object.fromEntries(list.map(i=>[(i.id || slugify(i.title||i.address||'item')), i]));
+          list.forEach(it=>{
+            const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
+            const idSafe = it.id || slugify(it.title||it.address||'item');
+            const editable = !!(it.createdBy && it.createdBy === uidParam);
+
+            const absMemo = (()=>{ try{
+              return it.memo ? (it.memo.startsWith('http') ? it.memo : new URL(it.memo, location.href).href) : '';
+            } catch(_){ return it.memo||''; } })();
+
+            const el=document.createElement('div'); el.className='dealcard';
+            el.innerHTML=`
+              <div class="dealhdr">
+                <div>${esc(it.title)}</div>
+                <div class="dealtype">${esc(kindTag)}</div>
+              </div>
+              <div class="dealmeta">
+                ${it.price?`<div class="chip">${esc(it.price)}</div>`:''}
+                ${it.terms?`<div class="chip">${esc(it.terms)}</div>`:''}
+                ${it.address?`<div class="chip">${esc(it.address)}</div>`:''}
+                ${it.shareLive?`<div class="chip">Live</div>`:''}
+              </div>
+              ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${esc(it.notes)}</div>`:''}
+              <div class="actrow">
+                ${it.memo?`<a class="btn" href="${esc(it.memo)}" target="_blank" rel="noopener">Open Memo</a>`:''}
+                <a class="btn" href="${esc(it.share||'https://www.facebook.com/marketplace/create/item')}" target="_blank" rel="noopener">Post / Share</a>
+                ${it.memo?`<button class="btn" data-copy="${esc(absMemo)}">Copy Link</button>`:''}
+                <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
+                <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
+                <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
+                ${editable ? `
+                  <button class="btn small" data-edit="${esc(idSafe)}">Edit</button>
+                  <button class="btn small" data-del="${esc(idSafe)}">Delete</button>
+                ` : ``}
+              </div>`;
+            el.addEventListener('click',e=>{
+              if(window.matchMedia('(max-width: 980px)').matches) return;
+              if(e.target.closest('.actrow')){
+                if(e.target.matches('button[data-preview]')) { renderPreview(it); }
+                if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
+                return;
+              }
+              renderPreview(it);
+            });
+            grid.appendChild(el);
+          });
+          grid.querySelectorAll('button[data-copy]').forEach(b=>{
+            b.addEventListener('click',e=>{ e.stopPropagation(); navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
+          });
+          grid.querySelectorAll('button[data-edit]').forEach(b=>{
+            b.addEventListener('click',e=>{
+              e.stopPropagation();
+              const it = byId[b.getAttribute('data-edit')];
+              if(it) openEditor(it);
+            });
+          });
+          grid.querySelectorAll('button[data-del]').forEach(b=>{
+            b.addEventListener('click',async e=>{
+              e.stopPropagation();
+              const id=b.getAttribute('data-del');
+              if(!confirm('Delete this item?')) return;
+              try{
+                // ✅ canonical path
+                await gateDb.ref(`dispo/deals/${uidParam}/${id}`).remove();
+                toast('Deleted');
+                renderDispo();
+              }catch{ alert('Could not delete right now.'); }
+            });
+          });
+        };
+
+        fill(deals, '#dealsGrid');
+        fill(offs,  '#offeringsGrid');
+
+        if(!window.matchMedia('(max-width: 980px)').matches){
+          renderPreview(items[0]||null);
+        }
+      });
+    }
+
+    /* ---------------- Acquisition render + Street View (inline) + Google map ---------------- */
+
+    // geocode via OSM Nominatim (no key) to lock SV to lat/lng
     async function geocode(addr){
       if(!addr) return null;
       try{
@@ -391,17 +620,24 @@
       }catch{}
       return null;
     }
+
     async function improveStreetViewAndMap(addr, svIframe, mapIframe){
       const hit = await geocode(addr);
-      if(!hit) return;
+      if(!hit) return; // keep address-based fallback
+
+      // Inline Street View with precise viewpoint (no button)
       svIframe.src = `https://www.google.com/maps?layer=c&cbll=${hit.lat},${hit.lon}&cbp=12,0,,0,0&hl=en&z=18&output=svembed`;
-      if(mapIframe){ mapIframe.src = `https://www.google.com/maps?output=embed&q=${encodeURIComponent(hit.lat+','+hit.lon)}&z=17`; }
+
+      // Keep Google map embed, but resolve to coords for stability
+      if(mapIframe){
+        mapIframe.src = `https://www.google.com/maps?output=embed&q=${encodeURIComponent(hit.lat+','+hit.lon)}&z=17`;
+      }
     }
 
     function render(i){
       if(!Array.isArray(window.leads)||!window.leads.length){
-        $('#leadCard').innerHTML='<div class="body">No leads found for this account.</div>';
-        setStatus('No leads'); return;
+        $('#leadCard').innerHTML='<div class="body">No leads loaded. Ensure <b>leads.js</b> defines <code>window.leads=[...]</code>.</div>';
+        setStatus('No leads found'); return;
       }
       if(i<0) i=window.leads.length-1;
       if(i>=window.leads.length) i=0;
@@ -410,11 +646,9 @@
       const lead=window.leads[idx];
       currentLead=lead;
 
-      const name  = clean(lead?.contacts?.[0]?.name||lead?.contactName||lead?.ownerName||'Unknown');
+      const name  = clean(lead?.contacts?.[0]?.name||'Unknown');
       const phone = phoneOf(lead);
       const addr  = clean(lead?.address||'');
-      const owner = clean(lead?.ownerName||'');
-      const poc   = clean(lead?.contactName||owner||'');
 
       modeCrumb.textContent = (mode==='acq'?'Acquisition':'Disposition');
       setStatus(`${mode==='acq'?'Acq':'Dispo'} • Lead ${idx+1} of ${window.leads.length}`);
@@ -431,21 +665,13 @@
         <div class="title">${esc(addr || name)}</div>
         <div class="body">
           <div class="chips">
-            <div class="chip">UID: ${esc((uidParam||'').slice(0,8))}</div>
+            <div class="chip">UID: ${esc(uid.slice(0,8))}</div>
             <div class="chip">${phone ? 'Phone on file' : 'Phone missing'}</div>
             <div class="chip">Dial: ${esc(dialMode)}</div>
             <div class="chip">Mode: Acquisition</div>
           </div>
 
-          <div class="section">
-            <div style="font-weight:800;margin-bottom:6px">Owner & POC</div>
-            <div style="display:flex;gap:10px;flex-wrap:wrap">
-              <div class="chip">Owner: ${esc(owner||'—')}</div>
-              <div class="chip">POC: ${esc(poc||'—')}</div>
-            </div>
-          </div>
-
-          <h3 style="margin:8px 0 6px;font-size:16px">${esc(name)}</h3>
+          <h3 style="margin:4px 0 6px;font-size:16px">${esc(name)}</h3>
 
           <div class="section">
             <div style="font-weight:800;margin-bottom:6px">Lead details</div>
@@ -469,6 +695,7 @@
       ta.addEventListener('input',()=>autoGrow(ta));
       $('#inlineSave').onclick = ()=>doSaveNotes();
 
+      // upgrade embeds to precise lat/lng (SV + Google map), seamlessly
       const svIframe = $('#leadCard .sv');
       const mapIframe= $('#leadCard .map');
       improveStreetViewAndMap(addr, svIframe, mapIframe);
@@ -487,10 +714,19 @@
     $('#btnPrev').onclick   = ()=>render(idx-1);
     $('#btnNext').onclick   = ()=>render(idx+1);
     $('#btnRandom').onclick = ()=>render(Math.floor(Math.random()*(window.leads?.length||1)));
-    $('#actCopy').onclick = ()=>{ const p=phoneOf(window.leads?.[idx]); if(!p) return alert('No phone on this lead.'); navigator.clipboard.writeText(p).then(()=>toast('Phone copied')); };
+
+    $('#actCopy').onclick = ()=>{
+      const p=phoneOf(window.leads?.[idx]);
+      if(!p) return alert('No phone on this lead.');
+      navigator.clipboard.writeText(p).then(()=>toast('Phone copied'));
+    };
 
     // dial settings
-    $('#actSettings').onclick = ()=>{ dlg.showModal(); const cur=getMode(); dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur)); };
+    $('#actSettings').onclick = ()=>{
+      dlg.showModal();
+      const cur=getMode();
+      dlg.querySelectorAll('input[name="mode"]').forEach(r=>r.checked=(r.value===cur));
+    };
     $('#saveMode').onclick = ()=>{ const m=dlg.querySelector('input[name="mode"]:checked')?.value||'device'; setMode(m); dlg.close(); render(idx); };
     $('#closeMode').onclick = ()=>dlg.close();
 
@@ -511,12 +747,22 @@
       setStatus(mode==='acq' ? 'Acq • Ready' : 'Dispo • Ready');
 
       if(mode==='acq'){
-        render(idx);
-      } else {
-        if(window.whGate?.dispoEnabled){ renderDispo(); }
+        if(window.whGate?.acqEnabled){ render(idx); }
         else{
+          $('#leadCard').classList.remove('hidden');
+          $('#leadCard').innerHTML = '<div class="body">Access to <b>acquisition</b> leads is disabled for this account.</div>';
+          setStatus('Acq access denied');
+        }
+      } else {
+        if(window.whGate?.dispoEnabled){
+          renderDispo();
+        } else {
           const pane = $('#dispoPane');
-          pane.innerHTML = `<div class="section"><div style="font-weight:800;margin-bottom:6px">Dispo access disabled</div><div style="color:#cfe3f7">Your account does not currently have access to <b>Dispo</b> leads.</div></div>`;
+          pane.innerHTML = `
+            <div class="section">
+              <div style="font-weight:800;margin-bottom:6px">Dispo access disabled</div>
+              <div style="color:#cfe3f7">Your account does not currently have access to <b>Dispo</b> leads.</div>
+            </div>`;
           setStatus('Dispo access denied');
         }
       }
@@ -525,9 +771,20 @@
     $('#tabDispo').onclick= ()=>switchTo('dispo');
 
     // share all
-    $('#linkShareAll').addEventListener('click',e=>{ e.preventDefault(); const root = location.origin + location.pathname.replace(/\/[^/]*$/,'/'); navigator.clipboard.writeText(root).then(()=>toast('Site link copied')); });
+    $('#linkShareAll').addEventListener('click',e=>{
+      e.preventDefault();
+      const root = location.origin + location.pathname.replace(/\/[^/]*$/,'/');
+      navigator.clipboard.writeText(root).then(()=>toast('Site link copied'));
+    });
 
-    document.addEventListener('keydown',e=>{ if(mode==='acq'){ if(e.key==='ArrowLeft') return $('#btnPrev').click(); if(e.key==='ArrowRight') return $('#btnNext').click(); if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); } } });
+    document.addEventListener('keydown',e=>{
+      if(mode==='acq'){
+        if(e.key==='ArrowLeft') return $('#btnPrev').click();
+        if(e.key==='ArrowRight') return $('#btnNext').click();
+        if((e.ctrlKey||e.metaKey) && e.key.toLowerCase()==='s'){ e.preventDefault(); return doSaveNotes(); }
+      }
+    });
+
     window.addEventListener('beforeunload',()=>{ if(mode==='acq' && currentLead){ doSaveNotes(); } });
 
     function init(){
@@ -535,148 +792,18 @@
       else { render(0); }
     }
 
-    // ====== Dispo (moved here) ======
-    let dispoItems=null, dispoLoaded=false;
-    const pvTitle=$('#pvTitle'), pvCar=$('#pvCarousel'), photoDlg=$('#photoDlg'),
-          phUrls=$('#phUrls'), phFiles=$('#phFiles'), phThumbs=$('#phThumbs'),
-          pvAdd=$('#pvAdd'), pvEdit=$('#pvEdit');
-    let previewItem=null;
-
-    function slugFor(it){ const base=(it?.memo||'') || (it?.title||'') || (it?.address||'item'); return String(base).toLowerCase().replace(/[^a-z0-9]+/g,'-'); }
-    const PHKEY = it => `db_dispo_photos_${slugFor(it)}`;
-    function getPhotos(it){ try{ const x=JSON.parse(localStorage.getItem(PHKEY(it))||'[]'); if(Array.isArray(x)&&x.length) return x; }catch{} return Array.isArray(it?.photos)?it.photos:[]; }
-    function savePhotos(it,arr){ localStorage.setItem(PHKEY(it), JSON.stringify(arr||[])); }
-    function isPdf(url){ try{ return /\.pdf($|\?)/i.test(new URL(url, location.href).pathname); }catch{return /\.pdf($|\?)/i.test(url||'');} }
-    function memoViewer(url){ if(isPdf(url)) return `https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`; return url; }
-
-    let carIdx=0, carTimer=null, carRun=true;
-    function renderPreview(it){
-      carIdx = 0; carRun = true; previewItem=it;
-      pvTitle.textContent = it?.title || it?.address || 'Photo / Memo Preview';
-      const photos=getPhotos(it);
-      pvCar.innerHTML='';
-      if(!photos.length && it?.memo){ const src = memoViewer(it.memo); pvCar.innerHTML = `<iframe src="${src}" style="width:100%;height:100%;border:0"></iframe>`; return; }
-      if(!photos.length){ pvCar.innerHTML = `<div style="color:#b8cbe0;padding:12px">No photos yet. Use <b>＋ Add Photo</b> to upload or paste URLs.</div>`; return; }
-      photos.forEach((src,i)=>{ const img=new Image(); img.src=src; img.alt='photo'; if(i===0) img.className='active'; pvCar.appendChild(img); });
-      const ctr=document.createElement('div'); ctr.className='carBtns';
-      const prev=document.createElement('button'); prev.className='carBtn'; prev.textContent='◀';
-      const pause=document.createElement('button'); pause.className='carBtn'; pause.textContent='⏯';
-      const next=document.createElement('button'); next.className='carBtn'; next.textContent='▶';
-      ctr.append(prev,pause,next); pvCar.appendChild(ctr);
-      prev.onclick=()=>{ carRun=false; setSlide(-1); };
-      next.onclick=()=>{ carRun=false; setSlide(+1); };
-      pause.onclick=()=>{ carRun=!carRun; if(carRun) startCar(); else stopCar(); };
-      startCar();
+    /* ---- Show/hide Memo row when kind changes (Offerings only) ---- */
+    function updateMemoVisibility(){
+      const kindEl = document.getElementById('niKind');
+      const memoLabel = document.getElementById('niMemo')?.closest('label');
+      if(!kindEl || !memoLabel) return;
+      memoLabel.style.display = (kindEl.value === 'offering') ? 'block' : 'none';
     }
-    function setSlide(d){ const imgs=[...pvCar.querySelectorAll('img')]; if(!imgs.length) return; imgs[carIdx]?.classList.remove('active'); carIdx=(carIdx+d+imgs.length)%imgs.length; imgs[carIdx]?.classList.add('active'); }
-    function startCar(){ stopCar(); carTimer=setInterval(()=>{ if(carRun) setSlide(+1); },2800); }
-    function stopCar(){ if(carTimer){ clearInterval(carTimer); carTimer=null; } }
-
-    function openPhotoMgr(){ const it=previewItem; if(!it) return; const arr=getPhotos(it); phUrls.value = arr.filter(u=>!/^data:/.test(u)).join(', '); drawThumbs(arr); photoDlg.showModal(); }
-    function drawThumbs(arr){
-      phThumbs.innerHTML='';
-      arr.forEach((src,i)=>{ const d=document.createElement('div'); d.innerHTML=`<img src="${src}" style="width:100%;aspect-ratio:1/1;object-fit:cover;border-radius:8px"/><button class="btn small" data-i="${i}" style="margin-top:4px">Remove</button>`; phThumbs.appendChild(d); });
-      phThumbs.querySelectorAll('button[data-i]').forEach(b=>{ b.onclick=()=>{ const i=+b.dataset.i; const cur=getPhotos(previewItem); cur.splice(i,1); savePhotos(previewItem,cur); drawThumbs(cur); renderPreview(previewItem); }; });
-    }
-    async function readUploads(files){ const out=[]; for(const f of files){ const data=await new Promise(res=>{ const r=new FileReader(); r.onload=()=>res(r.result); r.readAsDataURL(f); }); out.push(data); } return out; }
-    $('#phSave').onclick = async ()=>{ if(!previewItem) return; const urls=phUrls.value.split(',').map(s=>s.trim()).filter(Boolean); const ups = await readUploads(phFiles.files||[]); const final=[...urls,...ups]; savePhotos(previewItem,final); renderPreview(previewItem); photoDlg.close(); phFiles.value=''; phUrls.value=''; };
-    $('#phClear').onclick = ()=>{ if(!previewItem) return; savePhotos(previewItem,[]); drawThumbs([]); renderPreview(previewItem); };
-    $('#phClose').onclick = ()=>photoDlg.close();
-    pvAdd.onclick = openPhotoMgr; pvEdit.onclick = openPhotoMgr;
-
-    async function fetchDbDispo(db, uidX){
-      try{
-        const snap = await db.ref(`deals/${uidX}`).get(); // existing top-level "deals"
-        const obj = snap.val() || {};
-        return Object.entries(obj).map(([id,d])=>{
-          const safeId = d.id || id || slugify((d.title||d.address||'item'));
-          return { id: safeId, kind: d.kind || 'deal', title: d.title || safeId, address: d.location || d.address || '',
-                   price: d.price || '', terms: d.terms || '', memo: d.memo || '', notes: d.notes || '',
-                   photos: Array.isArray(d.photos)? d.photos : [], createdBy: d.createdBy || uidX };
-        });
-      }catch{ return []; }
-    }
-    async function mergeDispoData(db){
-      const dbItems = await fetchDbDispo(db, uidParam);
-      const base = []; // no seeded demo in production
-      const byId = new Map();
-      [...dbItems, ...base].forEach(raw=>{ const id = raw.id || slugify(raw.title||raw.address||'item'); if(!byId.has(id)) byId.set(id, {...raw, id}); });
-      return Array.from(byId.values());
-    }
-    function ensureDispoData(db, cb){ mergeDispoData(db).then(cb); }
-
-    function renderDispo(){
-      const db = firebase.database();
-      ensureDispoData(db, items=>{
-        const deals = items.filter(i=>i.kind!=='offering');
-        const offs  = items.filter(i=>i.kind==='offering');
-
-        const fill = (list, gridId) => {
-          const grid=$(gridId); grid.innerHTML='';
-          const byId = Object.fromEntries(list.map(i=>[(i.id || slugify(i.title||i.address||'item')), i]));
-          list.forEach(it=>{
-            const kindTag = it.kind==='offering' ? 'Offering' : 'Deal';
-            const idSafe = it.id || slugify(it.title||it.address||'item');
-            const editable = !!(it.createdBy && it.createdBy === uidParam);
-            const absMemo = (()=>{ try{ return it.memo ? (it.memo.startsWith('http') ? it.memo : new URL(it.memo, location.href).href) : ''; } catch(_){ return it.memo||''; } })();
-
-            const el=document.createElement('div'); el.className='dealcard';
-            el.innerHTML=`
-              <div class="dealhdr">
-                <div>${esc(it.title)}</div>
-                <div class="dealtype">${esc(kindTag)}</div>
-              </div>
-              <div class="dealmeta">
-                ${it.price?`<div class="chip">${esc(it.price)}</div>`:''}
-                ${it.terms?`<div class="chip">${esc(it.terms)}</div>`:''}
-                ${it.address?`<div class="chip">${esc(it.address)}</div>`:''}
-              </div>
-              ${it.notes?`<div style="font-size:13px;color:#cfe3f7">${esc(it.notes)}</div>`:''}
-              <div class="actrow">
-                ${it.memo?`<a class="btn" href="${esc(it.memo)}" target="_blank" rel="noopener">Open Memo</a>`:''}
-                <a class="btn" href="${esc(it.share||'https://www.facebook.com/marketplace/create/item')}" target="_blank" rel="noopener">Post / Share</a>
-                ${it.memo?`<button class="btn" data-copy="${esc(absMemo)}">Copy Link</button>`:''}
-                <a class="btn" href="https://www.craigslist.org/" target="_blank" rel="noopener">Craigslist</a>
-                <button class="btn desktopOnly" data-preview="1">📷 Preview</button>
-                <button class="btn desktopOnly" data-manage="1">＋ Photos</button>
-                ${editable ? `<button class="btn small" data-edit="${esc(idSafe)}">Edit</button><button class="btn small" data-del="${esc(idSafe)}">Delete</button>` : ``}
-              </div>`;
-            el.addEventListener('click',e=>{
-              if(window.matchMedia('(max-width: 980px)').matches) return;
-              if(e.target.closest('.actrow')){
-                if(e.target.matches('button[data-preview]')) { renderPreview(it); }
-                if(e.target.matches('button[data-manage]'))  { renderPreview(it); openPhotoMgr(); }
-                return;
-              }
-              renderPreview(it);
-            });
-            grid.appendChild(el);
-          });
-          grid.querySelectorAll('button[data-copy]').forEach(b=>{
-            b.addEventListener('click',e=>{ e.stopPropagation(); navigator.clipboard.writeText(b.getAttribute('data-copy')).then(()=>toast('Link copied')); });
-          });
-          grid.querySelectorAll('button[data-edit]').forEach(b=>{
-            b.addEventListener('click',e=>{ e.stopPropagation(); const it = byId[b.getAttribute('data-edit')]; if(it) openEditor(it); });
-          });
-          grid.querySelectorAll('button[data-del]').forEach(b=>{
-            b.addEventListener('click',async e=>{ e.stopPropagation(); const id=b.getAttribute('data-del'); if(!confirm('Delete this item?')) return; try{ await firebase.database().ref(`deals/${uidParam}/${id}`).remove(); toast('Deleted'); renderDispo(); }catch{ alert('Could not delete right now.'); } });
-          });
-        };
-
-        fill(deals, '#dealsGrid');
-        fill(offs,  '#offeringsGrid');
-        if(!window.matchMedia('(max-width: 980px)').matches){ renderPreview(items[0]||null); }
-      });
-    }
-
-    // New item dialog wiring (writes /deals/{uid}/{id})
-    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
-    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
-    const newDlg = $('#newItemDlg');
-    $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
-    function updateMemoVisibility(){ const kindEl = document.getElementById('niKind'); const memoLabel = document.getElementById('niMemo')?.closest('label'); if(!kindEl || !memoLabel) return; memoLabel.style.display = (kindEl.value === 'offering') ? 'block' : 'none'; }
     document.addEventListener('DOMContentLoaded', updateMemoVisibility);
     document.getElementById('niKind').addEventListener('change', updateMemoVisibility);
+
+    /* ---- New item (Deal / Offering) wiring ---- */
+    const newDlg = $('#newItemDlg');
     function openEditor(it){
       $('#newItemTitle').textContent = (it.kind==='offering' ? 'Edit Offering' : 'Edit Deal');
       $('#niKind').value  = it.kind || 'deal';
@@ -686,11 +813,22 @@
       $('#niTerms').value = it.terms || '';
       $('#niMemo').value  = it.memo  || '';
       $('#niNotes').value = it.notes || '';
-      $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[]).filter(u=>!/^data:/.test(u)).join(', ');
+      $('#niPhotos').value = (Array.isArray(it.photos)?it.photos:[])
+        .filter(u=>!/^data:/.test(u)).join(', ');
+      $('#niLive').checked = !!it.shareLive;
       newDlg.dataset.editing = it.id || slugify(it.title||it.address||'item');
       newDlg.showModal();
       updateMemoVisibility();
     }
+    // top-right triggers
+    $('#whNewDeal').onclick     = ()=>{ $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+    $('#whNewOffering').onclick = ()=>{ $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+
+    // dispo tab triggers
+    $('#newDealBtn').onclick     = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Deal';     $('#niKind').value='deal';      newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+    $('#newOfferingBtn').onclick = (e)=>{ e.preventDefault(); $('#newItemTitle').textContent='New Offering'; $('#niKind').value='offering';  newDlg.dataset.editing=''; newDlg.showModal(); updateMemoVisibility(); };
+    $('#niClose').onclick = ()=>{ newDlg.dataset.editing=''; newDlg.close(); };
+
     $('#niSave').onclick  = async ()=>{
       const kind  = $('#niKind').value;
       const title = $('#niTitle').value.trim();
@@ -700,12 +838,82 @@
       const terms = $('#niTerms').value.trim();
       const memo  = $('#niMemo').value.trim();
       const notes = $('#niNotes').value.trim();
+      const live  = !!$('#niLive').checked;
       const photos= $('#niPhotos').value.split(',').map(s=>s.trim()).filter(Boolean);
+
       const editingId = newDlg.dataset.editing || null;
       const id = editingId || slugify(title || addr || (kind+'-'+Date.now()));
-      const payload = { id, kind, title, address: addr, location: addr, price, terms, memo, notes, photos, status:'active', createdBy: uidParam, updatedAt: Date.now() };
-      try{ await firebase.database().ref(`deals/${uidParam}/${id}`).set(payload); newDlg.dataset.editing=''; toast(editingId ? 'Updated' : 'Saved'); newDlg.close(); renderDispo(); }catch{ alert('Could not save right now.'); }
+      const payload = {
+        id, kind, title, address: addr, location: addr,
+        price, terms, memo, notes, photos, shareLive: live,
+        status:'active', createdBy: uidParam, updatedAt: Date.now(), createdAt: editingId? undefined : Date.now()
+      };
+      try{
+        // ✅ canonical path
+        await gateDb.ref(`dispo/deals/${uidParam}/${id}`).set(payload);
+        // Admin inbox log
+        await gateDb.ref('admin/inbox').push({
+          ts: Date.now(),
+          type: (kind==='offering' ? 'newOffering' : 'newDeal'),
+          actorUid: uidParam,
+          extra: { title, addr, shareLive: live }
+        });
+
+        newDlg.dataset.editing='';
+        toast(editingId ? 'Updated' : 'Saved');
+        newDlg.close();
+        renderDispo();
+      }catch(e){ console.error(e); alert('Could not save right now.'); }
     };
+  </script>
+
+  <script src="config.js"></script>
+  <!-- DealBankers Firebase bootstrap (compat, token refresh) -->
+  <script>
+  (function(){
+    try {
+      if (typeof firebase === 'undefined' || !firebase?.auth) {
+        console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
+      }
+    } catch(e) {}
+
+    if (!window.firebase?.apps?.length) {
+      function initNow(){
+        try{
+          firebase.initializeApp(window.firebaseConfig);
+        }catch(e){ console.error('[DealBankers] init error', e); }
+      }
+      if (window.firebaseConfig) {
+        initNow();
+      } else {
+        var tries=0, t=setInterval(function(){
+          if (window.firebaseConfig){ clearInterval(t); initNow(); }
+          if (++tries>50){ clearInterval(t); console.error('[DealBankers] Missing window.firebaseConfig after waiting.'); }
+        },100);
+      }
+      if (window.firebaseConfig) {
+        firebase.initializeApp(window.firebaseConfig);
+      } else {
+        console.error('[DealBankers] Missing window.firebaseConfig — set your firebaseConfig before this script.');
+      }
+    }
+
+    function refreshToken(){
+      var u = firebase.auth().currentUser;
+      if (u && u.getIdToken) {
+        u.getIdToken(true).catch(function(e){ console.warn('Token refresh error', e); });
+      }
+    }
+    firebase.auth().onAuthStateChanged(function(user){
+      if (user) refreshToken();
+    });
+    document.addEventListener('visibilitychange', function(){
+      if (!document.hidden) refreshToken();
+    });
+
+    window.db = firebase.database();
+    window.rtdbRef = function(path){ return window.db.ref(path); };
+  })();
   </script>
 </body>
 </html>
