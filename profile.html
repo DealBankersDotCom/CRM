@@ -443,6 +443,12 @@
     const qs=new URL(location.href).searchParams;
     const toast=(t)=>{ let el=document.getElementById('gmToast'); if(!el){ el=document.createElement('div'); el.id='gmToast'; el.style.cssText='position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);z-index:9999;display:none'; document.body.appendChild(el); } el.textContent=t; el.style.display='block'; setTimeout(()=>el.style.display='none',1500); };
 
+    function safeUid(){ return auth.currentUser?.uid ? encodeURIComponent(auth.currentUser.uid) : 'anon'; }
+    function safeName(){
+      const n = (window.gProfile?.displayName || auth.currentUser?.displayName || '').trim();
+      return encodeURIComponent(n || 'User');
+    }
+
     function show(name){
       tabs.forEach(t=>t.classList.toggle('active',t.dataset.tab===name));
       panels.forEach(p=>p.style.display=(p.dataset.panel===name)?'block':'none');
@@ -457,11 +463,6 @@
 
     let gProfile=null, whSet=false, ctSet=false, ovSet=false;
 
-    function safeUid(){ return auth.currentUser?.uid ? encodeURIComponent(auth.currentUser.uid) : 'anon'; }
-    function safeName(){
-      const n = (gProfile?.displayName || auth.currentUser?.displayName || '').trim();
-      return encodeURIComponent(n || 'User');
-    }
     function ensureWh(){
       if(whSet || !auth.currentUser) return; whSet=true;
       const f=$('#whFrame'); if(f) f.src=`wholesaler.html?uid=${safeUid()}&name=${safeName()}`;
@@ -471,7 +472,7 @@
       const f=$('#ctFrame'); if(f) f.src=`contractor.html?uid=${safeUid()}&name=${safeName()}`;
     }
 
-    /* ---------- Live deals on Overview (PUBLIC FEED) ---------- */
+    /* ---------- Live deals on Overview (read from public mirror: live/deals) ---------- */
     async function fetchLiveDeals(limit=12){
       const snap = await db.ref('live/deals').get();
       const all = snap.val()||{};
@@ -495,7 +496,7 @@
             ${d.price?`<span class="chip">${d.price}</span>`:''}
             ${d.address?`<span class="chip">${d.address}</span>`:''}
             <span class="chip">${d.kind||'deal'}</span>
-            <span class="chip">${'LIVE'}</span>
+            <span class="chip">${d.ownerUid?('Owner '+d.ownerUid.slice(0,6)):'LIVE'}</span>
           </div>
           ${Array.isArray(d.photos)&&d.photos.length?`
             <div class="thumbs">
@@ -513,8 +514,9 @@
       if(!body||!input||!send||!presEl) return;
       const scroll=()=>{ body.scrollTop=body.scrollHeight; };
 
-      // Messages (read)
       const roomRef = db.ref('townhall/messages');
+
+      // Listen
       roomRef.limitToLast(100).on('child_added',snap=>{
         const m=snap.val(); if(!m) return;
         const me=auth.currentUser?.uid===m.uid;
@@ -530,31 +532,31 @@
         wrap.append(meta,bubble); body.appendChild(wrap); scroll();
       });
 
-      // Send (button + Enter) with light throttling
-      let lastSend=0;
-      function sendMessage(){
-        const u=auth.currentUser;
-        const text=(input.value||'').trim();
-        if(!u || !text) return;
-        const now=Date.now();
-        if(now-lastSend<800) return;
-        lastSend=now;
-        roomRef.push({
-          uid:u.uid,
-          name:(u.displayName||u.email||'Anon'),
-          text,
-          ts:firebase.database.ServerValue.TIMESTAMP
-        }).then(()=>{ input.value=''; });
-      }
-      send.addEventListener('click', sendMessage);
-      input.addEventListener('keydown', e=>{ if(e.key==='Enter') sendMessage(); });
-
       // Presence
       const presenceRef=db.ref('presence/global'); const myRef=presenceRef.child(auth.currentUser?.uid||'anon');
       db.ref('.info/connected').on('value',snap=>{
         if(snap.val()===true){ myRef.onDisconnect().remove(); myRef.set({uid:auth.currentUser?.uid||'anon', ts:firebase.database.ServerValue.TIMESTAMP}); }
       });
       presenceRef.on('value',snap=>{ presEl.textContent=`${snap.numChildren()} online`; });
+
+      // Send (button + Enter) with light throttle
+      let lastSend = 0;
+      function sendMessage(){
+        const u = auth.currentUser;
+        const text = (input.value || '').trim();
+        if(!u || !text) return;
+        const now = Date.now();
+        if (now - lastSend < 800) return; // throttle
+        lastSend = now;
+        roomRef.push({
+          uid: u.uid,
+          name: (u.displayName || u.email || 'Anon'),
+          text,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        }).then(()=>{ input.value=''; });
+      }
+      send.addEventListener('click', sendMessage);
+      input.addEventListener('keydown', (e)=>{ if(e.key==='Enter') sendMessage(); });
     }
 
     /* ---------- Robust chip wiring ---------- */
@@ -769,12 +771,12 @@
       });
       $('#gmFilter').addEventListener('input', renderGMTable);
 
-      // Click UID to load into the "by UID" editor
+      // Click UID to load into "by UID"
       document.getElementById('gmTable').addEventListener('click', (e)=>{
         const cell = e.target.closest('td'); if(!cell) return;
         const row = cell.parentElement;
         const uid = row.firstElementChild?.textContent?.trim();
-        if (uid) { $('#gmTargetUid').value = uid; gmRefreshTarget(); toast(`Loaded ${uid.slice(0,8)}`); }
+        if (uid) { $('#gmTargetUid').value = uid; gmRefreshTarget(); }
       });
     }
 
@@ -850,7 +852,7 @@
         $('#meDispoDisable')?.addEventListener('click',()=> setFlag(u.uid,{dispoEnabled:false},'Dispo OFF (me)','#meDispoState'));
 
         // Target load + role + toggles
-        $('#gmLoad')?.addEventListener('click', async()=>{ await gmRefreshTarget(); const t=$('#gmTargetUid').value.trim(); if(t) toast(`Loaded ${short(t)}`); });
+        $('#gmLoad')?.addEventListener('click', async()=>{ await gmRefreshTarget(); const t=$('#gmTargetUid').value.trim(); if(t) toast(`Loaded ${t.slice(0,8)}`); });
         $('#uidAcqEnable')?.addEventListener('click', ()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:true},  'Acq ON',   '#uidAcqState'); });
         $('#uidAcqDisable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{acqEnabled:false}, 'Acq OFF',  '#uidAcqState'); });
         $('#uidDispoEnable')?.addEventListener('click',()=>{ const t=$('#gmTargetUid').value.trim(); if(!t) return; setFlag(t,{dispoEnabled:true},'Dispo ON', '#uidDispoState'); });
