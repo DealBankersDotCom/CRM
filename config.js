@@ -1,12 +1,10 @@
-<!-- config.js -->
-<script>
-// Expose one config object BEFORE any Firebase code runs.
-window.firebaseConfig = Object.freeze({
-  apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
-  authDomain: "deal-bankers.firebaseapp.com",
-  databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
-  projectId: "deal-bankers",
-  storageBucket: "deal-bankers.appspot.com"
-  // messagingSenderId/appId optional for your use case
-});
-</script>
+// config.js  (put this next to index.html)
+window.firebaseConfig = {
+  apiKey: "YOUR_WEB_API_KEY",
+  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
+  databaseURL: "https://YOUR_RTDB_ID.firebaseio.com",
+  projectId: "YOUR_PROJECT_ID",
+  storageBucket: "YOUR_PROJECT_ID.appspot.com",
+  messagingSenderId: "YOUR_SENDER_ID",
+  appId: "YOUR_WEB_APP_ID"
+};
