@@ -1,6 +1,6 @@
 // config.js
 window.firebaseConfig = {
-  apiKey: "AIzaSyAoidTHzWJ_FrXXMZd_hPAuxoXDJuncs",
+  apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
   authDomain: "deal-bankers.firebaseapp.com",
   databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
   projectId: "deal-bankers",
