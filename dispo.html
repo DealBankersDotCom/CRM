@@ -1,7 +1,6 @@
-<!-- ======================= DealBankers • Capital Console (Dispo Only • Live-only, no legacy) ======================= -->
+<!-- ======================= DealBankers • Capital Console (Dispo + Buyers Queue) ======================= -->
 <!DOCTYPE html>
 <html lang="en">
-\1
 
 <!-- Firebase compat SDKs -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
@@ -12,6 +11,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DealBankers • Capital Console</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+
 <style>
 :root{
   --bg:#0b1118; --bg2:#0f1a24; --panel:#0f1f2b; --line:#254a63;
@@ -85,13 +85,17 @@ textarea{min-height:110px;resize:vertical}
 .gallery img{width:100%;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#0e1822}
 
 .toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;padding:10px 14px;border-radius:12px;background:#0b1218;border:1px solid rgba(255,255,255,.2);display:none;z-index:40}
+
+/* Buyers Queue (center column) */
+.qhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.qname{font-weight:900;font-size:18px}
+.qmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.chip{display:inline-flex;gap:6px;align-items:center;font-size:12px;padding:6px 10px;border-radius:999px;background:#0f2a3a;border:1px solid var(--line)}
+.qactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.qnav{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
+.qbox{background:#0e2231;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
 </style>
 
-<!-- Firebase -->
-
-
-
-\1
 <body>
 
 <header>
@@ -102,7 +106,7 @@ textarea{min-height:110px;resize:vertical}
   </div>
   <div class="toprow">
     <span class="stat">Queue: <b id="queueState">—</b></span>
-    <button id="queueToggle" class="topbtn" title="Acq queue ON/OFF">⏱️</button>
+    <button id="queueToggle" class="topbtn" title="Buyers queue ON/OFF">⏱️</button>
 
     <span class="stat admin-only" id="selStat" style="display:none">Selected: 0</span>
     <button id="selectAllBtn" class="topbtn admin-only" style="display:none">Select All</button>
@@ -120,14 +124,13 @@ textarea{min-height:110px;resize:vertical}
 
 <div class="wrap">
   <div class="grid">
-    <!-- LEFT: Deal list -->
+    <!-- LEFT: Disposition list (read-only quick access) -->
     <section class="card">
       <div class="head">
         <div>Disposition</div>
         <div class="row">
-          <button id="newDealBtn" class="btn green small">+ New Deal</button>
-          <button id="newOffBtn" class="btn blue small">+ New Offering</button>
-          <button id="buyersQueueBtn" class="btn small">📞 Buyers List Queue</button>
+          <!-- Buttons removed (they now live in Wholesaler portal) -->
+          <button id="buyersQueueJump" class="btn small">📞 Buyers Queue</button>
         </div>
       </div>
       <div class="body">
@@ -139,53 +142,66 @@ textarea{min-height:110px;resize:vertical}
       </div>
     </section>
 
-    <!-- CENTER: Deal edit -->
-    <section class="card">
+    <!-- CENTER: Buyers List Call Queue -->
+    <section class="card" id="buyersCard">
       <div class="head">
-        <div id="curTitle" style="font-weight:900">—</div>
-        <label class="tag"><input id="liveToggle" type="checkbox" style="margin-right:6px">Live</label>
+        <div class="qhead">
+          <div style="font-weight:900">Buyers List Queue</div>
+          <span class="tag">Pool: <b id="poolCount">0</b></span>
+          <span class="tag">Index: <b id="poolIndex">—</b></span>
+        </div>
+        <div class="row right">
+          <button id="qPrev" class="btn small">◀ Prev</button>
+          <button id="qNext" class="btn green small">▶ Next</button>
+        </div>
       </div>
       <div class="body">
-        <div class="row">
-          <div style="flex:1">
-            <label>Title</label>
-            <input id="dTitle" placeholder="e.g., $48,000 🔥 Fixer-Upper — 2 lots in San Antonio"/>
+        <div id="qInfo">
+          <div class="qname" id="bName">—</div>
+          <div class="qmeta">
+            <span class="chip" id="bCompany" style="display:none"></span>
+            <span class="chip" id="bTags" style="display:none"></span>
+            <span class="chip" id="bEmail" style="display:none"></span>
           </div>
-        </div>
 
-        <div class="row" style="margin-top:8px">
-          <div style="flex:1">
-            <label>Asking / Pricing meta</label>
-            <input id="dPrice" placeholder="e.g., 48,000 ask • 15k terms negotiable"/>
+          <div class="qbox">
+            <div class="row">
+              <div class="tag">Phone: <b id="bPhone">—</b></div>
+              <a id="callBtn" class="btn gold small" href="#" target="_blank" rel="noopener">📞 Call</a>
+              <a id="smsBtn"  class="btn small" href="#" target="_blank" rel="noopener">💬 Text</a>
+              <button id="copyBtn" class="btn small">📋 Copy</button>
+            </div>
           </div>
-        </div>
 
-        <div class="row" style="margin-top:8px">
-          <div style="flex:1">
-            <label>Address</label>
-            <input id="dAddr" placeholder="Street, City, ST ZIP"/>
+          <div class="qbox">
+            <label>Notes</label>
+            <textarea id="bNotes" placeholder="Quick notes…"></textarea>
+            <div class="row right" style="margin-top:8px">
+              <button id="saveNote" class="btn green small">💾 Save Note</button>
+            </div>
           </div>
-        </div>
 
-        <label style="display:block;margin-top:8px">Description / Notes</label>
-        <textarea id="dNotes" placeholder="Bullets, features, anything buyers should know…"></textarea>
-
-        <div class="row" style="margin-top:8px">
-          <div style="flex:1">
-            <label>Photo URLs (Google, comma-separated)</label>
-            <input id="dPhotos" placeholder="https://... , https://..."/>
+          <div class="qactions">
+            <button id="qaInterested" class="btn green small">✔ Interested</button>
+            <button id="qaFollow" class="btn small">🗓 Follow-up</button>
+            <button id="qaBad" class="btn red small">❌ Bad Number</button>
+            <button id="qaDnc" class="btn small">🚫 DNC</button>
+            <button id="qaSkip" class="btn small">⏭ Skip</button>
           </div>
-        </div>
-        <div id="gal" class="gallery"></div>
 
-        <div class="row" style="margin-top:10px;justify-content:flex-end">
-          <button id="saveBtn" class="btn green">💾 Save</button>
-          <button id="delBtn"  class="btn red">🗑 Delete</button>
+          <div class="qnav">
+            <span class="muted">Hotkeys: <span class="kbd">N</span> next • <span class="kbd">S</span> save note</span>
+          </div>
+
+          <div class="qbox" id="histBox" style="display:none">
+            <div style="font-weight:800;margin-bottom:6px">Recent Activity</div>
+            <div id="bHistory" style="font-size:13px;color:var(--muted)">—</div>
+          </div>
         </div>
       </div>
     </section>
 
-    <!-- RIGHT: Scripts (unchanged – your working version) -->
+    <!-- RIGHT: Pitch / Script (unchanged) -->
     <section class="card">
       <div class="head"><div>Pitch / Script</div></div>
       <div class="body">
@@ -225,9 +241,10 @@ const db=firebase.database();
 /* ===================== Helpers ===================== */
 const $ = s => document.querySelector(s);
 const toast = msg => { const t=$("#toast"); if(!t) return; t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",1600); };
-const onlyDigits = s => (s||"").replace(/[^\d+]/g,"");
-function chip(str){ return (str||"").trim(); }
-function parsePhotos(line){ return (line||"").split(",").map(s=>s.trim()).filter(Boolean); }
+const clean = s => (s||"").trim();
+const digitize = s => (s||"").replace(/[^\d+]/g,"");
+const now = ()=> Date.now();
+const fmt = ts => { const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
 
 /* ===================== State ===================== */
 const params   = new URL(location.href).searchParams;
@@ -235,156 +252,121 @@ let myUid      = params.get("uid") || "";
 let myEmail    = "";
 let isGod      = false;
 
-let allDeals   = [];  // {id,title,price,addr,notes,photos[],shareLive,updatedAt}
-let filtered   = [];
-let cur        = -1;
+let dispo = [];            // left list: deals/offerings
+let filtered = [];
+let cur = -1;
+
+let buyers = [];           // center queue
+let bIdx = -1;
 
 const GOD_EMAIL = "dealbankers@gmail.com";
+const DIAL_KEY = "db_cc_dial_mode"; // 'device' | 'textnow' | 'gvoice'
 
 /* ===================== Paths ===================== */
-const dealsPath    = (uid)=> `dispo/deals/${uid}`;
-const queueFlagPath= (uid)=> `userSettings/${uid}/queueEnabled`;
+const dealsPath     = (uid)=> `dispo/deals/${uid}`;
+const queueFlagPath = (uid)=> `userSettings/${uid}/queueEnabled`;
+const BUYERS_PATHS  = (uid)=> [
+  `buyers/queue/${uid}`,
+  `buyersQueue/${uid}`,
+  `buyers/globalQueue`,
+  `buyersQueuePublic`
+];
+const buyerLogPath  = (uid, id)=> `buyersLogs/${uid}/${id}`;
 
-/* ===================== Render ===================== */
+/* ===================== Dial mode ===================== */
+function getDial(){ return localStorage.getItem(DIAL_KEY)||"device"; }
+function setDial(m){ localStorage.setItem(DIAL_KEY,m); $("#dialModeBtn").textContent = (m==="device"?"Device":m==="textnow"?"TextNow":"GVoice"); }
+function phoneHref(num){
+  const n=digitize(num); const m=getDial();
+  if(!n) return "#";
+  if(m==="device") return `tel:${n}`;
+  if(m==="textnow"){ try{ navigator.clipboard?.writeText(n); }catch{} return "https://www.textnow.com/messaging"; }
+  if(m==="gvoice"){ try{ navigator.clipboard?.writeText(n); }catch{} return "https://voice.google.com/u/0/messages"; }
+  return `tel:${n}`;
+}
+
+/* ===================== Left: Dispo list ===================== */
+async function loadDispo(){
+  const snap = await db.ref(dealsPath(myUid)).get();
+  const v = snap.val()||{};
+  const list = Object.values(v);
+  list.sort((a,b)=> (b.updatedAt||0)-(a.updatedAt||0));
+  return list;
+}
 function drawList(){
-  const L=$("#list");
-  if(!L) return; L.innerHTML="";
+  const L=$("#list"); if(!L) return; L.innerHTML="";
   filtered.forEach((d,i)=>{
     const item=document.createElement("div");
     item.className="item"+(i===cur?" active":"");
-    const left=document.createElement("div");
-    left.className="chkWrap";
     const nm=document.createElement("div");
     nm.className="name"; nm.textContent = d.title||"Untitled";
     const mt=document.createElement("div");
     mt.className="muted";
-    mt.textContent = [d.price, d.addr, (d.shareLive?'LIVE':'')].filter(Boolean).join(" • ");
+    const addr = d.address||d.addr||"";
+    mt.textContent = [d.kind||d.type||"deal", d.price||"", addr].filter(Boolean).join(" • ");
     item.append(nm, mt);
-    item.onclick=()=>{ cur=i; pick(); };
+    item.onclick=()=>{ cur=i; drawList(); };
     L.appendChild(item);
   });
 }
 
-function previewGallery(arr){
-  const gal=$("#gal"); if(!gal) return;
-  gal.innerHTML="";
-  (arr||[]).slice(0,9).forEach(u=>{
-    const img=document.createElement("img");
-    img.src = u; img.alt="photo";
-    gal.appendChild(img);
-  });
+/* ===================== Center: Buyers Queue ===================== */
+async function firstNonEmptyPath(paths){
+  for(const p of paths){
+    const s = await db.ref(p).limitToFirst(2).get();
+    if(s.exists()) return p;
+  }
+  return null;
 }
-
-function pick(){
-  const d = filtered[cur];
-  const title=$("#dTitle"), price=$("#dPrice"), addr=$("#dAddr"), notes=$("#dNotes"), photos=$("#dPhotos");
-  const curTitle=$("#curTitle"), live=$("#liveToggle");
-  if(!d) return;
-
-  if(curTitle) curTitle.textContent = d.title||"—";
-  if(title) title.value = d.title||"";
-  if(price) price.value = d.price||"";
-  if(addr)  addr.value  = d.addr||"";
-  if(notes) notes.value = d.notes||"";
-  if(photos)photos.value= (d.photos||[]).join(", ");
-  if(live){ live.checked = !!d.shareLive; }
-
-  previewGallery(d.photos||[]);
-  drawList();
-}
-
-/* ===================== Cloud I/O ===================== */
-async function loadDeals(){
-  const snap = await db.ref(dealsPath(myUid)).get();
+async function loadBuyersQueue(){
+  const path = await firstNonEmptyPath(BUYERS_PATHS(myUid));
+  if(!path) return [];
+  const snap = await db.ref(path).get();
   const v = snap.val()||{};
-  const list = Object.values(v);
-  list.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0));
-  return list;
+  const arr = Object.entries(v).map(([id, b])=>({
+    id,
+    name: b.name || b.firstName && b.lastName ? `${b.firstName} ${b.lastName}`.trim() : (b.company || "Unknown"),
+    phone: b.phone || b.phone1 || b.mobile || b.tel || "",
+    email: b.email || "",
+    company: b.company || "",
+    tags: Array.isArray(b.tags)? b.tags : (typeof b.tags==="string"? b.tags.split(",").map(s=>s.trim()).filter(Boolean): []),
+    notes: b.notes || "",
+    raw: b
+  }));
+  arr.sort((a,b)=> (a.name||"").localeCompare(b.name||""));
+  return arr;
 }
-async function saveDeal(uid, deal){
-  const id = deal.id || crypto.randomUUID();
-  await db.ref(`${dealsPath(uid)}/${id}`).set({...deal, id});
+function renderBuyer(i){
+  if(buyers.length===0){ $("#poolCount").textContent="0"; $("#poolIndex").textContent="—"; $("#bName").textContent="No buyers in queue"; $("#bPhone").textContent="—"; return; }
+  if(i<0) i=buyers.length-1;
+  if(i>=buyers.length) i=0;
+  bIdx=i;
+
+  const b = buyers[bIdx];
+  $("#poolCount").textContent = buyers.length;
+  $("#poolIndex").textContent = (bIdx+1)+"/"+buyers.length;
+
+  $("#bName").textContent = b.name || "Unknown";
+  $("#bPhone").textContent = b.phone ? digitize(b.phone) : "—";
+  $("#bCompany").style.display = b.company ? "" : "none";
+  $("#bCompany").textContent = b.company || "";
+  $("#bEmail").style.display = b.email ? "" : "none";
+  $("#bEmail").textContent = b.email || "";
+  $("#bTags").style.display = (b.tags && b.tags.length) ? "" : "none";
+  $("#bTags").textContent = (b.tags||[]).join(", ");
+  $("#bNotes").value = b.notes || "";
+
+  $("#callBtn").href = phoneHref(b.phone);
+  $("#smsBtn").href  = getDial()==="device" && b.phone ? `sms:${digitize(b.phone)}` : phoneHref(b.phone);
+  $("#histBox").style.display = "none";
 }
-async function deleteDeal(uid, id){
-  await db.ref(`${dealsPath(uid)}/${id}`).remove();
+async function logBuyerAction(b, action, extra){
+  const rec = { ts: now(), action, buyerId:b.id, name:b.name||"", phone:b.phone||"", ...(extra||{}) };
+  await db.ref(buyerLogPath(myUid, b.id)).push(rec);
 }
+function nextBuyer(d=+1){ if(!buyers.length) return; renderBuyer(bIdx+d); }
 
-/* ===================== Events ===================== */
-$("#newDealBtn").onclick = async ()=>{
-  const d = {
-    id: crypto.randomUUID(),
-    type: "deal",
-    title: "New Deal",
-    price: "",
-    addr: "",
-    notes: "",
-    photos: [],
-    shareLive:false,
-    updatedAt: Date.now()
-  };
-  await saveDeal(myUid, d);
-  allDeals = await loadDeals();
-  filtered=[...allDeals];
-  cur = 0;
-  drawList(); pick();
-  toast("New deal created");
-};
-
-$("#newOffBtn").onclick = async ()=>{
-  const d = {
-    id: crypto.randomUUID(),
-    type: "offering",
-    title: "New Offering",
-    price: "",
-    addr: "",
-    notes: "",
-    photos: [],
-    shareLive:false,
-    updatedAt: Date.now()
-  };
-  await saveDeal(myUid, d);
-  allDeals = await loadDeals();
-  filtered=[...allDeals];
-  cur = 0; drawList(); pick();
-  toast("New offering created");
-};
-
-$("#saveBtn").onclick = async ()=>{
-  const d = filtered[cur]; if(!d) return;
-  d.title = chip($("#dTitle").value);
-  d.price = chip($("#dPrice").value);
-  d.addr  = chip($("#dAddr").value);
-  d.notes = $("#dNotes").value||"";
-  d.photos= parsePhotos($("#dPhotos").value);
-  d.shareLive = !!$("#liveToggle").checked;
-  d.updatedAt = Date.now();
-  await saveDeal(myUid, d);
-  const ct=$("#curTitle"); if(ct) ct.textContent=d.title||"—";
-  previewGallery(d.photos);
-  toast("Saved");
-};
-
-$("#delBtn").onclick = async ()=>{
-  const d = filtered[cur]; if(!d) return;
-  if(!confirm("Delete this item?")) return;
-  await deleteDeal(myUid, d.id);
-  allDeals = await loadDeals();
-  filtered=[...allDeals]; cur = filtered.length?0:-1;
-  drawList(); if(cur>=0) pick();
-  toast("Deleted");
-};
-
-$("#clearFilter").onclick=()=>{ const s=$("#search"); if(s) s.value=""; filtered=[...allDeals]; cur=filtered.length?0:-1; drawList(); if(cur>=0) pick();};
-$("#search").addEventListener("input",()=>{
-  const q=$("#search").value.toLowerCase().trim();
-  filtered = allDeals.filter(d=>{
-    const hay=[d.title,d.price,d.addr,d.notes,(d.shareLive?'live':'')].join(" ").toLowerCase();
-    return !q || hay.includes(q);
-  });
-  cur = filtered.length?0:-1; drawList(); if(cur>=0) pick();
-});
-
-/* ===================== Script box (reuse) ===================== */
+/* ===================== Script box (unchanged content) ===================== */
 const Scripts = {
   intro:  "Hey {{first}}, this is {{agent}} with DealBankers. Do you have a quick second?",
   terms:  "We typically look at price, timing, and any special terms you care about. What are you aiming for?",
@@ -401,48 +383,139 @@ document.querySelectorAll(".tab").forEach(b=>{
 });
 $("#scriptBox").textContent = scriptText("intro");
 
+/* ===================== Events ===================== */
+/* Header */
+$("#dialModeBtn").onclick = ()=>{
+  const cur = getDial();
+  const next = cur==="device" ? "textnow" : cur==="textnow" ? "gvoice" : "device";
+  setDial(next);
+  // refresh call/sms href for current buyer
+  if(bIdx>=0) renderBuyer(bIdx);
+};
+$("#buyersQueueJump").onclick = ()=> document.querySelector("#buyersCard")?.scrollIntoView({behavior:"smooth"});
+
+/* Left list */
+$("#clearFilter").onclick=()=>{ const s=$("#search"); if(s) s.value=""; filtered=[...dispo]; cur=filtered.length?0:-1; drawList(); };
+$("#search").addEventListener("input",()=>{
+  const q=$("#search").value.toLowerCase().trim();
+  filtered = dispo.filter(d=>{
+    const hay=[d.title,d.price,d.address||d.addr,d.notes,(d.shareLive?'live':'')].join(" ").toLowerCase();
+    return !q || hay.includes(q);
+  });
+  cur = filtered.length?0:-1; drawList();
+});
+
+/* Center queue */
+$("#qPrev").onclick = ()=> nextBuyer(-1);
+$("#qNext").onclick = ()=> nextBuyer(+1);
+$("#qaSkip").onclick = ()=> nextBuyer(+1);
+$("#copyBtn").onclick = ()=>{
+  const b=buyers[bIdx]; if(!b||!b.phone) return;
+  navigator.clipboard.writeText(digitize(b.phone)).then(()=>toast("Phone copied"));
+};
+$("#callBtn").onclick = ()=>{ const b=buyers[bIdx]; if(!b) return; logBuyerAction(b,"call_clicked",{dial:getDial()}); };
+$("#smsBtn").onclick  = ()=>{ const b=buyers[bIdx]; if(!b) return; logBuyerAction(b,"sms_clicked",{dial:getDial()}); };
+
+$("#saveNote").onclick = async ()=>{
+  const b=buyers[bIdx]; if(!b) return;
+  const txt = $("#bNotes").value||"";
+  await logBuyerAction(b,"note",{text:txt});
+  toast("Note saved");
+};
+
+$("#qaInterested").onclick = async ()=>{
+  const b=buyers[bIdx]; if(!b) return;
+  await logBuyerAction(b,"interested",{});
+  toast("Marked interested"); nextBuyer(+1);
+};
+$("#qaFollow").onclick = async ()=>{
+  const b=buyers[bIdx]; if(!b) return;
+  await logBuyerAction(b,"follow_up",{});
+  toast("Marked follow-up"); nextBuyer(+1);
+};
+$("#qaBad").onclick = async ()=>{
+  const b=buyers[bIdx]; if(!b) return;
+  await logBuyerAction(b,"bad_number",{});
+  toast("Marked bad number"); nextBuyer(+1);
+};
+$("#qaDnc").onclick = async ()=>{
+  const b=buyers[bIdx]; if(!b) return;
+  await logBuyerAction(b,"dnc",{});
+  toast("Marked DNC"); nextBuyer(+1);
+};
+
+/* Hotkeys */
+document.addEventListener("keydown",(e)=>{
+  if(document.activeElement && /input|textarea|select/i.test(document.activeElement.tagName)) return; // ignore while typing
+  if(e.key==="/"){ e.preventDefault(); $("#search")?.focus(); return; }
+  if(e.key.toLowerCase()==="n"){ e.preventDefault(); nextBuyer(+1); return; }
+  if(e.key.toLowerCase()==="s"){ e.preventDefault(); $("#saveNote").click(); return; }
+});
+
+/* Queue toggle flag */
+async function setQueueToggle(on){
+  await db.ref(queueFlagPath(myUid)).set(!!on);
+  $("#queueState").textContent = on ? "ON" : "OFF";
+  $("#queueToggle").classList.toggle("primary", !!on);
+}
+$("#queueToggle").onclick = async ()=>{
+  const cur = ($("#queueState").textContent||"").toUpperCase()==="ON";
+  await setQueueToggle(!cur);
+};
+
 /* ===================== Auth + Init ===================== */
 async function boot(){
+  setDial(getDial());
+
   await new Promise(res=>{
     auth.onAuthStateChanged(u=>{
       myEmail=((u&&u.email)||"").toLowerCase();
       if(!myUid && u) myUid=u.uid;
       isGod = (myEmail===GOD_EMAIL);
-      // show admin-only buttons if god
       document.querySelectorAll(".admin-only").forEach(el=>el.style.display = isGod?"":"none");
       res();
     });
   });
   if(!myUid){ alert("Sign in first"); return; }
-  allDeals = await loadDeals();
-  filtered=[...allDeals];
-  cur=filtered.length?0:-1;
-  drawList(); if(cur>=0) pick();
+
+  // Queue flag
+  const qf = await db.ref(queueFlagPath(myUid)).get();
+  const qOn = !!(qf.val());
+  $("#queueState").textContent = qOn?"ON":"OFF";
+  $("#queueToggle").classList.toggle("primary", qOn);
+
+  // Dispo list (left)
+  dispo = await loadDispo(); filtered=[...dispo]; cur=filtered.length?0:-1; drawList();
+
+  // Buyers queue (center)
+  buyers = await loadBuyersQueue();
+  if(!buyers.length){
+    buyers = [
+      {id:"sample-1", name:"Sample Buyer", phone:"+1 (555) 010-2000", email:"buyer@example.com", company:"Example LLC", tags:["demo"], notes:"This is a demo record."}
+    ];
+  }
+  renderBuyer(0);
 }
 boot();
 </script>
+
 <script src="config.js"></script>
 <!-- DealBankers Firebase bootstrap (compat, token refresh) -->
 <script>
 (function(){
-  // If modular SDK got loaded accidentally, stop and warn.
   try {
     if (typeof firebase === 'undefined' || !firebase?.auth) {
       console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
     }
   } catch(e) {}
 
-  // Guard init: expect window.firebaseConfig to be defined in each page (already present in your app).
   if (!window.firebase?.apps?.length) {
     function initNow(){
-      try{
-        firebase.initializeApp(window.firebaseConfig);
-      }catch(e){ console.error('[DealBankers] init error', e); }
+      try{ firebase.initializeApp(window.firebaseConfig); }catch(e){ console.error('[DealBankers] init error', e); }
     }
     if (window.firebaseConfig) {
       initNow();
     } else {
-      // wait up to 5 seconds for config to appear
       var tries=0, t=setInterval(function(){
         if (window.firebaseConfig){ clearInterval(t); initNow(); }
         if (++tries>50){ clearInterval(t); console.error('[DealBankers] Missing window.firebaseConfig after waiting.'); }
@@ -455,7 +528,6 @@ boot();
     }
   }
 
-  // Token refresh once on boot and on visibility changes
   function refreshToken(){
     var u = firebase.auth().currentUser;
     if (u && u.getIdToken) {
@@ -469,10 +541,8 @@ boot();
     if (!document.hidden) refreshToken();
   });
 
-  // Simple helpers globally
   window.db = firebase.database();
   window.rtdbRef = function(path){ return window.db.ref(path); };
-
 })();
 </script>
 </body>
