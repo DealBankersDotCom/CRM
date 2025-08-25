@@ -1,7 +1,13 @@
 <!-- ======================== profile.html (Overview + Announcements + Settings + GM; FIXED chip toggles) ======================== -->
 <!DOCTYPE html>
 <html lang="en">
-<head>
+\1
+
+<!-- Firebase compat SDKs -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>DealBankers • Profile</title>
@@ -121,7 +127,48 @@
     .stats{display:flex;flex-wrap:wrap;gap:8px}
     .stat{background:#0e2231;border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-weight:800}
   </style>
-</head>
+
+<!-- DealBankers Firebase bootstrap (compat, token refresh) -->
+<script>
+(function(){
+  // If modular SDK got loaded accidentally, stop and warn.
+  try {
+    if (typeof firebase === 'undefined' || !firebase?.auth) {
+      console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
+    }
+  } catch(e) {}
+
+  // Guard init: expect window.firebaseConfig to be defined in each page (already present in your app).
+  if (!window.firebase?.apps?.length) {
+    if (window.firebaseConfig) {
+      firebase.initializeApp(window.firebaseConfig);
+    } else {
+      console.error('[DealBankers] Missing window.firebaseConfig — set your firebaseConfig before this script.');
+    }
+  }
+
+  // Token refresh once on boot and on visibility changes
+  function refreshToken(){
+    var u = firebase.auth().currentUser;
+    if (u && u.getIdToken) {
+      u.getIdToken(true).catch(function(e){ console.warn('Token refresh error', e); });
+    }
+  }
+  firebase.auth().onAuthStateChanged(function(user){
+    if (user) refreshToken();
+  });
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden) refreshToken();
+  });
+
+  // Simple helpers globally
+  window.db = firebase.database();
+  window.rtdbRef = function(path){ return window.db.ref(path); };
+
+})();
+</script>
+
+\1
 <body>
   <div class="shell">
     <header>
@@ -420,9 +467,6 @@
   </div>
 
   <!-- Firebase -->
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 
   <script>
