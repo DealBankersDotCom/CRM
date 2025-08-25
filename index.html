@@ -6,96 +6,136 @@
   <title>DealBankers • Sign in</title>
   <meta name="robots" content="noindex"/>
 
-  <!-- Compat SDKs (one set, consistent version) -->
+  <!-- Firebase compat SDKs (keep versions consistent across site) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-  <!-- Your firebaseConfig (must define window.firebaseConfig) -->
-  <script src="config.js"></script>
+  <!-- Must define window.firebaseConfig -->
+  <script src="config.js?v=2025-08-25"></script>
 
   <style>
-    :root{--bg:#0b1118;--panel:#101c27;--line:#1f3550;--text:#eaf1f6;--muted:#9fb3c7;--green:#26cf84;}
+    :root{
+      --bg1:#0b1118; --bg2:#0e1a24; --bg3:#10283a;
+      --panel:#101c27; --line:rgba(255,255,255,.15);
+      --text:#eaf1f6; --muted:#9fb3c7; --shadow:0 24px 64px rgba(0,0,0,.5)
+    }
     *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    body{
+      margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center; padding:20px;
+      background:linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3)); color:var(--text);
+      font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif
+    }
     .wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:980px;width:100%}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:18px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+      border:1px solid var(--line); border-radius:18px; padding:18px; box-shadow:var(--shadow)}
     .brand{display:flex;gap:12px;align-items:center}
     .brand img{width:64px;height:64px;border-radius:12px;object-fit:cover}
     .title{font-weight:900;font-size:20px;margin:0}
     .muted{color:var(--muted);font-size:13px}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0f1a24;color:#eaf1f6;cursor:pointer;width:100%}
-    .btn:disabled{opacity:.6;cursor:default}
-    .status{margin-top:10px;font-size:12px;color:#cfe0f2}
+    .gbtn{
+      display:inline-flex; align-items:center; justify-content:center; gap:10px;
+      width:100%; padding:12px 16px; border-radius:10px; background:#fff; color:#1f1f1f;
+      border:1px solid rgba(0,0,0,.08); font-weight:600; cursor:pointer
+    }
+    .gbtn:disabled{opacity:.65; cursor:default}
+    .glogo{width:18px;height:18px;display:inline-block}
+    .status{margin-top:10px;font-size:12px;color:#cfe0f2;min-height:16px}
     @media (max-width:880px){ .wrap{grid-template-columns:1fr} }
+    #fbBanner{position:fixed; left:0; right:0; top:0; padding:8px 12px; background:#7a1020; color:#fff;
+      z-index:9999; font:13px/1.3 system-ui; display:none}
   </style>
 </head>
 <body>
+  <div id="fbBanner" role="alert"></div>
+
   <div class="wrap">
     <div class="card">
       <div class="brand">
-        <img src="icon (1).jpg" alt="">
+        <img src="icon (1).jpg" alt="DealBankers logo">
         <div>
           <h2 class="title">DealBankers</h2>
-          <div class="muted">Secure access to your acquisitions & dispositions portals. Sign in with Google to continue.</div>
+          <div class="muted">Secure access to your acquisitions &amp; dispositions portals. Sign in with Google to continue.</div>
         </div>
       </div>
     </div>
 
-    <div class="card" id="authCard">
+    <div class="card" id="authCard" aria-live="polite">
       <h3 style="margin:0 0 10px">🔐 Secure Sign-In</h3>
-      <button id="googleBtn" class="btn"><span>🔵</span> Sign in with Google</button>
+
+      <button id="googleBtn" class="gbtn" type="button" aria-label="Sign in with Google">
+        <span class="glogo" aria-hidden="true">
+          <svg viewBox="0 0 48 48" width="18" height="18">
+            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.3 29.5 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.4 29.6 3 24 3 12.3 3 3 12.3 3 24s9.3 21 21 21c10.5 0 20-7.6 20-21 0-1.2-.1-2.3-.4-3.5z"/>
+            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.4 29.6 3 24 3 15 3 7.5 8.2 6.3 14.7z"/>
+            <path fill="#4CAF50" d="M24 45c5.4 0 10.3-1.8 14.2-4.9l-6.6-5.4C29.6 36.4 26.9 37.5 24 37.5c-5.4 0-9.9-3.6-11.5-8.5l-6.7 5.2C7.2 40.5 15 45 24 45z"/>
+            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.4 4.1-5.6 7.5-11.3 7.5-5.4 0-9.9-3.6-11.5-8.5l-6.7 5.2C7.2 40.5 15 45 24 45c10.5 0 20-7.6 20-21 0-1.2-.1-2.3-.4-3.5z"/>
+          </svg>
+        </span>
+        <span>Sign in with Google</span>
+      </button>
+
       <div id="authStatus" class="status">Auth status: checking…</div>
     </div>
   </div>
 
   <script>
-    // ---------- One-time Firebase init (compat) ----------
+    // ---------- Firebase init ----------
     (function initFirebase(){
+      const banner = document.getElementById('fbBanner');
+      const alertErr = (msg)=>{ banner.textContent = 'Firebase init error: ' + msg; banner.style.display='block'; };
       try{
-        if(!window.firebaseConfig) throw new Error('Missing window.firebaseConfig (config.js)');
-        if(!firebase?.apps?.length) firebase.initializeApp(window.firebaseConfig);
+        if(!window.firebaseConfig){ alertErr('Missing window.firebaseConfig (check config.js).'); return; }
+        if(!window.firebase?.apps?.length){ firebase.initializeApp(window.firebaseConfig); }
         window.db   = firebase.database();
         window.auth = firebase.auth();
-      }catch(e){
-        document.getElementById('authStatus').textContent = 'Firebase init error: ' + (e.message||e);
-        console.error(e);
-      }
+      }catch(e){ console.error(e); alertErr(e?.message || String(e)); }
     })();
 
-    // ---------- Auth wiring ----------
+    // ---------- Auth flow (popup + redirect fallback) ----------
     (function(){
       const statusEl = document.getElementById('authStatus');
       const btn      = document.getElementById('googleBtn');
-      let navigated  = false; // prevent double redirects
+      let navigated  = false;
 
-      function go(path){
-        if(navigated) return; navigated = true;
-        location.href = path;
-      }
+      function say(t){ if(statusEl) statusEl.textContent = t; }
+      function go(path){ if(navigated) return; navigated = true; location.href = path; }
 
-      if (!window.auth){
-        statusEl.textContent = 'Firebase not ready. Check config.js.';
-        btn.disabled = true;
-        return;
-      }
+      if (!window.auth){ say('Firebase not ready. Check config.js and API key restrictions.'); btn.disabled = true; return; }
 
-      // If already signed in, jump straight to profile
-      auth.onAuthStateChanged(function(user){
-        if(user){ statusEl.textContent = 'Signed in. Redirecting…'; go('profile.html'); }
-        else { statusEl.textContent = 'Not signed in.'; btn.disabled = false; }
+      // Persist session across reloads
+      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+
+      // Complete redirect results if the last attempt used redirect
+      auth.getRedirectResult().then(() => {}).catch(e => console.warn('redirect result:', e));
+
+      // Already signed in? jump
+      auth.onAuthStateChanged((user)=>{
+        if(user){ say('Signed in. Redirecting…'); go('profile.html'); }
+        else { say('Not signed in.'); btn.disabled = false; }
       });
 
+      // Primary: popup; Fallback: redirect (for popup-blocked / iOS)
       btn.addEventListener('click', async ()=>{
-        btn.disabled = true; statusEl.textContent = 'Opening Google…';
+        btn.disabled = true; say('Opening Google…');
+        const provider = new firebase.auth.GoogleAuthProvider();
         try{
-          const prov = new firebase.auth.GoogleAuthProvider();
-          await auth.signInWithPopup(prov);
-          statusEl.textContent = 'Signed in. Redirecting…';
-          go('profile.html');
+          await auth.signInWithPopup(provider);
+          say('Signed in. Redirecting…'); go('profile.html');
         }catch(e){
-          console.error(e);
-          statusEl.textContent = 'Sign-in failed: ' + (e.message||e);
+          // If popup blocked or unsupported, go redirect
+          const code = e && e.code ? e.code : '';
+          if (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || code === 'auth/operation-not-supported-in-this-environment'){
+            try{
+              say('Popup blocked. Switching to redirect…');
+              await auth.signInWithRedirect(provider);
+              return; // page will reload on return
+            }catch(e2){
+              console.error(e2); say('Redirect sign-in failed: ' + (e2?.message || e2));
+            }
+          }else{
+            console.error(e); say('Sign-in failed: ' + (e?.message || e));
+          }
           btn.disabled = false;
         }
       });
