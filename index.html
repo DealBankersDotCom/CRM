@@ -1,160 +1,329 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
+  <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DealBankers • Sign in</title>
-  <meta name="robots" content="noindex"/>
-
-  <!-- Firebase compat SDKs (same version used across the repo) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <!-- MUST define window.firebaseConfig -->
-  <script src="config.js?v=2025-08-25"></script>
+  <title>DealBankers — Secure Access</title>
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
   <style>
     :root{
-      --bg1:#0b1118; --bg2:#0e1a24; --bg3:#10283a;
-      --panel:#101c27; --line:rgba(255,255,255,.14);
-      --text:#eaf1f6; --muted:#9fb3c7; --shadow:0 18px 44px rgba(0,0,0,.5);
+      --bg1:#0b1218; --bg2:#0e1a24; --bg3:#0f2432;
+      --card:#0f1a24ee;
+      --panel:#0b141b;
+      --glass:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.12);
+      --text:#e7eef4; --muted:#9fb3c7;
+      --green:#27a844; --green-2:#1f8a39;
+      --blue:#0d6efd; --blue-2:#0a58ca;
+      --accent:#c7a86a;
+      --shadow:0 24px 64px rgba(0,0,0,.55);
+      --radius:18px;
     }
     *{box-sizing:border-box}
+    html,body{height:100%}
     body{
-      margin:0;
-      min-height:100vh;
-      padding:48px 16px 24px;
-      display:flex; align-items:flex-start; justify-content:center;
-      background:radial-gradient(900px 500px at 90% -10%, #123043 0%, transparent 60%),
-                 linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-      color:var(--text);
-      font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
+      margin:0; color:var(--text);
+      font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
+      background:
+        radial-gradient(1400px 600px at 85% -10%, #133243 0%, transparent 60%),
+        radial-gradient(1000px 600px at 10% 110%, #0b1d29 0%, transparent 55%),
+        linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+      display:flex; align-items:center; justify-content:center;
+      padding:20px;
     }
+
     .wrap{
-      width:100%; max-width:760px; display:grid; gap:16px;
-      grid-template-columns:1fr; /* single column, compact */
-    }
-    .card{
-      background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));
+      width:1100px; max-width:100%;
       border:1px solid var(--line);
-      border-radius:14px; padding:14px; box-shadow:var(--shadow)
+      border-radius:24px; overflow:hidden;
+      background:linear-gradient(180deg,var(--glass),rgba(255,255,255,.03));
+      box-shadow:var(--shadow); backdrop-filter:blur(14px);
     }
-    .brand{display:flex;gap:12px;align-items:center}
-    .brand img{width:56px;height:56px;border-radius:12px;object-fit:cover}
-    .title{font-weight:900;font-size:18px;margin:0}
-    .muted{color:var(--muted);font-size:13px}
 
-    .gbtn{
-      display:inline-flex; align-items:center; justify-content:center; gap:10px;
-      width:100%; padding:10px 14px; border-radius:10px;
-      background:#fff; color:#1f1f1f; border:1px solid rgba(0,0,0,.08);
-      font-weight:600; cursor:pointer;
+    /* HEADER */
+    .top{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px; border-bottom:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(0,0,0,.12), transparent);
     }
-    .gbtn:disabled{opacity:.65; cursor:default}
-    .glogo{width:18px;height:18px;display:inline-block}
-    .status{margin-top:6px;font-size:12px;color:#cfe0f2;min-height:16px}
+    .brand{display:flex; align-items:center; gap:12px}
+    .brand img{width:42px;height:42px;border-radius:10px;object-fit:cover;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+    .brand h1{margin:0;font-size:16px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+    .chip{font-size:12px;color:var(--muted);padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.04)}
 
+    /* LAYOUT */
+    .layout{ display:grid; grid-template-columns: 42% 58%; gap:22px; padding:22px; align-items:stretch; }
+
+    .hero{ border:1px solid var(--line); border-radius:var(--radius); background:var(--panel); overflow:hidden; position:relative; }
+    .hero-img{
+      width:100%; height:100%;
+      aspect-ratio: 4 / 3;
+      background:linear-gradient(180deg, rgba(0,0,0,.20), rgba(0,0,0,.55)),
+                 url("icon (1).jpg") center/cover no-repeat;
+    }
+    .hero-text{
+      position:absolute; inset:auto 0 0 0; padding:16px 18px;
+      background:linear-gradient(180deg, transparent 20%, rgba(0,0,0,.45));
+    }
+    .hero-title{font-size:clamp(18px, 2.4vw, 24px); font-weight:800; letter-spacing:.02em}
+    .hero-sub{font-size:12px;color:var(--muted);margin-top:4px}
+
+    /* CARD */
+    .card{ border:1px solid var(--line); border-radius:var(--radius); background:var(--card); padding:20px; position:relative; overflow:hidden; }
+    .card:after{
+      content:""; position:absolute; inset:-35%;
+      background:radial-gradient(700px 220px at 120% -10%, rgba(199,168,106,.12), transparent 55%);
+      transform:rotate(-8deg);
+    }
+    .card-inner{position:relative; z-index:1}
+    h2{margin:0 0 6px; font-weight:800; letter-spacing:.02em; font-size:clamp(20px,2.6vw,28px)}
+    .sub{color:var(--muted); font-size:13px; margin-bottom:12px}
+
+    .row{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+    .input{
+      padding:12px 14px; border:1px solid var(--line); border-radius:12px;
+      background:rgba(8,14,20,.6); color:var(--text); font-size:15px; outline:none;
+    }
+    .input::placeholder{color:#8aa0b3}
+    .input:focus{border-color:var(--accent); box-shadow:0 0 0 2px rgba(199,168,106,.18)}
+
+    .btn{
+      width:100%; padding:12px 14px; border-radius:12px; border:1px solid var(--line);
+      background:rgba(255,255,255,.06); color:var(--text); font-size:15px; cursor:pointer;
+      transition:transform .02s ease, filter .15s ease, background .15s ease;
+      backdrop-filter: blur(6px);
+    }
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:linear-gradient(180deg,var(--green),var(--green-2)); border:none}
+    .btn-primary:hover{filter:brightness(1.03)}
+    .btn-dark{background:linear-gradient(180deg,#101b25,#0c151d); border:1px solid var(--line)}
+    .btn-ghost:hover{background:rgba(255,255,255,.09)}
+
+    .g-btn{
+      display:flex; align-items:center; justify-content:center; gap:10px;
+      background:#ffffff; color:#1b1f23; border:none; height:46px;
+      box-shadow:0 1px 0 rgba(0,0,0,.06) inset;
+    }
+    .g-btn img{width:18px;height:18px}
+
+    .actions{display:grid; grid-template-columns:1fr 1fr; gap:12px}
+
+    .roles{ display:grid; grid-template-columns:repeat(4,1fr); gap:12px; margin-top:12px; }
+    .role{ padding:11px 0; border-radius:12px; border:1px solid var(--line);
+      background:linear-gradient(180deg,var(--blue),var(--blue-2)); color:#fff; font-size:14px; cursor:pointer; }
+
+    .fine{color:var(--muted); font-size:12px; text-align:center; margin-top:10px}
+
+    /* RESPONSIVE */
+    @media (max-width: 980px){
+      .layout{grid-template-columns:1fr; gap:18px}
+      .hero-img{aspect-ratio: 16 / 9}
+    }
+    @media (max-width: 560px){
+      .wrap{border-radius:16px}
+      .layout{padding:16px}
+      .card{padding:16px}
+      .row{grid-template-columns:1fr}
+      .actions{grid-template-columns:1fr}
+      .roles{grid-template-columns:1fr 1fr}
+      .g-btn{height:46px}
+    }
+
+    /* Top error banner */
     #fbBanner{
-      position:fixed; left:0; right:0; top:0; padding:8px 12px;
-      background:#7a1020; color:#fff; z-index:9999; font:13px/1.3 system-ui;
-      display:none
+      position:fixed;left:0;right:0;top:0;padding:8px 12px;
+      background:#7a1020;color:#fff;z-index:9999;font:13px/1.3 system-ui;display:none
     }
   </style>
 </head>
 <body>
   <div id="fbBanner" role="alert"></div>
 
-  <div class="wrap">
-    <div class="card">
+  <main class="wrap" aria-label="Secure Login">
+    <header class="top">
       <div class="brand">
-        <img src="icon (1).jpg" alt="DealBankers logo">
-        <div>
-          <h2 class="title">DealBankers</h2>
-          <div class="muted">Secure access to your acquisitions &amp; dispositions portals. Sign in with Google to continue.</div>
-        </div>
+        <img src="icon (1).jpg" alt="DealBankers"/>
+        <h1>DEALBANKERS • ACCESS</h1>
       </div>
-    </div>
+      <span class="chip">Secure Portal • v2</span>
+    </header>
 
-    <div class="card" id="authCard" aria-live="polite">
-      <h3 style="margin:0 0 8px">🔐 Secure Sign-In</h3>
+    <section class="layout">
+      <!-- HERO -->
+      <aside class="hero" aria-hidden="true">
+        <div class="hero-img"></div>
+        <div class="hero-text">
+          <div class="hero-title">Operational • Confidential</div>
+          <div class="hero-sub">Authenticated users only. Activity monitored.</div>
+        </div>
+      </aside>
 
-      <button id="googleBtn" class="gbtn" type="button" aria-label="Sign in with Google">
-        <span class="glogo" aria-hidden="true">
-          <svg viewBox="0 0 48 48" width="18" height="18">
-            <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.3C33.9 32.3 29.5 36 24 36c-6.6 0-12-5.4-12-12S17.4 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.4 29.6 3 24 3 12.3 3 3 12.3 3 24s9.3 21 21 21c10.5 0 20-7.6 20-21 0-1.2-.1-2.3-.4-3.5z"/>
-            <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.7 16.2 18.9 12 24 12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 5.4 29.6 3 24 3 15 3 7.5 8.2 6.3 14.7z"/>
-            <path fill="#4CAF50" d="M24 45c5.4 0 10.3-1.8 14.2-4.9l-6.6-5.4C29.6 36.4 26.9 37.5 24 37.5c-5.4 0-9.9-3.6-11.5-8.5l-6.7 5.2C7.2 40.5 15 45 24 45z"/>
-            <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.3c-1.4 4.1-5.6 7.5-11.3 7.5-5.4 0-9.9-3.6-11.5-8.5l-6.7 5.2C7.2 40.5 15 45 24 45c10.5 0 20-7.6 20-21 0-1.2-.1-2.3-.4-3.5z"/>
-          </svg>
-        </span>
-        <span>Sign in with Google</span>
-      </button>
+      <!-- LOGIN CARD -->
+      <section class="card">
+        <div class="card-inner">
+          <h2>Sign In</h2>
+          <div class="sub">Use your email & password or your Google identity.</div>
 
-      <div id="authStatus" class="status">Auth status: checking…</div>
-    </div>
-  </div>
+          <div class="row" style="margin-bottom:12px">
+            <input id="email" class="input" type="email" placeholder="Email" autocomplete="username"/>
+            <input id="password" class="input" type="password" placeholder="Password" autocomplete="current-password"/>
+          </div>
 
+          <button id="emailLogin" class="btn btn-primary" style="margin-bottom:10px">Enter</button>
+
+          <button id="googleSignIn" class="btn g-btn" aria-label="Sign in with Google" style="margin-bottom:12px">
+            <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google"/>
+            <span>Sign in with Google</span>
+          </button>
+
+          <div class="actions" style="margin-bottom:6px">
+            <button id="signupBtn" class="btn btn-dark">Create Account</button>
+            <button id="resetBtn" class="btn btn-ghost">Forgot Password</button>
+          </div>
+
+          <div class="roles">
+            <button class="role" onclick="location.href='profile.html'">Contractor</button>
+            <button class="role" onclick="location.href='profile.html'">Wholesaler</button>
+            <button class="role" onclick="location.href='profile.html'">Realtor</button>
+            <button class="role" onclick="location.href='profile.html'">Investor</button>
+          </div>
+
+          <div id="status" class="fine">Checking session…</div>
+        </div>
+      </section>
+    </section>
+  </main>
+
+  <div id="toast" style="position:fixed;left:50%;transform:translateX(-50%);bottom:18px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid var(--line);box-shadow:var(--shadow);font-size:14px;display:none;z-index:50;"></div>
+
+  <!-- Prefer external config.js; keep inline as fallback -->
+  <script src="config.js?v=2025-08-25"></script>
+
+  <!-- Firebase (compat for static hosting) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
-    // ---------- Firebase init ----------
-    (function initFirebase(){
-      const banner = document.getElementById('fbBanner');
-      const alertErr = (msg)=>{ banner.textContent = 'Firebase init error: ' + msg; banner.style.display='block'; };
-      try{
-        if(!window.firebaseConfig){ alertErr('Missing window.firebaseConfig (check config.js).'); return; }
-        if(!window.firebase?.apps?.length){ firebase.initializeApp(window.firebaseConfig); }
-        window.auth = firebase.auth();
-        window.db   = firebase.database();
-      }catch(e){ console.error(e); alertErr(e?.message || String(e)); }
-    })();
+    // ---- Inline fallback (only used if config.js didn't set window.firebaseConfig) ----
+    window.firebaseConfig = window.firebaseConfig || {
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      // NOTE: storageBucket normally ends with .appspot.com; not required for login:
+      storageBucket: "deal-bankers.appspot.com",
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
+      measurementId: "G-KTNXZM14F7"
+    };
 
-    // ---------- Auth flow (popup + redirect fallback) ----------
-    (function(){
-      const statusEl = document.getElementById('authStatus');
-      const btn      = document.getElementById('googleBtn');
-      let navigated  = false;
+    const banner = document.getElementById('fbBanner');
+    const statusEl = document.getElementById('status');
+    const toast = (m)=>{ const el=document.getElementById('toast'); el.textContent=m; el.style.display='block'; setTimeout(()=>el.style.display='none',2200); };
+    const say = (m)=>{ if(statusEl) statusEl.textContent=m; };
 
-      function say(t){ if(statusEl) statusEl.textContent = t; }
-      function go(path){ if(navigated) return; navigated = true; location.href = path; }
+    // ---------- Init ----------
+    try{
+      if(!window.firebaseConfig) throw new Error('Missing window.firebaseConfig (check config.js).');
+      if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+    }catch(e){
+      console.error(e);
+      banner.textContent = 'Firebase init error: ' + (e.message||e);
+      banner.style.display = 'block';
+    }
 
-      if (!window.auth){ say('Firebase not ready. Check config.js and API key restrictions.'); btn.disabled = true; return; }
+    const auth = firebase.auth();
+    const db   = firebase.database();
 
-      // Persist session across reloads
-      auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
+    // Keep users signed in
+    auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL).catch(()=>{});
 
-      // Complete redirect results if the last attempt used redirect
-      auth.getRedirectResult().then(() => {}).catch(e => console.warn('redirect result:', e));
+    // Handle redirect result (iOS / popup-blocked)
+    auth.getRedirectResult().catch(err=>console.warn('redirect result:', err));
 
-      // Already signed in? jump
-      auth.onAuthStateChanged((user)=>{
-        if(user){ say('Signed in. Redirecting…'); go('profile.html'); }
-        else { say('Not signed in.'); btn.disabled = false; }
+    // Gate: already signed in?
+    auth.onAuthStateChanged(u => {
+      if(u){ say('Signed in. Redirecting…'); location.href='profile.html'; }
+      else { say('Not signed in.'); }
+    });
+
+    // ---------- UI wiring ----------
+    document.addEventListener('keydown', e => { if (e.key === 'Enter') document.getElementById('emailLogin')?.click(); });
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const emailEl   = document.getElementById('email');
+      const passEl    = document.getElementById('password');
+      const emailBtn  = document.getElementById('emailLogin');
+      const googleBtn = document.getElementById('googleSignIn');
+      const signupBtn = document.getElementById('signupBtn');
+      const resetBtn  = document.getElementById('resetBtn');
+
+      // Email/Password
+      emailBtn?.addEventListener('click', async () => {
+        const email = (emailEl?.value || '').trim();
+        const password = passEl?.value || '';
+        if (!email || !password) return toast('Enter email & password');
+        try{
+          await auth.signInWithEmailAndPassword(email, password);
+          location.href = 'profile.html';
+        }catch(e){
+          console.error(e);
+          toast((e.message||'').replace('Firebase: ', ''));
+          if(String(e).includes('auth/invalid-api-key')) showApiKeyHelp();
+        }
       });
 
-      // Primary: popup; Fallback: redirect (for popup-blocked / iOS)
-      btn.addEventListener('click', async ()=>{
-        btn.disabled = true; say('Opening Google…');
+      // Google (popup -> redirect fallback)
+      googleBtn?.addEventListener('click', async () => {
         const provider = new firebase.auth.GoogleAuthProvider();
         try{
           await auth.signInWithPopup(provider);
-          say('Signed in. Redirecting…'); go('profile.html');
+          location.href = 'profile.html';
         }catch(e){
           const code = e && e.code ? e.code : '';
           if (code === 'auth/popup-blocked' || code === 'auth/popup-closed-by-user' || code === 'auth/operation-not-supported-in-this-environment'){
             try{
               say('Popup blocked. Switching to redirect…');
               await auth.signInWithRedirect(provider);
-              return; // page will reload on return
-            }catch(e2){
-              console.error(e2); say('Redirect sign-in failed: ' + (e2?.message || e2));
-            }
+              return;
+            }catch(e2){ console.error(e2); toast((e2.message||'').replace('Firebase: ', '')); }
           }else{
-            console.error(e); say('Sign-in failed: ' + (e?.message || e));
+            console.error(e);
+            toast((e.message||'').replace('Firebase: ', ''));
+            if(String(e).includes('auth/invalid-api-key')) showApiKeyHelp();
+            if(String(e).includes('auth/domain-not-allowed')) toast('Add dealbankers.com to Firebase Auth → Authorized domains.');
           }
-          btn.disabled = false;
         }
       });
-    })();
+
+      // Create account
+      signupBtn?.addEventListener('click', async () => {
+        const email = (emailEl?.value || '').trim();
+        const password = passEl?.value || '';
+        if (!email || !password) return toast('Enter email & password to sign up');
+        try{
+          const cred = await auth.createUserWithEmailAndPassword(email, password);
+          await db.ref(`users/${cred.user.uid}`).set({ email, createdAt: Date.now() });
+          location.href = 'profile.html';
+        }catch(e){ console.error(e); toast((e.message||'').replace('Firebase: ', '')); }
+      });
+
+      // Reset password
+      resetBtn?.addEventListener('click', async () => {
+        const email = (emailEl?.value || '').trim();
+        if (!email) return toast('Enter your email first');
+        try{
+          await auth.sendPasswordResetEmail(email);
+          toast('Reset email sent');
+        }catch(e){ console.error(e); toast((e.message||'').replace('Firebase: ', '')); }
+      });
+    });
+
+    function showApiKeyHelp(){
+      banner.textContent = 'Auth error: invalid API key. Verify config.js and API key referrer restrictions for dealbankers.com';
+      banner.style.display='block';
+    }
   </script>
 </body>
 </html>
