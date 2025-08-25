@@ -1,142 +1,105 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="utf-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>DealBankers — Secure Sign-In</title>
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+  <title>DealBankers • Sign in</title>
   <meta name="robots" content="noindex"/>
 
+  <!-- Compat SDKs (one set, consistent version) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Your firebaseConfig (must define window.firebaseConfig) -->
+  <script src="config.js"></script>
+
   <style>
-    :root{
-      --bg1:#0b1218; --bg2:#0f1a24; --bg3:#0c1922;
-      --text:#e7eef4; --muted:#9fb3c7; --line:rgba(255,255,255,.12);
-      --accent:#c7a86a; --panel:#0f1a24ee; --shadow:0 24px 64px rgba(0,0,0,.45);
-    }
+    :root{--bg:#0b1118;--panel:#101c27;--line:#1f3550;--text:#eaf1f6;--muted:#9fb3c7;--green:#26cf84;}
     *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; color:var(--text);
-      background:
-        radial-gradient(1200px 900px at 8% -10%, #162431 0%, var(--bg1) 40%),
-        radial-gradient(800px 600px at 100% 110%, #0b1a23 0%, var(--bg3) 60%);
-      font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-      display:grid; place-items:center;
-      padding:24px;
-    }
-    .wrap{
-      width:100%; max-width:880px;
-      display:grid; gap:18px;
-      grid-template-columns: 1.2fr 1fr;
-    }
-    @media (max-width:900px){ .wrap{ grid-template-columns:1fr; } }
-
-    .brand{
-      background:linear-gradient(180deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
-      border:1px solid var(--line); border-radius:22px; padding:28px;
-      box-shadow:var(--shadow); position:relative; overflow:hidden;
-      display:flex; align-items:center; gap:18px;
-    }
-    .brand::before{
-      content:""; position:absolute; inset:-40% 50% auto -40%;
-      height:260px; background:radial-gradient(220px 220px at 20% 40%, rgba(199,168,106,.25), transparent 70%);
-      filter:blur(10px); transform:rotate(-8deg);
-    }
-    .logo{
-      width:92px; height:92px; border-radius:18px; flex:0 0 auto;
-      background:#0d1520 url("icon (1).jpg") center/cover no-repeat;
-      box-shadow:0 10px 40px rgba(199,168,106,.35);
-      border:1px solid rgba(255,255,255,.12);
-    }
-    .brand h1{margin:0 0 6px; font-size:26px; letter-spacing:.2px}
-    .brand p{margin:0; color:var(--muted)}
-
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
-      border:1px solid var(--line); border-radius:22px; padding:28px;
-      box-shadow:var(--shadow);
-    }
-    .title{display:flex; align-items:center; gap:10px; margin-bottom:14px}
-    .dot{width:10px; height:10px; border-radius:50%; background:var(--accent); box-shadow:0 0 24px var(--accent)}
-    h2{margin:0; font-size:20px}
-
-    /* Google-style button */
-    .gbtn{
-      width:100%; height:46px; display:inline-flex; align-items:center; justify-content:center;
-      gap:12px; background:#fff; color:#1f1f1f; font-weight:600; border-radius:6px;
-      border:1px solid #dadce0; cursor:pointer; transition:transform .04s ease, box-shadow .2s ease, border-color .2s ease;
-    }
-    .gbtn:hover{transform:translateY(-1px); box-shadow:0 6px 18px rgba(0,0,0,.18)}
-    .gicon{width:20px; height:20px}
-    .hint{margin-top:10px; font-size:12px; color:var(--muted)}
+    body{margin:0;background:linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:20px}
+    .wrap{display:grid;grid-template-columns:1fr 1fr;gap:24px;max-width:980px;width:100%}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.07),rgba(255,255,255,.03));border:1px solid rgba(255,255,255,.15);border-radius:18px;padding:18px;box-shadow:0 24px 64px rgba(0,0,0,.5)}
+    .brand{display:flex;gap:12px;align-items:center}
+    .brand img{width:64px;height:64px;border-radius:12px;object-fit:cover}
+    .title{font-weight:900;font-size:20px;margin:0}
+    .muted{color:var(--muted);font-size:13px}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0f1a24;color:#eaf1f6;cursor:pointer;width:100%}
+    .btn:disabled{opacity:.6;cursor:default}
+    .status{margin-top:10px;font-size:12px;color:#cfe0f2}
+    @media (max-width:880px){ .wrap{grid-template-columns:1fr} }
   </style>
 </head>
 <body>
   <div class="wrap">
-    <!-- Left brand panel -->
-    <section class="brand">
-      <div class="logo" aria-label="DealBankers logo"></div>
-      <div>
-        <h1>DealBankers</h1>
-        <p>Secure access to your acquisitions & dispositions portals. Sign in with Google to continue.</p>
+    <div class="card">
+      <div class="brand">
+        <img src="icon (1).jpg" alt="">
+        <div>
+          <h2 class="title">DealBankers</h2>
+          <div class="muted">Secure access to your acquisitions & dispositions portals. Sign in with Google to continue.</div>
+        </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Right login -->
-    <section class="card">
-      <div class="title"><span class="dot"></span><h2>Secure Sign-In</h2></div>
-      <button id="googleBtn" class="gbtn" type="button" aria-label="Sign in with Google">
-        <svg class="gicon" viewBox="0 0 48 48" aria-hidden="true">
-          <path fill="#FFC107" d="M43.6 20.5H42V20H24v8h11.2C33.7 32.9 29.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 12.9 4 4 12.9 4 24s8.9 20 20 20c10 0 19-7.3 19-20 0-1.3-.1-2.7-.4-3.5z"/>
-          <path fill="#FF3D00" d="M6.3 14.7l6.6 4.8C14.8 16 19 13 24 13c3.1 0 5.9 1.2 8 3.1l5.7-5.7C34.6 6.1 29.6 4 24 4 15.5 4 8.3 8.8 6.3 14.7z"/>
-          <path fill="#4CAF50" d="M24 44c5.1 0 10-1.9 13.7-5.2l-6.3-5.2C29.4 35.7 26.9 37 24 37c-5.1 0-9.4-3.3-10.9-7.9l-6.6 5.1C8.5 39.1 15.7 44 24 44z"/>
-          <path fill="#1976D2" d="M43.6 20.5H42V20H24v8h11.2C34.8 31.6 30.6 35 24 35c-5.1 0-9.4-3.3-10.9-7.9l-6.6 5.1C8.5 39.1 15.7 44 24 44c10 0 19-7.3 19-20 0-1.3-.1-2.7-.4-3.5z"/>
-        </svg>
-        <span>Sign in with Google</span>
-      </button>
-      <div class="hint">Auth status: <span id="authState">checking…</span></div>
-    </section>
+    <div class="card" id="authCard">
+      <h3 style="margin:0 0 10px">🔐 Secure Sign-In</h3>
+      <button id="googleBtn" class="btn"><span>🔵</span> Sign in with Google</button>
+      <div id="authStatus" class="status">Auth status: checking…</div>
+    </div>
   </div>
 
-  <!-- Firebase -->
-  <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-    import {
-      getAuth, GoogleAuthProvider, signInWithPopup,
-      setPersistence, browserLocalPersistence, onAuthStateChanged
-    } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
-
-    const firebaseConfig = {
-      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
-      authDomain: "deal-bankers.firebaseapp.com",
-      projectId: "deal-bankers"
-    };
-    const app  = initializeApp(firebaseConfig);
-    const auth = getAuth(app);
-    const provider = new GoogleAuthProvider();
-    provider.setCustomParameters({ prompt: "select_account" });
-
-    await setPersistence(auth, browserLocalPersistence);
-
-    const authState = document.getElementById("authState");
-
-    onAuthStateChanged(auth, (user) => {
-      if (user) {
-        authState.textContent = user.email || user.uid;
-        // Redirect after successful login
-        window.location.href = "https://www.dealbankers.com/profile.html";
-      } else {
-        authState.textContent = "signed out";
+  <script>
+    // ---------- One-time Firebase init (compat) ----------
+    (function initFirebase(){
+      try{
+        if(!window.firebaseConfig) throw new Error('Missing window.firebaseConfig (config.js)');
+        if(!firebase?.apps?.length) firebase.initializeApp(window.firebaseConfig);
+        window.db   = firebase.database();
+        window.auth = firebase.auth();
+      }catch(e){
+        document.getElementById('authStatus').textContent = 'Firebase init error: ' + (e.message||e);
+        console.error(e);
       }
-    });
+    })();
 
-    document.getElementById("googleBtn").addEventListener("click", async () => {
-      try {
-        await signInWithPopup(auth, provider);
-      } catch (e) {
-        alert("Sign-in failed: " + e.message);
+    // ---------- Auth wiring ----------
+    (function(){
+      const statusEl = document.getElementById('authStatus');
+      const btn      = document.getElementById('googleBtn');
+      let navigated  = false; // prevent double redirects
+
+      function go(path){
+        if(navigated) return; navigated = true;
+        location.href = path;
       }
-    });
+
+      if (!window.auth){
+        statusEl.textContent = 'Firebase not ready. Check config.js.';
+        btn.disabled = true;
+        return;
+      }
+
+      // If already signed in, jump straight to profile
+      auth.onAuthStateChanged(function(user){
+        if(user){ statusEl.textContent = 'Signed in. Redirecting…'; go('profile.html'); }
+        else { statusEl.textContent = 'Not signed in.'; btn.disabled = false; }
+      });
+
+      btn.addEventListener('click', async ()=>{
+        btn.disabled = true; statusEl.textContent = 'Opening Google…';
+        try{
+          const prov = new firebase.auth.GoogleAuthProvider();
+          await auth.signInWithPopup(prov);
+          statusEl.textContent = 'Signed in. Redirecting…';
+          go('profile.html');
+        }catch(e){
+          console.error(e);
+          statusEl.textContent = 'Sign-in failed: ' + (e.message||e);
+          btn.disabled = false;
+        }
+      });
+    })();
   </script>
 </body>
 </html>
