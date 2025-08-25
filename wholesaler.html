@@ -1,17 +1,46 @@
 <!-- ===================== wholesaler.html (Acq + Dispo; mobile-ready; respects DB gate) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
-\1
-
-<!-- Firebase compat SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
+<head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Wholesaler • Portal</title>
   <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+
+  <!-- Firebase compat SDKs (load first) -->
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+
+  <!-- Your Firebase config (must define window.firebaseConfig) -->
+  <script src="config.js"></script>
+
+  <!-- Initialize default app + helpers + token refresh -->
+  <script>
+    (function () {
+      if (!window.firebaseConfig) {
+        console.error('[DealBankers] Missing window.firebaseConfig. Create config.js with your Firebase config.');
+      }
+      if (!firebase.apps.length) {
+        firebase.initializeApp(window.firebaseConfig);
+      }
+
+      // Expose RTDB helpers for this page
+      window.db = firebase.database();
+      window.rtdbRef = (p) => window.db.ref(p);
+
+      // Refresh token once on sign-in and on tab focus
+      firebase.auth().onAuthStateChanged(function (u) {
+        if (u && u.getIdToken) u.getIdToken(true).catch(()=>{});
+      });
+      document.addEventListener('visibilitychange', function () {
+        if (!document.hidden) {
+          var u = firebase.auth().currentUser;
+          if (u && u.getIdToken) u.getIdToken(true).catch(()=>{});
+        }
+      });
+    })();
+  </script>
 
   <style>
     :root{
@@ -111,10 +140,8 @@
 
     @media (max-width:560px){ .bar{grid-template-columns:repeat(3,1fr)} .navrow{grid-template-columns:repeat(3,1fr)} .sv{height:230px} .map{height:200px} }
   </style>
+</head>
 
-
-
-\1
 <body>
   <div class="wrap">
     <section class="card">
@@ -264,13 +291,8 @@
 
   <div id="toast"></div>
 
-  <!-- Firebase (gate for leads) -->
+  <!-- ============ Gate + Page Logic (uses DEFAULT app’s RTDB so auth is attached) ============ -->
   <script>
-    const gateApp = firebase.initializeApp(
-      {apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",authDomain:"deal-bankers.firebaseapp.com",databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",projectId:"deal-bankers"},
-      "whGate"
-    );
-    const gateDb   = gateApp.database();
     const params   = new URL(location.href).searchParams;
     const uidParam = params.get('uid') || 'anon';
 
@@ -285,23 +307,26 @@
       document.head.appendChild(s);
     }
 
-    gateDb.ref(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
-      const g = snap.val() || {};
-      // Back-compat: support old single switches if present
-      window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
-      window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
+    // Wait for auth to be ready so reads carry a valid token
+    firebase.auth().onAuthStateChanged(function(){
+      rtdbRef(`userSettings/${uidParam}/wholesaler`).once('value').then(snap=>{
+        const g = snap.val() || {};
+        // Back-compat mirrors
+        window.whGate.acqEnabled   = (g.acqEnabled   !== undefined) ? !!g.acqEnabled   : !!g.leadsEnabled;
+        window.whGate.dispoEnabled = (g.dispoEnabled !== undefined) ? !!g.dispoEnabled : !!g.leadsEnabledDispo;
 
-      if(!window.whGate.acqEnabled){
+        if(!window.whGate.acqEnabled){
+          document.getElementById('leadCard').innerHTML =
+            '<div class="body">Access to <b>acquisition</b> leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
+          document.getElementById('status').textContent = 'Acq access denied';
+        } else {
+          loadLeadsJS();
+        }
+      }).catch(()=>{
         document.getElementById('leadCard').innerHTML =
-          '<div class="body">Access to <b>acquisition</b> leads is disabled for this account. Ask admin to enable in Settings → Wholesaler.</div>';
-        document.getElementById('status').textContent = 'Acq access denied';
-      } else {
-        loadLeadsJS();
-      }
-    }).catch(()=>{
-      document.getElementById('leadCard').innerHTML =
-        '<div class="body">Could not verify access right now. Try again shortly.</div>';
-      document.getElementById('status').textContent = 'Gate check failed';
+          '<div class="body">Could not verify access right now. Try again shortly.</div>';
+        document.getElementById('status').textContent = 'Gate check failed';
+      });
     });
   </script>
 
@@ -406,7 +431,7 @@
 
     async function fetchDbDispo(uidX){
       try{
-        const snap = await gateDb.ref(`deals/${uidX}`).once('value');
+        const snap = await rtdbRef(`deals/${uidX}`).once('value');
         const obj = snap.val() || {};
         return Object.entries(obj).map(([id,d])=>{
           const safeId = d.id || id || slugify((d.title||d.address||'item'));
@@ -615,7 +640,7 @@
               const id=b.getAttribute('data-del');
               if(!confirm('Delete this item?')) return;
               try{
-                await gateDb.ref(`deals/${uidParam}/${id}`).remove();
+                await rtdbRef(`deals/${uidParam}/${id}`).remove();
                 toast('Deleted');
                 renderDispo();
               }catch{ alert('Could not delete right now.'); }
@@ -870,7 +895,7 @@
         status:'active', createdBy: uidParam, updatedAt: Date.now()
       };
       try{
-        await gateDb.ref(`deals/${uidParam}/${id}`).set(payload);
+        await rtdbRef(`deals/${uidParam}/${id}`).set(payload);
         newDlg.dataset.editing='';
         toast(editingId ? 'Updated' : 'Saved');
         newDlg.close();
@@ -878,59 +903,5 @@
       }catch{ alert('Could not save right now.'); }
     };
   </script>
-<script src="config.js"></script>
-<!-- DealBankers Firebase bootstrap (compat, token refresh) -->
-<script>
-(function(){
-  // If modular SDK got loaded accidentally, stop and warn.
-  try {
-    if (typeof firebase === 'undefined' || !firebase?.auth) {
-      console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
-    }
-  } catch(e) {}
-
-  // Guard init: expect window.firebaseConfig to be defined in each page (already present in your app).
-  if (!window.firebase?.apps?.length) {
-    function initNow(){
-      try{
-        firebase.initializeApp(window.firebaseConfig);
-      }catch(e){ console.error('[DealBankers] init error', e); }
-    }
-    if (window.firebaseConfig) {
-      initNow();
-    } else {
-      // wait up to 5 seconds for config to appear
-      var tries=0, t=setInterval(function(){
-        if (window.firebaseConfig){ clearInterval(t); initNow(); }
-        if (++tries>50){ clearInterval(t); console.error('[DealBankers] Missing window.firebaseConfig after waiting.'); }
-      },100);
-    }
-    if (window.firebaseConfig) {
-      firebase.initializeApp(window.firebaseConfig);
-    } else {
-      console.error('[DealBankers] Missing window.firebaseConfig — set your firebaseConfig before this script.');
-    }
-  }
-
-  // Token refresh once on boot and on visibility changes
-  function refreshToken(){
-    var u = firebase.auth().currentUser;
-    if (u && u.getIdToken) {
-      u.getIdToken(true).catch(function(e){ console.warn('Token refresh error', e); });
-    }
-  }
-  firebase.auth().onAuthStateChanged(function(user){
-    if (user) refreshToken();
-  });
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) refreshToken();
-  });
-
-  // Simple helpers globally
-  window.db = firebase.database();
-  window.rtdbRef = function(path){ return window.db.ref(path); };
-
-})();
-</script>
 </body>
 </html>
