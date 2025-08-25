@@ -1,10 +1,11 @@
-// config.js  (put this next to index.html)
+// config.js
 window.firebaseConfig = {
-  apiKey: "YOUR_WEB_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  databaseURL: "https://YOUR_RTDB_ID.firebaseio.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_SENDER_ID",
-  appId: "YOUR_WEB_APP_ID"
+  apiKey: "AIzaSyAoidTHzWJ_FrXXMZd_hPAuxoXDJuncs",
+  authDomain: "deal-bankers.firebaseapp.com",
+  databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+  projectId: "deal-bankers",
+  storageBucket: "deal-bankers.appspot.com",
+  messagingSenderId: "485110155601",
+  appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
+  measurementId: "G-KTNXMZ1F47"
 };
