@@ -1,4 +1,4 @@
-<!-- ===================== claims.html (Claims Exchange) ===================== -->
+<!-- ===================== claims.html (Claims Exchange — disclaimer → intake → review → e-sign hook) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,65 +6,172 @@
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>Claims Exchange • DealBankers</title>
   <style>
-    body { font-family: system-ui, sans-serif; background:#0b131b; color:#f1f7fb; margin:0; padding:20px; }
-    h1 { color:#47b4ff; }
-    form { max-width:700px; margin:auto; background:#142838; padding:20px; border-radius:12px; }
-    label { display:block; margin-top:12px; font-weight:600; }
-    input, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #254a63; background:#0f1f2b; color:#fff; }
-    textarea { resize:vertical; min-height:80px; }
-    .checkbox { display:flex; align-items:center; margin-top:10px; }
-    .checkbox input { width:auto; margin-right:8px; }
-    button { margin-top:20px; padding:12px 18px; font-weight:700; background:linear-gradient(180deg,#47b4ff,#0a58ca); border:none; border-radius:8px; color:#fff; cursor:pointer; }
-    button:disabled { opacity:.6; cursor:not-allowed; }
-    .success { margin-top:20px; padding:12px; border-radius:8px; background:#173c53; }
+    :root{
+      --bg1:#0b131b; --bg2:#142838; --panel:#0f1f2b; --line:#254a63;
+      --text:#f1f7fb; --muted:#c5d3e1; --blue:#47b4ff; --green:#26cf84; --gold:#ffd36b;
+      --r:14px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui, -apple-system, Segoe UI, Inter, Roboto, Arial, sans-serif;background:linear-gradient(135deg,var(--bg1),var(--bg2));color:var(--text);}
+    .wrap{max-width:960px;margin:0 auto;padding:18px}
+    h1{margin:12px 0;color:var(--blue);}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.18);border-radius:var(--r);padding:16px}
+    label{display:block;margin-top:12px;font-weight:700;color:#e1f1ff}
+    input,textarea,select{width:100%;padding:10px 12px;border-radius:10px;border:1px solid rgba(255,255,255,.18);background:#0d2130;color:#fff}
+    textarea{min-height:100px;resize:vertical}
+    .row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    @media (max-width:740px){ .row{grid-template-columns:1fr} }
+    .btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:#0e2433;color:#eaf6ff;cursor:pointer;text-decoration:none;font-weight:800}
+    .btn:hover{filter:brightness(1.07)}
+    .btn-primary{background:linear-gradient(180deg,#2b74ff,#0a58ca);border:none;color:#fff}
+    .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);border:none;color:#fff}
+    .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
+    .muted{color:var(--muted);font-size:13px}
+    .stepper{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+    .chip{padding:6px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:#0f2a3a;font-size:12px;font-weight:800;color:#cfe3ff}
+    .chip.active{background:#2b74ff;border:none;color:#fff}
+    .hidden{display:none !important}
+    .preview{white-space:pre-wrap;background:#0e2231;border:1px solid rgba(255,255,255,.18);padding:12px;border-radius:10px}
+    .success{background:#0b2b1d;border:1px solid #1a6d47;padding:12px;border-radius:10px}
+    .warn{background:#2a1b0b;border:1px solid #8b5a2b;padding:12px;border-radius:10px}
+    .right{display:flex;gap:10px;justify-content:flex-end;margin-top:14px}
+    dialog{border:none;border-radius:16px;background:#0f1a24;color:#eaf6ff;padding:16px;max-width:720px;width:92%}
   </style>
 </head>
 <body>
-  <h1>Claims Exchange</h1>
-  <p>Assign your claim to <b>Bill Wilburn d/b/a DealBankers.com</b> for enforcement and recovery.</p>
+  <div class="wrap">
+    <h1>Claims Exchange</h1>
+    <div class="muted">Assign your claim to <b>Bill Wilburn d/b/a DealBankers Dot Com</b>. This intake collects facts, shows you a draft, and—after manual review—sends you a DocuSign packet. Some documents must be <b>notarized</b>.</div>
 
-  <form id="claimForm">
-    <label>Claimant (Your Name / Company)</label>
-    <input type="text" id="claimant" required/>
-
-    <label>Respondent (Person or Business You're Claiming Against)</label>
-    <input type="text" id="respondent" required/>
-
-    <label>Claim Amount (USD)</label>
-    <input type="number" id="amount" step="0.01" required/>
-
-    <label>Cause of Action (e.g., Breach of Contract, Non-performance)</label>
-    <input type="text" id="cause" required/>
-
-    <label>Summary of Claim</label>
-    <textarea id="summary" required></textarea>
-
-    <label>Narrative / Details</label>
-    <textarea id="narrative"></textarea>
-
-    <label>Evidence Links (URLs, comma separated)</label>
-    <textarea id="evidence"></textarea>
-
-    <div class="checkbox">
-      <input type="checkbox" id="assignCheck" required/>
-      <label for="assignCheck">I hereby assign this claim to Bill Wilburn d/b/a DealBankers.com.</label>
+    <div class="stepper">
+      <div id="s1" class="chip active">1) Disclaimer</div>
+      <div id="s2" class="chip">2) Statement of Facts</div>
+      <div id="s3" class="chip">3) Review & Submit</div>
+      <div id="s4" class="chip">4) E‑Sign (when ready)</div>
     </div>
 
-    <label>Signature (type your full legal name)</label>
-    <input type="text" id="signature" required/>
+    <!-- Step 1: Disclaimer -->
+    <section id="step1" class="card">
+      <h3>Read & Acknowledge</h3>
+      <div class="warn">
+        <ul>
+          <li>This site is not a law firm and does not provide legal advice.</li>
+          <li>You are assigning your claim to DealBankers.com for potential enforcement and recovery efforts.</li>
+          <li>Submission does not guarantee acceptance, litigation, or collection.</li>
+          <li>You must attest the facts under penalty of perjury and, where requested, sign in front of a notary.</li>
+          <li>False statements may expose you to civil and criminal liability.</li>
+        </ul>
+      </div>
+      <label class="row" style="align-items:center">
+        <span class="muted" style="grid-column:1/-1">
+          <input type="checkbox" id="agreeChk" style="width:auto;margin-right:8px"/> I have read and agree to the disclaimer above.
+        </span>
+      </label>
+      <div class="right">
+        <button id="toStep2" class="btn btn-primary" disabled>Continue</button>
+      </div>
+    </section>
 
-    <label>Date</label>
-    <input type="date" id="date" required/>
+    <!-- Step 2: Intake form -->
+    <section id="step2" class="card hidden">
+      <h3>Statement of Facts & Assignment Intake</h3>
+      <div class="row">
+        <div>
+          <label>Claimant (your full legal name or company)</label>
+          <input id="claimant" required/>
+        </div>
+        <div>
+          <label>Claimant Email</label>
+          <input id="email" type="email" required/>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Claimant Phone</label>
+          <input id="phone" required/>
+        </div>
+        <div>
+          <label>Respondent (person/business you claim against)</label>
+          <input id="respondent" required/>
+        </div>
+      </div>
+      <div class="row">
+        <div>
+          <label>Claim Amount (USD)</label>
+          <input id="amount" type="number" step="0.01" required/>
+        </div>
+        <div>
+          <label>Cause of Action</label>
+          <select id="cause">
+            <option>Breach of Contract</option>
+            <option>Non‑Performance</option>
+            <option>Fraud/Misrepresentation</option>
+            <option>Conversion</option>
+            <option>Unjust Enrichment</option>
+            <option>Other</option>
+          </select>
+        </div>
+      </div>
+      <label>Summary (1–3 sentences)</label>
+      <textarea id="summary" placeholder="Short summary of what happened…" required></textarea>
 
-    <button type="submit">Submit Claim</button>
-  </form>
+      <label>Statement of Facts (detailed narrative)</label>
+      <textarea id="facts" placeholder="Provide a clear, chronological statement of facts…" required></textarea>
 
-  <div id="result" class="success" style="display:none"></div>
+      <label>Evidence Links (URLs, comma separated)</label>
+      <textarea id="evidence" placeholder="https://… , https://…"></textarea>
+
+      <div class="row">
+        <div>
+          <label>State for Notarization</label>
+          <input id="notaryState" placeholder="e.g., Texas"/>
+        </div>
+        <div>
+          <label>County for Notarization</label>
+          <input id="notaryCounty" placeholder="e.g., Bexar"/>
+        </div>
+      </div>
+
+      <label>Signature (type your full legal name)</label>
+      <input id="signature" required/>
+
+      <div class="muted" style="margin-top:8px">
+        <input type="checkbox" id="attestChk" style="width:auto;margin-right:8px"/>
+        I attest that the above facts are true and correct to the best of my knowledge and understand I may be required to sign before a notary.
+      </div>
+
+      <div class="right">
+        <button id="back1" class="btn">Back</button>
+        <button id="toStep3" class="btn btn-primary" disabled>Build Draft</button>
+      </div>
+    </section>
+
+    <!-- Step 3: Draft & submit -->
+    <section id="step3" class="card hidden">
+      <h3>Review Draft</h3>
+      <div id="draft" class="preview">Draft will appear here…</div>
+      <div class="right">
+        <button id="back2" class="btn">Back</button>
+        <button id="submitBtn" class="btn btn-green">Submit for Review</button>
+      </div>
+      <div id="submitResult" class="success hidden"></div>
+    </section>
+
+    <!-- Step 4: E‑Sign status -->
+    <section id="step4" class="card hidden">
+      <h3>DocuSign Packet</h3>
+      <div id="esignStatus" class="muted">After manual review, you'll receive an email with DocuSign links. If you have a reference ID, this page will also show your packet when it's ready.</div>
+      <div id="esignCta" class="right hidden">
+        <a id="esignLink" class="btn btn-gold" target="_blank" rel="noopener">Open DocuSign Packet</a>
+      </div>
+    </section>
+  </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script>
+    // ===== Firebase init (read-only public keys are OK here) =====
     const app = firebase.initializeApp({
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -73,37 +180,133 @@
     });
     const db = firebase.database();
 
+    // ===== Helpers =====
+    const $ = s => document.querySelector(s);
     const uidParam = new URL(location.href).searchParams.get('uid') || 'anon';
+    const refParam = new URL(location.href).searchParams.get('ref') || '';
+    function setStep(n){
+      ['#step1','#step2','#step3','#step4'].forEach((sel,i)=>{ const el=$(sel); if(!el) return; el.classList.toggle('hidden', i!==n-1); });
+      ['#s1','#s2','#s3','#s4'].forEach((sel,i)=>{ const el=$(sel); if(!el) return; el.classList.toggle('active', i===n-1); });
+    }
 
-    document.getElementById('claimForm').addEventListener('submit', async e => {
-      e.preventDefault();
-
-      const data = {
-        claimant: document.getElementById('claimant').value.trim(),
-        respondent: document.getElementById('respondent').value.trim(),
-        amount: parseFloat(document.getElementById('amount').value),
-        cause: document.getElementById('cause').value.trim(),
-        summary: document.getElementById('summary').value.trim(),
-        narrative: document.getElementById('narrative').value.trim(),
-        evidence: document.getElementById('evidence').value.trim(),
-        signature: document.getElementById('signature').value.trim(),
-        date: document.getElementById('date').value,
-        assignment: true,
-        createdBy: uidParam,
-        createdAt: Date.now(),
-        status: 'submitted'
-      };
-
-      try {
-        const ref = await db.ref('claims/submissions').push(data);
-        document.getElementById('result').style.display='block';
-        document.getElementById('result').innerHTML =
-          `<b>Claim submitted!</b><br/>Reference ID: ${ref.key}`;
-        document.getElementById('claimForm').reset();
-      } catch(err) {
-        alert('Error saving claim: '+err.message);
-      }
+    // Step 1 logic
+    $('#agreeChk').addEventListener('change', ()=>{
+      $('#toStep2').disabled = !$('#agreeChk').checked;
     });
+    $('#toStep2').onclick = ()=> setStep(2);
+
+    // Step 2 validation
+    function validStep2(){
+      return $('#claimant').value.trim() && $('#email').value.trim() && $('#phone').value.trim() &&
+             $('#respondent').value.trim() && $('#amount').value && $('#summary').value.trim() &&
+             $('#facts').value.trim() && $('#signature').value.trim() && $('#attestChk').checked;
+    }
+    $('#attestChk').addEventListener('change', ()=> $('#toStep3').disabled = !validStep2());
+    ['#claimant','#email','#phone','#respondent','#amount','#summary','#facts','#signature'].forEach(sel=>{
+      $(sel).addEventListener('input', ()=> $('#toStep3').disabled = !validStep2());
+    });
+    $('#back1').onclick = ()=> setStep(1);
+
+    function buildDraft(){
+      const d = {
+        claimant: $('#claimant').value.trim(),
+        email: $('#email').value.trim(),
+        phone: $('#phone').value.trim(),
+        respondent: $('#respondent').value.trim(),
+        amount: Number($('#amount').value||0).toLocaleString('en-US', {style:'currency', currency:'USD'}),
+        cause: $('#cause').value,
+        summary: $('#summary').value.trim(),
+        facts: $('#facts').value.trim(),
+        evidence: $('#evidence').value.trim(),
+        notaryState: $('#notaryState').value.trim(),
+        notaryCounty: $('#notaryCounty').value.trim(),
+        signature: $('#signature').value.trim(),
+        date: new Date().toLocaleDateString()
+      };
+      const text =
+`ASSIGNMENT OF CLAIM & STATEMENT OF FACTS
+Assignor: ${d.claimant}
+Assignee: Bill Wilburn d/b/a DealBankers.com
+Date: ${d.date}
+
+Respondent: ${d.respondent}
+Claim Amount: ${d.amount}
+Cause of Action: ${d.cause}
+
+Summary:
+${d.summary}
+
+Statement of Facts:
+${d.facts}
+
+Evidence (links):
+${d.evidence || '—'}
+
+Notarization: Assignor acknowledges certain documents may require notarization in ${d.notaryCounty || '_____'} County, ${d.notaryState || '_____'}.
+Attestation: I declare under penalty of perjury that the foregoing is true and correct.
+
+Signature: ${d.signature}            Date: ${d.date}
+`;
+      $('#draft').textContent = text;
+      return d;
+    }
+
+    $('#toStep3').onclick = ()=>{ buildDraft(); setStep(3); };
+    $('#back2').onclick = ()=> setStep(2);
+
+    // Submit
+    $('#submitBtn').onclick = async ()=>{
+      const d = buildDraft();
+      const payload = {
+        ...d,
+        amountRaw: Number($('#amount').value||0),
+        disclaimerAccepted: $('#agreeChk').checked,
+        attested: $('#attestChk').checked,
+        createdAt: Date.now(),
+        createdBy: uidParam,
+        status: 'pending_review',
+        esignLink: '', // to be set by backoffice after approval
+      };
+      try{
+        const ref = await db.ref('claims/intake').push(payload);
+        const link = location.origin + location.pathname + '?ref=' + ref.key + (uidParam?('&uid='+encodeURIComponent(uidParam)):'') ;
+        $('#submitResult').classList.remove('hidden');
+        $('#submitResult').innerHTML = `<b>Submitted!</b> Reference ID: ${ref.key}<br/>Keep this link to check status: <a href="${link}">${link}</a>`;
+        setStep(4);
+        // Store in localStorage too
+        localStorage.setItem('db_claim_ref', ref.key);
+        // Immediately check for any esign link (will usually be blank)
+        checkEsign(ref.key);
+      }catch(e){
+        alert('Error submitting: '+e.message);
+      }
+    };
+
+    // Step 4 polling (if ?ref= is present or from local storage)
+    async function checkEsign(key){
+      if(!key) return;
+      try{
+        const snap = await db.ref('claims/intake/'+key).once('value');
+        const v = snap.val() || {};
+        if(v.esignLink){
+          $('#esignStatus').textContent = 'Your DocuSign packet is ready.';
+          $('#esignLink').href = v.esignLink;
+          $('#esignCta').classList.remove('hidden');
+        }else{
+          $('#esignStatus').textContent = 'Thanks! Your intake is pending review. You will get an email with DocuSign when approved.';
+        }
+      }catch{}
+    }
+
+    // On load: if ref param present, jump to step 4 and show status
+    (function init(){
+      if(refParam){
+        setStep(4);
+        checkEsign(refParam);
+      } else {
+        setStep(1);
+      }
+    })();
   </script>
 </body>
 </html>
