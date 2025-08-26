@@ -1,112 +1,163 @@
-<!-- ===================== index.html (Access page with Claims Exchange button) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8"/>
   <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>DealBankers — Access</title>
-  <link rel="icon" type="image/png" href="images/db-badge.png"/>
+  <link rel="icon" href="images/db-badge.png"/>
   <style>
-    :root{ --bg1:#0b131b; --bg2:#142838; --bg3:#173c53; --text:#f1f7fb; --muted:#cfe3f7; --shadow:0 28px 70px rgba(0,0,0,.55); --r:18px;
-           --green:#26cf84; --blue:#47b4ff; --gold:#ffd36b; --panel:#0f1f2b; }
+    :root{
+      --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
+      --panel:#0f1f2b; --line:#254a63;
+      --text:#eaf4ff; --muted:#b7c7da;
+      --green:#26cf84; --gold:#ffd36b; --blue:#47b4ff; --red:#ff5a66;
+      --shadow:0 28px 70px rgba(0,0,0,.55);
+      --r:18px;
+    }
     *{box-sizing:border-box}
-    body{margin:0;color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;
-      background: radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
-                 linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
-      min-height:100vh;padding:14px}
-    .wrap{max-width:1100px;margin:0 auto}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.18);
-      border-radius:20px;box-shadow:var(--shadow);overflow:hidden}
-    .top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.2);
-      background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
-    .brand{display:flex;gap:10px;align-items:center}
-    .brand img{width:42px;height:42px;border-radius:10px}
-    .btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:9px 12px;border-radius:999px;
-      border:1px solid rgba(255,255,255,.2);background:#0e2433;color:#eaf6ff;text-decoration:none;font-weight:800}
-    .btn:hover{filter:brightness(1.07)}
-    .btn-red{background:linear-gradient(180deg,#ff8a8a,#ff5151);border:none}
-    .btn-blue{background:linear-gradient(180deg,#89c7ff,#2a86db);border:none}
-    .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
-    .grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}
-    @media (max-width:980px){ .grid{grid-template-columns:1fr} }
-    .left{padding:12px}
-    .right{padding:12px}
-    .panel{background:#0d1e2b;border:1px solid rgba(255,255,255,.18);border-radius:14px;padding:12px}
-    .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-    .input{width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
-    .wide{width:100%}
+    body{
+      margin:0; color:var(--text);
+      font-family: ui-sans-serif,system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial;
+      background:
+        radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.18) 0%, transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+      min-height:100svh;
+      display:grid; place-items:center; padding:22px;
+    }
+    .shell{width:min(980px,100%);}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      margin-bottom:14px;
+    }
+    .brand{display:flex;align-items:center;gap:10px}
+    .brand img{width:44px;height:44px;border-radius:12px;box-shadow:var(--shadow);background:#062033}
+    .brand h1{font-size:16px;letter-spacing:.08em;margin:0;color:#d9ecff}
+    .actions{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;padding:8px 12px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.18); background:#102537; color:#eaf6ff; font-weight:800; text-decoration:none;
+    }
+    .chip.red{background:linear-gradient(180deg,#ff767f,#c5414b);color:#231012;border:none}
+    .chip.blue{background:linear-gradient(180deg,#66ccff,#0a67c7);border:none}
+    .chip.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);color:#221905;border:none}
+
+    .card{
+      background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
+      border:1px solid rgba(255,255,255,.18); border-radius:var(--r); box-shadow:var(--shadow); overflow:hidden;
+      display:grid; grid-template-columns: 1fr 1fr; gap:0;
+    }
+    @media (max-width:820px){ .card{grid-template-columns:1fr} }
+
+    .pane{padding:18px;border-right:1px solid rgba(255,255,255,.12)}
+    .pane:last-child{border-right:none}
+    .hdr{font-size:18px;font-weight:900;margin:4px 0 12px}
+    .lead{color:var(--muted);font-size:13px;margin-top:-6px;margin-bottom:12px}
+
+    .input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18); background:#0f2435;color:#eaf6ff}
+    .btn{width:100%;padding:12px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.22);background:#103043;color:#eaf6ff;font-weight:900;cursor:pointer}
+    .btn:hover{filter:brightness(1.06)}
+    .btn.primary{background:linear-gradient(180deg,#28d37d,#0aa05b);border:none;color:#06150f}
+    .btn.google{background:#fff;color:#222;border:1px solid #e7e7e7;display:flex;align-items:center;justify-content:center;gap:10px}
+    .glogo{width:18px;height:18px}
+
+    .row{display:grid;gap:10px}
+    .grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .minirow{display:flex;gap:10px;flex-wrap:wrap;margin-top:10px}
+    .pill{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:#0f2637;color:#dff1ff;font-weight:700;font-size:13px;cursor:pointer;}
+
+    .box{
+      border:1px solid rgba(255,255,255,.18); border-radius:12px;background:#0e2231;padding:12px;margin-top:10px
+    }
+    .foot{margin-top:12px;color:#aecdff;font-size:12px;text-align:center;opacity:.85}
+    a.inline{color:#9bd0ff}
   </style>
 </head>
 <body>
-  <div class="wrap">
+  <div class="shell">
+    <div class="topbar">
+      <div class="brand">
+        <img src="images/db-badge.png" alt="DealBankers logo" onerror="this.style.display='none'">
+        <h1>DEALBANKERS • ACCESS</h1>
+      </div>
+      <div class="actions">
+        <a class="chip red" href="tel:+12107999999">📞 Sales</a>
+        <a class="chip blue" href="mailto:support@dealbankers.com">🛟 Support</a>
+        <a class="chip gold" href="claims.html">⚖️ Claims Exchange</a>
+      </div>
+    </div>
+
     <section class="card">
-      <div class="top">
-        <div class="brand">
-          <img src="images/db-badge.png" alt="DB"/>
-          <div>
-            <div style="font-weight:900;letter-spacing:.02em">DEALBANKERS • ACCESS</div>
-            <div style="font-size:12px;color:#e6f5ff">Secure Portal • v2</div>
-          </div>
+      <div class="pane">
+        <div class="hdr">Sign In</div>
+        <div class="row" style="gap:10px">
+          <input id="email" class="input" type="email" placeholder="Email"/>
+          <input id="pass"  class="input" type="password" placeholder="Password"/>
+          <button id="btnEnter" class="btn primary">Enter</button>
+          <button id="btnGoogle" class="btn google"><img class="glogo" src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="G">Sign in with Google</button>
         </div>
-        <div class="row">
-          <a class="btn btn-red"  href="#"><span>☎</span> Sales</a>
-          <a class="btn btn-blue" href="#"><span>☎</span> Support</a>
-          <!-- NEW: Claims Exchange button next to phones -->
-          <a class="btn btn-gold" href="claims-exchange.html">⚖️ Claims Exchange</a>
-          <a class="btn" href="profile.html">Log In</a>
+        <div class="minirow">
+          <a class="pill" href="signup.html">Create Account</a>
+          <a class="pill" href="reset.html">Forgot Password</a>
+          <a class="pill" href="profile.html?tab=contractor">Contractor</a>
+          <a class="pill" href="profile.html?tab=wholesaler">Wholesaler</a>
+          <a class="pill" href="profile.html?tab=realtor">Realtor</a>
+          <a class="pill" href="profile.html?tab=investor">Investor</a>
         </div>
       </div>
 
-      <div class="grid">
-        <div class="left">
-          <div class="panel">
-            <h2 style="margin:6px 0 10px">Sign In</h2>
-            <div class="row">
-              <input id="email" class="input" placeholder="Email"/>
-              <input id="pass"  class="input" placeholder="Password" type="password"/>
-              <button id="btnEnter" class="btn wide">Enter</button>
-              <button id="btnGoogle" class="btn wide">Sign in with Google</button>
-            </div>
-            <div class="row" style="margin-top:8px">
-              <a class="btn" href="signup.html">Create Account</a>
-              <a class="btn" href="reset.html">Forgot Password</a>
-            </div>
-            <div class="row" style="margin-top:8px">
-              <a class="btn" href="contractor.html">Contractor</a>
-              <a class="btn" href="wholesaler.html">Wholesaler</a>
-              <a class="btn" href="realtor.html">Realtor</a>
-              <a class="btn" href="investor.html">Investor</a>
-            </div>
-          </div>
+      <div class="pane">
+        <div class="hdr">Claims Exchange</div>
+        <div class="lead">Assign monetary claims to DealBankers for pursuit. Start a new claim or check status with a reference ID. Secure sign‑in required.</div>
+        <div class="grid2">
+          <a class="btn" href="claims.html">Open Claims Exchange</a>
+          <a class="btn" href="claims-sof.html">Statement of Facts Form</a>
         </div>
-        <div class="right">
-          <div class="panel">
-            <h2 style="margin:6px 0 10px">Claims Exchange</h2>
-            <div style="color:var(--muted)">Assign monetary claims to DealBankers for pursuit. Start a new claim or check status with a reference ID. Requires secure sign‑in.</div>
-            <div class="row" style="margin-top:10px">
-              <a class="btn btn-gold" href="claims-exchange.html">Open Claims Exchange</a>
-              <a class="btn" href="claims.html">Statement of Facts Form</a>
-            </div>
-          </div>
+        <div class="box">
+          <b>New:</b> internal team access lives under <a class="inline" href="claims-admin.html">Claims Admin</a>. Ask support for role enablement.
         </div>
       </div>
     </section>
+
+    <div class="foot">Operational • Confidential. Authenticated users only. Activity monitored.</div>
   </div>
 
-  <!-- Optional: wire up auth buttons to Firebase if desired -->
+  <!-- Firebase Core + Auth -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
   <script>
     const app = firebase.initializeApp({
       apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
       projectId: "deal-bankers"
-    }, "access");
-    const auth = app.auth();
-    document.getElementById('btnGoogle').onclick = ()=> auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-    document.getElementById('btnEnter').onclick  = ()=> auth.signInWithEmailAndPassword(
-      document.getElementById('email').value.trim(), document.getElementById('pass').value.trim()
-    ).then(()=> location.href='profile.html').catch(e=> alert(e.message));
+    });
+
+    const auth = firebase.auth();
+
+    async function signInEmail(){
+      const email = document.getElementById('email').value.trim();
+      const pass  = document.getElementById('pass').value;
+      try{
+        await auth.signInWithEmailAndPassword(email, pass);
+        location.href = "profile.html";
+      }catch(e){
+        alert(e.message || "Could not sign in.");
+      }
+    }
+    async function signInGoogle(){
+      try{
+        const provider = new firebase.auth.GoogleAuthProvider();
+        await auth.signInWithPopup(provider);
+        location.href = "profile.html";
+      }catch(e){ alert(e.message || "Google sign-in failed."); }
+    }
+    document.getElementById('btnEnter').addEventListener('click', signInEmail);
+    document.getElementById('btnGoogle').addEventListener('click', signInGoogle);
+    document.addEventListener('keydown', (e)=>{
+      if(e.key==='Enter' && (document.activeElement.id==='email' || document.activeElement.id==='pass')){
+        signInEmail();
+      }
+    });
   </script>
 </body>
 </html>
