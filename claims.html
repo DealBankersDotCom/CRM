@@ -1,0 +1,109 @@
+<!-- ===================== claims.html (Claims Exchange) ===================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>Claims Exchange • DealBankers</title>
+  <style>
+    body { font-family: system-ui, sans-serif; background:#0b131b; color:#f1f7fb; margin:0; padding:20px; }
+    h1 { color:#47b4ff; }
+    form { max-width:700px; margin:auto; background:#142838; padding:20px; border-radius:12px; }
+    label { display:block; margin-top:12px; font-weight:600; }
+    input, textarea { width:100%; padding:10px; border-radius:8px; border:1px solid #254a63; background:#0f1f2b; color:#fff; }
+    textarea { resize:vertical; min-height:80px; }
+    .checkbox { display:flex; align-items:center; margin-top:10px; }
+    .checkbox input { width:auto; margin-right:8px; }
+    button { margin-top:20px; padding:12px 18px; font-weight:700; background:linear-gradient(180deg,#47b4ff,#0a58ca); border:none; border-radius:8px; color:#fff; cursor:pointer; }
+    button:disabled { opacity:.6; cursor:not-allowed; }
+    .success { margin-top:20px; padding:12px; border-radius:8px; background:#173c53; }
+  </style>
+</head>
+<body>
+  <h1>Claims Exchange</h1>
+  <p>Assign your claim to <b>Bill Wilburn d/b/a DealBankers.com</b> for enforcement and recovery.</p>
+
+  <form id="claimForm">
+    <label>Claimant (Your Name / Company)</label>
+    <input type="text" id="claimant" required/>
+
+    <label>Respondent (Person or Business You're Claiming Against)</label>
+    <input type="text" id="respondent" required/>
+
+    <label>Claim Amount (USD)</label>
+    <input type="number" id="amount" step="0.01" required/>
+
+    <label>Cause of Action (e.g., Breach of Contract, Non-performance)</label>
+    <input type="text" id="cause" required/>
+
+    <label>Summary of Claim</label>
+    <textarea id="summary" required></textarea>
+
+    <label>Narrative / Details</label>
+    <textarea id="narrative"></textarea>
+
+    <label>Evidence Links (URLs, comma separated)</label>
+    <textarea id="evidence"></textarea>
+
+    <div class="checkbox">
+      <input type="checkbox" id="assignCheck" required/>
+      <label for="assignCheck">I hereby assign this claim to Bill Wilburn d/b/a DealBankers.com.</label>
+    </div>
+
+    <label>Signature (type your full legal name)</label>
+    <input type="text" id="signature" required/>
+
+    <label>Date</label>
+    <input type="date" id="date" required/>
+
+    <button type="submit">Submit Claim</button>
+  </form>
+
+  <div id="result" class="success" style="display:none"></div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    const app = firebase.initializeApp({
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers"
+    });
+    const db = firebase.database();
+
+    const uidParam = new URL(location.href).searchParams.get('uid') || 'anon';
+
+    document.getElementById('claimForm').addEventListener('submit', async e => {
+      e.preventDefault();
+
+      const data = {
+        claimant: document.getElementById('claimant').value.trim(),
+        respondent: document.getElementById('respondent').value.trim(),
+        amount: parseFloat(document.getElementById('amount').value),
+        cause: document.getElementById('cause').value.trim(),
+        summary: document.getElementById('summary').value.trim(),
+        narrative: document.getElementById('narrative').value.trim(),
+        evidence: document.getElementById('evidence').value.trim(),
+        signature: document.getElementById('signature').value.trim(),
+        date: document.getElementById('date').value,
+        assignment: true,
+        createdBy: uidParam,
+        createdAt: Date.now(),
+        status: 'submitted'
+      };
+
+      try {
+        const ref = await db.ref('claims/submissions').push(data);
+        document.getElementById('result').style.display='block';
+        document.getElementById('result').innerHTML =
+          `<b>Claim submitted!</b><br/>Reference ID: ${ref.key}`;
+        document.getElementById('claimForm').reset();
+      } catch(err) {
+        alert('Error saving claim: '+err.message);
+      }
+    });
+  </script>
+</body>
+</html>
