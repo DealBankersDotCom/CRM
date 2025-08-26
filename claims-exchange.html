@@ -1,0 +1,234 @@
+<!-- ===================== claims-exchange.html (Claims Exchange portal) ===================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
+  <title>DealBankers • Claims Exchange</title>
+  <link rel="icon" type="image/png" href="images/icon-claims.png"/>
+  <style>
+    :root{
+      --bg1:#0b131b; --bg2:#142838; --bg3:#173c53;
+      --panel:#0f1f2b; --panel2:#0d1b27;
+      --line:#254a63; --text:#f1f7fb; --muted:#bfd0e2;
+      --blue:#47b4ff; --green:#26cf84; --gold:#ffd36b; --red:#ff6b6b;
+      --shadow:0 28px 70px rgba(0,0,0,.55);
+      --r:16px;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial,sans-serif;color:var(--text);
+      background:
+        radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),
+        linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
+      min-height:100vh; padding:14px}
+    .wrap{max-width:1100px;margin:0 auto}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
+      border:1px solid rgba(255,255,255,.18); border-radius:20px; box-shadow:var(--shadow); overflow:hidden}
+    .top{display:flex;justify-content:space-between;align-items:center;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.2);
+      background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
+    .brand{display:flex;gap:10px;align-items:center}
+    .brand img{width:38px;height:38px;border-radius:8px}
+    .right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+    .btn{display:inline-flex;align-items:center;gap:8px;justify-content:center;padding:10px 14px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.2);background:#0e2433;color:#eaf6ff;text-decoration:none;cursor:pointer;font-weight:800}
+    .btn:hover{filter:brightness(1.07)}
+    .btn-green{background:linear-gradient(180deg,var(--green),#1a9b61);border:none;color:#fff}
+    .btn-gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
+    .btn-blue{background:linear-gradient(180deg,#5fb3ff,#1d7dd6);border:none}
+    .btn-ghost{background:#0f2a3a}
+    .ico{font-size:18px}
+    .status{font-size:12px;color:#e6f5ff}
+    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px}
+    @media (max-width:900px){ .grid{grid-template-columns:1fr} }
+    .panel{background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border:1px solid rgba(255,255,255,.18);
+      border-radius:16px;padding:12px}
+    h2{margin:4px 0 10px}
+    .hint{font-size:13px;color:var(--muted)}
+    .list{display:grid;gap:8px;margin-top:8px}
+    .row{border:1px solid rgba(255,255,255,.18);border-radius:12px;background:#0c1e2b;padding:10px;display:grid;gap:6px}
+    .rowHead{display:flex;justify-content:space-between;align-items:center;font-weight:900}
+    .badge{font-size:12px;padding:4px 8px;border-radius:999px;background:#0d2a3c;border:1px solid rgba(255,255,255,.18)}
+    .small{font-size:12px;color:#cfe3f7}
+    .search{display:flex;gap:8px;align-items:center;margin-top:6px}
+    .input{width:100%;padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.2);background:#0d2130;color:#eaf6ff}
+    .hide{display:none !important}
+    .note{font-size:13px;color:#cfe3f7;margin-top:6px}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <section class="card">
+      <div class="top">
+        <div class="brand">
+          <img src="images/db-badge.png" alt="DB"/>
+          <div>
+            <div style="font-weight:900;letter-spacing:.02em">DEALBANKERS • CLAIMS EXCHANGE</div>
+            <div class="status" id="status">Secure • Ready</div>
+          </div>
+        </div>
+        <div class="right" id="topRight">
+          <a class="btn btn-ghost" href="index.html">← Back to Access</a>
+          <a class="btn btn-blue" id="btnLogin"><span class="ico">🔐</span> Sign In</a>
+          <a class="btn" id="btnLogout" style="display:none"><span class="ico">🚪</span> Sign Out</a>
+        </div>
+      </div>
+
+      <div class="grid">
+        <!-- Left: Actions -->
+        <div class="panel">
+          <h2>Start or Continue</h2>
+          <div class="hint">Use the buttons below. You must be signed in.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+            <a class="btn btn-gold" id="btnNewClaim" title="Create new claim">＋ New Claim</a>
+            <a class="btn btn-green" id="btnMyClaims" title="Show my claims">📄 My Claims</a>
+          </div>
+
+          <div class="search">
+            <input id="refInput" class="input" placeholder="Enter claim reference (e.g., -Nh7...)" />
+            <button id="btnLookup" class="btn">Lookup</button>
+          </div>
+          <div id="lookupResult" class="note"></div>
+
+          <div id="adminBlock" class="panel" style="margin-top:12px;display:none">
+            <div style="display:flex;align-items:center;gap:8px"><span class="badge">Deal Banker</span><b>Internal Tools</b></div>
+            <div class="note">You have internal access. View all intake claims.</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px">
+              <a class="btn" href="claims-admin.html">Open Admin (if present)</a>
+              <button class="btn" id="btnListAll">List All Claims</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right: Lists -->
+        <div class="panel">
+          <h2 id="listTitle">My Claims</h2>
+          <div id="list" class="list"></div>
+          <div id="empty" class="note">Nothing to show yet.</div>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <!-- Firebase (same project used across your CRM) -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script>
+    const app = firebase.initializeApp({
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers"
+    }, "claims");
+
+    const db   = app.database();
+    const auth = app.auth();
+
+    const $ = s => document.querySelector(s);
+    const statusEl = $('#status');
+    const listEl = $('#list');
+    const emptyEl = $('#empty');
+    const adminBlock = $('#adminBlock');
+    const listTitle = $('#listTitle');
+
+    function setStatus(t){ statusEl.textContent = t; }
+    function rowHtml(k, v){
+      const nice = (x)=> x ? String(x) : '—';
+      const created = v.createdAt ? new Date(v.createdAt).toLocaleString() : '—';
+      const actions = v.esignLink ? `<a class="btn btn-green" href="${v.esignLink}" target="_blank" rel="noopener">Open DocuSign</a>` : '';
+      return `
+        <div class="row">
+          <div class="rowHead">
+            <div>${nice(v.claimTitle||v.counterparty||'Statement of Facts')}</div>
+            <div class="badge">${nice(v.status||'pending_review')}</div>
+          </div>
+          <div class="small">Ref: <b>${k}</b> • Created: ${created}</div>
+          <div class="small">Counterparty: ${nice(v.counterparty)}</div>
+          <div class="small">Amount: ${nice(v.claimAmount)}</div>
+          ${actions}
+        </div>`;
+    }
+    function renderList(snap){
+      listEl.innerHTML='';
+      if(!snap.exists()){ emptyEl.classList.remove('hide'); return; }
+      const obj = snap.val() || {};
+      const keys = Object.keys(obj);
+      if(!keys.length){ emptyEl.classList.remove('hide'); return; }
+      emptyEl.classList.add('hide');
+      keys.reverse().forEach(k=> listEl.insertAdjacentHTML('beforeend', rowHtml(k, obj[k])));
+    }
+
+    async function isDealBanker(uid){
+      try{
+        const s = await db.ref('userRoles/'+uid+'/dealbanker').once('value');
+        return !!s.val();
+      }catch{ return false; }
+    }
+
+    // Auth UI ------------------------------------------------
+    const btnLogin = $('#btnLogin');
+    const btnLogout= $('#btnLogout');
+    btnLogin.onclick = async ()=>{
+      try{
+        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
+      }catch(e){
+        alert(e.message);
+      }
+    };
+    btnLogout.onclick = ()=> auth.signOut();
+
+    auth.onAuthStateChanged(async (u)=>{
+      const topRight = document.getElementById('topRight');
+      if(u){
+        btnLogin.style.display='none'; btnLogout.style.display='inline-flex';
+        setStatus('Signed in as '+(u.email||u.uid));
+        // show my claims by default
+        db.ref('claims/intake').orderByChild('createdByUid').equalTo(u.uid).once('value').then(renderList);
+        // deal banker?
+        if(await isDealBanker(u.uid)){ adminBlock.style.display='block'; } else { adminBlock.style.display='none'; }
+      }else{
+        btnLogin.style.display='inline-flex'; btnLogout.style.display='none';
+        setStatus('Secure • Not signed in');
+        listEl.innerHTML=''; emptyEl.classList.remove('hide'); adminBlock.style.display='none';
+      }
+    });
+
+    // Buttons ------------------------------------------------
+    document.getElementById('btnMyClaims').onclick = async ()=>{
+      const u = auth.currentUser;
+      if(!u) return alert('Please sign in.');
+      listTitle.textContent='My Claims';
+      const snap = await db.ref('claims/intake').orderByChild('createdByUid').equalTo(u.uid).once('value');
+      renderList(snap);
+    };
+
+    document.getElementById('btnNewClaim').onclick = ()=>{
+      const u = auth.currentUser;
+      if(!u) return alert('Please sign in.');
+      // Pass uid/email to claims.html so your form can prefill metadata if desired
+      const p = new URLSearchParams({ uid:u.uid, email:u.email||'' }).toString();
+      location.href = 'claims.html?'+p;
+    };
+
+    document.getElementById('btnLookup').onclick = async ()=>{
+      const ref = document.getElementById('refInput').value.trim();
+      if(!ref) return;
+      const s = await db.ref('claims/intake/'+ref).once('value');
+      if(!s.exists()){ document.getElementById('lookupResult').textContent='No claim found with that reference.'; return; }
+      document.getElementById('lookupResult').textContent='Found. Showing result below.';
+      listTitle.textContent='Lookup Result';
+      const fake = { [ref]: s.val() };
+      renderList({ exists:()=>true, val:()=>fake });
+    };
+
+    document.getElementById('btnListAll').onclick = async ()=>{
+      const u = auth.currentUser;
+      if(!u) return alert('Sign in first.');
+      if(!(await isDealBanker(u.uid))) return alert('Not authorized.');
+      listTitle.textContent='All Intake Claims';
+      const s = await db.ref('claims/intake').once('value');
+      renderList(s);
+    };
+  </script>
+</body>
+</html>
