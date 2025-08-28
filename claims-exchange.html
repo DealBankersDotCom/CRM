@@ -1,92 +1,42 @@
+<!-- ===================== claims-exchange.html (DealBankers — Claims Exchange) ===================== -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <meta name="viewport" content="width=device-width, initial-scale=1"/>
-  <title>Claims Exchange • DealBankers</title>
-  <link rel="icon" href="images/icon (1).jpg"/>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>DealBankers • Claims Exchange</title>
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
   <style>
-    :root{ --bg:#0b1218; --panel:#0f1c26; --muted:#b8cbe0; --text:#eef6ff; --line:#1f3a50; --gold:#ffd36b; --green:#24c27a; --red:#ff5e6b;}
-    *{box-sizing:border-box}
-    body{margin:0;background:linear-gradient(135deg,#0b1218,#0e2231 55%,#0b1218); color:var(--text); font-family:system-ui,Segoe UI,Inter,Roboto,Arial,sans-serif; min-height:100vh}
-    .wrap{max-width:1100px;margin:0 auto;padding:18px}
-    header{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}
-    .logo{display:flex;align-items:center;gap:10px}
-    .logo img{width:40px;height:40px;border-radius:10px}
-    .crumb{font-weight:900;letter-spacing:.06em}
-    .pill{padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.18);background:#0e2333;color:#d8ecff;font-weight:800;text-decoration:none;cursor:pointer}
-    .pill.gold{background:linear-gradient(180deg,var(--gold),#c89b3a); color:#231b05; border:none}
-    .card{border:1px solid rgba(255,255,255,.14);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));border-radius:16px;box-shadow:0 24px 60px rgba(0,0,0,.55);padding:12px}
-    .grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-    @media (max-width:960px){ .grid{grid-template-columns:1fr} }
-    .meta{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
-    iframe.viewer{width:100%;height:70vh;border:0;border-radius:12px;background:#fff}
-    .muted{color:var(--muted)}
-    .list{display:grid;gap:6px;margin-top:8px}
-    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-    .area{width:100%;min-height:110px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0f2230;color:#eaf6ff;padding:10px}
-    .actions{display:flex;gap:8px;flex-wrap:wrap}
-    .btn{padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);background:#0e2333;color:#d8ecff;font-weight:900;cursor:pointer}
-    .btn.green{background:linear-gradient(180deg,var(--green),#1a965f);border:none;color:#fff}
-    .btn.red{background:linear-gradient(180deg,var(--red),#c83a49);border:none;color:#fff}
-    #toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;background:#0b1218;color:#fff;padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.2);box-shadow:0 20px 50px rgba(0,0,0,.6);display:none;z-index:50}
+    body{margin:0;background:#0b131b;color:#eef6ff;font-family:Inter,Segoe UI,system-ui,Roboto,Arial,sans-serif}
+    .nav{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#111d29;border-bottom:1px solid rgba(255,255,255,.15)}
+    .nav .logo{display:flex;align-items:center;gap:8px;font-weight:900}
+    .nav .logo img{width:32px;height:32px;border-radius:8px}
+    .container{max-width:960px;margin:30px auto;padding:20px;background:#111d29;border-radius:12px}
+    h1{margin:0 0 20px}
+    iframe{width:100%;height:480px;border:1px solid rgba(255,255,255,.2);border-radius:6px;margin-bottom:12px}
+    .doc{margin-bottom:36px}
+    .btn{padding:8px 14px;border-radius:6px;border:none;cursor:pointer;font-weight:600;margin-right:8px}
+    .btn.approve{background:#4CAF50;color:#fff}
+    .btn.deny{background:#f44336;color:#fff}
+    textarea{width:100%;min-height:80px;padding:8px;border-radius:6px;border:1px solid #555;background:#0d2130;color:#eef6ff;margin:8px 0}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <header>
-      <div class="logo">
-        <img src="images/icon (1).jpg" alt="DealBankers"/>
-        <div>
-          <div class="crumb">DEALBANKERS • CLAIMS EXCHANGE</div>
-          <div class="muted" id="who">Loading user…</div>
-        </div>
-      </div>
-      <div style="display:flex;gap:8px">
-        <a class="pill" href="profile.html">Portal</a>
-        <a class="pill gold" href="claims.html">Start New Claim</a>
-        <button id="logout" class="pill">Log Out</button>
-      </div>
-    </header>
-
-    <section class="card">
-      <h2 style="margin:6px 0 8px">Your Claim</h2>
-      <div class="meta">
-        <span class="pill" id="refTag">Ref: —</span>
-        <span class="pill" id="statTag">Status: Reviewing</span>
-      </div>
-      <p class="muted" id="intro">Verifying access…</p>
-      <div id="links" class="list" style="display:none"></div>
-    </section>
-
-    <section class="grid" id="docGrid" style="margin-top:12px; display:none">
-      <div class="card">
-        <div style="font-weight:900;margin:6px 0 8px" id="doc1Title">Primary Document</div>
-        <iframe class="viewer" id="doc1" title="Claim Document 1"></iframe>
-      </div>
-      <div class="card">
-        <div style="font-weight:900;margin:6px 0 8px" id="doc2Title">Supporting Document</div>
-        <iframe class="viewer" id="doc2" title="Claim Document 2"></iframe>
-      </div>
-    </section>
-
-    <section class="card" id="feedbackCard" style="margin-top:12px; display:none">
-      <h3 style="margin:6px 0 6px">Review & Feedback</h3>
-      <p class="muted" style="margin-top:2px">
-        By clicking <b>Approve (as to form)</b>, you agree the attached documents appear correct in substance and layout for e-signature. 
-        This is <u>not a signature</u>. An e-signature copy will be sent to you shortly for execution.
-      </p>
-      <label style="display:block;margin:8px 0 6px;font-weight:800">Comments to DealBankers (optional)</label>
-      <textarea id="fbText" class="area" placeholder="Add any corrections, names, dates, or notes we should adjust before sending for e-signature…"></textarea>
-      <div class="actions" style="margin-top:10px">
-        <button class="btn green" id="btnApprove">Approve (as to form)</button>
-        <button class="btn red" id="btnDeny">Deny / Needs changes</button>
-      </div>
-      <div class="muted" id="lastSent" style="margin-top:8px"></div>
-    </section>
+  <div class="nav">
+    <div class="logo">
+      <img src="icon (1).jpg" alt="DB"/> DEALBANKERS • CLAIMS
+    </div>
+    <div>
+      <a href="profile.html" style="color:#7bc4ff;text-decoration:none;font-weight:600">← Back to Profile</a>
+    </div>
   </div>
 
-  <div id="toast"></div>
+  <div class="container">
+    <h1>Claims Exchange</h1>
+    <p>Review assigned claim documents below. Approving means you approve <b>as to form only</b>. It does not constitute your signature. An official e-filed copy will be sent to you shortly for signature.</p>
+
+    <div id="docsArea">Loading assigned documents…</div>
+  </div>
 
   <!-- Firebase -->
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -94,141 +44,68 @@
   <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
   <script src="config.js"></script>
   <script>
-    const originBase = location.origin;
-    const pdf = (file)=> `${originBase}/claims/${encodeURIComponent(file)}`;
-    const gview = (url)=>`https://docs.google.com/gview?embedded=1&url=${encodeURIComponent(url)}`;
-    const toastEl = document.getElementById('toast');
-    function toast(t){ toastEl.textContent=t; toastEl.style.display='block'; setTimeout(()=>toastEl.style.display='none',1600); }
+    const auth=firebase.auth();
+    const db=firebase.database();
 
-    // Assignment map
-    const CLAIMS = [
-      {
-        matcher: { email: 'mitzidyane@gmail.com' },
-        ref: 'DARLENE-001',
-        status: 'Received',
-        docs: [
-          { title: 'Assignment of Claims Agreement', file: 'Darlene-Assignment of Claims Agreement.pdf' },
-          { title: 'Statement of Facts Questionnaire', file: 'Darlene-Statement of Facts Questionnaire.pdf' },
-        ],
-      },
-      {
-        matcher: { uid: 'bZtK9f6wAwYab20yawDbXRZdG6c2' }, // Alfred
-        ref: 'HONCHO-001',
-        status: 'Under Review',
-        docs: [
-          { title: 'Assignment of Claims Agreement', file: 'Honcho-ASSIGNMENT OF CLAIMS AGREEMENT - Google Docs.pdf' },
-          { title: 'Statement of Facts Questionnaire', file: 'Honcho-STATEMENT OF FACTS QUESTIONNAIRE - Google Docs.pdf' },
-        ],
-      },
-      {
-        matcher: { email: 'pending@placeholder.invalid' }, // Madison placeholder
-        ref: 'MADISON-001',
-        status: 'Awaiting Account Activation',
-        docs: [
-          { title: 'Statement of Facts Questionnaire', file: 'Madison-STATEMENT OF FACTS QUESTIONNAIRE.pdf' },
-          { title: 'Marketing / Loan Agreement (reference)', file: 'Marketing_Loan_Agreement_Proposal_(1).pdf' },
-        ],
-      },
-    ];
+    const docsArea=document.getElementById('docsArea');
 
-    function findClaimFor(user){
-      const em = (user.email||'').toLowerCase().trim();
-      const id = user.uid||'';
-      let hit = CLAIMS.find(c => c.matcher.email && c.matcher.email.toLowerCase() === em);
-      if(!hit) hit = CLAIMS.find(c => c.matcher.uid && c.matcher.uid === id);
-      return hit;
-    }
-    function setText(id, txt){ const el=document.getElementById(id); if(el) el.textContent=txt; }
+    const claimsMap={
+      // assignments by user
+      "mitzidyane@gmail.com":[
+        "Darlene-Assignment of Claims Agreement.pdf",
+        "Darlene-Statement of Facts Questionnaire.pdf"
+      ],
+      "bZtK9f6wAwYab20yawDbXRZdG6c2":[
+        "Honcho-ASSIGNMENT OF CLAIMS AGREEMENT - Google Docs.pdf",
+        "Honcho-STATEMENT OF FACTS QUESTIONNAIRE - Google Docs.pdf"
+      ]
+      // Madison not yet assigned because no email/uid
+    };
 
-    const app = firebase.apps.length ? firebase.app() : firebase.initializeApp(window.firebaseConfig || {});
-    const auth = firebase.auth();
-    const db   = firebase.database();
-
-    let currentUser=null, currentClaim=null;
+    const repoBase="https://github.com/DealBankersDotCom/CRM/raw/main/claims/";
 
     auth.onAuthStateChanged(user=>{
-      const who = document.getElementById('who');
-      if(!user){ who.textContent = 'Not signed in'; location.replace('index.html'); return; }
-      who.textContent = `${user.email || user.uid}`;
-      currentUser=user;
+      if(!user){ location.href="index.html"; return; }
 
-      const claim = findClaimFor(user);
-      const intro = document.getElementById('intro');
-      const grid  = document.getElementById('docGrid');
-      const links = document.getElementById('links');
-      const fbCard= document.getElementById('feedbackCard');
+      let uid=user.uid;
+      let email=user.email;
+      let assigned=[];
 
-      if(!claim){
-        intro.innerHTML = 'No claim is linked to this account yet. Use <b>Start New Claim</b> or contact your case handler.';
-        setText('refTag','Ref: —'); setText('statTag','Status: —');
-        links.style.display='none'; grid.style.display='none'; fbCard.style.display='none';
+      if(claimsMap[email]) assigned=claimsMap[email];
+      else if(claimsMap[uid]) assigned=claimsMap[uid];
+
+      if(assigned.length===0){
+        docsArea.innerHTML=`<p>No claim documents assigned to you yet.</p>`;
         return;
       }
 
-      currentClaim=claim;
-
-      // Placeholder path (Madison)
-      const isPlaceholder = claim.matcher.email === 'pending@placeholder.invalid';
-      if(isPlaceholder){
-        intro.innerHTML = 'This claim is awaiting the claimant’s account activation. Once Madison is invited and signs in, the documents will appear under her login automatically.';
-        setText('refTag', `Ref: ${claim.ref}`); setText('statTag', `Status: ${claim.status}`);
-        links.innerHTML = `
-          <div class="row"><span class="pill">Preview Links</span>
-            <a class="pill" href="${pdf(claim.docs[0].file)}" target="_blank" rel="noopener">${claim.docs[0].title}</a>
-            <a class="pill" href="${pdf(claim.docs[1].file)}" target="_blank" rel="noopener">${claim.docs[1].title}</a>
-          </div>`;
-        links.style.display='grid'; grid.style.display='none'; fbCard.style.display='none';
-        return;
-      }
-
-      // Normal render
-      setText('refTag', `Ref: ${claim.ref}`); setText('statTag', `Status: ${claim.status}`);
-      intro.textContent = 'Your claim documents are available below.';
-      document.getElementById('doc1Title').textContent = claim.docs[0]?.title || 'Primary Document';
-      document.getElementById('doc2Title').textContent = claim.docs[1]?.title || 'Supporting Document';
-      document.getElementById('doc1').src = gview(pdf(claim.docs[0].file));
-      document.getElementById('doc2').src = gview(pdf(claim.docs[1].file));
-      grid.style.display='grid';
-
-      links.innerHTML = `
-        <div class="row"><span class="pill">Downloads</span>
-          <a class="pill" href="${pdf(claim.docs[0].file)}" target="_blank" rel="noopener">${claim.docs[0].title}</a>
-          <a class="pill" href="${pdf(claim.docs[1].file)}" target="_blank" rel="noopener">${claim.docs[1].title}</a>
-        </div>`;
-      links.style.display='grid';
-      fbCard.style.display='block';
-
-      // Load last feedback timestamp (optional)
-      db.ref(`claims/decisions/${claim.ref}/${user.uid}/last`).once('value').then(s=>{
-        const v=s.val(); if(v) document.getElementById('lastSent').textContent = `Last submitted: ${new Date(v).toLocaleString()}`;
+      docsArea.innerHTML="";
+      assigned.forEach(file=>{
+        let wrap=document.createElement('div');
+        wrap.className="doc";
+        wrap.innerHTML=`
+          <h3>${file}</h3>
+          <iframe src="${repoBase+encodeURIComponent(file)}"></iframe>
+          <textarea id="c_${file}" placeholder="Leave comments for admin…"></textarea><br/>
+          <button class="btn approve" onclick="submitFeedback('${file}','approve')">Approve</button>
+          <button class="btn deny" onclick="submitFeedback('${file}','deny')">Deny</button>
+        `;
+        docsArea.appendChild(wrap);
       });
     });
 
-    document.getElementById('logout').addEventListener('click', ()=>auth.signOut().then(()=>location.href='index.html'));
-
-    function submitDecision(decision){
-      if(!currentUser || !currentClaim) return;
-      const note = (document.getElementById('fbText').value||'').trim();
-      const ts = Date.now();
-      const payload = {
-        ts, decision, note,
-        uid: currentUser.uid,
-        email: currentUser.email || '',
-        claimRef: currentClaim.ref,
-      };
-      const base = `claims/decisions/${currentClaim.ref}/${currentUser.uid}`;
-      const pushKey = db.ref(`${base}/items`).push().key;
-      const updates = {};
-      updates[`${base}/items/${pushKey}`] = payload;
-      updates[`${base}/last`] = ts;
-      db.ref().update(updates).then(()=>{
-        document.getElementById('lastSent').textContent = `Last submitted: ${new Date(ts).toLocaleString()}`;
-        toast('Feedback sent');
-      }).catch(()=>toast('Could not send right now'));
+    function submitFeedback(file,action){
+      const user=auth.currentUser;
+      if(!user) return;
+      const comment=document.getElementById("c_"+file).value;
+      db.ref("claimsFeedback").push({
+        file,action,comment,
+        uid:user.uid,email:user.email,
+        ts:Date.now()
+      }).then(()=>{
+        alert("Response saved. Thank you.");
+      });
     }
-
-    document.getElementById('btnApprove').addEventListener('click', ()=>submitDecision('approve_as_to_form'));
-    document.getElementById('btnDeny').addEventListener('click', ()=>submitDecision('deny_needs_changes'));
   </script>
 </body>
 </html>
