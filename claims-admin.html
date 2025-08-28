@@ -1,0 +1,98 @@
+<!-- ===================== claims-admin.html (DealBankers — Claims Admin/God Mode) ===================== -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>DealBankers • Claims Admin</title>
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+  <style>
+    body{margin:0;background:#0b131b;color:#eef6ff;font-family:Inter,Segoe UI,system-ui,Roboto,Arial,sans-serif}
+    .nav{display:flex;justify-content:space-between;align-items:center;padding:12px 18px;background:#111d29;border-bottom:1px solid rgba(255,255,255,.15)}
+    .nav .logo{display:flex;align-items:center;gap:8px;font-weight:900}
+    .nav .logo img{width:32px;height:32px;border-radius:8px}
+    .container{max-width:1100px;margin:30px auto;padding:20px;background:#111d29;border-radius:12px}
+    h1{margin:0 0 20px}
+    table{width:100%;border-collapse:collapse;margin-top:12px}
+    th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.15);text-align:left;font-size:14px}
+    th{background:#0d2130}
+    .approve{color:#4CAF50;font-weight:700}
+    .deny{color:#f44336;font-weight:700}
+  </style>
+</head>
+<body>
+  <div class="nav">
+    <div class="logo">
+      <img src="icon (1).jpg" alt="DB"/> DEALBANKERS • CLAIMS ADMIN
+    </div>
+    <div>
+      <a href="profile.html" style="color:#7bc4ff;text-decoration:none;font-weight:600">← Back to Profile</a>
+    </div>
+  </div>
+
+  <div class="container">
+    <h1>Claims Feedback Overview</h1>
+    <p>This console shows all user claim reviews (approve/deny/comments). Only god mode (dealbankers@gmail.com) should see this.</p>
+
+    <table>
+      <thead>
+        <tr>
+          <th>User</th>
+          <th>Email</th>
+          <th>File</th>
+          <th>Action</th>
+          <th>Comment</th>
+          <th>Timestamp</th>
+        </tr>
+      </thead>
+      <tbody id="fbTable">
+        <tr><td colspan="6">Loading feedback…</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+  <script>
+    const auth=firebase.auth();
+    const db=firebase.database();
+
+    const fbTable=document.getElementById('fbTable');
+
+    auth.onAuthStateChanged(user=>{
+      if(!user){ location.href="index.html"; return; }
+
+      if(user.email!=="dealbankers@gmail.com"){
+        document.body.innerHTML="<p style='padding:20px'>Access denied. God mode only.</p>";
+        return;
+      }
+
+      db.ref("claimsFeedback").on("value",snap=>{
+        const val=snap.val()||{};
+        const rows=Object.values(val).sort((a,b)=>b.ts-a.ts);
+        fbTable.innerHTML="";
+        if(!rows.length){
+          fbTable.innerHTML="<tr><td colspan='6'>No feedback submitted yet.</td></tr>";
+          return;
+        }
+        rows.forEach(r=>{
+          const tr=document.createElement("tr");
+          const d=new Date(r.ts||0).toLocaleString();
+          tr.innerHTML=`
+            <td>${r.uid||""}</td>
+            <td>${r.email||""}</td>
+            <td>${r.file||""}</td>
+            <td class="${r.action}">${r.action||""}</td>
+            <td>${r.comment||""}</td>
+            <td>${d}</td>
+          `;
+          fbTable.appendChild(tr);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
