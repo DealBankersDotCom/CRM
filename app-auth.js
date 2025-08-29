@@ -1,5 +1,6 @@
-<!-- Save as: app-auth.js -->
-<script type="module">
+// Save this file as: app-auth.js
+// Type: ES Module (imported with <script type="module" src="./app-auth.js"></script>)
+
 /*
   DealBankers — Auth bootstrap
   - Uses window.firebaseConfig from config.js
@@ -18,27 +19,28 @@ import {
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-// ---- Guard: make sure config is available ----
+// --- Ensure config is present ---
 if (!window.firebaseConfig) {
   console.error("Missing firebaseConfig. Ensure config.js is loaded before app-auth.js");
 }
 
-// ---- Init Firebase ----
+// --- Init Firebase ---
 const app = initializeApp(window.firebaseConfig);
 const auth = getAuth(app);
 setPersistence(auth, browserLocalPersistence).catch(console.warn);
 
+// --- DOM handles ---
 const qs = (s) => document.querySelector(s);
-const emailEl = qs('#email');
-const passEl  = qs('#password');
+const emailEl  = qs('#email');
+const passEl   = qs('#password');
 const enterBtn = qs('#enterBtn');
 const googleBtn = qs('#googleBtn');
 
-// ---- Email/Password Sign-in ----
+// --- Email/Password Login ---
 async function emailLogin() {
   try {
     const email = (emailEl?.value || "").trim();
-    const pass  = (passEl?.value  || "").trim();
+    const pass  = (passEl?.value || "").trim();
     if (!email || !pass) { alert("Enter email and password."); return; }
     await signInWithEmailAndPassword(auth, email, pass);
     location.href = 'profile.html';
@@ -48,7 +50,7 @@ async function emailLogin() {
   }
 }
 
-// ---- Google Sign-in ----
+// --- Google Login ---
 async function googleLogin() {
   try {
     const provider = new GoogleAuthProvider();
@@ -56,20 +58,18 @@ async function googleLogin() {
     location.href = 'profile.html';
   } catch (err) {
     console.error(err);
-    // Common causes: provider not enabled, domain not authorized
     alert(err.message || "Google sign-in failed.");
   }
 }
 
-// ---- Wire UI ----
+// --- Wire up events ---
 enterBtn?.addEventListener('click', emailLogin);
 passEl?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') emailLogin(); });
 googleBtn?.addEventListener('click', googleLogin);
 
-// ---- Auto-redirect if already signed in ----
+// --- Auto-redirect if already signed in ---
 onAuthStateChanged(auth, (user) => {
   if (user && !location.pathname.endsWith('/profile.html')) {
     location.href = 'profile.html';
   }
 });
-</script>
