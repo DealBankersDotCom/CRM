@@ -1,87 +1,59 @@
-// app-auth.js  (drop this in at repo root, replacing the file completely)
-// Requires: <script defer src="./config.js"></script> loaded before this module.
-// Purpose: Initialize Firebase Auth, wire email/password & Google sign-in on index.html.
+<script>
+// Initializes Firebase (expects window.firebaseConfig from config.js)
+(function(){
+  if (!window.firebaseApp) {
+    window.firebaseApp = firebase.initializeApp(window.firebaseConfig);
+    window.auth = firebase.auth();
+    window.db = firebase.database();
+    window.storage = firebase.storage();
+  }
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import {
-  getAuth,
-  setPersistence,
-  browserLocalPersistence,
-  signInWithEmailAndPassword,
-  GoogleAuthProvider,
-  signInWithPopup,
-  onAuthStateChanged
-} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+  const auth = window.auth, db = window.db;
 
-/* ---------- Guard: firebaseConfig must exist ---------- */
-if (!window.firebaseConfig) {
-  console.error("Missing window.firebaseConfig. Ensure config.js is included BEFORE app-auth.js.");
-  alert("Config missing. Reload the page, or check that config.js is included before app-auth.js.");
-  throw new Error("firebaseConfig missing");
-}
+  // Presence for the signed-in user
+  function setPresence(uid){
+    const ref = db.ref('presence/'+uid);
+    ref.onDisconnect().set({ online:false, ts: firebase.database.ServerValue.TIMESTAMP });
+    ref.set({ online:true, ts: firebase.database.ServerValue.TIMESTAMP });
+  }
 
-/* ---------- Initialize Firebase ---------- */
-const app  = initializeApp(window.firebaseConfig);
-const auth = getAuth(app);
-await setPersistence(auth, browserLocalPersistence).catch(console.warn);
+  // Ensure a minimal roles doc exists
+  async function ensureRoles(uid){
+    const ref = db.ref(`userSettings/${uid}/roles`);
+    const snap = await ref.get();
+    if (!snap.exists()) {
+      await ref.set({ role:'member', acq:true, dispo:false });
+    }
+  }
 
-/* ---------- DOM helpers ---------- */
-const qs = (s) => document.querySelector(s);
-const emailEl   = qs("#email");
-const passEl    = qs("#password");
-const enterBtn  = qs("#enterBtn");
-const googleBtn = qs("#googleBtn");
+  // Gate/redirect
+  auth.onAuthStateChanged(async user => {
+    const gateEl = document.querySelector('[data-auth-status]');
+    if (gateEl) gateEl.textContent = user ? 'signed in' : 'signed out';
 
-function setBusy(el, on) {
-  if (!el) return;
-  el.disabled = !!on;
-  el.style.opacity = on ? "0.7" : "1";
-  el.style.pointerEvents = on ? "none" : "auto";
-}
+    const path = location.pathname.endsWith('/') ? location.pathname+'index.html' : location.pathname;
+    const onIndex = path.endsWith('/index.html');
 
-/* ---------- Email/Password Sign-in ---------- */
-async function emailLogin() {
-  try {
-    const email = (emailEl?.value || "").trim();
-    const pass  = (passEl?.value  || "").trim();
-    if (!email || !pass) {
-      alert("Enter email and password.");
+    if (!user) {
+      if (!onIndex) location.href = 'index.html';
       return;
     }
-    setBusy(enterBtn, true);
-    await signInWithEmailAndPassword(auth, email, pass);
-    location.href = "profile.html";
-  } catch (err) {
-    console.error(err);
-    alert(err && err.message ? err.message : "Sign-in failed.");
-  } finally {
-    setBusy(enterBtn, false);
-  }
-}
 
-/* ---------- Google Sign-in ---------- */
-async function googleLogin() {
-  try {
-    setBusy(googleBtn, true);
-    const provider = new GoogleAuthProvider();
-    await signInWithPopup(auth, provider);
-    location.href = "profile.html";
-  } catch (err) {
-    console.error(err);
-    alert(err && err.message ? err.message : "Google sign-in failed.");
-  } finally {
-    setBusy(googleBtn, false);
-  }
-}
+    try {
+      setPresence(user.uid);
+      await ensureRoles(user.uid);
+      // If on index and signed in, move into the app hub
+      if (onIndex) location.href = 'profile.html';
+    } catch (err) {
+      console.error('Auth gate error:', err);
+    }
+  });
 
-/* ---------- Wire events (if elements exist) ---------- */
-enterBtn?.addEventListener("click", emailLogin);
-passEl?.addEventListener("keydown", (e) => { if (e.key === "Enter") emailLogin(); });
-googleBtn?.addEventListener("click", googleLogin);
-
-/* ---------- Auto-redirect if already signed in ---------- */
-onAuthStateChanged(auth, (user) => {
-  if (user && !location.pathname.endsWith("/profile.html")) {
-    location.href = "profile.html";
-  }
-});
+  // Optional helper for other pages
+  window.requireAuth = () => new Promise(resolve => {
+    const unsub = auth.onAuthStateChanged(u => {
+      if (u) { unsub(); resolve(u); }
+    });
+  });
+})();
+</script>
