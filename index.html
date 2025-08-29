@@ -4,7 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>DealBankers — Secure Access</title>
-  <meta name="description" content="DealBankers secure portal login for wholesalers, contractors, realtors, investors." />
+  <meta name="description" content="DealBankers secure portal login for wholesalers, contractors, realtors, and investors." />
   <link rel="icon" href="images/db-icon-512.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
@@ -33,15 +33,17 @@
     h1{margin:0; font-size:28px; letter-spacing:.3px}
     p{margin:6px 0 0; color:var(--muted)}
     .panel{margin-top:22px; padding:16px; border:1px solid var(--line); border-radius:14px}
-    .btn{
+
+    /* Google button (code-only, no external image) */
+    .gbtn{
       display:inline-flex; align-items:center; justify-content:center; gap:10px;
-      width:100%; height:44px; border-radius:12px; border:1px solid #16314d;
-      background:linear-gradient(180deg,#0f1824,#0c1220); color:#eaf3ff; font-weight:600; cursor:pointer;
-      box-shadow:0 1px 6px rgba(0,0,0,.25); transition:transform .05s ease, box-shadow .2s ease;
-      user-select:none; -webkit-user-select:none;
+      width:100%; height:44px; border-radius:12px; border:1px solid #747775;
+      background:#1f1f1f; color:#e8eaed; font-weight:600; cursor:pointer;
+      box-shadow:0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.15);
+      transition:transform .05s ease, box-shadow .2s ease; user-select:none;
     }
-    .btn:hover{box-shadow:var(--glow); transform:translateY(-1px)}
-    .btn img{height:18px}
+    .gbtn:hover{box-shadow:var(--glow); transform:translateY(-1px)}
+    .g-icon{width:18px; height:18px; display:inline-block}
     .status{margin-top:12px; font-size:12px; color:var(--muted)}
     .hr{margin:16px 0; border:0; border-top:1px solid var(--line)}
     .tiny{font-size:11px; color:var(--muted)}
@@ -49,7 +51,7 @@
     @keyframes spin{to{transform:rotate(360deg)}}
   </style>
 
-  <!-- Firebase SDKs + config -->
+  <!-- Firebase SDKs + config + auth gate -->
   <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script defer src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -69,10 +71,18 @@
     </div>
 
     <div class="panel">
-      <button id="googleBtn" class="btn">
-        <img src="signinwithgoogle.png" alt="Google"/>
+      <button id="googleBtn" class="gbtn" aria-label="Continue with Google">
+        <!-- Inline Google 'G' SVG -->
+        <svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.79 1.22 9.32 3.6l6.98-6.98C36.89 2.17 30.87 0 24 0 14.62 0 6.51 5.38 2.56 13.22l8.41 6.52C12.66 13.6 17.9 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24c0-1.64-.15-3.21-.43-4.74H24v9h12.7c-.55 2.98-2.23 5.52-4.75 7.22l7.23 5.61C43.89 37.17 46.5 31.07 46.5 24z"/>
+          <path fill="#FBBC05" d="M11 28.74a14.5 14.5 0 0 1-.77-4.74c0-1.64.28-3.22.77-4.74l-8.44-6.55A23.94 23.94 0 0 0 0 24c0 3.85.92 7.48 2.56 10.74L11 28.74z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.14 15.9-5.83l-7.23-5.61c-2.01 1.35-4.6 2.14-8.67 2.14-6.1 0-11.34-4.1-13.02-9.94l-8.41 6.52C6.51 42.62 14.62 48 24 48z"/>
+          <path fill="none" d="M0 0h48v48H0z"/>
+        </svg>
         Continue with Google
       </button>
+
       <div class="status" id="authStatus">
         <span class="spinner"></span> Waiting for sign-in…
       </div>
@@ -88,8 +98,6 @@
   </main>
 
   <script>
-    // app-auth.js initializes firebaseApp/auth/db and handles onAuthStateChanged redirect
-    // Here we only attach the click handler to trigger Google sign-in.
     (function(){
       const btn = document.getElementById('googleBtn');
       const statusEl = document.getElementById('authStatus');
@@ -104,7 +112,7 @@
           const provider = new firebase.auth.GoogleAuthProvider();
           await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
           await firebase.auth().signInWithPopup(provider);
-          // onAuthStateChanged in app-auth.js will redirect to profile.html
+          // app-auth.js will redirect to profile.html after onAuthStateChanged fires
         } catch (e) {
           if (e && e.code === 'auth/popup-blocked') {
             setStatus('Pop-up blocked. Switching to redirect…', true);
