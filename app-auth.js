@@ -1,132 +1,90 @@
-<!-- app-auth.js -->
-<script type="module">
-// Uses your firebase config from config.js (do not commit secrets here)
-import { firebaseConfig } from './config.js';
+// app-auth.js
+// Uses Firebase v10+ CDN modules. Requires window.firebaseConfig from config.js.
 
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-app.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth, onAuthStateChanged, signOut,
-  signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup
-} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-auth.js";
-import {
-  getDatabase, ref, onChildAdded, push, serverTimestamp, update, get
-} from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+  getAuth, setPersistence, browserLocalPersistence,
+  signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup,
+  onAuthStateChanged
+} from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-const app = getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
-const auth = getAuth(app);
-const db   = getDatabase(app);
+function $(s){ return document.querySelector(s); }
+function toast(msg){ alert(msg); }
 
-// -----------------------------
-// Auth helpers exposed globally
-// -----------------------------
-window.DB = window.DB || {};
-DB.auth = auth;
-DB.db   = db;
+function ensureConfig(){
+  if (!window.firebaseConfig || !window.firebaseConfig.apiKey){
+    throw new Error("Missing firebaseConfig (config.js).");
+  }
+}
 
-DB.signInEmail = async (email, password) => {
-  const { user } = await signInWithEmailAndPassword(auth, email, password);
-  sessionStorage.setItem('uid', user.uid);
-  return user;
-};
+function initFirebase(){
+  ensureConfig();
+  const app = initializeApp(window.firebaseConfig);
+  const auth = getAuth(app);
+  setPersistence(auth, browserLocalPersistence).catch(()=>{});
+  return { app, auth };
+}
 
-DB.signInGoogle = async () => {
-  const provider = new GoogleAuthProvider();
-  const { user } = await signInWithPopup(auth, provider);
-  sessionStorage.setItem('uid', user.uid);
-  return user;
-};
+function gotoPortal(){
+  // Always land on profile.html when signed in
+  location.href = "profile.html";
+}
 
-DB.signOut = async () => {
-  sessionStorage.removeItem('uid');
-  await signOut(auth);
-  location.href = 'index.html';
-};
+export const DB = (()=>{
+  let auth = null;
 
-DB.requireAuth = (target = 'index.html') =>
-  new Promise((resolve)=>{
-    onAuthStateChanged(auth, (user)=>{
-      if (!user) { location.href = target; return; }
-      sessionStorage.setItem('uid', user.uid);
-      resolve(user);
-    });
-  });
-
-// --------------
-// Role utilities
-// --------------
-DB.getRole = async (uid) => {
-  const snap = await get(ref(db, `roles/${uid}`));
-  return snap.exists() ? snap.val() : null;
-};
-
-DB.isAdmin = async (uid) => (await DB.getRole(uid)) === 'admin';
-
-// ----------------------
-// Townhall chat bindings
-// ----------------------
-DB.bindTownhall = (els) => {
-  // els: { list, input, sendBtn }
-  const user = auth.currentUser;
-  if (!user || !els?.list) return;
-
-  const listRef = ref(db, 'townhall/messages');
-  onChildAdded(listRef, (snap)=>{
-    const m = snap.val();
-    const li = document.createElement('div');
-    li.style.margin = '6px 0';
-    li.style.padding = '8px 10px';
-    li.style.background = '#0d1620';
-    li.style.border = '1px solid rgba(255,255,255,.06)';
-    li.style.borderRadius = '10px';
-    li.textContent = `${m.displayName || 'User'}: ${m.text || ''}`;
-    els.list.prepend(li);
-  });
-
-  const send = async () => {
-    const text = els.input.value.trim();
-    if (!text) return;
-    els.input.value = '';
-    await push(listRef, {
-      uid: user.uid,
-      displayName: user.displayName || user.email || 'User',
-      text, ts: serverTimestamp()
-    });
-  };
-  els.sendBtn?.addEventListener('click', send);
-  els.input?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
-};
-
-// -----------------------------
-// Entry points for login page
-// -----------------------------
-DB.wireLogin = () => {
-  const email = document.querySelector('#email');
-  const pass  = document.querySelector('#password');
-  const btn   = document.querySelector('#enterBtn');
-  const gbtn  = document.querySelector('#googleBtn');
-
-  const go = async () => {
+  function wireLogin(){
     try{
-      if(!email?.value || !pass?.value){ alert('Enter email and password.'); return; }
-      await DB.signInEmail(email.value.trim(), pass.value.trim());
-      location.href = 'profile.html';
-    }catch(err){ alert(err.message || 'Login failed.'); }
-  };
-  btn?.addEventListener('click', go);
-  pass?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') go(); });
-  gbtn?.addEventListener('click', async ()=>{
-    try{ await DB.signInGoogle(); location.href='profile.html'; }
-    catch(err){ alert(err.message || 'Google sign-in failed.'); }
-  });
-};
+      auth = initFirebase().auth;
+    }catch(e){
+      console.error(e);
+      // Fallback: let the page still navigate so UX isn't dead.
+      $("#enterBtn")?.addEventListener("click", ()=>location.href="profile.html");
+      $("#googleBtn")?.addEventListener("click", ()=>location.href="profile.html");
+      return;
+    }
 
-// --------------------------
-// Claims Exchange convenience
-// --------------------------
-DB.ensureSignedInToClaims = async () => {
-  const u = await DB.requireAuth('index.html');
-  return u;
-};
+    const emailEl = $("#email");
+    const passEl  = $("#password");
 
-export {};
-</script>
+    $("#enterBtn")?.addEventListener("click", async ()=>{
+      const email = (emailEl?.value || "").trim();
+      const pass  = (passEl?.value || "").trim();
+      if(!email || !pass){ toast("Enter email and password."); return; }
+      try{
+        await signInWithEmailAndPassword(auth, email, pass);
+        gotoPortal();
+      }catch(err){
+        console.error(err);
+        toast(err?.message || "Sign-in failed.");
+      }
+    });
+
+    $("#password")?.addEventListener("keydown", (ev)=>{
+      if(ev.key === "Enter") $("#enterBtn")?.click();
+    });
+
+    $("#googleBtn")?.addEventListener("click", async ()=>{
+      try{
+        const provider = new GoogleAuthProvider();
+        await signInWithPopup(auth, provider);
+        gotoPortal();
+      }catch(err){
+        console.error(err);
+        toast(err?.message || "Google sign-in failed.");
+      }
+    });
+
+    // If already signed in, bounce straight to portal
+    onAuthStateChanged(auth, (u)=>{
+      if(u) gotoPortal();
+    });
+  }
+
+  return { wireLogin };
+})();
+
+// Auto-wire when loaded on index.html
+if (document.querySelector("#enterBtn")) {
+  DB.wireLogin();
+}
