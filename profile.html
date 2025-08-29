@@ -2,175 +2,97 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>DealBankers • Profile</title>
 <link rel="icon" href="images/db-badge.png"/>
-<link rel="preconnect" href="https://www.gstatic.com"/>
+<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
 <style>
-  :root { --bg:#0e1a22; --panel:#10222c; --muted:#8fb3c1; --pill:#0f2f3c; --accent:#e9b85b; --ok:#22c55e; --btn:#173847; }
-  body{margin:0;background:radial-gradient(1200px 800px at 50% -100px,#183142 0%,#0b171e 55%,#071219 100%) fixed;color:#cfe6f1;font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial,sans-serif}
-  .wrap{max-width:980px;margin:40px auto;padding:0 16px}
-  header{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
-  .brand{display:flex;align-items:center;gap:10px}
-  .brand img{width:26px;height:26px;border-radius:8px}
-  nav .tab{background:#132a35;border:1px solid #143241;padding:8px 12px;border-radius:10px;margin-right:8px;cursor:pointer}
-  nav .tab.active{background:#11313f;color:#fff;box-shadow:inset 0 0 0 1px #1e566e}
-  .top-actions a{margin-left:8px;padding:8px 12px;border-radius:14px;border:1px solid #234b5f;background:#173847;color:#d8eef9;text-decoration:none}
-  .top-actions a.gold{background:#2e1f02;border-color:#5a3c0a;color:#ffd685}
-  .card{background:#0f222c;border:1px solid #1a3b4b;border-radius:14px;padding:16px;margin:12px 0}
-  .row{display:flex;gap:10px}
-  textarea,input{width:100%;background:#0c1f28;border:1px solid #254a5b;border-radius:10px;color:#d8eef9;padding:10px}
-  button{background:#14485d;border:1px solid #1d5c73;color:#e7f7ff;border-radius:12px;padding:10px 14px;cursor:pointer}
-  button.green{background:#0d6b3b;border-color:#11804a}
-  .muted{color:#8fb3c1}
-  .pill{display:inline-flex;align-items:center;background:#0f2934;border:1px solid #214a5d;border-radius:999px;padding:6px 10px;margin-right:6px}
-  .json{white-space:pre-wrap;background:#0b1b23;border:1px dashed #224a60;border-radius:12px;padding:10px;color:#9ed3e7}
+  :root{--bg:#0f1a22;--panel:#13202a;--chip:#0d2a3a;--text:#cfe7ff;--mute:#88a8c4;--accent:#ffd166;--btn:#1f8b4c;}
+  html,body{background:var(--bg);color:var(--text);margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  .shell{max-width:1100px;margin:28px auto;padding:0 16px}
+  .top{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-bottom:12px}
+  .btn{background:#233748;color:#d8ebff;border:none;padding:8px 14px;border-radius:12px;cursor:pointer}
+  .btn:hover{opacity:.9}
+  .btn.gold{background:#6b4b12;color:#ffd166}
+  .btn.red{background:#662424;color:#ffdede}
+  .btn.blue{background:#1f3b63;color:#d7e9ff}
+  .tabs{display:flex;gap:8px;margin:10px 0}
+  .tab{background:#1b2b38;color:#cfe7ff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .tab.active{background:#254355}
+  .card{background:var(--panel);border-radius:14px;padding:14px;margin-top:10px}
+  .row{display:flex;gap:8px;align-items:center}
+  .chip{background:var(--chip);display:inline-block;padding:7px 10px;border-radius:10px;margin:6px 6px 0 0;color:#cfe7ff}
+  .input{width:100%;padding:10px;border-radius:9px;border:1px solid #2b4b63;background:#0e1b23;color:#d8ebff}
 </style>
 <script src="config.js"></script>
-<script src="app-auth.js"></script>
+<script src="app-auth.js" type="module"></script>
 </head>
 <body>
-<div class="wrap">
-  <header>
-    <div class="brand">
-      <img src="images/db-badge.png" alt="DB">
-      <div>
-        <div style="letter-spacing:.12em;font-weight:700">DEALBANKERS • PROFILE</div>
-        <div class="muted" style="font-size:12px">Secure portal</div>
-      </div>
-    </div>
-    <div class="top-actions">
-      <a class="gold" href="claims-exchange.html">Claims Exchange</a>
-      <a href="urgent-intake.html">Sales</a>
-      <a href="support.html">Support</a>
-      <a id="logout" href="#">Log Out</a>
-    </div>
-  </header>
+<div class="shell">
+  <div class="top">
+    <button class="btn gold" onclick="goto('claims-exchange.html')">Claims Exchange</button>
+    <button class="btn red" onclick="openImmediateSupport()">Sales</button>
+    <button class="btn blue" onclick="openStandardSupport()">Support</button>
+    <button class="btn" onclick="logout()">Log Out</button>
+  </div>
 
-  <nav>
-    <span class="tab active" data-tab="overview">Overview</span>
-    <span class="tab" data-tab="wholesaler">Wholesaler</span>
-    <span class="tab" data-tab="contractor">Contractor</span>
-    <span class="tab" data-tab="realtor">Realtor</span>
-    <span class="tab" data-tab="settings">Settings</span>
-  </nav>
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('overview')">Overview</button>
+    <button class="tab" onclick="showTab('wholesaler')">Wholesaler</button>
+    <button class="tab" onclick="showTab('contractor')">Contractor</button>
+    <button class="tab" onclick="showTab('realtor')">Realtor</button>
+    <button class="tab" onclick="showTab('settings')">Settings</button>
+  </div>
 
-  <!-- OVERVIEW -->
   <section id="overview" class="card">
-    <div class="row" style="justify-content:space-between;">
-      <div>Capital Open: <strong>$300k</strong> · Turn: <strong>7–10 days</strong></div>
+    <div class="row" style="justify-content:space-between">
+      <div>Capital Open: <b>$300k</b> • Turn: <b>7–10 days</b></div>
     </div>
-
-    <h3>Townhall (All Users)</h3>
-    <div id="chatLog" class="card" style="max-height:260px;overflow:auto"></div>
-    <div class="row">
-      <input id="chatInput" placeholder="Say something to the room… (press Enter to send)"/>
-      <button id="sendChat">Send</button>
+    <div class="card" style="margin-top:12px">
+      <div style="margin-bottom:8px">Townhall (All Users)</div>
+      <div id="chatList"></div>
+      <div class="row" style="margin-top:8px">
+        <input id="chatInput" class="input" placeholder="Say something to the room… (press Enter to send)"/>
+        <button id="chatSend" class="btn">Send</button>
+      </div>
     </div>
   </section>
 
-  <!-- PLACEHOLDER LINKS TO DEDICATED PAGES -->
   <section id="wholesaler" class="card" style="display:none">
-    <p>Acquisition & Dispo live in <a href="wholesaler.html">Wholesaler portal</a>.</p>
+    <div>Go to <a href="wholesaler.html">Wholesaler portal</a>.</div>
   </section>
+
   <section id="contractor" class="card" style="display:none">
-    <p>Post jobs and manage crews in the <a href="contractor.html">Contractor portal</a>.</p>
+    <div>Go to <a href="contractor.html">Contractor portal</a>.</div>
   </section>
+
   <section id="realtor" class="card" style="display:none">
-    <p>Realtor tools are available here: <a href="realtor.html">Realtor portal</a>.</p>
+    <div>Realtor tools are available here: <a href="realtor.html">Realtor portal</a>.</div>
   </section>
 
-  <!-- SETTINGS / GOD MODE -->
   <section id="settings" class="card" style="display:none">
-    <h3>Settings</h3>
-    <div class="muted">User role management & branding here.</div>
-
-    <div id="adminWrap" style="display:none;margin-top:16px">
-      <div class="pill">God Mode (Admin)</div>
-
-      <div class="card">
-        <div class="row">
-          <input id="uidLookup" placeholder="Paste UID to view their settings…"/>
-          <button id="loadUser">Load</button>
-        </div>
-        <div id="userView" class="json" style="margin-top:10px">—</div>
-      </div>
-
-      <div class="card">
-        <h4>Claims feedback (live)</h4>
-        <div class="row">
-          <input id="claimId" placeholder="Claim ID (e.g., darlene)"/>
-          <input id="targetUid" placeholder="Reviewer UID (optional; default: me)"/>
-          <button id="loadReview">Load Review</button>
-        </div>
-        <div id="reviewView" class="json" style="margin-top:10px">—</div>
-      </div>
-
-      <div class="card">
-        <h4>Leads</h4>
-        <p class="muted">Use the importer to seed Seller/Buyer CSVs and assign to users.</p>
-        <a class="pill" href="import-leads.html">Open Lead Importer</a>
-      </div>
-    </div>
+    <div class="card-title">Settings</div>
+    <div>User role management & branding live in this section (coming from earlier God Mode UI).</div>
   </section>
 </div>
 
 <script>
-  // Simple tab router
-  const tabs = document.querySelectorAll(".tab");
-  tabs.forEach(t => t.onclick = () => {
-    tabs.forEach(x => x.classList.remove("active"));
-    t.classList.add("active");
-    ["overview","wholesaler","contractor","realtor","settings"]
-      .forEach(id => document.getElementById(id).style.display = (id === t.dataset.tab ? "" : "none"));
-  });
-
-  document.getElementById("logout").onclick = (e) => { e.preventDefault(); DB?.signOut(); };
-
-  // Wait for Firebase
-  document.addEventListener("db-ready", async () => {
-    DB.requireAuth(async (u) => {
-      // Chat
-      DB.listenTownhall(list => {
-        const el = document.getElementById("chatLog");
-        el.innerHTML = list.map(m =>
-          `<div style="padding:6px 8px;border-bottom:1px solid #143141">
-            <b>${(m.name||"")}</b> <span class="muted" style="font-size:12px">${new Date(m.ts||Date.now()).toLocaleString()}</span><br/>
-            ${(m.text||"").replace(/</g,"&lt;")}
-          </div>`
-        ).join("") || '<div class="muted">No messages yet.</div>';
-        el.scrollTop = el.scrollHeight;
+  // Tab logic
+  const sections = ["overview","wholesaler","contractor","realtor","settings"];
+  function showTab(id){
+    sections.forEach(s=>{
+      document.getElementById(s).style.display = (s===id) ? "" : "none";
+      document.querySelectorAll(".tab").forEach(b=>{
+        if (b.textContent.toLowerCase().includes(id)) b.classList.add("active");
+        else b.classList.remove("active");
       });
-      const send = () => {
-        const t = document.getElementById("chatInput").value.trim();
-        if (!t) return;
-        DB.sendTownhall(t).then(() => document.getElementById("chatInput").value = "");
-      };
-      document.getElementById("sendChat").onclick = send;
-      document.getElementById("chatInput").addEventListener("keydown",e=>{ if(e.key==="Enter") send(); });
-
-      // Admin panel
-      if (await DB.isAdmin()) {
-        document.getElementById("adminWrap").style.display = "";
-        // View user settings by UID (read-only; admin allowed by your rules)
-        document.getElementById("loadUser").onclick = async () => {
-          const uid = document.getElementById("uidLookup").value.trim();
-          if (!uid) return;
-          const snap = await DB.db.ref("userSettings/"+uid).get();
-          document.getElementById("userView").textContent = snap.exists() ?
-            JSON.stringify(snap.val(),null,2) : "(no userSettings for that UID)";
-        };
-        // Load a claim review record
-        document.getElementById("loadReview").onclick = async () => {
-          const claimId = document.getElementById("claimId").value.trim();
-          const uid = document.getElementById("targetUid").value.trim() || DB.uid();
-          if (!claimId) return;
-          const rec = await DB.getClaimReview(claimId, uid);
-          document.getElementById("reviewView").textContent = rec ? JSON.stringify(rec,null,2) : "(no review yet)";
-        };
-      }
     });
-  });
+  }
+
+  // Auth + chat
+  const ready = setInterval(()=>{
+    if (window.DB_READY){ clearInterval(ready); window.initTownhall(); }
+  },50);
 </script>
 </body>
 </html>
