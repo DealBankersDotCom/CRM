@@ -1,70 +1,165 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>Wholesaler • Portal</title>
-<link rel="icon" href="images/db-badge.png"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Wholesaler Portal</title>
+<link rel="icon" href="images/db-icon-512.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 <style>
-  :root{--bg:#0f1a22;--panel:#13202a;--text:#cfe7ff}
-  html,body{background:var(--bg);color:var(--text);margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
-  .shell{max-width:1100px;margin:28px auto;padding:0 16px}
-  .bar{background:#1a2b36;border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center;justify-content:space-between}
-  .btn{background:#233748;color:#d8ebff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
-  .btn.gold{background:#6b4b12;color:#ffd166}
-  .btn.red{background:#662424;color:#ffdede}
-  .btn.blue{background:#1f3b63;color:#d7e9ff}
-  .card{background:#13202a;border-radius:14px;padding:14px;margin-top:12px}
+:root{
+  --bg:#0b0f14; --panel:#10151d; --ink:#d6e1ff; --muted:#8aa0c6;
+  --accent:#00d1ff; --line:#1c2a3a; --glow:0 0 16px rgba(0,209,255,.25),0 0 2px rgba(0,209,255,.6);
+}
+*{box-sizing:border-box}
+body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; color:var(--ink);
+  background: radial-gradient(1000px 700px at 70% 10%, #122034 0%, rgba(0,0,0,0) 60%), var(--bg);}
+.header{display:flex; align-items:center; justify-content:space-between; gap:12px;
+  padding:16px 20px; border-bottom:1px solid var(--line); position:sticky; top:0; backdrop-filter:blur(6px); background:rgba(11,15,20,.7);}
+h1{font-size:20px; margin:0}
+.badge{border:1px solid #2b3f57; border-radius:999px; padding:2px 8px; color:#b8d7ff; font-size:12px}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:36px; padding:0 12px; border-radius:10px; border:1px solid #16314d;
+  background:linear-gradient(180deg,#0f1824,#0c1220); color:#eaf3ff; font-weight:600; cursor:pointer; box-shadow:0 1px 6px rgba(0,0,0,.25);
+  transition:transform .05s ease, box-shadow .2s ease;}
+.btn:hover{box-shadow:var(--glow); transform:translateY(-1px)}
+.main{padding:16px 20px; display:grid; gap:16px}
+.card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid var(--line); border-radius:16px; padding:16px; box-shadow:0 8px 26px rgba(0,0,0,.35);}
+.tabs{display:flex; gap:8px; flex-wrap:wrap}
+.tab{padding:6px 10px; border:1px solid var(--line); border-radius:10px; cursor:pointer}
+.tab.active{border-color:#2b3f57; box-shadow:var(--glow)}
+table{width:100%; border-collapse:collapse; font-size:14px}
+th,td{border-top:1px solid var(--line); padding:10px; text-align:left}
+thead th{border-top:0; color:#bfe3ff; font-weight:600}
+.meta{color:var(--muted); font-size:12px}
+.search{display:flex; gap:8px; flex-wrap:wrap}
+.input{background:#0e1622; border:1px solid #16314d; color:#eaf3ff; border-radius:10px; padding:8px 10px; outline:none}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
-<script src="app-auth.js" type="module"></script>
+<script src="app-auth.js"></script>
 </head>
 <body>
-<div class="shell">
-  <div class="bar">
-    <div style="display:flex;gap:8px;align-items:center">
-      <button class="btn red" onclick="openImmediateSupport()">Immediate Support</button>
-      <button class="btn blue" onclick="openStandardSupport()">Standard Support</button>
-      <button class="btn gold" onclick="goto('claims-exchange.html')">Claims Exchange</button>
-    </div>
-    <div style="display:flex;gap:8px">
-      <button class="btn" onclick="goto('profile.html')">Back to Profile</button>
-      <button class="btn" onclick="logout()">Log Out</button>
-    </div>
+<header class="header">
+  <div>
+    <h1>Wholesaler Portal</h1>
+    <div class="meta">Your assigned seller & buyer leads.</div>
+  </div>
+  <div>
+    <a class="btn" href="profile.html">← Hub</a>
+    <span class="badge">Auth: <span data-auth-status>signed out</span></span>
+  </div>
+</header>
+
+<main class="main">
+  <div class="tabs">
+    <div class="tab active" data-tab="sellers">Seller Leads</div>
+    <div class="tab" data-tab="buyers">Buyer Leads</div>
   </div>
 
-  <div class="card" id="gateMsg">Checking access…</div>
-  <div class="card" id="content" style="display:none">
-    <div>Acquisition & Disposition tools restored here. (Leads table loads after gate.)</div>
-  </div>
-</div>
+  <section id="panel-sellers" class="card">
+    <div class="search">
+      <input id="s_q" class="input" placeholder="Search address / owner"/>
+      <button class="btn" onclick="reloadSellers()">Search</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Address</th><th>Owner/Contact</th><th>Phone</th><th>Status</th><th>Notes</th>
+      </tr></thead>
+      <tbody id="sellerRows"></tbody>
+    </table>
+  </section>
 
-<script type="module">
-import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
-const { gate, db, uid } = window;
+  <section id="panel-buyers" class="card" style="display:none">
+    <div class="search">
+      <input id="b_q" class="input" placeholder="Search name / criteria"/>
+      <button class="btn" onclick="reloadBuyers()">Search</button>
+    </div>
+    <table>
+      <thead><tr>
+        <th>Name</th><th>Phone</th><th>Criteria</th><th>Status</th><th>Notes</th>
+      </tr></thead>
+      <tbody id="buyerRows"></tbody>
+    </table>
+  </section>
+</main>
 
-// Gate = wholesaler or admin
-gate({ role: "wholesaler" })
-  .then(async ()=>{
-    document.getElementById("gateMsg").style.display="none";
-    const content = document.getElementById("content");
-    content.style.display="";
-    // Example: live leads list for this user (or all if admin)
-    const u = uid();
-    const isAdmin = (await window.getRole(u)) === "admin";
-    const path = isAdmin ? "live/deals" : `dispo/${u}/deals`;
-    const c = document.createElement("div");
-    c.innerHTML = `<div style="opacity:.8">Loading from <code>${path}</code>…</div>`;
-    content.appendChild(c);
-    onValue(ref(db, path), (snap)=>{
-      const area = document.createElement("pre");
-      area.textContent = JSON.stringify(snap.val()||{}, null, 2);
-      c.replaceWith(area);
-    });
-  })
-  .catch((e)=>{
-    document.getElementById("gateMsg").textContent = "Could not verify access right now. Try again shortly.";
+<script>
+let UID = null;
+let sellersQueryRef = null;
+let buyersQueryRef = null;
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const tab = t.getAttribute('data-tab');
+    document.getElementById('panel-sellers').style.display = tab==='sellers'?'block':'none';
+    document.getElementById('panel-buyers').style.display  = tab==='buyers'?'block':'none';
   });
+});
+
+firebase.auth().onAuthStateChanged(async u => {
+  if (!u) return;
+  UID = u.uid;
+  subscribeSellers();
+  subscribeBuyers();
+});
+
+function subscribeSellers(){
+  if (sellersQueryRef) sellersQueryRef.off();
+  sellersQueryRef = firebase.database().ref('leads/sellers').orderByChild('assignedTo').equalTo(UID);
+  sellersQueryRef.on('value', snap => {
+    const data = snap.val()||{};
+    renderSellerRows(data);
+  });
+}
+
+function subscribeBuyers(){
+  if (buyersQueryRef) buyersQueryRef.off();
+  buyersQueryRef = firebase.database().ref('leads/buyers').orderByChild('assignedTo').equalTo(UID);
+  buyersQueryRef.on('value', snap => {
+    const data = snap.val()||{};
+    renderBuyerRows(data);
+  });
+}
+
+function renderSellerRows(obj){
+  const q = (document.getElementById('s_q').value||'').toLowerCase();
+  const rows = Object.entries(obj).map(([id, v]) => ({id, ...v}))
+    .filter(v => !q || (v.address||'').toLowerCase().includes(q) || (v.owner||'').toLowerCase().includes(q))
+    .map(v => `<tr>
+      <td>${esc(v.address)}</td>
+      <td>${esc(v.owner||'')}</td>
+      <td>${esc(v.phone||'')}</td>
+      <td>${esc(v.status||'new')}</td>
+      <td>${esc(v.notes||'')}</td>
+    </tr>`).join('');
+  document.getElementById('sellerRows').innerHTML = rows || '<tr><td colspan="5" class="meta">No assigned seller leads yet.</td></tr>';
+}
+
+function renderBuyerRows(obj){
+  const q = (document.getElementById('b_q').value||'').toLowerCase();
+  const rows = Object.entries(obj).map(([id, v]) => ({id, ...v}))
+    .filter(v => !q || (v.name||'').toLowerCase().includes(q) || (v.criteria||'').toLowerCase().includes(q))
+    .map(v => `<tr>
+      <td>${esc(v.name||'')}</td>
+      <td>${esc(v.phone||'')}</td>
+      <td>${esc(v.criteria||'')}</td>
+      <td>${esc(v.status||'new')}</td>
+      <td>${esc(v.notes||'')}</td>
+    </tr>`).join('');
+  document.getElementById('buyerRows').innerHTML = rows || '<tr><td colspan="5" class="meta">No assigned buyer leads yet.</td></tr>';
+}
+
+function reloadSellers(){ subscribeSellers(); }
+function reloadBuyers(){ subscribeBuyers(); }
+
+function esc(s){ return (''+ (s||'')).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 </script>
 </body>
 </html>
