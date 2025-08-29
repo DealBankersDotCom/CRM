@@ -1,0 +1,34 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Settings</title><link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+:root{--bg1:#0b131b;--bg2:#142838;--bg3:#173c53;--line:#254a63;--text:#f1f7fb}*{box-sizing:border-box}
+body{margin:0;color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Arial;background:radial-gradient(1200px 520px at 92% -12%, rgba(93,224,255,.22) 0%, transparent 60%),linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3))}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
+.nav{display:flex;gap:8px;flex-wrap:wrap}.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration:none;font-weight:700}
+.wrap{max-width:1000px;margin:0 auto;padding:16px}.card{background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));border:1px solid rgba(255,255,255,.18);border-radius:20px;box-shadow:0 28px 70px rgba(0,0,0,.55);overflow:hidden}
+.card h2{margin:0;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.2);background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))}.body{padding:14px}
+.input{background:#0d1f2d;border:1px solid #254a63;border-radius:12px;color:#eaf6ff;padding:8px 10px}.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.meta{color:#c5d3e1;font-size:12px}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="config.js"></script><script src="app-auth.js"></script></head><body>
+<header class="header"><div>Settings</div><nav class="nav"><a class="chip" href="profile.html">Profile</a><a class="chip" href="wholesaler.html">Acq/Dispo</a><a class="chip" href="claims-exchange.html">Claims</a></nav></header>
+<div class="wrap"><section class="card"><h2>Admin • Roles & View-As</h2><div class="body">
+  <div class="row">
+    <label>UID <input id="uid" class="input" placeholder="paste UID"/></label>
+    <label>Role
+      <select id="role" class="input"><option value="member">member</option><option value="admin">admin</option><option value="branch">branch manager</option></select>
+    </label>
+    <button id="saveRole" class="chip">Save Role</button><span id="status" class="meta"></span>
+  </div>
+  <div class="row" style="margin-top:10px"><button id="viewAcq" class="chip">Open Acq as UID</button><button id="viewDispo" class="chip">Open Dispo as UID</button></div>
+  <p class="meta" style="margin-top:10px">Role stored at <code>/roles/{uid}</code>. “View as UID” uses the Acq/Dispo page’s admin bar to impersonate read-only.</p>
+</div></section></div>
+<script>
+let ME=null, IS_ADMIN=false; firebase.auth().onAuthStateChanged(async u=>{ if(!u) return; ME=u; const r=await firebase.database().ref('roles/'+u.uid).get(); IS_ADMIN=r.exists()&&r.val()==='admin'; if(!IS_ADMIN){ alert('Admins only'); location.href='profile.html'; } });
+document.getElementById('saveRole').onclick=async()=>{ const uid=document.getElementById('uid').value.trim(); const role=document.getElementById('role').value; if(!uid) return alert('UID required'); await firebase.database().ref('roles/'+uid).set(role); document.getElementById('status').textContent='Saved.'; };
+document.getElementById('viewAcq').onclick=()=>{ const uid=document.getElementById('uid').value.trim(); if(!uid) return alert('UID required'); sessionStorage.setItem('impUid', uid); location.href='wholesaler.html#acq'; };
+document.getElementById('viewDispo').onclick=()=>{ const uid=document.getElementById('uid').value.trim(); if(!uid) return alert('UID required'); sessionStorage.setItem('impUid', uid); location.href='wholesaler.html#dispo'; };
+</script></body></html>
