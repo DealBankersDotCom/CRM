@@ -2,142 +2,45 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
 <title>DealBankers • Claims Exchange</title>
 <link rel="icon" href="images/db-badge.png"/>
 <style>
-  :root { --panel:#0f222c; --border:#1a3b4b; --muted:#8fb3c1; --pill:#0f2934; }
-  body{margin:0;background:radial-gradient(1200px 800px at 50% -100px,#183142 0%,#0b171e 55%,#071219 100%) fixed;color:#cfe6f1;font-family:Inter,system-ui,Segoe UI,Roboto}
-  .wrap{max-width:980px;margin:36px auto;padding:0 16px}
-  .top a{margin-right:8px;padding:8px 12px;border-radius:14px;border:1px solid #234b5f;background:#173847;color:#d8eef9;text-decoration:none}
-  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
-  .row{display:flex;gap:10px}
-  iframe{width:100%;height:520px;border:0;border-radius:12px;background:#0b1b23}
-  textarea{width:100%;background:#0c1f28;border:1px solid #254a5b;border-radius:10px;color:#d8eef9;padding:10px}
-  button{background:#14485d;border:1px solid #1d5c73;color:#e7f7ff;border-radius:12px;padding:10px 14px;cursor:pointer}
-  .muted{color:var(--muted)}
+  :root{--bg:#0f1a22;--panel:#13202a;--text:#cfe7ff}
+  html,body{background:var(--bg);color:var(--text);margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  .shell{max-width:1100px;margin:28px auto;padding:0 16px}
+  .top{display:flex;gap:8px;justify-content:space-between}
+  .btn{background:#233748;color:#d8ebff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .btn.gold{background:#6b4b12;color:#ffd166}
+  .card{background:#13202a;border-radius:14px;padding:14px;margin-top:12px}
+  .card-title{font-weight:700;margin-bottom:6px}
+  .docframe{width:100%;height:420px;border:0;border-radius:10px;background:#0b1620}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .btn.success{background:#1f8b4c}
+  .btn.secondary{background:#30485e}
+  .btn.danger{background:#6b2a2a}
+  small{opacity:.75}
 </style>
 <script src="config.js"></script>
-<script src="app-auth.js"></script>
+<script src="app-auth.js" type="module"></script>
 </head>
 <body>
-<div class="wrap">
+<div class="shell">
   <div class="top">
-    <a href="profile.html">Back to Portal</a>
-    <a href="https://docs.google.com/document/d/1wVeXyU4vTndZpSNYjBioJnINzEFvLWFuD6zeZFw4V_g/preview" target="_blank">Privacy & Terms</a>
-  </div>
-
-  <div id="gate" class="card">Checking sign-in…</div>
-
-  <div id="content" style="display:none">
-    <h2>Claims Exchange</h2>
-    <div id="docs"></div>
-
-    <div class="card">
-      <h3>Review & Feedback</h3>
-      <p class="muted">Approving means “approved as to form” only and does not constitute a signature. A DocuSign link will be sent for formal e-signature shortly.</p>
-      <div class="row">
-        <button id="approve">Approve as to Form</button>
-        <button id="deny">Needs Changes</button>
-      </div>
-      <textarea id="comment" rows="4" placeholder="Add optional notes for Bill / legal…"></textarea>
-      <div class="row" style="justify-content:flex-end;margin-top:8px">
-        <button id="submit">Submit Review</button>
-      </div>
-      <div id="last" class="muted" style="margin-top:10px"></div>
+    <div class="row">
+      <button class="btn" onclick="goto('profile.html')">Back to Portal</button>
+      <button class="btn" onclick="window.open('https://docs.google.com/document/d/1wVeXyU4vTndZpSNYjBioJnINzEFvLWFuD6zeZFw4V_g/edit?usp=sharing','_blank')">Privacy & Terms</button>
     </div>
+    <button class="btn gold" onclick="logout()">Log Out</button>
   </div>
+
+  <div id="claimsCards" class="card">Checking sign-in…</div>
 </div>
 
 <script>
-/* Assignment map using your Google Docs links */
-const MAP = {
-  // Mitzi — via email
-  "mitzidyane@gmail.com": {
-    claimId: "darlene",
-    docs: [
-      {name:"Assignment of Claims Agreement", url:"https://docs.google.com/document/d/1LG0iYsi1YogCTmdFeFLFKQNIDZI-hzoYOQqJ07UHebQ/preview"},
-      {name:"Statement of Facts Questionnaire", url:"https://docs.google.com/document/d/1O8fgDbWstzJUu045_SGg3cxlZRs1nGwjX_Ksr0IBJCk/preview"}
-    ]
-  },
-  // Alfred — via UID
-  "uid:bZtK9f6wAwYab20yawDbXRZdG6c2": {
-    claimId: "honcho",
-    docs: [
-      {name:"Assignment of Claims Agreement", url:"https://docs.google.com/document/d/1H-sx230TmpKJx-Mst1_sXAS39MJWwUiQXpx75tzuLro/preview"},
-      {name:"Statement of Facts Questionnaire", url:"https://docs.google.com/document/d/1K72u3Fx4OGN3PbncLd1uwEqZ_olYpJrkUxByrDAs7ME/preview"}
-    ]
-  },
-  // Madison — not yet onboarded (email pending). Leave here for admin preview if she logs in later.
-  "label:madison": {
-    claimId: "madison",
-    docs: [
-      {name:"Assignment of Claims Agreement", url:"https://docs.google.com/document/d/1npndKHg7ejhqixWddrJ0tlrhDPgcva6d-Dl6oYI6KF0/preview"},
-      {name:"Statement of Facts Questionnaire", url:"https://docs.google.com/document/d/1xhyO7RcQNyfSXb7mNHGoxyDKSaGOY1FVhAJyERc4ggM/preview"}
-    ]
-  }
-};
-
-let CURRENT = { claimId:null, decision:null };
-
-document.addEventListener("db-ready", () => {
-  DB.requireAuth(async (u) => {
-    const keyEmail = u.email?.toLowerCase() || "";
-    const keyUid   = "uid:" + u.uid;
-    const isAdmin  = await DB.isAdmin();
-
-    let assignment = MAP[keyEmail] || MAP[keyUid];
-    if (!assignment && isAdmin) {
-      // Fallback for admin: allow viewing Madison docs while we onboard her
-      assignment = MAP["label:madison"];
-    }
-
-    if (!assignment) {
-      document.getElementById("gate").innerHTML =
-        "No claim is currently assigned to your account. If you believe this is an error, contact support.";
-      return;
-    }
-
-    CURRENT.claimId = assignment.claimId;
-    document.getElementById("content").style.display = "";
-    document.getElementById("gate").style.display = "none";
-
-    // Render docs
-    const docsEl = document.getElementById("docs");
-    docsEl.innerHTML = assignment.docs.map(d => `
-      <div class="card">
-        <h3 style="margin:0 0 8px 0">${d.name}</h3>
-        <iframe src="${d.url}" loading="lazy" referrerpolicy="no-referrer"></iframe>
-      </div>
-    `).join("");
-
-    // Load last review (if any)
-    const last = await DB.getClaimReview(CURRENT.claimId, DB.uid());
-    if (last) {
-      document.getElementById("last").textContent =
-        `Last submitted: ${new Date(last.ts||Date.now()).toLocaleString()} — ${last.decision}${last.comment ? " • " + last.comment : ""}`;
-    } else {
-      document.getElementById("last").textContent = "No review submitted yet.";
-    }
-  });
-});
-
-document.getElementById("approve").onclick = () => CURRENT.decision = "approve";
-document.getElementById("deny").onclick    = () => CURRENT.decision = "deny";
-
-document.getElementById("submit").onclick = async () => {
-  if (!CURRENT.claimId) return alert("Not ready yet.");
-  if (!CURRENT.decision) return alert("Choose Approve or Needs Changes.");
-  const comment = document.getElementById("comment").value.trim();
-  try {
-    await DB.writeClaimReview(CURRENT.claimId, CURRENT.decision, comment);
-    document.getElementById("last").textContent = `Submitted just now — ${CURRENT.decision}${comment ? " • " + comment : ""}`;
-    alert("Thanks! Your review was recorded.");
-  } catch (e) {
-    console.error(e);
-    alert("Couldn't submit. Please try again while signed in.");
-  }
-};
+  const ready = setInterval(()=>{
+    if (window.DB_READY){ clearInterval(ready); window.mountClaimsForUser("claimsCards"); }
+  },50);
 </script>
 </body>
 </html>
