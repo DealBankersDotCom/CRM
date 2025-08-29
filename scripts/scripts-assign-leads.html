@@ -1,96 +1,38 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DealBankers • Assign Leads (Admin)</title>
-<link rel="icon" href="../images/db-icon-512.png"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
-<style>
-:root{ --bg:#0b0f14; --panel:#10151d; --ink:#d6e1ff; --muted:#8aa0c6; --line:#1c2a3a; --accent:#00d1ff; }
-body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; color:var(--ink);
-  background: radial-gradient(1000px 700px at 70% 10%, #122034 0%, rgba(0,0,0,0) 60%), var(--bg);}
-.main{padding:18px; max-width:1100px; margin:0 auto}
-.card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid var(--line); border-radius:16px; padding:16px;}
-.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:32px; padding:0 10px; border-radius:10px; border:1px solid #16314d;
-  background:linear-gradient(180deg,#0f1824,#0c1220); color:#eaf3ff; font-weight:600; cursor:pointer; box-shadow:0 1px 6px rgba(0,0,0,.25);}
-.input{background:#0e1622; border:1px solid #16314d; color:#eaf3ff; border-radius:10px; padding:8px 10px; outline:none}
-table{width:100%; border-collapse:collapse; font-size:14px}
-th,td{border-top:1px solid var(--line); padding:8px; text-align:left}
-thead th{border-top:0; color:#bfe3ff; font-weight:600}
-.meta{color:#8aa0c6; font-size:12px}
+<!DOCTYPE html><html lang="en"><head><meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Assign Leads (Admin)</title><style>
+body{margin:0;font-family:system-ui,Inter,Segoe UI,Roboto,Arial;background:#0b0f14;color:#d6e1ff}.wrap{max-width:1100px;margin:0 auto;padding:18px}
+.card{border:1px solid #1c2a3a;border-radius:14px;padding:14px;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,0))}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin:8px 0}.input{flex:1;min-width:280px;padding:10px;border-radius:10px;border:1px solid #1c2a3a;background:#10151d;color:#eaf3ff}
+.btn{padding:10px 12px;border-radius:10px;border:1px solid #16314d;background:linear-gradient(180deg,#0f1824,#0c1220);color:#eaf3ff;font-weight:700;cursor:pointer}
+table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-top:1px solid #1c2a3a;padding:8px;text-align:left}thead th{border-top:0;color:#cfe3ff}
 </style>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="../config.js"></script>
-<script src="../app-auth.js"></script>
-</head>
-<body>
-  <div class="main">
-    <h1>Assign Leads (Admin)</h1>
-    <div class="card">
-      <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-        <label>Target UID: <input id="targetUid" class="input" placeholder="paste UID to assign to"/></label>
-        <button class="btn" id="refresh">Refresh</button>
-      </div>
-      <p class="meta">Click “Assign” to set <code>assignedTo = Target UID</code>. Rules allow only admins.</p>
-      <h3>Seller Leads</h3>
-      <table>
-        <thead><tr><th>Address</th><th>Owner</th><th>Phone</th><th>AssignedTo</th><th></th></tr></thead>
-        <tbody id="sRows"></tbody>
-      </table>
-      <h3>Buyer Leads</h3>
-      <table>
-        <thead><tr><th>Name</th><th>Phone</th><th>Criteria</th><th>AssignedTo</th><th></th></tr></thead>
-        <tbody id="bRows"></tbody>
-      </table>
-    </div>
-  </div>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="config.js"></script><script src="app-auth.js"></script></head><body>
+<div class="wrap"><h1>Assign Leads (Admin)</h1><div class="card">
+  <div class="row"><label>Target UID <input id="targetUid" class="input" placeholder="UID to assign to"/></label><button id="assignSelected" class="btn">Assign Selected</button><button id="assignAll" class="btn">Assign All</button></div>
+  <div class="row"><label>Filter by UID (view) <input id="filterUid" class="input" placeholder="leave blank = ALL"/></label><button id="reload" class="btn">Reload</button></div>
+</div>
+<h3>Sellers</h3><table><thead><tr><th><input type="checkbox" id="selAllS"/></th><th>Address</th><th>Owner</th><th>Phone</th><th>assignedTo</th></tr></thead><tbody id="sellers"></tbody></table>
+<h3>Buyers</h3><table><thead><tr><th><input type="checkbox" id="selAllB"/></th><th>Name</th><th>Phone</th><th>Criteria</th><th>assignedTo</th></tr></thead><tbody id="buyers"></tbody></table>
+</div>
 <script>
-let isAdmin = false;
-let sellersAll = {};
-let buyersAll = {};
-
-firebase.auth().onAuthStateChanged(async u => {
-  if (!u) return;
-  const roleSnap = await firebase.database().ref('roles/'+u.uid).get();
-  isAdmin = roleSnap.exists() && roleSnap.val()==='admin';
-  if (!isAdmin){ alert('Not admin'); return; }
-  load();
-});
-
-function load(){
-  firebase.database().ref('leads/sellers').on('value', s => { sellersAll = s.val()||{}; render(); });
-  firebase.database().ref('leads/buyers').on('value', s => { buyersAll = s.val()||{}; render(); });
+let IS_ADMIN=false; firebase.auth().onAuthStateChanged(async u=>{ if(!u) return; const r=await firebase.database().ref('roles/'+u.uid).get(); IS_ADMIN=r.exists()&&r.val()==='admin'; if(!IS_ADMIN){ alert('Admins only'); location.href='profile.html'; return; } reload(); });
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+document.getElementById('reload').onclick=reload; document.getElementById('assignSelected').onclick=()=>assign(false); document.getElementById('assignAll').onclick=()=>assign(true);
+document.getElementById('selAllS').addEventListener('change',e=>{ document.querySelectorAll('input[name="s_chk"]').forEach(c=>c.checked=e.target.checked); });
+document.getElementById('selAllB').addEventListener('change',e=>{ document.querySelectorAll('input[name="b_chk"]').forEach(c=>c.checked=e.target.checked); });
+function reload(){ const fuid=(document.getElementById('filterUid').value||'').trim(); loadList('sellers',fuid); loadList('buyers',fuid); }
+function loadList(kind,fuid){ const tb=document.getElementById(kind==='sellers'?'sellers':'buyers'); tb.innerHTML='<tr><td colspan="5">Loading…</td></tr>'; let ref=firebase.database().ref('leads/'+kind); if(fuid){ ref=ref.orderByChild('assignedTo').equalTo(fuid); }
+  ref.once('value',s=>{ const o=s.val()||{}; const rows=Object.entries(o).map(([id,v])=>({id,...v})).map(v=>{
+    return kind==='sellers'?`<tr><td><input type="checkbox" name="s_chk" value="${esc(v.id)}"/></td><td>${esc(v.address||'')}</td><td>${esc(v.owner||'')}</td><td>${esc(v.phone||'')}</td><td>${esc(v.assignedTo||'')}</td></tr>`:
+    `<tr><td><input type="checkbox" name="b_chk" value="${esc(v.id)}"/></td><td>${esc(v.name||'')}</td><td>${esc(v.phone||'')}</td><td>${esc(v.criteria||'')}</td><td>${esc(v.assignedTo||'')}</td></tr>`; }).join('');
+    tb.innerHTML = rows || '<tr><td colspan="5">No data.</td></tr>';
+  },e=>{ tb.innerHTML='<tr><td colspan="5">Error: '+esc(e.message)+'</td></tr>'; });
 }
-
-function render(){
-  const tUid = document.getElementById('targetUid').value.trim();
-  const sRows = document.getElementById('sRows');
-  const bRows = document.getElementById('bRows');
-  sRows.innerHTML = Object.entries(sellersAll).map(([id,v]) => `<tr>
-    <td>${esc(v.address||'')}</td><td>${esc(v.owner||'')}</td><td>${esc(v.phone||'')}</td><td>${esc(v.assignedTo||'')}</td>
-    <td><button class="btn" onclick="assign('sellers','${id}','${tUid}')">Assign</button></td>
-  </tr>`).join('');
-  bRows.innerHTML = Object.entries(buyersAll).map(([id,v]) => `<tr>
-    <td>${esc(v.name||'')}</td><td>${esc(v.phone||'')}</td><td>${esc(v.criteria||'')}</td><td>${esc(v.assignedTo||'')}</td>
-    <td><button class="btn" onclick="assign('buyers','${id}','${tUid}')">Assign</button></td>
-  </tr>`).join('');
+async function assign(all){ const target=(document.getElementById('targetUid').value||'').trim(); if(!target) return alert('Target UID required');
+  const sIds = (all? Array.from(document.querySelectorAll('#sellers input[name="s_chk"]')) : Array.from(document.querySelectorAll('#sellers input[name="s_chk"]:checked'))).map(c=>c.value);
+  const bIds = (all? Array.from(document.querySelectorAll('#buyers input[name="b_chk"]'))  : Array.from(document.querySelectorAll('#buyers input[name="b_chk"]:checked')) ).map(c=>c.value);
+  const ops=[]; sIds.forEach(id=>ops.push(firebase.database().ref('leads/sellers/'+id+'/assignedTo').set(target)));
+  bIds.forEach(id=>ops.push(firebase.database().ref('leads/buyers/'+id+'/assignedTo').set(target))); await Promise.all(ops); alert('Assigned '+(sIds.length+bIds.length)+' leads to '+target); reload();
 }
-
-async function assign(kind, id, target){
-  if (!isAdmin) return;
-  if (!target){ alert('Enter Target UID first'); return; }
-  await firebase.database().ref('leads/'+kind+'/'+id+'/assignedTo').set(target);
-  alert('Assigned');
-}
-
-document.getElementById('refresh').addEventListener('click', render);
-
-function esc(s){ return (''+ (s||'')).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
-</script>
-</body>
-</html>
+</script></body></html>
