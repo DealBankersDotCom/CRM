@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Import Leads (Admin)</title>
+<link rel="icon" href="../images/db-icon-512.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+<style>
+:root{ --bg:#0b0f14; --panel:#10151d; --ink:#d6e1ff; --muted:#8aa0c6; --line:#1c2a3a; --accent:#00d1ff; }
+body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; color:var(--ink);
+  background: radial-gradient(1000px 700px at 70% 10%, #122034 0%, rgba(0,0,0,0) 60%), var(--bg);}
+.main{padding:18px; max-width:900px; margin:0 auto}
+.card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid var(--line); border-radius:16px; padding:16px;}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:36px; padding:0 12px; border-radius:10px; border:1px solid #16314d;
+  background:linear-gradient(180deg,#0f1824,#0c1220); color:#eaf3ff; font-weight:600; cursor:pointer; box-shadow:0 1px 6px rgba(0,0,0,.25);}
+.input{background:#0e1622; border:1px solid #16314d; color:#eaf3ff; border-radius:10px; padding:8px 10px; outline:none}
+.meta{color:#8aa0c6; font-size:12px}
+pre{white-space:pre-wrap}
+</style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="../config.js"></script>
+<script src="../app-auth.js"></script>
+</head>
+<body>
+  <div class="main">
+    <h1>Import Leads (Admin)</h1>
+    <div class="card">
+      <p class="meta">Loads <code>data/Sellerleads.csv</code> and <code>data/Buyerslist.csv</code> from this repo and writes to
+        <code>/leads/sellers</code> and <code>/leads/buyers</code>. Only admins can write.</p>
+      <div style="display:flex; gap:8px; flex-wrap:wrap; align-items:center">
+        <label>Assign to UID (optional): <input id="assignUid" class="input" placeholder="leave blank to unassigned"/></label>
+        <button class="btn" id="runBtn">Run Import</button>
+      </div>
+      <pre id="log"></pre>
+    </div>
+  </div>
+
+<script>
+const logEl = document.getElementById('log');
+function log(m){ logEl.textContent += m + "\n"; }
+
+function parseCSV(text){
+  const rows = [];
+  let i=0, cur='', inQ=false, row=[];
+  while(i<text.length){
+    const ch=text[i];
+    if (inQ){
+      if (ch === '"'){
+        if (text[i+1] === '"'){ cur+='"'; i++; }
+        else inQ = false;
+      } else cur += ch;
+    } else {
+      if (ch === '"'){ inQ = true; }
+      else if (ch === ','){ row.push(cur.trim()); cur=''; }
+      else if (ch === '\n' || ch === '\r'){
+        if (cur.length || row.length){ row.push(cur.trim()); rows.push(row); row=[]; cur=''; }
+        if (ch==='\r' && text[i+1]==='\n') i++;
+      } else cur += ch;
+    }
+    i++;
+  }
+  if (cur.length || row.length){ row.push(cur.trim()); rows.push(row); }
+  if (!rows.length) return [];
+  const header = rows[0].map(h => h.toLowerCase());
+  const out = rows.slice(1).filter(r => r.some(x => x && x.trim().length)).map(r => {
+    const o={};
+    header.forEach((h, idx) => o[h] = r[idx]||'');
+    return o;
+  });
+  return out;
+}
+
+async function fetchText(path){
+  const res = await fetch(path+'?cache=' + Date.now());
+  if (!res.ok) throw new Error('Fetch failed: '+path);
+  return await res.text();
+}
+
+function normSeller(o){
+  return {
+    address: o.address||o.location||'',
+    owner: o.owner||o.name||'',
+    phone: o.phone||'',
+    notes: o.notes||'',
+    status: 'new',
+    source: 'csv',
+    assignedTo: '' // optionally filled later
+  };
+}
+function normBuyer(o){
+  return {
+    name: o.name||o.buyer||'',
+    phone: o.phone||'',
+    criteria: o.criteria||o.notes||'',
+    notes: o.notes||'',
+    status: 'new',
+    source: 'csv',
+    assignedTo: '' // optionally filled later
+  };
+}
+
+async function run(){
+  const me = await window.requireAuth();
+  const roleSnap = await firebase.database().ref('roles/'+me.uid).get();
+  if (!roleSnap.exists() || roleSnap.val() !== 'admin'){
+    log('ERROR: You are not admin. Aborting.');
+    return;
+  }
+
+  const assignUid = document.getElementById('assignUid').value.trim();
+
+  log('Downloading CSVs...');
+  const sellersCsv = await fetchText('../data/Sellerleads.csv').catch(()=>'');
+  const buyersCsv  = await fetchText('../data/Buyerslist.csv').catch(()=>'');
+
+  const sellers = sellersCsv ? parseCSV(sellersCsv).map(normSeller) : [];
+  const buyers  = buyersCsv  ? parseCSV(buyersCsv).map(normBuyer)  : [];
+
+  log('Parsed sellers: '+sellers.length);
+  log('Parsed buyers:  '+buyers.length);
+
+  const db = firebase.database();
+  let writes = [];
+
+  sellers.forEach(s => {
+    if (assignUid) s.assignedTo = assignUid;
+    const ref = db.ref('leads/sellers').push();
+    writes.push(ref.set(s));
+  });
+  buyers.forEach(b => {
+    if (assignUid) b.assignedTo = assignUid;
+    const ref = db.ref('leads/buyers').push();
+    writes.push(ref.set(b));
+  });
+
+  await Promise.all(writes);
+  log('Done. Wrote '+writes.length+' records.');
+}
+
+document.getElementById('runBtn').addEventListener('click', () => {
+  run().catch(e => log('ERROR: '+e.message));
+});
+</script>
+</body>
+</html>
