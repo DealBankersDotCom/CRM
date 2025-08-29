@@ -1,5 +1,3 @@
-<script>
-// Initializes Firebase (expects window.firebaseConfig from config.js)
 (function(){
   if (!window.firebaseApp) {
     window.firebaseApp = firebase.initializeApp(window.firebaseConfig);
@@ -10,23 +8,24 @@
 
   const auth = window.auth, db = window.db;
 
-  // Presence for the signed-in user
   function setPresence(uid){
-    const ref = db.ref('presence/'+uid);
+    const ref = db.ref('presence/global/'+uid);
     ref.onDisconnect().set({ online:false, ts: firebase.database.ServerValue.TIMESTAMP });
     ref.set({ online:true, ts: firebase.database.ServerValue.TIMESTAMP });
   }
 
-  // Ensure a minimal roles doc exists
-  async function ensureRoles(uid){
-    const ref = db.ref(`userSettings/${uid}/roles`);
-    const snap = await ref.get();
-    if (!snap.exists()) {
-      await ref.set({ role:'member', acq:true, dispo:false });
-    }
+  async function ensureRoleMirror(uid){
+    // Mirror role from /roles/{uid} into /userSettings/{uid}/roles/role for convenience
+    const rolesRef = db.ref('roles/'+uid);
+    const userRoleSnap = await rolesRef.get();
+    const role = userRoleSnap.exists() ? userRoleSnap.val() : 'member';
+    await db.ref('userSettings/'+uid+'/roles/role').set(role);
   }
 
-  // Gate/redirect
+  async function ensureDefaults(uid){
+    await ensureRoleMirror(uid);
+  }
+
   auth.onAuthStateChanged(async user => {
     const gateEl = document.querySelector('[data-auth-status]');
     if (gateEl) gateEl.textContent = user ? 'signed in' : 'signed out';
@@ -41,19 +40,14 @@
 
     try {
       setPresence(user.uid);
-      await ensureRoles(user.uid);
-      // If on index and signed in, move into the app hub
+      await ensureDefaults(user.uid);
       if (onIndex) location.href = 'profile.html';
     } catch (err) {
       console.error('Auth gate error:', err);
     }
   });
 
-  // Optional helper for other pages
   window.requireAuth = () => new Promise(resolve => {
-    const unsub = auth.onAuthStateChanged(u => {
-      if (u) { unsub(); resolve(u); }
-    });
+    const unsub = window.auth.onAuthStateChanged(u => { if (u) { unsub(); resolve(u); } });
   });
-})();
-</script>
+})();  
