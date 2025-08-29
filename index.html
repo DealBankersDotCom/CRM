@@ -13,7 +13,8 @@
     :root{
       --bg:#0f1720; --panel:#121c27; --muted:#7b8a9d; --text:#e8f1ff;
       --green:#20c36a; --green-2:#17a457; --gold:#f3c969; --blue:#3aa7ff; --red:#ff5a67;
-      --chip:#1c2a39; --chip-2:#182432; --br:16px; --br2:12px; --shadow:0 14px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.03);
+      --chip:#1c2a39; --chip-2:#182432; --br:16px; --br2:12px;
+      --shadow:0 14px 30px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.03);
       --glow:0 0 0 1px rgba(255,255,255,.05), 0 10px 30px rgba(23,36,50,.65), inset 0 1px 0 rgba(255,255,255,.05);
     }
     *{box-sizing:border-box}
@@ -27,7 +28,8 @@
     .wrap{width:100%;max-width:760px}
     .card{background:linear-gradient(180deg,#14202c 0%,#0f1923 100%); border-radius:var(--br); box-shadow:var(--shadow); border:1px solid rgba(255,255,255,.06); overflow:hidden}
     header{display:flex;align-items:center;justify-content:center;padding:22px 24px 6px;gap:12px}
-    .logo{width:44px;height:44px;border-radius:12px;background:#0b121a url("images/db-seal-256.png") center/cover no-repeat;box-shadow:0 6px 20px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06)}
+    /* FIX: point to an image that exists in your repo */
+    .logo{width:44px;height:44px;border-radius:12px;background:#0b121a url("images/icon (1).jpg") center/cover no-repeat;box-shadow:0 6px 20px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.06)}
     h1{margin:0;font-size:14px;letter-spacing:.18em;color:#cfe3ff;text-transform:uppercase;font-weight:800;opacity:.9}
     .top-actions{display:flex;gap:10px;justify-content:center;padding:0 24px 10px;flex-wrap:wrap}
     .chip{background:var(--chip);color:#cfe3ff;border:1px solid rgba(255,255,255,.06);padding:8px 14px;border-radius:999px;font-size:13px;font-weight:700;letter-spacing:.02em;box-shadow:var(--glow);cursor:pointer;transition:.2s transform}
@@ -72,13 +74,17 @@
         <!-- Sign-in -->
         <section class="pane">
           <h2>Sign In</h2>
-          <div class="input" style="margin-bottom:10px">
-            <input id="email" type="email" placeholder="Email" autocomplete="username" />
-          </div>
-          <div class="input" style="margin-bottom:12px">
-            <input id="password" type="password" placeholder="Password" autocomplete="current-password" />
-          </div>
-          <button class="btn" id="enterBtn">Sign In</button>
+
+          <!-- FIX: real form prevents the console warning -->
+          <form id="loginForm" novalidate>
+            <div class="input" style="margin-bottom:10px">
+              <input id="email" type="email" placeholder="Email" autocomplete="username" required />
+            </div>
+            <div class="input" style="margin-bottom:12px">
+              <input id="password" type="password" placeholder="Password" autocomplete="current-password" required />
+            </div>
+            <button class="btn" id="enterBtn" type="submit">Sign In</button>
+          </form>
 
           <div class="divider"></div>
 
@@ -114,10 +120,18 @@
     </div>
   </div>
 
-  <!-- IMPORTANT: exposes window.firebaseConfig -->
+  <!-- Make firebaseConfig available -->
   <script defer src="./config.js"></script>
 
   <!-- Auth wiring (module) -->
   <script type="module" src="./app-auth.js"></script>
+
+  <!-- Small helper: handle form submit so Enter key works without reloading -->
+  <script>
+    document.getElementById('loginForm')?.addEventListener('submit', (e) => {
+      e.preventDefault();
+      document.getElementById('enterBtn')?.click();
+    });
+  </script>
 </body>
 </html>
