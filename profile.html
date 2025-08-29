@@ -7,97 +7,90 @@
   <link rel="icon" href="icon (1).jpg">
   <style>
     :root{--bg:#0a1218; --card:#0f1c24; --mut:#9fb4c6; --ink:#dff2ff; --edge:#1e3646; --pill:#132937; --ok:#21c776}
-    html,body{height:100%} body{
+    html,body{height:100%}
+    body{
       margin:0; background:radial-gradient(1200px 600px at 50% -10%,#0f1b24 0%, #0a1218 45%, #071016 100%);
       color:var(--ink); font:400 16px/1.5 system-ui,Segoe UI,Inter,Roboto,Arial,sans-serif;
     }
     .wrap{max-width:980px;margin:24px auto;padding:0 16px}
-    .tabs{display:flex;gap:.5rem;margin:16px 0 12px}
-    .tab{padding:.45rem .75rem;border-radius:10px;background:var(--pill);border:1px solid var(--edge);color:#cfe8ff;cursor:pointer;font-weight:600}
+    .tabs{display:flex;gap:.5rem;margin:16px 0 12px;flex-wrap:wrap}
+    .tab{padding:.45rem .75rem;border-radius:10px;background:var(--pill);border:1px solid var(--edge);color:#cfe8ff;cursor:pointer;font-weight:600;text-decoration:none}
     .tab.active{background:#173345;border-color:#2b5062}
     .card{background:var(--card);border:1px solid var(--edge);border-radius:14px;padding:18px;box-shadow:0 10px 60px rgba(0,0,0,.28)}
     .row{display:flex;gap:10px;align-items:center}
     .row input{flex:1;background:#0c1720;border:1px solid #213a49;border-radius:10px;padding:.6rem .75rem;color:#cfe8ff}
     .send{background:var(--ok);border:0;border-radius:10px;padding:.55rem 1.1rem;font-weight:700;color:#04220f;cursor:pointer}
     .dim{color:var(--mut);font-size:.92rem}
+    .hidden{display:none}
   </style>
   <script src="config.js"></script>
   <script type="module" src="app-auth.js"></script>
 </head>
 <body>
   <div class="wrap">
-    <div id="content">
-      <!-- Fallback so we never show a blank page -->
-      <div class="card"><div class="dim">Loading portal…</div></div>
+    <div class="tabs" id="tabs">
+      <a class="tab" data-t="overview"   href="#overview">Overview</a>
+      <a class="tab" data-t="wholesaler" href="wholesaler.html">Wholesaler</a>
+      <a class="tab" data-t="contractor" href="contractor.html">Contractor</a>
+      <a class="tab" data-t="realtor"    href="realtor.html">Realtor</a>
+      <a class="tab" data-t="settings"   href="#settings">Settings</a>
     </div>
+
+    <!-- Overview -->
+    <section id="pane-overview" class="card">
+      <div class="dim">Capital Open: <b>$300k</b> • Turn: <b>7–10 days</b></div>
+      <h3>Townhall (All Users)</h3>
+      <div class="row">
+        <input id="chatBox" placeholder="Say something to the room… (press Enter to send)" />
+        <button class="send" id="sendBtn">Send</button>
+      </div>
+      <div class="dim" style="margin-top:.6rem" id="chatNote">Connected.</div>
+    </section>
+
+    <!-- Settings -->
+    <section id="pane-settings" class="card hidden">
+      <h3>Settings</h3>
+      <div class="dim">User role management & branding here.</div>
+      <ul class="dim">
+        <li>Your portals live here:
+          <a href="wholesaler.html">Wholesaler</a> •
+          <a href="contractor.html">Contractor</a> •
+          <a href="realtor.html">Realtor</a>
+        </li>
+      </ul>
+    </section>
   </div>
 
   <script type="module">
-    // Wait a tick for app-auth to build DB namespace even in safe mode
-    const ready = () => typeof window.DB !== "undefined" && typeof window.DB.renderHeader === "function";
+    // Ensure header & auth never blank the page
     const wait = (ms)=>new Promise(r=>setTimeout(r,ms));
+    const ready = ()=> window.DB && window.DB.renderHeader;
+
     (async () => {
       for (let i=0;i<30 && !ready();i++) await wait(50);
-      if (!ready()) {
-        document.getElementById('content').innerHTML =
-          `<div class="card"><div class="dim">Could not initialize scripts. Please hard refresh (Ctrl/Cmd+Shift+R).</div></div>`;
-        return;
-      }
+      if (ready()) window.DB.renderHeader();
 
-      window.DB.renderHeader();
+      // Tab handling (Overview + Settings are local; others navigate to real pages)
+      const panes = {
+        overview: document.getElementById('pane-overview'),
+        settings: document.getElementById('pane-settings')
+      };
+      const tabs = Array.from(document.querySelectorAll('.tab'));
+      const activate = (key)=>{
+        tabs.forEach(t=>t.classList.toggle('active', t.dataset.t===key));
+        Object.entries(panes).forEach(([k,el])=> el.classList.toggle('hidden', k!==key));
+      };
+      const start = new URL(location.href).hash?.replace('#','') || 'overview';
+      activate(start);
 
-      const content = document.getElementById('content');
-      const tabs = ['overview','wholesaler','contractor','realtor','settings'];
+      document.querySelector('[data-t="overview"]').onclick = (e)=>{ e.preventDefault(); location.hash='#overview'; activate('overview'); };
+      document.querySelector('[data-t="settings"]').onclick = (e)=>{ e.preventDefault(); location.hash='#settings'; activate('settings'); };
 
-      function setTab(tab){
-        const url = new URL(location.href);
-        url.searchParams.set('tab', tab);
-        history.replaceState(null,'',url);
-        render(tab);
-      }
-
-      function overview(){
-        return `
-          <div class="card">
-            <div class="dim">Capital Open: <b>$300k</b> • Turn: <b>7–10 days</b></div>
-            <h3>Townhall (All Users)</h3>
-            <div class="row">
-              <input id="chatBox" placeholder="Say something to the room… (press Enter to send)" />
-              <button class="send" id="sendBtn">Send</button>
-            </div>
-            <div class="dim" style="margin-top:.6rem" id="chatNote">Connecting…</div>
-          </div>
-        `;
-      }
-
-      const jump = (msg)=>`<div class="card dim">${msg}</div>`;
-      const settings = ()=>`<div class="card"><h3>Settings</h3><div class="dim">User role management & branding here.</div></div>`;
-
-      function render(active){
-        const t = active || (new URL(location.href).searchParams.get('tab')||'overview');
-        content.innerHTML = `
-          <div class="tabs">
-            ${tabs.map(x=>`<button class="tab ${t===x?'active':''}" data-t="${x}">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}
-          </div>
-          ${t==='overview'   ? overview() : ''}
-          ${t==='wholesaler' ? jump('Go to <a href="wholesaler.html">Wholesaler portal</a>.') : ''}
-          ${t==='contractor' ? jump('Post jobs and manage crews in the <a href="contractor.html">Contractor portal</a>.') : ''}
-          ${t==='realtor'    ? jump('Realtor tools are available here: <a href="realtor.html">Realtor portal</a>.') : ''}
-          ${t==='settings'   ? settings() : ''}
-        `;
-        document.querySelectorAll('.tab').forEach(b=>b.onclick = () => setTab(b.dataset.t));
-        const i = document.getElementById('chatBox'), s = document.getElementById('sendBtn'), n = document.getElementById('chatNote');
-        if (i && s) {
-          const send = ()=>{ if(!i.value.trim()) return; i.value=''; };
-          i.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
-          s.onclick = send;
-          if (n) n.textContent = 'You are connected.';
-        }
-      }
-
-      // Gate with auth when available; safe mode still renders
-      const go = (user)=> { render(); };
-      if (window.DB._safeMode) go(null); else window.DB.requireAuth(go);
+      // Very light chat UX stub so the page isn’t dead while chat is being re-wired
+      const i = document.getElementById('chatBox'), s = document.getElementById('sendBtn');
+      const send = ()=>{ if(!i.value.trim()) return; const v=i.value.trim(); i.value=''; alert(`(demo) sent: ${v}`); };
+      i.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
+      s.onclick = send;
     })();
   </script>
 </body>
