@@ -1,90 +1,75 @@
-// app-auth.js
-// Uses Firebase v10+ CDN modules. Requires window.firebaseConfig from config.js.
+<!-- Save as: app-auth.js -->
+<script type="module">
+/*
+  DealBankers — Auth bootstrap
+  - Uses window.firebaseConfig from config.js
+  - Wires Email/Password & Google sign-in
+  - Persists session and redirects after login
+*/
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
 import {
-  getAuth, setPersistence, browserLocalPersistence,
-  signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup,
+  getAuth,
+  setPersistence,
+  browserLocalPersistence,
+  signInWithEmailAndPassword,
+  GoogleAuthProvider,
+  signInWithPopup,
   onAuthStateChanged
 } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-function $(s){ return document.querySelector(s); }
-function toast(msg){ alert(msg); }
+// ---- Guard: make sure config is available ----
+if (!window.firebaseConfig) {
+  console.error("Missing firebaseConfig. Ensure config.js is loaded before app-auth.js");
+}
 
-function ensureConfig(){
-  if (!window.firebaseConfig || !window.firebaseConfig.apiKey){
-    throw new Error("Missing firebaseConfig (config.js).");
+// ---- Init Firebase ----
+const app = initializeApp(window.firebaseConfig);
+const auth = getAuth(app);
+setPersistence(auth, browserLocalPersistence).catch(console.warn);
+
+const qs = (s) => document.querySelector(s);
+const emailEl = qs('#email');
+const passEl  = qs('#password');
+const enterBtn = qs('#enterBtn');
+const googleBtn = qs('#googleBtn');
+
+// ---- Email/Password Sign-in ----
+async function emailLogin() {
+  try {
+    const email = (emailEl?.value || "").trim();
+    const pass  = (passEl?.value  || "").trim();
+    if (!email || !pass) { alert("Enter email and password."); return; }
+    await signInWithEmailAndPassword(auth, email, pass);
+    location.href = 'profile.html';
+  } catch (err) {
+    console.error(err);
+    alert(err.message || "Login failed.");
   }
 }
 
-function initFirebase(){
-  ensureConfig();
-  const app = initializeApp(window.firebaseConfig);
-  const auth = getAuth(app);
-  setPersistence(auth, browserLocalPersistence).catch(()=>{});
-  return { app, auth };
-}
-
-function gotoPortal(){
-  // Always land on profile.html when signed in
-  location.href = "profile.html";
-}
-
-export const DB = (()=>{
-  let auth = null;
-
-  function wireLogin(){
-    try{
-      auth = initFirebase().auth;
-    }catch(e){
-      console.error(e);
-      // Fallback: let the page still navigate so UX isn't dead.
-      $("#enterBtn")?.addEventListener("click", ()=>location.href="profile.html");
-      $("#googleBtn")?.addEventListener("click", ()=>location.href="profile.html");
-      return;
-    }
-
-    const emailEl = $("#email");
-    const passEl  = $("#password");
-
-    $("#enterBtn")?.addEventListener("click", async ()=>{
-      const email = (emailEl?.value || "").trim();
-      const pass  = (passEl?.value || "").trim();
-      if(!email || !pass){ toast("Enter email and password."); return; }
-      try{
-        await signInWithEmailAndPassword(auth, email, pass);
-        gotoPortal();
-      }catch(err){
-        console.error(err);
-        toast(err?.message || "Sign-in failed.");
-      }
-    });
-
-    $("#password")?.addEventListener("keydown", (ev)=>{
-      if(ev.key === "Enter") $("#enterBtn")?.click();
-    });
-
-    $("#googleBtn")?.addEventListener("click", async ()=>{
-      try{
-        const provider = new GoogleAuthProvider();
-        await signInWithPopup(auth, provider);
-        gotoPortal();
-      }catch(err){
-        console.error(err);
-        toast(err?.message || "Google sign-in failed.");
-      }
-    });
-
-    // If already signed in, bounce straight to portal
-    onAuthStateChanged(auth, (u)=>{
-      if(u) gotoPortal();
-    });
+// ---- Google Sign-in ----
+async function googleLogin() {
+  try {
+    const provider = new GoogleAuthProvider();
+    await signInWithPopup(auth, provider);
+    location.href = 'profile.html';
+  } catch (err) {
+    console.error(err);
+    // Common causes: provider not enabled, domain not authorized
+    alert(err.message || "Google sign-in failed.");
   }
-
-  return { wireLogin };
-})();
-
-// Auto-wire when loaded on index.html
-if (document.querySelector("#enterBtn")) {
-  DB.wireLogin();
 }
+
+// ---- Wire UI ----
+enterBtn?.addEventListener('click', emailLogin);
+passEl?.addEventListener('keydown', (e)=>{ if(e.key==='Enter') emailLogin(); });
+googleBtn?.addEventListener('click', googleLogin);
+
+// ---- Auto-redirect if already signed in ----
+onAuthStateChanged(auth, (user) => {
+  if (user && !location.pathname.endsWith('/profile.html')) {
+    location.href = 'profile.html';
+  }
+});
+</script>
