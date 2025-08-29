@@ -1,98 +1,118 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width, initial-scale=1"/>
-<title>DealBankers • Profile</title>
-<link rel="icon" href="images/db-badge.png"/>
-<link rel="preconnect" href="https://www.gstatic.com" crossorigin>
-<style>
-  :root{--bg:#0f1a22;--panel:#13202a;--chip:#0d2a3a;--text:#cfe7ff;--mute:#88a8c4;--accent:#ffd166;--btn:#1f8b4c;}
-  html,body{background:var(--bg);color:var(--text);margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
-  .shell{max-width:1100px;margin:28px auto;padding:0 16px}
-  .top{display:flex;gap:10px;align-items:center;justify-content:flex-end;margin-bottom:12px}
-  .btn{background:#233748;color:#d8ebff;border:none;padding:8px 14px;border-radius:12px;cursor:pointer}
-  .btn:hover{opacity:.9}
-  .btn.gold{background:#6b4b12;color:#ffd166}
-  .btn.red{background:#662424;color:#ffdede}
-  .btn.blue{background:#1f3b63;color:#d7e9ff}
-  .tabs{display:flex;gap:8px;margin:10px 0}
-  .tab{background:#1b2b38;color:#cfe7ff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
-  .tab.active{background:#254355}
-  .card{background:var(--panel);border-radius:14px;padding:14px;margin-top:10px}
-  .row{display:flex;gap:8px;align-items:center}
-  .chip{background:var(--chip);display:inline-block;padding:7px 10px;border-radius:10px;margin:6px 6px 0 0;color:#cfe7ff}
-  .input{width:100%;padding:10px;border-radius:9px;border:1px solid #2b4b63;background:#0e1b23;color:#d8ebff}
-</style>
-<script src="config.js"></script>
-<script src="app-auth.js" type="module"></script>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>DealBankers • Profile</title>
+  <link rel="icon" href="icon (1).jpg">
+  <style>
+    :root{
+      --bg:#0a1218; --card:#0f1c24; --mut:#9fb4c6; --ink:#dff2ff; --edge:#1e3646; --pill:#132937;
+      --ok:#21c776;
+    }
+    html,body{height:100%} body{
+      margin:0; background:radial-gradient(1200px 600px at 50% -10%,#0f1b24 0%, #0a1218 45%, #071016 100%);
+      color:var(--ink); font:400 16px/1.5 system-ui,Segoe UI,Inter,Roboto,Arial,sans-serif;
+    }
+    .wrap{max-width:980px;margin:24px auto;padding:0 16px;}
+    .tabs{display:flex;gap:.5rem;margin:16px 0 12px}
+    .tab{
+      padding:.45rem .75rem;border-radius:10px;background:var(--pill);border:1px solid var(--edge);
+      color:#cfe8ff;cursor:pointer;font-weight:600
+    }
+    .tab.active{background:#173345;border-color:#2b5062}
+    .card{
+      background:var(--card);border:1px solid var(--edge);border-radius:14px;padding:18px;
+      box-shadow:0 10px 60px rgba(0,0,0,.28);
+    }
+    .row{display:flex;gap:10px;align-items:center}
+    .row input{flex:1; background:#0c1720;border:1px solid #213a49;border-radius:10px;
+      padding:.6rem .75rem;color:#cfe8ff}
+    .send{background:var(--ok);border:0;border-radius:10px;padding:.55rem 1.1rem;font-weight:700;color:#04220f;cursor:pointer}
+    .dim{color:var(--mut);font-size:.92rem}
+  </style>
+  <script>
+    // simple tab switcher
+    function go(tab){
+      const url = new URL(location.href);
+      url.searchParams.set('tab', tab);
+      history.replaceState(null,'',url);
+      render(tab);
+    }
+  </script>
+  <script src="config.js"></script>
+  <!-- shared auth + header -->
+  <script type="module" src="app-auth.js"></script>
 </head>
 <body>
-<div class="shell">
-  <div class="top">
-    <button class="btn gold" onclick="goto('claims-exchange.html')">Claims Exchange</button>
-    <button class="btn red" onclick="openImmediateSupport()">Sales</button>
-    <button class="btn blue" onclick="openStandardSupport()">Support</button>
-    <button class="btn" onclick="logout()">Log Out</button>
+  <div class="wrap">
+    <!-- header injected by DB.renderHeader -->
+    <div id="content"></div>
   </div>
 
-  <div class="tabs">
-    <button class="tab active" onclick="showTab('overview')">Overview</button>
-    <button class="tab" onclick="showTab('wholesaler')">Wholesaler</button>
-    <button class="tab" onclick="showTab('contractor')">Contractor</button>
-    <button class="tab" onclick="showTab('realtor')">Realtor</button>
-    <button class="tab" onclick="showTab('settings')">Settings</button>
-  </div>
+  <script type="module">
+    import { onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
 
-  <section id="overview" class="card">
-    <div class="row" style="justify-content:space-between">
-      <div>Capital Open: <b>$300k</b> • Turn: <b>7–10 days</b></div>
-    </div>
-    <div class="card" style="margin-top:12px">
-      <div style="margin-bottom:8px">Townhall (All Users)</div>
-      <div id="chatList"></div>
-      <div class="row" style="margin-top:8px">
-        <input id="chatInput" class="input" placeholder="Say something to the room… (press Enter to send)"/>
-        <button id="chatSend" class="btn">Send</button>
+    window.DB.renderHeader();
+
+    const content = document.getElementById('content');
+
+    function render(active){
+      const t = active || (new URL(location.href).searchParams.get('tab')||'overview');
+      const all = ['overview','wholesaler','contractor','realtor','settings'];
+      content.innerHTML = `
+        <div class="tabs">
+          ${all.map(x=>`<button class="tab ${t===x?'active':''}" onclick="go('${x}')">${x[0].toUpperCase()+x.slice(1)}</button>`).join('')}
+        </div>
+        ${t==='overview'?overview():''}
+        ${t==='wholesaler'?jump('Go to <a href="wholesaler.html">Wholesaler portal</a>.'):''}
+        ${t==='contractor'?jump('Post jobs and manage crews in the <a href="contractor.html">Contractor portal</a>.'):''}
+        ${t==='realtor'?jump('Realtor tools are available here: <a href="realtor.html">Realtor portal</a>.'):''}
+        ${t==='settings'?settings():''}
+      `;
+    }
+
+    const jump = (msg)=>`<div class="card dim">${msg}</div>`;
+
+    const overview = ()=>`
+      <div class="card">
+        <div class="dim">Capital Open: <b>$300k</b> • Turn: <b>7–10 days</b></div>
+        <h3>Townhall (All Users)</h3>
+        <div class="row">
+          <input id="chatBox" placeholder="Say something to the room… (press Enter to send)" />
+          <button class="send" id="sendBtn">Send</button>
+        </div>
+        <div class="dim" style="margin-top:.6rem" id="chatNote">Connecting…</div>
       </div>
-    </div>
-  </section>
+    `;
 
-  <section id="wholesaler" class="card" style="display:none">
-    <div>Go to <a href="wholesaler.html">Wholesaler portal</a>.</div>
-  </section>
+    const settings = ()=>`
+      <div class="card">
+        <h3>Settings</h3>
+        <div class="dim">User role management & branding here.</div>
+      </div>
+    `;
 
-  <section id="contractor" class="card" style="display:none">
-    <div>Go to <a href="contractor.html">Contractor portal</a>.</div>
-  </section>
+    // minimal chat input wiring (placeholder)
+    function wireChat(){
+      const i = document.getElementById('chatBox');
+      const b = document.getElementById('sendBtn');
+      if(!i||!b) return;
+      const send = ()=>{ if(!i.value.trim()) return; i.value=''; };
+      i.addEventListener('keydown', (e)=>{ if(e.key==='Enter') send(); });
+      b.onclick = send;
+      document.getElementById('chatNote').textContent = 'You are connected.';
+    }
 
-  <section id="realtor" class="card" style="display:none">
-    <div>Realtor tools are available here: <a href="realtor.html">Realtor portal</a>.</div>
-  </section>
+    window.DB.requireAuth((user)=>{
+      // draw page
+      render();
+      wireChat();
 
-  <section id="settings" class="card" style="display:none">
-    <div class="card-title">Settings</div>
-    <div>User role management & branding live in this section (coming from earlier God Mode UI).</div>
-  </section>
-</div>
-
-<script>
-  // Tab logic
-  const sections = ["overview","wholesaler","contractor","realtor","settings"];
-  function showTab(id){
-    sections.forEach(s=>{
-      document.getElementById(s).style.display = (s===id) ? "" : "none";
-      document.querySelectorAll(".tab").forEach(b=>{
-        if (b.textContent.toLowerCase().includes(id)) b.classList.add("active");
-        else b.classList.remove("active");
-      });
+      // keep header present
+      window.DB.renderHeader();
     });
-  }
 
-  // Auth + chat
-  const ready = setInterval(()=>{
-    if (window.DB_READY){ clearInterval(ready); window.initTownhall(); }
-  },50);
-</script>
+  </script>
 </body>
 </html>
