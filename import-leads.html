@@ -1,53 +1,211 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-  <meta charset="utf-8"/>
-  <title>Import Leads</title>
-  <meta name="robots" content="noindex"/>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-  <script src="config.js"></script>
-  <!-- pulls your existing static array -->
-  <script src="leads.js"></script>
-  <style>body{font:14px system-ui;margin:20px}button{padding:8px 12px}</style>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Import Leads</title>
+<link rel="icon" href="images/db-badge.png"/>
+<link rel="preconnect" href="https://www.gstatic.com"/>
+<style>
+  :root { --panel:#0f222c; --border:#1a3b4b; --muted:#8fb3c1; --pill:#0f2934; }
+  body{margin:0;background:radial-gradient(1200px 800px at 50% -100px,#183142 0%,#0b171e 55%,#071219 100%) fixed;color:#cfe6f1;font-family:Inter,system-ui,Segoe UI,Roboto}
+  .wrap{max-width:1100px;margin:32px auto;padding:0 16px}
+  .top a{margin-right:8px;padding:8px 12px;border-radius:14px;border:1px solid #234b5f;background:#173847;color:#d8eef9;text-decoration:none}
+  .card{background:var(--panel);border:1px solid var(--border);border-radius:14px;padding:16px;margin:12px 0}
+  .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
+  .pill{display:inline-flex;align-items:center;background:#0f2934;border:1px solid #214a5d;border-radius:999px;padding:6px 10px}
+  input,select,textarea{background:#0c1f28;border:1px solid #254a5b;border-radius:10px;color:#d8eef9;padding:10px}
+  input,select{height:40px}
+  input[type="file"]{padding:8px}
+  button{background:#14485d;border:1px solid #1d5c73;color:#e7f7ff;border-radius:12px;padding:10px 14px;cursor:pointer}
+  button.green{background:#0d6b3b;border-color:#11804a}
+  table{width:100%;border-collapse:collapse}
+  th,td{border:1px solid #1b3e4e;padding:6px 8px;font-size:13px}
+  th{background:#0d2632}
+  .muted{color:var(--muted)}
+  .ok{color:#7ff7a4}
+  .err{color:#ff9aa9}
+  .mono{font-family:ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;font-size:12px}
+</style>
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+<!-- PapaParse for CSV -->
+<script src="https://cdn.jsdelivr.net/npm/papaparse@5.4.1/papaparse.min.js"></script>
 </head>
 <body>
-  <h1>Import Leads → RTDB</h1>
-  <p>This will write the <code>leads</code> array from <b>leads.js</b> to <code>acq/{yourUid}/leads</code>.</p>
-  <button id="signIn">Sign in with Google</button>
-  <button id="go" disabled>Import</button>
-  <div id="log"></div>
+<div class="wrap">
+  <div class="top">
+    <a href="profile.html">← Back to Portal</a>
+    <span class="pill">Import Leads</span>
+  </div>
 
-  <script>
-    const app = firebase.initializeApp(window.firebaseConfig);
-    const auth = firebase.auth();
-    const db   = firebase.database();
-    const log  = (m)=>{ const d=document.getElementById('log'); d.innerHTML += `<div>${m}</div>`; };
+  <div id="gate" class="card">Checking admin access…</div>
 
-    document.getElementById('signIn').onclick = async ()=>{
-      try{
-        await auth.signInWithPopup(new firebase.auth.GoogleAuthProvider());
-        document.getElementById('go').disabled = false;
-        log('Signed in as ' + (auth.currentUser.email || auth.currentUser.uid));
-      }catch(e){ log('Sign-in error: '+(e.message||e)); }
+  <div id="content" style="display:none">
+    <div class="card">
+      <h2 style="margin:0 0 10px">Upload CSV</h2>
+      <div class="row">
+        <input id="file" type="file" accept=".csv"/>
+        <select id="kind">
+          <option value="SellerLead">Seller Leads (Acq)</option>
+          <option value="BuyerLead">Buyer Leads (Dispo)</option>
+        </select>
+        <input id="targetUid" placeholder="Target UID (assign to)…" style="min-width:320px"/>
+      </div>
+      <div class="row" style="margin-top:6px">
+        <label class="pill"><input type="checkbox" id="useCsvUid" style="margin-right:6px"> Use <span class="mono">ownerUid</span> column from CSV if present</label>
+        <input id="sourceTag" placeholder="Source tag (optional e.g. 'Aug list')" />
+        <button id="previewBtn">Preview</button>
+        <button id="importBtn" class="green">Import</button>
+      </div>
+      <div class="muted" style="margin-top:6px">Tip: You can import your <span class="mono">Sellerleads.csv</span> or <span class="mono">Buyerslist.csv</span> directly.</div>
+    </div>
+
+    <div id="preview" class="card" style="display:none">
+      <h3 style="margin:0 0 8px">Preview (first 25 rows)</h3>
+      <div id="meta" class="muted"></div>
+      <div style="overflow:auto;max-height:420px;margin-top:8px">
+        <table id="table"></table>
+      </div>
+    </div>
+
+    <div id="progress" class="card" style="display:none">
+      <h3 style="margin:0 0 8px">Progress</h3>
+      <div id="bar" class="muted">Waiting…</div>
+      <div id="log" class="mono" style="margin-top:8px;white-space:pre-wrap"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+let ADMIN_UID = null;
+let CSV_ROWS = [];
+
+function pick(obj, keys) {
+  for (const k of keys) {
+    if (obj[k] != null && String(obj[k]).trim() !== "") return String(obj[k]).trim();
+  }
+  return "";
+}
+function titleFrom(row, kind){
+  if (kind === "SellerLead") {
+    return pick(row, ["address","Address","PROPERTY ADDRESS","Street","Street Address","Property Address","Site Address","Mailing Address"]) ||
+           pick(row, ["Owner","owner","Owner Name","Name","Full Name","Borrower"]);
+  } else {
+    return pick(row, ["Name","name","Buyer","Investor","Company","Entity"]) ||
+           pick(row, ["email","Email"]);
+  }
+}
+
+function normalize(row, kind, assignedUid, sourceTag) {
+  const title = titleFrom(row, kind) || (kind === "SellerLead" ? "Seller lead" : "Buyer lead");
+  return {
+    kind,
+    title,
+    ownerUid: assignedUid,
+    createdBy: ADMIN_UID,
+    status: "new",
+    source: sourceTag || "",
+    ts: DB.serverTs(),
+    raw: row
+  };
+}
+
+function renderPreview(rows) {
+  const table = document.getElementById("table");
+  if (!rows.length) { table.innerHTML = "<tr><td>No rows</td></tr>"; return;}
+  const headers = Object.keys(rows[0]);
+  table.innerHTML = `
+    <thead><tr>${headers.map(h=>`<th>${h}</th>`).join("")}</tr></thead>
+    <tbody>
+      ${rows.slice(0,25).map(r=>`<tr>${headers.map(h=>`<td>${(r[h]??"").toString().replace(/</g,"&lt;")}</td>`).join("")}</tr>`).join("")}
+    </tbody>
+  `;
+  document.getElementById("meta").textContent = `Detected ${rows.length} rows • Columns: ${headers.join(", ")}`;
+  document.getElementById("preview").style.display = "";
+}
+
+async function findUidByEmail(email) {
+  try {
+    const snap = await DB.db.ref("userSettings").get();
+    if (!snap.exists()) return null;
+    let found = null;
+    snap.forEach(ch => {
+      const v = ch.val();
+      if ((v.email||"").toLowerCase() === email.toLowerCase()) found = ch.key;
+    });
+    return found;
+  } catch (e) { console.error(e); return null; }
+}
+
+async function importRows(rows, kind, fallbackTargetUid, useCsvUid, sourceTag) {
+  const base = (uid) => DB.db.ref("dispo/"+uid+"/deals");
+  const bar  = document.getElementById("bar");
+  const log  = document.getElementById("log");
+  let ok=0, fail=0, i=0;
+
+  for (const r of rows) {
+    i++;
+    // Choose target uid
+    let target = fallbackTargetUid;
+    if (useCsvUid && r.ownerUid) target = String(r.ownerUid).trim();
+    if (!target && r.Email) { const guess = await findUidByEmail(String(r.Email)); if (guess) target = guess; }
+    if (!target) { fail++; log.textContent += `Row ${i}: no target UID — skipped\n`; continue; }
+
+    const obj = normalize(r, kind, target, sourceTag);
+    try {
+      const ref = base(target).push();
+      await ref.set(obj);
+      ok++;  log.textContent += `Row ${i}: ✔ ${obj.title}\n`;
+    } catch (e) {
+      fail++; log.textContent += `Row ${i}: ✖ ${e.message}\n`;
+    }
+    bar.textContent = `Imported ${ok} • Failed ${fail} • Processed ${i}/${rows.length}`;
+  }
+  bar.textContent += " • Done.";
+}
+
+document.addEventListener("db-ready", async () => {
+  DB.requireAuth(async (u) => {
+    ADMIN_UID = u.uid;
+    const admin = await DB.isAdmin();
+    if (!admin) {
+      document.getElementById("gate").innerHTML = "Admin only.";
+      return;
+    }
+    document.getElementById("gate").style.display = "none";
+    document.getElementById("content").style.display = "";
+
+    // Fill targetUid with self by default (you can override)
+    document.getElementById("targetUid").value = ADMIN_UID;
+
+    document.getElementById("previewBtn").onclick = () => {
+      const file = document.getElementById("file").files[0];
+      if (!file) return alert("Choose a CSV file first.");
+      Papa.parse(file, {
+        header:true, skipEmptyLines:true,
+        complete: (res) => {
+          CSV_ROWS = res.data || [];
+          renderPreview(CSV_ROWS);
+        }
+      });
     };
 
-    document.getElementById('go').onclick = async ()=>{
-      try{
-        const u = auth.currentUser; if(!u){ log('Please sign in'); return; }
-        if(!Array.isArray(window.leads)){ log('No leads array found in leads.js'); return; }
+    document.getElementById("importBtn").onclick = async () => {
+      if (!CSV_ROWS.length) return alert("Load a CSV and click Preview first.");
+      const kind = document.getElementById("kind").value;
+      const targetUid = document.getElementById("targetUid").value.trim();
+      const useCsvUid = document.getElementById("useCsvUid").checked;
+      const sourceTag = document.getElementById("sourceTag").value.trim();
 
-        const base = db.ref('acq/'+u.uid+'/leads');
-        const updates = {};
-        window.leads.forEach((L)=>{
-          const id = base.push().key;
-          updates[id] = L;
-        });
-        await base.update(updates);
-        log('Imported '+ window.leads.length + ' leads ✔');
-      }catch(e){ log('Import failed: '+(e.message||e)); }
+      document.getElementById("progress").style.display = "";
+      document.getElementById("bar").textContent = "Starting…";
+      document.getElementById("log").textContent = "";
+
+      await importRows(CSV_ROWS, kind, targetUid, useCsvUid, sourceTag);
     };
-  </script>
+  });
+});
+</script>
 </body>
 </html>
