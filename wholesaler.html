@@ -2,134 +2,69 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DealBankers • Acquisition</title>
+<meta name="viewport" content="width=device-width, initial-scale=1"/>
+<title>Wholesaler • Portal</title>
 <link rel="icon" href="images/db-badge.png"/>
 <style>
-  :root { --panel:#0f222c; --border:#1a3b4b; --muted:#8fb3c1; }
-  body{margin:0;background:radial-gradient(1200px 800px at 50% -100px,#183142 0%,#0b171e 55%,#071219 100%) fixed;color:#cfe6f1;font-family:Inter,system-ui,Segoe UI,Roboto}
-  .wrap{max-width:1100px;margin:36px auto;padding:0 16px}
-  .bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
-  .deck{background:#0f222c;border:1px solid #1a3b4b;border-radius:14px;padding:12px}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .btn{background:#143342;border:1px solid #245062;border-radius:999px;color:#e7f7ff;padding:8px 12px;text-decoration:none;display:inline-flex;align-items:center;gap:6px;cursor:pointer}
-  .btn.gold{background:#2e1f02;border-color:#5a3c0a;color:#ffd685}
-  .btn.red{background:#5d0f17;border-color:#8b111e}
-  .btn.blue{background:#123a66;border-color:#1c4d86}
-  .btn.green{background:#126a40;border-color:#15824f}
-  .pill{padding:6px 10px;border:1px solid #1a3b4b;border-radius:999px;background:#0f2934}
-  .muted{color:#8fb3c1}
-  /* modal */
-  dialog{border:none;border-radius:16px;background:#0f222c;color:#def2ff;border:1px solid #1a3b4b;max-width:560px;width:96%}
-  dialog::backdrop{background:rgba(0,0,0,.55)}
-  input,select,textarea{width:100%;background:#0c1f28;border:1px solid #254a5b;color:#d8eef9;border-radius:10px;padding:10px}
-  label{font-size:12px;color:#9fc7d7}
+  :root{--bg:#0f1a22;--panel:#13202a;--text:#cfe7ff}
+  html,body{background:var(--bg);color:var(--text);margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  .shell{max-width:1100px;margin:28px auto;padding:0 16px}
+  .bar{background:#1a2b36;border-radius:14px;padding:12px;display:flex;gap:10px;align-items:center;justify-content:space-between}
+  .btn{background:#233748;color:#d8ebff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
+  .btn.gold{background:#6b4b12;color:#ffd166}
+  .btn.red{background:#662424;color:#ffdede}
+  .btn.blue{background:#1f3b63;color:#d7e9ff}
+  .card{background:#13202a;border-radius:14px;padding:14px;margin-top:12px}
 </style>
 <script src="config.js"></script>
-<script src="app-auth.js"></script>
+<script src="app-auth.js" type="module"></script>
 </head>
 <body>
-<div class="wrap">
+<div class="shell">
   <div class="bar">
-    <div class="row" style="align-items:center">
-      <a href="profile.html" class="btn">← Back</a>
-      <span class="pill">DealBankers • Acquisition</span>
+    <div style="display:flex;gap:8px;align-items:center">
+      <button class="btn red" onclick="openImmediateSupport()">Immediate Support</button>
+      <button class="btn blue" onclick="openStandardSupport()">Standard Support</button>
+      <button class="btn gold" onclick="goto('claims-exchange.html')">Claims Exchange</button>
     </div>
-    <div class="row">
-      <a class="btn red" href="urgent-intake.html">Immediate Support</a>
-      <a class="btn blue" href="support.html">Standard Support</a>
-      <a class="btn gold" href="claims-exchange.html">Claims Exchange</a>
-      <button id="newItem" class="btn green">+ New Deal / Offer</button>
+    <div style="display:flex;gap:8px">
+      <button class="btn" onclick="goto('profile.html')">Back to Profile</button>
+      <button class="btn" onclick="logout()">Log Out</button>
     </div>
   </div>
 
-  <div class="deck">
-    <div class="row" style="align-items:center;justify-content:space-between">
-      <div class="row">
-        <span class="pill">Acq</span>
-        <span class="pill">Dispo</span>
-        <span class="pill">Realtor</span>
-      </div>
-      <span class="muted" id="gate">Loading…</span>
-    </div>
-
-    <div id="feed" class="muted" style="margin-top:8px">No items yet.</div>
+  <div class="card" id="gateMsg">Checking access…</div>
+  <div class="card" id="content" style="display:none">
+    <div>Acquisition & Disposition tools restored here. (Leads table loads after gate.)</div>
   </div>
 </div>
 
-<!-- New item modal -->
-<dialog id="modal">
-  <form id="form">
-    <h3 style="margin-top:0">New Deal / Offer</h3>
-    <div class="row">
-      <div style="flex:1">
-        <label>Kind</label>
-        <select id="kind">
-          <option value="Deal">Deal</option>
-          <option value="Offering">Offering</option>
-        </select>
-      </div>
-      <div style="flex:2">
-        <label>Title</label>
-        <input id="title" placeholder="Short title…"/>
-      </div>
-    </div>
-    <div style="margin-top:8px">
-      <label>Notes</label>
-      <textarea id="notes" rows="4" placeholder="Optional notes…"></textarea>
-    </div>
-    <div class="row" style="justify-content:flex-end;margin-top:10px">
-      <button type="button" onclick="document.getElementById('modal').close()">Close</button>
-      <button class="green" type="submit">Save</button>
-    </div>
-  </form>
-</dialog>
+<script type="module">
+import { ref, onValue } from "https://www.gstatic.com/firebasejs/10.12.4/firebase-database.js";
+const { gate, db, uid } = window;
 
-<script>
-document.addEventListener("db-ready", () => {
-  DB.requireAuth(async (u) => {
-    document.getElementById("gate").textContent = "Ready";
-    const base = DB.db.ref("dispo/"+u.uid+"/deals");
-
-    // Render list
-    base.on("value", (s) => {
-      if (!s.exists()) { document.getElementById("feed").textContent = "No items yet."; return; }
-      const items = [];
-      s.forEach(ch => items.push({id:ch.key, ...ch.val()}));
-      items.sort((a,b)=> (b.ts||0)-(a.ts||0));
-      document.getElementById("feed").innerHTML = items.map(it => `
-        <div class="deck" style="margin:8px 0">
-          <div class="row" style="justify-content:space-between">
-            <div><b>${it.kind}</b> — ${it.title||"(untitled)"} <span class="muted">• ${new Date(it.ts||Date.now()).toLocaleString()}</span></div>
-            <div class="muted">${it.status||"draft"}</div>
-          </div>
-          ${it.notes ? `<div class="muted" style="margin-top:6px">${(it.notes||"").replace(/</g,"&lt;")}</div>`:""}
-        </div>
-      `).join("");
+// Gate = wholesaler or admin
+gate({ role: "wholesaler" })
+  .then(async ()=>{
+    document.getElementById("gateMsg").style.display="none";
+    const content = document.getElementById("content");
+    content.style.display="";
+    // Example: live leads list for this user (or all if admin)
+    const u = uid();
+    const isAdmin = (await window.getRole(u)) === "admin";
+    const path = isAdmin ? "live/deals" : `dispo/${u}/deals`;
+    const c = document.createElement("div");
+    c.innerHTML = `<div style="opacity:.8">Loading from <code>${path}</code>…</div>`;
+    content.appendChild(c);
+    onValue(ref(db, path), (snap)=>{
+      const area = document.createElement("pre");
+      area.textContent = JSON.stringify(snap.val()||{}, null, 2);
+      c.replaceWith(area);
     });
-
-    // New item flow
-    const modal = document.getElementById("modal");
-    document.getElementById("newItem").onclick = () => modal.showModal();
-
-    document.getElementById("form").onsubmit = async (e) => {
-      e.preventDefault();
-      const title = document.getElementById("title").value.trim();
-      const kind  = document.getElementById("kind").value;
-      const notes = document.getElementById("notes").value.trim();
-      const ref = base.push();
-      await ref.set({
-        kind, title, notes,
-        uid: u.uid, email: u.email || "",
-        status: "draft",
-        ts: DB.serverTs()
-      });
-      modal.close();
-      alert("Saved!");
-      document.getElementById("form").reset();
-    };
+  })
+  .catch((e)=>{
+    document.getElementById("gateMsg").textContent = "Could not verify access right now. Try again shortly.";
   });
-});
 </script>
 </body>
 </html>
