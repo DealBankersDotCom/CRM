@@ -1,189 +1,83 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-<title>DealBankers • Town Hall</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Support Chat</title>
+<link rel="icon" href="images/db-icon-512.png"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 <style>
-  :root{
-    --bg:#0d1822; --panel:#0f1a24; --line:#1b2c3a;
-    --text:#e9eef2; --muted:#9fb3c7; --accent:#0d6efd; --accent2:#0a58ca;
-  }
-  *{box-sizing:border-box}
-  html,body{height:100%}
-  body{
-    margin:0; background:linear-gradient(135deg,#0b1218,#0e1a24 50%,#102434);
-    color:var(--text); font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;
-  }
-
-  /* Top bar (no hamburger) */
-  .bar{
-    display:flex; align-items:center; gap:12px;
-    padding:10px 12px; background:#0f1a24; border-bottom:1px solid var(--line);
-    position:sticky; top:0; z-index:10;
-  }
-  .brand{display:flex; align-items:center; gap:10px}
-  .brand img{width:34px;height:34px;border-radius:8px;object-fit:cover}
-  .brand h1{font-size:14px; letter-spacing:.12em; margin:0; color:#cfe2f3; text-transform:uppercase}
-
-  .spacer{flex:1}
-  .btn{
-    padding:8px 12px; border:1px solid var(--line); border-radius:10px;
-    background:#0f1a24; color:var(--text); cursor:pointer; font-weight:600;
-  }
-  .btn:hover{filter:brightness(1.06)}
-  .btn-primary{background:linear-gradient(180deg,var(--accent),var(--accent2)); border:none}
-
-  /* Room chips */
-  .rooms{
-    display:flex; gap:8px; padding:10px 12px; flex-wrap:wrap; background:#0f1a24; border-bottom:1px solid var(--line);
-  }
-  .chip{
-    padding:8px 12px; border:1px solid var(--line); border-radius:999px; cursor:pointer; color:#cfe2f3; background:#0f1a24;
-    font-size:13px
-  }
-  .chip.active{background:linear-gradient(180deg,var(--accent),var(--accent2)); color:#fff; border:none}
-
-  /* Utility row */
-  .utils{display:flex; gap:8px; padding:10px 12px; align-items:center; background:#0f1a24; border-bottom:1px solid var(--line)}
-  .utils input{
-    background:#09131a; border:1px solid var(--line); color:var(--text); border-radius:10px; padding:8px 10px; min-width:200px;
-  }
-
-  /* Chat area */
-  .wrap{height:calc(100vh - 156px);}
-  .wrap.full{height:calc(100vh - 112px);}
-  iframe{width:100%; height:100%; border:0; background:#fff}
-
-  /* Light mode */
-  .light body{background:#eef3f7;color:#0d1822}
-  .light .bar,.light .rooms,.light .utils{background:#ffffff; border-color:#e5e9ef}
-  .light .btn{background:#fff;color:#0d1822;border-color:#e5e9ef}
-  .light .chip{background:#fff;color:#0d1822;border-color:#e5e9ef}
-  .light .chip.active{color:#fff}
-  .light .utils input{background:#fff;color:#0d1822;border-color:#e5e9ef}
+:root{ --bg:#0b0f14; --panel:#10151d; --ink:#d6e1ff; --muted:#8aa0c6; --line:#1c2a3a; --glow:0 0 16px rgba(0,209,255,.25),0 0 2px rgba(0,209,255,.6);}
+*{box-sizing:border-box}
+body{margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial; color:var(--ink);
+  background: radial-gradient(1000px 700px at 70% 10%, #122034 0%, rgba(0,0,0,0) 60%), var(--bg);}
+.header{display:flex; align-items:center; justify-content:space-between; gap:12px; padding:12px 18px; border-bottom:1px solid var(--line);}
+.btn{display:inline-flex; align-items:center; justify-content:center; gap:8px; height:32px; padding:0 12px; border-radius:10px; border:1px solid #16314d;
+  background:linear-gradient(180deg,#0f1824,#0c1220); color:#eaf3ff; font-weight:600; cursor:pointer;}
+.main{max-width:900px; margin:0 auto; padding:18px; display:grid; gap:18px}
+.card{background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,0)); border:1px solid var(--line); border-radius:16px; padding:16px;}
+.msgs{border:1px solid var(--line); border-radius:12px; padding:10px; max-height:70vh; overflow:auto; background:#0e1622;}
+.msg{padding:6px 8px; border-bottom:1px dashed #223246}
+.msg:last-child{border-bottom:0}
+.input{display:flex; gap:8px; align-items:center}
+.input input{flex:1; background:#0e1622; border:1px solid #16314d; color:#eaf3ff; border-radius:10px; padding:10px; outline:none}
 </style>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
 </head>
 <body>
-  <!-- Top Bar -->
-  <div class="bar">
-    <div class="brand">
-      <img src="icon (1).jpg" alt="DealBankers">
-      <h1>DEALBANKERS • TOWN HALL</h1>
+<header class="header">
+  <div>Support • Townhall</div>
+  <div><a class="btn" href="profile.html">← Back</a></div>
+</header>
+
+<main class="main">
+  <div class="card">
+    <div id="msgs" class="msgs"></div>
+    <div class="input">
+      <input id="msgBox" placeholder="Type your message… (Enter to send)"/>
+      <button id="sendBtn" class="btn">Send</button>
     </div>
-    <div class="spacer"></div>
-    <button class="btn" onclick="location.href='index.html'">Home</button>
-    <button class="btn" onclick="location.href='profile.html'">Profile</button>
-    <button id="openBtn" class="btn">Open in New Tab</button>
-    <button id="fullBtn" class="btn">Fullscreen</button>
-    <button id="themeBtn" class="btn">Theme</button>
   </div>
-
-  <!-- Room Chips -->
-  <nav class="rooms" id="roomChips">
-    <!-- chips filled by JS -->
-  </nav>
-
-  <!-- Utilities -->
-  <div class="utils">
-    <input id="customRoom" placeholder="Join / create a room (e.g. san-antonio)" />
-    <button class="btn btn-primary" id="joinBtn">Join Room</button>
-    <div class="spacer"></div>
-    <button id="refreshBtn" class="btn">Refresh</button>
-    <button id="copyLinkBtn" class="btn">Copy Share Link</button>
-  </div>
-
-  <!-- Chat -->
-  <div class="wrap" id="chatWrap">
-    <iframe id="chatFrame" title="Town Hall Chat"></iframe>
-  </div>
+</main>
 
 <script>
-  // Rooms we offer as first-class chips
-  const ROOMS = [
-    { id:"dealbankers-townhall", label:"Town Hall" },
-    { id:"contractors",          label:"Contractors" },
-    { id:"wholesalers",          label:"Wholesalers" },
-    { id:"realtors",             label:"Realtors" },
-    { id:"investors",            label:"Investors" },
-    { id:"support",              label:"Support" },
-  ];
+let U=null;
+firebase.auth().onAuthStateChanged(async u => {
+  if (!u) return;
+  U=u; attach();
+});
 
-  const frame = document.getElementById('chatFrame');
-  const chips = document.getElementById('roomChips');
-  const wrap  = document.getElementById('chatWrap');
+function attach(){
+  const ref = firebase.database().ref('townhall/messages').limitToLast(200);
+  const list = document.getElementById('msgs');
+  ref.on('child_added', s => {
+    const m = s.val();
+    const el = document.createElement('div');
+    el.className = 'msg';
+    const t = new Date(m.ts||Date.now()).toLocaleString();
+    el.innerHTML = '<strong>'+esc(m.name||'Anon')+'</strong> <span style="color:#8aa0c6;font-size:11px">'+t+'</span><div>'+esc(m.text||'')+'</div>';
+    list.appendChild(el); list.scrollTop = list.scrollHeight;
+  });
 
-  // Build chips
-  function drawChips(activeId){
-    chips.innerHTML = "";
-    ROOMS.forEach(r=>{
-      const b = document.createElement('button');
-      b.className = 'chip' + (r.id===activeId ? ' active':'' );
-      b.textContent = r.label;
-      b.onclick = ()=> setRoom(r.id, true);
-      chips.appendChild(b);
-    });
+  function send(){
+    const box = document.getElementById('msgBox'); const txt = box.value.trim(); if (!txt) return;
+    firebase.database().ref('townhall/messages').push({
+      uid: U.uid, name: U.displayName || U.email || 'Anon', text: txt,
+      ts: firebase.database.ServerValue.TIMESTAMP
+    }).then(()=> box.value='');
   }
+  document.getElementById('sendBtn').addEventListener('click', send);
+  document.getElementById('msgBox').addEventListener('keydown', e => { if (e.key==='Enter'){ e.preventDefault(); send(); } });
+}
 
-  // Set iframe src and URL
-  function setRoom(roomId, push){
-    frame.src = `https://tlk.io/${roomId}`;
-    drawChips(roomId);
-    const url = new URL(location.href);
-    url.searchParams.set('room', roomId);
-    if (push) history.replaceState(null,'',url.toString());
-    // Update "Open" handler
-    document.getElementById('openBtn').onclick = ()=> window.open(`https://tlk.io/${roomId}`, '_blank');
-  }
-
-  // From URL or default
-  const initial = new URL(location.href).searchParams.get('room') || ROOMS[0].id;
-  setRoom(initial, false);
-
-  // Join custom room
-  document.getElementById('joinBtn').addEventListener('click', ()=>{
-    const v = (document.getElementById('customRoom').value || '').trim().toLowerCase().replace(/\s+/g,'-');
-    if(!v) return;
-    setRoom(v, true);
-  });
-
-  // Utilities
-  document.getElementById('refreshBtn').addEventListener('click', ()=> frame.contentWindow.location.reload());
-  document.getElementById('fullBtn').addEventListener('click', ()=>{
-    wrap.classList.toggle('full');
-    document.getElementById('fullBtn').textContent = wrap.classList.contains('full') ? 'Exit Fullscreen' : 'Fullscreen';
-  });
-  document.getElementById('copyLinkBtn').addEventListener('click', async ()=>{
-    try{
-      await navigator.clipboard.writeText(location.href);
-      document.getElementById('copyLinkBtn').textContent = 'Link Copied!';
-      setTimeout(()=> document.getElementById('copyLinkBtn').textContent='Copy Share Link', 1200);
-    }catch(e){}
-  });
-
-  // Theme toggle (soft)
-  const themeBtn = document.getElementById('themeBtn');
-  let light = false;
-  themeBtn.addEventListener('click', ()=>{
-    light = !light;
-    document.documentElement.classList.toggle('light', light);
-    themeBtn.textContent = light ? 'Dark' : 'Theme';
-  });
-
-  // Keyboard: 1..6 switch rooms, R refresh, F full
-  document.addEventListener('keydown', (e)=>{
-    if(e.target.tagName === 'INPUT') return;
-    if(e.key >= '1' && e.key <= '6'){
-      const idx = Number(e.key)-1;
-      if(ROOMS[idx]) setRoom(ROOMS[idx].id, true);
-    }else if(e.key.toLowerCase() === 'r'){
-      frame.contentWindow.location.reload();
-    }else if(e.key.toLowerCase() === 'f'){
-      document.getElementById('fullBtn').click();
-    }
-  });
+function esc(s){ return (''+(s||'')).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])); }
 </script>
 </body>
 </html>
-```
