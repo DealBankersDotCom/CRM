@@ -1,9 +1,9 @@
-﻿<!doctype html>
+<!doctype html>
 <html lang="en">
 <head>
 <meta charset="utf-8"/>
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Claims Admin â€¢ DealBankers</title>
+<title>Claims Admin • DealBankers</title>
 <link rel="icon" href="images/icon (1).jpg">
 <style>
   body{margin:0;background:#0f1a22;color:#e6eff5;font-family:system-ui,-apple-system,Segoe UI,Inter,Roboto,Arial}
@@ -31,31 +31,11 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
 .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 
 </style>
-<style>
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
-background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06));position:sticky;top:0;z-index:1000}
-.nav{display:flex;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
-background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration:none;font-weight:700;cursor:pointer}
-.chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a)}
-.chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31)}
-.active-chip{outline:2px solid #5db6ff; box-shadow:0 0 0 3px rgba(93,182,255,.18)}
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
-.modal{background:#0f1b27;border:1px solid #254a63;border-radius:16px;max-width:520px;width:92%;box-shadow:0 28px 70px rgba(0,0,0,.55);padding:16px}
-.modal h3{margin:0 0 8px}.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
-.modal label{font-size:14px;color:#cfe3ff}.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid #254a63;border-radius:10px;background:#0d1f2d;color:#eaf6ff}
-.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-</style>
 </head>
 <body data-portal="admin">
 
 <header class="header">
-  <nav class="nav">
-    <a class="chip active-chip" href="wholesaler.html">Wholesaler</a>
-    <a class="chip" href="contractor.html">Contractor</a>
-    <a class="chip" href="realtor.html">Realtor</a>
-    <a class="chip" href="settings.html">Settings</a>
-  </nav>
+  <div>DEALBANKERS • Portal</div>
   <nav class="nav">
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
     <button class="chip" id="btnBlue">🌀 Blue Phone</button>
@@ -84,114 +64,10 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
   </div>
 </div>
 <script>
-(function(){
-  const portal = "wholesaler";
-  function showModal(urgent){
-    document.getElementById('rbTitle').textContent = urgent ? "🚨 Urgent Request" : "Blue Phone Request";
-    document.getElementById('rbModal').style.display='flex';
-    document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
-  }
-  function hideModal(){ document.getElementById('rbModal').style.display='none'; }
-  document.addEventListener('click',function(e){
-    if(e.target.id==='btnRed') showModal(true);
-    if(e.target.id==='btnBlue') showModal(false);
-    if(e.target.id==='rbCancel' || e.target.id==='rbModal') hideModal();
-    if(e.target.id==='logoutBtn'){ try{ firebase.auth().signOut(); }catch(_){ } }
-    if(e.target.id==='rbSubmit')(async function(){
-      const cat = document.getElementById('rbCategory').value;
-      const subject = document.getElementById('rbSubject').value.trim();
-      const details = document.getElementById('rbDetails').value.trim();
-      const urgent = (document.getElementById('rbSubmit').dataset.urgent==='1');
-      let uid=null,email=null; try{ const u=firebase.auth().currentUser; if(u){uid=u.uid;email=u.email;} }catch(_){}
-      try{
-        await firebase.database().ref('requests').push({
-          portal, cat, subject, details, urgent, uid, email,
-          ts: firebase.database.ServerValue.TIMESTAMP
-        });
-        alert('Request sent. We will respond shortly.'); hideModal();
-        document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
-      }catch(err){ console.error(err); alert('Could not send.'); }
-    })();
-  });
-})();
-</script>
-<div class="modal-backdrop" id="rbModal">
-  <div class="modal">
-    <h3 id="rbTitle">Request</h3>
-    <div class="row"><label>Category</label>
-      <select id="rbCategory">
-        <option>Acquisition</option>
-        <option>Sales</option>
-        <option>Contractor</option>
-        <option>Realtor</option>
-        <option>Website</option>
-      </select>
-    </div>
-    <div class="row"><label>Subject</label><input id="rbSubject" placeholder="Short summary"/></div>
-    <div class="row"><label>Details</label><textarea id="rbDetails" rows="4" placeholder="What do you need?"></textarea></div>
-    <div class="actions">
-      <button class="chip" id="rbCancel">Cancel</button>
-      <button class="chip primary" id="rbSubmit">Send</button>
-    </div>
-  </div>
-</div>
-<script>
-(function(){
-  const portal = "wholesaler";
-  function showModal(urgent){
-    document.getElementById('rbTitle').textContent = urgent ? "🚨 Urgent Request" : "Blue Phone Request";
-    document.getElementById('rbModal').style.display='flex';
-    document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
-  }
-  function hideModal(){ document.getElementById('rbModal').style.display='none'; }
-  document.addEventListener('click',function(e){
-    if(e.target.id==='btnRed') showModal(true);
-    if(e.target.id==='btnBlue') showModal(false);
-    if(e.target.id==='rbCancel' || e.target.id==='rbModal') hideModal();
-    if(e.target.id==='logoutBtn'){ try{ firebase.auth().signOut(); }catch(_){ } }
-    if(e.target.id==='rbSubmit')(async function(){
-      const cat = document.getElementById('rbCategory').value;
-      const subject = document.getElementById('rbSubject').value.trim();
-      const details = document.getElementById('rbDetails').value.trim();
-      const urgent = (document.getElementById('rbSubmit').dataset.urgent==='1');
-      let uid=null,email=null; try{ const u=firebase.auth().currentUser; if(u){uid=u.uid;email=u.email;} }catch(_){}
-      try{
-        await firebase.database().ref('requests').push({
-          portal, cat, subject, details, urgent, uid, email,
-          ts: firebase.database.ServerValue.TIMESTAMP
-        });
-        alert('Request sent. We will respond shortly.'); hideModal();
-        document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
-      }catch(err){ console.error(err); alert('Could not send.'); }
-    })();
-  });
-})();
-</script>
-<div class="modal-backdrop" id="rbModal">
-  <div class="modal">
-    <h3 id="rbTitle">Request</h3>
-    <div class="row"><label>Category</label>
-      <select id="rbCategory">
-        <option>Acquisition</option>
-        <option>Sales</option>
-        <option>Contractor</option>
-        <option>Realtor</option>
-        <option>Website</option>
-      </select>
-    </div>
-    <div class="row"><label>Subject</label><input id="rbSubject" placeholder="Short summary"/></div>
-    <div class="row"><label>Details</label><textarea id="rbDetails" rows="4" placeholder="What do you need?"></textarea></div>
-    <div class="actions">
-      <button class="chip" id="rbCancel">Cancel</button>
-      <button class="chip primary" id="rbSubmit">Send</button>
-    </div>
-  </div>
-</div>
-<script>
   (function(){
     const portal = "admin";
     function showModal(urgent){
-      document.getElementById('rbTitle').textContent = urgent ? "ðŸš¨ Urgent Request" : "Blue Phone Request";
+      document.getElementById('rbTitle').textContent = urgent ? "🚨 Urgent Request" : "Blue Phone Request";
       document.getElementById('rbModal').style.display='flex';
       document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
     }
@@ -228,7 +104,7 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
 
 <div class="wrap">
   <h1>Claims Admin</h1>
-  <div id="gate" class="card">Checking admin roleâ€¦</div>
+  <div id="gate" class="card">Checking admin role…</div>
   <div id="grid" class="card" style="display:none">
     <table>
       <thead>
@@ -283,7 +159,7 @@ script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.j
         <td>${m.title||''}</td>
         <td>${who}</td>
         <td>${m.status||'draft'}</td>
-        <td>${f.map(d=>`<a href="${d.url}" target="_blank">${d.name}</a>`).join(' Â· ')||'-'}</td>
+        <td>${f.map(d=>`<a href="${d.url}" target="_blank">${d.name}</a>`).join(' · ')||'-'}</td>
         <td>
           <div style="display:flex;gap:6px;flex-wrap:wrap">
             <input id="who-${id}" placeholder="email or UID" />
@@ -318,5 +194,3 @@ script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.j
 </script>
 </body>
 </html>
-
-
