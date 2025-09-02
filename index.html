@@ -41,7 +41,7 @@
   /* Shell */
   .shell{max-width:1180px;margin:16px auto;padding:0 12px}
 
-  /* --- HERO / MP4 player with watermark hiders + fallback --- */
+  /* --- HERO: HTML5 video (CapCut MP4) + watermark masks + poster fallback --- */
   .hero{position:relative;margin:16px 0 6px}
   .hero .badge{
     position:absolute; z-index:3; left:12px; top:10px;
@@ -54,15 +54,17 @@
     background:#0c1622; box-shadow:var(--shadow);
   }
   .hero video,.hero .poster{position:absolute; inset:0; width:100%; height:100%; border:0}
+  .hero video{display:none; background:#000}
   .hero .poster{
-    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px;
     background:#0b1218 url('images/marketing-poster.jpg') center/cover no-repeat;
-    border-radius:16px;
   }
   .hero .poster .play{
     background:#ffffff; color:#102433; border:0; font-weight:800; cursor:pointer;
     padding:10px 14px; border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,.35);
   }
+  .hero .poster small{color:#9db2c7}
+
   /* Watermark masks sit ABOVE the video */
   .hero .wm-mask{
     position:absolute; z-index:2; pointer-events:none;
@@ -85,7 +87,8 @@
   }
   .lead h2{margin:0;font-size:18px}
   .lead small{color:#9db2c7}
-  .lead .actions{display:flex;gap:8px;flex-wrap:wrap}
+  .lead .actions{display:none;gap:8px;flex-wrap:wrap}
+  body.authed .lead .actions{display:flex}
 
   /* Featured grid */
   .grid{
@@ -180,22 +183,28 @@
 </header>
 
 <div class="shell">
-  <!-- HERO: direct MP4 + masks; automatic fallback to CapCut share page -->
+  <!-- HERO -->
   <section class="hero" aria-label="Promo">
     <span class="badge">Wholesale &amp; discounts • updated</span>
-    <div class="ratio" id="videoShell">
-      <!-- Masks to hide CapCut corner logos -->
+
+    <div class="ratio" id="videoWrap">
+      <!-- watermark hiders -->
       <div class="wm-mask wm-bl"></div>
       <div class="wm-mask wm-tr"></div>
       <div class="frame-edge"></div>
 
-      <!-- MP4 player -->
-      <video id="dbVid" playsinline controls poster="images/marketing-poster.jpg"></video>
+      <!-- HTML5 video (direct MP4 from CapCut) -->
+      <video id="promoVideo" preload="metadata" controls playsinline poster="images/marketing-poster.jpg">
+        <!-- Origin / 1080p -->
+        <source src="https://v16-cc.capcut.com/637cc72a2eac9e13ac5a76069579c94a/68b79c02/video/tos/alisg/tos-alisg-v-178310-sg/1bfedc75792944ee8cf388da7b90ff17/?a=348188&bti=MzQ8NWY1MTA6&ch=0&cr=0&dr=0&er=0&lr=default&&br=0&bt=0&ft=GAAO2Inz7ThmQr1KXq8Zmo&mime_type=video_mp4&rc=QGlAYSNz&vvpl=1&l=2025090303380916D7F5DF166EB25BFD22" type="video/mp4">
+        <!-- 480p fallback -->
+        <source src="https://v16-cc.capcut.com/8010f600b87d4e534bb2cfc11278aafa/68b79c02/video/tos/alisg/tos-alisg-v-178310-sg/40a7bf07bb7e48ff9ea200a829be3d2a/?a=348188&bti=MzQ8NWY1MTA6&ch=0&cr=0&dr=0&er=0&lr=default&&br=0&bt=0&ft=GAAO2Inz7ThmQr1KXq8Zmo&mime_type=video_mp4&rc=QGlAYSNz&vvpl=1&l=2025090303380916D7F5DF166EB25BFD22" type="video/mp4">
+      </video>
 
-      <!-- Fallback poster/button if the tokenized MP4 fails -->
-      <div class="poster" id="fallbackPoster" style="display:none">
-        <button class="play" id="watchCapcut">▶ Watch</button>
-        <small style="color:#9db2c7">If the embed is blocked, watch on CapCut.</small>
+      <!-- fallback poster if the above source ever fails -->
+      <div class="poster" id="videoPoster">
+        <button class="play" id="watchBtn">▶ Watch</button>
+        <small>If the embed is blocked, watch on CapCut.</small>
       </div>
     </div>
   </section>
@@ -263,7 +272,7 @@
         Wholesalers &amp; Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <b>210-941-4149</b>.
       </div>
 
-      <!-- Swift Sell blocks (concise; extend as needed) -->
+      <!-- Swift Sell blocks (sample; extend as needed) -->
       <details open>
         <summary>Mobile Homes to be Moved</summary>
         <div class="section">
@@ -283,8 +292,6 @@
           Pictures: <a class="link" href="https://drive.google.com/drive/folders/1dkmwEWVhW3TIwMG5j-45uBGtfGzkf1R7?usp=drive_link" target="_blank">Drive folder</a>
         </div>
       </details>
-
-      <!-- Add more Swift Sell sections later as needed -->
     </section>
 
     <!-- Secure Access card -->
@@ -312,34 +319,41 @@
 </div>
 
 <script>
-  // ---- HERO video: tokenized MP4 with graceful fallback to CapCut share page
-  // From your CapCut page source (player_480p.main_url). These links expire over time.
-  const MP4_URL = "https://v16-cc.capcut.com/637cc72a2eac9e13ac5a76069579c94a/68b79c02/video/tos/alisg/tos-alisg-v-178310-sg/1bfedc75792944ee8cf388da7b90ff17/?a=348188&bti=MzQ8NWY1MTA6&ch=0&cr=0&dr=0&er=0&lr=default&&br=0&bt=0&ft=GAAO2Inz7ThmQr1KXq8Zmo&mime_type=video_mp4&rc=QGlAYSNz&vvpl=1&l=2025090303380916D7F5DF166EB25BFD22";
-  const CAPCUT_SHARE = "https://www.capcut.com/sv2/ZSHtfLoP7H6nS-52ZGA/";
-
+  // ---- Promo video boot: show MP4 if it loads, else poster+CapCut link
   (function(){
-    const video   = document.getElementById('dbVid');
-    const poster  = document.getElementById('fallbackPoster');
-    const btnOpen = document.getElementById('watchCapcut');
+    const video  = document.getElementById('promoVideo');
+    const poster = document.getElementById('videoPoster');
+    const btn    = document.getElementById('watchBtn');
+    const capcutShare = "https://www.capcut.com/sv2/ZSHtfLoP7H6nS-52ZGA/";
+    btn.onclick = ()=> window.open(capcutShare, "_blank");
 
-    // try MP4
-    video.src = MP4_URL;
+    let shown = false;
+    const ok = () => {
+      if (shown) return;
+      shown = true;
+      poster.style.display = 'none';
+      video.style.display  = 'block';
+    };
+    const fail = () => {
+      if (shown) return;
+      // keep poster; optionally pre-open a new tab if user taps the poster button
+      poster.style.display = 'flex';
+      video.style.display  = 'none';
+    };
 
-    // If the tokenized MP4 fails (blocked/expired), reveal fallback poster
-    const showFallback = ()=>{ poster.style.display='flex'; };
-    let canplay = false;
-    video.addEventListener('canplay', ()=>{ canplay = true; }, { once:true });
-    video.addEventListener('error', showFallback, { once:true });
-    setTimeout(()=>{ if(!canplay) showFallback(); }, 2500);
-
-    btnOpen.addEventListener('click', ()=> window.open(CAPCUT_SHARE, "_blank"));
+    // if it can play, show it
+    video.addEventListener('loadeddata', ok, { once:true });
+    video.addEventListener('canplay', ok, { once:true });
+    video.addEventListener('error', fail, { once:true });
+    // safety timeout
+    setTimeout(()=>{ if (!shown) fail(); }, 2500);
   })();
 
-  // ---- Auth card
+  // ---- Auth: show extra chips only when signed-in
   (function(){
     const btn = document.getElementById('googleBtn');
     const statusEl = document.querySelector('[data-auth-status]');
-    function set(s){ if(statusEl) statusEl.textContent = s; }
+    function set(s){ if(statusEl) statusEl.textContent = s; document.body.classList.toggle('authed', s==='signed in'); }
     btn?.addEventListener('click', async ()=>{
       try{
         const p = new firebase.auth.GoogleAuthProvider();
@@ -356,7 +370,7 @@
     firebase.auth().onAuthStateChanged(u=> set(u?'signed in':'signed out'));
   })();
 
-  // ---- Lightbox galleries (hard-coded)
+  // ---- Lightbox galleries (hard-coded SRCs to your GitHub-hosted images)
   const galleries = {
     booth: [
       'images/deals/booth-st/20250124_171714.jpg',
@@ -389,6 +403,7 @@
   let curKey = null, curIdx = 0;
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
+
   function openLb(key, idx){
     const list = galleries[key]; if(!list) return;
     curKey = key; curIdx = idx||0;
