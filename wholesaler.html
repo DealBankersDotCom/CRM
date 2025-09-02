@@ -22,12 +22,7 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
 table{width:100%;border-collapse:collapse;font-size:14px}th,td{border-top:1px solid rgba(255,255,255,.2);padding:10px;text-align:left}thead th{border-top:0;color:#cfe3ff}
 .status{font-size:12px;color:#8fb3d1}.adminbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:8px}
 
-/* --- Global header + chips + modal (RB phone) --- */
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
-background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
-.nav{display:flex;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
-background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration:none;font-weight:700;cursor:pointer}
+/* Blue/Red phone modal */
 .chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a);}
 .chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31);}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
@@ -36,22 +31,36 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
 .modal label{font-size:14px;color:#cfe3ff}.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid #254a63;border-radius:10px;background:#0d1f2d;color:#eaf6ff}
 .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 
+/* Lead choice modal (same look as profile) */
+.modal.wide{max-width:720px}
+.lead-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px}
+.lead-card{border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px;background:#0e2332;cursor:pointer}
+.lead-card h4{margin:0 0 6px;font-size:16px}
+.lead-card p{margin:0;font-size:12px;color:#a8c3db}
+.helper{font-size:12px;color:#9fbed8;margin-top:8px;text-align:right}
+.helper a{color:#bfe3ff;text-decoration:underline;cursor:pointer}
 </style>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-<script src="config.js"></script><script src="app-auth.js"></script></head><body data-portal="wholesaler">
+<script src="config.js"></script><script src="app-auth.js"></script></head>
+<body data-portal="wholesaler">
 
 <header class="header">
   <div>DEALBANKERS • Portal</div>
   <nav class="nav">
+    <a class="chip" href="profile.html">Profile</a>
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
+    <button class="chip" id="btnGetLeads">Get Leads</button>
     <button class="chip" id="btnBlue">🌀 Blue Phone</button>
     <button class="chip danger" id="btnRed">🚨 Red Phone</button>
     <a class="chip" id="logoutBtn">Log Out</a>
   </nav>
 </header>
+
+<!-- Blue/Red Phone Modal -->
 <div class="modal-backdrop" id="rbModal">
   <div class="modal">
     <h3 id="rbTitle">Request</h3>
@@ -72,44 +81,30 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
     </div>
   </div>
 </div>
-<script>
-  (function(){
-    const portal = "wholesaler";
-    function showModal(urgent){
-      document.getElementById('rbTitle').textContent = urgent ? "🚨 Urgent Request" : "Blue Phone Request";
-      document.getElementById('rbModal').style.display='flex';
-      document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
-    }
-    function hideModal(){ document.getElementById('rbModal').style.display='none'; }
-    document.addEventListener('click',function(e){
-      if(e.target.id==='btnRed') showModal(true);
-      if(e.target.id==='btnBlue') showModal(false);
-      if(e.target.id==='rbCancel' || e.target.id==='rbModal') hideModal();
-      if(e.target.id==='logoutBtn') { try{ firebase.auth().signOut(); }catch(e){} }
-      if(e.target.id==='rbSubmit') (async function(){
-          const cat = document.getElementById('rbCategory').value;
-          const subject = document.getElementById('rbSubject').value.trim();
-          const details = document.getElementById('rbDetails').value.trim();
-          const urgent = e.target.dataset.urgent==='1';
-          let uid=null, email=null;
-          try{ const u=firebase.auth().currentUser; if(u){uid=u.uid; email=u.email;} }catch(_){}
-          try{
-            const payload = {
-              portal, cat, subject, details, urgent,
-              uid, email,
-              ts: firebase.database.ServerValue.TIMESTAMP
-            };
-            await firebase.database().ref('requests').push(payload);
-            alert('Request sent. We will respond shortly.');
-            hideModal();
-            document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
-          }catch(err){
-            console.error(err); alert('Could not send. Check your connection.');
-          }
-      })();
-    });
-  })();
-</script>
+
+<!-- Get Leads Modal -->
+<div class="modal-backdrop" id="leadsModal">
+  <div class="modal wide">
+    <h3>Get Leads</h3>
+    <div class="lead-grid">
+      <div class="lead-card" data-lead="street">
+        <h4>Street</h4>
+        <p>Partner with DealBankers boots-on-ground—or add your own street deals into CRM.</p>
+      </div>
+      <div class="lead-card" data-lead="web">
+        <h4>Web</h4>
+        <p>Run click campaigns via a vendor partner to fill your pipeline.</p>
+      </div>
+      <div class="lead-card" data-lead="live">
+        <h4>Live</h4>
+        <p>Partner with another DealBankers user for live inbound opportunities.</p>
+      </div>
+    </div>
+    <div class="helper">
+      <a id="closeLeads">Close</a>
+    </div>
+  </div>
+</div>
 
 <div class="wrap">
   <section class="card">
@@ -132,27 +127,37 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
     </div>
   </section>
 </div>
+
 <script>
 let UID=null, IS_ADMIN=false, VIEW_AS=null; let sRef=null, bRef=null;
+
 firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return; UID=u.uid;
   const r=await firebase.database().ref('roles/'+UID).get(); IS_ADMIN=r.exists() && r.val()==='admin';
   document.getElementById('adminBar').style.display = IS_ADMIN ? 'flex' : 'none';
   const hash=location.hash.replace('#',''); if(hash==='dispo') switchMode('dispo'); else switchMode('acq');
 });
-document.getElementById('tabAcq').onclick=()=>switchMode('acq'); document.getElementById('tabDispo').onclick=()=>switchMode('dispo');
+
+document.getElementById('tabAcq').onclick=()=>switchMode('acq'); 
+document.getElementById('tabDispo').onclick=()=>switchMode('dispo');
 document.getElementById('applyImp').onclick=()=>{ VIEW_AS=document.getElementById('impUid').value.trim()||null; subscribe(); };
 document.getElementById('clearImp').onclick=()=>{ VIEW_AS=null; document.getElementById('impUid').value=''; subscribe(); };
 document.getElementById('s_reload').onclick=subscribe; document.getElementById('b_reload').onclick=subscribe;
 
-function switchMode(m){ document.getElementById('tabAcq').classList.toggle('active',m==='acq');
+document.getElementById('logoutBtn').onclick=()=>firebase.auth().signOut().then(()=>location.href='index.html');
+
+function switchMode(m){ 
+  document.getElementById('tabAcq').classList.toggle('active',m==='acq');
   document.getElementById('tabDispo').classList.toggle('active',m==='dispo');
   document.getElementById('panel-acq').style.display=m==='acq'?'block':'none';
   document.getElementById('panel-dispo').style.display=m==='dispo'?'block':'none';
-  document.getElementById('crumb').textContent=(m==='acq'?'Acquisition':'Disposition'); subscribe();
+  document.getElementById('crumb').textContent=(m==='acq'?'Acquisition':'Disposition'); 
+  subscribe();
 }
 function activeUid(){ return (IS_ADMIN && VIEW_AS)?VIEW_AS:UID; }
 function setStatus(t){ document.getElementById('status').textContent=t; }
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+
 function subscribe(){
   if(!UID) return;
   if(sRef) sRef.off(); if(bRef) bRef.off();
@@ -164,15 +169,74 @@ function subscribe(){
 }
 function renderS(o){
   const q=(document.getElementById('s_q').value||'').toLowerCase();
-  const rows=Object.entries(o).map(([id,v])=>({id,...v})).filter(v=>!q||(v.address||'').toLowerCase().includes(q)||(v.owner||'').toLowerCase().includes(q))
+  const rows=Object.entries(o).map(([id,v])=>({id,...v}))
+    .filter(v=>!q||(v.address||'').toLowerCase().includes(q)||(v.owner||'').toLowerCase().includes(q))
     .map(v=>`<tr><td>${esc(v.address)}</td><td>${esc(v.owner||'')}</td><td>${esc(v.phone||'')}</td><td>${esc(v.status||'new')}</td><td>${esc(v.notes||'')}</td></tr>`).join('');
   document.getElementById('sellerRows').innerHTML = rows || '<tr><td colspan="5" class="status">No assigned seller leads yet.</td></tr>';
 }
 function renderB(o){
   const q=(document.getElementById('b_q').value||'').toLowerCase();
-  const rows=Object.entries(o).map(([id,v])=>({id,...v})).filter(v=>!q||(v.name||'').toLowerCase().includes(q)||(v.criteria||'').toLowerCase().includes(q))
+  const rows=Object.entries(o).map(([id,v])=>({id,...v}))
+    .filter(v=>!q||(v.name||'').toLowerCase().includes(q)||(v.criteria||'').toLowerCase().includes(q))
     .map(v=>`<tr><td>${esc(v.name||'')}</td><td>${esc(v.phone||'')}</td><td>${esc(v.criteria||'')}</td><td>${esc(v.status||'new')}</td><td>${esc(v.notes||'')}</td></tr>`).join('');
   document.getElementById('buyerRows').innerHTML = rows || '<tr><td colspan="5" class="status">No assigned buyer leads yet.</td></tr>';
 }
-function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-</script></body></html>
+
+/* Blue/Red phone modal */
+(function(){
+  function showModal(urgent){
+    document.getElementById('rbTitle').textContent = urgent ? "🚨 Urgent Request" : "Blue Phone Request";
+    document.getElementById('rbModal').style.display='flex';
+    document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
+  }
+  function hideModal(){ document.getElementById('rbModal').style.display='none'; }
+  document.addEventListener('click',function(e){
+    if(e.target.id==='btnRed') return showModal(true);
+    if(e.target.id==='btnBlue') return showModal(false);
+    if(e.target.id==='rbCancel' || e.target.id==='rbModal') return hideModal();
+    if(e.target.id==='rbSubmit') (async function(){
+      try{
+        const u=firebase.auth().currentUser||{};
+        await firebase.database().ref('requests').push({
+          portal:'wholesaler',
+          cat: document.getElementById('rbCategory').value,
+          subject: (document.getElementById('rbSubject').value||'').trim(),
+          details: (document.getElementById('rbDetails').value||'').trim(),
+          urgent: document.getElementById('rbSubmit').dataset.urgent==='1',
+          uid:u.uid||null, email:u.email||null,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
+        alert('Request sent. We will respond shortly.');
+        hideModal();
+        document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
+      }catch(err){ console.error(err); alert('Could not send. Check your connection.'); }
+    })();
+  });
+})();
+
+/* Get Leads modal (in-portal) */
+(function(){
+  const leadsModal = document.getElementById('leadsModal');
+  function openLeads(){ leadsModal.style.display='flex'; }
+  function closeLeads(){ leadsModal.style.display='none'; }
+
+  document.getElementById('btnGetLeads').addEventListener('click',openLeads);
+  document.getElementById('leadsModal').addEventListener('click', async (e)=>{
+    if(e.target.id==='leadsModal' || e.target.id==='closeLeads') return closeLeads();
+    const card = e.target.closest('.lead-card');
+    if(card){
+      const type = card.dataset.lead;  // street | web | live
+      try{
+        const u=firebase.auth().currentUser||{};
+        await firebase.database().ref('lead_requests').push({
+          portal:'wholesaler', type, uid:u.uid||null, email:u.email||null,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
+        alert('Request received. We’ll reach out with next steps.');
+      }catch(err){ console.error(err); alert('Could not send request.'); }
+      closeLeads();
+    }
+  });
+})();
+</script>
+</body></html>
