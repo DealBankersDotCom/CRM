@@ -23,7 +23,7 @@ body{
 a{color:inherit;text-decoration:none}
 button{font-family:inherit}
 
-/* ===== Header (claims exchange + brand) ===== */
+/* ===== Header ===== */
 .header{
   display:flex;align-items:center;justify-content:space-between;
   padding:12px 16px;border-bottom:1px solid var(--line);
@@ -32,11 +32,11 @@ button{font-family:inherit}
 .brand{display:flex;align-items:center;gap:10px}
 .logo{width:36px;height:36px;border-radius:10px;object-fit:cover;box-shadow:0 6px 20px rgba(0,0,0,.35)}
 .brand h1{font-size:18px;margin:0}
-.header .nav{display:flex;gap:8px}
+.header .nav{display:flex;gap:8px;flex-wrap:wrap}
 .chip{
   display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;
   border:1px solid rgba(255,255,255,.22);background:linear-gradient(180deg,#111f2c,#0d1823);
-  color:#eaf6ff;font-weight:700;cursor:pointer
+  color:#eaf6ff;font-weight:700;cursor:pointer;white-space:nowrap
 }
 .chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31)}
 .chip.accent{border-color:#2b9ec2;background:#0e2a39}
@@ -58,7 +58,7 @@ button{font-family:inherit}
 .hero p{margin:0;color:var(--muted);font-size:13px}
 .hero-ctas{display:flex;gap:8px;flex-wrap:wrap}
 
-/* sign-in card (right column) — kept intact look & ids */
+/* sign-in card (right) — IDs/logic preserved */
 .card{
   background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0));
   border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)
@@ -95,17 +95,17 @@ button{font-family:inherit}
   min-width:280px;max-width:280px;border:1px solid var(--line);border-radius:14px;overflow:hidden;scroll-snap-align:start;
   background:#0e1a26
 }
-.card-deal .img{
-  position:relative;height:170px;background:#0c1620;display:grid;place-items:center
-}
+.card-deal .img{position:relative;height:170px;background:#0c1620;display:grid;place-items:center}
 .card-deal img{width:100%;height:100%;object-fit:cover;display:block}
-.card-deal .badge{position:absolute;left:8px;top:8px;background:#0d2740;color:#bfe3ff;font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
+.card-deal .badge{position:absolute;left:8px;top:8px;background:#0d2740;color:#bfe3ff;font-size:11px;padding:4px 8px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.18)}
 .card-deal .body{padding:10px}
 .addr{font-weight:800;margin:0 0 4px 0}
 .meta{color:#a8bfdc;font-size:12px;margin-bottom:8px}
 .btngrid{display:flex;gap:8px}
 .btn{
-  display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:#0f2232;color:#eaf6ff;font-weight:700;cursor:pointer
+  display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line);
+  background:#0f2232;color:#eaf6ff;font-weight:700;cursor:pointer
 }
 .btn.primary{background:linear-gradient(180deg,#2b74ff,#0a58ca)}
 .btn.ghost{background:#0e1a26}
@@ -122,6 +122,22 @@ button{font-family:inherit}
 .pbox h3{margin:0 0 8px}
 .pbox .grid{display:flex;gap:8px;flex-wrap:wrap}
 .pbox .chip{background:#0e2231}
+
+/* inventory blocks (collapsible) */
+.section{
+  max-width:1200px;margin:18px auto;padding:0 18px 18px
+}
+details.inv{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:#0e1a26}
+details.inv>summary{
+  list-style:none;cursor:pointer;padding:12px 14px;font-weight:800;border-bottom:1px solid var(--line)
+}
+details.inv>summary::-webkit-details-marker{display:none}
+.inv-body{padding:12px 14px}
+.inv h4{margin:8px 0 6px}
+.inv p{margin:6px 0;color:#bdd1ef}
+.inv .list{font-size:14px;color:#cfe2ff}
+.inv a{color:#78d7ff;text-decoration:underline}
+.badge-note{display:inline-block;margin:6px 0 10px;padding:6px 8px;border:1px solid var(--line);border-radius:10px;background:#0d2231;color:#cfe6ff;font-size:12px}
 </style>
 
 <!-- Firebase (unchanged) -->
@@ -141,7 +157,14 @@ button{font-family:inherit}
   </div>
   <nav class="nav">
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
-    <button class="chip accent" id="leadBtn">Request Leads</button>
+    <button class="chip accent" id="leadBtn" style="display:none">Request Leads</button>
+    <!-- portal chips are injected only when logged in -->
+    <span id="portalChips" style="display:none">
+      <a class="chip" href="profile.html">Portal</a>
+      <a class="chip" href="wholesaler.html">Wholesaler</a>
+      <a class="chip" href="realtor.html">Realtor</a>
+      <a class="chip" href="contractor.html">Contractor</a>
+    </span>
   </nav>
 </header>
 
@@ -151,12 +174,10 @@ button{font-family:inherit}
     <div class="hero">
       <div>
         <h2>Wholesale & Discount Deals — available now</h2>
-        <p>Tap a card to view the gallery or signal interest. Everything still behind secure access after you sign in.</p>
+        <p>Tap a card to view the gallery or signal interest. Portal buttons appear after sign-in.</p>
         <div class="hero-ctas">
-          <a class="chip" href="profile.html">Secure Access</a>
-          <a class="chip primary" href="wholesaler.html">Wholesaler Portal</a>
-          <a class="chip" href="realtor.html">Realtor</a>
-          <a class="chip" href="contractor.html">Contractor</a>
+          <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
+          <a class="chip" id="ctaAccess" href="#" onclick="document.getElementById('googleBtn').click();return false;">Secure Access</a>
         </div>
       </div>
     </div>
@@ -170,7 +191,7 @@ button{font-family:inherit}
     </div>
   </section>
 
-  <!-- RIGHT: Your original secure access card (unchanged IDs/logic) -->
+  <!-- RIGHT: your original secure access card -->
   <main class="card">
     <div class="row">
       <img class="logo" src="icon (1).jpg" alt="DB"/>
@@ -197,6 +218,111 @@ button{font-family:inherit}
   </main>
 </div>
 
+<!-- Compliance + categories -->
+<section class="section">
+  <div class="badge-note">
+    All properties below are under contract and we are assigning our interest as buyer for an assignment fee, or we own the property.
+    Wholesalers & Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <strong>210-941-4149</strong>.
+  </div>
+
+  <details class="inv" open>
+    <summary>Mobile Homes to be Moved</summary>
+    <div class="inv-body list">
+      <h4>2018 2/2 Singlewide — Needs To Be Moved</h4>
+      <p>942 Waukee Pass St, San Antonio, TX 78260 • 840 sf (14×60) • Year 2018 • Label NTA1825234 • <strong>$42,000</strong><br>
+      No repairs needed, ready to move. Seller will disconnect utilities & porch. <em>Assignment of Contract</em></p>
+      <p>Pictures: <a href="https://drive.google.com/drive/folders/1yU_TdvSxaSzt0CLsM6lSWoupHd6jNpmD?usp=sharing" target="_blank">Google Drive</a> •
+      Craigslist: <a href="https://sanantonio.craigslist.org/reo/d/san-antonio-2018-singlewide-bd-ba-to-be/7869586869.html" target="_blank">Posting</a></p>
+    </div>
+  </details>
+
+  <details class="inv">
+    <summary>Land</summary>
+    <div class="inv-body list">
+      <h4>Commercial land for storage units — 1.197 acres</h4>
+      <p>9896 PARK ROAD 37, Lakehills, TX 78063 • Prop ID 153266 • leveled & driveway permit • <strong>$60,000</strong><br>
+      GPS: 29.60091, -98.93626 (left of Scenic Summit Rd entrance)</p>
+      <p>Pics: <a href="https://drive.google.com/drive/folders/1dkmwEWVhW3TIwMG5j-45uBGtfGzkf1R7?usp=drive_link" target="_blank">Google Drive</a> •
+      Craigslist: <a href="https://austin.craigslist.org/reo/d/pipe-creek-12-acres-commercial-land/7855386859.html" target="_blank">Posting</a></p>
+    </div>
+  </details>
+
+  <details class="inv">
+    <summary>Mobile Homes in Parks (no move)</summary>
+    <div class="inv-body list">
+      <h4>4/2 Doublewide — Rent to Own</h4>
+      <p>566 4th St, Floresville, TX • 2005 • 1,792 sf • Price $75,000 • $10,000 down • 12% • 8 yrs • $1,800/mo<br>
+      OR Rent $1,900/mo (+$1,900 deposit). Pictures: <a href="https://drive.google.com/drive/u/0/folders/see" target="_blank">Drive</a></p>
+      <hr class="hr">
+      <h4>Affordable 3/2 — Move-in ready (San Antonio)</h4>
+      <p>1721 Pinn Rd LOT 48, 2000 SW 3/2 • Down $3,000 • $1,315/mo (incl. $625 lot rent) • Cash $45,000<br>
+      Pics: <a href="https://photos.app.goo.gl/JtB5rz7GMEtyrTyu6" target="_blank">Google Photos</a></p>
+      <hr class="hr">
+      <h4>2017 3/2 — Corpus Christi beach-area cashflow</h4>
+      <p>557 Crayton St • 1,216 sf (16×76) • Label NTA1740633 • Serial CLW042222TX • Park: Valley Homes MHP • Lot rent ~$550<br>
+      Price: $55,000 cash • Est. rent $1,400 → up to ~$900/mo cash flow (or OF note).<br>
+      Pics: <a href="https://www.dropbox.com/scl/fo/r4ihvvdawmhjtbxqh1owt/APcUHqCzJdnNw6CYAYbFL5I?rlkey=g5lwbisnymstvhbceccx5i8v1&dl=0" target="_blank">Dropbox</a> •
+      Craigslist: <a href="https://corpuschristi.craigslist.org/reo/d/corpus-christi-2017-singlewide-bed-bath/7851895642.html" target="_blank">Posting</a></p>
+    </div>
+  </details>
+
+  <details class="inv">
+    <summary>Mobile Homes on Land</summary>
+    <div class="inv-body list">
+      <h4>4/3 Doublewide on 9.93 acres + workshop (Hondo)</h4>
+      <p>370 County Road 347, Hondo TX 78861 • 2,128 sf • 2000 • ARV ~$350k • Ask $250k • Repairs TBD<br>
+      Pics: <a href="https://drive.google.com/drive/folders/1nbb0CCTF9o2oO9MPC9mcjmaV9VSCDEha?usp=sharing" target="_blank">Drive</a></p>
+      <hr class="hr">
+      <h4>Big-family OF play: 4/2 + gutted 2/1 to combine (San Antonio)</h4>
+      <p>21010 Escondido Park, 78264 • Price $135k cash • RTO $155k w/ $25k down @12% • .6ac corner lot • major value-add<br>
+      Pics: <a href="https://drive.google.com/drive/u/0/folders/15mvuzjF5FOrf8yUn8hyPVnmj18tuoK_u" target="_blank">Drive</a></p>
+      <hr class="hr">
+      <h4>4/3 on 0.6 acres — turnkey updates (San Antonio)</h4>
+      <p>21016 Escondido Park, 78264 • 1,792 sf • 2000 • Ask $235k cash • RTO: $25k down / $2,385/mo / $250k total<br>
+      Pics: <a href="https://drive.google.com/drive/folders/1f7BwOPbue3I0HF6Qn49Ws4arzXkI6_Ej" target="_blank">Drive</a></p>
+    </div>
+  </details>
+
+  <details class="inv">
+    <summary>Single Family Residence</summary>
+    <div class="inv-body list">
+      <h4>3/2 Brick near The Forum — rental/location play</h4>
+      <p>109 Logswood, Universal City 78148 • 1,353 sf • 7,274 sf lot • 1977 • Sunroom (climate-controlled) • 2 living areas<br>
+      Price $190k • OF @ $230k w/ $25k down, 10%/25yr (P&I ~$1,862.84 + T&I). Owner-occupied—do not disturb.</p>
+      <hr class="hr">
+      <h4>3/1 near Lone Star District — teardown</h4>
+      <p>152 E Baylor St, San Antonio 78204 • 960 sf • 5,500 sf lot • 1945 • Purchase $55k cash • <em>Assignment</em></p>
+    </div>
+  </details>
+
+  <details class="inv">
+    <summary>Commercial / Multi-Family</summary>
+    <div class="inv-body list">
+      <h4>Spur Trucking (Midland, TX)</h4>
+      <p>Price $10,000,000 • NDA required for financials • OM:
+        <a href="https://docs.google.com/document/d/10hedFZcSex8DBKcqXfNK0oalI49Jzrx1x1cDyZVdeNk/edit?usp=sharing" target="_blank">Google Doc</a></p>
+      <hr class="hr">
+      <h4>Solidify Trucking</h4>
+      <p>Price $2.5MM • NOI ~$575k • NDA required for financials</p>
+    </div>
+  </details>
+
+  <div class="tiny" style="margin-top:10px">
+    PLEASE CALL OR TEXT FOR DETAILS: <strong>210-361-7757</strong> • SERIOUS INQUIRIES ONLY • THANK YOU!
+  </div>
+
+  <details class="inv">
+    <summary>Disclaimers</summary>
+    <div class="inv-body list" style="font-size:12px;line-height:1.5">
+      **DISCLAIMER:** Assignment contract transaction or double closing. Do your own due diligence.
+      Non-refundable $3,000 deposit to secure. Buyer pays all closing costs. Sold as-is. Buyer must be able to close in 7–10 days.
+      We may JV some wholesale deals. We do not represent the recipient of this information. Real estate investment involves risk.
+      Owner of Swift Sell Properties is a TX real estate agent (Somos Real Estate, Lic# 620984).
+      <div style="margin-top:8px">Photo URLs doc (for future gallery wiring): <a target="_blank" href="https://docs.google.com/document/d/1L8p5av49FMzfqPOsfIWWeiYbBuOZsqAcpIAFrWIuOs8/edit?tab=t.0">Google Doc</a></div>
+    </div>
+  </details>
+</section>
+
 <!-- Lightbox -->
 <div class="lb-back" id="lb">
   <div class="lb"><img id="lbImg" alt=""/></div>
@@ -217,7 +343,22 @@ button{font-family:inherit}
 </div>
 
 <script>
-/* ---------- Sign-in (UNCHANGED behavior) ---------- */
+/* ---------- Auth UI visibility (no behavior change) ---------- */
+(function(){
+  const chips = document.getElementById('portalChips');
+  const leadBtn = document.getElementById('leadBtn');
+  const ctaAccess = document.getElementById('ctaAccess');
+  firebase.auth().onAuthStateChanged(u=>{
+    const signedIn = !!u;
+    chips.style.display = signedIn ? 'inline-flex' : 'none';
+    leadBtn.style.display = signedIn ? 'inline-flex' : 'none';
+    // If signed in, "Secure Access" turns into direct Portal
+    if (signedIn){ ctaAccess.textContent='Go to Portal'; ctaAccess.href='profile.html'; ctaAccess.onclick=null; }
+    document.querySelector('[data-auth-status]').textContent = signedIn ? 'signed in' : 'signed out';
+  });
+})();
+
+/* ---------- Sign-in (UNCHANGED core) ---------- */
 (function(){
   const btn=document.getElementById('googleBtn'), statusEl=document.getElementById('authStatus');
   function setStatus(s,spin){ statusEl.innerHTML = spin?('<span class="spinner"></span> '+s):s; }
@@ -246,8 +387,10 @@ const deals = [
     tags:'3 bed • 2 bath • 1,798 sf • 8,165 sf lot',
     avm:'AVM ~$347k (8/31/25)',
     base:'images/deals/booth-st',
-    // some likely booth filenames seen in your repo; plus numbered fallbacks
-    candidates:['20250124_171714.jpg','20250124_171729.jpg','20250124_171805.jpg','20250124_171826.jpg']
+    candidates:[
+      '20250124_171742.jpg','20250124_171749.jpg','20250124_171805.jpg','20250124_171821.jpg',
+      '20250124_171826.jpg','20250124_171829.jpg','20250124_171840.jpg'
+    ]
   },
   {
     id:'san-luis-st',
@@ -260,22 +403,23 @@ const deals = [
   {
     id:'vera-cruz-st',
     title:'Vera Cruz St, San Antonio, TX',
-    tags:'Infill lot • city utilities',
+    tags:'Infill lot • City utilities',
     avm:'Wholesale pricing',
     base:'images/deals/vera-cruz-st',
     candidates:[]
   }
 ];
 
-// try to auto-collect up to 20 images: 1..20.(png|jpg)
+// generate list 1..20 and handle case-insensitive extensions
 function autoList(base, seed=[]) {
-  const list = [...seed];
-  for (let i=1;i<=20;i++){ list.push(`${base}/${i}.png`, `${base}/${i}.jpg`); }
+  const list = [...seed.map(n=>`${base}/${n}`)];
+  for (let i=1;i<=20;i++){
+    list.push(`${base}/${i}.png`, `${base}/${i}.jpg`, `${base}/${i}.JPG`, `${base}/${i}.PNG`);
+  }
   return list;
 }
 
 async function filterExisting(urls){
-  // load images; resolve with those that succeed
   const checks = urls.map(u => new Promise(resolve=>{
     const img = new Image();
     img.onload=()=>resolve(u);
@@ -283,7 +427,10 @@ async function filterExisting(urls){
     img.src = u;
   }));
   const results = await Promise.all(checks);
-  return results.filter(Boolean);
+  // de-dupe while preserving order
+  const seen=new Set(); const out=[];
+  for(const r of results){ if(r && !seen.has(r)){ seen.add(r); out.push(r);} }
+  return out;
 }
 
 function dealCard(d){
@@ -354,7 +501,7 @@ async function sendLeadRequest(type){
   }catch(err){ console.error(err); alert('Could not send request right now.'); }
 }
 
-/* ---------- “I’m Interested” capture (minimal) ---------- */
+/* ---------- “I’m Interested” capture ---------- */
 async function recordInterest(d){
   let uid=null,email=null;
   try{ const u=firebase.auth().currentUser; if(u){ uid=u.uid; email=u.email; } }catch(_){}
