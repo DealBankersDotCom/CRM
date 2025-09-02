@@ -41,7 +41,7 @@
   /* Shell */
   .shell{max-width:1180px;margin:16px auto;padding:0 12px}
 
-  /* --- HERO / CapCut embed with watermark hiders + fallback --- */
+  /* --- HERO / MP4 player with watermark hiders + fallback --- */
   .hero{position:relative;margin:16px 0 6px}
   .hero .badge{
     position:absolute; z-index:3; left:12px; top:10px;
@@ -53,16 +53,17 @@
     border:1px solid var(--line); border-radius:16px; overflow:hidden;
     background:#0c1622; box-shadow:var(--shadow);
   }
-  .hero iframe,.hero .poster{position:absolute; inset:0; width:100%; height:100%; border:0}
+  .hero video,.hero .poster{position:absolute; inset:0; width:100%; height:100%; border:0}
   .hero .poster{
     display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;
     background:#0b1218 url('images/marketing-poster.jpg') center/cover no-repeat;
+    border-radius:16px;
   }
   .hero .poster .play{
     background:#ffffff; color:#102433; border:0; font-weight:800; cursor:pointer;
     padding:10px 14px; border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,.35);
   }
-  /* Watermark masks sit ABOVE the iframe */
+  /* Watermark masks sit ABOVE the video */
   .hero .wm-mask{
     position:absolute; z-index:2; pointer-events:none;
     background:rgba(11,18,24,.88);
@@ -174,24 +175,27 @@
 <header class="header">
   <div class="brand"><img src="icon (1).jpg" alt=""><b>DealBankers</b></div>
   <div class="right">
-    <!-- ONE public button by request -->
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
   </div>
 </header>
 
 <div class="shell">
-  <!-- HERO: embed CapCut if allowed; otherwise show poster button; watermark areas masked -->
+  <!-- HERO: direct MP4 + masks; automatic fallback to CapCut share page -->
   <section class="hero" aria-label="Promo">
     <span class="badge">Wholesale &amp; discounts • updated</span>
-    <div class="ratio" id="videoHost">
-      <!-- overlays that hide CapCut corner logos (stay in place in both modes) -->
+    <div class="ratio" id="videoShell">
+      <!-- Masks to hide CapCut corner logos -->
       <div class="wm-mask wm-bl"></div>
       <div class="wm-mask wm-tr"></div>
       <div class="frame-edge"></div>
 
-      <!-- fallback poster until iframe loads (or if blocked) -->
-      <div class="poster" id="videoPoster">
-        <button class="play" id="watchBtn">▶ Watch</button>
+      <!-- MP4 player -->
+      <video id="dbVid" playsinline controls poster="images/marketing-poster.jpg"></video>
+
+      <!-- Fallback poster/button if the tokenized MP4 fails -->
+      <div class="poster" id="fallbackPoster" style="display:none">
+        <button class="play" id="watchCapcut">▶ Watch</button>
+        <small style="color:#9db2c7">If the embed is blocked, watch on CapCut.</small>
       </div>
     </div>
   </section>
@@ -280,7 +284,7 @@
         </div>
       </details>
 
-      <!-- Add the rest of Mitzi’s categories in the same pattern when you’re ready -->
+      <!-- Add more Swift Sell sections later as needed -->
     </section>
 
     <!-- Secure Access card -->
@@ -308,39 +312,30 @@
 </div>
 
 <script>
-  // ---- CapCut try-embed with fallback & corner logo masks
+  // ---- HERO video: tokenized MP4 with graceful fallback to CapCut share page
+  // From your CapCut page source (player_480p.main_url). These links expire over time.
+  const MP4_URL = "https://v16-cc.capcut.com/637cc72a2eac9e13ac5a76069579c94a/68b79c02/video/tos/alisg/tos-alisg-v-178310-sg/1bfedc75792944ee8cf388da7b90ff17/?a=348188&bti=MzQ8NWY1MTA6&ch=0&cr=0&dr=0&er=0&lr=default&&br=0&bt=0&ft=GAAO2Inz7ThmQr1KXq8Zmo&mime_type=video_mp4&rc=QGlAYSNz&vvpl=1&l=2025090303380916D7F5DF166EB25BFD22";
+  const CAPCUT_SHARE = "https://www.capcut.com/sv2/ZSHtfLoP7H6nS-52ZGA/";
+
   (function(){
-    const host   = document.getElementById('videoHost');
-    const poster = document.getElementById('videoPoster');
-    const btn    = document.getElementById('watchBtn');
+    const video   = document.getElementById('dbVid');
+    const poster  = document.getElementById('fallbackPoster');
+    const btnOpen = document.getElementById('watchCapcut');
 
-    const capcutPlayer = "https://www.capcut.com/player/7545527076913250357?workspaceId=7523750964008845373";
-    const capcutLink   = "https://www.capcut.com/sv2/ZSHtfLoP7H6nS-52ZGA/";
+    // try MP4
+    video.src = MP4_URL;
 
-    btn.onclick = ()=> window.open(capcutLink, "_blank");
+    // If the tokenized MP4 fails (blocked/expired), reveal fallback poster
+    const showFallback = ()=>{ poster.style.display='flex'; };
+    let canplay = false;
+    video.addEventListener('canplay', ()=>{ canplay = true; }, { once:true });
+    video.addEventListener('error', showFallback, { once:true });
+    setTimeout(()=>{ if(!canplay) showFallback(); }, 2500);
 
-    // Try to embed (CapCut may block via X-Frame-Options)
-    try{
-      const ifr = document.createElement('iframe');
-      ifr.allow = "clipboard-write; fullscreen";
-      ifr.referrerPolicy = "no-referrer";
-      ifr.setAttribute('allowfullscreen','');
-      ifr.src = capcutPlayer;
-      ifr.style.display = 'none';
-      host.appendChild(ifr);
-
-      let loaded = false;
-      const to = setTimeout(()=>{
-        if(!loaded){ ifr.remove(); /* stay on poster */ }
-      }, 3000);
-
-      ifr.addEventListener('load', ()=>{ loaded = true; clearTimeout(to); poster.remove(); ifr.style.display='block'; });
-    }catch(_e){
-      // fall back to poster
-    }
+    btnOpen.addEventListener('click', ()=> window.open(CAPCUT_SHARE, "_blank"));
   })();
 
-  // ---- Auth card (Claims Exchange remains public; other portal buttons appear after sign-in if you add them)
+  // ---- Auth card
   (function(){
     const btn = document.getElementById('googleBtn');
     const statusEl = document.querySelector('[data-auth-status]');
@@ -361,7 +356,7 @@
     firebase.auth().onAuthStateChanged(u=> set(u?'signed in':'signed out'));
   })();
 
-  // ---- Lightbox galleries (hard-coded SRCs to your GitHub-hosted images)
+  // ---- Lightbox galleries (hard-coded)
   const galleries = {
     booth: [
       'images/deals/booth-st/20250124_171714.jpg',
@@ -394,7 +389,6 @@
   let curKey = null, curIdx = 0;
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
-
   function openLb(key, idx){
     const list = galleries[key]; if(!list) return;
     curKey = key; curIdx = idx||0;
