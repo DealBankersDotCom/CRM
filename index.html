@@ -41,23 +41,19 @@
   /* Shell */
   .shell{max-width:1180px;margin:16px auto;padding:0 12px}
 
-<!-- ===== HERO (CapCut smart embed with fallback + corner overlay) ===== -->
-<section class="hero" aria-label="Promo">
-  <span class="badge">Wholesale & discounts • updated</span>
-  <!-- Corner overlay lives here regardless (covers watermark area on success) -->
-  <div class="mask-topright"></div>
+  /* HERO (CapCut with fallback) */
+  .hero{position:relative;border:1px solid var(--line);border-radius:16px;padding:10px;background:#0d1822;overflow:hidden}
+  .badge{position:absolute;left:16px;top:12px;background:#0e2332;border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px}
+  .mask-topright{position:absolute;right:12px;top:12px;width:90px;height:30px;background:linear-gradient(180deg,rgba(11,18,24,.7),rgba(11,18,24,.7));border-radius:10px;pointer-events:none;z-index:3}
+  .ratio{position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#0a141c}
+  .ratio iframe,.ratio .poster{position:absolute;inset:0;width:100%;height:100%;border:0}
+  .poster{display:flex;align-items:center;justify-content:center;background:url('images/marketing-poster.jpg') center/cover no-repeat}
+  .poster .play{background:rgba(0,0,0,.55);border:1px solid #334;backdrop-filter:blur(2px);color:#fff;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer}
 
-  <div class="ratio" id="videoMount" data-src="https://www.capcut.com/player/7545527076913250357?workspaceId=7523750964008845373"
-       data-poster="images/marketing-poster.jpg">
-    <!-- we’ll inject either the iframe or the fallback poster button -->
-  </div>
-</section>
-
-
-  /* Headline bar */
+  /* Lead */
   .lead{
     display:flex;gap:10px;align-items:center;justify-content:space-between;
-    padding:14px;border:1px solid var(--line);border-radius:16px;background:#0e1a24;
+    padding:14px;border:1px solid var(--line);border-radius:16px;background:#0e1a24;margin-top:14px
   }
   .lead h2{margin:0;font-size:18px}
   .lead small{color:var(--muted)}
@@ -114,11 +110,9 @@
   .lb-prev{left:10px;top:50%;transform:translateY(-50%)}
   .lb-next{right:10px;top:50%;transform:translateY(-50%)}
 
-  /* Secure card (right column on wide, stacked on mobile) */
+  /* Secure card & 2-col layout */
   .cols{display:grid;grid-template-columns:1fr 320px;gap:14px;margin-top:14px}
-  .secure{
-    border:1px solid var(--line);border-radius:16px;background:#0f1a24;padding:14px
-  }
+  .secure{border:1px solid var(--line);border-radius:16px;background:#0f1a24;padding:14px}
   .gbtn{
     display:flex;align-items:center;justify-content:center;gap:10px;
     height:44px;width:100%;border-radius:12px;border:1px solid #747775;
@@ -138,7 +132,7 @@
   }
 </style>
 
-<!-- Firebase compat (same stack you’re using) -->
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -151,19 +145,21 @@
 <header class="header">
   <div class="brand"><img src="icon (1).jpg" alt=""><b>DealBankers</b></div>
   <div class="right">
+    <!-- ONE public button by request -->
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
+    <!-- Any other portal chips are hidden until auth (we don’t render them here) -->
   </div>
 </header>
 
 <div class="shell">
-  <!-- HERO with CapCut embed -->
+  <!-- HERO: try CapCut; on failure show poster button -->
   <section class="hero" aria-label="Promo">
     <span class="badge">Wholesale & discounts • updated</span>
     <div class="mask-topright"></div>
-    <div class="ratio">
-      <iframe src="https://www.capcut.com/player/7545527076913250357?workspaceId=7523750964008845373"
-              allow="clipboard-write" webkitallowfullscreen mozallowfullscreen allowfullscreen
-              title="DealBankers Promo"></iframe>
+    <div class="ratio" id="videoHost">
+      <div class="poster" id="videoPoster">
+        <button class="play" id="watchBtn">▶ Watch</button>
+      </div>
     </div>
   </section>
 
@@ -172,7 +168,7 @@
       <div class="lead">
         <div>
           <h2>Wholesale & Discount Deals — available now</h2>
-          <small>Tap a card to view the gallery or signal interest. Portal buttons appear after sign-in.</small>
+        <small>Tap a card to view the gallery or signal interest. Portal buttons appear after sign-in.</small>
         </div>
         <div class="actions">
           <a class="chip" href="claims-exchange.html">Claims Exchange</a>
@@ -188,7 +184,7 @@
           <img class="thumb" src="images/deals/booth-st/20250124_171821.jpg" alt="Booth St">
           <div class="pad">
             <div class="title">Booth St, San Antonio, TX</div>
-            <div class="meta">3/2 • 1,798 sf • ARV ≈ $347k</div>
+            <div class="meta">3/2 • 1,798 sf • AVM ≈ $347k</div>
             <div class="btns">
               <button class="btn view" data-open="booth">View</button>
               <button class="btn" data-intent>I'm Interested</button>
@@ -230,7 +226,7 @@
         Wholesalers & Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <b>210-941-4149</b>.
       </div>
 
-      <!-- Collapsibles (your long list—kept lean) -->
+      <!-- Swift Sell blocks (kept concise; your text below) -->
       <details open>
         <summary>Mobile Homes to be Moved</summary>
         <div class="section">
@@ -251,10 +247,10 @@
         </div>
       </details>
 
-      <!-- Add the rest of your sections exactly as you want; keeping structure identical -->
+      <!-- (You can paste the rest of Mitzi’s categories here—same structure) -->
     </section>
 
-    <!-- Secure Access card (portal buttons appear post-sign-in) -->
+    <!-- Secure Access card -->
     <aside class="secure">
       <h3 style="margin:0 0 8px">Secure Access</h3>
       <div class="meta" style="margin-bottom:10px">Sign in to continue to your portal.</div>
@@ -262,7 +258,7 @@
         <img src="https://developers.google.com/identity/images/g-logo.png" alt="">
         Continue with Google
       </button>
-      <div class="status" id="authStatus">Status: <span data-auth-status>signed out</span></div>
+      <div class="status">Status: <span data-auth-status>signed out</span></div>
       <div class="status" style="margin-top:10px">If pop-ups are blocked we’ll fall back to redirect sign-in.</div>
     </aside>
   </div>
@@ -279,7 +275,34 @@
 </div>
 
 <script>
-  // ---- Auth card
+  // ---- CapCut try-embed with fallback & corner mask
+  (function(){
+    const host = document.getElementById('videoHost');
+    const poster = document.getElementById('videoPoster');
+    const btn = document.getElementById('watchBtn');
+    const capcutUrl = "https://www.capcut.com/player/7545527076913250357?workspaceId=7523750964008845373";
+    btn.onclick = ()=> window.open(capcutUrl, "_blank");
+
+    // Try to embed (some browsers will block)
+    const f = document.createElement('iframe');
+    f.src = capcutUrl;
+    f.allow = "clipboard-write";
+    f.setAttribute('webkitallowfullscreen','');
+    f.setAttribute('mozallowfullscreen','');
+    f.setAttribute('allowfullscreen','');
+    f.style.display = 'none';
+    host.appendChild(f);
+
+    // If it loads, show it and keep the corner mask covering logo
+    let showed = false;
+    const readyTimer = setTimeout(()=> {
+      if(!showed){ f.remove(); /* stay on poster */ }
+    }, 2200);
+
+    f.onload = () => { showed = true; clearTimeout(readyTimer); poster.remove(); f.style.display='block'; };
+  })();
+
+  // ---- Auth card (hide other portal stuff until signed in; Claims Exchange remains public)
   (function(){
     const btn = document.getElementById('googleBtn');
     const statusEl = document.querySelector('[data-auth-status]');
@@ -297,28 +320,36 @@
         alert('Sign-in failed. Try again.');
       }
     });
-    firebase.auth().onAuthStateChanged(u=>{
-      set(u?'signed in':'signed out');
-      // if signed in, you can reveal additional portal chips if you ever add them
-    });
+    firebase.auth().onAuthStateChanged(u=> set(u?'signed in':'signed out'));
   })();
 
-  // ---- Lightbox (hard-coded selections)
+  // ---- Lightbox galleries (hard-coded SRCs)
   const galleries = {
     booth: [
+      'images/deals/booth-st/20250124_171714.jpg',
+      'images/deals/booth-st/20250124_171749.jpg',
+      'images/deals/booth-st/20250124_171808.jpg',
       'images/deals/booth-st/20250124_171821.jpg',
-      'images/deals/booth-st/20250124_171926.jpg',
-      'images/deals/booth-st/20250249_194536.jpg'
+      'images/deals/booth-st/20250429_171726.jpg',
+      'images/deals/booth-st/20250429_171749.jpg',
+      'images/deals/booth-st/20250429_171821.jpg',
+      'images/deals/booth-st/20250429_194437.jpg',
+      'images/deals/booth-st/20250429_194536.jpg',
+      'images/deals/booth-st/20250429_194717.jpg'
     ],
     sanluis: [
+      'images/deals/san-luis-st/1.png',
       'images/deals/san-luis-st/3.png',
       'images/deals/san-luis-st/7.png',
-      'images/deals/san-luis-st/12.png'
+      'images/deals/san-luis-st/12.png',
+      'images/deals/san-luis-st/16.png'
     ],
     veracruz: [
       'images/deals/vera-cruz-st/1.png',
+      'images/deals/vera-cruz-st/3.png',
       'images/deals/vera-cruz-st/7.png',
-      'images/deals/vera-cruz-st/12.png'
+      'images/deals/vera-cruz-st/12.png',
+      'images/deals/vera-cruz-st/16.png'
     ],
   };
 
