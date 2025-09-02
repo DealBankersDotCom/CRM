@@ -41,7 +41,7 @@
   /* Shell */
   .shell{max-width:1180px;margin:16px auto;padding:0 12px}
 
-  /* --- HERO: HTML5 video (CapCut MP4) + watermark masks + poster fallback --- */
+  /* --- HERO: HTML5 video + watermark masks + reliable poster --- */
   .hero{position:relative;margin:16px 0 6px}
   .hero .badge{
     position:absolute; z-index:3; left:12px; top:10px;
@@ -57,7 +57,9 @@
   .hero video{display:none; background:#000}
   .hero .poster{
     display:flex; align-items:center; justify-content:center; flex-direction:column; gap:10px;
-    background:#0b1218 url('images/marketing-poster.jpg') center/cover no-repeat;
+    /* SVG gradient poster — removes dependency on a local file */
+    background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1280 720'%3E%3Cdefs%3E%3ClinearGradient id='g' x1='0' y1='0' x2='1' y2='1'%3E%3Cstop offset='0' stop-color='%230b1218'/%3E%3Cstop offset='1' stop-color='%23111f2c'/%3E%3C/linearGradient%3E%3C/defs%3E%3Crect width='1280' height='720' fill='url(%23g)'/%3E%3Ctext x='50%25' y='52%25' text-anchor='middle' fill='%239db2c7' font-family='Inter,Arial' font-size='38'%3EDealBankers — Promo%3C/text%3E%3C/svg%3E");
+    background-size:cover; background-position:center;
   }
   .hero .poster .play{
     background:#ffffff; color:#102433; border:0; font-weight:800; cursor:pointer;
@@ -193,15 +195,13 @@
       <div class="wm-mask wm-tr"></div>
       <div class="frame-edge"></div>
 
-      <!-- HTML5 video (direct MP4 from CapCut) -->
-      <video id="promoVideo" preload="metadata" controls playsinline poster="images/marketing-poster.jpg">
-        <!-- Origin / 1080p -->
+      <!-- HTML5 video (CapCut MP4s). If they fail, poster overlay stays. -->
+      <video id="promoVideo" preload="metadata" controls playsinline>
         <source src="https://v16-cc.capcut.com/637cc72a2eac9e13ac5a76069579c94a/68b79c02/video/tos/alisg/tos-alisg-v-178310-sg/1bfedc75792944ee8cf388da7b90ff17/?a=348188&bti=MzQ8NWY1MTA6&ch=0&cr=0&dr=0&er=0&lr=default&&br=0&bt=0&ft=GAAO2Inz7ThmQr1KXq8Zmo&mime_type=video_mp4&rc=QGlAYSNz&vvpl=1&l=2025090303380916D7F5DF166EB25BFD22" type="video/mp4">
-        <!-- 480p fallback -->
         <source src="https://v16-cc.capcut.com/8010f600b87d4e534bb2cfc11278aafa/68b79c02/video/tos/alisg/tos-alisg-v-178310-sg/40a7bf07bb7e48ff9ea200a829be3d2a/?a=348188&bti=MzQ8NWY1MTA6&ch=0&cr=0&dr=0&er=0&lr=default&&br=0&bt=0&ft=GAAO2Inz7ThmQr1KXq8Zmo&mime_type=video_mp4&rc=QGlAYSNz&vvpl=1&l=2025090303380916D7F5DF166EB25BFD22" type="video/mp4">
       </video>
 
-      <!-- fallback poster if the above source ever fails -->
+      <!-- poster overlay (always available) -->
       <div class="poster" id="videoPoster">
         <button class="play" id="watchBtn">▶ Watch</button>
         <small>If the embed is blocked, watch on CapCut.</small>
@@ -324,7 +324,7 @@
     const video  = document.getElementById('promoVideo');
     const poster = document.getElementById('videoPoster');
     const btn    = document.getElementById('watchBtn');
-    const capcutShare = "https://www.capcut.com/sv2/ZSHtfLoP7H6nS-52ZGA/";
+    const capcutShare = "https://www.capcut.com/presentation/7545527076913250357?workspaceId=7523750964008845373&utm_source=share&utm_medium=product";
     btn.onclick = ()=> window.open(capcutShare, "_blank");
 
     let shown = false;
@@ -336,16 +336,14 @@
     };
     const fail = () => {
       if (shown) return;
-      // keep poster; optionally pre-open a new tab if user taps the poster button
+      // keep poster; user can click Watch to open CapCut
       poster.style.display = 'flex';
       video.style.display  = 'none';
     };
 
-    // if it can play, show it
     video.addEventListener('loadeddata', ok, { once:true });
     video.addEventListener('canplay', ok, { once:true });
     video.addEventListener('error', fail, { once:true });
-    // safety timeout
     setTimeout(()=>{ if (!shown) fail(); }, 2500);
   })();
 
@@ -370,7 +368,7 @@
     firebase.auth().onAuthStateChanged(u=> set(u?'signed in':'signed out'));
   })();
 
-  // ---- Lightbox galleries (hard-coded SRCs to your GitHub-hosted images)
+  // ---- Lightbox galleries
   const galleries = {
     booth: [
       'images/deals/booth-st/20250124_171714.jpg',
@@ -403,7 +401,6 @@
   let curKey = null, curIdx = 0;
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
-
   function openLb(key, idx){
     const list = galleries[key]; if(!list) return;
     curKey = key; curIdx = idx||0;
@@ -428,7 +425,7 @@
     if(e.key==='ArrowRight') step(+1);
   });
 
-  // “I’m Interested” → call/text
+  // “I’m Interested”
   document.querySelectorAll('[data-intent]').forEach(b=>{
     b.addEventListener('click', ()=>{
       alert('Text or call 210-941-4149. We will reply fast.');
