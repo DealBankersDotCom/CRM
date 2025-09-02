@@ -41,14 +41,41 @@
   /* Shell */
   .shell{max-width:1180px;margin:16px auto;padding:0 12px}
 
-  /* HERO (CapCut with fallback) */
-  .hero{position:relative;border:1px solid var(--line);border-radius:16px;padding:10px;background:#0d1822;overflow:hidden}
-  .badge{position:absolute;left:16px;top:12px;background:#0e2332;border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px}
-  .mask-topright{position:absolute;right:12px;top:12px;width:90px;height:30px;background:linear-gradient(180deg,rgba(11,18,24,.7),rgba(11,18,24,.7));border-radius:10px;pointer-events:none;z-index:3}
-  .ratio{position:relative;width:100%;padding-top:56.25%;border-radius:10px;overflow:hidden;background:#0a141c}
-  .ratio iframe,.ratio .poster{position:absolute;inset:0;width:100%;height:100%;border:0}
-  .poster{display:flex;align-items:center;justify-content:center;background:url('images/marketing-poster.jpg') center/cover no-repeat}
-  .poster .play{background:rgba(0,0,0,.55);border:1px solid #334;backdrop-filter:blur(2px);color:#fff;padding:10px 14px;border-radius:999px;font-weight:800;cursor:pointer}
+  /* --- HERO / CapCut embed with watermark hiders + fallback --- */
+  .hero{position:relative;margin:16px 0 6px}
+  .hero .badge{
+    position:absolute; z-index:3; left:12px; top:10px;
+    background:#102433; border:1px solid #2b4961; color:#d9ecff;
+    padding:4px 10px; border-radius:999px; font-size:12px;
+  }
+  .hero .ratio{
+    position:relative; width:100%; aspect-ratio:16/9;
+    border:1px solid var(--line); border-radius:16px; overflow:hidden;
+    background:#0c1622; box-shadow:var(--shadow);
+  }
+  .hero iframe,.hero .poster{position:absolute; inset:0; width:100%; height:100%; border:0}
+  .hero .poster{
+    display:flex; align-items:center; justify-content:center; flex-direction:column; gap:12px;
+    background:#0b1218 url('images/marketing-poster.jpg') center/cover no-repeat;
+  }
+  .hero .poster .play{
+    background:#ffffff; color:#102433; border:0; font-weight:800; cursor:pointer;
+    padding:10px 14px; border-radius:12px; box-shadow:0 6px 24px rgba(0,0,0,.35);
+  }
+  /* Watermark masks sit ABOVE the iframe */
+  .hero .wm-mask{
+    position:absolute; z-index:2; pointer-events:none;
+    background:rgba(11,18,24,.88);
+    border-radius:10px;
+    filter:drop-shadow(0 0 6px rgba(0,0,0,.35));
+  }
+  .hero .wm-bl{left:10px; bottom:10px; width:18%; max-width:180px; height:11%;}
+  .hero .wm-tr{right:10px; top:10px; width:18%; max-width:180px; height:11%;}
+  .hero .frame-edge{
+    position:absolute; inset:0; pointer-events:none; z-index:2;
+    box-shadow:inset 0 0 0 12px rgba(11,18,24,.55);
+    border-radius:16px;
+  }
 
   /* Lead */
   .lead{
@@ -56,7 +83,7 @@
     padding:14px;border:1px solid var(--line);border-radius:16px;background:#0e1a24;margin-top:14px
   }
   .lead h2{margin:0;font-size:18px}
-  .lead small{color:var(--muted)}
+  .lead small{color:#9db2c7}
   .lead .actions{display:flex;gap:8px;flex-wrap:wrap}
 
   /* Featured grid */
@@ -119,7 +146,7 @@
     background:#1f1f1f;color:#e8eaed;font-weight:700;cursor:pointer
   }
   .gbtn img{width:18px;height:18px}
-  .status{color:var(--muted);font-size:12px;margin-top:8px}
+  .status{color:#9db2c7;font-size:12px;margin-top:8px}
 
   /* responsive */
   @media (max-width: 980px){
@@ -129,6 +156,8 @@
   @media (max-width: 640px){
     .grid{grid-template-columns:1fr}
     .lead{flex-direction:column;align-items:flex-start}
+    .hero .wm-bl,.hero .wm-tr{width:28%; height:14%;}
+    .hero .frame-edge{box-shadow:inset 0 0 0 10px rgba(11,18,24,.55);}
   }
 </style>
 
@@ -147,16 +176,20 @@
   <div class="right">
     <!-- ONE public button by request -->
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
-    <!-- Any other portal chips are hidden until auth (we don’t render them here) -->
   </div>
 </header>
 
 <div class="shell">
-  <!-- HERO: try CapCut; on failure show poster button -->
+  <!-- HERO: embed CapCut if allowed; otherwise show poster button; watermark areas masked -->
   <section class="hero" aria-label="Promo">
-    <span class="badge">Wholesale & discounts • updated</span>
-    <div class="mask-topright"></div>
+    <span class="badge">Wholesale &amp; discounts • updated</span>
     <div class="ratio" id="videoHost">
+      <!-- overlays that hide CapCut corner logos (stay in place in both modes) -->
+      <div class="wm-mask wm-bl"></div>
+      <div class="wm-mask wm-tr"></div>
+      <div class="frame-edge"></div>
+
+      <!-- fallback poster until iframe loads (or if blocked) -->
       <div class="poster" id="videoPoster">
         <button class="play" id="watchBtn">▶ Watch</button>
       </div>
@@ -168,7 +201,7 @@
       <div class="lead">
         <div>
           <h2>Wholesale & Discount Deals — available now</h2>
-        <small>Tap a card to view the gallery or signal interest. Portal buttons appear after sign-in.</small>
+          <small>Tap a card to view the gallery or signal interest. Portal buttons appear after sign-in.</small>
         </div>
         <div class="actions">
           <a class="chip" href="claims-exchange.html">Claims Exchange</a>
@@ -223,16 +256,16 @@
 
       <div class="notice">
         All properties below are under contract and we are assigning our interest as buyer for an assignment fee, or we own the property.
-        Wholesalers & Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <b>210-941-4149</b>.
+        Wholesalers &amp; Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <b>210-941-4149</b>.
       </div>
 
-      <!-- Swift Sell blocks (kept concise; your text below) -->
+      <!-- Swift Sell blocks (concise; extend as needed) -->
       <details open>
         <summary>Mobile Homes to be Moved</summary>
         <div class="section">
           <b>2018 2/2 Singlewide — Needs To Be Moved</b><br>
           942 Waukee Pass St, San Antonio, TX 78260 • 840 sf (14x60) • Label NTA1825234 • <b>$42,000</b><br>
-          No repairs needed. Ready to move. Seller will disconnect utilities & porch. <i>Assignment of Contract</i><br>
+          No repairs needed. Ready to move. Seller will disconnect utilities &amp; porch. <i>Assignment of Contract</i><br>
           Pictures: <a class="link" href="https://drive.google.com/drive/folders/1yU_TdvSxaSzt0CLsM6lSWoupHd6jNpmD?usp=sharing" target="_blank">Google Drive</a> •
           Craigslist: <a class="link" href="https://sanantonio.craigslist.org/reo/d/san-antonio-2018-singlewide-bd-ba-to-be/7869586869.html" target="_blank">Posting</a>
         </div>
@@ -247,7 +280,7 @@
         </div>
       </details>
 
-      <!-- (You can paste the rest of Mitzi’s categories here—same structure) -->
+      <!-- Add the rest of Mitzi’s categories in the same pattern when you’re ready -->
     </section>
 
     <!-- Secure Access card -->
@@ -275,34 +308,39 @@
 </div>
 
 <script>
-  // ---- CapCut try-embed with fallback & corner mask
+  // ---- CapCut try-embed with fallback & corner logo masks
   (function(){
-    const host = document.getElementById('videoHost');
+    const host   = document.getElementById('videoHost');
     const poster = document.getElementById('videoPoster');
-    const btn = document.getElementById('watchBtn');
-    const capcutUrl = "https://www.capcut.com/player/7545527076913250357?workspaceId=7523750964008845373";
-    btn.onclick = ()=> window.open(capcutUrl, "_blank");
+    const btn    = document.getElementById('watchBtn');
 
-    // Try to embed (some browsers will block)
-    const f = document.createElement('iframe');
-    f.src = capcutUrl;
-    f.allow = "clipboard-write";
-    f.setAttribute('webkitallowfullscreen','');
-    f.setAttribute('mozallowfullscreen','');
-    f.setAttribute('allowfullscreen','');
-    f.style.display = 'none';
-    host.appendChild(f);
+    const capcutPlayer = "https://www.capcut.com/player/7545527076913250357?workspaceId=7523750964008845373";
+    const capcutLink   = "https://www.capcut.com/sv2/ZSHtfLoP7H6nS-52ZGA/";
 
-    // If it loads, show it and keep the corner mask covering logo
-    let showed = false;
-    const readyTimer = setTimeout(()=> {
-      if(!showed){ f.remove(); /* stay on poster */ }
-    }, 2200);
+    btn.onclick = ()=> window.open(capcutLink, "_blank");
 
-    f.onload = () => { showed = true; clearTimeout(readyTimer); poster.remove(); f.style.display='block'; };
+    // Try to embed (CapCut may block via X-Frame-Options)
+    try{
+      const ifr = document.createElement('iframe');
+      ifr.allow = "clipboard-write; fullscreen";
+      ifr.referrerPolicy = "no-referrer";
+      ifr.setAttribute('allowfullscreen','');
+      ifr.src = capcutPlayer;
+      ifr.style.display = 'none';
+      host.appendChild(ifr);
+
+      let loaded = false;
+      const to = setTimeout(()=>{
+        if(!loaded){ ifr.remove(); /* stay on poster */ }
+      }, 3000);
+
+      ifr.addEventListener('load', ()=>{ loaded = true; clearTimeout(to); poster.remove(); ifr.style.display='block'; });
+    }catch(_e){
+      // fall back to poster
+    }
   })();
 
-  // ---- Auth card (hide other portal stuff until signed in; Claims Exchange remains public)
+  // ---- Auth card (Claims Exchange remains public; other portal buttons appear after sign-in if you add them)
   (function(){
     const btn = document.getElementById('googleBtn');
     const statusEl = document.querySelector('[data-auth-status]');
@@ -323,7 +361,7 @@
     firebase.auth().onAuthStateChanged(u=> set(u?'signed in':'signed out'));
   })();
 
-  // ---- Lightbox galleries (hard-coded SRCs)
+  // ---- Lightbox galleries (hard-coded SRCs to your GitHub-hosted images)
   const galleries = {
     booth: [
       'images/deals/booth-st/20250124_171714.jpg',
@@ -356,6 +394,7 @@
   let curKey = null, curIdx = 0;
   const lb = document.getElementById('lightbox');
   const lbImg = document.getElementById('lbImg');
+
   function openLb(key, idx){
     const list = galleries[key]; if(!list) return;
     curKey = key; curIdx = idx||0;
