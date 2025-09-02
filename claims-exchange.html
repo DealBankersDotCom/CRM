@@ -6,38 +6,39 @@
 <title>DealBankers • Claims Exchange</title>
 <link rel="icon" href="images/db-badge.png"/>
 <style>
-  :root{--bg:#0f1a22;--panel:#13202a;--text:#cfe7ff}
+  :root{--bg:#0f1a22;--panel:#13202a;--text:#cfe7ff;--line:#203141}
   html,body{background:var(--bg);color:var(--text);margin:0;font:16px/1.4 system-ui,Segoe UI,Roboto,Helvetica,Arial}
   .shell{max-width:1100px;margin:28px auto;padding:0 16px}
-  .top{display:flex;gap:8px;justify-content:space-between}
+  .top{display:flex;gap:8px;justify-content:space-between;flex-wrap:wrap}
   .btn{background:#233748;color:#d8ebff;border:none;padding:8px 12px;border-radius:10px;cursor:pointer}
   .btn.gold{background:#6b4b12;color:#ffd166}
-  .card{background:#13202a;border-radius:14px;padding:14px;margin-top:12px}
+  .card{background:#13202a;border-radius:14px;padding:14px;margin-top:12px;border:1px solid var(--line)}
   .card-title{font-weight:700;margin-bottom:6px}
   .docframe{width:100%;height:420px;border:0;border-radius:10px;background:#0b1620}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .btn.success{background:#1f8b4c}
-  .btn.secondary{background:#30485e}
-  .btn.danger{background:#6b2a2a}
   small{opacity:.75}
 
-/* --- Global header + chips + modal (RB phone) --- */
-.header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
-background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
-.nav{display:flex;gap:8px;flex-wrap:wrap}
-.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
-background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration:none;font-weight:700;cursor:pointer}
-.chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a);}
-.chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31);}
-.modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
-.modal{background:#0f1b27;border:1px solid #254a63;border-radius:16px;max-width:520px;width:92%;box-shadow:0 28px 70px rgba(0,0,0,.55);padding:16px}
-.modal h3{margin:0 0 8px}.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
-.modal label{font-size:14px;color:#cfe3ff}.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid #254a63;border-radius:10px;background:#0d1f2d;color:#eaf6ff}
-.modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-
+  /* Global header + chips + modal (RB phone) */
+  .header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
+  .nav{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
+  background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration:none;font-weight:700;cursor:pointer}
+  .chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a);}
+  .chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31);}
+  .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
+  .modal{background:#0f1b27;border:1px solid #254a63;border-radius:16px;max-width:520px;width:92%;box-shadow:0 28px 70px rgba(0,0,0,.55);padding:16px}
+  .modal h3{margin:0 0 8px}.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+  .modal label{font-size:14px;color:#cfe3ff}.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid #254a63;border-radius:10px;background:#0d1f2d;color:#eaf6ff}
+  .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 </style>
+
+<!-- Firebase (same compat stack) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
-<script src="app-auth.js" type="module"></script>
+<script src="app-auth.js"></script>
 </head>
 <body data-portal="claims">
 
@@ -50,6 +51,8 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
     <a class="chip" id="logoutBtn">Log Out</a>
   </nav>
 </header>
+
+<!-- RB phone modal -->
 <div class="modal-backdrop" id="rbModal">
   <div class="modal">
     <h3 id="rbTitle">Request</h3>
@@ -70,7 +73,21 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
     </div>
   </div>
 </div>
+
+<div class="shell">
+  <div class="top">
+    <div>
+      <button class="btn" id="backBtn">Back to Portal</button>
+      <button class="btn" onclick="window.open('https://docs.google.com/document/d/1wVeXyU4vTndZpSNYjBioJnINzEFvLWFuD6zeZFw4V_g/edit?usp=sharing','_blank')">Privacy & Terms</button>
+    </div>
+    <button class="btn gold" id="logoutTop">Log Out</button>
+  </div>
+
+  <div id="claimsCards" class="card">Checking sign-in…</div>
+</div>
+
 <script>
+  // Blue/Red phone + logout
   (function(){
     const portal = "claims";
     function showModal(urgent){
@@ -79,49 +96,37 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
       document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
     }
     function hideModal(){ document.getElementById('rbModal').style.display='none'; }
+
     document.addEventListener('click',function(e){
       if(e.target.id==='btnRed') showModal(true);
       if(e.target.id==='btnBlue') showModal(false);
       if(e.target.id==='rbCancel' || e.target.id==='rbModal') hideModal();
-      if(e.target.id==='logoutBtn') { try{ firebase.auth().signOut(); }catch(e){} }
-      if(e.target.id==='rbSubmit') (async function(){
-          const cat = document.getElementById('rbCategory').value;
-          const subject = document.getElementById('rbSubject').value.trim();
-          const details = document.getElementById('rbDetails').value.trim();
-          const urgent = e.target.dataset.urgent==='1';
-          let uid=null, email=null;
-          try{ const u=firebase.auth().currentUser; if(u){uid=u.uid; email=u.email;} }catch(_){}
-          try{
-            const payload = {
-              portal, cat, subject, details, urgent,
-              uid, email,
-              ts: firebase.database.ServerValue.TIMESTAMP
-            };
-            await firebase.database().ref('requests').push(payload);
-            alert('Request sent. We will respond shortly.');
-            hideModal();
-            document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
-          }catch(err){
-            console.error(err); alert('Could not send. Check your connection.');
-          }
-      })();
+      if(e.target.id==='logoutBtn' || e.target.id==='logoutTop'){
+        firebase.auth().signOut().then(()=>location.href='index.html').catch(()=>location.href='index.html');
+      }
     });
+
+    document.getElementById('backBtn').onclick = ()=> location.href='index.html';
+
+    document.getElementById('rbSubmit').onclick = async function(e){
+      const cat = document.getElementById('rbCategory').value;
+      const subject = document.getElementById('rbSubject').value.trim();
+      const details = document.getElementById('rbDetails').value.trim();
+      const urgent = this.dataset.urgent==='1';
+      let uid=null, email=null;
+      try{ const u=firebase.auth().currentUser; if(u){uid=u.uid; email=u.email;} }catch(_){}
+      try{
+        const payload = { portal, cat, subject, details, urgent, uid, email,
+          ts: firebase.database.ServerValue.TIMESTAMP };
+        await firebase.database().ref('requests').push(payload);
+        alert('Request sent. We will respond shortly.');
+        hideModal();
+        document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
+      }catch(err){ console.error(err); alert('Could not send. Check your connection.'); }
+    };
   })();
-</script>
 
-<div class="shell">
-  <div class="top">
-    <div class="row">
-      <button class="btn" onclick="goto('profile.html')">Back to Portal</button>
-      <button class="btn" onclick="window.open('https://docs.google.com/document/d/1wVeXyU4vTndZpSNYjBioJnINzEFvLWFuD6zeZFw4V_g/edit?usp=sharing','_blank')">Privacy & Terms</button>
-    </div>
-    <button class="btn gold" onclick="logout()">Log Out</button>
-  </div>
-
-  <div id="claimsCards" class="card">Checking sign-in…</div>
-</div>
-
-<script>
+  // Mount claims UI after app-auth.js is ready
   const ready = setInterval(()=>{
     if (window.DB_READY){ clearInterval(ready); window.mountClaimsForUser("claimsCards"); }
   },50);
