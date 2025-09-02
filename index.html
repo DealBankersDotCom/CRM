@@ -10,6 +10,15 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 
+<!-- Firebase compat (same stack as before) -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+<!-- Your local config & auth helpers -->
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+
 <style>
   :root{
     --bg:#0b1218; --panel:#0f1823; --line:#1e2c3a;
@@ -27,6 +36,11 @@
         color:#d7ecff;text-decoration:none;font-weight:700}
 
   .shell{max-width:1180px;margin:14px auto;padding:0 12px}
+
+  /* 2-col layout: main + secure access */
+  .cols{display:grid;grid-template-columns:1fr 320px;gap:14px}
+  @media (max-width: 980px){ .cols{grid-template-columns:1fr} }
+
   .panel{border:1px solid var(--line);border-radius:14px;background:var(--panel)}
 
   /* Map */
@@ -52,6 +66,16 @@
 
   .notice{margin:12px 0;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;color:#cfe3ff;background:#0c1a25;font-size:13px}
 
+  /* Secure Access card */
+  .secure{border:1px solid var(--line);border-radius:16px;background:#0f1a24;padding:14px}
+  .gbtn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    height:44px;width:100%;border-radius:12px;border:1px solid #747775;
+    background:#1f1f1f;color:#e8eaed;font-weight:700;cursor:pointer
+  }
+  .gbtn img{width:18px;height:18px}
+  .status{color:var(--muted);font-size:12px;margin-top:8px}
+
   @media (max-width: 980px){ .cards{grid-template-columns:1fr 1fr} #map{height:360px} }
   @media (max-width: 640px){ .cards{grid-template-columns:1fr} #map{height:320px} }
 </style>
@@ -62,33 +86,71 @@
   <a class="chip" href="claims-exchange.html">Claims Exchange</a>
 </header>
 
-<div class="shell">
-  <div class="panel">
-    <div class="mapbar">
-      <div><b>Deals Map</b> — tap a pin to open details ↓</div>
-      <div class="legend">
-        <span><i class="dot featured"></i> Featured inventory</span>
-        <span><i class="dot swift"></i> Other Off-Market Deals</span>
+<div class="shell cols">
+  <!-- Left: Map + Deals -->
+  <main>
+    <div class="panel">
+      <div class="mapbar">
+        <div><b>Deals Map</b> — tap a pin to open details ↓</div>
+        <div class="legend">
+          <span><i class="dot featured"></i> Featured inventory</span>
+          <span><i class="dot swift"></i> Swift Sell (Mitzi)</span>
+        </div>
       </div>
+      <div id="map"></div>
     </div>
-    <div id="map"></div>
-  </div>
 
-  <div class="notice">
-    All properties below are under contract and we are assigning our interest as buyer for an assignment fee, or we own the property.
-    Wholesalers & Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <b>210-941-4149</b>.
-  </div>
+    <div class="notice">
+      All properties below are under contract and we are assigning our interest as buyer for an assignment fee, or we own the property.
+      Wholesalers &amp; Realtors: we JV—tell us upfront and we’ll work with you. To make an offer call/text <b>512-843-5181</b>.
+    </div>
 
-  <!-- Details cards auto-render here -->
-  <div id="cards" class="cards"></div>
+    <!-- Details cards auto-render here -->
+    <div id="cards" class="cards"></div>
+  </main>
+
+  <!-- Right: Secure Access / Login -->
+  <aside class="secure">
+    <h3 style="margin:0 0 8px">Secure Access</h3>
+    <div class="meta" style="margin-bottom:10px">Sign in to continue to your portal.</div>
+    <button id="googleBtn" class="gbtn">
+      <img src="https://developers.google.com/identity/images/g-logo.png" alt="">
+      Continue with Google
+    </button>
+    <div class="status">Status: <span data-auth-status>signed out</span></div>
+    <div class="status" style="margin-top:10px">If pop-ups are blocked we’ll fall back to redirect sign-in.</div>
+  </aside>
 </div>
 
 <script>
+/* ========= Auth card (same behavior as before) ========= */
+(function(){
+  const btn = document.getElementById('googleBtn');
+  const statusEl = document.querySelector('[data-auth-status]');
+  function setStatus(s){ if(statusEl) statusEl.textContent = s; }
+
+  btn?.addEventListener('click', async ()=>{
+    try{
+      const provider = new firebase.auth.GoogleAuthProvider();
+      await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
+      await firebase.auth().signInWithPopup(provider);
+    }catch(e){
+      if(e?.code === 'auth/popup-blocked'){
+        const provider = new firebase.auth.GoogleAuthProvider();
+        return firebase.auth().signInWithRedirect(provider);
+      }
+      alert('Sign-in failed. Try again.');
+    }
+  });
+
+  firebase.auth().onAuthStateChanged(u=> setStatus(u ? 'signed in' : 'signed out'));
+})();
+
 /* =======================
-   DEALS DATA (edit freely)
+   DEALS DATA
 ======================= */
 const deals = [
-  /* ====== Featured inventory (your site deals) ====== */
+  // Featured inventory
   {
     id:"booth", group:"featured",
     title:"Booth St, San Antonio, TX",
@@ -117,14 +179,14 @@ const deals = [
     links:{}
   },
 
-  /* ====== Swift Sell (Mitzi) — highlights you provided ====== */
+  // Swift Sell (Mitzi)
   {
     id:"mh-move-2018-waukee", group:"swift",
     title:"2018 2/2 Singlewide — Needs To Be Moved",
     address:"942 Waukee Pass St, San Antonio, TX 78260",
     summary:"840 sf (14x60) • Label NTA1825234 • No repairs • Ready to move",
     price:"$42,000",
-    photos:[], // external images linked below
+    photos:[],
     links:{
       pictures:"https://drive.google.com/drive/folders/1yU_TdvSxaSzt0CLsM6lSWoupHd6jNpmD?usp=sharing",
       craigslist:"https://sanantonio.craigslist.org/reo/d/san-antonio-2018-singlewide-bd-ba-to-be/7869586869.html"
@@ -203,7 +265,7 @@ const deals = [
     summary:"1486 sf • 0.23 ac • 1960 build",
     price:"$125,000 (ARV ≈ $203k; est. repairs $25k)",
     photos:[],
-    links:{ pictures:"https://drive.google.com/drive/folders/1?pli=1" } // placeholder label from your note
+    links:{ pictures:"https://drive.google.com/drive/folders/1?pli=1" }
   },
   {
     id:"logswood", group:"swift",
@@ -256,7 +318,6 @@ async function geocode(addr){
   const key = 'geo:'+addr.toLowerCase();
   const cached = localStorage.getItem(key);
   if(cached){ return JSON.parse(cached); }
-  // throttle a bit
   await new Promise(r=>setTimeout(r, 250));
   const url = 'https://nominatim.openstreetmap.org/search?format=json&q='+encodeURIComponent(addr);
   const res = await fetch(url, {headers:{'Accept':'application/json'}});
@@ -282,7 +343,7 @@ function renderCard(d){
       <div class="meta">${d.summary || ''}</div>
       ${d.price? `<div class="row"><span class="tag">Price: ${d.price}</span></div>`:''}
       <div class="row" style="margin-top:10px">
-        <a class="btn primary" href="tel:+12109414149">I'm Interested</a>
+        <a class="btn primary" href="tel:+15128435181">I'm Interested</a>
         ${d.links?.pictures ? `<a class="btn" target="_blank" href="${d.links.pictures}">Pictures</a>`:''}
         ${d.links?.craigslist ? `<a class="btn" target="_blank" href="${d.links.craigslist}">Craigslist</a>`:''}
       </div>
@@ -292,7 +353,7 @@ function renderCard(d){
   document.getElementById('cards').appendChild(el);
 }
 
-// link popup “View details” → scroll to card
+// popup “View details” + call button
 function popupHTML(d){
   const img = d.photos?.[0] || '';
   return `
@@ -304,7 +365,7 @@ function popupHTML(d){
       <div style="display:flex;gap:8px;margin-top:8px">
         <a href="#deal-${d.id}" onclick="document.getElementById('deal-${d.id}').scrollIntoView({behavior:'smooth',block:'start'})"
            style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">View details</a>
-        <a href="tel:+12109414149" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#0f2945;color:#dff1ff;text-decoration:none;font-weight:700">Call</a>
+        <a href="tel:+15128435181" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#0f2945;color:#dff1ff;text-decoration:none;font-weight:700">Call</a>
       </div>
     </div>`;
 }
