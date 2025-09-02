@@ -1,62 +1,370 @@
-<!DOCTYPE html><html lang="en"><head>
-<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1"/>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DealBankers — Secure Access</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
 <style>
-:root{--bg:#0b0f14;--panel:#10151d;--ink:#d6e1ff;--muted:#8aa0c6;--line:#1c2a3a;--accent:#00d1ff;--glow:0 0 16px rgba(0,209,255,.25),0 0 2px rgba(0,209,255,.6)}
-*{box-sizing:border-box}html,body{height:100%}body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--ink);
-background:radial-gradient(1000px 700px at 70% 10%,#122034 0%,transparent 60%),var(--bg);display:grid;place-items:center}
-.card{width:min(560px,92vw);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0));border:1px solid var(--line);
-border-radius:20px;padding:28px;box-shadow:0 12px 40px rgba(0,0,0,.35)}
-.row{display:flex;gap:18px;align-items:center}.logo{width:60px;height:60px;border-radius:14px;object-fit:cover;box-shadow:0 6px 20px rgba(0,0,0,.35)}
-h1{margin:0;font-size:28px}p{margin:6px 0 0;color:var(--muted)}.panel{margin-top:22px;padding:16px;border:1px solid var(--line);border-radius:14px}
-.gbtn{display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;height:44px;border-radius:12px;border:1px solid #747775;
-background:#1f1f1f;color:#e8eaed;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.15);
-transition:transform .05s,box-shadow .2s}.gbtn:hover{box-shadow:var(--glow);transform:translateY(-1px)}
-.g-icon{width:18px;height:18px}.status{margin-top:12px;font-size:12px;color:var(--muted)}.hr{margin:16px 0;border:0;border-top:1px solid var(--line)}
-.tiny{font-size:11px;color:var(--muted)}.spinner{display:inline-block;width:14px;height:14px;border:2px solid #3b4a62;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
+:root{
+  --bg:#0b0f14;--ink:#d6e1ff;--muted:#8aa0c6;--line:#1c2a3a;
+  --accent:#00d1ff;--accent2:#2b74ff;--chip:#0f2232;--panel:#10151d;
+  --glow:0 0 16px rgba(0,209,255,.25),0 0 2px rgba(0,209,255,.6)
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{
+  margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial;color:var(--ink);
+  background:radial-gradient(1000px 700px at 70% 10%,#122034 0%,transparent 60%),var(--bg);
+}
+a{color:inherit;text-decoration:none}
+button{font-family:inherit}
+
+/* ===== Header (claims exchange + brand) ===== */
+.header{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 16px;border-bottom:1px solid var(--line);
+  background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.02));
+}
+.brand{display:flex;align-items:center;gap:10px}
+.logo{width:36px;height:36px;border-radius:10px;object-fit:cover;box-shadow:0 6px 20px rgba(0,0,0,.35)}
+.brand h1{font-size:18px;margin:0}
+.header .nav{display:flex;gap:8px}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.22);background:linear-gradient(180deg,#111f2c,#0d1823);
+  color:#eaf6ff;font-weight:700;cursor:pointer
+}
+.chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31)}
+.chip.accent{border-color:#2b9ec2;background:#0e2a39}
+
+/* ===== Above-the-fold layout ===== */
+.shell{
+  max-width:1200px;margin:0 auto;padding:18px;display:grid;gap:18px;
+  grid-template-columns: 1.1fr .9fr;
+}
+@media (max-width: 980px){ .shell{grid-template-columns:1fr} }
+
+/* left column: hero + deals */
+.hero{
+  display:flex;align-items:center;justify-content:space-between;gap:14px;
+  padding:14px;border:1px solid var(--line);border-radius:16px;
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,0));
+}
+.hero h2{margin:0 0 6px 0;font-size:22px}
+.hero p{margin:0;color:var(--muted);font-size:13px}
+.hero-ctas{display:flex;gap:8px;flex-wrap:wrap}
+
+/* sign-in card (right column) — kept intact look & ids */
+.card{
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,0));
+  border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 12px 40px rgba(0,0,0,.35)
+}
+.row{display:flex;gap:14px;align-items:center}
+.card .logo{width:52px;height:52px;border-radius:12px}
+.card h1{margin:0;font-size:22px}
+.card p{margin:6px 0 0;color:var(--muted)}
+.panel{margin-top:18px;padding:14px;border:1px solid var(--line);border-radius:14px}
+.gbtn{
+  display:inline-flex;align-items:center;justify-content:center;gap:10px;width:100%;height:44px;border-radius:12px;border:1px solid #747775;
+  background:#1f1f1f;color:#e8eaed;font-weight:600;cursor:pointer;box-shadow:0 1px 2px rgba(0,0,0,.3),0 1px 3px rgba(0,0,0,.15);
+  transition:transform .05s,box-shadow .2s
+}
+.gbtn:hover{box-shadow:var(--glow);transform:translateY(-1px)}
+.g-icon{width:18px;height:18px}
+.status{margin-top:10px;font-size:12px;color:var(--muted)}
+.hr{margin:14px 0;border:0;border-top:1px solid var(--line)}
+.tiny{font-size:11px;color:var(--muted)}
+.spinner{display:inline-block;width:14px;height:14px;border:2px solid #3b4a62;border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* deals rail */
+.rail{
+  margin-top:14px;border:1px solid var(--line);border-radius:16px;padding:12px;
+  background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(255,255,255,.0))
+}
+.rail-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.rail-title{font-weight:800}
+.scroller{
+  display:flex;gap:12px;overflow:auto;scroll-snap-type:x mandatory;padding-bottom:6px
+}
+.card-deal{
+  min-width:280px;max-width:280px;border:1px solid var(--line);border-radius:14px;overflow:hidden;scroll-snap-align:start;
+  background:#0e1a26
+}
+.card-deal .img{
+  position:relative;height:170px;background:#0c1620;display:grid;place-items:center
+}
+.card-deal img{width:100%;height:100%;object-fit:cover;display:block}
+.card-deal .badge{position:absolute;left:8px;top:8px;background:#0d2740;color:#bfe3ff;font-size:11px;padding:4px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.18)}
+.card-deal .body{padding:10px}
+.addr{font-weight:800;margin:0 0 4px 0}
+.meta{color:#a8bfdc;font-size:12px;margin-bottom:8px}
+.btngrid{display:flex;gap:8px}
+.btn{
+  display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 10px;border-radius:10px;border:1px solid var(--line);background:#0f2232;color:#eaf6ff;font-weight:700;cursor:pointer
+}
+.btn.primary{background:linear-gradient(180deg,#2b74ff,#0a58ca)}
+.btn.ghost{background:#0e1a26}
+.btn:disabled{opacity:.6;cursor:not-allowed}
+
+/* simple lightbox */
+.lb-back{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;z-index:9999}
+.lb{max-width:92vw;max-height:92vh}
+.lb img{max-width:92vw;max-height:92vh;display:block;border-radius:10px}
+
+/* lead-request picker */
+.picker{display:none;position:fixed;inset:0;z-index:9999;align-items:center;justify-content:center;background:rgba(0,0,0,.6)}
+.pbox{background:#0f1b27;border:1px solid var(--line);border-radius:16px;max-width:420px;width:92%;padding:16px}
+.pbox h3{margin:0 0 8px}
+.pbox .grid{display:flex;gap:8px;flex-wrap:wrap}
+.pbox .chip{background:#0e2231}
 </style>
+
+<!-- Firebase (unchanged) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-<script src="config.js"></script><script src="app-auth.js"></script></head><body>
-<main class="card">
-  <div class="row">
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+</head>
+<body>
+
+<header class="header">
+  <div class="brand">
     <img class="logo" src="icon (1).jpg" alt="DB"/>
-    <div><h1>DealBankers — Secure Access</h1><p>Sign in to continue to your portal.</p></div>
+    <h1>DealBankers</h1>
   </div>
-  <div class="panel">
-    <button id="googleBtn" class="gbtn">
-      <svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true">
-        <path fill="#EA4335" d="M24 9.5c3.54 0 6.79 1.22 9.32 3.6l6.98-6.98C36.89 2.17 30.87 0 24 0 14.62 0 6.51 5.38 2.56 13.22l8.41 6.52C12.66 13.6 17.9 9.5 24 9.5z"/>
-        <path fill="#4285F4" d="M46.5 24c0-1.64-.15-3.21-.43-4.74H24v9h12.7c-.55 2.98-2.23 5.52-4.75 7.22l7.23 5.61C43.89 37.17 46.5 31.07 46.5 24z"/>
-        <path fill="#FBBC05" d="M11 28.74a14.5 14.5 0 0 1-.77-4.74c0-1.64.28-3.22.77-4.74l-8.44-6.55A23.94 23.94 0 0 0 0 24c0 3.85.92 7.48 2.56 10.74L11 28.74z"/>
-        <path fill="#34A853" d="M24 48c6.48 0 11.93-2.14 15.9-5.83l-7.23-5.61c-2.01 1.35-4.6 2.14-8.67 2.14-6.1 0-11.34-4.1-13.02-9.94l-8.41 6.52C6.51 42.62 14.62 48 24 48z"/>
-      </svg> Continue with Google
-    </button>
-    <div class="status" id="authStatus"><span class="spinner"></span> Waiting for sign-in…</div>
-    <hr class="hr"/><div class="tiny">Status: <span data-auth-status>signed out</span></div>
+  <nav class="nav">
+    <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
+    <button class="chip accent" id="leadBtn">Request Leads</button>
+  </nav>
+</header>
+
+<div class="shell">
+  <!-- LEFT: Hero + deals -->
+  <section>
+    <div class="hero">
+      <div>
+        <h2>Wholesale & Discount Deals — available now</h2>
+        <p>Tap a card to view the gallery or signal interest. Everything still behind secure access after you sign in.</p>
+        <div class="hero-ctas">
+          <a class="chip" href="profile.html">Secure Access</a>
+          <a class="chip primary" href="wholesaler.html">Wholesaler Portal</a>
+          <a class="chip" href="realtor.html">Realtor</a>
+          <a class="chip" href="contractor.html">Contractor</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="rail">
+      <div class="rail-head">
+        <div class="rail-title">Featured Inventory</div>
+        <div class="tiny">Swipe ⇄</div>
+      </div>
+      <div class="scroller" id="dealRail"><!-- JS injects cards --></div>
+    </div>
+  </section>
+
+  <!-- RIGHT: Your original secure access card (unchanged IDs/logic) -->
+  <main class="card">
+    <div class="row">
+      <img class="logo" src="icon (1).jpg" alt="DB"/>
+      <div>
+        <h1>Secure Access</h1>
+        <p>Sign in to continue to your portal.</p>
+      </div>
+    </div>
+    <div class="panel">
+      <button id="googleBtn" class="gbtn">
+        <svg class="g-icon" viewBox="0 0 48 48" aria-hidden="true">
+          <path fill="#EA4335" d="M24 9.5c3.54 0 6.79 1.22 9.32 3.6l6.98-6.98C36.89 2.17 30.87 0 24 0 14.62 0 6.51 5.38 2.56 13.22l8.41 6.52C12.66 13.6 17.9 9.5 24 9.5z"/>
+          <path fill="#4285F4" d="M46.5 24c0-1.64-.15-3.21-.43-4.74H24v9h12.7c-.55 2.98-2.23 5.52-4.75 7.22l7.23 5.61C43.89 37.17 46.5 31.07 46.5 24z"/>
+          <path fill="#FBBC05" d="M11 28.74a14.5 14.5 0 0 1-.77-4.74c0-1.64.28-3.22.77-4.74l-8.44-6.55A23.94 23.94 0 0 0 0 24c0 3.85.92 7.48 2.56 10.74L11 28.74z"/>
+          <path fill="#34A853" d="M24 48c6.48 0 11.93-2.14 15.9-5.83l-7.23-5.61c-2.01 1.35-4.6 2.14-8.67 2.14-6.1 0-11.34-4.1-13.02-9.94l-8.41 6.52C6.51 42.62 14.62 48 24 48z"/>
+        </svg>
+        Continue with Google
+      </button>
+      <div class="status" id="authStatus"><span class="spinner"></span> Waiting for sign-in…</div>
+      <hr class="hr"/>
+      <div class="tiny">Status: <span data-auth-status>signed out</span></div>
+    </div>
+    <div class="tiny" style="margin-top:10px">If pop-ups are blocked we’ll fall back to redirect sign-in.</div>
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div class="lb-back" id="lb">
+  <div class="lb"><img id="lbImg" alt=""/></div>
+</div>
+
+<!-- Lead picker -->
+<div class="picker" id="picker">
+  <div class="pbox">
+    <h3>Request Leads</h3>
+    <p class="tiny" style="margin:6px 0 10px">Choose a path and we’ll log it to your account:</p>
+    <div class="grid">
+      <button class="chip" data-lead="street">Street Leads (partner / self-enter)</button>
+      <button class="chip" data-lead="web">Web Click Campaign (vendor)</button>
+      <button class="chip" data-lead="live">Live Leads (partner with user)</button>
+      <button class="chip" id="pickCancel">Cancel</button>
+    </div>
   </div>
-  <div class="tiny" style="margin-top:10px">If pop‑ups are blocked we’ll fall back to redirect sign-in.</div>
-</main>
+</div>
+
 <script>
+/* ---------- Sign-in (UNCHANGED behavior) ---------- */
 (function(){
   const btn=document.getElementById('googleBtn'), statusEl=document.getElementById('authStatus');
   function setStatus(s,spin){ statusEl.innerHTML = spin?('<span class="spinner"></span> '+s):s; }
   btn.addEventListener('click', async ()=>{
     try{
-      setStatus('Opening Google sign‑in…',true);
+      setStatus('Opening Google sign-in…',true);
       const p=new firebase.auth.GoogleAuthProvider();
       await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       await firebase.auth().signInWithPopup(p);
     }catch(e){
-      if(e?.code==='auth/popup-blocked'){ setStatus('Pop-up blocked → redirect…',true); const p=new firebase.auth.GoogleAuthProvider(); return firebase.auth().signInWithRedirect(p); }
+      if(e?.code==='auth/popup-blocked'){
+        setStatus('Pop-up blocked → redirect…',true);
+        const p=new firebase.auth.GoogleAuthProvider();
+        return firebase.auth().signInWithRedirect(p);
+      }
       console.error(e); setStatus('Sign-in failed. Try again.');
     }
   });
 })();
+
+/* ---------- Deals rail ---------- */
+const deals = [
+  {
+    id:'booth-st',
+    title:'707 Booth Dr, San Antonio, TX 78216',
+    tags:'3 bed • 2 bath • 1,798 sf • 8,165 sf lot',
+    avm:'AVM ~$347k (8/31/25)',
+    base:'images/deals/booth-st',
+    // some likely booth filenames seen in your repo; plus numbered fallbacks
+    candidates:['20250124_171714.jpg','20250124_171729.jpg','20250124_171805.jpg','20250124_171826.jpg']
+  },
+  {
+    id:'san-luis-st',
+    title:'San Luis St, San Antonio, TX',
+    tags:'Lot with structure • RM-4',
+    avm:'Ask $65,000 (wholesale)',
+    base:'images/deals/san-luis-st',
+    candidates:[]
+  },
+  {
+    id:'vera-cruz-st',
+    title:'Vera Cruz St, San Antonio, TX',
+    tags:'Infill lot • city utilities',
+    avm:'Wholesale pricing',
+    base:'images/deals/vera-cruz-st',
+    candidates:[]
+  }
+];
+
+// try to auto-collect up to 20 images: 1..20.(png|jpg)
+function autoList(base, seed=[]) {
+  const list = [...seed];
+  for (let i=1;i<=20;i++){ list.push(`${base}/${i}.png`, `${base}/${i}.jpg`); }
+  return list;
+}
+
+async function filterExisting(urls){
+  // load images; resolve with those that succeed
+  const checks = urls.map(u => new Promise(resolve=>{
+    const img = new Image();
+    img.onload=()=>resolve(u);
+    img.onerror=()=>resolve(null);
+    img.src = u;
+  }));
+  const results = await Promise.all(checks);
+  return results.filter(Boolean);
+}
+
+function dealCard(d){
+  const el = document.createElement('div');
+  el.className='card-deal';
+  el.innerHTML = `
+    <div class="img"><span class="badge">New</span><img alt=""/></div>
+    <div class="body">
+      <div class="addr">${d.title}</div>
+      <div class="meta">${d.tags}<br><span class="tiny">${d.avm}</span></div>
+      <div class="btngrid">
+        <button class="btn primary" data-action="view">View</button>
+        <button class="btn ghost" data-action="interest">I’m Interested</button>
+      </div>
+    </div>`;
+  return el;
+}
+
+(async function renderRail(){
+  const rail = document.getElementById('dealRail');
+  for (const d of deals){
+    const urls = await filterExisting(autoList(d.base, d.candidates||[]));
+    const card = dealCard(d);
+    const img = card.querySelector('img');
+    if (urls[0]) img.src = urls[0]; else img.alt = 'No image';
+    card.querySelector('[data-action="view"]').onclick=()=>openLightbox(urls[0]||'', urls);
+    card.querySelector('[data-action="interest"]').onclick=()=>recordInterest(d);
+    rail.appendChild(card);
+  }
+})();
+
+/* ---------- Lightbox ---------- */
+const lb = document.getElementById('lb');
+const lbImg = document.getElementById('lbImg');
+let lbList=[], lbIndex=0;
+function openLightbox(first, list){
+  lbList = list && list.length ? list : [first].filter(Boolean);
+  if (!lbList.length) return;
+  lbIndex = 0; lbImg.src = lbList[0]; lb.style.display='flex';
+}
+lb.onclick = ()=>{ // click to cycle/close
+  lbIndex++;
+  if (lbIndex >= lbList.length){ lb.style.display='none'; return; }
+  lbImg.src = lbList[lbIndex];
+};
+
+/* ---------- Lead request picker ---------- */
+const picker = document.getElementById('picker');
+document.getElementById('leadBtn').onclick=()=>picker.style.display='flex';
+document.getElementById('pickCancel').onclick=()=>picker.style.display='none';
+picker.addEventListener('click',e=>{
+  if(e.target===picker) picker.style.display='none';
+  const type = e.target?.dataset?.lead;
+  if(!type) return;
+  sendLeadRequest(type);
+  picker.style.display='none';
+});
+
+async function sendLeadRequest(type){
+  let uid=null,email=null;
+  try{ const u=firebase.auth().currentUser; if(u){ uid=u.uid; email=u.email; } }catch(_){}
+  try{
+    await firebase.database().ref('requests').push({
+      portal:'index', kind:'lead-request', type,
+      uid,email, ts: firebase.database.ServerValue.TIMESTAMP
+    });
+    alert('Lead request received. We’ll follow up.');
+  }catch(err){ console.error(err); alert('Could not send request right now.'); }
+}
+
+/* ---------- “I’m Interested” capture (minimal) ---------- */
+async function recordInterest(d){
+  let uid=null,email=null;
+  try{ const u=firebase.auth().currentUser; if(u){ uid=u.uid; email=u.email; } }catch(_){}
+  try{
+    await firebase.database().ref('interests').push({
+      property:d.id, title:d.title, uid,email, ts: firebase.database.ServerValue.TIMESTAMP
+    });
+    alert('Got it — we’ll reach out about ' + d.title);
+  }catch(err){ console.error(err); alert('Could not send interest right now.'); }
+}
 </script>
-</body></html>
+</body>
+</html>
