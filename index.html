@@ -55,12 +55,12 @@
   /* Details grid */
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
   .card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
-  .thumb{aspect-ratio:4/3;width:100%;object-fit:cover;background:#08111a}
+  .thumb{aspect-ratio:4/3;width:100%;object-fit:cover;background:#08111a;cursor:pointer}
   .pad{padding:12px}
   .title{font-weight:800;margin:0 0 4px}
   .meta{color:#b5cbe0;font-size:12px}
   .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
-  .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#102433;color:#dff1ff;font-weight:700;text-decoration:none}
+  .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#102433;color:#dff1ff;font-weight:700;text-decoration:none;cursor:pointer}
   .btn.primary{background:#0f2945}
   .tag{display:inline-flex;align-items:center;gap:6px;background:#0e2332;border:1px solid #294861;border-radius:8px;padding:4px 8px;font-size:12px;color:#cfe3ff}
 
@@ -78,6 +78,20 @@
 
   @media (max-width: 980px){ .cards{grid-template-columns:1fr 1fr} #map{height:360px} }
   @media (max-width: 640px){ .cards{grid-template-columns:1fr} #map{height:320px} }
+
+  /* ===== Lightbox ===== */
+  .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000}
+  .lightbox.open{display:flex}
+  .lb-inner{position:relative;max-width:min(1000px,92vw);width:100%;padding:0 44px}
+  .lb-img{width:100%;max-height:78vh;object-fit:contain;border-radius:12px;background:#08111a}
+  .lb-close,.lb-prev,.lb-next{
+    position:absolute;top:50%;transform:translateY(-50%);
+    width:38px;height:38px;border-radius:50%;border:1px solid #2a3a4e;background:#0c1a24;color:#dff1ff;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer;
+  }
+  .lb-close{top:8px;right:8px;transform:none}
+  .lb-prev{left:4px}
+  .lb-next{right:4px}
+  .lb-cap{margin-top:8px;text-align:center;color:#b5cbe0;font-size:12px}
 </style>
 </head>
 <body>
@@ -120,6 +134,17 @@
     <div class="status">Status: <span data-auth-status>signed out</span></div>
     <div class="status" style="margin-top:10px">If pop-ups are blocked we’ll fall back to redirect sign-in.</div>
   </aside>
+</div>
+
+<!-- ===== Lightbox markup ===== -->
+<div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
+  <div class="lb-inner">
+    <button class="lb-close" onclick="closeGallery()" aria-label="Close">✕</button>
+    <button class="lb-prev" onclick="navGallery(-1)" aria-label="Previous">‹</button>
+    <img id="lbImg" class="lb-img" alt="">
+    <button class="lb-next" onclick="navGallery(1)" aria-label="Next">›</button>
+    <div id="lbCap" class="lb-cap"></div>
+  </div>
 </div>
 
 <script>
@@ -186,14 +211,14 @@ const deals = [
     address:"942 Waukee Pass St, San Antonio, TX 78260",
     summary:"840 sf (14x60) • Label NTA1825234 • No repairs • Ready to move",
     price:"$42,000",
-    photos:[], // add if you want thumb images here later
+    photos:[],
     links:{
       pictures:"https://drive.google.com/drive/folders/1yU_TdvSxaSzt0CLsM6lSWoupHd6jNpmD?usp=sharing",
       craigslist:"https://sanantonio.craigslist.org/reo/d/san-antonio-2018-singlewide-bd-ba-to-be/7869586869.html"
     }
   },
 
-  /* Commercial land — photos added */
+  /* Commercial land — photos */
   {
     id:"land-lakehills", group:"swift",
     title:"Commercial Land great for Storage Units (1.197 acres)",
@@ -215,7 +240,7 @@ const deals = [
     links:{ pictures:"https://drive.google.com/drive/folders/1dkmwEWVhW3TIwMG5j-45uBGtfGzkf1R7?usp=drive_link" }
   },
 
-  /* Floresville RTO — photos added */
+  /* Floresville RTO — photos */
   {
     id:"floresville-rto", group:"swift",
     title:"4/2 Doublewide — Rent to Own",
@@ -277,32 +302,18 @@ const deals = [
     links:{ pictures:"https://drive.google.com/drive/u/0/folders/1zryK15xf6vJNyzyrQNTOebOanhYK71zN" }
   },
 
-  /* Pinn Rd — Google Photos links used as fallbacks */
+  /* Pinn Rd — keep external album (Google Photos) */
   {
     id:"pinn-rd", group:"swift",
     title:"Affordable 3/2 Mobile Home — Move-In Ready",
     address:"1721 Pinn Rd LOT 48, San Antonio, TX 78227",
     summary:"2000 SW • DP $3,000 • $1,315/mo (incl. $625 lot rent) • A/C 2 yrs",
     price:"$45,000 (cash)",
-    photos:[
-      "https://photos.app.goo.gl/m4fhnAoAZNLaAhyFA",
-      "https://photos.app.goo.gl/GHKiQdueABkYCbey5",
-      "https://photos.app.goo.gl/j5CKigCJyT8MMTiu5",
-      "https://photos.app.goo.gl/w8nHzYZYrgHvM5Wp8",
-      "https://photos.app.goo.gl/WKaexKSfnURrbz6v7",
-      "https://photos.app.goo.gl/8TF5aEoW8367ro5N6",
-      "https://photos.app.goo.gl/FtFendSjJMicnAR1A",
-      "https://photos.app.goo.gl/MMTYTB8BCzyTE5ud8",
-      "https://photos.app.goo.gl/TaFKhAwSYmNMkWpE6",
-      "https://photos.app.goo.gl/Nz9hYeJG4erQV1sC9",
-      "https://photos.app.goo.gl/JGXWym2zA8vzDjhk7",
-      "https://photos.app.goo.gl/Ak9NyFN2vLwHNZ3r5",
-      "https://photos.app.goo.gl/LyNmFQBqx5w1AaCw8"
-    ],
+    photos:[], /* Google Photos doesn't give a direct <img> URL; keep as external album */
     links:{ pictures:"https://photos.app.goo.gl/JtB5rz7GMEtyrTyu6" }
   },
 
-  /* Corpus 2017 — photos added from Dropbox raw URLs */
+  /* Corpus 2017 — Dropbox photos */
   {
     id:"corpus-2017", group:"swift",
     title:"2017 3/2 in Corpus (12 mins to JP Luby Beach)",
@@ -331,7 +342,7 @@ const deals = [
     }
   },
 
-  /* Hondo 9.93ac — photos added */
+  /* Hondo 9.93ac — photos */
   {
     id:"hondo-9ac", group:"swift",
     title:"4/3 Doublewide on 9.93 acres with Workshop",
@@ -369,7 +380,7 @@ const deals = [
     links:{ pictures:"https://drive.google.com/drive/folders/1nbb0CCTF9o2oO9MPC9mcjmaV9VSCDEha?usp=sharing" }
   },
 
-  /* Escondido 21010 — photos added */
+  /* Escondido 21010 — photos */
   {
     id:"escondido-21010", group:"swift",
     title:"Big-Family Play — 4/2 DW + gutted 2/1 SW (combine to 6/3)",
@@ -418,7 +429,7 @@ const deals = [
     links:{ pictures:"https://drive.google.com/drive/u/0/folders/15mvuzjF5FOrf8yUn8hyPVnmj18tuoK_u" }
   },
 
-  /* Escondido 21016 — photos added */
+  /* Escondido 21016 — photos */
   {
     id:"escondido-21016", group:"swift",
     title:"4/3 Double-wide on 0.6 acres — Updated + NEW HVAC @ close",
@@ -447,7 +458,7 @@ const deals = [
     links:{ pictures:"https://drive.google.com/drive/folders/1f7BwOPbue3I0HF6Qn49Ws4arzXkI6_Ej" }
   },
 
-  /* The following two will show "Photos coming soon" placeholder until photos are added */
+  /* Placeholders stay empty — shows “Photos coming soon” */
   {
     id:"eveningway", group:"swift",
     title:"3/2 Brick — Handyman Special",
@@ -520,23 +531,71 @@ async function geocode(addr){
   return null;
 }
 
+/* ===== Lightbox logic ===== */
+let lbState = { ids:[], index:0, deal:null };
+const lbEl = document.getElementById('lightbox');
+const lbImg = document.getElementById('lbImg');
+const lbCap = document.getElementById('lbCap');
+
+function openGallery(dealId, startIndex=0){
+  const d = deals.find(x=>x.id===dealId);
+  if(!d || !Array.isArray(d.photos) || d.photos.length===0){
+    // no inline photos; if there's an external album, open that
+    if(d?.links?.pictures){ window.open(d.links.pictures, '_blank'); }
+    return;
+  }
+  lbState.deal = d;
+  lbState.ids = d.photos;
+  lbState.index = Math.max(0, Math.min(startIndex, d.photos.length-1));
+  renderLightbox();
+  lbEl.classList.add('open');
+}
+function closeGallery(){ lbEl.classList.remove('open'); }
+function navGallery(step){
+  if(!lbState.ids.length) return;
+  lbState.index = (lbState.index + step + lbState.ids.length) % lbState.ids.length;
+  renderLightbox();
+}
+function renderLightbox(){
+  const url = lbState.ids[lbState.index];
+  lbImg.src = url;
+  lbCap.textContent = `${lbState.deal.title} — ${lbState.index+1} / ${lbState.ids.length}`;
+}
+document.addEventListener('keydown', (e)=>{
+  if(!lbEl.classList.contains('open')) return;
+  if(e.key==='Escape') closeGallery();
+  if(e.key==='ArrowRight') navGallery(1);
+  if(e.key==='ArrowLeft') navGallery(-1);
+});
+lbEl.addEventListener('click', (e)=>{ if(e.target===lbEl) closeGallery(); });
+
+/* Rendering helpers */
+function thumbHTML(d){
+  const img = d.photos?.[0];
+  if(img){
+    return `<img class="thumb" src="${img}" alt="" onclick="openGallery('${d.id}',0)">`;
+  }
+  return `<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#9db2c7;font-size:13px">Photos coming soon</div>`;
+}
+
 // render details card
 function renderCard(d){
-  const img = d.photos?.[0] || '';
   const el = document.createElement('article');
   el.className = 'card';
   el.id = 'deal-'+d.id;
   el.innerHTML = `
-    ${img
-      ? `<img class="thumb" src="${img}" alt="">`
-      : `<div class="thumb" style="display:flex;align-items:center;justify-content:center;color:#9db2c7;font-size:13px">Photos coming soon</div>`}
+    ${thumbHTML(d)}
     <div class="pad">
       <div class="title">${d.title}</div>
       <div class="meta">${d.summary || ''}</div>
       ${d.price? `<div class="row"><span class="tag">Price: ${d.price}</span></div>`:''}
       <div class="row" style="margin-top:10px">
         <a class="btn primary" href="tel:+15128435181">I'm Interested</a>
-        ${d.links?.pictures ? `<a class="btn" target="_blank" href="${d.links.pictures}">Pictures</a>`:''}
+        ${
+          (d.photos && d.photos.length)
+            ? `<button class="btn" onclick="openGallery('${d.id}',0)">Pictures</button>`
+            : (d.links?.pictures ? `<a class="btn" target="_blank" href="${d.links.pictures}">Pictures</a>` : '')
+        }
         ${d.links?.craigslist ? `<a class="btn" target="_blank" href="${d.links.craigslist}">Craigslist</a>`:''}
       </div>
       <div class="meta" style="margin-top:8px">📍 ${d.address}</div>
@@ -548,15 +607,19 @@ function renderCard(d){
 // popup “View details” + call button
 function popupHTML(d){
   const img = d.photos?.[0] || '';
+  const photosBtn = (d.photos?.length)
+    ? `<a href="javascript:void(0)" onclick="openGallery('${d.id}',0)" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">Photos</a>`
+    : (d.links?.pictures ? `<a target="_blank" href="${d.links.pictures}" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">Photos</a>` : '');
   return `
     <div style="min-width:220px;max-width:260px">
-      ${img ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:6px">` : ''}
+      ${img ? `<img src="${img}" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:6px;cursor:pointer" onclick="openGallery('${d.id}',0)">` : ''}
       <div style="font-weight:800">${d.title}</div>
       <div style="color:#7fb0ff;font-size:12px;margin:2px 0">${d.summary || ''}</div>
       ${d.price ? `<div style="font-size:12px;margin:4px 0">Price: ${d.price}</div>`:''}
       <div style="display:flex;gap:8px;margin-top:8px">
         <a href="#deal-${d.id}" onclick="document.getElementById('deal-${d.id}').scrollIntoView({behavior:'smooth',block:'start'})"
-           style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">View details</a>
+           style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">View</a>
+        ${photosBtn}
         <a href="tel:+15128435181" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#0f2945;color:#dff1ff;text-decoration:none;font-weight:700">Call</a>
       </div>
     </div>`;
