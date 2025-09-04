@@ -172,6 +172,35 @@
 })();
 
 /* =======================
+   URL NORMALIZER (Drive/Dropbox -> direct image)
+======================= */
+function normalizeImageURL(u){
+  if(!u) return u;
+  try{
+    const url = new URL(u);
+
+    // Google Drive: /file/d/<id>/view or ...open?id=<id>
+    if(url.hostname.includes('drive.google.com')){
+      const m = url.pathname.match(/\/file\/d\/([^/]+)\//);
+      const id = url.searchParams.get('id') || (m ? m[1] : null);
+      if(id) return `https://drive.google.com/uc?export=view&id=${id}`;
+    }
+
+    // Dropbox: convert share page to direct content
+    if(url.hostname.includes('dropbox.com')){
+      return u
+        .replace('www.dropbox.com', 'dl.dropboxusercontent.com')
+        .replace('dropbox.com', 'dl.dropboxusercontent.com')
+        .replace(/(\?dl=0|\?dl=1|\?raw=0)/, '?raw=1');
+    }
+
+    return u;
+  }catch(_){
+    return u;
+  }
+}
+
+/* =======================
    DEALS DATA
 ======================= */
 const deals = [
@@ -309,7 +338,7 @@ const deals = [
     address:"1721 Pinn Rd LOT 48, San Antonio, TX 78227",
     summary:"2000 SW • DP $3,000 • $1,315/mo (incl. $625 lot rent) • A/C 2 yrs",
     price:"$45,000 (cash)",
-    photos:[], /* Google Photos doesn't give a direct <img> URL; keep as external album */
+    photos:[], /* Google Photos album link only */
     links:{ pictures:"https://photos.app.goo.gl/JtB5rz7GMEtyrTyu6" }
   },
 
@@ -540,7 +569,6 @@ const lbCap = document.getElementById('lbCap');
 function openGallery(dealId, startIndex=0){
   const d = deals.find(x=>x.id===dealId);
   if(!d || !Array.isArray(d.photos) || d.photos.length===0){
-    // no inline photos; if there's an external album, open that
     if(d?.links?.pictures){ window.open(d.links.pictures, '_blank'); }
     return;
   }
@@ -557,7 +585,7 @@ function navGallery(step){
   renderLightbox();
 }
 function renderLightbox(){
-  const url = lbState.ids[lbState.index];
+  const url = normalizeImageURL(lbState.ids[lbState.index]);
   lbImg.src = url;
   lbCap.textContent = `${lbState.deal.title} — ${lbState.index+1} / ${lbState.ids.length}`;
 }
@@ -571,7 +599,8 @@ lbEl.addEventListener('click', (e)=>{ if(e.target===lbEl) closeGallery(); });
 
 /* Rendering helpers */
 function thumbHTML(d){
-  const img = d.photos?.[0];
+  const raw = d.photos?.[0];
+  const img = raw ? normalizeImageURL(raw) : null;
   if(img){
     return `<img class="thumb" src="${img}" alt="" onclick="openGallery('${d.id}',0)">`;
   }
@@ -606,7 +635,8 @@ function renderCard(d){
 
 // popup “View details” + call button
 function popupHTML(d){
-  const img = d.photos?.[0] || '';
+  const raw = d.photos?.[0];
+  const img = raw ? normalizeImageURL(raw) : '';
   const photosBtn = (d.photos?.length)
     ? `<a href="javascript:void(0)" onclick="openGallery('${d.id}',0)" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">Photos</a>`
     : (d.links?.pictures ? `<a target="_blank" href="${d.links.pictures}" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">Photos</a>` : '');
