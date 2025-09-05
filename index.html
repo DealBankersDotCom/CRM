@@ -6,13 +6,17 @@
 <title>DealBankers — Wholesale & Discount Deals (Map)</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
 
+<!-- Leaflet -->
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="anonymous">
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin="anonymous"></script>
 
+<!-- Firebase (compat to match your stack) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
+
+<!-- Your local config/auth -->
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 
@@ -20,35 +24,60 @@
   :root{ --bg:#0b1218; --panel:#0f1823; --line:#1e2c3a; --text:#eaf2ff; --muted:#9db2c7; --accent:#2b74ff; --chip:#0e2332; }
   *{box-sizing:border-box} html,body{height:100%}
   body{margin:0; background:linear-gradient(135deg,#0b1218,#0e1a25 60%,#0b1218); color:var(--text); font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
-  .header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))}
-  .brand{display:flex;gap:10px;align-items:center} .brand img{width:36px;height:36px;border-radius:10px;object-fit:cover}
-  .chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid #294861;background:var(--chip);color:#d7ecff;text-decoration:none;font-weight:700}
+
+  .header{position:sticky;top:0;z-index:30;display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);
+    background:linear-gradient(180deg, rgba(255,255,255,.06), rgba(255,255,255,.02))}
+  .brand{display:flex;gap:10px;align-items:center}
+  .brand img{width:36px;height:36px;border-radius:10px;object-fit:cover}
+  .chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid #294861;background:var(--chip);
+        color:#d7ecff;text-decoration:none;font-weight:700}
+
   .shell{max-width:1180px;margin:14px auto;padding:0 12px}
-  .cols{display:grid;grid-template-columns:1fr 320px;gap:14px} @media (max-width:980px){.cols{grid-template-columns:1fr}}
+  .cols{display:grid;grid-template-columns:1fr 320px;gap:14px}
+  @media (max-width:980px){ .cols{grid-template-columns:1fr} }
+
   .panel{border:1px solid var(--line);border-radius:14px;background:var(--panel)}
   #map{height:420px;border-radius:14px}
   .mapbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:space-between;padding:10px}
-  .legend{display:flex;gap:10px;flex-wrap:wrap} .legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
-  .dot{width:10px;height:10px;border-radius:50%} .dot.featured{background:#2b74ff} .dot.swift{background:#caa86a}
+  .legend{display:flex;gap:10px;flex-wrap:wrap}
+  .legend span{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--muted)}
+  .dot{width:10px;height:10px;border-radius:50%;background:#2b74ff}
+
   .cards{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-top:12px}
   .card{border:1px solid var(--line);border-radius:14px;overflow:hidden;background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02))}
   .thumb{aspect-ratio:4/3;width:100%;object-fit:cover;background:#08111a;cursor:pointer}
-  .pad{padding:12px} .title{font-weight:800;margin:0 0 4px} .meta{color:#b5cbe0;font-size:12px}
+  .pad{padding:12px}
+  .title{font-weight:800;margin:0 0 4px}
+  .meta{color:#b5cbe0;font-size:12px}
   .row{display:flex;flex-wrap:wrap;gap:8px;margin-top:10px}
   .btn{padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#102433;color:#dff1ff;font-weight:700;text-decoration:none;cursor:pointer}
   .btn.primary{background:#0f2945}
   .tag{display:inline-flex;align-items:center;gap:6px;background:#0e2332;border:1px solid #294861;border-radius:8px;padding:4px 8px;font-size:12px;color:#cfe3ff}
+
   .notice{margin:12px 0;padding:10px 12px;border:1px dashed var(--line);border-radius:12px;color:#cfe3ff;background:#0c1a25;font-size:13px}
+
   .secure{border:1px solid var(--line);border-radius:16px;background:#0f1a24;padding:14px}
-  .gbtn{display:flex;align-items:center;justify-content:center;gap:10px;height:44px;width:100%;border-radius:12px;border:1px solid #747775;background:#1f1f1f;color:#e8eaed;font-weight:700;cursor:pointer}
-  .gbtn img{width:18px;height:18px} .status{color:var(--muted);font-size:12px;margin-top:8px}
-  @media (max-width:980px){.cards{grid-template-columns:1fr 1fr} #map{height:360px}} @media (max-width:640px){.cards{grid-template-columns:1fr} #map{height:320px}}
+  .gbtn{
+    display:flex;align-items:center;justify-content:center;gap:10px;
+    height:44px;width:100%;border-radius:12px;border:1px solid #747775;
+    background:#1f1f1f;color:#e8eaed;font-weight:700;cursor:pointer
+  }
+  .gbtn img{width:18px;height:18px}
+  .status{color:var(--muted);font-size:12px;margin-top:8px}
+
+  @media (max-width:980px){ .cards{grid-template-columns:1fr 1fr} #map{height:360px} }
+  @media (max-width:640px){ .cards{grid-template-columns:1fr} #map{height:320px} }
+
+  /* Lightbox */
   .lightbox{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:1000}
   .lightbox.open{display:flex}
   .lb-inner{position:relative;max-width:min(1000px,92vw);width:100%;padding:0 44px}
   .lb-img{width:100%;max-height:78vh;object-fit:contain;border-radius:12px;background:#08111a}
-  .lb-close,.lb-prev,.lb-next{position:absolute;top:50%;transform:translateY(-50%);width:38px;height:38px;border-radius:50%;border:1px solid #2a3a4e;background:#0c1a24;color:#dff1ff;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer}
-  .lb-close{top:8px;right:8px;transform:none} .lb-prev{left:4px} .lb-next{right:4px}
+  .lb-close,.lb-prev,.lb-next{position:absolute;top:50%;transform:translateY(-50%);
+    width:38px;height:38px;border-radius:50%;border:1px solid #2a3a4e;background:#0c1a24;color:#dff1ff;display:flex;align-items:center;justify-content:center;font-weight:900;cursor:pointer}
+  .lb-close{top:8px;right:8px;transform:none}
+  .lb-prev{left:4px}
+  .lb-next{right:4px}
   .lb-cap{margin-top:8px;text-align:center;color:#b5cbe0;font-size:12px}
 </style>
 </head>
@@ -64,8 +93,7 @@
       <div class="mapbar">
         <div><b>Deals Map</b> — tap a pin to open details ↓</div>
         <div class="legend">
-          <span><i class="dot featured"></i> Featured inventory</span>
-          <span><i class="dot swift"></i> Mobile Homes & Land</span>
+          <span><i class="dot"></i> Featured inventory</span>
         </div>
       </div>
       <div id="map"></div>
@@ -91,6 +119,7 @@
   </aside>
 </div>
 
+<!-- Lightbox -->
 <div id="lightbox" class="lightbox" role="dialog" aria-modal="true" aria-label="Photo viewer">
   <div class="lb-inner">
     <button class="lb-close" onclick="closeGallery()" aria-label="Close">✕</button>
@@ -102,11 +131,12 @@
 </div>
 
 <script>
-/* ========= Auth card ========= */
+/* ===== Auth card ===== */
 (function(){
   const btn = document.getElementById('googleBtn');
   const statusEl = document.querySelector('[data-auth-status]');
   function setStatus(s){ if(statusEl) statusEl.textContent = s; }
+
   btn?.addEventListener('click', async ()=>{
     try{
       const provider = new firebase.auth.GoogleAuthProvider();
@@ -120,105 +150,69 @@
       alert('Sign-in failed. Try again.');
     }
   });
+
   firebase.auth().onAuthStateChanged(u=> setStatus(u ? 'signed in' : 'signed out'));
 })();
 
 /* =======================
-   DEALS DATA (unchanged content from your last message)
+   DEALS DATA — ONLY YOUR FEATURED ITEMS
 ======================= */
 const deals = [
-  { id:"booth", group:"featured", title:"Booth St, San Antonio, TX", address:"Booth St, San Antonio, TX", summary:"3/2 • 1,798 sf • AVM ≈ $347k", price:null, photos:["images/deals/booth-st/20250124_171821.jpg","images/deals/booth-st/20250429_194536.jpg"], links:{} },
-  { id:"sanluis", group:"featured", title:"San Luis St, San Antonio, TX", address:"San Luis St, San Antonio, TX", summary:"Lot with structure • RM-4 • Ask $65,000 (wholesale)", price:"$65,000", photos:["images/deals/san-luis-st/7.png","images/deals/san-luis-st/12.png"], links:{} },
-  { id:"veracruz", group:"featured", title:"Vera Cruz St, San Antonio, TX", address:"Vera Cruz St, San Antonio, TX", summary:"Infill lot • City utilities • Wholesale pricing", price:null, photos:["images/deals/vera-cruz-st/12.png","images/deals/vera-cruz-st/7.png"], links:{} },
-
-  { id:"mh-move-2018-waukee", group:"swift", title:"2018 2/2 Singlewide — Needs To Be Moved", address:"942 Waukee Pass St, San Antonio, TX 78260", summary:"840 sf (14x60) • Label NTA1825234 • No repairs • Ready to move", price:"$42,000", photos:[], links:{ pictures:"https://drive.google.com/drive/folders/1yU_TdvSxaSzt0CLsM6lSWoupHd6jNpmD?usp=sharing", craigslist:"https://sanantonio.craigslist.org/reo/d/san-antonio-2018-singlewide-bd-ba-to-be/7869586869.html" } },
-
-  { id:"land-lakehills", group:"swift", title:"Commercial Land great for Storage Units (1.197 acres)", address:"9896 Park Road 37, Lakehills, TX 78063", summary:"Outside large residential community — leveled, driveway permit in pics", price:"$60,000",
-    photos:[
-      "https://drive.google.com/uc?export=view&id=18x-G9NDsvk54TC4EQS0yXsMefWNl5Krh","https://drive.google.com/uc?export=view&id=1r6OqE_sMTU-rSXXMPepojWumanlid2yq","https://drive.google.com/uc?export=view&id=1Z44LN2CbHo_1RNJNLR2a2BN9WFOO8Wgj","https://drive.google.com/uc?export=view&id=1yZKwwgZ0oQCYrZjepxiKiuMbHzqH0FpY","https://drive.google.com/uc?export=view&id=12bydfiky98d0lmHEh9YNRukkHNSjax53","https://drive.google.com/uc?export=view&id=1L11EqbfhmJU7sJ4rx5X6nzDt-G0-_mqS","https://drive.google.com/uc?export=view&id=10xkuiEE6AcbuxmlzGzxsp3F2imUXp5mT","https://drive.google.com/uc?export=view&id=1YNn0KRgT1TOvYWJYMfHsMk69Y2evuj93","https://drive.google.com/uc?export=view&id=1H1D6_FCfdfNUSndUzQ4hV-GtYqN_K3dB","https://drive.google.com/uc?export=view&id=19mH4NCoTdwX0sGpDpNXhPmHaoIEqMo_v"
-    ],
-    links:{ pictures:"https://drive.google.com/drive/folders/1dkmwEWVhW3TIwMG5j-45uBGtfGzkf1R7?usp=drive_link" }
+  {
+    id:"booth", group:"featured",
+    title:"Booth St, San Antonio, TX",
+    address:"Booth St, San Antonio, TX",
+    summary:"3/2 • 1,798 sf • AVM ≈ $347k • Seeking money partners & seller-finance buyers",
+    price:null,
+    photos:["images/deals/booth-st/20250124_171821.jpg","images/deals/booth-st/20250429_194536.jpg"],
+    links:{}
   },
-
-  { id:"floresville-rto", group:"swift", title:"4/2 Doublewide — Rent to Own", address:"566 4th St, Floresville, TX", summary:"2005 • 1,792 sf • $75,000 or RTO with $5,000 down (12% for 8 yrs)", price:"$75,000",
-    photos:[
-      "https://drive.google.com/uc?export=view&id=1jYTVYAnvi4w0UXf3Bvpt6PZAoMpJ1zde","https://drive.google.com/uc?export=view&id=1_LxkUGXUvkpiBKPC1A2zTljrlKXlXYc6","https://drive.google.com/uc?export=view&id=1LGrY4O-AU8V5GlMuVbPJddghioo31fyh","https://drive.google.com/uc?export=view&id=12Iz2vHOBHTDjnE3UolZpeiyewmCZ7uDk","https://drive.google.com/uc?export=view&id=1-Vm5N353jX3NrIhwOso8VlSfRrWvaPaM","https://drive.google.com/uc?export=view&id=1vlMpO4RDRAu5W4DEbC5mDLqKCPE1TAlv","https://drive.google.com/uc?export=view&id=1NongXdME-LrdjZx-GX77OURDxNYgOumx","https://drive.google.com/uc?export=view&id=1kfD-HnzgmmhyplvmR_yXfK7F5U0A3054","https://drive.google.com/uc?export=view&id=1TM8Hi7wrIS0ZC2HGj-CiDVrDygGe5iJ2","https://drive.google.com/uc?export=view&id=1-Cz8xF2m2L_ukbPmoOayYAmly5W42WPC","https://drive.google.com/uc?export=view&id=1FUlfIPmpwsArsmer65EQp-TqnM7CfvyP","https://drive.google.com/uc?export=view&id=18asGC5N0k98Bvs5QNgpJ8zGr7glA62cK","https://drive.google.com/uc?export=view&id=1ztc5xPV2PbiR-cHGohkukK-mgbn7_TAH","https://drive.google.com/uc?export=view&id=1xjmejkQps9OZkoqGMHggoO3p77Ard3d7","https://drive.google.com/uc?export=view&id=1MWr5hSEQJwGoFw7tDyWMxbsTeEp04hym","https://drive.google.com/uc?export=view&id=1dZaCboPYLc5aOZ-_F4jDlNSowFwoksjg","https://drive.google.com/uc?export=view&id=1C2jVYl7o5AvnFhGNGduLsLo63_y9nB0X","https://drive.google.com/uc?export=view&id=16yryaGyu339tdgnJTXt1RBeljfydZEs-","https://drive.google.com/uc?export=view&id=1oQ23jyC5Cnm3J9bfPAO3G2hIBB7mUMVR","https://drive.google.com/uc?export=view&id=12a14XDyQFKwQshrnlh72OPm-QW00muIW","https://drive.google.com/uc?export=view&id=1E8LWYP_sR3ZxcllqCxPL565MefT-jN4a","https://drive.google.com/uc?export=view&id=19NM6mITpMPLLg_xzR_H5dd-bbwJQpqHn","https://drive.google.com/uc?export=view&id=1j6cxZzs8AWBx_m20C5wU8PoevibPcbyo","https://drive.google.com/uc?export=view&id=1kwiM1hnhRr_9gRsbOMtwAdohhYYFrsgs","https://drive.google.com/uc?export=view&id=1B3qh-FzZ81cxkSkYBmPHd-7fptLkwH60","https://drive.google.com/uc?export=view&id=1PTtRgBgvybSoMqOaj3NfqYSDbznERjz9","https://drive.google.com/uc?export=view&id=14y9f7jVM5_gybl05ldGvwZ8MtQ7sathY","https://drive.google.com/uc?export=view&id=1BF59h2aKFFgzoNT-0bGOuN1RGvZBcHkb","https://drive.google.com/uc?export=view&id=1wOKM_-6hOlefXC-fsVC4mj-TeuNKybT5","https://drive.google.com/uc?export=view&id=1LLEamlCeeqNxdgT-WHL26tFaHx3XVo4R","https://drive.google.com/uc?export=view&id=1RdKG6whIBukOSD-KOxskGD3k9MUWTK6w","https://drive.google.com/uc?export=view&id=1e2Lp33vZG3tvwctTaKid9P0DN0hUvJi0","https://drive.google.com/uc?export=view&id=1ThTXaBE4QI3CNjWclN5_2g0xL0nv0iGV","https://drive.google.com/uc?export=view&id=1nQEr1rgU9ChbI5dkJq6Ck_5xrA495hiY","https://drive.google.com/uc?export=view&id=1Cmm3kDOyTxoQc2cPPI-DLGUq-_D-HonU","https://drive.google.com/uc?export=view&id=1X1t8FJd_H3jDUZFs4A9UwdfyDPJ7AHT7","https://drive.google.com/uc?export=view&id=1_4pahC04zryd3QLX6fwBWD1MknFgC3U-","https://drive.google.com/uc?export=view&id=1S4SyhXxz7TvfF_Q4WcWQUhJHocrEMBKs","https://drive.google.com/uc?export=view&id=1lu-5nJaYnlSk-YNkm76Tbmf4G6o4ls71","https://drive.google.com/uc?export=view&id=1Wb6tHr3P7fjfmTpigS2JguMwVmX2GEVL","https://drive.google.com/uc?export=view&id=1Ip-Gz8_gT3l_QFw7vaLbR2nXQnsEoy9D","https://drive.google.com/uc?export=view&id=1nwt1pjr-19wyJ1Bw2MVRk9xAclQhPqLh","https://drive.google.com/uc?export=view&id=1sVRmLMTsWcsyZ5BdMnNeJJh5tiZv7aGI","https://drive.google.com/uc?export=view&id=11sCIm7hXTPAlzaiOeCh7Yhh0VXXaAr9G","https://drive.google.com/uc?export=view&id=1dPfbq5vnbO0VJa6_4_UF8EntRapio1sR","https://drive.google.com/uc?export=view&id=1k8IIH2mOQdeSV3zcJFhjXEax4K5q4vbc","https://drive.google.com/uc?export=view&id=10bWEzUp5GM0MX04ZRbRTuiFzfJLEqeFN","https://drive.google.com/uc?export=view&id=1EFtRbM8WR5cyKjR3df8sIuuwPABHCWVD","https://drive.google.com/uc?export=view&id=1B-IKrXX0_zXzFS4tzAb5_6ie_z0xv4aw","https://drive.google.com/uc?export=view&id=13XMD_7QRwjDLxrl7Gng8NsyGjqN8acUV"
-    ],
-    links:{ pictures:"https://drive.google.com/drive/u/0/folders/1zryK15xf6vJNyzyrQNTOebOanhYK71zN" }
+  {
+    id:"sanluis", group:"featured",
+    title:"San Luis St, San Antonio, TX",
+    address:"San Luis St, San Antonio, TX",
+    summary:"Lot w/ structure • RM-4 • Wholesale — Ask $65,000",
+    price:"$65,000",
+    photos:["images/deals/san-luis-st/7.png","images/deals/san-luis-st/12.png"],
+    links:{}
   },
-
-  { id:"pinn-rd", group:"swift", title:"Affordable 3/2 Mobile Home — Move-In Ready", address:"1721 Pinn Rd LOT 48, San Antonio, TX 78227", summary:"2000 SW • DP $3,000 • $1,315/mo (incl. $625 lot rent) • A/C 2 yrs", price:"$45,000 (cash)", photos:[], links:{ pictures:"https://photos.app.goo.gl/JtB5rz7GMEtyrTyu6" } },
-
-  { id:"corpus-2017", group:"swift", title:"2017 3/2 in Corpus (12 mins to JP Luby Beach)", address:"557 Crayton St, Corpus Christi, TX 78418", summary:"1,216 sf • Wind Zone II • Strong rental/owner-finance play", price:"$55,000 (cash)",
-    photos:[
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AF0VPLlI0z2habyiSiNgO4Y/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%281%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AIFhVo_JWZVuZ-temERohdw/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%282%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AFNqmpIkZItrpGyubrzPvzs/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%283%29%20%281%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/ANno1FJamkqY_QEpRtE2ouM/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%283%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AASnsAE9kgNV38LFvYuEa3c/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%284%29%20%281%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AH5_5W_OHjPdx9QVOi_vRa4/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%284%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AEHk_YsfrCyhd50p58ZFHWI/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%285%29%20%281%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AHVarGfeFRhzAwYvqRaXdHk/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%285%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AE6aRIcsTaoBuQIQZsvm1DA/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%286%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AGBsbDS_reB2aiLBuOk02HE/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%287%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/ALzp4g9UxebnmGeNAf5n4_M/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%288%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AAk2R3cQnquocxkz1nPTlLY/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%289%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AHBCpyXyRXGBWdNhvG2ZB0k/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM%20%2810%29.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1",
-      "https://dl.dropboxusercontent.com/scl/fo/r4ihvvdawmhjtbxqh1owt/AMFJdPasJ_K0XwftaLeJYfE/Photo%20Feb%2012%202025%2C%208%2053%2058%20PM.jpg?rlkey=g5lwbisnymstvhbceccx5i8v1&raw=1"
-    ],
-    links:{ pictures:"https://www.dropbox.com/scl/fo/r4ihvvdawmhjtbxqh1owt/APcUHqCzJdnNw6CYAYbFL5I?rlkey=g5lwbisnymstvhbceccx5i8v1&dl=0", craigslist:"https://corpuschristi.craigslist.org/reo/d/corpus-christi-2017-singlewide-bed-bath/7851895642.html" }
-  },
-
-  { id:"hondo-9ac", group:"swift", title:"4/3 Doublewide on 9.93 acres with Workshop", address:"370 County Road 347, Hondo, TX 78861", summary:"Palm Harbor (28x76) • 2 living rooms • workshop w/ bath & mini-split", price:"Ask $250,000 (ARV ≈ $350k)",
-    photos:[
-      "https://drive.google.com/uc?export=view&id=1ZBPuXzfDOH8ugjEcOQDWaxyR_KHpP2SB","https://drive.google.com/uc?export=view&id=1i6eaPKsUyBFsk2tjd0467ZBswWP2f6Ii","https://drive.google.com/uc?export=view&id=1LEKBvlqDU7VHl23xQNkfhkw1V4V3KKzu","https://drive.google.com/uc?export=view&id=1gI73N7gr9r6YjhK2uissw8Jt76XG7c40","https://drive.google.com/uc?export=view&id=1vRUqyNWTzn9QAwYWdkWcaIq1K3DcyigM","https://drive.google.com/uc?export=view&id=1WbumrPFD5YeHFrFz-ME836LTAi-VODdp","https://drive.google.com/uc?export=view&id=1EtQydfMvqRSQOPx5uqqghtp6ghEdXDs7","https://drive.google.com/uc?export=view&id=19tjYKaN-JgwYoCNs_VxuLP7KL8BZRDsh","https://drive.google.com/uc?export=view&id=1rbkaRtEon_efoBcx7itYG0FL9DsfyPf8","https://drive.google.com/uc?export=view&id=1F7hrmt8VbcMqrdmd6yKctlO6lgCJHd2f","https://drive.google.com/uc?export=view&id=12ohmz5AVr6VZTM10IzUuQ-BjIzILLUqZ","https://drive.google.com/uc?export=view&id=1alzj6LflMiaEqtTT97yfDTTsGMNGd7Xk","https://drive.google.com/uc?export=view&id=1-EVBg2U71EGqiuMA-eSCy2RxpBdkOw5G","https://drive.google.com/uc?export=view&id=1awI2qfFFfQKLF0JLdti24LRlfxot3Nxl","https://drive.google.com/uc?export=view&id=1-k__WLRAunxR5xfHev5z-5wY1btYjLKT","https://drive.google.com/uc?export=view&id=1Cw7r6Oo_Q-rKfLrrJYD22q-FiSLuB4Q4","https://drive.google.com/uc?export=view&id=1-39Hmu0KKMiW1_-z44TkIOUx94p9NKdU","https://drive.google.com/uc?export=view&id=13gQ_LEsVgnzW_qnpDVlTXr6b7H-_IK0c","https://drive.google.com/uc?export=view&id=1fB9EE6bb6QE-8K7Za2c9GdSqJlzrZWC-","https://drive.google.com/uc?export=view&id=1E74uhd5M8NUuLUBQLQwM_Fkr6Sw3VSz8","https://drive.google.com/uc?export=view&id=15m7XxoaLKpGpah-vnFIrsRav_VjfzBm2","https://drive.google.com/uc?export=view&id=1YyMMrUb7bWjyUvsx1GYb6BXtNgNEd4-V","https://drive.google.com/uc?export=view&id=1vNmaDpqvjptpnUSThkmtjwksBCtjoLKB","https://drive.google.com/uc?export=view&id=12Cw3dGUFtsXxqEWgIK6hH87WZQsOlptZ","https://drive.google.com/uc?export=view&id=1mPsWfWROVPBObPKUlehcFKV4YByY91j1","https://drive.google.com/uc?export=view&id=1amxajvMY3_aYgN-XB34Qy0A0w9t9bzNO"
-    ],
-    links:{ pictures:"https://drive.google.com/drive/folders/1nbb0CCTF9o2oO9MPC9mcjmaV9VSCDEha?usp=sharing" }
-  },
-
-  { id:"escondido-21010", group:"swift", title:"Big-Family Play — 4/2 DW + gutted 2/1 SW (combine to 6/3)", address:"21010 Escondido Park, San Antonio, TX 78264", summary:".6 acre corner • New roof/paint • Needs HVAC, MEP, septic, kitchens/baths", price:"$135,000 cash (RTO: $155k with $25k down @12%)",
-    photos:[
-      "https://drive.google.com/uc?export=view&id=1Lnfh-PmypWX3vwfULKeoLy5BMpovwtJa","https://drive.google.com/uc?export=view&id=1nl0xUSmMdGBPxi4jgnsd5iYVQfkUJA4u","https://drive.google.com/uc?export=view&id=1pVFnpRjOwr8GRCepD7ViLydY7qFlgP1g","https://drive.google.com/uc?export=view&id=1pRmiHWcB9Ld41G12pJYr62Qv7FwegVbk","https://drive.google.com/uc?export=view&id=1pGfol0YoE4nbgFtNZB6vqqFccjv0iXpn","https://drive.google.com/uc?export=view&id=1pAknF-fbQhs2NbGA0zPXi4LeTgiQJClU","https://drive.google.com/uc?export=view&id=1p3lW1QXUo-s_y0PdUDOh_L5SowjGBXpE","https://drive.google.com/uc?export=view&id=1p068j-reUieARuz7vxhQGWmZZuuk99Bs","https://drive.google.com/uc?export=view&id=1mySCr2Qez2W3qZ6VwGr-bFI3BI2i53sL","https://drive.google.com/uc?export=view&id=1ou7ubPj1B2gPxg3Ixb-DguKYwzr6-rkG","https://drive.google.com/uc?export=view&id=1nPlIi78CVsyKZ41C1jckaDGn4xajPpot","https://drive.google.com/uc?export=view&id=1onnOWCuRKalIPjRbkzJ-Vq8SU1HB1hyw","https://drive.google.com/uc?export=view&id=1okeC1Q1_UMgcgKlWTueUkejjDME7kuOl","https://drive.google.com/uc?export=view&id=1oj_0GvDojyjLvtnapldLLdvhyd1k4g0-","https://drive.google.com/uc?export=view&id=1mrDifZa9ChEEe0zu8bf2ZO-qCC2EHe3P","https://drive.google.com/uc?export=view&id=1oZa81gBsVlON28BUBPw-2ugmZCcjTfaG","https://drive.google.com/uc?export=view&id=1meKtL17WWf59S_HnzsQKH6TgA5Fu8116","https://drive.google.com/uc?export=view&id=1oVk1fHYflS3q9lS3XokebCmMzQ4XcFN9","https://drive.google.com/uc?export=view&id=1oRwyOrWsnxXCJ5tReIdciwOPHTqAg1oL","https://drive.google.com/uc?export=view&id=1oPAzq58WHg_2TDwaG9Ph50jY9hWwNq6Z","https://drive.google.com/uc?export=view&id=1oGhtxFglyjdyzsd8zw16P2gLwsYQyKBv","https://drive.google.com/uc?export=view&id=1oCwRJjYGKpPonbyVzhBKKu799NFK-8sr","https://drive.google.com/uc?export=view&id=1o4ItF_xNOLGiyAnF_Q9OVRs6EMqImiaq","https://drive.google.com/uc?export=view&id=1o0RxLkH0rrWEMR4p4YUJqfQ-p1lf9qJj","https://drive.google.com/uc?export=view&id=1nyCG8ULZBze8gf289f1lzYKAokcvOt1F","https://drive.google.com/uc?export=view&id=1K5ZexuA1rRSxALpNwJ0phxzSm7_h0Z2D","https://drive.google.com/uc?export=view&id=1ihga2nIwmahoINykFkMEWw320qczK5qe","https://drive.google.com/uc?export=view&id=1iC15_06K_u2HADYPG2EyV2I8ULFbOC_3","https://drive.google.com/uc?export=view&id=1c3nBmvT6ezPOs-9veWGty8OY46Xk-GmA","https://drive.google.com/uc?export=view&id=1lxNesjXLzWz64TrThGIqrTbTvY7R_WIv","https://drive.google.com/uc?export=view&id=13PycF-4lohXfgaih9Lmv3LB3jPAmQX87","https://drive.google.com/uc?export=view&id=1TBSuSmELNE0IxZU2O74vdQR39G2tG9Mj","https://drive.google.com/uc?export=view&id=1Apj6RDGwLY8H_DgaZtvWNekocNJ9kle-","https://drive.google.com/uc?export=view&id=15fCHZHWvqyWkR5qdKVCwQG08-a-ySYqD","https://drive.google.com/uc?export=view&id=1T29L3hXt-cSi-N0GpghaVsa_ckjQdCHB","https://drive.google.com/uc?export=view&id=19GusODft5CHk2brD7Jxy8uAE3drlT34i","https://drive.google.com/uc?export=view&id=1BMZZyZ8J30KirEtNztLymoWLEoAB2bmc"
-    ],
-    links:{ pictures:"https://drive.google.com/drive/u/0/folders/15mvuzjF5FOrf8yUn8hyPVnmj18tuoK_u" }
-  },
-
-  { id:"escondido-21016", group:"swift", title:"4/3 Double-wide on 0.6 acres — Updated + NEW HVAC @ close", address:"21016 Escondido Park, San Antonio, TX 78264", summary:"1792 sf • new floors/paint/porches • tiled primary shower • office/flex", price:"$235,000 cash (RTO: $250k; $25k down; $2,385/mo)",
-    photos:[
-      "https://drive.google.com/uc?export=view&id=1LNRp16gQTQeoEMZDAXYA-1hegWmsD8as","https://drive.google.com/uc?export=view&id=11fQ_-RVIxuitalVU7rIXn5D7MozkNlaX","https://drive.google.com/uc?export=view&id=1xvXL0Rr4q1nEviJF4DOuRDiUhBrOi9Xw","https://drive.google.com/uc?export=view&id=1DDwzcoB9aVHtLbVahmENI7LUvnVLs5MR","https://drive.google.com/uc?export=view&id=1yE2Ez2Xk_hjqLL1c0HVlGN2FDbQgZ6QL","https://drive.google.com/uc?export=view&id=14cEMIWnR3TeT3ZCgP6gvSmtwFIo3yStu","https://drive.google.com/uc?export=view&id=1WgX1jcJlTCM1KnrtBhh4zcEntPkchCL_","https://drive.google.com/uc?export=view&id=1j1y5YMfrrFtCy6DqGkF-lC-NcS2vP1lY","https://drive.google.com/uc?export=view&id=1QXoxVZrusgdLclmoY3VMh70S-W1pSGA6","https://drive.google.com/uc?export=view&id=1YI0bAqnK95SFun8IRjG1aC_OGQ1I7xFX","https://drive.google.com/uc?export=view&id=1T14OdDhkqbs4Cd7CcXdZi_wwP0NQgg12","https://drive.google.com/uc?export=view&id=1uJvT3xBOg11G_m6kUPWN82F6a1Oewm-X","https://drive.google.com/uc?export=view&id=1kgsOROnxlijr35beH-pIiGldUnpUYiKe","https://drive.google.com/uc?export=view&id=1ISg0NIwQNMVnqL1ezRRVsraQlw_64MPy","https://drive.google.com/uc?export=view&id=1bP06BTmdLhTqGX2G9s86LzwEEUZRg_OB","https://drive.google.com/uc?export=view&id=1AM9mVB3i8w0diC2blqPx1X512g8gT_W7","https://drive.google.com/uc?export=view&id=1gEnPfTqJNkoIV1T8ET8a9Et9Lxouw7HO"
-    ],
-    links:{ pictures:"https://drive.google.com/drive/folders/1f7BwOPbue3I0HF6Qn49Ws4arzXkI6_Ej" }
-  },
-
-  { id:"eveningway", group:"swift", title:"3/2 Brick — Handyman Special", address:"9923 Eveningway Dr, San Antonio, TX 78233", summary:"1486 sf • 0.23 ac • 1960 build", price:"$125,000 (ARV ≈ $203k; est. repairs $25k)", photos:[], links:{ pictures:"https://drive.google.com/drive/folders/1?pli=1" } },
-  { id:"logswood", group:"swift", title:"3/2 near the FORUM — Great Rental", address:"109 Logswood, Universal City, TX 78148", summary:"1,353 sf • skylights • two living rooms • privacy fence", price:"$190,000 (OF: $230k @10%/25yr; $25k down)", photos:[], links:{} },
-  { id:"baylor", group:"swift", title:"3/1 Near Lone Star District — Tear Down", address:"152 E Baylor St, San Antonio, TX 78204", summary:"960 sf • 5,500 sf lot • *Assignment of Contract*", price:"$55,000 cash", photos:[], links:{} }
+  {
+    id:"veracruz", group:"featured",
+    title:"Vera Cruz St, San Antonio, TX",
+    address:"Vera Cruz St, San Antonio, TX",
+    summary:"Two properties: one vacant lot + one tear-down house • Infill • City utilities",
+    price:null,
+    photos:["images/deals/vera-cruz-st/12.png","images/deals/vera-cruz-st/7.png"],
+    links:{}
+  }
 ];
 
-/* --- Drive/Download URL normalizer (key fix) --- */
+/* (kept) URL fixer for safety if any future Drive links get added */
 function fixURL(u){
   if(!u) return u;
   try{
-    // If it's already a clean Dropbox or local file, return as-is
     if(u.includes('dropboxusercontent.com') || u.startsWith('images/')) return u;
-    // Match any Google Drive id=... pattern (works for uc?, open?, download?, googleusercontent)
     const m = u.match(/[?&]id=([^&]+)/);
     if(m && m[1]) return `https://drive.google.com/uc?id=${m[1]}`;
     return u;
   }catch{ return u; }
 }
-// normalize all photo URLs once
-deals.forEach(d=>{
-  if(Array.isArray(d.photos)) d.photos = d.photos.map(fixURL);
-});
+deals.forEach(d=>{ if(Array.isArray(d.photos)) d.photos = d.photos.map(fixURL); });
 
 /* =======================
    MAP + GEOCODING
 ======================= */
-const map = L.map('map',{ center:[29.47,-98.52], zoom:10, scrollWheelZoom:true, preferCanvas:true });
+const map = L.map('map',{ center:[29.47,-98.52], zoom:11, scrollWheelZoom:true, preferCanvas:true });
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{ attribution:'&copy; OpenStreetMap' }).addTo(map);
-function colorIcon(color){ return new L.DivIcon({ className:'pin', html:`<div style="width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:${color};box-shadow:0 2px 8px rgba(0,0,0,.45)"></div>`, iconSize:[20,20], iconAnchor:[10,10] }); }
-const ICONS = { featured: colorIcon('#2b74ff'), swift: colorIcon('#caa86a') };
+
+function colorIcon(color){
+  return new L.DivIcon({
+    className:'pin',
+    html:`<div style="width:20px;height:20px;border-radius:50%;border:2px solid #fff;background:${color};box-shadow:0 2px 8px rgba(0,0,0,.45)"></div>`,
+    iconSize:[20,20], iconAnchor:[10,10]
+  });
+}
+const ICONS = { featured: colorIcon('#2b74ff') };
 
 async function geocode(addr){
   const key = 'geo:'+addr.toLowerCase();
@@ -240,10 +234,7 @@ const lbCap = document.getElementById('lbCap');
 
 function openGallery(dealId, startIndex=0){
   const d = deals.find(x=>x.id===dealId);
-  if(!d || !Array.isArray(d.photos) || d.photos.length===0){
-    if(d?.links?.pictures) window.open(d.links.pictures,'_blank');
-    return;
-  }
+  if(!d || !Array.isArray(d.photos) || d.photos.length===0) return;
   lbState.deal = d; lbState.ids = d.photos; lbState.index = Math.max(0, Math.min(startIndex, d.photos.length-1));
   renderLightbox(); lbEl.classList.add('open');
 }
@@ -257,12 +248,11 @@ function renderLightbox(){
 document.addEventListener('keydown', e=>{ if(!lbEl.classList.contains('open')) return; if(e.key==='Escape') closeGallery(); if(e.key==='ArrowRight') navGallery(1); if(e.key==='ArrowLeft') navGallery(-1); });
 lbEl.addEventListener('click', e=>{ if(e.target===lbEl) closeGallery(); });
 
-/* Rendering helpers */
+/* ===== Rendering ===== */
 function thumbHTML(d){
   const img = d.photos?.[0];
   if(img){
     const safe = fixURL(img);
-    // onerror fallback: show placeholder but keep the Pictures button usable
     return `<img class="thumb" src="${safe}" alt="" referrerpolicy="no-referrer" loading="lazy"
              onerror="this.outerHTML='<div class=&quot;thumb&quot; style=&quot;display:flex;align-items:center;justify-content:center;color:#9db2c7;font-size:13px&quot;>Photos coming soon</div>'"
              onclick="openGallery('${d.id}',0)">`;
@@ -281,20 +271,16 @@ function renderCard(d){
       ${d.price? `<div class="row"><span class="tag">Price: ${d.price}</span></div>`:''}
       <div class="row" style="margin-top:10px">
         <a class="btn primary" href="tel:+15128435181">I'm Interested</a>
-        ${(d.photos && d.photos.length) ? `<button class="btn" onclick="openGallery('${d.id}',0)">Pictures</button>` : (d.links?.pictures ? `<a class="btn" target="_blank" href="${d.links.pictures}">Pictures</a>` : '')}
-        ${d.links?.craigslist ? `<a class="btn" target="_blank" href="${d.links.craigslist}">Craigslist</a>`:''}
+        ${(d.photos && d.photos.length) ? `<button class="btn" onclick="openGallery('${d.id}',0)">Pictures</button>` : ``}
       </div>
       <div class="meta" style="margin-top:8px">📍 ${d.address}</div>
-      <div class="meta">Type: ${d.group==='featured'?'Featured':'Swift Sell'}</div>
+      <div class="meta">Type: Featured</div>
     </div>`;
   document.getElementById('cards').appendChild(el);
 }
 
 function popupHTML(d){
   const img = d.photos?.[0] || '';
-  const photosBtn = (d.photos?.length)
-    ? `<a href="javascript:void(0)" onclick="openGallery('${d.id}',0)" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">Photos</a>`
-    : (d.links?.pictures ? `<a target="_blank" href="${d.links.pictures}" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">Photos</a>` : '');
   return `
     <div style="min-width:220px;max-width:260px">
       ${img ? `<img src="${fixURL(img)}" referrerpolicy="no-referrer" style="width:100%;height:120px;object-fit:cover;border-radius:8px;margin-bottom:6px;cursor:pointer" onclick="openGallery('${d.id}',0)">` : ''}
@@ -304,7 +290,6 @@ function popupHTML(d){
       <div style="display:flex;gap:8px;margin-top:8px">
         <a href="#deal-${d.id}" onclick="document.getElementById('deal-${d.id}').scrollIntoView({behavior:'smooth',block:'start'})"
            style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#102433;color:#dff1ff;text-decoration:none;font-weight:700">View</a>
-        ${photosBtn}
         <a href="tel:+15128435181" style="padding:6px 8px;border:1px solid #2a3a4e;border-radius:8px;background:#0f2945;color:#dff1ff;text-decoration:none;font-weight:700">Call</a>
       </div>
     </div>`;
@@ -318,7 +303,7 @@ function popupHTML(d){
     try{
       const g = await geocode(d.address);
       if(!g) continue;
-      const m = L.marker([g.lat,g.lon], {icon:ICONS[d.group]}).addTo(map);
+      const m = L.marker([g.lat,g.lon], {icon:ICONS.featured}).addTo(map);
       m.bindPopup(popupHTML(d));
       bounds.extend([g.lat,g.lon]);
     }catch(_){}
