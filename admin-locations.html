@@ -1,0 +1,117 @@
+<!DOCTYPE html><html lang="en"><head>
+<meta charset="utf-8"/><meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1"/>
+<title>DealBankers • Live Contractors</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="theme-neon.css">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin=""/>
+<style>
+:root{--muted:#a8c3d9}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,system-ui,Segoe UI,Roboto,Arial}
+.header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
+background:linear-gradient(180deg,rgba(255,255,255,.14),rgba(255,255,255,.06))}
+.h-left{display:flex;gap:10px;align-items:center}
+.logo{width:36px;height:36px;border-radius:10px;object-fit:cover}
+.brand{font-weight:900}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:8px;height:34px;padding:0 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
+background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration:none;font-weight:700}
+.wrap{display:grid;grid-template-columns:1fr;gap:12px;padding:12px;max-width:1200px;margin:0 auto}
+@media(min-width:900px){ .wrap{grid-template-columns: 2fr 1fr;} }
+.card{background:linear-gradient(180deg,#0e1a24,#0b141b);border:1px solid rgba(255,255,255,.18);border-radius:20px;box-shadow:0 28px 70px rgba(0,0,0,.55);overflow:hidden}
+.card h2{margin:0;padding:12px 14px;border-bottom:1px solid rgba(255,255,255,.14)}
+.body{padding:0}
+#map{width:100%;height:70vh}
+.table{width:100%;border-collapse:collapse;font-size:13px}
+.table th,.table td{padding:8px 10px;border-bottom:1px solid rgba(255,255,255,.12)}
+.meta{color:var(--muted);font-size:12px}
+.pill{display:inline-block;border:1px solid rgba(0,255,255,.2);padding:2px 8px;border-radius:999px;font-size:11px}
+</style>
+</head><body>
+<header class="header">
+  <div class="h-left">
+    <img class="logo" src="icon (1).jpg" alt="DealBankers"/>
+    <div>
+      <div class="brand">DealBankers</div>
+      <div class="meta">Live Contractors (admin)</div>
+    </div>
+  </div>
+  <nav class="nav">
+    <a class="chip" href="contractor.html">Contractor</a>
+    <a class="chip" href="contractor-setup.html">Setup</a>
+    <a class="chip" href="settings.html">Settings</a>
+  </nav>
+</header>
+
+<div class="wrap">
+  <section class="card">
+    <h2>Map</h2>
+    <div class="body"><div id="map"></div></div>
+  </section>
+  <section class="card">
+    <h2>Roster</h2>
+    <div class="body">
+      <table class="table" id="roster">
+        <thead><tr><th>Name</th><th>Trade</th><th>Level</th><th>Status</th><th>Last</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/8.10.1/firebase-database.js"></script>
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
+<script>
+const ADMIN_EMAILS = ['dealbankers@gmail.com','aptbidsonline@gmail.com'];
+let map, markers = {};
+function initMap(){
+  map = L.map('map').setView([29.4241,-98.4936], 11);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{attribution:'&copy; OpenStreetMap'}).addTo(map);
+}
+function upsertMarker(uid, p){
+  if(!p || !p.location || !p.location.lat) return;
+  const {lat,lng} = p.location;
+  const text = (p.profile?.headline||'') + '<br/>' + (p.profile?.level||'') + ' • ' + (p.profile?.availability||'');
+  if(!markers[uid]){ markers[uid] = L.marker([lat,lng]).addTo(map).bindPopup(text); }
+  else { markers[uid].setLatLng([lat,lng]).setPopupContent(text); }
+}
+function renderRow(uid, p){
+  const tr = document.createElement('tr');
+  const name = p.profile?.headline || uid.slice(0,6)+'…';
+  const trade = (p.profile?.divisions||[]).length ? 'CSI '+(p.profile.divisions.join(',')) : '-';
+  const level = p.profile?.level || '-';
+  const status = (p.location?.sharing && p.location?.lat) ? '<span class="pill">LIVE</span>' : '<span class="pill" style="opacity:.6">OFFLINE</span>';
+  const last = p.location?.ts ? new Date(p.location.ts).toLocaleString() : '-';
+  tr.innerHTML = `<td>${name}</td><td>${trade}</td><td>${level}</td><td>${status}</td><td>${last}</td>`;
+  return tr;
+}
+firebase.auth().onAuthStateChanged(async u=>{
+  if(!u){ return location.replace('index.html'); }
+  if(!ADMIN_EMAILS.includes((u.email||'').toLowerCase())){
+    alert('Admins only'); return location.replace('profile.html');
+  }
+  initMap();
+  const tbody = document.querySelector('#roster tbody');
+  function refresh(snapshot){
+    tbody.innerHTML='';
+    const data = snapshot.val()||{};
+    Object.keys(data).forEach(uid=>{
+      const p = data[uid]; upsertMarker(uid,p); tbody.appendChild(renderRow(uid,p));
+    });
+  }
+  const ref = firebase.database().ref('contractors_public');
+  ref.on('value', refresh);
+  ref.once('value').then(s=>{
+    const v=s.val()||{};
+    for(const uid of Object.keys(v)){ const l=v[uid].location; if(l && l.lat){ map.setView([l.lat,l.lng],12); break; } }
+  });
+});
+</script>
+</body></html>
