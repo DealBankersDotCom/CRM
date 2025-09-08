@@ -37,12 +37,13 @@
 
   function setMeta(text){ meta.textContent=text; }
 
+  const PERMISSION_TIPS = 'Location is blocked. Click the lock icon next to the URL → Site settings → Allow Location, then try Update again.';
   function getPosition(){
     return new Promise((resolve,reject)=>{
       if(!navigator.geolocation) return reject(new Error('Geolocation not supported'));
       navigator.geolocation.getCurrentPosition(
         pos=>resolve(pos),
-        err=>reject(err),
+        err=>{ if(err && err.code===1){ err.message = PERMISSION_TIPS; } reject(err); },
         {enableHighAccuracy:true, timeout:15000, maximumAge:0}
       );
     });
@@ -54,7 +55,7 @@
       sharing: !!share.checked, ts: firebase.database.ServerValue.TIMESTAMP
     } : { sharing:false, ts: firebase.database.ServerValue.TIMESTAMP };
     await firebase.database().ref('contractors/'+uid+'/location').set(payload);
-    await firebase.database().ref('contractors_public/'+uid+'/location').set(payload); // public summary
+    await firebase.database().ref('contractors_public/'+uid+'/location').set(payload);
   }
 
   async function saveProfile(uid){
@@ -63,11 +64,8 @@
     const headline = document.getElementById('headline').value.trim();
     const rate = document.getElementById('rate').value ? Number(document.getElementById('rate').value) : null;
     const bio = document.getElementById('bio').value.trim();
+    const divisions = Array.from(divWrap.querySelectorAll('input[type=checkbox]:checked')).map(c=>Number(c.dataset.div));
 
-    const divisions = Array.from(divWrap.querySelectorAll('input[type=checkbox]:checked'))
-      .map(c=>Number(c.dataset.div));
-
-    // Placeholder signals (future: computed from modules & certs)
     const trainingScore = 0, certPoints = 0, endorsements = 0;
     const computed = computeLevel(trainingScore, certPoints, endorsements);
 
@@ -78,14 +76,12 @@
     };
 
     await firebase.database().ref('contractors/'+uid+'/profile').set(profile);
-    // minimal public projection
     await firebase.database().ref('contractors_public/'+uid+'/profile').set({
       level, availability, headline, rate, divisions, computed
     });
   }
 
   function computeLevel(trainingScore, certPoints, endorsements){
-    // Simple weighted score you can tune later
     const score = (trainingScore*0.6 + certPoints*0.3 + endorsements*0.1) / 100;
     let band='Apprentice';
     if(score>=0.8) band='Master';
@@ -93,22 +89,17 @@
     else if(score>=0.4) band='Handyman';
     return { band, score: Number(score.toFixed(2)) };
   }
-
-  // expose compute display
   window.computeLevel = computeLevel;
 
-  // Bind buttons
   btnGet.addEventListener('click', async()=>{
-    errEl.textContent='';
-    setMeta('Requesting GPS…');
+    errEl.textContent=''; setMeta('Requesting GPS…');
     try{
       const u = firebase.auth().currentUser; if(!u) return alert('Please sign in again.');
       const pos = await getPosition();
       await saveLocation(u.uid, pos.coords);
       setMeta(`Lat ${pos.coords.latitude.toFixed(6)}, Lng ${pos.coords.longitude.toFixed(6)} • ±${Math.round(pos.coords.accuracy)} m • sharing ${share.checked?'on':'off'}`);
     }catch(err){
-      errEl.textContent = err && err.message ? err.message : 'Could not get location.';
-      setMeta('Not sharing');
+      errEl.textContent = err && err.message ? err.message : 'Could not get location.'; setMeta('Not sharing');
     }
   });
 
@@ -116,30 +107,21 @@
     errEl.textContent='';
     try{
       const u = firebase.auth().currentUser; if(!u) return alert('Please sign in again.');
-      share.checked=false;
-      await saveLocation(u.uid, null);
-      setMeta('Not sharing');
+      share.checked=false; await saveLocation(u.uid, null); setMeta('Not sharing');
     }catch(err){
       errEl.textContent = err && err.message ? err.message : 'Could not clear.';
     }
   });
 
-  share.addEventListener('change', ()=>{
-    setMeta(share.checked ? 'Sharing is ON (click Update to refresh coords)' : 'Not sharing');
-  });
+  share.addEventListener('change', ()=>{ setMeta(share.checked ? 'Sharing is ON (click Update to refresh coords)' : 'Not sharing'); });
 
-  // Save profile
   document.getElementById('btnSave').addEventListener('click', async()=>{
     try{
       const u=firebase.auth().currentUser; if(!u) return alert('Please sign in again.');
-      await saveProfile(u.uid);
-      alert('Profile saved.');
-    }catch(err){
-      alert('Could not save: '+(err && err.message || 'unknown error'));
-    }
+      await saveProfile(u.uid); alert('Profile saved.');
+    }catch(err){ alert('Could not save: '+(err && err.message || 'unknown error')); }
   });
 
-  // Load existing values for convenience
   firebase.auth().onAuthStateChanged(async (u)=>{
     if(!u) return;
     try{
@@ -152,8 +134,7 @@
         document.getElementById('rate').value = p.rate != null ? p.rate : '';
         document.getElementById('bio').value = p.bio || '';
         (p.divisions||[]).forEach(id=>{
-          const cb = divWrap.querySelector(`[data-div="${id}"]`);
-          if(cb) cb.checked = true;
+          const cb = divWrap.querySelector(`[data-div="${id}"]`); if(cb) cb.checked = true;
         });
       }
       const s2 = await firebase.database().ref('contractors/'+u.uid+'/location').get();
@@ -162,9 +143,7 @@
         share.checked = !!l.sharing;
         if(l.lat && l.lng){
           setMeta(`Lat ${Number(l.lat).toFixed(6)}, Lng ${Number(l.lng).toFixed(6)} • ±${Math.round(l.accuracy||0)} m • sharing ${share.checked?'on':'off'}`);
-        } else {
-          setMeta(share.checked ? 'Sharing is ON (no coordinates saved yet)' : 'Not sharing');
-        }
+        } else { setMeta(share.checked ? 'Sharing is ON (no coordinates saved yet)' : 'Not sharing'); }
       }
     }catch(e){ console.warn(e); }
   });
