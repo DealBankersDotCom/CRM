@@ -1,6 +1,5 @@
 (function(){
   const el = (id)=>document.getElementById(id);
-  const fields = ['theme','drivingMode','uiScale','defaultPortal','portals_contractor','portals_wholesaler','portals_investor','portals_privateMoney','portals_selfManager','haptics','voiceInput'];
   const theme = el('ux_theme'), driving = el('ux_driving'), scale = el('ux_scale'), portal = el('ux_portal');
   const c_con = el('ux_p_contractor'), c_who = el('ux_p_wholesaler'), c_inv = el('ux_p_investor'), c_pm = el('ux_p_pm'), c_sm = el('ux_p_sm');
   const haptics = el('ux_haptics'), voice = el('ux_voice');
