@@ -27,9 +27,13 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
 
 </style>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script><script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="config.js"></script><script src="app-auth.js"></script></head><body data-portal="contractor">
+<script src="config.js"></script><script src="app-auth.js"></script>
+<link rel="stylesheet" href="theme-neon.css">
+<script src="ux-apply.js"></script>
+</head><body data-portal="contractor">
 
 <header class="header">
+  <a class="chip" href="contractor-setup.html" style="position:absolute;right:12px;top:60px">Contractor Setup</a>
   <div>DEALBANKERS • Portal</div>
   <nav class="nav">
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
@@ -97,5 +101,22 @@ background:linear-gradient(180deg,#111f2c,#0d1823);color:#eaf6ff;text-decoration
   })();
 </script>
 
-<div class="wrap"><section class="card"><h2>Jobs</h2><div class="body"><div class="meta">Coming next: jobs under <code>/jobs</code> in RTDB. Shell present so nav isn’t broken.</div></div></section></div>
+<div class="wrap"><section class="card"><h2>Jobs</h2><div class="meta">Location: <span id="locStatus">loading…</span></div><div class="body"><div class="meta">Coming next: jobs under <code>/jobs</code> in RTDB. Shell present so nav isn’t broken.</div></div></section></div>
+
+<script>
+firebase.auth().onAuthStateChanged(async u=>{
+  if(!u) return;
+  try{
+    const snap = await firebase.database().ref('contractors/'+u.uid+'/location').get();
+    const el = document.getElementById('locStatus'); if(!el) return;
+    if (snap.exists() && snap.val().sharing && snap.val().lat) {
+      const {lat,lng,accuracy} = snap.val();
+      el.textContent = `LIVE • ${Number(lat).toFixed(5)}, ${Number(lng).toFixed(5)} (±${Math.round(accuracy||0)}m)`;
+    } else {
+      el.innerHTML = 'OFFLINE • <a href="contractor-setup.html">Enable sharing</a>';
+    }
+  } catch(e){ console.warn(e); }
+});
+</script>
+
 </body></html>
