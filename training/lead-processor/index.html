@@ -99,12 +99,70 @@ footer{
   background:rgba(0,0,0,.5);
   border-top:1px solid #1c2a3a;
 }
+
+/* Floating Calculator Modal */
+#calcModal {
+  display:none;
+  position:fixed;
+  top:50%;left:50%;
+  transform:translate(-50%,-50%);
+  background:#0a0f19;
+  border:1px solid #00d1ff;
+  border-radius:12px;
+  box-shadow:0 0 25px #00d1ff;
+  padding:20px;
+  color:#00d1ff;
+  width:360px;
+  z-index:9999;
+}
+#calcModal h2{
+  text-align:center;
+  margin-bottom:10px;
+}
+.calc-field{
+  display:flex;
+  justify-content:space-between;
+  margin:6px 0;
+}
+.calc-field input{
+  width:140px;
+  padding:5px;
+  border-radius:6px;
+  border:1px solid #00d1ff;
+  background:#000;
+  color:#00d1ff;
+}
+.calc-btn{
+  width:100%;
+  margin-top:8px;
+  padding:8px;
+  background:#00d1ff;
+  color:#000;
+  font-weight:bold;
+  border:none;
+  border-radius:8px;
+  cursor:pointer;
+}
+.close-btn{
+  position:absolute;
+  top:8px;
+  right:12px;
+  cursor:pointer;
+  color:#00d1ff;
+  font-weight:bold;
+}
+.result{
+  text-align:center;
+  margin-top:10px;
+  font-size:1rem;
+  color:#0ff;
+}
 </style>
 </head>
 
 <body>
 <header>
-  🚀 DEAL BANKERS // INTERNAL OPS CONSOLE <span style="color:#00d1ff;">v1.0</span>
+  🚀 DEAL BANKERS // INTERNAL OPS CONSOLE <span style="color:#00d1ff;">v1.2</span>
 </header>
 
 <div class="container">
@@ -113,10 +171,11 @@ footer{
     <button onclick="loadTool('https://bexar.tx.publicsearch.us/results?department=RP&docTypes=LIEN&limit=50&offset=0&parties=%7B%22grantee%22%3A%5B%7B%22term%22%3A%22San%20Antonio%22%2C%22types%22%3A%5B%22grantee%22%5D%7D%5D%7D&recordedDateRange=18000101%2C20251001&searchType=advancedSearch&sort=desc&sortBy=recordedDate')">🏛️ City Liens Search</button>
     <button onclick="loadTool('https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110')">🏠 BCAD Property Search</button>
     <button onclick="loadTool('https://bexar.acttax.com/act_webdev/bexar/index.jsp')">💰 Tax Assessor</button>
-    <button onclick="loadTool('https://www.google.com/maps/d/u/0/edit?mid=1I6zf3DbwJ9kgNP8kCnEa0jb7FUtfoDo&usp=sharing')">🗺️ City Lien Leads Map</button>
+    <button onclick="loadTool('https://www.google.com/maps/d/embed?mid=1I6zf3DbwJ9kgNP8kCnEa0jb7FUtfoDo&ll=29.444831639713456,-98.50898675&z=11')">🗺️ City Lien Leads Map</button>
     <button onclick="loadTool('https://docs.google.com/spreadsheets/d/1ZZATvHr9pfa6s4aQ-y0XxZZ6wLKMuM2HORz8LsGAMLE/edit?gid=187512055#gid=187512055')">📊 QR Database</button>
     <button onclick="loadTool('https://www.zillow.com/')">🏡 Zillow</button>
     <button onclick="loadTool('https://truepeoplesearch.com')">🔎 Skip Trace</button>
+    <button onclick="toggleCalc()">🧮 Deal Analyzer</button>
   </div>
 
   <div class="tool-area">
@@ -125,17 +184,55 @@ footer{
   </div>
 </div>
 
+<!-- Floating Deal Analyzer -->
+<div id="calcModal">
+  <div class="close-btn" onclick="toggleCalc()">✖</div>
+  <h2>🧮 Deal Analyzer</h2>
+
+  <div class="calc-field"><label>ARV ($):</label><input id="arv" type="number" placeholder="After Repair Value"></div>
+  <div class="calc-field"><label>Repairs ($):</label><input id="repairs" type="number" placeholder="Repair Costs"></div>
+  <div class="calc-field"><label>Monthly Rent ($):</label><input id="rent" type="number" placeholder="Rent"></div>
+  <div class="calc-field"><label>Purchase Price ($):</label><input id="price" type="number" placeholder="Price"></div>
+
+  <button class="calc-btn" onclick="calcRules()">CALCULATE ⚡</button>
+
+  <div class="result" id="result"></div>
+</div>
+
 <footer>© DealBankers.com — Confidential Ops Interface</footer>
 
 <script>
-const frame = document.getElementById('toolFrame');
-const loader = document.getElementById('loader');
+const frame=document.getElementById('toolFrame');
+const loader=document.getElementById('loader');
+const modal=document.getElementById('calcModal');
+const result=document.getElementById('result');
 
-function loadTool(url) {
+function loadTool(url){
   loader.classList.remove('hidden');
-  frame.src = url;
+  frame.src=url;
 }
-frame.addEventListener('load', () => loader.classList.add('hidden'));
+frame.addEventListener('load',()=>loader.classList.add('hidden'));
+
+function toggleCalc(){
+  modal.style.display = (modal.style.display === "block") ? "none" : "block";
+}
+
+function calcRules(){
+  const arv=parseFloat(document.getElementById('arv').value)||0;
+  const repairs=parseFloat(document.getElementById('repairs').value)||0;
+  const rent=parseFloat(document.getElementById('rent').value)||0;
+  const price=parseFloat(document.getElementById('price').value)||0;
+
+  const rule70 = (arv * 0.7) - repairs;
+  const capRate = rent*12 / price * 100;
+  const onePercent = price * 0.01;
+
+  result.innerHTML = `
+    <strong>70% Rule Max Offer:</strong> $${rule70.toLocaleString()}<br>
+    <strong>Cap Rate:</strong> ${capRate.toFixed(2)}%<br>
+    <strong>1% Rule (Min Rent):</strong> $${onePercent.toLocaleString()}
+  `;
+}
 </script>
 </body>
 </html>
