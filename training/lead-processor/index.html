@@ -5,7 +5,6 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 <title>🚀 DEAL BANKERS // Q-Terminal</title>
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@500&display=swap" rel="stylesheet">
-
 <style>
 html,body{
   margin:0;
@@ -16,12 +15,29 @@ html,body{
   overflow:hidden;
 }
 header{
-  text-align:center;
+  display:flex;
+  justify-content:center;
+  align-items:center;
   padding:18px;
   border-bottom:1px solid #1c2a3a;
+  background:rgba(0,0,0,0.6);
+  position:relative;
+}
+header img{
+  position:absolute;
+  left:20px;
+  width:42px;
+  cursor:pointer;
+  transition:transform .3s ease, filter .3s ease;
+}
+header img:hover{
+  transform:scale(1.1);
+  filter:drop-shadow(0 0 8px #00d1ff);
+}
+header h1{
   font-size:1.2rem;
   letter-spacing:2px;
-  background:rgba(0,0,0,0.6);
+  margin:0;
 }
 .container{
   display:flex;
@@ -34,7 +50,6 @@ header{
   padding:15px;
   display:flex;
   flex-direction:column;
-  justify-content:flex-start;
   overflow-y:auto;
 }
 button{
@@ -57,19 +72,11 @@ button:hover{
   box-shadow:0 0 16px #00d1ff;
   transform:translateY(-1px);
 }
-.tool-area{
-  position:relative;
-  flex:1;
-  height:100%;
-  display:flex;
-  flex-direction:column;
-}
 iframe{
   flex:1;
   width:100%;
   height:100%;
   border:none;
-  border-radius:0;
   background:#05080c;
 }
 .loader{
@@ -99,70 +106,13 @@ footer{
   background:rgba(0,0,0,.5);
   border-top:1px solid #1c2a3a;
 }
-
-/* Floating Calculator Modal */
-#calcModal {
-  display:none;
-  position:fixed;
-  top:50%;left:50%;
-  transform:translate(-50%,-50%);
-  background:#0a0f19;
-  border:1px solid #00d1ff;
-  border-radius:12px;
-  box-shadow:0 0 25px #00d1ff;
-  padding:20px;
-  color:#00d1ff;
-  width:360px;
-  z-index:9999;
-}
-#calcModal h2{
-  text-align:center;
-  margin-bottom:10px;
-}
-.calc-field{
-  display:flex;
-  justify-content:space-between;
-  margin:6px 0;
-}
-.calc-field input{
-  width:140px;
-  padding:5px;
-  border-radius:6px;
-  border:1px solid #00d1ff;
-  background:#000;
-  color:#00d1ff;
-}
-.calc-btn{
-  width:100%;
-  margin-top:8px;
-  padding:8px;
-  background:#00d1ff;
-  color:#000;
-  font-weight:bold;
-  border:none;
-  border-radius:8px;
-  cursor:pointer;
-}
-.close-btn{
-  position:absolute;
-  top:8px;
-  right:12px;
-  cursor:pointer;
-  color:#00d1ff;
-  font-weight:bold;
-}
-.result{
-  text-align:center;
-  margin-top:10px;
-  font-size:1rem;
-  color:#0ff;
-}
 </style>
 </head>
 
 <body>
 <header>
-  🚀 DEAL BANKERS // INTERNAL OPS CONSOLE <span style="color:#00d1ff;">v1.2</span>
+  <img src="https://dealbankers.com/icon.jpg" alt="Deal Bankers Logo" onclick="window.open('https://dealbankers.com','_blank')">
+  <h1>🚀 DEAL BANKERS // INTERNAL OPS CONSOLE <span style="color:#00d1ff;">v1.3</span></h1>
 </header>
 
 <div class="container">
@@ -175,28 +125,14 @@ footer{
     <button onclick="loadTool('https://docs.google.com/spreadsheets/d/1ZZATvHr9pfa6s4aQ-y0XxZZ6wLKMuM2HORz8LsGAMLE/edit?gid=187512055#gid=187512055')">📊 QR Database</button>
     <button onclick="loadTool('https://www.zillow.com/')">🏡 Zillow</button>
     <button onclick="loadTool('https://truepeoplesearch.com')">🔎 Skip Trace</button>
-    <button onclick="toggleCalc()">🧮 Deal Analyzer</button>
+    <button onclick="loadTool('https://groupme.com/join_group/111016976/Tq1rD826')">💬 Townhall Chat</button>
+    <button onclick="loadTool('https://dealbankers.com/profile.html')">🧠 Portal Access</button>
   </div>
 
-  <div class="tool-area">
+  <div style="position:relative;flex:1;">
     <div id="loader" class="loader hidden">LOADING 🔄 Please wait…</div>
     <iframe id="toolFrame" src="" title="Deal Bankers Tool Viewer"></iframe>
   </div>
-</div>
-
-<!-- Floating Deal Analyzer -->
-<div id="calcModal">
-  <div class="close-btn" onclick="toggleCalc()">✖</div>
-  <h2>🧮 Deal Analyzer</h2>
-
-  <div class="calc-field"><label>ARV ($):</label><input id="arv" type="number" placeholder="After Repair Value"></div>
-  <div class="calc-field"><label>Repairs ($):</label><input id="repairs" type="number" placeholder="Repair Costs"></div>
-  <div class="calc-field"><label>Monthly Rent ($):</label><input id="rent" type="number" placeholder="Rent"></div>
-  <div class="calc-field"><label>Purchase Price ($):</label><input id="price" type="number" placeholder="Price"></div>
-
-  <button class="calc-btn" onclick="calcRules()">CALCULATE ⚡</button>
-
-  <div class="result" id="result"></div>
 </div>
 
 <footer>© DealBankers.com — Confidential Ops Interface</footer>
@@ -204,35 +140,12 @@ footer{
 <script>
 const frame=document.getElementById('toolFrame');
 const loader=document.getElementById('loader');
-const modal=document.getElementById('calcModal');
-const result=document.getElementById('result');
 
 function loadTool(url){
   loader.classList.remove('hidden');
   frame.src=url;
 }
 frame.addEventListener('load',()=>loader.classList.add('hidden'));
-
-function toggleCalc(){
-  modal.style.display = (modal.style.display === "block") ? "none" : "block";
-}
-
-function calcRules(){
-  const arv=parseFloat(document.getElementById('arv').value)||0;
-  const repairs=parseFloat(document.getElementById('repairs').value)||0;
-  const rent=parseFloat(document.getElementById('rent').value)||0;
-  const price=parseFloat(document.getElementById('price').value)||0;
-
-  const rule70 = (arv * 0.7) - repairs;
-  const capRate = rent*12 / price * 100;
-  const onePercent = price * 0.01;
-
-  result.innerHTML = `
-    <strong>70% Rule Max Offer:</strong> $${rule70.toLocaleString()}<br>
-    <strong>Cap Rate:</strong> ${capRate.toFixed(2)}%<br>
-    <strong>1% Rule (Min Rent):</strong> $${onePercent.toLocaleString()}
-  `;
-}
 </script>
 </body>
 </html>
