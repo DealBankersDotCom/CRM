@@ -145,63 +145,48 @@ footer span{display:block;margin-top:4px;color:#2b74ff;font-weight:700}
 </footer>
 
 <script>
-// ===== AUTH =====
-const btn = document.getElementById('googleBtn');
-const statusEl = document.getElementById('authStatus');
-btn.addEventListener('click', async ()=>{
- try{
-  const provider = new firebase.auth.GoogleAuthProvider();
-  await firebase.auth().setPersistence(firebase.auth.Auth.Persistence.LOCAL);
-  await firebase.auth().signInWithPopup(provider);
- }catch(e){
-  if(e.code==='auth/popup-blocked'){
-   const provider = new firebase.auth.GoogleAuthProvider();
-   await firebase.auth().signInWithRedirect(provider);
-  }
- }
-});
+// ===== AUTH & CHAT (MATCHING PROFILE VERSION) =====
+let U = null;
 firebase.auth().onAuthStateChanged(u=>{
- if(u){
-  btn.style.display='none';
-  statusEl.innerHTML=`Signed in as ${u.displayName} <a id='logoutLink' style='margin-left:8px;color:#2b74ff;cursor:pointer;'>Sign out</a>`;
-  document.getElementById('logoutLink').onclick=()=>firebase.auth().signOut();
- } else {
-  btn.style.display='inline-flex';
-  statusEl.textContent='Signed out';
- }
+  if(u){ U=u; attachTownhall(); }
 });
 
-// ===== TOWNHALL CHAT =====
-const db = firebase.database();
-const msgRef = db.ref('townhall'); // ✅ fixed path
-const msgBox = document.getElementById('messages');
-const msgInput = document.getElementById('msgInput');
-const sendBtn = document.getElementById('sendBtn');
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
-function sendMsg(){
- const user = firebase.auth().currentUser;
- if(!user){alert('Please sign in to chat.');return;}
- const name = user.displayName || 'User';
- const text = msgInput.value.trim();
- if(!text) return;
- msgRef.push({name,text,ts:Date.now()});
- msgInput.value='';
+function attachTownhall(){
+  const ref=firebase.database().ref('townhall/messages').limitToLast(100);
+  const list=document.getElementById('messages');
+  const box=document.getElementById('msgInput');
+  const btn=document.getElementById('sendBtn');
+
+  ref.on('child_added', s=>{
+    const m=s.val()||{};
+    const t=new Date(m.ts||Date.now()).toLocaleString();
+    const el=document.createElement('div');
+    el.className='msg';
+    el.innerHTML='<span style="font-weight:800;color:#bfe3ff">'+esc(m.name||"Anon")+'</span> <span style="font-size:11px;color:#8fb3d1">'+t+'</span><div>'+esc(m.text||"")+'</div>';
+    list.appendChild(el);
+    list.scrollTop=list.scrollHeight;
+  });
+
+  function send(){
+    const txt=(box.value||'').trim();
+    if(!txt) return;
+    const u=firebase.auth().currentUser||{};
+    firebase.database().ref('townhall/messages').push({
+      uid:u.uid||null,
+      name:u.displayName||u.email||'Anon',
+      text:txt,
+      ts:firebase.database.ServerValue.TIMESTAMP
+    }).then(()=>box.value='');
+  }
+
+  btn.onclick=send;
+  box.addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();send();}});
 }
-
-sendBtn.addEventListener('click', sendMsg);
-msgInput.addEventListener('keypress', e=>{if(e.key==='Enter'){e.preventDefault();sendMsg();}});
-
-msgRef.limitToLast(100).on('child_added', snap=>{
- const d = snap.val();
- const t = new Date(d.ts).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
- const div = document.createElement('div');
- div.className='msg';
- div.innerHTML = `<strong>${d.name}</strong><small>${t}</small><div>${d.text}</div>`;
- msgBox.appendChild(div);
- msgBox.scrollTop = msgBox.scrollHeight;
-});
 
 document.getElementById('year').textContent=new Date().getFullYear();
 </script>
+
 </body>
 </html>
