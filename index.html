@@ -143,6 +143,24 @@ footer span{display:block;margin-top:4px;color:#2b74ff;font-weight:700}
 document.getElementById('year').textContent = new Date().getFullYear();
 
 let db, auth, user;
+
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
+
+function attachChat(){
+  const msgList=document.getElementById('messages');
+  const ref = db.ref('townhall/messages').limitToLast(50);
+  msgList.innerHTML='';
+  ref.on('child_added', snap=>{
+    const d=snap.val()||{};
+    const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    const div=document.createElement('div');
+    div.className='msg';
+    div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
+    msgList.appendChild(div);
+    msgList.scrollTop=msgList.scrollHeight;
+  });
+}
+
 window.addEventListener('load', ()=>{
   if(!firebase.apps.length){
     console.error("Firebase not initialized");
@@ -155,11 +173,10 @@ window.addEventListener('load', ()=>{
 
   const googleBtn=document.getElementById('googleBtn');
   const statusEl=document.getElementById('authStatus');
-  const msgList=document.getElementById('messages');
   const msgInput=document.getElementById('msgInput');
   const sendBtn=document.getElementById('sendBtn');
 
-  // Always attach chat listener so guests can see messages
+  // Always attach chat listener for guests
   attachChat();
 
   googleBtn.addEventListener('click', async ()=>{
@@ -187,23 +204,6 @@ window.addEventListener('load', ()=>{
     }
   });
 
-  function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
-
-  function attachChat(){
-    const ref = db.ref('townhall/messages').limitToLast(50);
-    ref.off();
-    msgList.innerHTML='';
-    ref.on('child_added', snap=>{
-      const d=snap.val()||{};
-      const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-      const div=document.createElement('div');
-      div.className='msg';
-      div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
-      msgList.appendChild(div);
-      msgList.scrollTop=msgList.scrollHeight;
-    });
-  }
-
   function sendMsg(){
     if(!user){alert('Please sign in first.');return;}
     const text=msgInput.value.trim();
@@ -223,6 +223,7 @@ window.addEventListener('load', ()=>{
   });
 });
 </script>
+
 
 </body>
 </html>
