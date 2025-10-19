@@ -118,12 +118,11 @@ footer span{display:block;margin-top:4px;color:#2b74ff;font-weight:700}
 </footer>
 
 <script>
-document.getElementById('year').textContent=new Date().getFullYear();
+document.getElementById('year').textContent = new Date().getFullYear();
 
 let db, auth, user;
 window.addEventListener('load', ()=> {
-  // Verify Firebase app loaded
-  if(!firebase.apps.length){
+  if (!firebase.apps.length) {
     console.error("Firebase not initialized - check config.js");
     alert("Firebase not initialized. Check config.js path.");
     return;
@@ -142,16 +141,24 @@ window.addEventListener('load', ()=> {
     try {
       await auth.setPersistence(firebase.auth.Auth.Persistence.LOCAL);
       await auth.signInWithPopup(provider);
-    } catch(e){console.error(e);}
+    } catch(e){ console.error(e); }
   });
 
   auth.onAuthStateChanged(u=>{
     user = u;
-    if(u){
+    if (u) {
       googleBtn.style.display='none';
-      statusEl.innerHTML = `Signed in as ${u.displayName||u.email} <a id='logout' style='color:#2b74ff;cursor:pointer;margin-left:6px;'>Sign out</a>`;
+      statusEl.innerHTML = `Signed in as ${u.displayName || u.email} <a id='logout' style='color:#2b74ff;cursor:pointer;margin-left:6px;'>Sign out</a>`;
       document.getElementById('logout').onclick = ()=>auth.signOut();
       attachChat();
+
+      // ✅ redirect to profile.html after login
+      setTimeout(()=>{
+        if (!window.location.href.includes('profile.html')) {
+          window.location.href = 'profile.html';
+        }
+      }, 1000);
+
     } else {
       googleBtn.style.display='inline-flex';
       statusEl.textContent='Signed out';
@@ -165,30 +172,30 @@ window.addEventListener('load', ()=> {
     const ref = db.ref('townhall/messages').limitToLast(100);
     ref.off();
     ref.on('child_added', snap=>{
-      const d = snap.val()||{};
+      const d = snap.val() || {};
       const t = new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
       const div = document.createElement('div');
       div.className='msg';
       div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
       msgList.appendChild(div);
-      msgList.scrollTop=msgList.scrollHeight;
+      msgList.scrollTop = msgList.scrollHeight;
     });
   }
 
   function sendMsg(){
     if(!user){alert('Please sign in first.');return;}
-    const text=msgInput.value.trim();
+    const text = msgInput.value.trim();
     if(!text) return;
     db.ref('townhall/messages').push({
-      uid:user.uid,
-      name:user.displayName||user.email,
-      text:text,
-      ts:firebase.database.ServerValue.TIMESTAMP
+      uid: user.uid,
+      name: user.displayName || user.email,
+      text: text,
+      ts: firebase.database.ServerValue.TIMESTAMP
     });
     msgInput.value='';
   }
 
-  sendBtn.onclick=sendMsg;
+  sendBtn.onclick = sendMsg;
   msgInput.addEventListener('keypress', e=>{
     if(e.key==='Enter'){e.preventDefault();sendMsg();}
   });
