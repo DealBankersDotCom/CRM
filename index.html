@@ -159,6 +159,9 @@ window.addEventListener('load', ()=>{
   const msgInput=document.getElementById('msgInput');
   const sendBtn=document.getElementById('sendBtn');
 
+  // Always attach chat listener so guests can see messages
+  attachChat();
+
   googleBtn.addEventListener('click', async ()=>{
     const provider = new firebase.auth.GoogleAuthProvider();
     try{
@@ -173,18 +176,21 @@ window.addEventListener('load', ()=>{
     if(u){
       statusEl.innerHTML = `Signed in as ${u.displayName||u.email} <a id='logout' style='color:#2b74ff;cursor:pointer;margin-left:6px;'>Sign out</a>`;
       document.getElementById('logout').onclick = ()=>auth.signOut();
-      msgInput.disabled=false;sendBtn.disabled=false;msgInput.placeholder="Type your message...";
+      msgInput.disabled=false;
+      sendBtn.disabled=false;
+      msgInput.placeholder="Type your message...";
     } else {
       statusEl.textContent='Signed out';
-      msgInput.disabled=true;sendBtn.disabled=true;msgInput.placeholder="Sign in to chat...";
+      msgInput.disabled=true;
+      sendBtn.disabled=true;
+      msgInput.placeholder="Sign in to chat...";
     }
-    attachChat();
   });
 
   function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[m]))}
 
   function attachChat(){
-    const ref = db.ref('townhall/messages').limitToLast(25);
+    const ref = db.ref('townhall/messages').limitToLast(50);
     ref.off();
     msgList.innerHTML='';
     ref.on('child_added', snap=>{
@@ -217,5 +223,6 @@ window.addEventListener('load', ()=>{
   });
 });
 </script>
+
 </body>
 </html>
