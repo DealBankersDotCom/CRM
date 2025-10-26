@@ -27,8 +27,6 @@ background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))}
 .input{display:flex;gap:8px;align-items:center;margin-top:8px}.input input{flex:1;background:#0d1f2d;border:1px solid #254a63;border-radius:12px;color:#eaf6ff;padding:10px}
 .button{display:inline-flex;align-items:center;justify-content:center;gap:8px;height:40px;padding:0 12px;border-radius:10px;border:1px solid #254a63;background:linear-gradient(180deg,#102334,#0b1521);color:#eaf6ff;font-weight:700}
 .meta{color:var(--muted);font-size:12px}.ok{color:#29e3a0}
-
-/* Modal (Blue/Red phone) */
 .chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a);}
 .chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31);}
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;z-index:9999}
@@ -36,8 +34,6 @@ background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))}
 .modal h3{margin:0 0 8px}.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
 .modal label{font-size:14px;color:#cfe3ff}.modal input,.modal select,.modal textarea{width:100%;padding:10px;border:1px solid #254a63;border-radius:10px;background:#0d1f2d;color:#eaf6ff}
 .modal .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
-
-/* Lead choice modal */
 .modal.wide{max-width:720px}
 .lead-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:10px;margin-top:8px}
 .lead-card{border:1px solid rgba(255,255,255,.22);border-radius:14px;padding:12px;background:#0e2332;cursor:pointer}
@@ -59,13 +55,13 @@ background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))}
   <nav class="nav">
     <a class="chip primary" href="claims-exchange.html">Claims Exchange</a>
     <button class="chip" id="btnGetLeads">Get Leads</button>
+    <a class="chip" href="contractor.html">Contractors</a>
     <button class="chip" id="btnBlue">🌀 Blue Phone</button>
     <button class="chip danger" id="btnRed">🚨 Red Phone</button>
     <a class="chip" id="logoutBtn">Log Out</a>
   </nav>
 </header>
 
-<!-- Blue/Red Phone Modal -->
 <div class="modal-backdrop" id="rbModal">
   <div class="modal">
     <h3 id="rbTitle">Request</h3>
@@ -87,7 +83,6 @@ background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))}
   </div>
 </div>
 
-<!-- Get Leads Modal (shown before entering Wholesaler) -->
 <div class="modal-backdrop" id="leadsModal">
   <div class="modal wide">
     <h3>Get Leads</h3>
@@ -122,7 +117,10 @@ background:linear-gradient(180deg,rgba(255,255,255,.18),rgba(255,255,255,.06))}
         <a class="tab active">Overview</a>
         <a class="tab" data-wh href="wholesaler.html" id="goAcq">Acq</a>
         <a class="tab" data-wh href="wholesaler.html#dispo" id="goDispo">Dispo</a>
+
+        <!-- ✅ INSERTED Contractor Portal TAB -->
         <a class="tab" href="contractor.html">Contractor</a>
+
         <a class="tab" href="realtor.html">Realtor</a>
         <a class="tab" href="settings.html">Settings</a>
       </div>
@@ -144,85 +142,13 @@ function attach(){
   const ref=firebase.database().ref('townhall/messages').limitToLast(100), list=document.getElementById('msgs');
   ref.on('child_added', s=>{ const m=s.val()||{}, el=document.createElement('div'); el.className='msg';
     const t=new Date(m.ts||Date.now()).toLocaleString();
-    el.innerHTML='<span style="font-weight:800;color:#bfe3ff">'+esc(m.name||"Anon")+'</span> <span style="font-size:11px;color:#8fb3d1">'+t+'</span><div>'+esc(m.text||"")+'</div>';
+    el.innerHTML='<span style="font-weight:800;color:#bfe3ff">'+esc(m.name||"Anon")+
+      '</span> <span style="font-size:11px;color:#8fb3d1">'+t+
+      '</span><div>'+esc(m.text||"")+'</div>';
     list.appendChild(el); list.scrollTop=list.scrollHeight; });
   function send(){ const box=document.getElementById('msgBox'); const txt=(box.value||'').trim(); if(!txt) return;
     firebase.database().ref('townhall/messages').push({uid:U.uid,name:U.displayName||U.email||'Anon',text:txt,ts:firebase.database.ServerValue.TIMESTAMP}).then(()=>box.value=''); }
   document.getElementById('sendBtn').onclick=send; document.getElementById('msgBox').addEventListener('keydown',e=>{ if(e.key==='Enter'){e.preventDefault();send();}});
 }
-
-/* --- Blue/Red phone modal --- */
-(function(){
-  function showModal(urgent){
-    document.getElementById('rbTitle').textContent = urgent ? "🚨 Urgent Request" : "Blue Phone Request";
-    document.getElementById('rbModal').style.display='flex';
-    document.getElementById('rbSubmit').dataset.urgent = urgent ? '1' : '0';
-  }
-  function hideModal(){ document.getElementById('rbModal').style.display='none'; }
-  document.addEventListener('click',function(e){
-    if(e.target.id==='btnRed') return showModal(true);
-    if(e.target.id==='btnBlue') return showModal(false);
-    if(e.target.id==='rbCancel' || e.target.id==='rbModal') return hideModal();
-    if(e.target.id==='rbSubmit') (async function(){
-      try{
-        const u=firebase.auth().currentUser||{};
-        await firebase.database().ref('requests').push({
-          portal:'profile',
-          cat: document.getElementById('rbCategory').value,
-          subject: (document.getElementById('rbSubject').value||'').trim(),
-          details: (document.getElementById('rbDetails').value||'').trim(),
-          urgent: document.getElementById('rbSubmit').dataset.urgent==='1',
-          uid:u.uid||null, email:u.email||null,
-          ts: firebase.database.ServerValue.TIMESTAMP
-        });
-        alert('Request sent. We will respond shortly.');
-        hideModal();
-        document.getElementById('rbSubject').value=''; document.getElementById('rbDetails').value='';
-      }catch(err){ console.error(err); alert('Could not send. Check your connection.'); }
-    })();
-  });
-})();
-
-/* --- Get Leads modal + pre-portal hook --- */
-(function(){
-  const leadsModal = document.getElementById('leadsModal');
-  let pendingHref = null;
-
-  function openLeads(href){ pendingHref = href || 'wholesaler.html'; leadsModal.style.display='flex'; }
-  function closeLeads(){ leadsModal.style.display='none'; }
-
-  // Intercept Acq/Dispo tabs to show modal first
-  document.querySelectorAll('[data-wh]').forEach(a=>{
-    a.addEventListener('click',(e)=>{ e.preventDefault(); openLeads(a.getAttribute('href')); });
-  });
-
-  // Also expose a header chip to request leads any time
-  document.getElementById('btnGetLeads').addEventListener('click',()=>openLeads(null));
-
-  // Click handlers inside modal
-  leadsModal.addEventListener('click', async (e)=>{
-    if(e.target.id==='leadsModal') return closeLeads();
-    const card = e.target.closest('.lead-card');
-    if(card){
-      const type = card.dataset.lead;           // street | web | live
-      try{
-        const u=firebase.auth().currentUser||{};
-        await firebase.database().ref('lead_requests').push({
-          portal:'profile', type, uid:u.uid||null, email:u.email||null,
-          ts: firebase.database.ServerValue.TIMESTAMP
-        });
-        alert('Request received. We’ll reach out with next steps.');
-      }catch(err){ console.error(err); alert('Could not send request.'); }
-      const go = pendingHref || 'wholesaler.html';
-      closeLeads();
-      location.href = go;
-    }
-    if(e.target.id==='enterPortal'){
-      const go = pendingHref || 'wholesaler.html';
-      closeLeads();
-      location.href = go;
-    }
-  });
-})();
 </script>
 </body></html>
