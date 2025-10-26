@@ -1,86 +1,134 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>DealBankers – Contractor Portal</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg">
-
-<link rel="stylesheet" href="contractor.css">
-
-<!-- Firebase -->
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Contractors</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+<link rel="stylesheet" href="profile.css">
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
+<script src="app-auth.js"></script>
+<script src="jobs.js" defer></script>
+
+<style>
+.wrap {
+  max-width: 1100px;
+  margin: 0 auto;
+  padding: 16px;
+  display: grid;
+  grid-template-columns: 2fr 1.7fr;
+  gap: 16px;
+}
+@media(max-width:900px){
+  .wrap { grid-template-columns:1fr; }
+  #map { height:300px; }
+}
+.card { min-height:420px; }
+.map-box {
+  height:460px;
+  border-radius:14px;
+  overflow:hidden;
+  border:1px solid rgba(255,255,255,.18);
+}
+.job-list {
+  max-height:460px;
+  overflow-y:auto;
+}
+.job-item {
+  border:1px solid rgba(255,255,255,.22);
+  padding:10px;
+  border-radius:12px;
+  margin-bottom:8px;
+  background:#0e2332;
+  cursor:pointer;
+}
+.job-item h4 {
+  margin:0 0 4px;
+  font-size:16px;
+}
+.job-item .meta {
+  font-size:12px;
+  color:#a8c3db;
+}
+.chip.primary { background:linear-gradient(180deg,#2b74ff,#0a58ca); }
+.hidden { display:none !important; }
+
+/* Modal for bids */
+.modal-backdrop {
+  position:fixed; inset:0; background:rgba(0,0,0,.6);
+  display:none; align-items:center; justify-content:center; z-index:9999;
+}
+.modal {
+  background:#0f1b27;
+  border:1px solid #254a63;
+  border-radius:16px;
+  max-width:480px;
+  width:92%;
+  box-shadow:0 28px 70px rgba(0,0,0,.55);
+  padding:16px;
+}
+.modal .row { margin:8px 0; }
+.modal label { font-size:14px;color:#cfe3ff; }
+.modal input, .modal textarea {
+  width:100%; padding:10px;
+  border:1px solid #254a63;
+  border-radius:10px;
+  background:#0d1f2d;color:#eaf6ff;
+}
+.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+</style>
 </head>
 
-<body>
+<body data-portal="contractor">
 
-<header>
-  <div class="brand" onclick="window.location='profile.html'">
-    <img src="icon (1).jpg"><span>Contractors</span>
-  </div>
-  <div id="authStatus" class="status">Signed out</div>
+<header class="header">
+  <div class="brand">DEALBANKERS • Contractor Portal</div>
+  <nav class="nav">
+    <a class="chip" href="profile.html">Back to Profile</a>
+    <button id="btnPostJob" class="chip primary hidden">+ Post Job</button>
+    <button class="chip" id="logoutBtn">Log Out</button>
+  </nav>
 </header>
 
-
-<div class="layout">
-
-  <!-- LEFT -->
-  <aside class="left-panel">
-    <h3>My Profile</h3>
-    <div id="contractorCard" class="card">
-      <div id="userName">Loading...</div>
-      <div id="skillsList"></div>
-      <button id="editSkillsBtn">Update Skills</button>
+<div class="wrap">
+  <div class="map-box"><div id="map"></div></div>
+  <section class="card">
+    <div class="card-head">
+      <div>
+        <div style="font-weight:900">Available Jobs</div>
+        <div class="meta">Jobs open for bidding</div>
+      </div>
     </div>
-
-    <h3>Resources</h3>
-    <div class="card">
-      • Jobsite Safety Docs<br>
-      • SOP’s<br>
-      • Job Photos Upload<br>
-    </div>
-  </aside>
-
-
-  <!-- RIGHT -->
-  <main class="right-panel">
-
-    <h2>Nearby Jobs</h2>
-    <p class="note">Tap a job icon to claim or view tasks.</p>
-
-    <div id="map" class="map"></div>
-
-    <div class="job-list-section">
-      <h3>All Jobs</h3>
-      <div id="jobsList"></div>
-    </div>
-
-  </main>
-
+    <div class="body job-list" id="jobsList"></div>
+  </section>
 </div>
 
-
-<!-- Add Skills Modal -->
-<div id="skillModal" class="modal">
-  <div class="modal-content">
-    <h3>Update Your Skills</h3>
-    <label><input type="checkbox" value="finish"> Finish-Out</label><br>
-    <label><input type="checkbox" value="plumbing"> Plumbing</label><br>
-    <label><input type="checkbox" value="flooring"> Flooring</label><br>
-    <label><input type="checkbox" value="paint"> Paint/Texture</label><br>
-    <label><input type="checkbox" value="drywall"> Drywall/Patch</label><br>
-    <label><input type="checkbox" value="general"> General Cleanup</label><br>
-    <label><input type="checkbox" value="other"> Other</label><br>
-
-    <button id="saveSkillsBtn">Save</button>
-    <button id="closeSkillModal">Close</button>
+<!-- Bid Modal -->
+<div class="modal-backdrop" id="bidModal">
+  <div class="modal">
+    <h3>Place Bid</h3>
+    <div class="row">
+      <label>Your Bid ($)</label>
+      <input id="bidPrice" type="number" min="0"/>
+    </div>
+    <div class="row">
+      <label>Notes</label>
+      <textarea id="bidNotes" rows="3" placeholder="Tools, ETA, special skills..."></textarea>
+    </div>
+    <div class="actions">
+      <button class="chip" id="cancelBid">Cancel</button>
+      <button class="chip primary" id="submitBid">Submit Bid</button>
+    </div>
   </div>
 </div>
 
-<script src="contractor.js"></script>
-
+<script>
+// Logout
+document.getElementById('logoutBtn').onclick=()=>firebase.auth().signOut().then(()=>location.href='index.html');
+</script>
 </body>
 </html>
