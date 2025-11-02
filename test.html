@@ -2,16 +2,27 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Deal Bankers | 3D Cube</title>
+<title>Deal Bankers | 3D Network</title>
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Poppins,Arial,sans-serif;color:#ffd700;}
-  h1{position:absolute;top:8%;width:100%;text-align:center;
-     font-size:3em;letter-spacing:3px;text-shadow:0 0 25px #ffd700;}
+  h1{position:absolute;top:8%;width:100%;text-align:center;font-size:3em;letter-spacing:3px;text-shadow:0 0 25px #ffd700;}
+  a.label{
+    position:absolute;color:#ffd700;font-weight:bold;text-shadow:0 0 10px #ffd700;
+    text-decoration:none;transition:0.2s;font-size:1.2em;
+  }
+  a.label:hover{color:#fff;}
   canvas{display:block;}
 </style>
 </head>
 <body>
 <h1>DEAL BANKERS</h1>
+
+<!-- labels for each node -->
+<a href="wholesaler.html" class="label" id="wholesaler">Wholesaler</a>
+<a href="contractor.html" class="label" id="contractor">Contractor</a>
+<a href="realtor.html" class="label" id="realtor">Realtor</a>
+<a href="investor.html" class="label" id="investor">Investor</a>
+
 <script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script>
 const scene=new THREE.Scene();
@@ -20,30 +31,62 @@ const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
 document.body.appendChild(renderer.domElement);
 
-// bright blue wireframe cube
+// cube
 const geom=new THREE.BoxGeometry(2,2,2);
 const mat=new THREE.MeshBasicMaterial({color:0x00aaff,wireframe:true});
 const cube=new THREE.Mesh(geom,mat);
 scene.add(cube);
 
-// gold corner spheres
+// gold nodes
 const sphereGeom=new THREE.SphereGeometry(0.1,16,16);
 const sphereMat=new THREE.MeshBasicMaterial({color:0xffd700});
-const coords=[[1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],[1,1,-1],[-1,1,-1],[1,-1,-1],[-1,-1,-1]];
-coords.forEach(([x,y,z])=>{
+const coords={
+  wholesaler:[-1,1,1],
+  contractor:[1,1,1],
+  realtor:[1,-1,1],
+  investor:[-1,-1,1]
+};
+for(const key in coords){
+  const [x,y,z]=coords[key];
   const s=new THREE.Mesh(sphereGeom,sphereMat);
   s.position.set(x,y,z);
   scene.add(s);
-});
-
+}
 camera.position.z=5;
+
+// label link elements to move with 3D positions
+const labels={
+  wholesaler:document.getElementById("wholesaler"),
+  contractor:document.getElementById("contractor"),
+  realtor:document.getElementById("realtor"),
+  investor:document.getElementById("investor")
+};
+function updateLabelPositions(){
+  for(const key in coords){
+    const vec=new THREE.Vector3(...coords[key]);
+    vec.project(camera);
+    const x=(vec.x*0.5+0.5)*innerWidth;
+    const y=(-vec.y*0.5+0.5)*innerHeight;
+    labels[key].style.left=`${x}px`;
+    labels[key].style.top=`${y}px`;
+  }
+}
+
+// animation
 function animate(){
   requestAnimationFrame(animate);
-  cube.rotation.x+=0.01;
-  cube.rotation.y+=0.01;
+  cube.rotation.x+=0.005;
+  cube.rotation.y+=0.007;
+  updateLabelPositions();
   renderer.render(scene,camera);
 }
 animate();
+
+addEventListener('resize',()=>{
+  camera.aspect=innerWidth/innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth,innerHeight);
+});
 </script>
 </body>
 </html>
