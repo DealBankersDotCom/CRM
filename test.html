@@ -1,92 +1,49 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Deal Bankers | Network Prototype</title>
+<meta charset="UTF-8">
+<title>Deal Bankers | 3D Cube</title>
 <style>
   html,body{margin:0;height:100%;overflow:hidden;background:#000;font-family:Poppins,Arial,sans-serif;color:#ffd700;}
-  h1{
-    position:absolute;top:8%;width:100%;text-align:center;
-    font-size:3em;letter-spacing:3px;text-shadow:0 0 25px #ffd700;
-    animation:fadeIn 2s ease forwards;
-  }
-  @keyframes fadeIn{from{opacity:0;transform:translateY(-20px);}to{opacity:1;transform:translateY(0);}}
+  h1{position:absolute;top:8%;width:100%;text-align:center;
+     font-size:3em;letter-spacing:3px;text-shadow:0 0 25px #ffd700;}
   canvas{display:block;}
 </style>
 </head>
 <body>
 <h1>DEAL BANKERS</h1>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r152/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
 <script>
-// basic scene setup
 const scene=new THREE.Scene();
-const camera=new THREE.PerspectiveCamera(70,innerWidth/innerHeight,0.1,1000);
+const camera=new THREE.PerspectiveCamera(75,innerWidth/innerHeight,0.1,1000);
 const renderer=new THREE.WebGLRenderer({antialias:true});
 renderer.setSize(innerWidth,innerHeight);
-renderer.setClearColor(0x000010);
 document.body.appendChild(renderer.domElement);
 
-// cube wireframe
-const cubeGeom=new THREE.BoxGeometry(2,2,2);
-const cubeMat=new THREE.MeshBasicMaterial({color:0x00aaff,wireframe:true});
-const cube=new THREE.Mesh(cubeGeom,cubeMat);
+// bright blue wireframe cube
+const geom=new THREE.BoxGeometry(2,2,2);
+const mat=new THREE.MeshBasicMaterial({color:0x00aaff,wireframe:true});
+const cube=new THREE.Mesh(geom,mat);
 scene.add(cube);
 
-// glowing node spheres
-const nodeGeom=new THREE.SphereGeometry(0.12,24,24);
-const nodeMat=new THREE.MeshBasicMaterial({color:0xffd700});
-const nodePos=[
- [1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],
- [1,1,-1],[-1,1,-1],[1,-1,-1],[-1,-1,-1]
-];
-nodePos.forEach(p=>{
-  const n=new THREE.Mesh(nodeGeom,nodeMat);
-  n.position.set(...p);
-  scene.add(n);
+// gold corner spheres
+const sphereGeom=new THREE.SphereGeometry(0.1,16,16);
+const sphereMat=new THREE.MeshBasicMaterial({color:0xffd700});
+const coords=[[1,1,1],[-1,1,1],[1,-1,1],[-1,-1,1],[1,1,-1],[-1,1,-1],[1,-1,-1],[-1,-1,-1]];
+coords.forEach(([x,y,z])=>{
+  const s=new THREE.Mesh(sphereGeom,sphereMat);
+  s.position.set(x,y,z);
+  scene.add(s);
 });
 
-// text labels
-const loader=new THREE.TextureLoader();
-const labels=['Wholesaler','Contractor','Realtor','Investor'];
-labels.forEach((text,i)=>{
-  const c=document.createElement('canvas');
-  const ctx=c.getContext('2d');
-  c.width=512;c.height=128;
-  ctx.fillStyle='#ffd700';
-  ctx.font='bold 48px Poppins';
-  ctx.fillText(text,40,80);
-  const tex=new THREE.CanvasTexture(c);
-  const sprite=new THREE.Sprite(new THREE.SpriteMaterial({map:tex}));
-  sprite.scale.set(3,0.8,1);
-  const pos=nodePos[i*2]; // space labels roughly around cube
-  sprite.position.set(...pos);
-  scene.add(sprite);
-});
-
-// subtle ambient lighting
-const light=new THREE.PointLight(0xffffff,1);
-light.position.set(5,5,5);
-scene.add(light);
-scene.add(new THREE.AmbientLight(0x404040));
-
-// camera + animate
 camera.position.z=5;
 function animate(){
   requestAnimationFrame(animate);
-  cube.rotation.x+=0.003;
-  cube.rotation.y+=0.004;
-  scene.rotation.y+=0.0005; // global slow drift
+  cube.rotation.x+=0.01;
+  cube.rotation.y+=0.01;
   renderer.render(scene,camera);
 }
 animate();
-
-// resize handler
-addEventListener('resize',()=>{
-  camera.aspect=innerWidth/innerHeight;
-  camera.updateProjectionMatrix();
-  renderer.setSize(innerWidth,innerHeight);
-});
 </script>
 </body>
 </html>
