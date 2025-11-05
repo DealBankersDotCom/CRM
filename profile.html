@@ -5,23 +5,22 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DealBankers • Portal</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet"/>
 
 <style>
 :root {
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
-  --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;
+  --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
   --shadow:0 28px 70px rgba(0,0,0,.55)
 }
 *{box-sizing:border-box}
 body{
   margin:0;color:var(--text);
-  font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
+  font-family:"Orbitron",system-ui,Segoe UI,Roboto,Arial;
   background:radial-gradient(1000px 420px at 90% -8%, rgba(93,224,255,.22) 0%, transparent 60%),
              linear-gradient(135deg,var(--bg1),var(--bg2) 55%,var(--bg3));
   transition:all .4s ease-in-out;
+  min-height:100vh;
 }
 .header{
   display:flex;align-items:center;justify-content:space-between;
@@ -39,14 +38,14 @@ body{
   background:linear-gradient(180deg,#111f2c,#0d1823);
   color:#eaf6ff;text-decoration:none;font-weight:700;cursor:pointer
 }
-.chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a);}
-.chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31);}
+.chip.primary{background:linear-gradient(180deg,#0f2945,#0a1d31)}
+.chip.danger{background:linear-gradient(180deg,#6b1111,#3a0a0a)}
 .wrap{max-width:1000px;margin:0 auto;padding:16px}
 .card{
   background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
   border:1px solid rgba(255,255,255,.18);
   border-radius:20px;box-shadow:var(--shadow);overflow:hidden;
-  animation:fadeIn .7s ease forwards
+  animation:fadeIn .7s ease forwards;margin-top:20px
 }
 @keyframes fadeIn{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:none}}
 .card-head{
@@ -61,47 +60,39 @@ body{
   color:#cfe6ff;text-decoration:none;cursor:pointer
 }
 .tab.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
-.msgs{
-  border:1px dashed rgba(255,255,255,.28);
-  border-radius:12px;padding:10px;
-  max-height:360px;overflow:auto;
-  background:#0e2231;scroll-behavior:smooth
-}
-.msg{padding:6px 8px;border-bottom:1px dashed rgba(255,255,255,.16)}
-.msg:last-child{border-bottom:0}
-.input{display:flex;gap:8px;align-items:center;margin-top:8px}
-.input input{
-  flex:1;background:#0d1f2d;
-  border:1px solid #254a63;border-radius:12px;
-  color:#eaf6ff;padding:10px
+.section{padding:20px}
+.section label{display:block;margin-bottom:6px;color:#bcd3ee}
+.section input,select,textarea{
+  width:100%;padding:10px;border-radius:10px;border:1px solid #294861;
+  background:#0e2231;color:#fff;margin-bottom:10px
 }
 .button{
   display:inline-flex;align-items:center;justify-content:center;
   gap:8px;height:40px;padding:0 12px;border-radius:10px;
   border:1px solid #254a63;
   background:linear-gradient(180deg,#102334,#0b1521);
-  color:#eaf6ff;font-weight:700
+  color:#eaf6ff;font-weight:700;cursor:pointer
 }
 .meta{color:var(--muted);font-size:12px}
 .ok{color:#29e3a0}
+#savedMsg{color:#29e3a0;font-size:0.9rem;margin-top:8px;text-align:center;display:none}
+.msgs{border:1px dashed rgba(255,255,255,.28);border-radius:12px;padding:10px;
+  max-height:300px;overflow:auto;background:#0e2231;scroll-behavior:smooth;margin-top:10px}
+.msg{padding:6px 8px;border-bottom:1px dashed rgba(255,255,255,.16)}
+.msg:last-child{border-bottom:0}
+.chatTitle{display:flex;align-items:center;gap:6px;margin-bottom:6px}
+.chatTitle img{width:18px;height:18px;filter:drop-shadow(0 0 4px #2b74ff)}
 </style>
-
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="config.js"></script>
 </head>
 
-<body data-portal="profile">
+<body>
 <header class="header">
   <div>DEALBANKERS • Portal</div>
   <nav class="nav">
-    <!-- ✅ TOOLS now routes directly to your profile dashboard -->
-    <a class="chip" href="https://www.dealbankers.com/profile.html">Tools</a>
     <a class="chip primary" href="claimsync.html">ClaimSync</a>
     <button class="chip" id="btnBlue">🌀 Blue Phone</button>
     <button class="chip danger" id="btnRed">🚨 Red Phone</button>
-    <a class="chip" id="logoutBtn">Log Out</a>
+    <a class="chip" href="#" id="logoutBtn">Log Out</a>
   </nav>
 </header>
 
@@ -113,89 +104,136 @@ body{
         <div class="meta">Capital Open: <span class="ok">$300k</span> • Turn: 7–10 days</div>
       </div>
       <div class="tabs">
-        <a class="tab active" id="goWholesaler">Wholesaler</a>
-        <a class="tab" id="goContractor">Contractor</a>
-        <a class="tab" id="goRealtor">Realtor</a>
-        <a class="tab" id="goInvestor">Investor</a>
-        <a class="tab" id="goSettings">Settings</a>
+        <div class="tab active" id="goWholesaler">🏠 Wholesaler Portal</div>
+        <div class="tab" id="goContractor">🔧 Contractor Portal</div>
       </div>
     </div>
 
-    <div class="body" id="portalContainer">
-      <div class="meta" style="margin-bottom:6px">Townhall (All Users)</div>
+    <div id="portalContainer" class="section">
+      <div class="chatTitle"><img src="https://cdn-icons-png.flaticon.com/512/1380/1380370.png" alt="Townhall chat"/><strong>Townhall Chat</strong></div>
       <div id="msgs" class="msgs"><div class="meta">Loading chat...</div></div>
       <div class="input">
-        <input id="msgBox" placeholder="Say something to the room... (press Enter to send)"/>
+        <input id="msgBox" placeholder="Say something..." />
         <button id="sendBtn" class="button">Send</button>
       </div>
     </div>
   </section>
+
+  <section id="settingsSection" class="card" style="display:none;">
+    <div class="card-head"><strong id="settingsTitle">Settings</strong></div>
+    <div class="section" id="settingsBody"></div>
+    <div id="savedMsg">✅ Settings saved successfully</div>
+  </section>
 </div>
 
-<script>
-let U=null;
-firebase.auth().onAuthStateChanged(user=>{
-  if(user){
-    U=user;
-    console.log("User logged in:", U.email);
-    attachTownhall();
-  }else{
-    console.log("User not logged in, redirecting...");
-    window.location.href="index.html";
-  }
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { getDatabase, ref, push, onChildAdded, set, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { firebaseConfig } from "./config.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+let user = null;
+
+onAuthStateChanged(auth, u => {
+  if (!u) { window.location.href = "index.html"; return; }
+  user = u;
+  attachChat();
 });
 
-document.getElementById("logoutBtn").onclick=()=>firebase.auth().signOut();
+document.getElementById("logoutBtn").onclick = () => signOut(auth);
 
 function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 
-function attachTownhall(){
-  const ref=firebase.database().ref("townhall/messages").limitToLast(100);
-  const list=document.getElementById("msgs");
-  list.innerHTML="<div class='meta'>Connected to Townhall...</div>";
-  ref.on("child_added",snap=>{
-    const m=snap.val()||{}, el=document.createElement("div");
-    el.className="msg";
-    const t=new Date(m.ts||Date.now()).toLocaleString();
-    el.innerHTML="<span style='font-weight:800;color:#bfe3ff'>"+esc(m.name||"Anon")+
-      "</span> <span style='font-size:11px;color:#8fb3d1'>"+t+
-      "</span><div>"+esc(m.text||"")+"</div>";
+function attachChat(){
+  const refMsgs = ref(db, "townhall/messages");
+  const list = document.getElementById("msgs");
+  list.innerHTML = "<div class='meta'>Connected to Townhall...</div>";
+  onChildAdded(refMsgs, snap => {
+    const m = snap.val() || {};
+    const el = document.createElement("div");
+    el.className = "msg";
+    const t = new Date(m.ts || Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+    el.innerHTML = `<span style='font-weight:800;color:#bfe3ff'>${esc(m.name||"Anon")}</span> <span style='font-size:11px;color:#8fb3d1'>${t}</span><div>${esc(m.text||"")}</div>`;
     list.appendChild(el);
-    list.scrollTop=list.scrollHeight;
-  });
-  const send=()=>{
-    const box=document.getElementById("msgBox");
-    const txt=(box.value||"").trim();
-    if(!txt)return;
-    firebase.database().ref("townhall/messages").push({
-      uid:U.uid,
-      name:U.displayName||U.email||"Anon",
-      text:txt,
-      ts:firebase.database.ServerValue.TIMESTAMP
-    }).then(()=>box.value="");
-  };
-  document.getElementById("sendBtn").onclick=send;
-  document.getElementById("msgBox").addEventListener("keydown",e=>{
-    if(e.key==="Enter"){e.preventDefault();send();}
+    list.scrollTop = list.scrollHeight;
   });
 }
 
-// Portal section loader
-function loadPortal(file,id){
+document.getElementById("sendBtn").onclick = () => {
+  const box = document.getElementById("msgBox");
+  const txt = box.value.trim();
+  if (!txt || !user) return;
+  push(ref(db, "townhall/messages"), {
+    uid: user.uid,
+    name: user.displayName || user.email || "Anon",
+    text: txt,
+    ts: serverTimestamp()
+  });
+  box.value = "";
+};
+
+function showSettings(type) {
+  const section = document.getElementById("settingsSection");
+  const body = document.getElementById("settingsBody");
+  const title = document.getElementById("settingsTitle");
+  section.style.display = "block";
+  title.textContent = `${type} Settings`;
+
+  let html = "";
+  if (type === "Wholesaler") {
+    html = `
+      <label>Experience Level</label>
+      <select id="exp"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select>
+      <label>Lead Type Focus</label>
+      <input id="leadType" placeholder="e.g. City Liens, Pre-foreclosures"/>
+      <label>Upload Your Own Leads?</label>
+      <select id="uploadOwn"><option>No</option><option>Yes</option></select>
+      <label>Go Live / Partner Mode</label>
+      <select id="partner"><option>No</option><option>Yes</option></select>
+      <button id="saveBtn" class="button">Save Settings</button>`;
+  } else {
+    html = `
+      <label>Skill Division</label>
+      <input id="skillDiv" placeholder="e.g. Electrical, Roofing, Plumbing"/>
+      <label>Tools Available</label>
+      <textarea id="tools" rows="3" placeholder="List your main tools or equipment"></textarea>
+      <label>Experience Level</label>
+      <select id="cExp"><option>Apprentice</option><option>Journeyman</option><option>Master</option></select>
+      <button id="saveBtn" class="button">Save Settings</button>`;
+  }
+  body.innerHTML = html;
+  document.getElementById("saveBtn").onclick = () => saveSettings(type);
+}
+
+function saveSettings(type){
+  const savedMsg = document.getElementById("savedMsg");
+  const data = { type, ts: serverTimestamp() };
+  if (type === "Wholesaler") {
+    data.exp = document.getElementById("exp").value;
+    data.leadType = document.getElementById("leadType").value;
+    data.uploadOwn = document.getElementById("uploadOwn").value;
+    data.partner = document.getElementById("partner").value;
+  } else {
+    data.skillDiv = document.getElementById("skillDiv").value;
+    data.tools = document.getElementById("tools").value;
+    data.cExp = document.getElementById("cExp").value;
+  }
+  set(ref(db, `users/${user.uid}/${type.toLowerCase()}Settings`), data);
+  savedMsg.style.display = "block";
+  setTimeout(()=>savedMsg.style.display="none",2500);
+}
+
+document.getElementById("goWholesaler").onclick = ()=>{showSettings("Wholesaler");toggleTabs("goWholesaler");};
+document.getElementById("goContractor").onclick = ()=>{showSettings("Contractor");toggleTabs("goContractor");};
+
+function toggleTabs(id){
   document.querySelectorAll(".tab").forEach(t=>t.classList.remove("active"));
   document.getElementById(id).classList.add("active");
-  fetch(file)
-    .then(r=>r.text())
-    .then(html=>{document.getElementById("portalContainer").innerHTML=html;})
-    .catch(()=>{document.getElementById("portalContainer").innerHTML=`<div style='padding:20px;'>⚠️ Unable to load ${file}</div>`;});
 }
-
-// Event binding for sections
-document.getElementById("goWholesaler").onclick=()=>loadPortal("wholesaler.html","goWholesaler");
-document.getElementById("goContractor").onclick=()=>loadPortal("contractor.html","goContractor");
-document.getElementById("goRealtor").onclick=()=>loadPortal("realtor.html","goRealtor");
-document.getElementById("goInvestor").onclick=()=>loadPortal("investor.html","goInvestor");
-document.getElementById("goSettings").onclick=()=>loadPortal("settings.html","goSettings");
 </script>
 </body>
 </html>
