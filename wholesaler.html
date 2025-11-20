@@ -41,7 +41,6 @@ body{
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
 
-/* LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
 .card{
   background:rgba(255,255,255,.07);
@@ -64,7 +63,7 @@ body{
 }
 .status{font-size:12px;color:#9ab9d6}
 
-/* BODY GRID: LEFT = TABLE, RIGHT = DETAIL / STREET VIEW */
+/* BODY GRID */
 .body{
   padding:14px;
   display:grid;
@@ -75,15 +74,7 @@ body{
   .body{grid-template-columns:1fr}
 }
 
-.left-col{}
-.right-col{
-  background:#0b1825;
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);
-  padding:12px;
-}
-
-/* SEARCH / TABLE */
+/* LEFT (Lead List) */
 .search{
   display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap
 }
@@ -93,12 +84,7 @@ body{
 }
 .small{padding:4px 10px;font-size:12px}
 
-/* table wrap for mobile */
-.table-wrap{
-  overflow-x:auto;
-  border-radius:12px;
-  -webkit-overflow-scrolling:touch;
-}
+.table-wrap{overflow-x:auto;border-radius:12px}
 table{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
 th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2)}
 thead th{border-top:0;color:#cfe3ff}
@@ -106,54 +92,43 @@ tr.lead-row{cursor:pointer}
 tr.lead-row:hover{background:rgba(255,255,255,.06)}
 tr.lead-row.selected{background:rgba(43,116,255,.25)}
 
-/* RIGHT PANEL: CALL HUB */
+/* RIGHT PANEL */
+.right-col{
+  background:#0b1825;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  padding:12px;
+}
+.detail-header{margin-bottom:6px}
 .detail-header h3{margin:0;font-size:16px}
 .detail-header .sub{font-size:12px;color:#9ab9d6}
 
-.detail-info div{margin-bottom:3px}
-
+.detail-info{font-size:13px;margin-bottom:10px}
 .script-box{
-  background:#0d2233;
-  border-radius:10px;
-  padding:10px;
-  font-size:13px;
-  line-height:1.6;
-  margin-top:8px;
+  background:#0d2233;border-radius:10px;padding:10px;
+  font-size:13px;line-height:1.5;margin-top:8px;
 }
-.map-wrap iframe{
-  width:100%;height:220px;border:0
-}
+.detail-actions{display:flex;gap:8px;margin-top:8px}
 
-/* Floating Chat Bubble */
-#chatBubble{
-  position:fixed;bottom:24px;right:24px;
-  width:54px;height:54px;border-radius:50%;
-  background:#133e6a;color:white;border:2px solid var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:0 0 15px rgba(0,138,255,.6);
-  z-index:999;transition:transform .15s
-}
-#chatBubble:hover{transform:scale(1.08)}
+/* MAP */
+.map-wrap{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
+.map-wrap iframe{width:100%;height:250px;border:0}
 </style>
 
-<!-- Firebase Core -->
+<!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 </head>
 
 <body data-portal="wholesaler">
 
-<!-- HEADER -->
 <header class="header">
   <div>DEALBANKERS • Wholesaler Portal</div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
-    <a class="chip" href="dispo.html">Dispo Console</a>
-    <a class="chip" href="contractor.html">Contractors</a>
     <button class="chip" id="btnGetLeads">Get Leads</button>
     <button class="chip" id="btnBlue">🌀 Blue</button>
     <button class="chip danger" id="btnRed">🚨 Red</button>
@@ -161,10 +136,8 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
   </nav>
 </header>
 
-<!-- MAIN CONTENT WRAPPER -->
 <div class="wrap">
   <section class="card">
-
     <div class="top">
       <div>
         <div id="crumb">Acquisition</div>
@@ -175,49 +148,36 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
         <button id="tabDispo">Dispo</button>
       </div>
     </div>
-
+    
     <div class="body">
-
-      <!-- LEFT: Lead List -->
-      <div class="left-col">
+      <!-- LEFT SIDE -->
+      <div id="panel-acq">
         <div class="search">
-          <input id="s_q" class="input" placeholder="Search address / owner"/>
+          <input id="s_q" class="input" placeholder="Search address / owner" />
           <button class="chip small" id="s_reload">Search</button>
-          <button class="chip small" id="prevLead">◀ Prev</button>
-          <button class="chip small" id="nextLead">Next ▶</button>
         </div>
         <div class="table-wrap">
           <table>
-            <thead>
-              <tr><th>Address</th><th>Owner</th><th>Phone</th><th>Status</th><th>Notes</th></tr>
-            </thead>
+            <thead><tr><th>Address</th><th>Owner</th><th>Phone</th><th>Status</th><th>Notes</th></tr></thead>
             <tbody id="sellerRows"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- RIGHT: Detail Panel with Street View -->
+      <!-- RIGHT SIDE -->
       <div class="right-col" id="detailPanel">
         <div class="detail-header">
           <h3 id="detailTitle">No lead selected</h3>
-          <div class="sub" id="detailSub">Click a lead to load Street View and scripts.</div>
+          <div class="sub" id="detailSub">Select a lead to load details and map.</div>
         </div>
 
         <div class="detail-info" id="detailInfo" style="display:none;">
           <div><strong>Address:</strong> <span id="detailAddr"></span></div>
           <div><strong>Owner:</strong> <span id="detailOwner"></span></div>
           <div><strong>Phone:</strong> <span id="detailPhone"></span></div>
-          <div><strong>Status:</strong> <span id="detailStatus"></span></div>
         </div>
 
-        <div class="detail-actions" id="detailActions" style="display:none;">
-          <button class="chip small" id="openMaps">Open in Maps</button>
-          <button class="chip small" id="copyScript">Copy Script</button>
-        </div>
-
-        <div class="script-box" id="scriptBox">
-          Select a lead to load the Belfort-style opener and call flow.
-        </div>
+        <div class="script-box" id="scriptBox">Select a lead to load script.</div>
 
         <div class="map-wrap" id="mapWrap" style="display:none;">
           <iframe id="streetFrame" loading="lazy"></iframe>
@@ -227,77 +187,58 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
   </section>
 </div>
 
-<!-- Floating Chat Bubble -->
-<div id="chatBubble">💬</div>
-
-<!-- SCRIPTS -->
 <script>
 let UID=null, IS_ADMIN=false, VIEW_AS=null;
+let sRef=null;
 let sellerList=[]; let sellerView=[]; let currentIndex=-1;
-let sRef=null, bRef=null;
 
-const esc = s => (''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
-const activeUid = () => (IS_ADMIN && VIEW_AS)?VIEW_AS:UID;
+const esc = s => (''+(s||'')).replace(/[&<>"']/g,m=>(
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
+);
 
-/* AUTH */
 firebase.auth().onAuthStateChanged(async (u)=>{
   if(!u){ location.href='index.html'; return; }
   UID=u.uid;
-  try{
-    const roleSnap = await firebase.database().ref('roles/'+UID).get();
-    IS_ADMIN = roleSnap.exists() && roleSnap.val()==='admin';
-  }catch(e){ console.warn(e); }
   subscribe();
 });
 
-document.getElementById('logoutBtn').onclick = ()=>firebase.auth().signOut();
-document.getElementById('s_reload').onclick = ()=>renderS();
-document.getElementById('prevLead').onclick = ()=>cycleLead(-1);
-document.getElementById('nextLead').onclick = ()=>cycleLead(1);
-
-/* SUBSCRIBE TO LEADS */
 function subscribe(){
-  if(!UID) return;
   if(sRef) sRef.off();
-  const a = activeUid();
-  sRef = firebase.database().ref('leads/sellers').orderByChild('assignedTo').equalTo(a);
-  sRef.on('value', snap=>{
-    sellerList = Object.entries(snap.val()||{}).map(([id,v])=>({id,...v}));
+  sRef=firebase.database().ref('leads/sellers');
+  sRef.on('value',snap=>{
+    const obj=snap.val()||{};
+    sellerList=Object.entries(obj).map(([id,v])=>({id,...v}));
     renderS();
   });
 }
 
-/* RENDER SELLER LEADS */
 function renderS(){
-  const q = (s_q.value||'').toLowerCase();
-  sellerView = sellerList.filter(v =>
-    !q || 
-    (v.address||'').toLowerCase().includes(q) ||
-    (v.owner||'').toLowerCase().includes(q)
+  const q=(document.getElementById('s_q').value||'').toLowerCase();
+  sellerView=sellerList.filter(v=>
+    !q || (v.address||'').toLowerCase().includes(q) || (v.owner||'').toLowerCase().includes(q)
   );
-
-  const tbody = document.getElementById('sellerRows');
-  document.getElementById('status').textContent = 'Acq: '+sellerView.length+' items';
+  
+  const tbody=document.getElementById('sellerRows');
+  document.getElementById('status').textContent='Acq: '+sellerView.length+' items';
 
   if(!sellerView.length){
-    tbody.innerHTML = '<tr><td colspan="5" class="status">No assigned seller leads yet.</td></tr>';
-    currentIndex=-1;
-    updateDetail(null);
-    return;
+    tbody.innerHTML='<tr><td colspan="5" class="status">No leads yet.</td></tr>';
+    updateDetail(null); return;
   }
 
-  tbody.innerHTML = sellerView.map((v,i)=>`
+  tbody.innerHTML=sellerView.map((v,i)=>`
     <tr class="lead-row" data-idx="${i}">
       <td>${esc(v.address)}</td>
-      <td>${esc(v.owner)}</td>
-      <td>${esc(v.phone)}</td>
+      <td>${esc(v.owner||'')}</td>
+      <td>${esc(v.phone||'')}</td>
       <td>${esc(v.status||'new')}</td>
       <td>${esc(v.notes||'')}</td>
-    </tr>`).join('');
+    </tr>`
+  ).join('');
 
   tbody.querySelectorAll('tr.lead-row').forEach(r=>{
     r.addEventListener('click',()=>{
-      currentIndex = parseInt(r.dataset.idx,10);
+      currentIndex=parseInt(r.dataset.idx,10);
       updateDetail(sellerView[currentIndex]);
       highlightRow();
     });
@@ -305,75 +246,48 @@ function renderS(){
 }
 
 function highlightRow(){
-  document.querySelectorAll('#sellerRows tr').forEach(r=>r.classList.remove('selected'));
+  document.querySelectorAll('#sellerRows tr.lead-row').forEach(r=>r.classList.remove('selected'));
   if(currentIndex>=0){
-    document.querySelector(`#sellerRows tr[data-idx="${currentIndex}"]`)?.classList.add('selected');
+    const row=document.querySelector(`#sellerRows tr.lead-row[data-idx="${currentIndex}"]`);
+    if(row) row.classList.add('selected');
   }
 }
 
-/* DETAIL PANEL */
 function updateDetail(lead){
   const frame=document.getElementById('streetFrame');
   const mapW=document.getElementById('mapWrap');
-  const title=document.getElementById('detailTitle');
-  const sub=document.getElementById('detailSub');
-  const info=document.getElementById('detailInfo');
-  const acts=document.getElementById('detailActions');
-  const scriptBox=document.getElementById('scriptBox');
-
+  
   if(!lead){
-    title.textContent='No lead selected';
-    sub.textContent='Click a lead to load Street View';
-    info.style.display='none'; acts.style.display='none';
+    document.getElementById('detailTitle').textContent='No lead selected';
+    document.getElementById('detailSub').textContent='Select a lead to load details.';
+    document.getElementById('detailInfo').style.display='none';
     mapW.style.display='none'; frame.src='';
-    scriptBox.textContent = 'Select a lead for script and street view.';
+    document.getElementById('scriptBox').textContent='Select a lead to load script.';
     return;
   }
 
-  const address = lead.address||'';
-  const owner = lead.owner||'';
-  const phone = lead.phone||'';
-  const status = lead.status||'new';
+  document.getElementById('detailInfo').style.display='block';
+  document.getElementById('detailAddr').textContent=lead.address||'';
+  document.getElementById('detailOwner').textContent=lead.owner||'';
+  document.getElementById('detailPhone').textContent=lead.phone||'';
 
-  title.textContent = owner || 'Unknown Owner';
-  sub.textContent = address;
-  document.getElementById('detailAddr').textContent = address;
-  document.getElementById('detailOwner').textContent = owner;
-  document.getElementById('detailPhone').textContent = phone;
-  document.getElementById('detailStatus').textContent = status;
-
-  info.style.display='block'; acts.style.display='flex';
-
-  if(address){
-    frame.src = 'https://www.google.com/maps?q='+encodeURIComponent(address)+'&output=embed';
+  if(lead.address){
+    frame.src='https://www.google.com/maps?q='+encodeURIComponent(lead.address)+'&output=embed';
     mapW.style.display='block';
+  } else {
+    mapW.style.display='none';
+    frame.src='';
   }
 
-  const first = owner.split(' ')[0]||'there';
-  scriptBox.innerHTML = `
-    <p><strong>Opener:</strong> "Hi ${first}, this is Bill with DealBankers. I’m calling about ${address}. Did I catch you at a bad time?”</p>
-    <p><strong>Position:</strong> “I work with a small group that solves problem properties —
-    taxes, liens, or inherited homes. I’m not here to list it — I'm here to solve it.”</p>
+  document.getElementById('detailTitle').textContent=lead.owner||'Unknown Owner';
+  document.getElementById('detailSub').textContent=lead.address||'';
+  
+  document.getElementById('scriptBox').innerHTML = `
+    <p><strong>Opener:</strong> "Hi ${lead.owner?.split(' ')[0]||'there'}, this is Bill with DealBankers — sound familiar?"</p>
+    <p><strong>Frame:</strong> "I specialize in solving problem properties — taxes, liens, inherited houses — anything stressing you out."</p>
   `;
-
-  document.getElementById('openMaps').onclick = ()=>window.open('https://www.google.com/maps/search/?api=1&query='+encodeURIComponent(address),'_blank');
-  document.getElementById('copyScript').onclick = async ()=>{
-    await navigator.clipboard.writeText(scriptBox.innerText);
-    alert('Script copied!');
-  };
 }
-
-function cycleLead(d){
-  if(!sellerView.length) return;
-  currentIndex = (currentIndex + d + sellerView.length) % sellerView.length;
-  updateDetail(sellerView[currentIndex]);
-  highlightRow();
-}
-
-/* CHAT BUBBLE */
-document.getElementById('chatBubble').onclick = ()=>{
-  window.location.href='townhall.html?from=wholesaler';
-};
 </script>
+
 </body>
 </html>
