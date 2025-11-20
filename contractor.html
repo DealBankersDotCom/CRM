@@ -1,134 +1,403 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DealBankers • Contractors</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-<link rel="stylesheet" href="profile.css">
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-storage-compat.js"></script>
-<script src="config.js"></script>
-<script src="app-auth.js"></script>
-<script src="jobs.js" defer></script>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>DealBankers • Contractor</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
 
 <style>
-.wrap {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 16px;
-  display: grid;
-  grid-template-columns: 2fr 1.7fr;
-  gap: 16px;
+/* Global Core (matches wholesaler) */
+:root{--bg1:#0b131b;--bg2:#142838;--bg3:#173c53;--line:#254a63;--text:#f1f7fb;
+--muted:#c5d3e1;--accent:#2b74ff;}
+*{box-sizing:border-box;margin:0;padding:0}
+body{
+  margin:0;font-family:Inter,system-ui,Arial;color:var(--text);
+  background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+  min-height:100vh;
 }
-@media(max-width:900px){
-  .wrap { grid-template-columns:1fr; }
-  #map { height:300px; }
+.header{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04))}
+.nav{display:flex;gap:8px;flex-wrap:wrap}
+.chip{
+  padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.22);
+  background:#0d1823;color:var(--text);text-decoration:none;
+  cursor:pointer;font-weight:600;transition:background .2s,transform .2s
 }
-.card { min-height:420px; }
-.map-box {
-  height:460px;
-  border-radius:14px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.18);
-}
-.job-list {
-  max-height:460px;
-  overflow-y:auto;
-}
-.job-item {
-  border:1px solid rgba(255,255,255,.22);
-  padding:10px;
-  border-radius:12px;
-  margin-bottom:8px;
-  background:#0e2332;
-  cursor:pointer;
-}
-.job-item h4 {
-  margin:0 0 4px;
-  font-size:16px;
-}
-.job-item .meta {
-  font-size:12px;
-  color:#a8c3db;
-}
-.chip.primary { background:linear-gradient(180deg,#2b74ff,#0a58ca); }
-.hidden { display:none !important; }
+.chip:hover{background:#14314d;transform:scale(1.03)}
+.chip.primary{background:#133e6a}
+.chip.danger{background:#6b1111}
 
-/* Modal for bids */
-.modal-backdrop {
-  position:fixed; inset:0; background:rgba(0,0,0,.6);
-  display:none; align-items:center; justify-content:center; z-index:9999;
+/* Layout Core */
+.wrap{max-width:1200px;margin:0 auto;padding:16px}
+.card{
+  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;box-shadow:0 28px 70px rgba(0,0,0,.55);overflow:hidden
 }
-.modal {
-  background:#0f1b27;
-  border:1px solid #254a63;
-  border-radius:16px;
-  max-width:480px;
-  width:92%;
-  box-shadow:0 28px 70px rgba(0,0,0,.55);
-  padding:16px;
+.top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2)
 }
-.modal .row { margin:8px 0; }
-.modal label { font-size:14px;color:#cfe3ff; }
-.modal input, .modal textarea {
-  width:100%; padding:10px;
-  border:1px solid #254a63;
-  border-radius:10px;
-  background:#0d1f2d;color:#eaf6ff;
+.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px}
+.seg button{
+  padding:8px 14px;border:0;background:#0e2332;
+  color:#cfe6ff;cursor:pointer
 }
-.actions { display:flex; justify-content:flex-end; gap:8px; margin-top:10px; }
+.seg button.active{
+  background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff
+}
+.status{font-size:12px;color:#9ab9d6}
+
+/* Split-area (left: jobs; right: detail/estimator) */
+.body{
+  padding:14px;
+  display:grid;
+  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+  gap:16px;
+}
+@media(max-width:960px){
+  .body{grid-template-columns:1fr}
+}
+
+/* Table / Search styling (same as wholesaler) */
+.search{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
+.input{
+  flex:1;background:#0d1f2d;border:1px solid #254a63;
+  color:#fff;border-radius:12px;padding:8px 10px
+}
+.small{padding:4px 10px;font-size:12px}
+.table-wrap{overflow-x:auto;border-radius:12px}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
+th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2)}
+thead th{border-top:0;color:#cfe3ff}
+tr.job-row{cursor:pointer}
+tr.job-row:hover{background:rgba(255,255,255,.06)}
+tr.job-row.selected{background:rgba(43,116,255,.25)}
+
+/* Right side: detail panel styling */
+.right-col{
+  background:#0b1825;border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);padding:12px
+}
+.detail-header h3{margin:0;font-size:16px}
+.detail-header .sub{font-size:12px;color:#9ab9d6;margin-bottom:6px}
+.detail-info{font-size:13px;margin-bottom:10px}
+.detail-info div{margin-bottom:3px}
+.detail-actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:8px}
+.script-box{
+  background:#0d2233;border-radius:10px;
+  padding:10px;font-size:13px;line-height:1.5;margin-top:8px
+}
+.script-box strong{color:#f5fbff}
+
+/* Street View / Job Preview */
+.map-wrap{
+  margin-top:10px;border-radius:12px;
+  overflow:hidden;border:1px solid rgba(255,255,255,.2)
+}
+.map-wrap iframe{width:100%;height:220px;border:0}
+
+/* Floating Townhall Chat */
+#chatBubble{
+  position:fixed;bottom:24px;right:24px;width:54px;height:54px;
+  border-radius:50%;background:#133e6a;color:white;
+  border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;
+  cursor:pointer;box-shadow:0 0 15px rgba(0,138,255,.6);
+  z-index:999;transition:transform .15s
+}
+#chatBubble:hover{transform:scale(1.08)}
+
+/* Modals (blue/red lead request) */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  display:none;align-items:center;justify-content:center;z-index:9999
+}
+.modal{
+  background:#0f1b27;border:1px solid #254a63;
+  border-radius:16px;padding:16px;max-width:520px;
+  width:92%;box-shadow:0 28px 70px rgba(0,0,0,.55)
+}
+.modal.wide{max-width:720px}
+.row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap}
+.modal input,.modal select,.modal textarea{
+  width:100%;padding:10px;border:1px solid #254a63;
+  background:#0d1f2d;color:#fff;border-radius:10px
+}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 </style>
+
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-storage-compat.js"></script>
+<script src="config.js"></script>
+<script src="app-auth.js"></script>
 </head>
 
 <body data-portal="contractor">
 
 <header class="header">
-  <div class="brand">DEALBANKERS • Contractor Portal</div>
+  <div>DEALBANKERS • Contractor</div>
   <nav class="nav">
-    <a class="chip" href="profile.html">Back to Profile</a>
-    <button id="btnPostJob" class="chip primary hidden">+ Post Job</button>
-    <button class="chip" id="logoutBtn">Log Out</button>
+    <a class="chip" href="profile.html">Dashboard</a>
+    <button class="chip" id="btnBlue">🌀 Blue</button>
+    <button class="chip danger" id="btnRed">🚨 Red</button>
+    <a class="chip" id="logoutBtn">Log Out</a>
   </nav>
 </header>
 
-<div class="wrap">
-  <div class="map-box"><div id="map"></div></div>
-  <section class="card">
-    <div class="card-head">
-      <div>
-        <div style="font-weight:900">Available Jobs</div>
-        <div class="meta">Jobs open for bidding</div>
-      </div>
-    </div>
-    <div class="body job-list" id="jobsList"></div>
-  </section>
-</div>
-
-<!-- Bid Modal -->
-<div class="modal-backdrop" id="bidModal">
+<!-- Blue/Red Support Modal -->
+<div class="modal-backdrop" id="rbModal">
   <div class="modal">
-    <h3>Place Bid</h3>
+    <h3 id="rbTitle">Request</h3>
     <div class="row">
-      <label>Your Bid ($)</label>
-      <input id="bidPrice" type="number" min="0"/>
+      <label>Category</label>
+      <select id="rbCategory">
+        <option>Job Issues</option><option>Estimate Support</option>
+        <option>Permit / City</option><option>Safety</option>
+        <option>Material / Supply Chain</option>
+      </select>
     </div>
-    <div class="row">
-      <label>Notes</label>
-      <textarea id="bidNotes" rows="3" placeholder="Tools, ETA, special skills..."></textarea>
-    </div>
+    <div class="row"><input id="rbSubject" placeholder="Subject" /></div>
+    <div class="row"><textarea id="rbDetails" rows="4" placeholder="Describe the issue or help needed"></textarea></div>
     <div class="actions">
-      <button class="chip" id="cancelBid">Cancel</button>
-      <button class="chip primary" id="submitBid">Submit Bid</button>
+      <button class="chip" id="rbCancel">Cancel</button>
+      <button class="chip primary" id="rbSubmit">Send</button>
     </div>
   </div>
 </div>
 
+<div class="wrap">
+  <section class="card">
+    <div class="top">
+      <div>
+        <div id="crumb">Active Jobs</div>
+        <div class="status" id="status">Loading…</div>
+      </div>
+      <div class="seg">
+        <button id="tabActive" class="active">Active</button>
+        <button id="tabUpcoming">Upcoming</button>
+      </div>
+    </div>
+
+    <div class="body">
+      <!-- LEFT SIDE: JOBS TABLE -->
+      <div class="left-col">
+        <div class="search">
+          <input id="s_q" class="input" placeholder="Search address / scope / client" />
+          <button class="chip small" id="s_reload">Search</button>
+          <button class="chip small" id="prevJob">◀ Prev</button>
+          <button class="chip small" id="nextJob">Next ▶</button>
+        </div>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Address</th><th>Scope</th><th>Client</th><th>Status</th><th>Notes</th></tr></thead>
+            <tbody id="jobRows"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RIGHT SIDE: JOB DETAILS & ESTIMATOR -->
+      <div class="right-col" id="detailPanel">
+        <div class="detail-header">
+          <h3 id="detailTitle">No job selected</h3>
+          <div class="sub" id="detailSub">Select a job to view details, street view, and estimator script.</div>
+        </div>
+
+        <div class="detail-info" id="detailInfo" style="display:none;">
+          <div><strong>Address:</strong> <span id="detailAddr"></span></div>
+          <div><strong>Scope:</strong> <span id="detailScope"></span></div>
+          <div><strong>Client:</strong> <span id="detailClient"></span></div>
+          <div><strong>Status:</strong> <span id="detailStatus"></span></div>
+        </div>
+
+        <div class="detail-actions" id="detailActions" style="display:none;">
+          <button class="chip small" id="openMaps">Open in Maps</button>
+          <button class="chip small" id="copyScript">Copy Estimator Script</button>
+        </div>
+
+        <div class="script-box" id="scriptBox">
+          Select a job to load estimator script, call flow, and job qualification questions.
+        </div>
+
+        <div class="map-wrap" id="mapWrap" style="display:none;">
+          <iframe id="streetFrame" loading="lazy"></iframe>
+        </div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="chatBubble">💬</div>
+
 <script>
-// Logout
-document.getElementById('logoutBtn').onclick=()=>firebase.auth().signOut().then(()=>location.href='index.html');
+let UID=null, jobList=[], jobView=[], currentIndex=-1;
+
+/* Firebase Auth */
+firebase.auth().onAuthStateChanged(async u=>{
+  if(!u) location.href="index.html";
+  UID = u.uid;
+  subscribeJobs();
+});
+
+/* Logout */
+logoutBtn.onclick = ()=>firebase.auth().signOut();
+
+/* BLUE/RED MODAL CONTROL */
+(function(){
+  const modal = rbModal;
+  btnBlue.onclick=()=>show(false);
+  btnRed.onclick=()=>show(true);
+  rbCancel.onclick=()=>modal.style.display='none';
+
+  function show(urgent){
+    rbTitle.textContent = urgent ? "🚨 Urgent Request" : "Blue Support Request";
+    rbSubmit.dataset.urgent = urgent ? '1':'0';
+    modal.style.display='flex';
+  }
+
+  rbSubmit.onclick = async()=>{
+    const u = firebase.auth().currentUser||{};
+    await firebase.database().ref('contractor_support').push({
+      urgent:rbSubmit.dataset.urgent==='1',
+      cat:rbCategory.value,
+      subject:rbSubject.value.trim(),
+      details:rbDetails.value.trim(),
+      uid:u.uid,email:u.email,
+      ts:firebase.database.ServerValue.TIMESTAMP
+    });
+    alert('Support request sent.');
+    modal.style.display='none';
+  };
+})();
+
+/* SUBSCRIBE JOBS */
+function subscribeJobs(){
+  firebase.database().ref('leads/jobs').orderByChild('assignedTo')
+    .equalTo(UID).on('value',snap=>{
+      jobList = Object.entries(snap.val()||{}).map(([id,v])=>({id,...v}));
+      renderJobs();
+    });
+}
+
+/* RENDER JOBS */
+function renderJobs(){
+  const q = (s_q.value||'').toLowerCase();
+  jobView = jobList.filter(v=>
+    !q ||
+    (v.address||'').toLowerCase().includes(q) ||
+    (v.scope||'').toLowerCase().includes(q) ||
+    (v.client||'').toLowerCase().includes(q)
+  );
+  status.textContent = `Jobs: ${jobView.length}`;
+  const tbody = document.getElementById('jobRows');
+
+  if(!jobView.length){
+    tbody.innerHTML='<tr><td colspan="5">No jobs assigned.</td></tr>';
+    updateDetail(null);
+    return;
+  }
+
+  tbody.innerHTML = jobView.map((v,idx)=>`
+    <tr class="job-row" data-idx="${idx}">
+      <td>${esc(v.address)}</td>
+      <td>${esc(v.scope)}</td>
+      <td>${esc(v.client)}</td>
+      <td>${esc(v.status||'pending')}</td>
+      <td>${esc(v.notes||'')}</td>
+    </tr>`).join('');
+
+  tbody.querySelectorAll('tr.job-row').forEach(row=>{
+    row.onclick = ()=>{
+      currentIndex = parseInt(row.dataset.idx,10);
+      updateDetail(jobView[currentIndex]);
+      highlightRow();
+    };
+  });
+}
+
+function highlightRow(){
+  document.querySelectorAll('.job-row').forEach(r=>r.classList.remove('selected'));
+  const row = document.querySelector(`tr.job-row[data-idx="${currentIndex}"]`);
+  row?.classList.add('selected');
+}
+
+/* NEXT / PREV */
+nextJob.onclick=()=>cycle(1);
+prevJob.onclick=()=>cycle(-1);
+function cycle(d){
+  if(!jobView.length) return;
+  currentIndex = (currentIndex + d + jobView.length) % jobView.length;
+  updateDetail(jobView[currentIndex]);
+  highlightRow();
+}
+
+/* DETAIL PANEL (street view + estimator script) */
+function updateDetail(job){
+  if(!job){
+    detailTitle.textContent = "No job selected";
+    detailSub.textContent = "Select a job to preview scope, street view, estimator script.";
+    detailInfo.style.display='none'; detailActions.style.display='none';
+    mapWrap.style.display='none'; scriptBox.textContent="Select a job.";
+    return;
+  }
+
+  const {address,scope,client,status:st} = job;
+  detailTitle.textContent = scope || "Job Detail";
+  detailSub.textContent = address || "No address";
+  detailAddr.textContent = address || "";
+  detailScope.textContent = scope || "";
+  detailClient.textContent = client || "";
+  detailStatus.textContent = st || "pending";
+
+  detailInfo.style.display='block';
+  detailActions.style.display='flex';
+
+  if(address){
+    streetFrame.src = `https://www.google.com/maps?q=${encodeURIComponent(address)}&output=embed`;
+    mapWrap.style.display='block';
+  } else mapWrap.style.display='none';
+
+  const script = `
+    <p><strong>Call Opener:</strong><br>
+    "Hey ${client||'there'}, this is _____ with DealBankers Contractor Network.<br>
+    I’ve got your scope request for <strong>${scope||'the project'}</strong> at <strong>${address||'the property'}</strong>.<br>
+    You still have 2 minutes for a quick layout check?"</p>
+
+    <p><strong>Discovery:</strong><br>
+    "Big picture — are we talking repairs, upgrades, or full turn-key build-out?"</p>
+
+    <p><strong>Expectation Frame:</strong><br>
+    "We don’t just price jobs — we help prevent cost overruns, delays,
+    and failed inspections. Most contractors miss that, we don’t."</p>
+
+    <p><strong>Next Step:</strong><br>
+    "I’ll put together a **scope confirmation sheet** with budget ranges, timelines, 
+    and permit triggers. You’ll know exactly where you stand. Fair enough?"</p>
+  `;
+  scriptBox.innerHTML = script;
+
+  openMaps.onclick = ()=>window.open(
+    `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(address)}`,
+    '_blank'
+  );
+
+  copyScript.onclick = async()=>{
+    await navigator.clipboard.writeText(scriptBox.innerText);
+    alert('Script copied');
+  };
+}
+
+/* CHAT BUBBLE */
+chatBubble.onclick = ()=>location.href="townhall.html?from=contractor";
+
+/* Escape HTML */
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 </script>
 </body>
 </html>
