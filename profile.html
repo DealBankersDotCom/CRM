@@ -1,53 +1,87 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DealBankers • Dashboard</title>
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg" />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="theme-neon.css" />
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>DealBankers • Dashboard</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet"/>
+
+<style>
+/* --- CORE DASHBOARD STYLE --- */
+:root {
+  --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
+  --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+}
+body {
+  margin:0; font-family:"Orbitron",system-ui;
+  background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+  color:var(--text); min-height:100vh;
+}
+.header{display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04))}
+.nav{display:flex;gap:10px;flex-wrap:wrap}
+.chip{padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.2);
+  background:#0d1823;color:var(--text);text-decoration:none;cursor:pointer}
+.chip.primary{background:#133e6a}
+.wrap{max-width:900px;padding:24px;margin:0 auto}
+.card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;padding:20px;margin-top:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.title{font-size:1.4rem;font-weight:700;margin-bottom:10px}
+.portal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
+.plink{padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:14px;
+  text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer}
+#chatBubble {
+  position:fixed;bottom:24px;right:24px;width:54px;height:54px;
+  border-radius:50%;background:#133e6a;color:white;border:2px solid var(--accent);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;
+  box-shadow:0 0 15px rgba(0,138,255,.6);
+}
+</style>
 </head>
+
 <body>
-  <header class="header">
-    <div>DEALBANKERS • Portal</div>
-    <nav class="nav">
-      <a class="chip primary" href="claimsync.html">ClaimSync</a>
-      <a class="chip" href="wholesaler.html">Wholesaler Portal</a>
-      <a class="chip" href="contractor.html">Contractor Portal</a>
-      <a class="chip" href="realtor.html">Realtor Portal</a>
-      <button class="chip" id="btnBlue">🌀 Blue Phone</button>
-      <button class="chip danger" id="btnRed">🚨 Red Phone</button>
-      <a class="chip" id="logoutBtn">Log Out</a>
-    </nav>
-  </header>
+<header class="header">
+  <div>DEALBANKERS • Dashboard</div>
+  <nav class="nav">
+    <a class="chip" href="settings.html">⚙ Settings</a>
+    <a class="chip primary" href="#" id="logoutBtn">Log Out</a>
+  </nav>
+</header>
 
-  <div class="wrap">
-    <section class="card">
-      <div class="card-head">
-        <div>
-          <strong>Overview</strong>
-          <div class="meta">Capital Open: <span class="ok">$300k</span> • Turn: 7–10 days</div>
-        </div>
-        <div class="tabs">
-          <div class="tab active" id="goChat">💬 Townhall</div>
-        </div>
-      </div>
+<div class="wrap">
+  <section class="card">
+    <div class="title">Welcome.</div>
+    <div>Select your workspace:</div>
+    <div class="portal-links">
+      <a class="plink" href="wholesaler.html">🏠 Wholesaler</a>
+      <a class="plink" href="contractor.html">🔧 Contractor</a>
+      <a class="plink" href="realtor.html">📎 Realtor</a>
+      <a class="plink" href="investor.html">💼 Investor</a>
+    </div>
+  </section>
+</div>
 
-      <div id="chatPortal" class="section">
-        <div class="chatTitle">
-          <img src="https://cdn-icons-png.flaticon.com/512/1380/1380370.png" alt="Townhall chat"/>
-          <strong>Townhall Chat</strong>
-        </div>
-        <div id="msgs" class="msgs"><div class="meta">Loading chat...</div></div>
-        <div class="input">
-          <input id="msgBox" placeholder="Say something..." />
-          <button id="sendBtn" class="button">Send</button>
-        </div>
-      </div>
-    </section>
-  </div>
+<!-- Floating Chat Button (opens townhall or 1-on-1) -->
+<div id="chatBubble">💬</div>
 
-  <script type="module" src="ux-settings.js"></script>
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+import { firebaseConfig } from "./config.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+
+onAuthStateChanged(auth, user => {
+  if (!user) window.location.href = "index.html";
+});
+
+document.getElementById("logoutBtn").onclick = () => signOut(auth);
+document.getElementById("chatBubble").onclick = () => {
+  window.location.href = "townhall.html"; // dedicated chat page
+};
+</script>
 </body>
 </html>
