@@ -67,6 +67,29 @@ body {
 <div id="chatBubble">💬</div>
 
 <script type="module">
+  import { onValue, ref } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+function attachAdminPresenceMonitor(userRole) {
+  if (userRole !== "admin" && userRole !== "god") return;
+
+  // Show panel
+  document.getElementById("adminPresencePanel").style.display = "block";
+
+  // Listen for presence changes
+  onValue(ref(db, "presence/global"), snap => {
+    const data = snap.val() || {};
+    const usersDiv = document.getElementById("onlineUsers");
+    usersDiv.innerHTML = "";
+
+    Object.keys(data).forEach(uid => {
+      const u = data[uid];
+      if (u.state === "online") {
+        usersDiv.innerHTML += `<div>🟢 <strong>${u.name}</strong> (${u.role})</div>`;
+      }
+    });
+  });
+}
+
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { firebaseConfig } from "./config.js";
