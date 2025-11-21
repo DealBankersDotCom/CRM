@@ -74,9 +74,45 @@ import { firebaseConfig } from "./config.js";
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 
-onAuthStateChanged(auth, user => {
-  if (!user) window.location.href = "index.html";
+import { getDatabase, ref, get, set, onDisconnect, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+const app = initializeApp(firebaseConfig);
+const auth = getAuth(app);
+const db = getDatabase(app);
+
+onAuthStateChanged(auth, async user => {
+  if (!user) {
+    window.location.href = "index.html";
+    return;
+  }
+
+  // 1️⃣ Get user's role from Firebase (/roles/$uid)
+  const roleSnap = await get(ref(db, `roles/${user.uid}`));
+  const userRole = roleSnap.exists() ? roleSnap.val() : "user";
+
+  // 2️⃣ Call presence tracker
+  setPresence(user, userRole);
 });
+
+// 🔥 Presence function (paste below the above block)
+function setPresence(user, userRole) {
+  const presRef = ref(db, `presence/global/${user.uid}`);
+
+  // When user closes browser/goes offline
+  onDisconnect(presRef).set({
+    state: "offline",
+    lastOnline: serverTimestamp()
+  });
+
+  // When user is online
+  set(presRef, {
+    state: "online",
+    name: user.displayName || user.email,
+    role: userRole,
+    ts: serverTimestamp()
+  });
+}
+
 
 document.getElementById("logoutBtn").onclick = () => signOut(auth);
 document.getElementById("chatBubble").onclick = () => {
