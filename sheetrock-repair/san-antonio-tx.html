@@ -190,9 +190,10 @@
   | Expanding to Austin • Dallas • Houston
 </footer>
 
-<!-- Google Maps Logic -->
+<!-- Google Maps with Animated Contractor Movement -->
 <script>
 let map;
+let contractorMarkers = [];
 
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
@@ -233,9 +234,31 @@ function dropTrucks(center) {
     { lat: center.lat + 0.01, lng: center.lng + 0.04 }
   ];
 
-  trucks.forEach(pos => {
-    new google.maps.Marker({ position: pos, map: map, icon: truckIcon, title: "Available Contractor" });
+  trucks.forEach((pos, index) => {
+    const marker = new google.maps.Marker({
+      position: pos,
+      map: map,
+      icon: truckIcon,
+      title: `Contractor ${index + 1}`
+    });
+    contractorMarkers.push(marker);
   });
+
+  simulateMovement();
+}
+
+// Simple Fake Movement Animation
+function simulateMovement() {
+  setInterval(() => {
+    contractorMarkers.forEach(marker => {
+      const oldPos = marker.getPosition();
+      const newPos = {
+        lat: oldPos.lat() + (Math.random() - 0.5) * 0.001,
+        lng: oldPos.lng() + (Math.random() - 0.5) * 0.001
+      };
+      marker.setPosition(new google.maps.LatLng(newPos.lat, newPos.lng));
+    });
+  }, 4000); // every 4 seconds
 }
 
 /* Sticky Button Click-to-Call */
