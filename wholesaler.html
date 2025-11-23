@@ -41,6 +41,24 @@ body{
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
 
+/* Settings Gear */
+.icon-btn {
+  background: rgba(255,255,255,0.12);
+  border: 1px solid rgba(255,255,255,0.25);
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  font-size: 18px;
+  color: white;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.icon-btn:hover {
+  background: rgba(255,255,255,0.25);
+}
+
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
 .card{
   background:rgba(255,255,255,.07);
@@ -113,6 +131,31 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 /* MAP */
 .map-wrap{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
 .map-wrap iframe{width:100%;height:250px;border:0}
+
+/* Onboarding Modal Backdrop */
+.modal-backdrop{
+  position:fixed;inset:0;background:rgba(0,0,0,.7);
+  display:none;align-items:center;justify-content:center;z-index:9999;
+}
+.modal{
+  background:#0f1b27;border:1px solid #254a63;
+  border-radius:16px;padding:16px;max-width:520px;
+  width:92%;box-shadow:0 28px 70px rgba(0,0,0,.55);
+}
+.modal.wide{max-width:650px}
+.empty-actions button{
+  margin:10px;
+  padding:10px 16px;
+  background:#2563eb;
+  color:#fff;
+  border:none;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600;
+}
+.empty-actions button:hover{
+  background:#1a4fd8;
+}
 </style>
 
 <!-- Firebase -->
@@ -129,7 +172,7 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
   <div>DEALBANKERS • Wholesaler Portal</div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
-    <button class="chip" id="btnGetLeads">Get Leads</button>
+    <button class="icon-btn" id="btnSettings">⚙️</button>
     <button class="chip" id="btnBlue">🌀 Blue</button>
     <button class="chip danger" id="btnRed">🚨 Red</button>
     <a class="chip" id="logoutBtn">Log Out</a>
@@ -191,6 +234,10 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 let UID=null, IS_ADMIN=false, VIEW_AS=null;
 let sRef=null;
 let sellerList=[]; let sellerView=[]; let currentIndex=-1;
+
+document.getElementById('btnSettings').onclick = () => {
+  location.href = 'settings.html';
+};
 
 const esc = s => (''+(s||'')).replace(/[&<>"']/g,m=>(
   {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
@@ -288,19 +335,20 @@ function updateDetail(lead){
   `;
 }
 </script>
+
 <script>
 document.addEventListener("DOMContentLoaded", async () => {
   const u = firebase.auth().currentUser;
   if (!u) return;
 
-  const portal = document.body.dataset.portal; // contractor, wholesaler, etc.
+  const portal = document.body.dataset.portal;
 
   const snap = await firebase.database().ref(`userSettings/${u.uid}/profile`).once('value');
   if (!snap.exists()) showOnboarding(portal);
 });
 
 function showOnboarding(portal) {
-  const t = portalText[portal] || portalText['contractor']; // fallback
+  const t = portalText[portal] || portalText['wholesaler'];
   const m = document.createElement('div');
   m.className = 'modal-backdrop';
   m.innerHTML = `
