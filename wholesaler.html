@@ -381,6 +381,37 @@ function dismissOnboarding(btn){
   btn.closest('.modal-backdrop').remove();
 }
 
+<script>
+function closeModal(btn){
+  btn.closest('.modal-backdrop').remove();
+}
+
+function dismissOnboarding(btn){
+  const u = firebase.auth().currentUser;
+  if (u) {
+    firebase.database().ref(`userSettings/${u.uid}/onboardingDismissed`).set(true);
+  }
+  btn.closest('.modal-backdrop').remove();
+}
+
+async function maybeShowOnboardingForPortal() {
+  const u = firebase.auth().currentUser;
+  if (!u) return;
+
+  const uid = u.uid;
+  const portal = document.body.dataset.portal;
+
+  const adminOnboarding = await firebase.database().ref(`admin/onboardingEnabled`).once('value');
+  if (adminOnboarding.exists() && adminOnboarding.val() === false) return;
+
+  const userDismissed = await firebase.database().ref(`userSettings/${uid}/onboardingDismissed`).once('value');
+  if (userDismissed.exists() && userDismissed.val() === true) return;
+
+  if (portal === 'wholesaler' && sellerView.length === 0) {
+    showOnboarding(portal);
+  }
+}
+
 const portalText = {
   contractor: {
     title: "🚀 Welcome Contractor!",
@@ -404,30 +435,8 @@ const portalText = {
     action3: "🏘 View Deals",
   }
 };
-  <script>
-async function maybeShowOnboardingForPortal() {
-  const u = firebase.auth().currentUser;
-  if (!u) return;
-  
-  const uid = u.uid;
-  const portal = document.body.dataset.portal; // wholesaler, contractor, etc.
-
-  // 🔐 Check if Admin (God Mode) disabled onboarding
-  const adminOnboarding = await firebase.database().ref(`admin/onboardingEnabled`).once('value');
-  if (adminOnboarding.exists() && adminOnboarding.val() === false) return;
-
-  // 🙅 Check if this user already dismissed onboarding
-  const userDismissed = await firebase.database().ref(`userSettings/${uid}/onboardingDismissed`).once('value');
-  if (userDismissed.exists() && userDismissed.val() === true) return;
-
-  // 🚨 Trigger onboarding ONLY when portal is empty of leads
-  if (portal === 'wholesaler' && sellerView.length === 0) {
-    showOnboarding(portal);
-  }
-}
 </script>
 
-</script>
 
 </body>
 </html>
