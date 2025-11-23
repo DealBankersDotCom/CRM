@@ -7,6 +7,7 @@
 <meta name="description" content="Fast sheetrock and drywall repair in San Antonio, TX. Cracks, holes, ceiling patches, water damage — text a photo for instant estimate. Local licensed pros.">
 
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;500;700&display=swap" rel="stylesheet"/>
+
 <style>
   body {margin:0;font-family:'Poppins',sans-serif;background:#f5f5f5;color:#333;}
   header{background:#1f2937;color:#fff;padding:18px 40px;display:flex;justify-content:space-between;}
@@ -14,14 +15,23 @@
   .hero{padding:70px 30px;text-align:center;background:linear-gradient(135deg,#1f2937,#334155);color:white;}
   .hero h1{font-size:2.2rem;}
   .cta-buttons a{display:inline-block;margin:6px;padding:12px 20px;background:#2563eb;color:white;border-radius:6px;text-decoration:none;}
+  .cta-buttons a:hover{background:#1e40af;transition:0.3s;}
+  
   .section{padding:40px 30px;max-width:900px;margin:auto;}
 
-  /* Map styling */
+  /* Live Google Map Styling */
   #map {
     width: 100%;
-    height: 350px;
+    height: 360px;
     border-radius: 10px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+  }
+
+  #locationStatus {
+    text-align:center;
+    font-size:0.9rem;
+    color:#555;
+    margin-top:5px;
   }
 
   footer{background:#1f2937;color:#fff;padding:30px;text-align:center;margin-top:50px;}
@@ -29,6 +39,7 @@
 </head>
 
 <body>
+
 <header>
   <h2>DealBankers • Sheetrock Repair</h2>
   <nav>
@@ -40,8 +51,8 @@
 
 <section class="hero">
   <h1>Sheetrock Repair in San Antonio, TX</h1>
-  <p>We fix holes, cracks, water damage, and ceilings — FAST.  
-  <strong>Text a photo to (512) 843-5181 for an instant quote.</strong></p>
+  <p>We fix holes, cracks, water damage, and ceilings — FAST.<br>
+  <strong>Text a photo to (512) 843-5181 for a fast quote.</strong></p>
   <div class="cta-buttons">
     <a href="tel:5128435181">📞 Call Now</a>
     <a href="sms:5128435181">📸 Text Photo Estimate</a>
@@ -52,74 +63,69 @@
 <section class="section">
   <h2>📍 Live Contractor Dispatch Near You</h2>
   <div id="map"></div>
-  <p id="locationStatus" style="text-align:center; font-size:0.9rem; color:#666;"></p>
+  <p id="locationStatus"></p>
   <p><strong>Service Areas:</strong> Alamo Heights, Stone Oak, Helotes, Leon Valley, New Braunfels, Converse, Cibolo, Schertz, Boerne.</p>
-  <p>We actively dispatch jobs through vetted local contractors — even if one isn’t on your street yet, our internal team will assign fast.</p>
+  <p>Even if we don’t have a contractor on your street yet, our internal dispatch system assigns fast.</p>
 </section>
 
 <section class="section">
-  <h2>⭐ Most Common Sheetrock Services in San Antonio</h2>
+  <h2>⭐ Most Common Sheetrock Services</h2>
   <ul>
     <li>✔ Ceiling hole repair & patching</li>
     <li>✔ Wall crack and bulge restoration</li>
-    <li>✔ Water-damaged drywall & replacement</li>
-    <li>✔ Texture matching – smooth, knockdown, orange peel</li>
-    <li>✔ Seam, tape, and joint repair</li>
+    <li>✔ Water-damaged drywall replacement</li>
+    <li>✔ Texture matching – smooth, knockdown & orange peel</li>
+    <li>✔ Tape, seam, and joint repair</li>
   </ul>
 </section>
 
 <section class="section">
-  <h2>💡 Why People in San Antonio Choose DealBankers</h2>
+  <h2>💡 Why People Choose DealBankers</h2>
   <ul>
-    <li>📸 Send photos via text — no scheduling needed</li>
-    <li>📍 Local-based contractor dispatch network (not national call center)</li>
-    <li>🛡️ Background-checked, insured contractors</li>
-    <li>🚀 Fast response — usually under 4 hours</li>
-    <li>⚙ Automated job tracking — homeowners get photo updates</li>
+    <li>📸 Text photos for fast estimates</li>
+    <li>🚚 Live contractor dispatch network</li>
+    <li>🛡️ Licensed, insured, background-checked pros</li>
+    <li>⏱️ Average response time: Under 4 hours</li>
   </ul>
 </section>
 
 <footer>
-  © 2025 DealBankers • Sheetrock Repair San Antonio, TX  
-  Expanding to Austin • Dallas • Houston  
+  © 2025 DealBankers • Sheetrock Repair San Antonio, TX<br>
+  Expanding to Austin • Dallas • Houston
 </footer>
 
 <!-- 🚚 Live Map Logic -->
 <script>
 let map;
-let userMarker;
 
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 29.4241, lng: -98.4936 },
+    center: { lat: 29.4241, lng: -98.4936 }, // Default San Antonio
     zoom: 10,
   });
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
-        const userLocation = {
-          lat: position.coords.latitude,
-          lng: position.coords.longitude,
-        };
-        document.getElementById("locationStatus").innerHTML =
-          "📍 Showing available contractors near your location.";
+        const userLoc = { lat: position.coords.latitude, lng: position.coords.longitude };
+        map.setCenter(userLoc);
+        map.setZoom(13);
 
-        map.setCenter(userLocation);
-        map.setZoom(12);
-
-        userMarker = new google.maps.Marker({
-          position: userLocation,
+        new google.maps.Marker({
+          position: userLoc,
           map: map,
           icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
           title: "You are here",
         });
 
-        dropTrucks(userLocation);
+        document.getElementById("locationStatus").innerHTML =
+          "📍 Showing contractors estimated near your location.";
+          
+        dropTrucks(userLoc);
       },
       () => {
         document.getElementById("locationStatus").innerHTML =
-          "❗ Location access blocked — showing San Antonio contractors.";
+          "📍 Location blocked — showing San Antonio contractors by default.";
         dropTrucks({ lat: 29.4241, lng: -98.4936 });
       }
     );
@@ -128,29 +134,26 @@ function initMap() {
 
 function dropTrucks(center) {
   const truckIcon = {
-    url: "https://img.icons8.com/color/48/delivery.png",
-    scaledSize: new google.maps.Size(40, 40),
+    url: "https://img.icons8.com/color/48/000000/delivery.png",
+    scaledSize: new google.maps.Size(38, 38),
   };
 
-  const truckCoordinates = [
-    { lat: center.lat + 0.02, lng: center.lng + 0.03 },
-    { lat: center.lat - 0.03, lng: center.lng - 0.01 },
-    { lat: center.lat + 0.01, lng: center.lng - 0.04 },
+  const trucks = [
+    { lat: center.lat + 0.03, lng: center.lng - 0.02 },
+    { lat: center.lat - 0.04, lng: center.lng + 0.01 },
+    { lat: center.lat + 0.01, lng: center.lng + 0.04 }
   ];
 
-  truckCoordinates.forEach((coords) => {
-    new google.maps.Marker({
-      position: coords,
-      map: map,
-      icon: truckIcon,
-      title: "Available Contractor",
-    });
+  trucks.forEach(pos => {
+    new google.maps.Marker({ position: pos, map: map, icon: truckIcon, title: "Available Contractor" });
   });
 }
 </script>
 
-<!-- Load Maps API -->
-<script async src="https://maps.googleapis.com/maps/api/js?key=YOUR_API_KEY_HERE&callback=initMap"></script>
+<!-- Load Google Maps Safely - USE YOUR RESTRICTED KEY BELOW -->
+<script async defer 
+  src="https://maps.googleapis.com/maps/api/js?key=YOUR_RESTRICTED_API_KEY&callback=initMap">
+</script>
 
 </body>
 </html>
