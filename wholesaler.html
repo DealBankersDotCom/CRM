@@ -397,6 +397,29 @@ const portalText = {
     action3: "🏘 View Deals",
   }
 };
+  <script>
+async function maybeShowOnboardingForPortal() {
+  const u = firebase.auth().currentUser;
+  if (!u) return;
+  
+  const uid = u.uid;
+  const portal = document.body.dataset.portal; // wholesaler, contractor, etc.
+
+  // 🔐 Check if Admin (God Mode) disabled onboarding
+  const adminOnboarding = await firebase.database().ref(`admin/onboardingEnabled`).once('value');
+  if (adminOnboarding.exists() && adminOnboarding.val() === false) return;
+
+  // 🙅 Check if this user already dismissed onboarding
+  const userDismissed = await firebase.database().ref(`userSettings/${uid}/onboardingDismissed`).once('value');
+  if (userDismissed.exists() && userDismissed.val() === true) return;
+
+  // 🚨 Trigger onboarding ONLY when portal is empty of leads
+  if (portal === 'wholesaler' && sellerView.length === 0) {
+    showOnboarding(portal);
+  }
+}
+</script>
+
 </script>
 
 </body>
