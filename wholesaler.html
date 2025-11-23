@@ -177,56 +177,58 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
     <button class=""icon-btn"" id=""btnSettings"">⚙️</button>
     <a class=""chip"" id=""logoutBtn"">Log Out</a>
   </nav>
-</header><div class=""wrap"">
-  <section class=""card"">
-    <div class=""top"">
+</header>
+<div class="wrap">
+  <section class="card">
+    <div class="top">
       <div>
-        <div id=""crumb"">Acquisition</div>
-        <div class=""status"" id=""status"">Loading…</div>
+        <div id="crumb">Acquisition</div>
+        <div class="status" id="status">Loading…</div>
       </div>
-      <div class=""seg"">
-        <button id=""tabAcq"" class=""active"">Acq</button>
-        <button id=""tabDispo"">Dispo</button>
+      <div class="seg">
+        <button id="tabAcq" class="active">Acq</button>
+        <button id="tabDispo">Dispo</button>
       </div>
     </div>
     
-    <div class=""body"">
+    <div class="body">
       <!-- LEFT SIDE -->
-      <div id=""panel-acq"">
-        <div class=""search"">
-          <input id=""s_q"" class=""input"" placeholder=""Search address / owner"" />
-          <button class=""chip small"" id=""s_reload"">Search</button>
+      <div id="panel-acq">
+        <div class="search">
+          <input id="s_q" class="input" placeholder="Search address / owner" />
+          <button class="chip small" id="s_reload">Search</button>
         </div>
-        <div class=""table-wrap"">
+        <div class="table-wrap">
           <table>
             <thead><tr><th>Address</th><th>Owner</th><th>Phone</th><th>Status</th><th>Notes</th></tr></thead>
-            <tbody id=""sellerRows""></tbody>
+            <tbody id="sellerRows"></tbody>
           </table>
         </div>
       </div>
 
       <!-- RIGHT SIDE -->
-      <div class=""right-col"" id=""detailPanel"">
-        <div class=""detail-header"">
-          <h3 id=""detailTitle"">No lead selected</h3>
-          <div class=""sub"" id=""detailSub"">Select a lead to load details and map.</div>
+      <div class="right-col" id="detailPanel">
+        <div class="detail-header">
+          <h3 id="detailTitle">No lead selected</h3>
+          <div class="sub" id="detailSub">Select a lead to load details and map.</div>
         </div>
 
-        <div class=""detail-info"" id=""detailInfo"" style=""display:none;"">
-          <div><strong>Address:</strong> <span id=""detailAddr""></span></div>
-          <div><strong>Owner:</strong> <span id=""detailOwner""></span></div>
-          <div><strong>Phone:</strong> <span id=""detailPhone""></span></div>
+        <div class="detail-info" id="detailInfo" style="display:none;">
+          <div><strong>Address:</strong> <span id="detailAddr"></span></div>
+          <div><strong>Owner:</strong> <span id="detailOwner"></span></div>
+          <div><strong>Phone:</strong> <span id="detailPhone"></span></div>
         </div>
 
-        <div class=""script-box"" id=""scriptBox"">Select a lead to load script.</div>
+        <div class="script-box" id="scriptBox">Select a lead to load script.</div>
 
-        <div class=""map-wrap"" id=""mapWrap"" style=""display:none;"">
-          <iframe id=""streetFrame"" loading=""lazy""></iframe>
+        <div class="map-wrap" id="mapWrap" style="display:none;">
+          <iframe id="streetFrame" loading="lazy"></iframe>
         </div>
       </div>
     </div>
   </section>
-</div><!-- Main JS -->
+</div>
+<!-- Main JS -->
 <script>
 let UID=null, IS_ADMIN=false, VIEW_AS=null;
 let sRef=null;
@@ -236,8 +238,8 @@ document.getElementById('btnSettings').onclick = () => {
   location.href = 'settings.html';
 };
 
-const esc = s => (''+(s||'')).replace(/[&<>""']/g,m=>(
-  {'&':'&amp;','<':'&lt;','>':'&gt;','""':'&quot;',""'"":'&#39;'}[m])
+const esc = s => (''+(s||'')).replace(/[&<>"']/g,m=>(
+  {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m])
 );
 
 firebase.auth().onAuthStateChanged(async (u)=>{
@@ -270,14 +272,14 @@ function renderS(){
   document.getElementById('status').textContent='Acq: '+sellerView.length+' items';
 
   if(!sellerView.length){
-    tbody.innerHTML='<tr><td colspan=""5"" class=""status"">No leads yet.</td></tr>';
+    tbody.innerHTML='<tr><td colspan="5" class="status">No leads yet.</td></tr>';
     updateDetail(null);
     maybeShowOnboardingForPortal();
     return;
   }
 
   tbody.innerHTML=sellerView.map((v,i)=>`
-    <tr class=""lead-row"" data-idx=""${i}"">
+    <tr class="lead-row" data-idx="${i}">
       <td>${esc(v.address)}</td>
       <td>${esc(v.owner||'')}</td>
       <td>${esc(v.phone||'')}</td>
@@ -298,7 +300,7 @@ function renderS(){
 function highlightRow(){
   document.querySelectorAll('#sellerRows tr.lead-row').forEach(r=>r.classList.remove('selected'));
   if(currentIndex>=0){
-    const row=document.querySelector(`#sellerRows tr.lead-row[data-idx=""${currentIndex}""]`);
+    const row=document.querySelector(`#sellerRows tr.lead-row[data-idx="${currentIndex}"]`);
     if(row) row.classList.add('selected');
   }
 }
@@ -333,8 +335,8 @@ function updateDetail(lead){
   document.getElementById('detailSub').textContent=lead.address||'';
   
   document.getElementById('scriptBox').innerHTML = `
-    <p><strong>Opener:</strong> ""Hi ${lead.owner?.split(' ')[0]||'there'}, this is Bill with DealBankers — sound familiar?""</p>
-    <p><strong>Frame:</strong> ""I specialize in solving problem properties — taxes, liens, inherited houses — anything stressing you out.""</p>
+    <p><strong>Opener:</strong> "Hi ${lead.owner?.split(' ')[0]||'there'}, this is Bill with DealBankers — sound familiar?"</p>
+    <p><strong>Frame:</strong> "I specialize in solving problem properties — taxes, liens, inherited houses — anything stressing you out."</p>
   `;
 }
 </script>
@@ -373,52 +375,51 @@ async function maybeShowOnboardingForPortal() {
 
 const portalText = {
   contractor: {
-    title: ""🚀 Welcome Contractor!"",
-    msg: ""To start receiving jobs, fill in your service areas, trade skills, and enable live location."",
-    action1: ""📍 Service Areas"",
-    action2: ""🛠 Trade Skills"",
-    action3: ""📡 Enable Live Location"",
+    title: "🚀 Welcome Contractor!",
+    msg: "To start receiving jobs, fill in your service areas, trade skills, and enable live location.",
+    action1: "📍 Service Areas",
+    action2: "🛠 Trade Skills",
+    action3: "📡 Enable Live Location",
   },
   wholesaler: {
-    title: ""🎯 Welcome Wholesaler!"",
-    msg: ""Upload leads, skip trace, and start making calls to lock deals for assignment."",
-    action1: ""📤 Upload Leads"",
-    action2: ""🔍 Skip Trace"",
-    action3: ""📞 Start Calling"",
+    title: "🎯 Welcome Wholesaler!",
+    msg: "Upload leads, skip trace, and start making calls to lock deals for assignment.",
+    action1: "📤 Upload Leads",
+    action2: "🔍 Skip Trace",
+    action3: "📞 Start Calling",
   },
   investor: {
-    title: ""💼 Welcome Investor!"",
-    msg: ""Tell us what properties you're looking for, your budget, and markets of interest."",
-    action1: ""📌 Set Buy Box"",
-    action2: ""📈 Define Budget"",
-    action3: ""🏘 View Deals"",
+    title: "💼 Welcome Investor!",
+    msg: "Tell us what properties you're looking for, your budget, and markets of interest.",
+    action1: "📌 Set Buy Box",
+    action2: "📈 Define Budget",
+    action3: "🏘 View Deals",
   }
 };
 </script>
 <script>
 function showOnboarding(portal) {
   const pt = portalText[portal] || {
-    title: ""👋 Welcome!"",
-    msg: ""Let’s get you started."",
-    action1: ""⚙️ Settings"",
-    action2: """",
-    action3: """"
+    title: "👋 Welcome!",
+    msg: "Let’s get you started.",
+    action1: "⚙️ Settings",
+    action2: "",
+    action3: ""
   };
-
   const m = document.createElement('div');
   m.className = 'modal-backdrop';
   m.innerHTML = `
-    <div class=""modal wide"">
+    <div class="modal wide">
       <h2>${pt.title}</h2>
       <p>${pt.msg}</p>
-      <div class=""empty-actions"">
-        ${pt.action1 ? `<button onclick=""location.href='settings.html'"">${pt.action1}</button>` : ''}
+      <div class="empty-actions">
+        ${pt.action1 ? `<button onclick="location.href='settings.html'">${pt.action1}</button>` : ''}
         ${pt.action2 ? `<button>${pt.action2}</button>` : ''}
         ${pt.action3 ? `<button>${pt.action3}</button>` : ''}
       </div>
-      <div class=""actions"">
-        <button class=""chip"" onclick=""dismissOnboarding(this)"">Don't show again</button>
-        <button class=""chip"" onclick=""closeModal(this)"">Close</button>
+      <div class="actions">
+        <button class="chip" onclick="dismissOnboarding(this)">Don't show again</button>
+        <button class="chip" onclick="closeModal(this)">Close</button>
       </div>
     </div>
   `;
