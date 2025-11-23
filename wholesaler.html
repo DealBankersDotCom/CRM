@@ -230,6 +230,7 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
   </section>
 </div>
 
+<!-- Main JS -->
 <script>
 let UID=null, IS_ADMIN=false, VIEW_AS=null;
 let sRef=null;
@@ -268,12 +269,12 @@ function renderS(){
   const tbody=document.getElementById('sellerRows');
   document.getElementById('status').textContent='Acq: '+sellerView.length+' items';
 
- if(!sellerView.length){
+  if(!sellerView.length){
     tbody.innerHTML='<tr><td colspan="5" class="status">No leads yet.</td></tr>';
     updateDetail(null);
-    maybeShowOnboardingForPortal();  // 🟢 NEW LINE
+    maybeShowOnboardingForPortal();
     return;
-}
+  }
 
   tbody.innerHTML=sellerView.map((v,i)=>`
     <tr class="lead-row" data-idx="${i}">
@@ -338,49 +339,7 @@ function updateDetail(lead){
 }
 </script>
 
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const u = firebase.auth().currentUser;
-  if (!u) return;
-
-  const portal = document.body.dataset.portal;
-
-  const snap = await firebase.database().ref(`userSettings/${u.uid}/profile`).once('value');
-  if (!snap.exists()) showOnboarding(portal);
-});
-
-function showOnboarding(portal) {
-  const t = portalText[portal] || portalText['wholesaler'];
-  const m = document.createElement('div');
-  m.className = 'modal-backdrop';
-  m.innerHTML = `
-    <div class="modal wide">
-      <h2>${t.title}</h2>
-      <p>${t.msg}</p>
-      <div class="empty-actions">
-         <button onclick="location.href='settings.html'">${t.action1}</button>
-         <button onclick="location.href='settings.html'">${t.action2}</button>
-         <button onclick="location.href='settings.html'">${t.action3}</button>
-      </div>
-      <div class="actions">
-<button class="chip" onclick="dismissOnboarding(this)">Close</button>
-      </div>
-    </div>`;
-  document.body.appendChild(m);
-  m.style.display = 'flex';
-}
-
-function closeModal(btn){
-  btn.closest('.modal-backdrop').remove();
-}
-function dismissOnboarding(btn){
-  const u = firebase.auth().currentUser;
-  if (u) {
-    firebase.database().ref(`userSettings/${u.uid}/onboardingDismissed`).set(true);
-  }
-  btn.closest('.modal-backdrop').remove();
-}
-
+<!-- Onboarding & Modal Logic -->
 <script>
 function closeModal(btn){
   btn.closest('.modal-backdrop').remove();
@@ -436,7 +395,6 @@ const portalText = {
   }
 };
 </script>
-
 
 </body>
 </html>
