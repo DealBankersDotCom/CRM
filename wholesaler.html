@@ -288,6 +288,66 @@ function updateDetail(lead){
   `;
 }
 </script>
+<script>
+document.addEventListener("DOMContentLoaded", async () => {
+  const u = firebase.auth().currentUser;
+  if (!u) return;
+
+  const portal = document.body.dataset.portal; // contractor, wholesaler, etc.
+
+  const snap = await firebase.database().ref(`userSettings/${u.uid}/profile`).once('value');
+  if (!snap.exists()) showOnboarding(portal);
+});
+
+function showOnboarding(portal) {
+  const t = portalText[portal] || portalText['contractor']; // fallback
+  const m = document.createElement('div');
+  m.className = 'modal-backdrop';
+  m.innerHTML = `
+    <div class="modal wide">
+      <h2>${t.title}</h2>
+      <p>${t.msg}</p>
+      <div class="empty-actions">
+         <button onclick="location.href='settings.html'">${t.action1}</button>
+         <button onclick="location.href='settings.html'">${t.action2}</button>
+         <button onclick="location.href='settings.html'">${t.action3}</button>
+      </div>
+      <div class="actions">
+        <button class="chip" onclick="closeModal(this)">Close</button>
+      </div>
+    </div>`;
+  document.body.appendChild(m);
+  m.style.display = 'flex';
+}
+
+function closeModal(btn){
+  btn.closest('.modal-backdrop').remove();
+}
+
+const portalText = {
+  contractor: {
+    title: "🚀 Welcome Contractor!",
+    msg: "To start receiving jobs, fill in your service areas, trade skills, and enable live location.",
+    action1: "📍 Service Areas",
+    action2: "🛠 Trade Skills",
+    action3: "📡 Enable Live Location",
+  },
+  wholesaler: {
+    title: "🎯 Welcome Wholesaler!",
+    msg: "Upload leads, skip trace, and start making calls to lock deals for assignment.",
+    action1: "📤 Upload Leads",
+    action2: "🔍 Skip Trace",
+    action3: "📞 Start Calling",
+  },
+  investor: {
+    title: "💼 Welcome Investor!",
+    msg: "Tell us what properties you're looking for, your budget, and markets of interest.",
+    action1: "📌 Set Buy Box",
+    action2: "📈 Define Budget",
+    action3: "🏘 View Deals",
+  }
+};
+</script>
 
 </body>
 </html>
