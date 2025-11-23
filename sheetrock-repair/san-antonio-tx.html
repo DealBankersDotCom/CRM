@@ -94,33 +94,34 @@
   Expanding to Austin • Dallas • Houston
 </footer>
 
-<!-- 🚚 Live Map + Fake Truck Icons -->
+<!-- 🚚 Live Map Logic with Fake Truck Emojis (No Broken URLs) -->
 <script>
 let map;
 
 function initMap() {
   map = new google.maps.Map(document.getElementById("map"), {
-    center: { lat: 29.4241, lng: -98.4936 },
-    zoom: 10,
+    center: { lat: 29.4241, lng: -98.4936 }, // San Antonio
+    zoom: 11,
   });
 
   if (navigator.geolocation) {
     navigator.geolocation.getCurrentPosition(
       (position) => {
         const userLoc = { lat: position.coords.latitude, lng: position.coords.longitude };
-
+        
         map.setCenter(userLoc);
         map.setZoom(13);
 
+        // User marker
         new google.maps.Marker({
           position: userLoc,
           map: map,
-          icon: "https://maps.google.com/mapfiles/ms/icons/blue-dot.png",
+          label: "📍",
           title: "You are here",
         });
 
         document.getElementById("locationStatus").innerHTML =
-          "📍 Showing contractors near your location...";
+          "📌 Contractors estimated near your location.";
           
         dropTrucks(userLoc);
       },
@@ -134,24 +135,25 @@ function initMap() {
 }
 
 function dropTrucks(center) {
-  const truckIcon = {
-    url: "https://img.icons8.com/color/48/delivery.png",
-    scaledSize: new google.maps.Size(45, 45),
-  };
-
-  const trucks = [
-    { lat: center.lat + 0.05, lng: center.lng - 0.03 },
-    { lat: center.lat - 0.04, lng: center.lng + 0.02 },
-    { lat: center.lat + 0.02, lng: center.lng + 0.05 }
+  const truckPositions = [
+    { lat: center.lat + 0.03, lng: center.lng - 0.02 },
+    { lat: center.lat - 0.04, lng: center.lng + 0.01 },
+    { lat: center.lat + 0.01, lng: center.lng + 0.04 },
+    { lat: center.lat - 0.02, lng: center.lng - 0.03 }
   ];
 
-  trucks.forEach(pos => {
-    new google.maps.Marker({ position: pos, map: map, icon: truckIcon, title: "Available Contractor" });
+  truckPositions.forEach(pos => {
+    new google.maps.Marker({
+      position: pos,
+      map: map,
+      label: "🚚",
+      title: "Nearby Contractor",
+    });
   });
 }
 </script>
 
-<!-- Load Google Maps Script -->
+<!-- Load Google Maps -->
 <script async defer 
   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs&callback=initMap">
 </script>
