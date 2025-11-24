@@ -42,7 +42,7 @@ body{
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
 
-/* Settings Icon */
+/* Settings Gear */
 .icon-btn{
   background:rgba(255,255,255,0.12);
   border:1px solid rgba(255,255,255,0.25);
@@ -53,7 +53,7 @@ body{
 }
 .icon-btn:hover{background:rgba(255,255,255,0.25)}
 
-/* LAYOUT CONTAINERS */
+/* LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
 .card{
   background:rgba(255,255,255,.07);
@@ -78,7 +78,7 @@ body{
 }
 .status{font-size:12px;color:#9ab9d6}
 
-/* GRID LAYOUT */
+/* GRID */
 .body{
   padding:14px;
   display:grid;
@@ -87,15 +87,12 @@ body{
 }
 @media(max-width:960px){.body{grid-template-columns:1fr}}
 
-/* LEFT PANEL (Table) */
-.search{
-  display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap
-}
+/* LEADS TABLE */
+.search{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .input{
   flex:1;background:#0d1f2d;border:1px solid #254a63;
-  color:#fff;border-radius:12px;padding:8px 10px
+  color:#fff;border-radius:12px;padding:8px 10px;
 }
-.small{padding:4px 10px;font-size:12px}
 .table-wrap{overflow-x:auto;border-radius:12px}
 table{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
 th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2)}
@@ -104,19 +101,17 @@ tr.lead-row{cursor:pointer}
 tr.lead-row:hover{background:rgba(255,255,255,.06)}
 tr.lead-row.selected{background:rgba(43,116,255,.25)}
 
-/* RIGHT PANEL */
+/* DETAIL PANEL */
 .right-col{
-  background:#0b1825;
-  border-radius:16px;
+  background:#0b1825;border-radius:16px;padding:12px;
   border:1px solid rgba(255,255,255,.14);
-  padding:12px;
 }
 .detail-header h3{margin:0;font-size:16px}
 .detail-header .sub{font-size:12px;color:#9ab9d6;margin-bottom:8px}
 .detail-info{font-size:13px;margin-bottom:10px}
 .script-box{
-  background:#0d2233;border-radius:10px;padding:10px;
-  font-size:13px;line-height:1.5;margin-top:8px
+  background:#0d2233;border-radius:10px;
+  padding:10px;font-size:13px;line-height:1.5;margin-top:8px;
 }
 
 /* MAP */
@@ -163,25 +158,24 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
     </div>
 
     <div class="body">
-      <!-- LEFT (Leads Table) -->
+      <!-- LEFT SIDE -->
       <div id="panel-acq">
         <div class="search">
           <input id="s_q" class="input" placeholder="Search address / owner" />
           <button class="chip small" id="s_reload">Search</button>
         </div>
+
         <div class="table-wrap">
           <table>
             <thead>
-              <tr>
-                <th>Address</th><th>Owner</th><th>Phone</th><th>Status</th><th>Notes</th>
-              </tr>
+              <tr><th>Address</th><th>Owner</th><th>Phone</th><th>Status</th><th>Notes</th></tr>
             </thead>
             <tbody id="sellerRows"></tbody>
           </table>
         </div>
       </div>
 
-      <!-- RIGHT (Lead Details) -->
+      <!-- RIGHT SIDE -->
       <div class="right-col" id="detailPanel">
         <div class="detail-header">
           <h3 id="detailTitle">No lead selected</h3>
@@ -216,14 +210,12 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 <script>
 let UID=null, sellerList=[], sellerView=[], currentIndex=-1;
 
-/* INIT AUTH */
 firebase.auth().onAuthStateChanged(u=>{
   if(!u) return location.href='index.html';
   UID=u.uid;
   subscribeLeads();
 });
 
-/* FETCH LEADS FROM RTDB */
 function subscribeLeads(){
   firebase.database().ref('leads/sellers').on('value',snap=>{
     const obj=snap.val()||{};
@@ -232,21 +224,22 @@ function subscribeLeads(){
   });
 }
 
-/* RENDER LEAD LIST */
 function renderLeads(){
   const q=(s_q.value||'').toLowerCase();
   sellerView=sellerList.filter(v=>
-    !q || (v.address||'').toLowerCase().includes(q) || (v.owner||'').toLowerCase().includes(q)
+    !q || (v.address||'').toLowerCase().includes(q) ||
+    (v.owner||'').toLowerCase().includes(q)
   );
 
   status.textContent='Acq: '+sellerView.length+' items';
   const tbody=document.getElementById('sellerRows');
+
   if(!sellerView.length){
     tbody.innerHTML='<tr><td colspan="5" class="status">No leads found.</td></tr>';
     updateDetail(null);
     return;
   }
-  
+
   tbody.innerHTML=sellerView.map((v,i)=>`
     <tr class="lead-row" data-idx="${i}">
       <td>${v.address||''}</td>
@@ -261,14 +254,13 @@ function renderLeads(){
   });
 }
 
-/* RIGHT PANEL UPDATE */
 function updateDetail(lead){
   if(!lead){
     detailTitle.textContent='No lead selected';
     detailSub.textContent='Select a lead to view information.';
     detailInfo.style.display='none';
-    mapWrap.style.display='none';
     scriptBox.textContent='Select a lead to load script.';
+    mapWrap.style.display='none';
     return;
   }
 
@@ -279,9 +271,8 @@ function updateDetail(lead){
   detailAddr.textContent=lead.address||'';
   detailOwner.textContent=lead.owner||'';
   detailPhone.textContent=lead.phone||'';
-  scriptBox.textContent=`Hey ${lead.owner || 'there'}, my name is Bill with DealBankers. I was calling regarding ${
-    lead.address || 'your property'
-  } — are you the owner?`;
+  scriptBox.textContent=`Hi ${lead.owner || 'there'}, this is Bill
+    regarding ${lead.address || 'your property'}. Are you the owner?`;
 
   if(lead.address){
     streetFrame.src='https://www.google.com/maps?q='+encodeURIComponent(lead.address)+'&output=embed';
@@ -289,16 +280,16 @@ function updateDetail(lead){
   }
 }
 
-/* SEARCH BUTTON */
-document.getElementById('s_reload').onclick=()=>renderLeads();
-
-/* SETTINGS NAVIGATION */
-btnSettings.onclick=()=>location.href='settings.html';
-
-/* CHAT NAVIGATION */
+/* Chat Bubble Navigation */
 chatBubble.onclick=()=>location.href='townhall.html?from=wholesaler';
 
-/* PRESENCE TRACKING */
+/* Search Button */
+document.getElementById('s_reload').onclick=()=>renderLeads();
+
+/* Settings Navigation */
+btnSettings.onclick=()=>location.href='settings.html';
+
+/* Presence Tracking */
 firebase.auth().onAuthStateChanged(u=>{
   if(!u) return;
   const uid=u.uid;
@@ -307,15 +298,8 @@ firebase.auth().onAuthStateChanged(u=>{
 
   connRef.on('value',snap=>{
     if(snap.val()===false) return;
-    userRef.onDisconnect().set({state:'offline',ts:firebase.database.ServerValue.TIMESTAMP})
-      .then(()=>userRef.set({
-        state:'online',
-        ts:firebase.database.ServerValue.TIMESTAMP,
-        portal:'wholesaler',
-        email:u.email
-      }));
-  });
-});
+    userRef.onDisconnect().set({state:'offline',ts
+}); }); });
 </script>
 
 </body>
