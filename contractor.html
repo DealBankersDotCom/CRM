@@ -25,7 +25,7 @@ body{
   min-height:100vh;
 }
 
-/* HEADER / NAV (shared across all portals) */
+/* GLOBAL HEADER */
 .header{
   display:flex;
   justify-content:space-between;
@@ -50,7 +50,6 @@ body{
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
 
-/* Settings Gear (shared) */
 .icon-btn {
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.25);
@@ -66,14 +65,14 @@ body{
 }
 .icon-btn:hover { background: rgba(255,255,255,0.25); }
 
-/* (then keep your wrap, card, job list, and portal-specific styles below) */
-
-
-/* Layout Core */
+/* MAIN LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
 .card{
-  background:rgba(255,255,255,.07);border:1px solid rgba(255,255,255,.15);
-  border-radius:20px;box-shadow:0 28px 70px rgba(0,0,0,.55);overflow:hidden
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:20px;
+  box-shadow:0 28px 70px rgba(0,0,0,.55);
+  overflow:hidden
 }
 .top{
   display:flex;align-items:center;justify-content:space-between;
@@ -87,9 +86,6 @@ body{
 .seg button.active{
   background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff
 }
-.status{font-size:12px;color:#9ab9d6}
-
-/* Split-area */
 .body{
   padding:14px;
   display:grid;
@@ -98,34 +94,7 @@ body{
 }
 @media(max-width:960px){ .body{grid-template-columns:1fr} }
 
-/* Table / Search styling */
-.search{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-.input{
-  flex:1;background:#0d1f2d;border:1px solid #254a63;
-  color:#fff;border-radius:12px;padding:8px 10px
-}
-.small{padding:4px 10px;font-size:12px}
-.table-wrap{overflow-x:auto;border-radius:12px}
-table{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
-th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2)}
-thead th{border-top:0;color:#cfe3ff}
-tr.job-row{cursor:pointer}
-tr.job-row:hover{background:rgba(255,255,255,.06)}
-tr.job-row.selected{background:rgba(43,116,255,.25)}
-
-/* Right side panel */
-.right-col{
-  background:#0b1825;border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);padding:12px
-}
-.detail-header h3{margin:0;font-size:16px}
-.detail-header .sub{font-size:12px;color:#9ab9d6;margin-bottom:6px}
-.script-box{
-  background:#0d2233;border-radius:10px;
-  padding:10px;font-size:13px;line-height:1.5;margin-top:8px
-}
-
-/* Empty State */
+/* EMPTY STATE */
 .empty-state {text-align:center;padding:40px;color:#cfe3ff;}
 .empty-box {
   display:inline-block;background:#122334;
@@ -137,9 +106,8 @@ tr.job-row.selected{background:rgba(43,116,255,.25)}
   color:#fff;border:none;border-radius:6px;
   cursor:pointer;font-weight:600;
 }
-.empty-actions button:hover { background:#1a4fd8; }
 
-/* Chat Bubble */
+/* FLOATING CHAT BUBBLE */
 #chatBubble{
   position:fixed;bottom:24px;right:24px;width:54px;height:54px;
   border-radius:50%;background:#133e6a;color:white;
@@ -150,18 +118,17 @@ tr.job-row.selected{background:rgba(43,116,255,.25)}
 }
 #chatBubble:hover{transform:scale(1.08)}
 
-/* Modal */
+/* MODALS */
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.7);
   display:none;align-items:center;justify-content:center;z-index:9999}
 .modal{
   background:#0f1b27;border:1px solid #254a63;border-radius:16px;
-  padding:16px;max-width:520px;width:92%;
+  padding:16px;max-width:720px;width:92%;
   box-shadow:0 28px 70px rgba(0,0,0,.55)
 }
-.modal.wide{max-width:720px}
 .modal input,.modal select,.modal textarea{
   width:100%;padding:10px;border:1px solid #254a63;
-  background:#0d1f2d;color:#fff;border-radius:10px
+  background:#0d1f2d;color:#fff;border-radius:10px;margin:6px 0;
 }
 .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 </style>
@@ -179,20 +146,18 @@ tr.job-row.selected{background:rgba(43,116,255,.25)}
   </nav>
 </header>
 
-<!-- Settings Modal -->
+<!-- CONTRACTOR SETTINGS MODAL -->
 <div class="modal-backdrop" id="settingsModal">
-  <div class="modal wide">
+  <div class="modal">
     <h3>Contractor Account Setup</h3>
-    <p>Tell us how you want to receive jobs.</p>
-    <div class="row"><input id="bizName" placeholder="Business Name" /></div>
-    <div class="row"><input id="serviceArea" placeholder="Cities, Zip Codes" /></div>
-    <div class="row"><input id="trades" placeholder="Trades You Perform" /></div>
-    <div class="row">
-      <select id="liveShare">
-        <option>Disabled</option>
-        <option>Enabled</option>
-      </select>
-    </div>
+    <p>Tell us how you'd like to receive jobs:</p>
+    <input id="bizName" placeholder="Business Name" />
+    <input id="serviceArea" placeholder="Cities, Zip Codes" />
+    <input id="trades" placeholder="Trades You Perform" />
+    <select id="liveShare">
+      <option>Disabled</option>
+      <option>Enabled</option>
+    </select>
     <div class="actions">
       <button class="chip" id="closeSettings">Cancel</button>
       <button class="chip primary" id="saveSettings">Save</button>
@@ -200,13 +165,30 @@ tr.job-row.selected{background:rgba(43,116,255,.25)}
   </div>
 </div>
 
-<!-- Support Modal (Blue/Red) — unchanged -->
+<!-- BLUE/RED PHONE SUPPORT MODAL -->
 <div class="modal-backdrop" id="rbModal">
   <div class="modal">
-    ...
+    <h3 id="rbTitle">Request</h3>
+    <label>Category</label>
+    <select id="rbCategory">
+      <option>Acquisition</option>
+      <option>Sales</option>
+      <option>Contractor</option>
+      <option>Realtor</option>
+      <option>Website</option>
+    </select>
+    <label>Subject</label>
+    <input id="rbSubject" placeholder="Short summary" />
+    <label>Details</label>
+    <textarea id="rbDetails" rows="4" placeholder="What do you need?"></textarea>
+    <div class="actions">
+      <button class="chip" id="rbCancel">Cancel</button>
+      <button class="chip primary" id="rbSubmit">Send</button>
+    </div>
   </div>
 </div>
 
+<!-- MAIN CONTENT -->
 <div class="wrap">
   <section class="card">
     <div class="top">
@@ -221,8 +203,8 @@ tr.job-row.selected{background:rgba(43,116,255,.25)}
     </div>
 
     <div class="body" id="jobContent">
-      <div class="left-col" id="jobTable"> ... </div>
-      <div class="right-col" id="detailPanel"> ... </div>
+      <div class="left-col" id="jobTable">Loading jobs...</div>
+      <div class="right-col" id="detailPanel">Select a job to view details...</div>
     </div>
   </section>
 
@@ -239,159 +221,18 @@ tr.job-row.selected{background:rgba(43,116,255,.25)}
 </div>
 
 <div id="chatBubble">💬</div>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database-compat.js"></script>
+
+<!-- ****** SCRIPTS ****** -->
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 
 <script>
-let UID = null, jobList = [], jobView = [];
-
-firebase.auth().onAuthStateChanged(async u => {
-  if (!u) location.href = "index.html";
+// 🔐 AUTH CHECK
+firebase.auth().onAuthStateChanged(async (u) => {
+  if (!u) return location.href = "index.html";
   UID = u.uid;
   loadSettings();
-  subscribeJobs();
 });
-
-// 🔹 Load Contractor Settings
-async function loadSettings() {
-  const snap = await firebase.database().ref(`users/${UID}/contractorSettings`).once('value');
-  const s = snap.val();
-
-  if (s) {
-    bizName.value = s.businessName || "";
-    serviceArea.value = s.serviceArea || "";
-    trades.value = s.trades || "";
-    liveShare.value = s.liveShare ? "Enabled" : "Disabled";
-
-    emptyState.style.display = "none";
-  } else {
-    emptyState.style.display = "block";
-  }
-}
-
-// 🔹 Save Contractor Settings
-saveSettings.onclick = async () => {
-  await firebase.database().ref(`users/${UID}/contractorSettings`).set({
-    businessName: bizName.value.trim(),
-    serviceArea: serviceArea.value.trim(),
-    trades: trades.value.trim(),
-    liveShare: liveShare.value === "Enabled",
-    updatedAt: new Date().toISOString()
-  });
-  alert("Settings saved!");
-  settingsModal.style.display = "none";
-  emptyState.style.display = "none";
-};
-
-// 🔹 Open/Close Settings Modal
-btnSettings.onclick = () => settingsModal.style.display = "flex";
-closeSettings.onclick = () => settingsModal.style.display = "none";
-setupServices.onclick = () => settingsModal.style.display = "flex";
-
-// 🔹 Existing Job Loading Functions (unchanged)
-function subscribeJobs(){ ... }
-function renderJobs(){ ... }
-function updateDetail(job){ ... }
-
-// 🔹 Assistance Request (Blue/Red)
-(function(){
-  ...
-})();
-
-// Chat navigation
-chatBubble.onclick = ()=>location.href="townhall.html?from=contractor";
-
-/* Escape */
-function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
-</script>
-<script>
-document.addEventListener("DOMContentLoaded", async () => {
-  const u = firebase.auth().currentUser;
-  if (!u) return;
-
-  const portal = document.body.dataset.portal; // contractor, wholesaler, etc.
-
-  const snap = await firebase.database().ref(`userSettings/${u.uid}/profile`).once('value');
-  if (!snap.exists()) showOnboarding(portal);
-});
-
-function showOnboarding(portal) {
-  const t = portalText[portal] || portalText['contractor']; // fallback
-  const m = document.createElement('div');
-  m.className = 'modal-backdrop';
-  m.innerHTML = `
-    <div class="modal wide">
-      <h2>${t.title}</h2>
-      <p>${t.msg}</p>
-      <div class="empty-actions">
-         <button onclick="location.href='settings.html'">${t.action1}</button>
-         <button onclick="location.href='settings.html'">${t.action2}</button>
-         <button onclick="location.href='settings.html'">${t.action3}</button>
-      </div>
-      <div class="actions">
-        <button class="chip" onclick="closeModal(this)">Close</button>
-      </div>
-    </div>`;
-  document.body.appendChild(m);
-  m.style.display = 'flex';
-}
-
-function closeModal(btn){
-  btn.closest('.modal-backdrop').remove();
-}
-
-const portalText = {
-  contractor: {
-    title: "🚀 Welcome Contractor!",
-    msg: "To start receiving jobs, fill in your service areas, trade skills, and enable live location.",
-    action1: "📍 Service Areas",
-    action2: "🛠 Trade Skills",
-    action3: "📡 Enable Live Location",
-  },
-  wholesaler: {
-    title: "🎯 Welcome Wholesaler!",
-    msg: "Upload leads, skip trace, and start making calls to lock deals for assignment.",
-    action1: "📤 Upload Leads",
-    action2: "🔍 Skip Trace",
-    action3: "📞 Start Calling",
-  },
-  investor: {
-    title: "💼 Welcome Investor!",
-    msg: "Tell us what properties you're looking for, your budget, and markets of interest.",
-    action1: "📌 Set Buy Box",
-    action2: "📈 Define Budget",
-    action3: "🏘 View Deals",
-  }
-};
-</script>
-<script>
-firebase.auth().onAuthStateChanged(u => {
-  if (!u) return;
-
-  const uid = u.uid;
-  const userStatusRef = firebase.database().ref(`/presence/${uid}`);
-  const isOfflineForRTDB = {
-    state: 'offline',
-    last_changed: firebase.database.ServerValue.TIMESTAMP,
-  };
-  const isOnlineForRTDB = {
-    state: 'online',
-    last_changed: firebase.database.ServerValue.TIMESTAMP,
-    portal: document.body.dataset.portal || "unknown",
-    email: u.email || "",
-  };
-
-  const rtdbConnectedRef = firebase.database().ref('.info/connected');
-  rtdbConnectedRef.on('value', snapshot => {
-    if (snapshot.val() == false) return;
-    userStatusRef.onDisconnect().set(isOfflineForRTDB)
-      .then(() => userStatusRef.set(isOnlineForRTDB));
-  });
-});
-</script>
-</body>
-</html>
-  
