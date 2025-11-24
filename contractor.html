@@ -14,54 +14,42 @@
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
   --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
 }
-
 *{box-sizing:border-box;margin:0;padding:0}
 
 body{
-  margin:0;
-  font-family:Inter,system-ui,Arial;
+  margin:0;font-family:Inter,system-ui,Arial;
   color:var(--text);
   background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
   min-height:100vh;
 }
 
-/* GLOBAL HEADER */
+/* HEADER / NAV */
 .header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
+  display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;
   border-bottom:1px solid rgba(255,255,255,.2);
   background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));
 }
 .nav{display:flex;gap:8px;flex-wrap:wrap}
 .chip{
-  padding:6px 14px;
-  border-radius:100px;
+  padding:6px 14px;border-radius:100px;
   border:1px solid rgba(255,255,255,.22);
-  background:#0d1823;
-  color:var(--text);
-  text-decoration:none;
-  cursor:pointer;
-  font-weight:600;
+  background:#0d1823;color:var(--text);
+  text-decoration:none;cursor:pointer;font-weight:600;
   transition:background .2s,transform .2s;
 }
 .chip:hover{background:#14314d;transform:scale(1.03)}
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
 
+/* Gear Icon */
 .icon-btn {
   background: rgba(255,255,255,0.12);
   border: 1px solid rgba(255,255,255,0.25);
   border-radius: 50%;
-  width: 34px;
-  height: 34px;
-  font-size: 18px;
-  color: white;
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 34px;height: 34px;font-size: 18px;
+  color: white;cursor: pointer;
+  display: flex;align-items: center;justify-content: center;
 }
 .icon-btn:hover { background: rgba(255,255,255,0.25); }
 
@@ -72,7 +60,7 @@ body{
   border:1px solid rgba(255,255,255,.15);
   border-radius:20px;
   box-shadow:0 28px 70px rgba(0,0,0,.55);
-  overflow:hidden
+  overflow:hidden;
 }
 .top{
   display:flex;align-items:center;justify-content:space-between;
@@ -107,7 +95,7 @@ body{
   cursor:pointer;font-weight:600;
 }
 
-/* FLOATING CHAT BUBBLE */
+/* CHAT BUBBLE */
 #chatBubble{
   position:fixed;bottom:24px;right:24px;width:54px;height:54px;
   border-radius:50%;background:#133e6a;color:white;
@@ -133,6 +121,7 @@ body{
 .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
 </style>
 </head>
+
 <body data-portal="contractor">
 
 <header class="header">
@@ -146,11 +135,11 @@ body{
   </nav>
 </header>
 
-<!-- CONTRACTOR SETTINGS MODAL -->
+<!-- Settings Modal -->
 <div class="modal-backdrop" id="settingsModal">
-  <div class="modal">
+  <div class="modal wide">
     <h3>Contractor Account Setup</h3>
-    <p>Tell us how you'd like to receive jobs:</p>
+    <p>Tell us how you want to receive jobs.</p>
     <input id="bizName" placeholder="Business Name" />
     <input id="serviceArea" placeholder="Cities, Zip Codes" />
     <input id="trades" placeholder="Trades You Perform" />
@@ -165,7 +154,7 @@ body{
   </div>
 </div>
 
-<!-- BLUE/RED PHONE SUPPORT MODAL -->
+<!-- Blue/Red Request Modal -->
 <div class="modal-backdrop" id="rbModal">
   <div class="modal">
     <h3 id="rbTitle">Request</h3>
@@ -208,7 +197,6 @@ body{
     </div>
   </section>
 
-  <!-- EMPTY STATE -->
   <div id="emptyState" class="empty-state" style="display:none;">
     <div class="empty-box">
       <h2>🚀 No jobs yet</h2>
@@ -222,7 +210,7 @@ body{
 
 <div id="chatBubble">💬</div>
 
-<!-- ****** SCRIPTS ****** -->
+<!-- SCRIPTS -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -230,9 +218,108 @@ body{
 <script src="app-auth.js"></script>
 
 <script>
-// 🔐 AUTH CHECK
-firebase.auth().onAuthStateChanged(async (u) => {
+// AUTH & USER STATUS
+let UID = null;
+
+firebase.auth().onAuthStateChanged(async u => {
   if (!u) return location.href = "index.html";
   UID = u.uid;
   loadSettings();
+  subscribeJobs();
 });
+
+// Load Contractor Settings
+async function loadSettings() {
+  const snap = await firebase.database().ref(`users/${UID}/contractorSettings`).once('value');
+  const s = snap.val();
+  if (s) {
+    bizName.value = s.businessName || "";
+    serviceArea.value = s.serviceArea || "";
+    trades.value = s.trades || "";
+    liveShare.value = s.liveShare ? "Enabled" : "Disabled";
+    emptyState.style.display = "none";
+  } else {
+    emptyState.style.display = "block";
+  }
+}
+
+// Save Settings
+saveSettings.onclick = async () => {
+  await firebase.database().ref(`users/${UID}/contractorSettings`).set({
+    businessName: bizName.value.trim(),
+    serviceArea: serviceArea.value.trim(),
+    trades: trades.value.trim(),
+    liveShare: liveShare.value === "Enabled",
+    updatedAt: new Date().toISOString()
+  });
+  alert("Settings saved!");
+  settingsModal.style.display = "none";
+  emptyState.style.display = "none";
+};
+
+// Modals Open/Close
+btnSettings.onclick = ()=>settingsModal.style.display='flex';
+closeSettings.onclick = ()=>settingsModal.style.display='none';
+setupServices.onclick=()=>settingsModal.style.display='flex';
+
+// Placeholder for actual job loading
+function subscribeJobs(){
+  jobTable.innerHTML = "<p style='padding:14px;'>No active jobs.</p>";
+}
+
+// Blue/Red Phone Support Requests
+document.addEventListener('click',e=>{
+  if(e.target.id==='btnRed') showModal(true);
+  if(e.target.id==='btnBlue') showModal(false);
+  if(e.target.id==='rbCancel') hideModal();
+});
+function showModal(urgent){
+  rbModal.style.display='flex';
+  rbTitle.textContent = urgent ? '🚨 Urgent Request' : '🌀 Blue Request';
+}
+function hideModal(){ rbModal.style.display='none'; }
+
+rbSubmit.onclick = async ()=>{
+  await firebase.database().ref('requests').push({
+    portal:'contractor',
+    cat:rbCategory.value,
+    subject:rbSubject.value,
+    details:rbDetails.value,
+    urgent:false,
+    uid:UID,
+    ts:firebase.database.ServerValue.TIMESTAMP
+  });
+  alert('Request Sent!');
+  hideModal();
+};
+
+// Chat button
+chatBubble.onclick = ()=>location.href="townhall.html?from=contractor";
+
+// Presence Tracking
+firebase.auth().onAuthStateChanged(u=>{
+  if(!u) return;
+  const uid=u.uid;
+  const userStatusRef=firebase.database().ref(`/presence/${uid}`);
+  const isOffline={state:'offline',last_changed:firebase.database.ServerValue.TIMESTAMP};
+  const isOnline={
+    state:'online',
+    last_changed:firebase.database.ServerValue.TIMESTAMP,
+    portal:document.body.dataset.portal,email:u.email
+  };
+  firebase.database().ref('.info/connected').on('value',snap=>{
+    if(snap.val()==false) return;
+    userStatusRef.onDisconnect().set(isOffline).then(()=>userStatusRef.set(isOnline));
+  });
+
+  firebase.database().ref('adminNotifications').push({
+    msg:`${u.email} logged into Contractor Portal`,
+    ts:firebase.database.ServerValue.TIMESTAMP
+  });
+});
+
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+</script>
+
+</body>
+</html>
