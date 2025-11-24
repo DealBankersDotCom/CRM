@@ -367,7 +367,31 @@ const portalText = {
   }
 };
 </script>
+<script>
+firebase.auth().onAuthStateChanged(u => {
+  if (!u) return;
 
+  const uid = u.uid;
+  const userStatusRef = firebase.database().ref(`/presence/${uid}`);
+  const isOfflineForRTDB = {
+    state: 'offline',
+    last_changed: firebase.database.ServerValue.TIMESTAMP,
+  };
+  const isOnlineForRTDB = {
+    state: 'online',
+    last_changed: firebase.database.ServerValue.TIMESTAMP,
+    portal: document.body.dataset.portal || "unknown",
+    email: u.email || "",
+  };
+
+  const rtdbConnectedRef = firebase.database().ref('.info/connected');
+  rtdbConnectedRef.on('value', snapshot => {
+    if (snapshot.val() == false) return;
+    userStatusRef.onDisconnect().set(isOfflineForRTDB)
+      .then(() => userStatusRef.set(isOnlineForRTDB));
+  });
+});
+</script>
 </body>
 </html>
   
