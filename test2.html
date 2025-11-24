@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Deal Bankers | Circle Governance Matrix</title>
+<style>
+  html, body {
+    margin: 0; height: 100%; overflow: hidden;
+    background: radial-gradient(circle at center, #000006, #02101f, #000006);
+    font-family: 'Poppins', Arial, sans-serif; color: #ffd700;
+  }
+  h1 {
+    position: absolute; top: 3.2%; width: 100%;
+    text-align: center; font-size: 3.2em; letter-spacing: 7px;
+    color: #ffd700; font-weight: 600;
+    text-shadow: 0 0 40px #ffd700, 0 0 75px #ffaa00;
+    user-select: none;
+  }
+  a.label {
+    position: absolute; color: #ffd700;
+    font-weight: 600; text-decoration: none;
+    padding: 8px 18px; border-radius: 10px;
+    font-size: 1.18em; cursor: pointer;
+    text-shadow: 0 0 12px #ffd700;
+    transition: 0.5s ease, transform 0.5s ease, opacity 0.4s ease;
+  }
+  a.label:hover {
+    color: #ffffff;
+    text-shadow: 0 0 22px #ffffff, 0 0 40px #ffd700;
+    background: rgba(255,215,0,0.15);
+    transform: scale(1.2);
+    border: 1px solid #ffd700;
+  }
+  canvas { display: block; }
+</style>
+</head>
+<body>
+<h1>CIRCLE GOVERNANCE MATRIX</h1>
+
+<!-- Visible Portals -->
+<a href="charter.html" class="label" id="charter">Charter | Foundation</a>
+<a href="records.html" class="label" id="records">Records | Evidence</a>
+<a href="architect.html" class="label" id="architect">Architect | Systems</a>
+<a href="shield.html" class="label" id="shield">Shield | Conduct</a>
+<a href="legal.html" class="label" id="legal">Legal Strategy</a>
+<a href="fatherhood.html" class="label" id="fatherhood">Fatherhood | Legacy</a>
+<a href="presence.html" class="label" id="presence">Presence | Mindset</a>
+
+<script src="https://cdn.jsdelivr.net/npm/three@0.152.2/build/three.min.js"></script>
+<script>
+// 🌌 Scene Setup
+const scene = new THREE.Scene();
+const camera = new THREE.PerspectiveCamera(75, innerWidth/innerHeight, 0.1, 1000);
+camera.position.set(0, 0, 6);
+
+const renderer = new THREE.WebGLRenderer({ antialias: true });
+renderer.setSize(innerWidth, innerHeight);
+document.body.appendChild(renderer.domElement);
+
+// ✨ Light — Source of Understanding
+scene.add(new THREE.AmbientLight(0x222222));
+const pointLight = new THREE.PointLight(0xffd700, 1.5, 200);
+pointLight.position.set(0, 0, 4);
+scene.add(pointLight);
+
+// 📐 Sacred Math
+const phi = (1 + Math.sqrt(5)) / 2;
+const radiusPrimary = 2.4 * phi;   // For portals
+const radiusTriad = 1.2 * phi;     // Inner triangle (Reason, Will, Emotion)
+
+// 🔆 Central Source (Purpose / Identity)
+const center = new THREE.Mesh(
+  new THREE.SphereGeometry(0.38 * phi, 42, 42),
+  new THREE.MeshBasicMaterial({ color: 0xffd700 })
+);
+scene.add(center);
+
+// 🔺 Triad Nodes — Thought, Intent, Feeling (Ancient governing model)
+const triadLabels = ["reason", "will", "emotion"];
+triadLabels.forEach((label, i) => {
+  const angle = i * 120 * (Math.PI/180) - Math.PI/2;
+  const x = Math.cos(angle) * radiusTriad;
+  const y = Math.sin(angle) * radiusTriad;
+  
+  const triadSphere = new THREE.Mesh(
+    new THREE.SphereGeometry(0.11 * phi, 28, 28),
+    new THREE.MeshBasicMaterial({ color: 0xffd700 })
+  );
+  triadSphere.position.set(x, y, 0.5);
+  scene.add(triadSphere);
+});
+
+// 🌟 Seven Portals (Heptagon of Governance)
+const portalKeys = ["charter", "records", "architect", "shield", "legal", "fatherhood", "presence"];
+const coords = {};
+
+portalKeys.forEach((key, i) => {
+  const angle = i * 51.428571 * (Math.PI/180) - Math.PI/2;
+  const x = Math.cos(angle) * radiusPrimary;
+  const y = Math.sin(angle) * radiusPrimary;
+
+  const node = new THREE.Mesh(
+    new THREE.SphereGeometry(0.13 * phi, 32, 32),
+    new THREE.MeshBasicMaterial({ color: 0xffd700 })
+  );
+  node.position.set(x, y, 1);
+  scene.add(node);
+  coords[key] = [x, y, 1];
+});
+
+// 🗂 Knowledge & Record System (Expandable Data Model)
+const knowledgeMatrix = {
+  triad: {
+    reason: ["logic", "analysis", "case strategy"],
+    will: ["discipline", "execution", "habit tracking"],
+    emotion: ["alignment", "story", "parenting presence"]
+  },
+  portals: {
+    charter: ["values", "constitution", "mission-letter"],
+    records: ["evidence-log", "timeline", "attachments"],
+    architect: ["mindmaps", "firebase-schema", "diagrams"],
+    shield: ["behavioral-log", "accountability", "self-audit"],
+    legal: ["cases", "mandamus", "quiet-title", "motions"],
+    fatherhood: ["parenting-evidence", "journals", "photos"],
+    presence: ["mindset-log", "gratitude", "principles"]
+  }
+};
+console.log("Knowledge Matrix Loaded:", knowledgeMatrix);
+
+// 📎 Map labels to DOM
+const labels = {};
+portalKeys.forEach(id => labels[id] = document.getElementById(id));
+
+// 🎯 Function: Position Labels Correctly
+function updateLabelPositions(){
+  const width = innerWidth, height = innerHeight;
+  for(const key in coords){
+    const vec = new THREE.Vector3(...coords[key]);
+    vec.project(camera);
+    labels[key].style.left = `${(vec.x * 0.5 + 0.5) * width}px`;
+    labels[key].style.top  = `${(-vec.y * 0.5 + 0.5) * height}px`;
+  }
+}
+
+// 🕊 True Mathematical Motion — Harmonic but Centered
+let t = 0;
+function animate(){
+  requestAnimationFrame(animate);
+
+  t += 0.0025;
+  scene.rotation.y = Math.sin(t/phi) * 0.5;
+  scene.rotation.x = Math.sin(t/2.2) * 0.15;
+
+  updateLabelPositions();
+  renderer.render(scene, camera);
+}
+animate();
+
+// 📱 Responsive Scaling
+addEventListener('resize', ()=>{
+  camera.aspect = innerWidth / innerHeight;
+  camera.updateProjectionMatrix();
+  renderer.setSize(innerWidth, innerHeight);
+});
+</script>
+</body>
+</html>
