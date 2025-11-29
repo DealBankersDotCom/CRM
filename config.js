@@ -1,4 +1,5 @@
-// config.js (classic, non-module version)
+✅ Your Correct config.js (non-module):
+// config.js
 window.firebaseConfig = {
   apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
   authDomain: "deal-bankers.firebaseapp.com",
