@@ -1,549 +1,137 @@
-<!-- ======================= DealBankers • Capital Console (Dispo + Buyers Queue) ======================= -->
 <!DOCTYPE html>
 <html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>DealBankers — Dispositions</title>
+  <link rel="icon" href="icon (1).jpg" />
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+  <style>
+    :root {
+      --bg: #060b11; --accent: #2b74ff; --accent-glow: #4f8cff;
+      --text: #eaf2ff; --line: #1e2c3a; --muted: #9db2c7;
+      --chrome: #a8c1ff; --neon: #33aaff;
+    }
+    body {
+      font-family: "Orbitron", sans-serif;
+      background: radial-gradient(circle at 30% 10%, #0b1523 0%, #050910 100%);
+      color: var(--text);
+      margin: 0; padding: 0;
+    }
+    header {
+      display: flex; justify-content: space-between; align-items: center;
+      padding: 12px 20px;
+      background: linear-gradient(90deg, #070d16, #0e1b30 80%, #070d16);
+      border-bottom: 1px solid var(--line);
+    }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--chrome); }
+    .brand img { width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 0 10px var(--neon); }
+    nav { display: flex; gap: 10px; }
+    nav a {
+      padding: 6px 14px; border-radius: 8px; background: #162238; font-weight: 700;
+      color: #bcd1ff; transition: .25s; text-decoration: none;
+    }
+    nav a:hover { background: var(--accent); color: #fff; box-shadow: 0 0 12px var(--accent-glow); }
 
-<!-- Firebase compat SDKs -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+    .container {
+      max-width: 1100px;
+      margin: 40px auto;
+      padding: 0 16px;
+    }
 
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>DealBankers • Capital Console</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+    .deal-card {
+      background: #111c2a;
+      border: 1px solid #2b74ff;
+      padding: 20px;
+      margin-bottom: 30px;
+      border-radius: 14px;
+      color: var(--text);
+      box-shadow: 0 0 14px rgba(43, 116, 255, 0.2);
+    }
+    .deal-card h2 {
+      margin-top: 0;
+      color: var(--chrome);
+    }
+    .deal-card img {
+      max-width: 100%;
+      border-radius: 12px;
+      margin: 16px 0;
+    }
+    .deal-card p {
+      margin: 6px 0;
+      color: var(--muted);
+    }
+    .deal-card a {
+      color: var(--neon);
+      font-weight: bold;
+      text-decoration: none;
+      margin-right: 10px;
+    }
+    .deal-card a:hover {
+      text-decoration: underline;
+    }
 
-<style>
-:root{
-  --bg:#0b1118; --bg2:#0f1a24; --panel:#0f1f2b; --line:#254a63;
-  --text:#e9f3ff; --muted:#a9c3db; --gold:#ffd36b; --green:#26cf84; --blue:#2b74ff; --red:#ff5e6c;
-  --chip:#0e2030; --shadow:0 26px 60px rgba(0,0,0,.55); --r:14px;
-}
-*{box-sizing:border-box}
-html,body{margin:0;height:100%}
-body{
-  background:
-    radial-gradient(900px 420px at 100% -10%, rgba(71,180,255,.15) 0%, transparent 60%),
-    linear-gradient(135deg,#0b1118,#0e1a24 55%,#10283a);
-  color:var(--text); font-family:system-ui,-apple-system,Inter,Segoe UI,Roboto,Arial,sans-serif;
-}
-header{
-  display:flex;align-items:center;justify-content:space-between;padding:10px 12px;
-  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.04));
-  border-bottom:1px solid var(--line);
-}
-.brand{display:flex;gap:10px;align-items:center;font-weight:900;letter-spacing:.3px}
-.badge{font-size:12px;padding:4px 8px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a;color:#cfe3f6}
-.kb{opacity:.8}
-.toprow{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.topbtn{display:inline-flex;gap:8px;align-items:center;border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:#0e2433;color:#cfe3f6;text-decoration:none;cursor:pointer}
-.topbtn.primary{background:linear-gradient(180deg,var(--blue),#0a58ca);border:none;color:#fff}
-.topbtn.green{background:linear-gradient(180deg,var(--green),#1a9b61);border:none;color:#fff}
-.topbtn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
-.stat{display:inline-flex;gap:6px;align-items:center;padding:6px 10px;border-radius:999px;border:1px solid var(--line);background:#0f2a3a;font-size:12px}
-
-.wrap{padding:12px}
-.grid{display:grid;gap:12px;grid-template-columns:1.15fr 1fr 1fr}
-@media (max-width:1080px){ .grid{grid-template-columns:1fr} }
-
-.card{background:linear-gradient(180deg,rgba(255,255,255,.08),rgba(255,255,255,.03));
-  border:1px solid rgba(255,255,255,.18);border-radius:16px;box-shadow:var(--shadow);overflow:hidden}
-.card .head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.15);background:linear-gradient(180deg,rgba(255,255,255,.16),rgba(255,255,255,.06))}
-.card .body{padding:10px}
-
-input,textarea,select{
-  width:100%;background:#0f1a24;border:1px solid var(--line);color:#e9f3ff;border-radius:10px;
-  padding:10px 12px;font-size:14px
-}
-textarea{min-height:110px;resize:vertical}
-.row{display:flex;gap:8px;flex-wrap:wrap}
-.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:#0f2434;color:#cfe3f6;cursor:pointer;text-decoration:none;user-select:none}
-.btn:hover{filter:brightness(1.08)}
-.btn.gold{background:linear-gradient(180deg,var(--gold),#c89b3a);border:none;color:#211a05}
-.btn.green{background:linear-gradient(180deg,var(--green),#1a9b61);border:none;color:#fff}
-.btn.blue{background:linear-gradient(180deg,var(--blue),#0a58ca);border:none;color:#fff}
-.btn.red{background:linear-gradient(180deg,#ff7b85,#d24652);border:none;color:#fff}
-.small{padding:8px 10px;font-size:13px}
-.tag{display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:999px;background:#0f2a3a;border:1px solid var(--line);font-size:12px}
-
-.list{display:flex;flex-direction:column;gap:8px;max-height:66vh;overflow:auto;padding:10px}
-.item{border:1px solid var(--line);border-radius:12px;background:#0f1a24;padding:10px;cursor:pointer;display:grid;grid-template-columns:auto 1fr;gap:10px;align-items:start}
-.item.active{outline:2px solid #52a6ff}
-.item .name{font-weight:800}
-.item .muted{color:var(--muted)}
-.chk{margin-top:3px}
-
-.kbd{font-family:ui-monospace,Consolas,monospace;font-size:12px;padding:2px 6px;border:1px solid var(--line);border-radius:6px;background:#0b1a24;color:#cfe3f6}
-.right{justify-content:flex-end}
-
-.scriptTabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px}
-.scriptTabs button{border:1px solid var(--line);background:#0f2a3a;color:#cfe3f6;border-radius:999px;padding:6px 10px;cursor:pointer}
-.scriptTabs button.active{background:linear-gradient(180deg,var(--blue),#0a58ca);color:#fff;border:none}
-.scriptBox{background:#0e2231;border:1px solid var(--line);border-radius:12px;padding:10px;min-height:160px;line-height:1.45}
-.flagrow{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-
-.gallery{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:8px}
-.gallery img{width:100%;height:110px;object-fit:cover;border-radius:10px;border:1px solid var(--line);background:#0e1822}
-
-.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:16px;padding:10px 14px;border-radius:12px;background:#0b1218;border:1px solid rgba(255,255,255,.2);display:none;z-index:40}
-
-/* Buyers Queue (center column) */
-.qhead{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
-.qname{font-weight:900;font-size:18px}
-.qmeta{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
-.chip{display:inline-flex;gap:6px;align-items:center;font-size:12px;padding:6px 10px;border-radius:999px;background:#0f2a3a;border:1px solid var(--line)}
-.qactions{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.qnav{display:flex;gap:8px;flex-wrap:wrap;margin-top:10px}
-.qbox{background:#0e2231;border:1px solid var(--line);border-radius:12px;padding:10px;margin-top:10px}
-</style>
-
+    footer {
+      text-align: center;
+      margin: 40px auto;
+      color: #88a5bf;
+      font-size: .9rem;
+    }
+  </style>
+</head>
 <body>
 
 <header>
   <div class="brand">
-    <span style="font-size:18px">⚡️ DealBankers</span>
-    <span class="badge">Capital Console</span>
-    <span class="kb">Search <span class="kbd">/</span> • Next <span class="kbd">N</span> • Save <span class="kbd">S</span></span>
+    <img src="icon (1).jpg" alt="logo" />
+    <span>DealBankers</span>
   </div>
-  <div class="toprow">
-    <span class="stat">Queue: <b id="queueState">—</b></span>
-    <button id="queueToggle" class="topbtn" title="Buyers queue ON/OFF">⏱️</button>
-
-    <span class="stat admin-only" id="selStat" style="display:none">Selected: 0</span>
-    <button id="selectAllBtn" class="topbtn admin-only" style="display:none">Select All</button>
-    <button id="clearSelBtn" class="topbtn admin-only" style="display:none">Clear Sel</button>
-
-    <button id="pullBtn" class="topbtn admin-only" style="display:none">Pull</button>
-    <button id="pushBtn" class="topbtn admin-only" style="display:none">Push</button>
-
-    <button id="dialModeBtn" class="topbtn">Device</button>
-    <button id="importBtn"  class="topbtn">⬆️ Import</button>
-    <button id="exportHot"  class="topbtn">Export Hotlist</button>
-    <button id="setName"    class="topbtn">Set My Name</button>
-  </div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="profile.html">Tools</a>
+    <a href="dispo.html">Dispo</a>
+    <a href="claims-exchange.html">ClaimChain</a>
+  </nav>
 </header>
 
-<div class="wrap">
-  <div class="grid">
-    <!-- LEFT: Disposition list (read-only quick access) -->
-    <section class="card">
-      <div class="head">
-        <div>Disposition</div>
-        <div class="row">
-          <!-- Buttons removed (they now live in Wholesaler portal) -->
-          <button id="buyersQueueJump" class="btn small">📞 Buyers Queue</button>
-        </div>
-      </div>
-      <div class="body">
-        <input id="search" placeholder="Search deals… address, tags, notes ( / )"/>
-        <div class="row" style="margin-top:8px">
-          <button id="clearFilter" class="btn small">All</button>
-        </div>
-        <div id="list" class="list"></div>
-      </div>
-    </section>
-
-    <!-- CENTER: Buyers List Call Queue -->
-    <section class="card" id="buyersCard">
-      <div class="head">
-        <div class="qhead">
-          <div style="font-weight:900">Buyers List Queue</div>
-          <span class="tag">Pool: <b id="poolCount">0</b></span>
-          <span class="tag">Index: <b id="poolIndex">—</b></span>
-        </div>
-        <div class="row right">
-          <button id="qPrev" class="btn small">◀ Prev</button>
-          <button id="qNext" class="btn green small">▶ Next</button>
-        </div>
-      </div>
-      <div class="body">
-        <div id="qInfo">
-          <div class="qname" id="bName">—</div>
-          <div class="qmeta">
-            <span class="chip" id="bCompany" style="display:none"></span>
-            <span class="chip" id="bTags" style="display:none"></span>
-            <span class="chip" id="bEmail" style="display:none"></span>
-          </div>
-
-          <div class="qbox">
-            <div class="row">
-              <div class="tag">Phone: <b id="bPhone">—</b></div>
-              <a id="callBtn" class="btn gold small" href="#" target="_blank" rel="noopener">📞 Call</a>
-              <a id="smsBtn"  class="btn small" href="#" target="_blank" rel="noopener">💬 Text</a>
-              <button id="copyBtn" class="btn small">📋 Copy</button>
-            </div>
-          </div>
-
-          <div class="qbox">
-            <label>Notes</label>
-            <textarea id="bNotes" placeholder="Quick notes…"></textarea>
-            <div class="row right" style="margin-top:8px">
-              <button id="saveNote" class="btn green small">💾 Save Note</button>
-            </div>
-          </div>
-
-          <div class="qactions">
-            <button id="qaInterested" class="btn green small">✔ Interested</button>
-            <button id="qaFollow" class="btn small">🗓 Follow-up</button>
-            <button id="qaBad" class="btn red small">❌ Bad Number</button>
-            <button id="qaDnc" class="btn small">🚫 DNC</button>
-            <button id="qaSkip" class="btn small">⏭ Skip</button>
-          </div>
-
-          <div class="qnav">
-            <span class="muted">Hotkeys: <span class="kbd">N</span> next • <span class="kbd">S</span> save note</span>
-          </div>
-
-          <div class="qbox" id="histBox" style="display:none">
-            <div style="font-weight:800;margin-bottom:6px">Recent Activity</div>
-            <div id="bHistory" style="font-size:13px;color:var(--muted)">—</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- RIGHT: Pitch / Script (unchanged) -->
-    <section class="card">
-      <div class="head"><div>Pitch / Script</div></div>
-      <div class="body">
-        <div class="scriptTabs">
-          <button class="tab active" data-k="intro">Intro</button>
-          <button class="tab" data-k="terms">Terms</button>
-          <button class="tab" data-k="seller">Seller Finance</button>
-          <button class="tab" data-k="close">Close</button>
-        </div>
-        <div id="scriptBox" class="scriptBox"></div>
-
-        <div class="flagrow">
-          <button class="btn green small" id="flagInterested">✔ Interested</button>
-          <button class="btn small" id="flagFollow">🗓 Follow-up</button>
-          <button class="btn red small" id="flagBad">❌ Bad Number</button>
-          <button class="btn small" id="flagDnc">🚫 DNC</button>
-        </div>
-      </div>
-    </section>
-  </div>
+<div class="container">
+  <h1 style="color:var(--chrome);text-align:center;">📦 Wholesale Deals — Dispo</h1>
+  <div id="dispo-list"></div>
 </div>
 
-<div id="toast" class="toast"></div>
+<footer>
+  © <span id="year"></span> DealBankers.com — Dispo Access for All
+</footer>
 
+<!-- Script to show current year -->
 <script>
-/* ===================== Firebase ===================== */
-const firebaseConfig = {
-  apiKey:"AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
-  authDomain:"deal-bankers.firebaseapp.com",
-  databaseURL:"https://deal-bankers-default-rtdb.firebaseio.com",
-  projectId:"deal-bankers"
-};
-if (!firebase.apps.length) firebase.initializeApp(firebaseConfig);
-const auth=firebase.auth();
-const db=firebase.database();
-
-/* ===================== Helpers ===================== */
-const $ = s => document.querySelector(s);
-const toast = msg => { const t=$("#toast"); if(!t) return; t.textContent=msg; t.style.display="block"; setTimeout(()=>t.style.display="none",1600); };
-const clean = s => (s||"").trim();
-const digitize = s => (s||"").replace(/[^\d+]/g,"");
-const now = ()=> Date.now();
-const fmt = ts => { const d=new Date(ts); return (d.getMonth()+1)+"/"+d.getDate()+" "+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0"); };
-
-/* ===================== State ===================== */
-const params   = new URL(location.href).searchParams;
-let myUid      = params.get("uid") || "";
-let myEmail    = "";
-let isGod      = false;
-
-let dispo = [];            // left list: deals/offerings
-let filtered = [];
-let cur = -1;
-
-let buyers = [];           // center queue
-let bIdx = -1;
-
-const GOD_EMAIL = "dealbankers@gmail.com";
-const DIAL_KEY = "db_cc_dial_mode"; // 'device' | 'textnow' | 'gvoice'
-
-/* ===================== Paths ===================== */
-const dealsPath     = (uid)=> `dispo/deals/${uid}`;
-const queueFlagPath = (uid)=> `userSettings/${uid}/queueEnabled`;
-const BUYERS_PATHS  = (uid)=> [
-  `buyers/queue/${uid}`,
-  `buyersQueue/${uid}`,
-  `buyers/globalQueue`,
-  `buyersQueuePublic`
-];
-const buyerLogPath  = (uid, id)=> `buyersLogs/${uid}/${id}`;
-
-/* ===================== Dial mode ===================== */
-function getDial(){ return localStorage.getItem(DIAL_KEY)||"device"; }
-function setDial(m){ localStorage.setItem(DIAL_KEY,m); $("#dialModeBtn").textContent = (m==="device"?"Device":m==="textnow"?"TextNow":"GVoice"); }
-function phoneHref(num){
-  const n=digitize(num); const m=getDial();
-  if(!n) return "#";
-  if(m==="device") return `tel:${n}`;
-  if(m==="textnow"){ try{ navigator.clipboard?.writeText(n); }catch{} return "https://www.textnow.com/messaging"; }
-  if(m==="gvoice"){ try{ navigator.clipboard?.writeText(n); }catch{} return "https://voice.google.com/u/0/messages"; }
-  return `tel:${n}`;
-}
-
-/* ===================== Left: Dispo list ===================== */
-async function loadDispo(){
-  const snap = await db.ref(dealsPath(myUid)).get();
-  const v = snap.val()||{};
-  const list = Object.values(v);
-  list.sort((a,b)=> (b.updatedAt||0)-(a.updatedAt||0));
-  return list;
-}
-function drawList(){
-  const L=$("#list"); if(!L) return; L.innerHTML="";
-  filtered.forEach((d,i)=>{
-    const item=document.createElement("div");
-    item.className="item"+(i===cur?" active":"");
-    const nm=document.createElement("div");
-    nm.className="name"; nm.textContent = d.title||"Untitled";
-    const mt=document.createElement("div");
-    mt.className="muted";
-    const addr = d.address||d.addr||"";
-    mt.textContent = [d.kind||d.type||"deal", d.price||"", addr].filter(Boolean).join(" • ");
-    item.append(nm, mt);
-    item.onclick=()=>{ cur=i; drawList(); };
-    L.appendChild(item);
-  });
-}
-
-/* ===================== Center: Buyers Queue ===================== */
-async function firstNonEmptyPath(paths){
-  for(const p of paths){
-    const s = await db.ref(p).limitToFirst(2).get();
-    if(s.exists()) return p;
-  }
-  return null;
-}
-async function loadBuyersQueue(){
-  const path = await firstNonEmptyPath(BUYERS_PATHS(myUid));
-  if(!path) return [];
-  const snap = await db.ref(path).get();
-  const v = snap.val()||{};
-  const arr = Object.entries(v).map(([id, b])=>({
-    id,
-    name: b.name || b.firstName && b.lastName ? `${b.firstName} ${b.lastName}`.trim() : (b.company || "Unknown"),
-    phone: b.phone || b.phone1 || b.mobile || b.tel || "",
-    email: b.email || "",
-    company: b.company || "",
-    tags: Array.isArray(b.tags)? b.tags : (typeof b.tags==="string"? b.tags.split(",").map(s=>s.trim()).filter(Boolean): []),
-    notes: b.notes || "",
-    raw: b
-  }));
-  arr.sort((a,b)=> (a.name||"").localeCompare(b.name||""));
-  return arr;
-}
-function renderBuyer(i){
-  if(buyers.length===0){ $("#poolCount").textContent="0"; $("#poolIndex").textContent="—"; $("#bName").textContent="No buyers in queue"; $("#bPhone").textContent="—"; return; }
-  if(i<0) i=buyers.length-1;
-  if(i>=buyers.length) i=0;
-  bIdx=i;
-
-  const b = buyers[bIdx];
-  $("#poolCount").textContent = buyers.length;
-  $("#poolIndex").textContent = (bIdx+1)+"/"+buyers.length;
-
-  $("#bName").textContent = b.name || "Unknown";
-  $("#bPhone").textContent = b.phone ? digitize(b.phone) : "—";
-  $("#bCompany").style.display = b.company ? "" : "none";
-  $("#bCompany").textContent = b.company || "";
-  $("#bEmail").style.display = b.email ? "" : "none";
-  $("#bEmail").textContent = b.email || "";
-  $("#bTags").style.display = (b.tags && b.tags.length) ? "" : "none";
-  $("#bTags").textContent = (b.tags||[]).join(", ");
-  $("#bNotes").value = b.notes || "";
-
-  $("#callBtn").href = phoneHref(b.phone);
-  $("#smsBtn").href  = getDial()==="device" && b.phone ? `sms:${digitize(b.phone)}` : phoneHref(b.phone);
-  $("#histBox").style.display = "none";
-}
-async function logBuyerAction(b, action, extra){
-  const rec = { ts: now(), action, buyerId:b.id, name:b.name||"", phone:b.phone||"", ...(extra||{}) };
-  await db.ref(buyerLogPath(myUid, b.id)).push(rec);
-}
-function nextBuyer(d=+1){ if(!buyers.length) return; renderBuyer(bIdx+d); }
-
-/* ===================== Script box (unchanged content) ===================== */
-const Scripts = {
-  intro:  "Hey {{first}}, this is {{agent}} with DealBankers. Do you have a quick second?",
-  terms:  "We typically look at price, timing, and any special terms you care about. What are you aiming for?",
-  seller: "We can do seller finance if it helps — low down, flexible terms. What would make this a win for you?",
-  close:  "Sounds good. I’ll follow up with next steps. Best number to text a quick summary?"
-};
-function scriptText(key){ return (Scripts[key]||"").replace(/\{\{agent\}\}/g,"our team").replace(/\{\{first\}\}/g,"there"); }
-document.querySelectorAll(".tab").forEach(b=>{
-  b.addEventListener("click",()=>{
-    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    b.classList.add("active");
-    $("#scriptBox").textContent = scriptText(b.dataset.k);
-  });
-});
-$("#scriptBox").textContent = scriptText("intro");
-
-/* ===================== Events ===================== */
-/* Header */
-$("#dialModeBtn").onclick = ()=>{
-  const cur = getDial();
-  const next = cur==="device" ? "textnow" : cur==="textnow" ? "gvoice" : "device";
-  setDial(next);
-  // refresh call/sms href for current buyer
-  if(bIdx>=0) renderBuyer(bIdx);
-};
-$("#buyersQueueJump").onclick = ()=> document.querySelector("#buyersCard")?.scrollIntoView({behavior:"smooth"});
-
-/* Left list */
-$("#clearFilter").onclick=()=>{ const s=$("#search"); if(s) s.value=""; filtered=[...dispo]; cur=filtered.length?0:-1; drawList(); };
-$("#search").addEventListener("input",()=>{
-  const q=$("#search").value.toLowerCase().trim();
-  filtered = dispo.filter(d=>{
-    const hay=[d.title,d.price,d.address||d.addr,d.notes,(d.shareLive?'live':'')].join(" ").toLowerCase();
-    return !q || hay.includes(q);
-  });
-  cur = filtered.length?0:-1; drawList();
-});
-
-/* Center queue */
-$("#qPrev").onclick = ()=> nextBuyer(-1);
-$("#qNext").onclick = ()=> nextBuyer(+1);
-$("#qaSkip").onclick = ()=> nextBuyer(+1);
-$("#copyBtn").onclick = ()=>{
-  const b=buyers[bIdx]; if(!b||!b.phone) return;
-  navigator.clipboard.writeText(digitize(b.phone)).then(()=>toast("Phone copied"));
-};
-$("#callBtn").onclick = ()=>{ const b=buyers[bIdx]; if(!b) return; logBuyerAction(b,"call_clicked",{dial:getDial()}); };
-$("#smsBtn").onclick  = ()=>{ const b=buyers[bIdx]; if(!b) return; logBuyerAction(b,"sms_clicked",{dial:getDial()}); };
-
-$("#saveNote").onclick = async ()=>{
-  const b=buyers[bIdx]; if(!b) return;
-  const txt = $("#bNotes").value||"";
-  await logBuyerAction(b,"note",{text:txt});
-  toast("Note saved");
-};
-
-$("#qaInterested").onclick = async ()=>{
-  const b=buyers[bIdx]; if(!b) return;
-  await logBuyerAction(b,"interested",{});
-  toast("Marked interested"); nextBuyer(+1);
-};
-$("#qaFollow").onclick = async ()=>{
-  const b=buyers[bIdx]; if(!b) return;
-  await logBuyerAction(b,"follow_up",{});
-  toast("Marked follow-up"); nextBuyer(+1);
-};
-$("#qaBad").onclick = async ()=>{
-  const b=buyers[bIdx]; if(!b) return;
-  await logBuyerAction(b,"bad_number",{});
-  toast("Marked bad number"); nextBuyer(+1);
-};
-$("#qaDnc").onclick = async ()=>{
-  const b=buyers[bIdx]; if(!b) return;
-  await logBuyerAction(b,"dnc",{});
-  toast("Marked DNC"); nextBuyer(+1);
-};
-
-/* Hotkeys */
-document.addEventListener("keydown",(e)=>{
-  if(document.activeElement && /input|textarea|select/i.test(document.activeElement.tagName)) return; // ignore while typing
-  if(e.key==="/"){ e.preventDefault(); $("#search")?.focus(); return; }
-  if(e.key.toLowerCase()==="n"){ e.preventDefault(); nextBuyer(+1); return; }
-  if(e.key.toLowerCase()==="s"){ e.preventDefault(); $("#saveNote").click(); return; }
-});
-
-/* Queue toggle flag */
-async function setQueueToggle(on){
-  await db.ref(queueFlagPath(myUid)).set(!!on);
-  $("#queueState").textContent = on ? "ON" : "OFF";
-  $("#queueToggle").classList.toggle("primary", !!on);
-}
-$("#queueToggle").onclick = async ()=>{
-  const cur = ($("#queueState").textContent||"").toUpperCase()==="ON";
-  await setQueueToggle(!cur);
-};
-
-/* ===================== Auth + Init ===================== */
-async function boot(){
-  setDial(getDial());
-
-  await new Promise(res=>{
-    auth.onAuthStateChanged(u=>{
-      myEmail=((u&&u.email)||"").toLowerCase();
-      if(!myUid && u) myUid=u.uid;
-      isGod = (myEmail===GOD_EMAIL);
-      document.querySelectorAll(".admin-only").forEach(el=>el.style.display = isGod?"":"none");
-      res();
-    });
-  });
-  if(!myUid){ alert("Sign in first"); return; }
-
-  // Queue flag
-  const qf = await db.ref(queueFlagPath(myUid)).get();
-  const qOn = !!(qf.val());
-  $("#queueState").textContent = qOn?"ON":"OFF";
-  $("#queueToggle").classList.toggle("primary", qOn);
-
-  // Dispo list (left)
-  dispo = await loadDispo(); filtered=[...dispo]; cur=filtered.length?0:-1; drawList();
-
-  // Buyers queue (center)
-  buyers = await loadBuyersQueue();
-  if(!buyers.length){
-    buyers = [
-      {id:"sample-1", name:"Sample Buyer", phone:"+1 (555) 010-2000", email:"buyer@example.com", company:"Example LLC", tags:["demo"], notes:"This is a demo record."}
-    ];
-  }
-  renderBuyer(0);
-}
-boot();
+  document.getElementById("year").textContent = new Date().getFullYear();
 </script>
 
-<script src="config.js"></script>
-<!-- DealBankers Firebase bootstrap (compat, token refresh) -->
+<!-- Load deal data and render -->
+<script src="scripts/dispo-deals.js"></script>
 <script>
-(function(){
-  try {
-    if (typeof firebase === 'undefined' || !firebase?.auth) {
-      console.warn('[DealBankers] Switching to compat SDK — ensure -compat scripts are included.');
-    }
-  } catch(e) {}
+  const dispoList = document.getElementById("dispo-list");
 
-  if (!window.firebase?.apps?.length) {
-    function initNow(){
-      try{ firebase.initializeApp(window.firebaseConfig); }catch(e){ console.error('[DealBankers] init error', e); }
-    }
-    if (window.firebaseConfig) {
-      initNow();
-    } else {
-      var tries=0, t=setInterval(function(){
-        if (window.firebaseConfig){ clearInterval(t); initNow(); }
-        if (++tries>50){ clearInterval(t); console.error('[DealBankers] Missing window.firebaseConfig after waiting.'); }
-      },100);
-    }
-    if (window.firebaseConfig) {
-      firebase.initializeApp(window.firebaseConfig);
-    } else {
-      console.error('[DealBankers] Missing window.firebaseConfig — set your firebaseConfig before this script.');
-    }
-  }
-
-  function refreshToken(){
-    var u = firebase.auth().currentUser;
-    if (u && u.getIdToken) {
-      u.getIdToken(true).catch(function(e){ console.warn('Token refresh error', e); });
-    }
-  }
-  firebase.auth().onAuthStateChanged(function(user){
-    if (user) refreshToken();
+  window.dispoDeals.forEach(deal => {
+    const imgPath = `images/deals/${deal.folder}/${deal.images[0]}`;
+    const card = document.createElement("div");
+    card.className = "deal-card";
+    card.innerHTML = `
+      <h2>${deal.address}</h2>
+      <img src="${imgPath}" alt="Deal Photo">
+      <p><strong>ARV:</strong> ${deal.arv}</p>
+      <p><strong>Estimated Repairs:</strong> ${deal.repairs}</p>
+      <p>${deal.notes}</p>
+      <p>
+        <a href="${deal.photos}" target="_blank">📸 View Google Photos</a>
+        <a href="https://facebook.com" target="_blank">📢 Post to Facebook</a>
+        <a href="https://craigslist.org" target="_blank">📢 Post to Craigslist</a>
+      </p>
+    `;
+    dispoList.appendChild(card);
   });
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) refreshToken();
-  });
-
-  window.db = firebase.database();
-  window.rtdbRef = function(path){ return window.db.ref(path); };
-})();
 </script>
+
 </body>
 </html>
