@@ -15,8 +15,7 @@
     body {
       font-family: "Orbitron", sans-serif;
       background: radial-gradient(circle at 30% 10%, #0b1523 0%, #050910 100%);
-      color: var(--text);
-      margin: 0; padding: 0;
+      color: var(--text); margin: 0; padding: 0;
     }
     header {
       display: flex; justify-content: space-between; align-items: center;
@@ -103,7 +102,7 @@
   © <span id="year"></span> DealBankers.com — Dispo Access for All
 </footer>
 
-<!-- Current year script -->
+<!-- Current year -->
 <script>
   document.getElementById("year").textContent = new Date().getFullYear();
 </script>
@@ -112,58 +111,62 @@
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js"></script>
 
-<!-- Firebase Config -->
-<script type="module">
-  import { firebaseConfig } from "./config.js";
-  const app = firebase.initializeApp(firebaseConfig);
-  const db = firebase.database();
+<!-- Firebase Config and Deal Fetch -->
+<script>
+  import('./config.js').then(({ firebaseConfig }) => {
+    const app = firebase.initializeApp(firebaseConfig);
+    const db = firebase.database();
 
-  const dispoList = document.getElementById("dispo-list");
+    const dispoList = document.getElementById("dispo-list");
 
-  function esc(s) {
-    return ('' + (s || '')).replace(/[&<>"']/g, m => ({
-      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-    }[m]));
-  }
-
-  function renderDeals(deals) {
-    if (!deals || deals.length === 0) {
-      dispoList.innerHTML = "<p>No deals available at this time.</p>";
-      return;
+    function esc(s) {
+      return ('' + (s || '')).replace(/[&<>"']/g, m => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[m]));
     }
 
-    dispoList.innerHTML = ""; // Clear existing
+    function renderDeals(deals) {
+      if (!deals || deals.length === 0) {
+        dispoList.innerHTML = "<p>No deals available at this time.</p>";
+        return;
+      }
 
-    deals.forEach(deal => {
-      const imgPath = `images/deals/${deal.folder || ''}/${deal.images?.[0] || 'placeholder.jpg'}`;
-      const card = document.createElement("div");
-      card.className = "deal-card";
-      card.innerHTML = `
-        <h2>${esc(deal.address)}</h2>
-        <img src="${imgPath}" alt="Deal Photo">
-        <p><strong>ARV:</strong> ${esc(deal.arv)}</p>
-        <p><strong>Estimated Repairs:</strong> ${esc(deal.repairs)}</p>
-        <p>${esc(deal.notes)}</p>
-        <p>
-          <a href="${deal.photos}" target="_blank">📸 View Google Photos</a>
-          <a href="https://facebook.com" target="_blank">📢 Post to Facebook</a>
-          <a href="https://craigslist.org" target="_blank">📢 Post to Craigslist</a>
-        </p>
-      `;
-      dispoList.appendChild(card);
-    });
-  }
+      dispoList.innerHTML = "";
 
-  function fetchDeals() {
-    const ref = db.ref("dispoDeals");
-    ref.on("value", snap => {
-      const data = snap.val();
-      const dealArray = Object.values(data || {});
-      renderDeals(dealArray);
-    });
-  }
+      deals.forEach(deal => {
+        const imgPath = `images/deals/${deal.folder || ''}/${deal.images?.[0] || 'placeholder.jpg'}`;
+        const card = document.createElement("div");
+        card.className = "deal-card";
+        card.innerHTML = `
+          <h2>${esc(deal.address)}</h2>
+          <img src="${imgPath}" alt="Deal Photo">
+          <p><strong>ARV:</strong> ${esc(deal.arv)}</p>
+          <p><strong>Estimated Repairs:</strong> ${esc(deal.repairs)}</p>
+          <p>${esc(deal.notes)}</p>
+          <p>
+            <a href="${deal.photos}" target="_blank">📸 View Google Photos</a>
+            <a href="https://facebook.com" target="_blank">📢 Post to Facebook</a>
+            <a href="https://craigslist.org" target="_blank">📢 Post to Craigslist</a>
+          </p>
+        `;
+        dispoList.appendChild(card);
+      });
+    }
 
-  fetchDeals();
+    function fetchDeals() {
+      const ref = db.ref("dispoDeals");
+      ref.on("value", snap => {
+        const data = snap.val();
+        const dealArray = Object.values(data || {});
+        renderDeals(dealArray);
+      });
+    }
+
+    fetchDeals();
+  }).catch(err => {
+    console.error("Failed to load config.js:", err);
+    document.getElementById("dispo-list").innerHTML = "<p>⚠️ Failed to load deals.</p>";
+  });
 </script>
 
 </body>
