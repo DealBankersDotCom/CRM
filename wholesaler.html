@@ -158,28 +158,12 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
     </div>
 
     <div class="body">
-      <!-- LEFT SIDE -->
+      <!-- ACQUISITION PANEL -->
       <div id="panel-acq">
         <div class="search">
           <input id="s_q" class="input" placeholder="Search address / owner" />
           <button class="chip small" id="s_reload">Search</button>
         </div>
-<!-- DISPO PANEL -->
-<div id="panel-dispo" style="display:none;">
-  <div class="search">
-    <input id="d_q" class="input" placeholder="Search dispo deals…" />
-    <button class="chip small" id="d_reload">Search</button>
-  </div>
-
-  <div class="table-wrap">
-    <table>
-      <thead>
-        <tr><th>Address</th><th>Status</th><th>ARV</th><th>Repairs</th><th>Actions</th></tr>
-      </thead>
-      <tbody id="dispoRows"></tbody>
-    </table>
-  </div>
-</div>
 
         <div class="table-wrap">
           <table>
@@ -191,7 +175,16 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
         </div>
       </div>
 
-      <!-- RIGHT SIDE -->
+      <!-- DISPOSITION PANEL via iframe -->
+      <div id="panel-dispo" style="display:none; height: 80vh;">
+        <iframe 
+          id="iframeDispo" 
+          src="dispo.html" 
+          style="width:100%; height:100%; border:none; border-radius:12px; background:#0b1825;">
+        </iframe>
+      </div>
+
+      <!-- DETAIL PANEL (always visible on right side) -->
       <div class="right-col" id="detailPanel">
         <div class="detail-header">
           <h3 id="detailTitle">No lead selected</h3>
@@ -216,6 +209,7 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 
 <div id="chatBubble">💬</div>
 
+
 <!-- Firebase -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -224,98 +218,120 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 <script src="app-auth.js"></script>
 
 <script>
-let UID=null, sellerList=[], sellerView=[], currentIndex=-1;
+let UID = null, sellerList = [], sellerView = [], currentIndex = -1;
 
-firebase.auth().onAuthStateChanged(u=>{
-  if(!u) return location.href='index.html';
-  UID=u.uid;
+firebase.auth().onAuthStateChanged(u => {
+  if (!u) return location.href = 'index.html';
+  UID = u.uid;
   subscribeLeads();
 });
 
-function subscribeLeads(){
-  firebase.database().ref('leads/sellers').on('value',snap=>{
-    const obj=snap.val()||{};
-    sellerList=Object.entries(obj).map(([id,v])=>({id,...v}));
+function subscribeLeads() {
+  firebase.database().ref('leads/sellers').on('value', snap => {
+    const obj = snap.val() || {};
+    sellerList = Object.entries(obj).map(([id, v]) => ({ id, ...v }));
     renderLeads();
   });
 }
 
-function renderLeads(){
-  const q=(s_q.value||'').toLowerCase();
-  sellerView=sellerList.filter(v=>
-    !q || (v.address||'').toLowerCase().includes(q) ||
-    (v.owner||'').toLowerCase().includes(q)
+function renderLeads() {
+  const q = (s_q.value || '').toLowerCase();
+  sellerView = sellerList.filter(v =>
+    !q || (v.address || '').toLowerCase().includes(q) ||
+    (v.owner || '').toLowerCase().includes(q)
   );
 
-  status.textContent='Acq: '+sellerView.length+' items';
-  const tbody=document.getElementById('sellerRows');
+  status.textContent = 'Acq: ' + sellerView.length + ' items';
+  const tbody = document.getElementById('sellerRows');
 
-  if(!sellerView.length){
-    tbody.innerHTML='<tr><td colspan="5" class="status">No leads found.</td></tr>';
+  if (!sellerView.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found.</td></tr>';
     updateDetail(null);
     return;
   }
 
-  tbody.innerHTML=sellerView.map((v,i)=>`
+  tbody.innerHTML = sellerView.map((v, i) => `
     <tr class="lead-row" data-idx="${i}">
-      <td>${v.address||''}</td>
-      <td>${v.owner||''}</td>
-      <td>${v.phone||''}</td>
-      <td>${v.status||'new'}</td>
-      <td>${v.notes||''}</td>
+      <td>${v.address || ''}</td>
+      <td>${v.owner || ''}</td>
+      <td>${v.phone || ''}</td>
+      <td>${v.status || 'new'}</td>
+      <td>${v.notes || ''}</td>
     </tr>`).join('');
 
-  tbody.querySelectorAll('tr.lead-row').forEach(r=>{
-    r.onclick=()=>{ currentIndex=parseInt(r.dataset.idx); updateDetail(sellerView[currentIndex]); };
+  tbody.querySelectorAll('tr.lead-row').forEach(r => {
+    r.onclick = () => {
+      currentIndex = parseInt(r.dataset.idx);
+      updateDetail(sellerView[currentIndex]);
+    };
   });
 }
 
-function updateDetail(lead){
-  if(!lead){
-    detailTitle.textContent='No lead selected';
-    detailSub.textContent='Select a lead to view information.';
-    detailInfo.style.display='none';
-    scriptBox.textContent='Select a lead to load script.';
-    mapWrap.style.display='none';
+function updateDetail(lead) {
+  if (!lead) {
+    detailTitle.textContent = 'No lead selected';
+    detailSub.textContent = 'Select a lead to view information.';
+    detailInfo.style.display = 'none';
+    scriptBox.textContent = 'Select a lead to load script.';
+    mapWrap.style.display = 'none';
     return;
   }
 
-  detailTitle.textContent=lead.owner||'Lead Details';
-  detailSub.textContent=lead.status||'new';
-  detailInfo.style.display='block';
+  detailTitle.textContent = lead.owner || 'Lead Details';
+  detailSub.textContent = lead.status || 'new';
+  detailInfo.style.display = 'block';
 
-  detailAddr.textContent=lead.address||'';
-  detailOwner.textContent=lead.owner||'';
-  detailPhone.textContent=lead.phone||'';
-  scriptBox.textContent=`Hi ${lead.owner || 'there'}, this is Bill
+  detailAddr.textContent = lead.address || '';
+  detailOwner.textContent = lead.owner || '';
+  detailPhone.textContent = lead.phone || '';
+  scriptBox.textContent = `Hi ${lead.owner || 'there'}, this is Bill
     regarding ${lead.address || 'your property'}. Are you the owner?`;
 
-  if(lead.address){
-    streetFrame.src='https://www.google.com/maps?q='+encodeURIComponent(lead.address)+'&output=embed';
-    mapWrap.style.display='block';
+  if (lead.address) {
+    streetFrame.src = 'https://www.google.com/maps?q=' + encodeURIComponent(lead.address) + '&output=embed';
+    mapWrap.style.display = 'block';
   }
 }
 
 /* Chat Bubble Navigation */
-chatBubble.onclick=()=>location.href='townhall.html?from=wholesaler';
+chatBubble.onclick = () => location.href = 'townhall.html?from=wholesaler';
 
 /* Search Button */
-document.getElementById('s_reload').onclick=()=>renderLeads();
+document.getElementById('s_reload').onclick = () => renderLeads();
 
 /* Settings Navigation */
-btnSettings.onclick=()=>location.href='settings.html';
+btnSettings.onclick = () => location.href = 'settings.html';
+
+/* Tab Toggle (Acq / Dispo) */
+document.getElementById('tabAcq').onclick = () => {
+  tabAcq.classList.add('active');
+  tabDispo.classList.remove('active');
+  document.getElementById('panel-acq').style.display = 'block';
+  document.getElementById('panel-dispo').style.display = 'none';
+  crumb.textContent = 'Acquisition';
+};
+
+document.getElementById('tabDispo').onclick = () => {
+  tabDispo.classList.add('active');
+  tabAcq.classList.remove('active');
+  document.getElementById('panel-acq').style.display = 'none';
+  document.getElementById('panel-dispo').style.display = 'block';
+  crumb.textContent = 'Dispo';
+};
 
 /* Presence Tracking */
-firebase.auth().onAuthStateChanged(u=>{
-  if(!u) return;
-  const uid=u.uid;
-  const userRef=firebase.database().ref(`/presence/${uid}`);
-  const connRef=firebase.database().ref('.info/connected');
+firebase.auth().onAuthStateChanged(u => {
+  if (!u) return;
+  const uid = u.uid;
+  const userRef = firebase.database().ref(`/presence/${uid}`);
+  const connRef = firebase.database().ref('.info/connected');
 
-  connRef.on('value',snap=>{
-    if(snap.val()===false) return;
-    userRef.onDisconnect().set({state:'offline',ts
-}); }); });
+  connRef.on('value', snap => {
+    if (snap.val() === false) return;
+    userRef.onDisconnect().set({ state: 'offline', ts: Date.now() });
+    userRef.set({ state: 'online', ts: Date.now() });
+  });
+});
 </script>
 
 </body>
