@@ -302,22 +302,31 @@ document.getElementById('s_reload').onclick = () => renderLeads();
 /* Settings Navigation */
 btnSettings.onclick = () => location.href = 'settings.html';
 
-/* Tab Toggle (Acq / Dispo) */
-document.getElementById('tabAcq').onclick = () => {
-  tabAcq.classList.add('active');
-  tabDispo.classList.remove('active');
-  document.getElementById('panel-acq').style.display = 'block';
-  document.getElementById('panel-dispo').style.display = 'none';
-  crumb.textContent = 'Acquisition';
-};
+/* Tab Toggle (Acq / Dispo) — fixed for safe DOM load */
+document.addEventListener('DOMContentLoaded', () => {
+  const tabAcq = document.getElementById('tabAcq');
+  const tabDispo = document.getElementById('tabDispo');
+  const panelAcq = document.getElementById('panel-acq');
+  const panelDispo = document.getElementById('panel-dispo');
+  const crumb = document.getElementById('crumb');
 
-document.getElementById('tabDispo').onclick = () => {
-  tabDispo.classList.add('active');
-  tabAcq.classList.remove('active');
-  document.getElementById('panel-acq').style.display = 'none';
-  document.getElementById('panel-dispo').style.display = 'block';
-  crumb.textContent = 'Dispo';
-};
+  tabAcq.onclick = () => {
+    tabAcq.classList.add('active');
+    tabDispo.classList.remove('active');
+    panelAcq.style.display = 'block';
+    panelDispo.style.display = 'none';
+    crumb.textContent = 'Acquisition';
+  };
+
+  tabDispo.onclick = () => {
+    tabDispo.classList.add('active');
+    tabAcq.classList.remove('active');
+    panelAcq.style.display = 'none';
+    panelDispo.style.display = 'block';
+    crumb.textContent = 'Dispo';
+  };
+});
+
 
 /* Presence Tracking */
 firebase.auth().onAuthStateChanged(u => {
