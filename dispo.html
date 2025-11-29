@@ -96,41 +96,74 @@
 
 <div class="container">
   <h1 style="color:var(--chrome);text-align:center;">📦 Wholesale Deals — Dispo</h1>
-  <div id="dispo-list"></div>
+  <div id="dispo-list">Loading deals...</div>
 </div>
 
 <footer>
   © <span id="year"></span> DealBankers.com — Dispo Access for All
 </footer>
 
-<!-- Script to show current year -->
+<!-- Current year script -->
 <script>
   document.getElementById("year").textContent = new Date().getFullYear();
 </script>
 
-<!-- Load deal data and render -->
-<script src="scripts/dispo-deals.js"></script>
-<script>
+<!-- Firebase SDKs -->
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js"></script>
+
+<!-- Firebase Config -->
+<script type="module">
+  import { firebaseConfig } from "./config.js";
+  const app = firebase.initializeApp(firebaseConfig);
+  const db = firebase.database();
+
   const dispoList = document.getElementById("dispo-list");
 
-  window.dispoDeals.forEach(deal => {
-    const imgPath = `images/deals/${deal.folder}/${deal.images[0]}`;
-    const card = document.createElement("div");
-    card.className = "deal-card";
-    card.innerHTML = `
-      <h2>${deal.address}</h2>
-      <img src="${imgPath}" alt="Deal Photo">
-      <p><strong>ARV:</strong> ${deal.arv}</p>
-      <p><strong>Estimated Repairs:</strong> ${deal.repairs}</p>
-      <p>${deal.notes}</p>
-      <p>
-        <a href="${deal.photos}" target="_blank">📸 View Google Photos</a>
-        <a href="https://facebook.com" target="_blank">📢 Post to Facebook</a>
-        <a href="https://craigslist.org" target="_blank">📢 Post to Craigslist</a>
-      </p>
-    `;
-    dispoList.appendChild(card);
-  });
+  function esc(s) {
+    return ('' + (s || '')).replace(/[&<>"']/g, m => ({
+      '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[m]));
+  }
+
+  function renderDeals(deals) {
+    if (!deals || deals.length === 0) {
+      dispoList.innerHTML = "<p>No deals available at this time.</p>";
+      return;
+    }
+
+    dispoList.innerHTML = ""; // Clear existing
+
+    deals.forEach(deal => {
+      const imgPath = `images/deals/${deal.folder || ''}/${deal.images?.[0] || 'placeholder.jpg'}`;
+      const card = document.createElement("div");
+      card.className = "deal-card";
+      card.innerHTML = `
+        <h2>${esc(deal.address)}</h2>
+        <img src="${imgPath}" alt="Deal Photo">
+        <p><strong>ARV:</strong> ${esc(deal.arv)}</p>
+        <p><strong>Estimated Repairs:</strong> ${esc(deal.repairs)}</p>
+        <p>${esc(deal.notes)}</p>
+        <p>
+          <a href="${deal.photos}" target="_blank">📸 View Google Photos</a>
+          <a href="https://facebook.com" target="_blank">📢 Post to Facebook</a>
+          <a href="https://craigslist.org" target="_blank">📢 Post to Craigslist</a>
+        </p>
+      `;
+      dispoList.appendChild(card);
+    });
+  }
+
+  function fetchDeals() {
+    const ref = db.ref("dispoDeals");
+    ref.on("value", snap => {
+      const data = snap.val();
+      const dealArray = Object.values(data || {});
+      renderDeals(dealArray);
+    });
+  }
+
+  fetchDeals();
 </script>
 
 </body>
