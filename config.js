@@ -1,5 +1,5 @@
-// config.js
-export const firebaseConfig = {
+// config.js (non-module version)
+window.firebaseConfig = {
   apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
   authDomain: "deal-bankers.firebaseapp.com",
   databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
