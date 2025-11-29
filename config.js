@@ -1,5 +1,5 @@
-// config.js — FOR BROWSER
-window.firebaseConfig = {
+// config.js
+export const firebaseConfig = {
   apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
   authDomain: "deal-bankers.firebaseapp.com",
   databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
@@ -9,5 +9,3 @@ window.firebaseConfig = {
   appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
   measurementId: "G-KTNXZM14F7"
 };
-
-firebase.initializeApp(window.firebaseConfig);
