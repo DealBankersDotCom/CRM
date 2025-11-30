@@ -11,14 +11,15 @@
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background: #0e0e0e;
+      background: #0b0f16;
       color: #f0f0f0;
     }
 
+    /* Header bar fixed at top */
     header {
       padding: 16px 24px;
-      background: #121212;
-      border-bottom: 1px solid #333;
+      background: #0e1522;
+      border-bottom: 1px solid #1e2a3a;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -28,26 +29,45 @@
       margin: 0;
       font-size: 1.4rem;
       letter-spacing: 1px;
-      color: #00cfff;
+      color: #00c9ff;
     }
 
-    .deal-container {
+    nav a {
+      color: #00c9ff;
+      text-decoration: none;
+      margin-right: 16px;
+      font-size: 0.9rem;
+    }
+
+    nav a:hover {
+      text-decoration: underline;
+      color: #4dd2ff;
+    }
+
+    /* Main container for deals with visible height */
+    #dealsContainer {
       padding: 20px;
+      min-height: calc(100vh - 80px);
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(320px,1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
       gap: 20px;
+      background: #0a121c;
+      overflow-y: auto;
+      border-top: 1px solid #132133;
     }
 
     .deal-card {
-      background: #171717;
+      background: #141d2b;
       border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0,0,0,0.65);
-      transition: transform 0.2s ease-in-out;
+      box-shadow: 0 4px 14px rgba(0,0,0,0.65);
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s;
+      border: 1px solid #1f2b3a;
     }
 
     .deal-card:hover {
-      transform: scale(1.02);
+      transform: scale(1.03);
+      box-shadow: 0 6px 18px rgba(0,0,0,0.8);
     }
 
     .deal-gallery img {
@@ -69,21 +89,21 @@
     }
 
     .deal-location {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin: 0 0 8px 0;
-      color: #bbb;
+      color: #a8b3c2;
     }
 
     .deal-price {
-      color: #00ff6a;
+      color: #00ff88;
       font-weight: 600;
       margin-bottom: 10px;
     }
 
     .deal-terms {
-      font-size: 0.9rem;
-      margin-bottom: 10px;
-      color: #ccc;
+      font-size: 0.85rem;
+      margin-bottom: 12px;
+      color: #c9d2e0;
     }
 
     .viewDealBtn {
@@ -95,26 +115,11 @@
       cursor: pointer;
       border-radius: 6px;
       font-size: 0.95rem;
+      transition: background 0.2s;
     }
 
     .viewDealBtn:hover {
       opacity: 0.9;
-    }
-
-    /* Floating chat bubble placeholder */
-    .chat-bubble {
-      position: fixed;
-      bottom: 22px;
-      right: 22px;
-      width: 60px;
-      height: 60px;
-      border-radius: 50%;
-      background: linear-gradient(45deg,#006aff,#00c9ff);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      box-shadow: 0 0 15px rgba(0,255,255,0.6);
     }
   </style>
 </head>
@@ -123,19 +128,15 @@
 <header>
   <h1>Live Deals Marketplace</h1>
   <nav>
-    <a href="overview.html" style="color:#00c9ff; text-decoration:none; margin-right:15px;">🏠 Overview</a>
-    <a href="wholesaler.html" style="color:#00c9ff; text-decoration:none; margin-right:15px;">Wholesaler</a>
-    <a href="investor.html" style="color:#00c9ff; text-decoration:none; margin-right:15px;">Investor</a>
-    <a href="contractor.html" style="color:#00c9ff; text-decoration:none; margin-right:15px;">Contractor</a>
-    <a href="realtor.html" style="color:#00c9ff; text-decoration:none;">Realtor</a>
+    <a href="overview.html">🏠 Overview</a>
+    <a href="wholesaler.html">Wholesaler</a>
+    <a href="investor.html">Investor</a>
+    <a href="contractor.html">Contractor</a>
+    <a href="realtor.html">Realtor</a>
   </nav>
 </header>
 
-<div id="dealsContainer" class="deal-container"></div>
-
-<div class="chat-bubble" title="Chat with Deal Banker">
-  💬
-</div>
+<div id="dealsContainer"></div>
 
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
@@ -160,7 +161,7 @@
   onValue(dealsRef, (snapshot) => {
     dealsContainer.innerHTML = '';
     if (!snapshot.exists()) {
-      dealsContainer.innerHTML = `<p>No active deals found.</p>`;
+      dealsContainer.innerHTML = `<p style="color:#ccc; padding:20px;">No active deals found.</p>`;
       return;
     }
 
@@ -168,7 +169,7 @@
       userSnap.forEach(dealSnap => {
         const deal = dealSnap.val();
         const photos = (deal.photos && Array.isArray(deal.photos)) ? deal.photos.slice(0,3) : [];
-        
+
         const card = document.createElement('div');
         card.classList.add('deal-card');
 
