@@ -7,94 +7,22 @@
   <title>DealBankers | Live Deals</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
   <style>
-    body {
-      margin: 0;
-      font-family: 'Inter', sans-serif;
-      background: #0e0e0e;
-      color: #f0f0f0;
-    }
-
-    header {
-      padding: 16px 24px;
-      background: #121212;
-      border-bottom: 1px solid #333;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-
-    header h1 {
-      margin: 0;
-      font-size: 1.4rem;
-      letter-spacing: 1px;
-      color: #00cfff;
-    }
-
-    .deal-container {
-      padding: 20px;
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-      gap: 20px;
-    }
-
-    .deal-card {
-      background: #171717;
-      border-radius: 14px;
-      overflow: hidden;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.65);
-      transition: transform 0.2s ease-in-out;
-    }
-
-    .deal-card:hover {
-      transform: scale(1.02);
-    }
-
-    .deal-gallery img {
-      width: 100%;
-      height: 200px;
-      object-fit: cover;
-      display: block;
-    }
-
-    .deal-details {
-      padding: 14px 18px;
-    }
-
-    .deal-title {
-      font-size: 1.1rem;
-      font-weight: 600;
-      margin-bottom: 6px;
-      color: #fff;
-    }
-
-    .deal-location {
-      font-size: 0.9rem;
-      margin-bottom: 8px;
-      color: #bbb;
-    }
-
-    .deal-price {
-      color: #00ff6a;
-      font-weight: 600;
-      margin-bottom: 10px;
-    }
-
-    .deal-terms {
-      font-size: 0.85rem;
-      color: #ccc;
-      margin-bottom: 10px;
-    }
-
-    .viewDealBtn {
-      width: 100%;
-      padding: 12px;
-      border: none;
-      background: linear-gradient(45deg, #006aff, #00c9ff);
-      color: #fff;
-      cursor: pointer;
-      border-radius: 6px;
-      font-size: 0.95rem;
-    }
+    body { margin: 0; font-family: 'Inter', sans-serif; background: #0e0e0e; color: #f0f0f0; }
+    header { padding: 16px 24px; background: #121212; border-bottom: 1px solid #333; display: flex; 
+             align-items: center; justify-content: space-between; }
+    header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; color: #00cfff; }
+    .deal-container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
+    .deal-card { background: #171717; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.65);
+                 transition: transform 0.2s ease-in-out; }
+    .deal-card:hover { transform: scale(1.02); }
+    .deal-gallery img { width: 100%; height: 200px; object-fit: cover; display: block; }
+    .deal-details { padding: 14px 18px; }
+    .deal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: #fff; }
+    .deal-location { font-size: 0.9rem; margin-bottom: 8px; color: #bbb; }
+    .deal-price { color: #00ff6a; font-weight: 600; margin-bottom: 10px; }
+    .deal-terms { font-size: 0.85rem; color: #ccc; margin-bottom: 10px; }
+    .viewDealBtn { width: 100%; padding: 12px; border: none; background: linear-gradient(45deg,#006aff,#00c9ff);
+                   color: #fff; cursor: pointer; border-radius: 6px; font-size: 0.95rem; }
   </style>
 </head>
 
@@ -115,14 +43,24 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
-    import { firebaseConfig } from "./config.js";
+
+    // 🔹 Inline Firebase config (no config.js dependency)
+    const firebaseConfig = {
+      apiKey: "AIzaSyAVIFYOURREALKEY",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.appspot.com",
+      messagingSenderId: "780517313588",
+      appId: "1:780517313588:web:d90506a4bc5b547c7bd2b1"
+    };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const dealsContainer = document.getElementById('dealsContainer');
 
-    // 🔥 FIXED PATH — YOUR REAL DATA LOCATION
-    const dealsRef = ref(db, 'live/deals');
+    // 🔥 Correct deal location in your RTDB
+    const dealsRef = ref(db, 'dispoDeals');
 
     onValue(dealsRef, (snapshot) => {
       dealsContainer.innerHTML = '';
@@ -132,37 +70,38 @@
         return;
       }
 
-      snapshot.forEach((dealSnap) => {
-        const deal = dealSnap.val();
-        if (deal.status !== 'active') return;
+      snapshot.forEach(uidSnap => {
+        uidSnap.forEach(dealSnap => {
+          const deal = dealSnap.val();
+          if (deal.status !== 'active') return;
 
-        // 🔹 Safe defaults
-        const dealData = {
-          title: deal.title || 'Untitled Deal',
-          location: deal.location || deal.address || 'Unknown Location',
-          price: deal.price ? `$${deal.price}` : 'Price Not Listed',
-          terms: deal.terms || '',
-          photos: Array.isArray(deal.photos) ? deal.photos.slice(0, 3) : [],
-          id: deal.id || dealSnap.key,
-          createdBy: deal.createdBy || '',
-        };
+          const dealData = {
+            title: deal.title || 'Untitled Deal',
+            location: deal.location || deal.address || 'Unknown Location',
+            price: deal.price ? `$${deal.price}` : 'Price Not Listed',
+            terms: deal.terms || '',
+            photos: Array.isArray(deal.photos) ? deal.photos.slice(0, 3) : [],
+            id: deal.id || dealSnap.key,
+            createdBy: deal.createdBy || ''
+          };
 
-        const card = document.createElement('div');
-        card.classList.add('deal-card');
-        card.innerHTML = `
-          <div class="deal-gallery">
-            ${dealData.photos.map(p => `<img src="${p}" alt="Deal Image"/>`).join('')}
-          </div>
-          <div class="deal-details">
-            <h2 class="deal-title">${dealData.title}</h2>
-            <p class="deal-location">${dealData.location}</p>
-            <p class="deal-price">${dealData.price}</p>
-            <p class="deal-terms">${dealData.terms}</p>
-            <button class="viewDealBtn" onclick="window.location.href='deal.html?id=${dealData.id}&uid=${dealData.createdBy}'">
-              View Full Deal
-            </button>
-          </div>`;
-        dealsContainer.appendChild(card);
+          const card = document.createElement('div');
+          card.classList.add('deal-card');
+          card.innerHTML = `
+            <div class="deal-gallery">
+              ${dealData.photos.map(p => `<img src="${p}" alt="Deal Image"/>`).join('')}
+            </div>
+            <div class="deal-details">
+              <h2 class="deal-title">${dealData.title}</h2>
+              <p class="deal-location">${dealData.location}</p>
+              <p class="deal-price">${dealData.price}</p>
+              <p class="deal-terms">${dealData.terms}</p>
+              <button class="viewDealBtn" onclick="window.location.href='deal.html?id=${dealData.id}&uid=${dealData.createdBy}'">
+                View Full Deal
+              </button>
+            </div>`;
+          dealsContainer.appendChild(card);
+        });
       });
     });
   </script>
