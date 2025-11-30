@@ -1,24 +1,24 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DealBankers | Active Deals</title>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DealBankers | Live Deals</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
 
   <style>
     body {
       margin: 0;
       font-family: 'Inter', sans-serif;
-      background: #0b0f16;
+      background: #0e0e0e;
       color: #f0f0f0;
     }
 
     header {
       padding: 16px 24px;
-      background: #0e1522;
-      border-bottom: 1px solid #1e2a3a;
+      background: #121212;
+      border-bottom: 1px solid #333;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -28,44 +28,26 @@
       margin: 0;
       font-size: 1.4rem;
       letter-spacing: 1px;
-      color: #00c9ff;
+      color: #00cfff;
     }
 
-    nav a {
-      color: #00c9ff;
-      text-decoration: none;
-      margin-right: 16px;
-      font-size: 0.9rem;
-    }
-
-    nav a:hover {
-      text-decoration: underline;
-      color: #4dd2ff;
-    }
-
-    #dealsContainer {
+    .deal-container {
       padding: 20px;
-      min-height: calc(100vh - 80px);
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(300px,1fr));
+      grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
       gap: 20px;
-      background: #0a121c;
-      overflow-y: auto;
-      border-top: 1px solid #132133;
     }
 
     .deal-card {
-      background: #141d2b;
+      background: #171717;
       border-radius: 14px;
       overflow: hidden;
-      box-shadow: 0 4px 14px rgba(0,0,0,0.65);
-      transition: transform 0.2s ease-in-out, box-shadow 0.2s;
-      border: 1px solid #1f2b3a;
+      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.65);
+      transition: transform 0.2s ease-in-out;
     }
 
     .deal-card:hover {
-      transform: scale(1.03);
-      box-shadow: 0 6px 18px rgba(0,0,0,0.8);
+      transform: scale(1.02);
     }
 
     .deal-gallery img {
@@ -82,112 +64,110 @@
     .deal-title {
       font-size: 1.1rem;
       font-weight: 600;
-      margin: 0 0 6px 0;
+      margin-bottom: 6px;
       color: #fff;
     }
 
     .deal-location {
-      font-size: 0.85rem;
-      margin: 0 0 8px 0;
-      color: #a8b3c2;
+      font-size: 0.9rem;
+      margin-bottom: 8px;
+      color: #bbb;
     }
 
     .deal-price {
-      color: #00ff88;
+      color: #00ff6a;
       font-weight: 600;
       margin-bottom: 10px;
     }
 
     .deal-terms {
       font-size: 0.85rem;
-      margin-bottom: 12px;
-      color: #c9d2e0;
+      color: #ccc;
+      margin-bottom: 10px;
     }
 
     .viewDealBtn {
       width: 100%;
       padding: 12px;
       border: none;
-      background: linear-gradient(45deg,#006aff,#00c9ff);
+      background: linear-gradient(45deg, #006aff, #00c9ff);
       color: #fff;
       cursor: pointer;
       border-radius: 6px;
       font-size: 0.95rem;
-      transition: background 0.2s;
-    }
-
-    .viewDealBtn:hover {
-      opacity: 0.9;
     }
   </style>
 </head>
+
 <body>
+  <header>
+    <h1>Live Deals Marketplace</h1>
+    <nav>
+      <a href="overview.html" style="color:#00c9ff; margin-right:15px;">🏠 Overview</a>
+      <a href="wholesaler.html" style="color:#00c9ff; margin-right:15px;">Wholesaler</a>
+      <a href="investor.html" style="color:#00c9ff; margin-right:15px;">Investor</a>
+      <a href="contractor.html" style="color:#00c9ff; margin-right:15px;">Contractor</a>
+      <a href="realtor.html" style="color:#00c9ff;">Realtor</a>
+    </nav>
+  </header>
 
-<header>
-  <h1>Live Deals Marketplace</h1>
-  <nav>
-    <a href="overview.html">🏠 Overview</a>
-    <a href="wholesaler.html">Wholesaler</a>
-    <a href="investor.html">Investor</a>
-    <a href="contractor.html">Contractor</a>
-    <a href="realtor.html">Realtor</a>
-  </nav>
-</header>
+  <div id="dealsContainer" class="deal-container"></div>
 
-<div id="dealsContainer"></div>
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
-  import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-database.js";
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "deal-bankers.firebaseapp.com",
+      databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.appspot.com",
+      messagingSenderId: "780517313588",
+      appId: "1:780517313588:web:d90506a4bc5b547c7bd2b1"
+    };
 
-  const firebaseConfig = {
-    apiKey: "YOUR_API_KEY",
-    authDomain: "deal-bankers.firebaseapp.com",
-    databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
-    projectId: "deal-bankers",
-    storageBucket: "deal-bankers.appspot.com",
-    messagingSenderId: "780517313588",
-    appId: "1:780517313588:web:d90506a4bc5b547c7bd2b1"
-  };
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+    const dealsContainer = document.getElementById('dealsContainer');
+    const dealsRef = ref(db, 'deals');
 
-  const app = initializeApp(firebaseConfig);
-  const db = getDatabase(app);
+    onValue(dealsRef, (snapshot) => {
+      dealsContainer.innerHTML = '';
 
-  const dealsContainer = document.getElementById('dealsContainer');
-  const dealsRef = ref(db, 'deals/');
+      if (!snapshot.exists()) {
+        dealsContainer.innerHTML = `<p style="padding:20px;">No active deals found.</p>`;
+        return;
+      }
 
-  onValue(dealsRef, (snapshot) => {
-    dealsContainer.innerHTML = '';
-    if (!snapshot.exists()) {
-      dealsContainer.innerHTML = `<p style="color:#ccc; padding:20px;">No active deals found.</p>`;
-      return;
-    }
+      snapshot.forEach(uidSnap => {
+        uidSnap.forEach(dealSnap => {
+          const deal = dealSnap.val();
+          if (deal.status !== 'active') return;
 
-    snapshot.forEach(userSnap => {
-      userSnap.forEach(dealSnap => {
-        const deal = dealSnap.val();
-        const photos = (deal.photos && Array.isArray(deal.photos)) ? deal.photos.slice(0,3) : [];
+          const photos = Array.isArray(deal.photos) ? deal.photos.slice(0, 3) : [];
 
-        const card = document.createElement('div');
-        card.classList.add('deal-card');
+          const card = document.createElement('div');
+          card.classList.add('deal-card');
 
-        card.innerHTML = `
-          <div class="deal-gallery">
-            ${photos.map(p => `<img src="${p}" alt="Deal Image" />`).join('')}
-          </div>
-          <div class="deal-details">
-            <h2 class="deal-title">${deal.title || 'Untitled Deal'}</h2>
-            <p class="deal-location">${deal.location || ''}</p>
-            <p class="deal-price">$${deal.price || 'N/A'}</p>
-            <p class="deal-terms">${deal.terms || ''}</p>
-            <button class="viewDealBtn" data-id="${deal.id}" data-uid="${deal.createdBy}">View Full Deal</button>
-          </div>
-        `;
-        dealsContainer.appendChild(card);
+          card.innerHTML = `
+            <div class="deal-gallery">
+              ${photos.map(p => `<img src="${p}" alt="Deal Image"/>`).join('')}
+            </div>
+            <div class="deal-details">
+              <h2 class="deal-title">${deal.title || 'Untitled Deal'}</h2>
+              <p class="deal-location">${deal.location || ''}</p>
+              <p class="deal-price">${deal.price ? '$' + deal.price : ''}</p>
+              <p class="deal-terms">${deal.terms || ''}</p>
+              <button class="viewDealBtn" onclick="window.location.href='deal.html?id=${deal.id}&uid=${deal.createdBy}'">
+                View Full Deal
+              </button>
+            </div>
+          `;
+          dealsContainer.appendChild(card);
+        });
       });
     });
-  });
-</script>
-
+  </script>
 </body>
 </html>
