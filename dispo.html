@@ -8,7 +8,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
   <style>
     body { margin: 0; font-family: 'Inter', sans-serif; background: #0e0e0e; color: #f0f0f0; }
-    header { padding: 16px 24px; background: #121212; border-bottom: 1px solid #333; display: flex; 
+    header { padding: 16px 24px; background: #121212; border-bottom: 1px solid #333; display: flex;
              align-items: center; justify-content: space-between; }
     header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; color: #00cfff; }
     .deal-container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
@@ -44,7 +44,7 @@
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
     import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-    // 🔹 Inline Firebase config (no config.js dependency)
+    // 🔹 Firebase connection (correct)
     const firebaseConfig = {
       apiKey: "AIzaSyAVIFYOURREALKEY",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -59,8 +59,9 @@
     const db = getDatabase(app);
     const dealsContainer = document.getElementById('dealsContainer');
 
-    // 🔥 Correct deal location in your RTDB
-    const dealsRef = ref(db, 'dispoDeals');
+    // ⛔ Old: const dealsRef = ref(db, 'dispoDeals');
+    // 🔥 Correct path:
+    const dealsRef = ref(db, 'deals');
 
     onValue(dealsRef, (snapshot) => {
       dealsContainer.innerHTML = '';
@@ -73,7 +74,7 @@
       snapshot.forEach(uidSnap => {
         uidSnap.forEach(dealSnap => {
           const deal = dealSnap.val();
-if (!deal.status || deal.status.toLowerCase() !== 'active') return;
+          if (!deal || !deal.status || deal.status.toLowerCase() !== 'active') return;
 
           const dealData = {
             title: deal.title || 'Untitled Deal',
@@ -81,15 +82,17 @@ if (!deal.status || deal.status.toLowerCase() !== 'active') return;
             price: deal.price ? `$${deal.price}` : 'Price Not Listed',
             terms: deal.terms || '',
             photos: Array.isArray(deal.photos) ? deal.photos.slice(0, 3) : [],
-            id: deal.id || dealSnap.key,
-            createdBy: deal.createdBy || ''
+            id: dealSnap.key,
+            createdBy: deal.createdBy || uidSnap.key
           };
 
           const card = document.createElement('div');
           card.classList.add('deal-card');
           card.innerHTML = `
             <div class="deal-gallery">
-              ${dealData.photos.map(p => `<img src="${p}" alt="Deal Image"/>`).join('')}
+              ${dealData.photos.length ?
+                dealData.photos.map(p => `<img src="${p}" alt="Deal Image"/>`).join('') :
+                `<img src="https://via.placeholder.com/400x200?text=No+Image" />`}
             </div>
             <div class="deal-details">
               <h2 class="deal-title">${dealData.title}</h2>
