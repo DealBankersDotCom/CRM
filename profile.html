@@ -137,7 +137,7 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { getDatabase, ref, get, set, push, onDisconnect, onValue, onChildAdded, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-// Init with Window Config (Matches your other files)
+// Initialize using Global Config
 const app = initializeApp(window.firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
@@ -145,6 +145,7 @@ const db = getDatabase(app);
 let currentUser = null;
 let currentChatTargetId = null;
 
+// Sound Effect
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
 /* =========================
@@ -162,7 +163,7 @@ onAuthStateChanged(auth, async (user) => {
   
   setPresence(user, userRole);
 
-  // GOD MODE TRIGGER
+  // GOD MODE CHECK (Email + Role)
   if (user.email === "dealbankers@gmail.com" || userRole === "god" || userRole === "admin") {
       initGodMode(user.uid);
   }
@@ -172,6 +173,7 @@ onAuthStateChanged(auth, async (user) => {
    PRESENCE TRACKING (ME)
 ========================= */
 function setPresence(user, userRole) {
+  // Store presence in GLOBAL node for Admin visibility
   const presRef = ref(db, `presence/global/${user.uid}`);
   const connectedRef = ref(db, ".info/connected");
 
@@ -193,7 +195,7 @@ function setPresence(user, userRole) {
 }
 
 /* =========================
-   GOD MODE: LOGIC
+   GOD MODE: RADAR LOGIC
 ========================= */
 function initGodMode(myUid) {
   console.log("⚡ God Mode Activated");
@@ -214,7 +216,7 @@ function initGodMode(myUid) {
     
     Object.keys(data).forEach((uid) => {
       const u = data[uid];
-      if (uid === myUid) return; 
+      if (uid === myUid) return; // Don't show myself
       
       if (u.state === "online") {
         const row = document.createElement("div");
@@ -224,9 +226,10 @@ function initGodMode(myUid) {
         row.onclick = () => openPrivateChat(uid, u.name);
         listDiv.appendChild(row);
 
+        // Alert if new
         if (!knownUsers.has(uid)) {
             knownUsers.add(uid);
-            pingSound.play().catch(e => {});
+            pingSound.play().catch(e => {}); 
             
             if (Notification.permission === "granted") {
                 new Notification("Deal Bankers Alert", { 
@@ -259,11 +262,11 @@ window.openPrivateChat = function(targetUid, name) {
     modal.style.display = "flex";
     msgContainer.innerHTML = ""; 
 
-    // Chat ID: Sort UIDs for unique conversation ID
+    // Create Chat ID (Sort UIDs so it's always unique pair)
     const chatId = [currentUser.uid, targetUid].sort().join("_");
     const chatRef = ref(db, `direct_messages/${chatId}`);
 
-    // Simple listener for new messages
+    // Listen for messages
     onChildAdded(chatRef, (snapshot) => {
         renderMessage(snapshot.val());
     });
@@ -307,7 +310,7 @@ document.getElementById("closePcBtn").onclick = () => {
 };
 
 /* =========================
-   STANDARD BUTTON HANDLERS
+   BUTTON HANDLERS
 ========================= */
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   try {
@@ -319,7 +322,6 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 });
 
 document.getElementById("chatBubble").onclick = () => {
-  // Simple redirect to townhall section of index (or townhall.html if you separate it)
   window.location.href = "index.html#townhall"; 
 };
 </script>
