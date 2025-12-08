@@ -33,55 +33,63 @@ body {
 .plink{padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:14px;
   text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer}
 
-/* Floating Chat Bubble (Townhall) */
+/* Floating Chat Bubble */
 #chatBubble {
   position:fixed;bottom:24px;right:24px;width:54px;height:54px;
   border-radius:50%;background:#133e6a;color:white;border:2px solid var(--accent);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   box-shadow:0 0 15px rgba(0,138,255,.6);
-  z-index: 99;
+  z-index: 200; /* Highest */
+  transition: transform 0.2s;
 }
+#chatBubble:hover { transform: scale(1.1); }
 
-/* --- ADMIN PANELS (GOD MODE) --- */
+/* --- ADMIN RADAR PANEL --- */
 #adminPresencePanel {
-  position:fixed; bottom:100px; right:24px;
+  position:fixed; bottom:90px; right:24px;
   background:#0e2231; padding:15px; border-radius:12px;
   border: 1px solid var(--accent);
   box-shadow:0 0 20px rgba(0,0,0,0.6); 
-  display:none; color:white;
+  display:none; /* Hidden by default, toggled by bubble */
+  color:white;
   min-width:260px; font-size:14px;
   max-height: 400px; overflow-y: auto;
-  z-index: 100;
+  z-index: 150;
 }
 .user-row {
   padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;
+  display:flex; justify-content:space-between; align-items:center;
 }
 .user-row:hover { background: rgba(43, 116, 255, 0.2); }
-.user-row strong { color: #00ff6a; } /* Green for online */
+.user-row strong { color: #00ff6a; } 
 
-/* Private Chat Modal */
-#privateChatModal {
-  display:none; position:fixed; bottom:20px; right:340px; 
+/* --- UNIFIED CHAT WINDOW --- */
+#chatModal {
+  display:none; position:fixed; bottom:90px; right:300px; /* Positioned to left of radar */
   width:320px; height:400px; background:#142838; 
   border:1px solid var(--accent); border-radius:12px 12px 0 0; 
-  z-index:10000; box-shadow: 0 0 25px rgba(0,0,0,0.8); 
+  z-index:160; box-shadow: 0 0 25px rgba(0,0,0,0.8); 
   flex-direction:column;
 }
-#pcHeader {
+@media (max-width: 600px) {
+    #chatModal { right: 20px; bottom: 90px; width: auto; left: 20px; }
+}
+
+#chatHeader {
   padding:10px; background:#0b131b; border-bottom:1px solid #254a63; 
   display:flex; justify-content:space-between; align-items:center; border-radius: 12px 12px 0 0;
 }
-#pcMessages {
+#chatMessages {
   flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;
   background: rgba(0,0,0,0.2);
 }
-.pc-msg {
+.chat-msg {
   padding:8px 12px; border-radius:12px; max-width:85%; font-size: 0.9rem; word-wrap: break-word;
 }
-.pc-me { align-self: flex-end; background: var(--accent); color: white; }
-.pc-them { align-self: flex-start; background: #254a63; color: #ccc; }
+.msg-me { align-self: flex-end; background: var(--accent); color: white; }
+.msg-them { align-self: flex-start; background: #254a63; color: #ccc; }
 
-#pcInputArea {
+#chatInputArea {
   padding:10px; border-top:1px solid #254a63; display:flex; background:#0b131b;
 }
 </style>
@@ -118,15 +126,15 @@ body {
   <div id="onlineUsers">Scanning...</div>
 </div>
 
-<div id="privateChatModal">
-  <div id="pcHeader">
-    <span id="chatTargetName" style="font-weight:bold; color:#fff;">User</span>
-    <button id="closePcBtn" style="background:none; border:none; color:#ff5555; cursor:pointer; font-weight:bold;">✕</button>
+<div id="chatModal">
+  <div id="chatHeader">
+    <span id="chatTitle" style="font-weight:bold; color:#fff;">Townhall</span>
+    <button id="closeChatBtn" style="background:none; border:none; color:#ff5555; cursor:pointer; font-weight:bold;">✕</button>
   </div>
-  <div id="pcMessages"></div>
-  <div id="pcInputArea">
-    <input id="pcInput" type="text" placeholder="Message..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#1e2c3a; color:#fff;">
-    <button id="pcSendBtn" style="margin-left:5px; padding:0 12px; background:var(--accent); color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
+  <div id="chatMessages"></div>
+  <div id="chatInputArea">
+    <input id="chatInput" type="text" placeholder="Message..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#1e2c3a; color:#fff;">
+    <button id="chatSendBtn" style="margin-left:5px; padding:0 12px; background:var(--accent); color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
   </div>
 </div>
 
@@ -137,19 +145,19 @@ import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/fireba
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 import { getDatabase, ref, get, set, push, onDisconnect, onValue, onChildAdded, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-// Initialize using Global Config
 const app = initializeApp(window.firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
 
 let currentUser = null;
-let currentChatTargetId = null;
+let myRole = 'user';
+let activeChatPath = null; // Stores current firebase path (Townhall or DM)
+let activeChatListener = null;
 
-// Sound Effect
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
 /* =========================
-   AUTH + ROLE DETECTION
+   AUTH + INIT
 ========================= */
 onAuthStateChanged(auth, async (user) => {
   if (!user) {
@@ -159,52 +167,37 @@ onAuthStateChanged(auth, async (user) => {
   currentUser = user;
 
   const roleSnap = await get(ref(db, `roles/${user.uid}`));
-  const userRole = roleSnap.exists() ? roleSnap.val() : "user";
+  myRole = roleSnap.exists() ? roleSnap.val() : "user";
   
-  setPresence(user, userRole);
+  setPresence(user, myRole);
 
-  // GOD MODE CHECK (Email + Role)
-  if (user.email === "dealbankers@gmail.com" || userRole === "god" || userRole === "admin") {
-      initGodMode(user.uid);
+  // If Admin, start the Radar background scanner
+  if (isGod()) {
+      startRadarScanner(user.uid);
   }
 });
 
-/* =========================
-   PRESENCE TRACKING (ME)
-========================= */
-function setPresence(user, userRole) {
-  // Store presence in GLOBAL node for Admin visibility
-  const presRef = ref(db, `presence/global/${user.uid}`);
-  const connectedRef = ref(db, ".info/connected");
+function isGod() { return (myRole === 'god' || myRole === 'admin' || currentUser.email === "dealbankers@gmail.com"); }
 
-  onValue(connectedRef, (snap) => {
-    if (snap.val() === true) {
-        onDisconnect(presRef).set({
-            state: "offline",
-            lastOnline: serverTimestamp(),
-        });
-        set(presRef, {
-            state: "online",
-            name: user.displayName || user.email,
-            email: user.email,
-            role: userRole,
-            ts: serverTimestamp(),
-        });
+/* =========================
+   BUTTON LOGIC (THE FIX)
+========================= */
+document.getElementById("chatBubble").onclick = () => {
+    if (isGod()) {
+        // ADMIN: Toggle the Radar Panel
+        const panel = document.getElementById("adminPresencePanel");
+        panel.style.display = (panel.style.display === 'block') ? 'none' : 'block';
+    } else {
+        // USER: Open Townhall Chat directly
+        openChat('townhall/messages', '🔵 Townhall');
     }
-  });
-}
+};
 
 /* =========================
-   GOD MODE: RADAR LOGIC
+   GOD MODE: RADAR
 ========================= */
-function initGodMode(myUid) {
-  console.log("⚡ God Mode Activated");
-  
-  if (Notification.permission !== "granted" && Notification.permission !== "denied") {
-    Notification.requestPermission();
-  }
-
-  document.getElementById("adminPresencePanel").style.display = "block";
+function startRadarScanner(myUid) {
+  if (Notification.permission !== "granted") Notification.requestPermission();
 
   const presRef = ref(db, "presence/global");
   const knownUsers = new Set(); 
@@ -216,26 +209,30 @@ function initGodMode(myUid) {
     
     Object.keys(data).forEach((uid) => {
       const u = data[uid];
-      if (uid === myUid) return; // Don't show myself
+      if (uid === myUid) return; 
       
       if (u.state === "online") {
         const row = document.createElement("div");
         row.className = "user-row";
-        row.innerHTML = `<div><strong>● ${u.name}</strong></div><div style='font-size:0.8em;color:#88a5bf'>${u.email}</div>`;
+        // Show Page they are on if available
+        const loc = u.page ? `(${u.page})` : '';
+        row.innerHTML = `
+            <div><strong>● ${u.name}</strong> <small style='color:#ccc'>${loc}</small></div>
+            <div style='font-size:1.2em'>💬</div>`;
         
-        row.onclick = () => openPrivateChat(uid, u.name);
+        // CLICK USER -> OPEN PRIVATE CHAT
+        row.onclick = () => {
+            const chatId = [currentUser.uid, uid].sort().join("_");
+            openChat(`direct_messages/${chatId}`, u.name);
+        };
         listDiv.appendChild(row);
 
-        // Alert if new
+        // Alert
         if (!knownUsers.has(uid)) {
             knownUsers.add(uid);
             pingSound.play().catch(e => {}); 
-            
             if (Notification.permission === "granted") {
-                new Notification("Deal Bankers Alert", { 
-                    body: `${u.name} is Online`,
-                    icon: "icon (1).jpg"
-                });
+                new Notification("Deal Bankers", { body: `${u.name} is Online`, icon: "icon (1).jpg" });
             }
         }
       } else {
@@ -243,30 +240,26 @@ function initGodMode(myUid) {
       }
     });
 
-    if (listDiv.innerHTML === "") {
-        listDiv.innerHTML = "<div style='padding:10px;color:#666'>No users online.</div>";
-    }
+    if (listDiv.innerHTML === "") listDiv.innerHTML = "<div style='padding:10px;color:#666'>No users online.</div>";
   });
 }
 
 /* =========================
-   PRIVATE CHAT SYSTEM
+   UNIFIED CHAT SYSTEM
 ========================= */
-window.openPrivateChat = function(targetUid, name) {
-    const modal = document.getElementById("privateChatModal");
-    const title = document.getElementById("chatTargetName");
-    const msgContainer = document.getElementById("pcMessages");
+window.openChat = function(dbPath, title) {
+    const modal = document.getElementById("chatModal");
+    const titleEl = document.getElementById("chatTitle");
+    const msgContainer = document.getElementById("chatMessages");
 
-    currentChatTargetId = targetUid;
-    title.innerText = name;
+    activeChatPath = dbPath;
+    titleEl.innerText = title;
     modal.style.display = "flex";
     msgContainer.innerHTML = ""; 
 
-    // Create Chat ID (Sort UIDs so it's always unique pair)
-    const chatId = [currentUser.uid, targetUid].sort().join("_");
-    const chatRef = ref(db, `direct_messages/${chatId}`);
-
-    // Listen for messages
+    // Listen to messages
+    const chatRef = ref(db, dbPath);
+    // Note: In production, detach old listener if switching. For now, we just attach new.
     onChildAdded(chatRef, (snapshot) => {
         renderMessage(snapshot.val());
     });
@@ -274,28 +267,35 @@ window.openPrivateChat = function(targetUid, name) {
 
 function renderMessage(msg) {
     const div = document.createElement("div");
-    div.className = "pc-msg " + (msg.sender === currentUser.uid ? "pc-me" : "pc-them");
-    div.innerText = msg.text;
-    const container = document.getElementById("pcMessages");
+    // Check sender: if it's me OR if it matches my UID (handle both Townhall & DM formats)
+    const isMe = (msg.uid === currentUser.uid || msg.sender === currentUser.uid);
+    
+    div.className = "chat-msg " + (isMe ? "msg-me" : "msg-them");
+    
+    // Format: Name: Message
+    const name = msg.name ? `<strong>${msg.name}</strong><br>` : '';
+    div.innerHTML = `${name}${msg.text}`;
+    
+    const container = document.getElementById("chatMessages");
     container.appendChild(div);
     container.scrollTop = container.scrollHeight; 
 }
 
-document.getElementById("pcSendBtn").onclick = sendMessage;
-document.getElementById("pcInput").addEventListener("keypress", (e) => {
+// Send Logic
+document.getElementById("chatSendBtn").onclick = sendMessage;
+document.getElementById("chatInput").addEventListener("keypress", (e) => {
     if (e.key === "Enter") sendMessage();
 });
 
 function sendMessage() {
-    const input = document.getElementById("pcInput");
+    const input = document.getElementById("chatInput");
     const text = input.value.trim();
-    if (!text || !currentChatTargetId) return;
+    if (!text || !activeChatPath) return;
 
-    const chatId = [currentUser.uid, currentChatTargetId].sort().join("_");
-    const chatRef = ref(db, `direct_messages/${chatId}`);
-
-    push(chatRef, {
-        sender: currentUser.uid,
+    push(ref(db, activeChatPath), {
+        sender: currentUser.uid, // For DM
+        uid: currentUser.uid,    // For Townhall compatibility
+        name: currentUser.displayName || currentUser.email,
         text: text,
         ts: serverTimestamp()
     });
@@ -304,26 +304,36 @@ function sendMessage() {
     input.focus();
 }
 
-document.getElementById("closePcBtn").onclick = () => {
-    document.getElementById("privateChatModal").style.display = "none";
-    currentChatTargetId = null;
+document.getElementById("closeChatBtn").onclick = () => {
+    document.getElementById("chatModal").style.display = "none";
+    activeChatPath = null;
 };
 
 /* =========================
-   BUTTON HANDLERS
+   PRESENCE & LOGOUT
 ========================= */
-document.getElementById("logoutBtn").addEventListener("click", async () => {
-  try {
-    await signOut(auth);
-    window.location.href = "index.html";
-  } catch (error) {
-    console.error("Logout failed:", error);
-  }
-});
+function setPresence(user, userRole) {
+  const presRef = ref(db, `presence/global/${user.uid}`);
+  const connectedRef = ref(db, ".info/connected");
+  onValue(connectedRef, (snap) => {
+    if (snap.val() === true) {
+        onDisconnect(presRef).set({ state: "offline", lastOnline: serverTimestamp() });
+        set(presRef, {
+            state: "online",
+            name: user.displayName || user.email,
+            email: user.email,
+            role: userRole,
+            ts: serverTimestamp(),
+            page: "Dashboard"
+        });
+    }
+  });
+}
 
-document.getElementById("chatBubble").onclick = () => {
-  window.location.href = "index.html#townhall"; 
-};
+document.getElementById("logoutBtn").addEventListener("click", async () => {
+  try { await signOut(auth); window.location.href = "index.html"; } 
+  catch (error) { console.error(error); }
+});
 </script>
 
 </body>
