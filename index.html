@@ -182,7 +182,7 @@
   const authStatus = document.getElementById("authStatus");
   const googleBtn = document.getElementById("googleBtn");
 
-  // --- FIXED TYPO HERE (Removed the bad quotes) ---
+  // --- FIXED TYPO (Removed bad quotes) ---
   function esc(s){ 
       return (''+(s||'')).replace(/[&<>"']/g, function(m) { 
           return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m]; 
@@ -225,11 +225,8 @@
     window.location.href = "profile.html";
   };
 
-  /* =========================================
-     PRESENCE TRACKING (Active & Correct)
-  ========================================= */
+  // --- PRESENCE TRACKING (Hidden) ---
   async function setPresence(user) {
-    // 1. Check Role first
     const roleSnap = await get(ref(db, `roles/${user.uid}`));
     const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
@@ -238,12 +235,7 @@
 
     onValue(connectedRef, (snap) => {
       if (snap.val() === true) {
-        // If we disconnect, go offline
-        onDisconnect(presRef).set({
-            state: "offline",
-            lastOnline: serverTimestamp(),
-        });
-        // We are here! Broadcast to God Mode
+        onDisconnect(presRef).set({ state: "offline", lastOnline: serverTimestamp() });
         set(presRef, {
             state: "online",
             name: user.displayName || user.email,
@@ -260,15 +252,13 @@
     if(user){
       authStatus.innerHTML = `Signed in as ${user.displayName||user.email} <a id='logout' style='color:#2b74ff;cursor:pointer;margin-left:6px;'>Sign out</a>`;
       msgInput.disabled = false; sendBtn.disabled = false;
-      
       attachChat();
-      setPresence(user); // TRACKING ON
-
+      setPresence(user); 
       document.getElementById("logout").onclick = () => signOut(auth);
     } else {
       authStatus.textContent = "Signed out";
       msgInput.disabled = true; sendBtn.disabled = true;
-      attachChat(); // read-only
+      attachChat(); 
     }
   });
 </script>
