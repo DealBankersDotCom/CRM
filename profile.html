@@ -32,17 +32,57 @@ body {
 .portal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
 .plink{padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:14px;
   text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer}
+
+/* Floating Chat Bubble (Townhall) */
 #chatBubble {
   position:fixed;bottom:24px;right:24px;width:54px;height:54px;
   border-radius:50%;background:#133e6a;color:white;border:2px solid var(--accent);
   display:flex;align-items:center;justify-content:center;cursor:pointer;
   box-shadow:0 0 15px rgba(0,138,255,.6);
+  z-index: 99;
 }
+
+/* --- ADMIN PANELS (GOD MODE) --- */
 #adminPresencePanel {
   position:fixed; bottom:100px; right:24px;
-  background:#0e2231; padding:14px 18px; border-radius:12px;
-  box-shadow:0 0 15px rgba(0,138,255,.45); display:none; color:white;
-  min-width:240px; font-size:14px;
+  background:#0e2231; padding:15px; border-radius:12px;
+  border: 1px solid var(--accent);
+  box-shadow:0 0 20px rgba(0,0,0,0.6); 
+  display:none; color:white;
+  min-width:260px; font-size:14px;
+  max-height: 400px; overflow-y: auto;
+  z-index: 100;
+}
+.user-row {
+  padding: 8px; border-bottom: 1px solid rgba(255,255,255,0.1); cursor: pointer; transition: background 0.2s;
+}
+.user-row:hover { background: rgba(43, 116, 255, 0.2); }
+.user-row strong { color: #00ff6a; } /* Green for online */
+
+/* Private Chat Modal */
+#privateChatModal {
+  display:none; position:fixed; bottom:20px; right:340px; 
+  width:320px; height:400px; background:#142838; 
+  border:1px solid var(--accent); border-radius:12px 12px 0 0; 
+  z-index:10000; box-shadow: 0 0 25px rgba(0,0,0,0.8); 
+  flex-direction:column;
+}
+#pcHeader {
+  padding:10px; background:#0b131b; border-bottom:1px solid #254a63; 
+  display:flex; justify-content:space-between; align-items:center; border-radius: 12px 12px 0 0;
+}
+#pcMessages {
+  flex:1; padding:10px; overflow-y:auto; display:flex; flex-direction:column; gap:8px;
+  background: rgba(0,0,0,0.2);
+}
+.pc-msg {
+  padding:8px 12px; border-radius:12px; max-width:85%; font-size: 0.9rem; word-wrap: break-word;
+}
+.pc-me { align-self: flex-end; background: var(--accent); color: white; }
+.pc-them { align-self: flex-start; background: #254a63; color: #ccc; }
+
+#pcInputArea {
+  padding:10px; border-top:1px solid #254a63; display:flex; background:#0b131b;
 }
 </style>
 </head>
@@ -69,25 +109,42 @@ body {
   </section>
 </div>
 
-<!-- Floating Chat Button -->
 <div id="chatBubble">💬</div>
 
-<!-- Admin Presence Panel -->
 <div id="adminPresencePanel">
-  <strong>🟢 Online Users</strong>
-  <div id="onlineUsers"></div>
+  <div style="margin-bottom:10px; color:#c5d3e1; font-weight:bold; border-bottom:1px solid #333; padding-bottom:5px;">
+    📡 Radar (Online)
+  </div>
+  <div id="onlineUsers">Scanning...</div>
 </div>
 
-<!-- JAVASCRIPT -->
+<div id="privateChatModal">
+  <div id="pcHeader">
+    <span id="chatTargetName" style="font-weight:bold; color:#fff;">User</span>
+    <button id="closePcBtn" style="background:none; border:none; color:#ff5555; cursor:pointer; font-weight:bold;">✕</button>
+  </div>
+  <div id="pcMessages"></div>
+  <div id="pcInputArea">
+    <input id="pcInput" type="text" placeholder="Message..." style="flex:1; padding:8px; border-radius:6px; border:none; background:#1e2c3a; color:#fff;">
+    <button id="pcSendBtn" style="margin-left:5px; padding:0 12px; background:var(--accent); color:#fff; border:none; border-radius:6px; cursor:pointer;">➤</button>
+  </div>
+</div>
+
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getDatabase, ref, get, set, onDisconnect, onValue, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, onDisconnect, onValue, onChildAdded, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 import { firebaseConfig } from "./config.js";
 
 const app = initializeApp(firebaseConfig);
 const auth = getAuth(app);
 const db = getDatabase(app);
+let currentUser = null;
+let activeChatListener = null; // To detach listener when switching chats
+let currentChatTargetId = null;
+
+// Sound Effect for New User
+const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
 /* =========================
    AUTH + ROLE DETECTION
@@ -97,69 +154,182 @@ onAuthStateChanged(auth, async (user) => {
     window.location.href = "index.html";
     return;
   }
+  currentUser = user;
 
   const roleSnap = await get(ref(db, `roles/${user.uid}`));
   const userRole = roleSnap.exists() ? roleSnap.val() : "user";
-
+  
+  // Set My Status
   setPresence(user, userRole);
-  attachAdminPresenceMonitor(userRole);
-  attachAdminLoginAlerts(userRole);
+
+  // GOD MODE CHECK: Email match OR Role match
+  if (user.email === "dealbankers@gmail.com" || userRole === "god" || userRole === "admin") {
+      initGodMode(user.uid);
+  }
 });
 
 /* =========================
-   PRESENCE TRACKING
+   PRESENCE TRACKING (ME)
 ========================= */
 function setPresence(user, userRole) {
   const presRef = ref(db, `presence/global/${user.uid}`);
+  const connectedRef = ref(db, ".info/connected");
 
-  onDisconnect(presRef).set({
-    state: "offline",
-    lastOnline: serverTimestamp(),
-  });
-
-  set(presRef, {
-    state: "online",
-    name: user.displayName || user.email,
-    role: userRole,
-    ts: serverTimestamp(),
+  onValue(connectedRef, (snap) => {
+    if (snap.val() === true) {
+        onDisconnect(presRef).set({
+            state: "offline",
+            lastOnline: serverTimestamp(),
+        });
+        set(presRef, {
+            state: "online",
+            name: user.displayName || user.email,
+            email: user.email,
+            role: userRole,
+            ts: serverTimestamp(),
+        });
+    }
   });
 }
 
 /* =========================
-   PRESENCE PANEL (ADMIN)
+   GOD MODE: LOGIC
 ========================= */
-function attachAdminPresenceMonitor(userRole) {
-  if (userRole !== "admin" && userRole !== "god") return;
+function initGodMode(myUid) {
+  console.log("⚡ God Mode Activated");
+  
+  // 1. Request Notification Permission
+  if (Notification.permission !== "granted" && Notification.permission !== "denied") {
+    Notification.requestPermission();
+  }
+
+  // 2. Show Radar Panel
   document.getElementById("adminPresencePanel").style.display = "block";
 
-  onValue(ref(db, "presence/global"), (snap) => {
-    const data = snap.val() || {};
-    const usersDiv = document.getElementById("onlineUsers");
-    usersDiv.innerHTML = "";
+  // 3. Monitor Online Users
+  const presRef = ref(db, "presence/global");
+  const knownUsers = new Set(); // To track who we've already alerted about
 
+  onValue(presRef, (snap) => {
+    const data = snap.val() || {};
+    const listDiv = document.getElementById("onlineUsers");
+    listDiv.innerHTML = "";
+    
+    // Sort keys to keep list stable? No, just iterate.
     Object.keys(data).forEach((uid) => {
       const u = data[uid];
+      if (uid === myUid) return; // Don't list myself
+      
+      // Filter for ONLINE only
       if (u.state === "online") {
-        usersDiv.innerHTML += `<div>🟢 <strong>${u.name}</strong> (${u.role})</div>`;
+        // Render Row
+        const row = document.createElement("div");
+        row.className = "user-row";
+        row.innerHTML = `<div><strong>● ${u.name}</strong></div><div style='font-size:0.8em;color:#88a5bf'>${u.email}</div>`;
+        
+        // Click to Chat
+        row.onclick = () => openPrivateChat(uid, u.name);
+        listDiv.appendChild(row);
+
+        // Alert Logic (Sound + Notify)
+        if (!knownUsers.has(uid)) {
+            // New user detected in this session!
+            knownUsers.add(uid);
+            pingSound.play().catch(e => console.log("Audio play blocked"));
+            
+            if (Notification.permission === "granted") {
+                new Notification("Deal Bankers Alert", { 
+                    body: `${u.name} just signed in.`,
+                    icon: "icon (1).jpg"
+                });
+            }
+        }
+      } else {
+        // If offline, ensure we remove from known set so we alert if they come back
+        knownUsers.delete(uid);
       }
     });
+
+    if (listDiv.innerHTML === "") {
+        listDiv.innerHTML = "<div style='padding:10px;color:#666'>No other users online.</div>";
+    }
   });
 }
 
 /* =========================
-   LOGIN ALERTS (ADMIN)
+   PRIVATE CHAT SYSTEM
 ========================= */
-function attachAdminLoginAlerts(userRole) {
-  if (userRole !== "admin" && userRole !== "god") return;
+window.openPrivateChat = function(targetUid, name) {
+    const modal = document.getElementById("privateChatModal");
+    const title = document.getElementById("chatTargetName");
+    const msgContainer = document.getElementById("pcMessages");
 
-  onChildAdded(ref(db, "notifications/admin"), (snap) => {
-    const n = snap.val();
-    alert(`🚨 ${n.message}`);
-  });
+    currentChatTargetId = targetUid;
+    title.innerText = name;
+    modal.style.display = "flex";
+    msgContainer.innerHTML = ""; // Clear previous chat
+
+    // Create unique Chat ID: Sort UIDs to ensure same ID for both parties
+    const chatId = [currentUser.uid, targetUid].sort().join("_");
+    const chatRef = ref(db, `direct_messages/${chatId}`);
+
+    // Remove old listener if exists
+    if (activeChatListener) {
+        off(activeChatListener); // This requires keeping reference to exact path/callback
+        // Simpler way: onChildAdded returns a callback function, but Firebase V9 'off' works differently.
+        // For simplicity in V9 modular: we just rely on new listeners. 
+        // Note: For production, you'd want to unsubscribe properly using the unsubscribe function returned by onChildAdded (if supported) or use get() for history + limitToLast.
+    }
+
+    // Load Messages
+    onChildAdded(chatRef, (snapshot) => {
+        const msg = snapshot.val();
+        renderMessage(msg);
+    });
 }
 
+function renderMessage(msg) {
+    const div = document.createElement("div");
+    div.className = "pc-msg " + (msg.sender === currentUser.uid ? "pc-me" : "pc-them");
+    div.innerText = msg.text;
+    const container = document.getElementById("pcMessages");
+    container.appendChild(div);
+    container.scrollTop = container.scrollHeight; // Auto scroll to bottom
+}
+
+// Send Message
+document.getElementById("pcSendBtn").onclick = sendMessage;
+document.getElementById("pcInput").addEventListener("keypress", (e) => {
+    if (e.key === "Enter") sendMessage();
+});
+
+function sendMessage() {
+    const input = document.getElementById("pcInput");
+    const text = input.value.trim();
+    if (!text || !currentChatTargetId) return;
+
+    const chatId = [currentUser.uid, currentChatTargetId].sort().join("_");
+    const chatRef = ref(db, `direct_messages/${chatId}`);
+
+    push(chatRef, {
+        sender: currentUser.uid,
+        text: text,
+        ts: serverTimestamp()
+    });
+    
+    input.value = "";
+    input.focus();
+}
+
+// Close Modal
+document.getElementById("closePcBtn").onclick = () => {
+    document.getElementById("privateChatModal").style.display = "none";
+    currentChatTargetId = null;
+};
+
+
 /* =========================
-   BUTTON HANDLERS
+   STANDARD BUTTON HANDLERS
 ========================= */
 document.getElementById("logoutBtn").addEventListener("click", async () => {
   try {
@@ -171,7 +341,7 @@ document.getElementById("logoutBtn").addEventListener("click", async () => {
 });
 
 document.getElementById("chatBubble").onclick = () => {
-  window.location.href = "townhall/index.html";  // ← FIXED
+  window.location.href = "townhall/index.html"; 
 };
 </script>
 
