@@ -166,7 +166,6 @@
 <script type="module">
   import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
   import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-  // ADDED: Imports for Presence Tracking
   import { getDatabase, ref, push, onChildAdded, serverTimestamp, set, onDisconnect, onValue, get } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
   // Init with Global Config
@@ -183,7 +182,12 @@
   const authStatus = document.getElementById("authStatus");
   const googleBtn = document.getElementById("googleBtn");
 
-  function esc(s){ return (''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&','<':'<','>':'>','"':'"',"'":'''}[m])) }
+  // FIXED ESC FUNCTION (No Syntax Error)
+  function esc(s){ 
+      return (''+(s||'')).replace(/[&<>"']/g, function(m) { 
+          return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m]; 
+      }); 
+  }
 
   function attachChat(){
     const chatRef = ref(db,"townhall/messages");
@@ -222,11 +226,10 @@
   };
 
   /* =========================================
-     PRESENCE TRACKING (The "Invisible" Fix)
-     This makes the user show up on your Radar
+     PRESENCE TRACKING (The Fix)
   ========================================= */
   async function setPresence(user) {
-    // 1. Check Role first (optional, but good for data)
+    // 1. Check Role first
     const roleSnap = await get(ref(db, `roles/${user.uid}`));
     const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
@@ -247,7 +250,7 @@
             email: user.email,
             role: userRole,
             ts: serverTimestamp(),
-            page: "Townhall" // Let admin know where they are
+            page: "Townhall" 
         });
       }
     });
@@ -259,7 +262,7 @@
       msgInput.disabled = false; sendBtn.disabled = false;
       
       attachChat();
-      setPresence(user); // <--- ACTIVATE RADAR TRACKING
+      setPresence(user); // TRACKING ON
 
       document.getElementById("logout").onclick = () => signOut(auth);
     } else {
