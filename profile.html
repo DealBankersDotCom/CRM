@@ -39,10 +39,9 @@ body {
   border-radius:50%; background:var(--accent); color:white;
   border:2px solid #fff; box-shadow:0 0 20px rgba(43,116,255,0.8);
   display:flex; align-items:center; justify-content:center;
-  font-size:30px; cursor:pointer; z-index:999;
+  font-size:30px; cursor:pointer; 
+  z-index:9999; /* Ensure it is on top on mobile */
   transition: transform 0.2s, box-shadow 0.2s;
-  /* Visible for everyone now */
-  display: flex; 
 }
 #chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
 
@@ -55,7 +54,7 @@ body {
   border-left: 1px solid var(--accent);
   box-shadow: -10px 0 40px rgba(0,0,0,0.8);
   transition: right 0.3s ease-in-out;
-  z-index: 998;
+  z-index: 10000;
   display: flex; flex-direction: column;
 }
 .sidebar-panel.open { right: 0; }
@@ -146,7 +145,7 @@ body {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getDatabase, ref, get, set, push, onDisconnect, onValue, onChildAdded, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { getDatabase, ref, get, set, push, onDisconnect, onValue, onChildAdded, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 const app = initializeApp(window.firebaseConfig);
 const auth = getAuth(app);
@@ -155,6 +154,7 @@ const db = getDatabase(app);
 let currentUser = null;
 let currentChatPath = null;
 let isAdmin = false;
+let activeChatListener = null; // Store ref to listener to unbind
 
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
@@ -175,7 +175,7 @@ onAuthStateChanged(auth, async (user) => {
       startRadar(); // Admin Mode: Start scanning
   } else {
       isAdmin = false;
-      initUserMode(); // User Mode: Prepare chat
+      initUserMode(); // User Mode: Prepare chat immediately
   }
 });
 
@@ -189,25 +189,38 @@ const title = document.getElementById("panelTitle");
 // Toggle Panel
 document.getElementById("chatBubble").onclick = () => {
     sidePanel.classList.toggle("open");
-    if(sidePanel.classList.contains("open") && !isAdmin) {
-        // If regular user opens panel, ensure chat is ready
-        initUserMode();
+    // Ensure correct view is shown when opening
+    if (sidePanel.classList.contains("open")) {
+        if (!isAdmin) {
+            initUserMode();
+        } else if (!currentChatPath) {
+            // Admin opening panel with no active chat -> show radar
+            showRadarView();
+        }
     }
 };
 document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
 
 // Back Button (Admin Only)
 backBtn.onclick = () => {
+    showRadarView();
+};
+
+function showRadarView() {
     radarList.style.display = "block";
     chatArea.style.display = "none";
     backBtn.style.display = "none";
     title.innerText = "📡 Live Radar";
-    currentChatPath = null; // Detach from specific chat
-};
+    currentChatPath = null;
+    // Unsubscribe from old chat if needed
+    if (activeChatListener) {
+        off(activeChatListener);
+        activeChatListener = null;
+    }
+}
 
 /* --- USER MODE LOGIC --- */
 function initUserMode() {
-    // Regular users don't see radar. They see chat immediately.
     radarList.style.display = "none";
     chatArea.style.display = "flex";
     backBtn.style.display = "none";
@@ -215,31 +228,35 @@ function initUserMode() {
     
     // User chats in their own specific channel: direct_messages/{USER_UID}
     // Admin will look at this channel when they click the user on radar.
-    currentChatPath = `direct_messages/${currentUser.uid}`;
-    loadMessages(currentChatPath);
+    const myChatPath = `direct_messages/${currentUser.uid}`;
+    
+    // Only load if not already loaded
+    if (currentChatPath !== myChatPath) {
+        currentChatPath = myChatPath;
+        loadMessages(currentChatPath);
+    }
 }
 
 /* --- ADMIN MODE LOGIC (RADAR) --- */
 function startRadar() {
-    title.innerText = "📡 Live Radar";
-    radarList.style.display = "block";
-    
     // Listen to GLOBAL presence
     onValue(ref(db, "presence/global"), (snap) => {
         const data = snap.val() || {};
         radarList.innerHTML = "";
 
+        let count = 0;
         Object.keys(data).forEach(uid => {
             if (uid === currentUser.uid) return; // Don't show self
             const u = data[uid];
             if (u.state === "online") {
+                count++;
                 // Render User Card
                 const div = document.createElement("div");
                 div.className = "radar-user";
                 const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
                 div.innerHTML = `
                     <div>
-                        <div style="font-weight:bold; color:#fff">${u.name}</div>
+                        <div style="font-weight:bold; color:#fff">${u.name || 'User'}</div>
                         <small style="color:#666">${u.email}</small>
                         ${loc}
                     </div>
@@ -251,7 +268,7 @@ function startRadar() {
                     radarList.style.display = "none";
                     chatArea.style.display = "flex";
                     backBtn.style.display = "inline"; // Show back button
-                    title.innerText = u.name;
+                    title.innerText = u.name || 'User';
                     
                     // Admin connects to that User's channel
                     currentChatPath = `direct_messages/${uid}`;
@@ -261,7 +278,9 @@ function startRadar() {
             } 
         });
 
-        if (radarList.innerHTML === "") radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
+        if (count === 0) {
+            radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
+        }
     });
 }
 
@@ -270,8 +289,15 @@ function loadMessages(path) {
     const box = document.getElementById("chatMsgs");
     box.innerHTML = ""; // Clear old
     
+    // Detach old listener if exists
+    if (activeChatListener) {
+        off(activeChatListener);
+    }
+
+    activeChatListener = ref(db, path);
+    
     // Listen for new messages
-    onChildAdded(ref(db, path), (snap) => {
+    onChildAdded(activeChatListener, (snap) => {
         const msg = snap.val();
         const div = document.createElement("div");
         const isMe = (msg.sender === currentUser.uid);
@@ -306,7 +332,9 @@ function setPresence(user) {
 
     onValue(conRef, (s) => {
         if (s.val() === true) {
+            // Global List Disconnect
             onDisconnect(globalRef).set({state:"offline", last: serverTimestamp()});
+            // Status List Disconnect
             onDisconnect(statusRef).set({state:"offline", ts: serverTimestamp()});
 
             set(globalRef, {
