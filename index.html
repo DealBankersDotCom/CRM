@@ -223,11 +223,12 @@
   googleBtn.onclick = async () => {
     await setPersistence(auth, browserLocalPersistence);
     await signInWithPopup(auth, provider);
-    // REMOVED: window.location.href = "profile.html"; to prevent forced redirect after sign-in
+    // REMOVED: window.location.href = "profile.html"; to prevent unwanted redirect after sign-in
   };
 
   /* =========================================
      PRESENCE TRACKING (For God Mode) - FIXED
+     (Now updates both required paths for "Live Radar")
   ========================================= */
   async function setPresence(user) {
     // 1. Check Role first
@@ -235,7 +236,7 @@
     const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
     const presRef = ref(db, `presence/global/${user.uid}`);
-    const userStatusRef = ref(db, `presence/${user.uid}`); // ADDED: Second path for presence
+    const userStatusRef = ref(db, `presence/${user.uid}`); 
 
     const connectedRef = ref(db, ".info/connected");
 
@@ -291,7 +292,10 @@
   });
 
 
-// --- CHAT INITIATION AND NOTIFICATION TRIGGER ---
+/* =========================================
+   CHAT INITIATION AND NOTIFICATION TRIGGER
+   (Attached to the new 'Get Help Now' button)
+========================================= */
 const getHelpBtn = document.getElementById("getHelpBtn");
 
 function initiateSupportChat() {
@@ -305,7 +309,7 @@ function initiateSupportChat() {
     getHelpBtn.disabled = true;
     getHelpBtn.textContent = "Starting Chat...";
 
-    // 1. PUSH to /requests to create the ticket and trigger your email Cloud Function
+    // 1. PUSH to /requests to create the ticket (triggers your email Cloud Function)
     const newRequestRef = push(ref(db, 'requests'));
     const ticketId = newRequestRef.key;
 
@@ -321,12 +325,9 @@ function initiateSupportChat() {
 
     set(newRequestRef, requestData)
     .then(() => {
-        console.log("Support request created:", ticketId);
-
         // 2. Start the chat in /direct_messages/TICKET_ID
         const chatRef = ref(db, 'direct_messages/' + ticketId);
         
-        // Send the user's first message to start the conversation
         push(chatRef, {
             text: "Hello, I need assistance.",
             sender: user.uid,
@@ -334,9 +335,8 @@ function initiateSupportChat() {
         });
 
         alert("Chat started! Check your email/admin dashboard for the new ticket.");
-        
-        // The user needs to be redirected to a specific chat page to continue the conversation.
-        // For example: window.location.href = '/private-chat.html?id=' + ticketId; 
+        // **ACTION REQUIRED:** You must redirect the user to a chat viewing page here:
+        // window.location.href = '/private-chat.html?id=' + ticketId; 
 
         // Restore the button state
         getHelpBtn.disabled = false;
