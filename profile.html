@@ -33,7 +33,7 @@ body {
 .plink{padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:14px;
   text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer}
 
-/* --- THE "GOD MODE" FLOATING BUTTON --- */
+/* --- THE FLOATING CHAT BUTTON --- */
 #chatBubble {
   position:fixed; bottom:20px; right:20px; width:60px; height:60px;
   border-radius:50%; background:var(--accent); color:white;
@@ -41,16 +41,17 @@ body {
   display:flex; align-items:center; justify-content:center;
   font-size:30px; cursor:pointer; z-index:999;
   transition: transform 0.2s, box-shadow 0.2s;
-  display: none; /* Hidden by default until role check passes */
+  /* Visible for everyone now */
+  display: flex; 
 }
 #chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
 
-/* --- RUNWAY STYLE SIDEBAR (Glassmorphism) --- */
+/* --- SIDEBAR PANEL --- */
 .sidebar-panel {
   position: fixed;
   top: 0; right: -360px; width: 340px; height: 100vh;
-  background: rgba(11, 24, 37, 0.95); /* Dark Blue */
-  backdrop-filter: blur(12px); /* Blur Effect */
+  background: rgba(11, 24, 37, 0.95);
+  backdrop-filter: blur(12px);
   border-left: 1px solid var(--accent);
   box-shadow: -10px 0 40px rgba(0,0,0,0.8);
   transition: right 0.3s ease-in-out;
@@ -66,8 +67,8 @@ body {
 .panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
 .close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
 
-/* Radar List */
-#radarList { flex: 1; overflow-y: auto; padding: 10px; }
+/* Radar List (Admin Only View) */
+#radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
 .radar-user {
   padding: 12px; margin-bottom: 8px; border-radius: 8px;
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
@@ -76,7 +77,7 @@ body {
 .radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
 .status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; }
 
-/* Chat Area (Inside Sidebar) */
+/* Chat Area (User View & Admin Active View) */
 #chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
 #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
 .msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
@@ -87,7 +88,7 @@ body {
 .chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; }
 .send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
 
-/* Back Button (In Chat Mode) */
+/* Back Button (Only for Admin) */
 #backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
 </style>
 </head>
@@ -121,7 +122,7 @@ body {
   <div class="panel-header">
     <div style="display:flex; align-items:center;">
         <span id="backToRadar">◀ Back</span>
-        <span id="panelTitle" class="panel-title">📡 Live Radar</span>
+        <span id="panelTitle" class="panel-title">Support Chat</span>
     </div>
     <button class="close-btn" id="closePanel">✕</button>
   </div>
@@ -153,26 +154,28 @@ const db = getDatabase(app);
 
 let currentUser = null;
 let currentChatPath = null;
-let activeListener = null;
+let isAdmin = false;
 
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
-/* --- AUTH & GOD MODE CHECK --- */
+/* --- AUTH & ROLE CHECK --- */
 onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "index.html"; return; }
   currentUser = user;
   
-  // Track My Presence
+  // 1. Track Presence (So you show up on radar)
   setPresence(user);
 
-  // Check Role
+  // 2. Check if God/Admin
   const roleSnap = await get(ref(db, `roles/${user.uid}`));
   const role = roleSnap.exists() ? roleSnap.val() : "user";
 
-  // If Admin/God -> Activate Radar & Show Chat Bubble
   if (role === 'admin' || role === 'god' || user.email === "dealbankers@gmail.com") {
-      document.getElementById("chatBubble").style.display = "flex";
-      startRadar();
+      isAdmin = true;
+      startRadar(); // Admin Mode: Start scanning
+  } else {
+      isAdmin = false;
+      initUserMode(); // User Mode: Prepare chat
   }
 });
 
@@ -184,40 +187,50 @@ const backBtn = document.getElementById("backToRadar");
 const title = document.getElementById("panelTitle");
 
 // Toggle Panel
-document.getElementById("chatBubble").onclick = () => sidePanel.classList.toggle("open");
+document.getElementById("chatBubble").onclick = () => {
+    sidePanel.classList.toggle("open");
+    if(sidePanel.classList.contains("open") && !isAdmin) {
+        // If regular user opens panel, ensure chat is ready
+        initUserMode();
+    }
+};
 document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
 
-// Switch Views
-function showRadar() {
+// Back Button (Admin Only)
+backBtn.onclick = () => {
     radarList.style.display = "block";
     chatArea.style.display = "none";
     backBtn.style.display = "none";
     title.innerText = "📡 Live Radar";
-    currentChatPath = null;
-}
+    currentChatPath = null; // Detach from specific chat
+};
 
-function showChat(name, dbPath) {
+/* --- USER MODE LOGIC --- */
+function initUserMode() {
+    // Regular users don't see radar. They see chat immediately.
     radarList.style.display = "none";
     chatArea.style.display = "flex";
-    backBtn.style.display = "inline";
-    title.innerText = name;
-    currentChatPath = dbPath;
-    loadMessages(dbPath);
+    backBtn.style.display = "none";
+    title.innerText = "Support Chat";
+    
+    // User chats in their own specific channel: direct_messages/{USER_UID}
+    // Admin will look at this channel when they click the user on radar.
+    currentChatPath = `direct_messages/${currentUser.uid}`;
+    loadMessages(currentChatPath);
 }
 
-backBtn.onclick = showRadar;
-
-/* --- LOGIC: RADAR --- */
+/* --- ADMIN MODE LOGIC (RADAR) --- */
 function startRadar() {
-    const known = new Set();
+    title.innerText = "📡 Live Radar";
+    radarList.style.display = "block";
     
-    // Listen to ALL presence
+    // Listen to GLOBAL presence
     onValue(ref(db, "presence/global"), (snap) => {
         const data = snap.val() || {};
         radarList.innerHTML = "";
 
         Object.keys(data).forEach(uid => {
-            if (uid === currentUser.uid) return;
+            if (uid === currentUser.uid) return; // Don't show self
             const u = data[uid];
             if (u.state === "online") {
                 // Render User Card
@@ -233,31 +246,26 @@ function startRadar() {
                     <div class="status-dot"></div>
                 `;
                 
-                // Click to Chat
+                // Admin Click -> Enter Chat with this User
                 div.onclick = () => {
-                    // Create standard chat ID by sorting UIDs
-                    // This ensures consistent ID for direct messages
-                    const uids = [currentUser.uid, uid].sort();
-                    const chatId = uids.join("_"); 
-                    showChat(u.name, `direct_messages/${chatId}`);
+                    radarList.style.display = "none";
+                    chatArea.style.display = "flex";
+                    backBtn.style.display = "inline"; // Show back button
+                    title.innerText = u.name;
+                    
+                    // Admin connects to that User's channel
+                    currentChatPath = `direct_messages/${uid}`;
+                    loadMessages(currentChatPath);
                 };
                 radarList.appendChild(div);
-
-                // Alert Sound
-                if (!known.has(uid)) {
-                    known.add(uid);
-                    pingSound.play().catch(e=>{});
-                }
-            } else {
-                known.delete(uid);
-            }
+            } 
         });
 
         if (radarList.innerHTML === "") radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
     });
 }
 
-/* --- LOGIC: CHAT --- */
+/* --- MESSAGING LOGIC --- */
 function loadMessages(path) {
     const box = document.getElementById("chatMsgs");
     box.innerHTML = ""; // Clear old
@@ -290,20 +298,17 @@ function sendMsg() {
     input.value = "";
 }
 
-/* --- UTILS: PRESENCE TRACKING (FIXED) --- */
+/* --- PRESENCE TRACKING (FIXED) --- */
 function setPresence(user) {
     const globalRef = ref(db, `presence/global/${user.uid}`);
-    const statusRef = ref(db, `presence/${user.uid}`); // ADDED SECOND PATH
+    const statusRef = ref(db, `presence/${user.uid}`); 
     const conRef = ref(db, ".info/connected");
 
     onValue(conRef, (s) => {
         if (s.val() === true) {
-            // Global List Disconnect
             onDisconnect(globalRef).set({state:"offline", last: serverTimestamp()});
-            // Status List Disconnect
             onDisconnect(statusRef).set({state:"offline", ts: serverTimestamp()});
 
-            // Set Online Global
             set(globalRef, {
                 state: "online",
                 name: user.displayName || user.email,
@@ -311,7 +316,6 @@ function setPresence(user) {
                 ts: serverTimestamp(),
                 page: "Dashboard"
             });
-            // Set Online Status
             set(statusRef, {state:"online", ts: serverTimestamp()});
         }
     });
