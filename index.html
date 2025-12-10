@@ -223,7 +223,7 @@
   googleBtn.onclick = async () => {
     await setPersistence(auth, browserLocalPersistence);
     await signInWithPopup(auth, provider);
-    window.location.href = "profile.html";
+    // REMOVED: window.location.href = "profile.html"; to prevent forced redirect after sign-in
   };
 
   /* =========================================
@@ -235,8 +235,7 @@
     const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
     const presRef = ref(db, `presence/global/${user.uid}`);
-    // ADDED: Reference to the user-specific presence node
-    const userStatusRef = ref(db, `presence/${user.uid}`); 
+    const userStatusRef = ref(db, `presence/${user.uid}`); // ADDED: Second path for presence
 
     const connectedRef = ref(db, ".info/connected");
 
@@ -247,13 +246,13 @@
             state: "offline",
             lastOnline: serverTimestamp(),
         });
-        // ADDED: onDisconnect for the user-specific presence node
-        onDisconnect(userStatusRef).set({ 
+        // FIXED: Set onDisconnect for second path
+        onDisconnect(userStatusRef).set({
             state: "offline",
-            ts: serverTimestamp() 
+            ts: serverTimestamp()
         });
 
-        // We are here! Broadcast to God Mode (presRef is already handled)
+        // We are here! Broadcast online status
         set(presRef, {
             state: "online",
             name: user.displayName || user.email,
@@ -262,10 +261,10 @@
             ts: serverTimestamp(),
             page: "Townhall" 
         });
-        // ADDED: Set status for the user-specific presence node
-        set(userStatusRef, { 
+        // FIXED: Set online status for second path
+        set(userStatusRef, {
             state: "online",
-            ts: serverTimestamp() 
+            ts: serverTimestamp()
         });
       }
     });
@@ -279,7 +278,11 @@
       attachChat();
       setPresence(user); // TRACKING ON
 
-      document.getElementById("logout").onclick = () => signOut(auth);
+      // FIXED LOGOUT: Explicitly redirect to index.html to clear the stuck state
+      document.getElementById("logout").onclick = () => { 
+            signOut(auth); 
+            window.location.href = "index.html"; 
+        };
     } else {
       authStatus.textContent = "Signed out";
       msgInput.disabled = true; sendBtn.disabled = true;
@@ -330,11 +333,12 @@ function initiateSupportChat() {
             ts: serverTimestamp()
         });
 
-        alert("Chat started! You will be redirected to your private chat room.");
-        // IMPORTANT: You still need a page (e.g., private-chat.html) to view the conversation.
-        // window.location.href = '/private-chat.html?id=' + ticketId; 
+        alert("Chat started! Check your email/admin dashboard for the new ticket.");
+        
+        // The user needs to be redirected to a specific chat page to continue the conversation.
+        // For example: window.location.href = '/private-chat.html?id=' + ticketId; 
 
-        // For now, we restore the button state:
+        // Restore the button state
         getHelpBtn.disabled = false;
         getHelpBtn.textContent = "🚨 Get Help Now (Live Support)";
     })
