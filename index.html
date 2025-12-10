@@ -135,7 +135,6 @@
       <div class="tile"><h3>Realtors</h3><p>Analyze property data, upload listings, refer deals.</p></div>
       <div class="tile"><h3>Investors</h3><p>Capital, returns, networking, market pulse.</p></div>
     </div>
-    <button id="getHelpBtn" class="gbtn" style="margin-top:20px; width:100%; background:#8b0000; border-color:#ff4500;">🚨 Get Help Now (Live Support)</button>
   </div>
 
   <div class="right-col" id="townhall">
@@ -182,13 +181,12 @@
   const sendBtn = document.getElementById("sendBtn");
   const authStatus = document.getElementById("authStatus");
   const googleBtn = document.getElementById("googleBtn");
-  const getHelpBtn = document.getElementById("getHelpBtn"); // NEW BUTTON REF
 
   // --- FIXED FUNCTION (No Syntax Error) ---
   function esc(s){ 
       return (''+(s||'')).replace(/[&<>"']/g, function(m) { 
           return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m]; 
-      });
+      }); 
   }
 
   function attachChat(){
@@ -224,11 +222,11 @@
   googleBtn.onclick = async () => {
     await setPersistence(auth, browserLocalPersistence);
     await signInWithPopup(auth, provider);
-    // Removed redirect so you stay on page to chat
+    window.location.href = "profile.html";
   };
 
   /* =========================================
-     PRESENCE TRACKING (For God Mode) - FIXED
+     PRESENCE TRACKING (For God Mode)
   ========================================= */
   async function setPresence(user) {
     // 1. Check Role first
@@ -236,15 +234,15 @@
     const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
     const presRef = ref(db, `presence/global/${user.uid}`);
-    const userStatusRef = ref(db, `presence/${user.uid}`); // FIX: Added secondary path
-
     const connectedRef = ref(db, ".info/connected");
+
     onValue(connectedRef, (snap) => {
       if (snap.val() === true) {
         // If we disconnect, go offline
-        onDisconnect(presRef).set({ state: "offline", lastOnline: serverTimestamp() });
-        onDisconnect(userStatusRef).set({ state: "offline", ts: serverTimestamp() });
-
+        onDisconnect(presRef).set({
+            state: "offline",
+            lastOnline: serverTimestamp(),
+        });
         // We are here! Broadcast to God Mode
         set(presRef, {
             state: "online",
@@ -254,55 +252,9 @@
             ts: serverTimestamp(),
             page: "Townhall" 
         });
-        set(userStatusRef, { state: "online", ts: serverTimestamp() });
       }
     });
   }
-
-  /* =========================================
-     CHAT INITIATION LOGIC (God Mode Trigger)
-  ========================================= */
-  function initiateSupportChat() {
-    const user = auth.currentUser;
-    if (!user) { alert("Please sign in to start a chat."); return; }
-    
-    getHelpBtn.disabled = true;
-    getHelpBtn.textContent = "Starting Chat...";
-
-    // 1. Trigger Notification (Write to Requests)
-    const newRequestRef = push(ref(db, 'requests'));
-    const ticketId = newRequestRef.key;
-
-    set(newRequestRef, {
-        uid: user.uid,
-        email: user.email,
-        message: "User initiated live support chat. (Ticket: " + ticketId + ")",
-        name: user.displayName || user.email,
-        status: "new",
-        ts: serverTimestamp(),
-        type: "Live Chat Support"
-    }).then(() => {
-        // 2. Start Direct Chat
-        const chatRef = ref(db, 'direct_messages/' + ticketId);
-        push(chatRef, {
-            text: "Hello, I need assistance.",
-            sender: user.uid,
-            ts: serverTimestamp()
-        });
-        
-        alert("Chat started! Ticket ID: " + ticketId);
-        // Here you would redirect to a private chat page if you had one.
-        // For now, staying on page.
-        getHelpBtn.disabled = false;
-        getHelpBtn.textContent = "🚨 Get Help Now (Live Support)";
-    }).catch(err => {
-        console.error(err);
-        getHelpBtn.disabled = false;
-        getHelpBtn.textContent = "🚨 Get Help Now (Live Support)";
-    });
-  }
-  
-  if(getHelpBtn) getHelpBtn.addEventListener('click', initiateSupportChat);
 
   onAuthStateChanged(auth, user => {
     if(user){
@@ -312,11 +264,7 @@
       attachChat();
       setPresence(user); // TRACKING ON
 
-      // FIXED LOGOUT
-      document.getElementById("logout").onclick = () => {
-          signOut(auth);
-          window.location.href = "index.html";
-      };
+      document.getElementById("logout").onclick = () => signOut(auth);
     } else {
       authStatus.textContent = "Signed out";
       msgInput.disabled = true; sendBtn.disabled = true;
