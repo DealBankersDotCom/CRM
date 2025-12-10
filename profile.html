@@ -40,7 +40,7 @@ body {
   border:2px solid #fff; box-shadow:0 0 20px rgba(43,116,255,0.8);
   display:flex; align-items:center; justify-content:center;
   font-size:30px; cursor:pointer; 
-  z-index:9999; /* Ensure it is on top on mobile */
+  z-index:9999; /* Force On Top */
   transition: transform 0.2s, box-shadow 0.2s;
 }
 #chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
@@ -49,7 +49,7 @@ body {
 .sidebar-panel {
   position: fixed;
   top: 0; right: -360px; width: 340px; height: 100vh;
-  background: rgba(11, 24, 37, 0.95);
+  background: rgba(11, 24, 37, 0.98);
   backdrop-filter: blur(12px);
   border-left: 1px solid var(--accent);
   box-shadow: -10px 0 40px rgba(0,0,0,0.8);
@@ -66,7 +66,7 @@ body {
 .panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
 .close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
 
-/* Radar List (Admin Only View) */
+/* Radar List (Admin Only) */
 #radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
 .radar-user {
   padding: 12px; margin-bottom: 8px; border-radius: 8px;
@@ -76,7 +76,7 @@ body {
 .radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
 .status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; }
 
-/* Chat Area (User View & Admin Active View) */
+/* Chat Area (User Default) */
 #chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
 #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
 .msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
@@ -87,7 +87,7 @@ body {
 .chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; }
 .send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
 
-/* Back Button (Only for Admin) */
+/* Back Button (Admin Only) */
 #backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
 </style>
 </head>
@@ -154,7 +154,7 @@ const db = getDatabase(app);
 let currentUser = null;
 let currentChatPath = null;
 let isAdmin = false;
-let activeChatListener = null; // Store ref to listener to unbind
+let activeChatListener = null;
 
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
@@ -163,19 +163,20 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "index.html"; return; }
   currentUser = user;
   
-  // 1. Track Presence (So you show up on radar)
+  // 1. Presence (Crucial for Radar)
   setPresence(user);
 
-  // 2. Check if God/Admin
+  // 2. Role Check
   const roleSnap = await get(ref(db, `roles/${user.uid}`));
   const role = roleSnap.exists() ? roleSnap.val() : "user";
 
   if (role === 'admin' || role === 'god' || user.email === "dealbankers@gmail.com") {
       isAdmin = true;
-      startRadar(); // Admin Mode: Start scanning
+      startRadar(); // Admin sees Radar
   } else {
       isAdmin = false;
-      initUserMode(); // User Mode: Prepare chat immediately
+      // User Logic: Chat path is ALWAYS "direct_messages/{MY_UID}"
+      currentChatPath = `direct_messages/${user.uid}`;
   }
 });
 
@@ -189,22 +190,22 @@ const title = document.getElementById("panelTitle");
 // Toggle Panel
 document.getElementById("chatBubble").onclick = () => {
     sidePanel.classList.toggle("open");
-    // Ensure correct view is shown when opening
+    
+    // If panel opens...
     if (sidePanel.classList.contains("open")) {
         if (!isAdmin) {
-            initUserMode();
-        } else if (!currentChatPath) {
-            // Admin opening panel with no active chat -> show radar
-            showRadarView();
+            // USER: Show Chat immediately
+            showChatView(currentChatPath, "Support Chat");
+        } else {
+            // ADMIN: Show Radar (unless already in a chat)
+            if(!currentChatPath) showRadarView();
         }
     }
 };
 document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
 
 // Back Button (Admin Only)
-backBtn.onclick = () => {
-    showRadarView();
-};
+backBtn.onclick = () => showRadarView();
 
 function showRadarView() {
     radarList.style.display = "block";
@@ -212,32 +213,25 @@ function showRadarView() {
     backBtn.style.display = "none";
     title.innerText = "📡 Live Radar";
     currentChatPath = null;
-    // Unsubscribe from old chat if needed
+    
     if (activeChatListener) {
         off(activeChatListener);
         activeChatListener = null;
     }
 }
 
-/* --- USER MODE LOGIC --- */
-function initUserMode() {
+function showChatView(path, name) {
     radarList.style.display = "none";
     chatArea.style.display = "flex";
-    backBtn.style.display = "none";
-    title.innerText = "Support Chat";
+    // Only admin gets a back button
+    backBtn.style.display = isAdmin ? "inline" : "none";
+    title.innerText = name;
     
-    // User chats in their own specific channel: direct_messages/{USER_UID}
-    // Admin will look at this channel when they click the user on radar.
-    const myChatPath = `direct_messages/${currentUser.uid}`;
-    
-    // Only load if not already loaded
-    if (currentChatPath !== myChatPath) {
-        currentChatPath = myChatPath;
-        loadMessages(currentChatPath);
-    }
+    currentChatPath = path;
+    loadMessages(path);
 }
 
-/* --- ADMIN MODE LOGIC (RADAR) --- */
+/* --- ADMIN MODE: RADAR --- */
 function startRadar() {
     // Listen to GLOBAL presence
     onValue(ref(db, "presence/global"), (snap) => {
@@ -250,7 +244,6 @@ function startRadar() {
             const u = data[uid];
             if (u.state === "online") {
                 count++;
-                // Render User Card
                 const div = document.createElement("div");
                 div.className = "radar-user";
                 const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
@@ -263,18 +256,13 @@ function startRadar() {
                     <div class="status-dot"></div>
                 `;
                 
-                // Admin Click -> Enter Chat with this User
+                // Admin Click -> Open User's Chat Channel
                 div.onclick = () => {
-                    radarList.style.display = "none";
-                    chatArea.style.display = "flex";
-                    backBtn.style.display = "inline"; // Show back button
-                    title.innerText = u.name || 'User';
-                    
-                    // Admin connects to that User's channel
-                    currentChatPath = `direct_messages/${uid}`;
-                    loadMessages(currentChatPath);
+                    showChatView(`direct_messages/${uid}`, u.name || 'User');
                 };
                 radarList.appendChild(div);
+                
+                // Play sound if new user? (Optional)
             } 
         });
 
@@ -290,13 +278,10 @@ function loadMessages(path) {
     box.innerHTML = ""; // Clear old
     
     // Detach old listener if exists
-    if (activeChatListener) {
-        off(activeChatListener);
-    }
+    if (activeChatListener) off(activeChatListener);
 
     activeChatListener = ref(db, path);
     
-    // Listen for new messages
     onChildAdded(activeChatListener, (snap) => {
         const msg = snap.val();
         const div = document.createElement("div");
@@ -332,9 +317,7 @@ function setPresence(user) {
 
     onValue(conRef, (s) => {
         if (s.val() === true) {
-            // Global List Disconnect
             onDisconnect(globalRef).set({state:"offline", last: serverTimestamp()});
-            // Status List Disconnect
             onDisconnect(statusRef).set({state:"offline", ts: serverTimestamp()});
 
             set(globalRef, {
