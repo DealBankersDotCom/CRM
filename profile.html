@@ -41,18 +41,21 @@ body {
   display:flex; align-items:center; justify-content:center;
   font-size:30px; cursor:pointer; z-index:999;
   transition: transform 0.2s, box-shadow 0.2s;
+  display: none; /* Hidden by default until role check passes */
 }
 #chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
 
 /* --- RUNWAY STYLE SIDEBAR (Glassmorphism) --- */
 .sidebar-panel {
-  position: fixed; top: 0; right: -360px; width: 340px; height: 100vh;
+  position: fixed;
+  top: 0; right: -360px; width: 340px; height: 100vh;
   background: rgba(11, 24, 37, 0.95); /* Dark Blue */
   backdrop-filter: blur(12px); /* Blur Effect */
   border-left: 1px solid var(--accent);
   box-shadow: -10px 0 40px rgba(0,0,0,0.8);
   transition: right 0.3s ease-in-out;
-  z-index: 998; display: flex; flex-direction: column;
+  z-index: 998;
+  display: flex; flex-direction: column;
 }
 .sidebar-panel.open { right: 0; }
 
@@ -150,7 +153,7 @@ const db = getDatabase(app);
 
 let currentUser = null;
 let currentChatPath = null;
-let activeListener = null; // Track listener to detach if needed
+let activeListener = null;
 
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
@@ -166,8 +169,9 @@ onAuthStateChanged(auth, async (user) => {
   const roleSnap = await get(ref(db, `roles/${user.uid}`));
   const role = roleSnap.exists() ? roleSnap.val() : "user";
 
-  // If Admin/God -> Activate Radar
+  // If Admin/God -> Activate Radar & Show Chat Bubble
   if (role === 'admin' || role === 'god' || user.email === "dealbankers@gmail.com") {
+      document.getElementById("chatBubble").style.display = "flex";
       startRadar();
   }
 });
@@ -231,7 +235,10 @@ function startRadar() {
                 
                 // Click to Chat
                 div.onclick = () => {
-                    const chatId = [currentUser.uid, uid].sort().join("_");
+                    // Create standard chat ID by sorting UIDs
+                    // This ensures consistent ID for direct messages
+                    const uids = [currentUser.uid, uid].sort();
+                    const chatId = uids.join("_"); 
                     showChat(u.name, `direct_messages/${chatId}`);
                 };
                 radarList.appendChild(div);
@@ -256,7 +263,6 @@ function loadMessages(path) {
     box.innerHTML = ""; // Clear old
     
     // Listen for new messages
-    // Note: Ideally use 'limitToLast' here for perf, keeping it simple
     onChildAdded(ref(db, path), (snap) => {
         const msg = snap.val();
         const div = document.createElement("div");
@@ -284,20 +290,29 @@ function sendMsg() {
     input.value = "";
 }
 
-/* --- UTILS --- */
+/* --- UTILS: PRESENCE TRACKING (FIXED) --- */
 function setPresence(user) {
-    const myRef = ref(db, `presence/global/${user.uid}`);
+    const globalRef = ref(db, `presence/global/${user.uid}`);
+    const statusRef = ref(db, `presence/${user.uid}`); // ADDED SECOND PATH
     const conRef = ref(db, ".info/connected");
+
     onValue(conRef, (s) => {
         if (s.val() === true) {
-            onDisconnect(myRef).set({state:"offline", last: serverTimestamp()});
-            set(myRef, {
+            // Global List Disconnect
+            onDisconnect(globalRef).set({state:"offline", last: serverTimestamp()});
+            // Status List Disconnect
+            onDisconnect(statusRef).set({state:"offline", ts: serverTimestamp()});
+
+            // Set Online Global
+            set(globalRef, {
                 state: "online",
                 name: user.displayName || user.email,
                 email: user.email,
                 ts: serverTimestamp(),
                 page: "Dashboard"
             });
+            // Set Online Status
+            set(statusRef, {state:"online", ts: serverTimestamp()});
         }
     });
 }
