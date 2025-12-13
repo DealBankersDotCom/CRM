@@ -118,16 +118,58 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 .map-wrap{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
 .map-wrap iframe{width:100%;height:250px;border:0}
 
-/* CHAT BUBBLE */
+/* --- CHAT BUBBLE & PANEL STYLES --- */
 #chatBubble{
-  position:fixed;bottom:24px;right:24px;width:54px;height:54px;
+  position:fixed;bottom:24px;right:24px;width:60px;height:60px;
   border-radius:50%;background:#133e6a;color:white;
   border:2px solid var(--accent);
   display:flex;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:0 0 15px rgba(0,138,255,.6);
-  z-index:999;transition:transform .15s
+  cursor:pointer;box-shadow:0 0 20px rgba(43,116,255,0.8);
+  z-index:9999;transition:transform .2s, box-shadow 0.2s;
+  font-size: 30px;
 }
-#chatBubble:hover{transform:scale(1.08)}
+#chatBubble:hover{transform:scale(1.1);box-shadow:0 0 30px rgba(43,116,255,1);}
+
+/* SIDEBAR PANEL */
+.sidebar-panel {
+  position: fixed; top: 0; right: -360px; width: 340px; height: 100vh;
+  background: rgba(11, 24, 37, 0.98); backdrop-filter: blur(12px);
+  border-left: 1px solid var(--accent);
+  box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+  transition: right 0.3s ease-in-out;
+  z-index: 10000;
+  display: flex; flex-direction: column;
+}
+.sidebar-panel.open { right: 0; }
+
+.panel-header {
+  padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--line);
+  display: flex; justify-content: space-between; align-items: center;
+}
+.panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
+.close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
+
+/* Radar (Admin) */
+#radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
+.radar-user {
+  padding: 12px; margin-bottom: 8px; border-radius: 8px;
+  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+}
+.radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
+.status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; }
+
+/* Chat Area */
+#chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
+#chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+.msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
+.msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
+.msg-them { align-self: flex-start; background: #1e2c3a; color: #ddd; border-bottom-left-radius: 2px; }
+
+.chat-input-row { padding: 15px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
+.chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; }
+.send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
+#backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
 </style>
 </head>
 
@@ -158,7 +200,6 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
     </div>
 
     <div class="body">
-      <!-- ACQUISITION PANEL -->
       <div id="panel-acq">
         <div class="search">
           <input id="s_q" class="input" placeholder="Search address / owner" />
@@ -175,7 +216,6 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
         </div>
       </div>
 
-      <!-- DISPOSITION PANEL via iframe -->
       <div id="panel-dispo" style="display:none; height: 80vh;">
         <iframe 
           id="iframeDispo" 
@@ -184,7 +224,6 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
         </iframe>
       </div>
 
-      <!-- DETAIL PANEL (always visible on right side) -->
       <div class="right-col" id="detailPanel">
         <div class="detail-header">
           <h3 id="detailTitle">No lead selected</h3>
@@ -209,8 +248,28 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 
 <div id="chatBubble">💬</div>
 
+<div id="sidePanel" class="sidebar-panel">
+  <div class="panel-header">
+    <div style="display:flex; align-items:center;">
+        <span id="backToRadar">◀ Back</span>
+        <span id="panelTitle" class="panel-title">Support Chat</span>
+    </div>
+    <button class="close-btn" id="closePanel">✕</button>
+  </div>
 
-<!-- Firebase -->
+  <div id="radarList">
+    <div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div>
+  </div>
+
+  <div id="chatArea">
+    <div id="chatMsgs"></div>
+    <div class="chat-input-row">
+        <input id="chatInput" class="chat-input" type="text" placeholder="Type a message...">
+        <button id="chatSend" class="send-btn">➤</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -218,14 +277,169 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 <script src="app-auth.js"></script>
 
 <script>
-let UID = null, sellerList = [], sellerView = [], currentIndex = -1;
+let UID = null;
+let sellerList = [], sellerView = [], currentIndex = -1;
 
+// Chat Variables
+let currentChatPath = null;
+let isAdmin = false;
+let activeChatRef = null;
+
+// Auth State
 firebase.auth().onAuthStateChanged(u => {
   if (!u) return location.href = 'index.html';
   UID = u.uid;
+  
+  // 1. Start Lead Subscription (Original Logic)
   subscribeLeads();
+  
+  // 2. Presence Logic (Tracking Online Status)
+  trackPresence(u);
+
+  // 3. Check Role & Initialize Chat (God Mode Logic)
+  firebase.database().ref(`roles/${UID}`).once('value').then(snap => {
+    const role = snap.val();
+    if (role === 'admin' || role === 'god' || u.email === "dealbankers@gmail.com") {
+        isAdmin = true;
+        startRadar();
+    } else {
+        isAdmin = false;
+        currentChatPath = `direct_messages/${UID}`;
+        setupChat(currentChatPath); // User listens to their own channel
+    }
+  });
 });
 
+/* --- CHAT LOGIC --- */
+const sidePanel = document.getElementById("sidePanel");
+const radarList = document.getElementById("radarList");
+const chatArea = document.getElementById("chatArea");
+const backBtn = document.getElementById("backToRadar");
+const panelTitle = document.getElementById("panelTitle");
+
+// Toggle Panel
+document.getElementById("chatBubble").onclick = () => {
+    sidePanel.classList.toggle("open");
+    if(sidePanel.classList.contains("open")) {
+        if(isAdmin && !currentChatPath) {
+            showRadarView();
+        } else {
+            // If user or admin already in chat
+            if(chatArea.style.display !== 'flex') {
+                if(!isAdmin) showChatView(currentChatPath, "Support Chat");
+            }
+        }
+    }
+};
+document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
+backBtn.onclick = () => showRadarView();
+
+function showRadarView() {
+    radarList.style.display = "block";
+    chatArea.style.display = "none";
+    backBtn.style.display = "none";
+    panelTitle.innerText = "📡 Live Radar";
+    currentChatPath = null;
+    if(activeChatRef) { activeChatRef.off(); activeChatRef = null; }
+}
+
+function showChatView(path, name) {
+    radarList.style.display = "none";
+    chatArea.style.display = "flex";
+    backBtn.style.display = isAdmin ? "inline" : "none";
+    panelTitle.innerText = name;
+    currentChatPath = path;
+    loadMessages(path);
+}
+
+function startRadar() {
+    firebase.database().ref('presence/global').on('value', snap => {
+        const data = snap.val() || {};
+        radarList.innerHTML = "";
+        let count = 0;
+        
+        Object.keys(data).forEach(uid => {
+            if(uid === UID) return;
+            const u = data[uid];
+            if(u.state === 'online') {
+                count++;
+                const div = document.createElement("div");
+                div.className = "radar-user";
+                const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
+                div.innerHTML = `
+                    <div>
+                        <div style="font-weight:bold; color:#fff">${u.name || 'User'}</div>
+                        <small style="color:#666">${u.email}</small>
+                        ${loc}
+                    </div>
+                    <div class="status-dot"></div>
+                `;
+                div.onclick = () => showChatView(`direct_messages/${uid}`, u.name || 'User');
+                radarList.appendChild(div);
+            }
+        });
+        
+        if(count === 0) radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
+    });
+}
+
+function loadMessages(path) {
+    const box = document.getElementById("chatMsgs");
+    box.innerHTML = "";
+    if(activeChatRef) activeChatRef.off();
+    
+    activeChatRef = firebase.database().ref(path);
+    activeChatRef.on('child_added', snap => {
+        const msg = snap.val();
+        const div = document.createElement("div");
+        const isMe = (msg.sender === UID);
+        div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
+        div.innerText = msg.text;
+        box.appendChild(div);
+        box.scrollTop = box.scrollHeight;
+    });
+}
+
+// Send Message
+document.getElementById("chatSend").onclick = sendMsg;
+document.getElementById("chatInput").addEventListener("keypress", (e) => { if(e.key==="Enter") sendMsg(); });
+
+function sendMsg() {
+    const input = document.getElementById("chatInput");
+    const txt = input.value.trim();
+    if(!txt || !currentChatPath) return;
+    
+    firebase.database().ref(currentChatPath).push({
+        sender: UID,
+        text: txt,
+        ts: firebase.database.ServerValue.TIMESTAMP
+    });
+    input.value = "";
+}
+
+/* --- PRESENCE TRACKING --- */
+function trackPresence(u) {
+    const globalRef = firebase.database().ref(`presence/global/${u.uid}`);
+    const statusRef = firebase.database().ref(`presence/${u.uid}`);
+    const connRef = firebase.database().ref('.info/connected');
+
+    connRef.on('value', snap => {
+        if (snap.val() === false) return;
+        globalRef.onDisconnect().set({state: "offline", last: firebase.database.ServerValue.TIMESTAMP});
+        statusRef.onDisconnect().set({state: "offline", ts: firebase.database.ServerValue.TIMESTAMP});
+
+        globalRef.set({
+            state: "online",
+            name: u.displayName || u.email,
+            email: u.email,
+            ts: firebase.database.ServerValue.TIMESTAMP,
+            page: "Wholesaler Portal"
+        });
+        statusRef.set({state: "online", ts: firebase.database.ServerValue.TIMESTAMP});
+    });
+}
+
+/* --- ORIGINAL LEAD LOGIC (PRESERVED) --- */
 function subscribeLeads() {
   firebase.database().ref('leads/sellers').on('value', snap => {
     const obj = snap.val() || {};
@@ -235,13 +449,13 @@ function subscribeLeads() {
 }
 
 function renderLeads() {
-  const q = (s_q.value || '').toLowerCase();
+  const q = (document.getElementById('s_q').value || '').toLowerCase();
   sellerView = sellerList.filter(v =>
     !q || (v.address || '').toLowerCase().includes(q) ||
     (v.owner || '').toLowerCase().includes(q)
   );
 
-  status.textContent = 'Acq: ' + sellerView.length + ' items';
+  document.getElementById('status').textContent = 'Acq: ' + sellerView.length + ' items';
   const tbody = document.getElementById('sellerRows');
 
   if (!sellerView.length) {
@@ -268,6 +482,16 @@ function renderLeads() {
 }
 
 function updateDetail(lead) {
+  const detailTitle = document.getElementById('detailTitle');
+  const detailSub = document.getElementById('detailSub');
+  const detailInfo = document.getElementById('detailInfo');
+  const detailAddr = document.getElementById('detailAddr');
+  const detailOwner = document.getElementById('detailOwner');
+  const detailPhone = document.getElementById('detailPhone');
+  const scriptBox = document.getElementById('scriptBox');
+  const mapWrap = document.getElementById('mapWrap');
+  const streetFrame = document.getElementById('streetFrame');
+
   if (!lead) {
     detailTitle.textContent = 'No lead selected';
     detailSub.textContent = 'Select a lead to view information.';
@@ -284,25 +508,19 @@ function updateDetail(lead) {
   detailAddr.textContent = lead.address || '';
   detailOwner.textContent = lead.owner || '';
   detailPhone.textContent = lead.phone || '';
-  scriptBox.textContent = `Hi ${lead.owner || 'there'}, this is Bill
-    regarding ${lead.address || 'your property'}. Are you the owner?`;
+  scriptBox.textContent = `Hi ${lead.owner || 'there'}, this is Bill regarding ${lead.address || 'your property'}. Are you the owner?`;
 
   if (lead.address) {
-    streetFrame.src = 'https://www.google.com/maps?q=' + encodeURIComponent(lead.address) + '&output=embed';
+    streetFrame.src = 'https://www.google.com/maps/embed/v1/place?key=AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs&q=' + encodeURIComponent(lead.address);
     mapWrap.style.display = 'block';
   }
 }
 
-/* Chat Bubble Navigation */
-chatBubble.onclick = () => location.href = 'townhall.html?from=wholesaler';
-
-/* Search Button */
+/* UI Listeners */
 document.getElementById('s_reload').onclick = () => renderLeads();
+document.getElementById('btnSettings').onclick = () => location.href = 'settings.html';
+document.getElementById('logoutBtn').onclick = () => firebase.auth().signOut();
 
-/* Settings Navigation */
-btnSettings.onclick = () => location.href = 'settings.html';
-
-/* Tab Toggle (Acq / Dispo) — fixed for safe DOM load */
 document.addEventListener('DOMContentLoaded', () => {
   const tabAcq = document.getElementById('tabAcq');
   const tabDispo = document.getElementById('tabDispo');
@@ -325,21 +543,6 @@ document.addEventListener('DOMContentLoaded', () => {
     panelDispo.style.display = 'block';
     crumb.textContent = 'Dispo';
   };
-});
-
-
-/* Presence Tracking */
-firebase.auth().onAuthStateChanged(u => {
-  if (!u) return;
-  const uid = u.uid;
-  const userRef = firebase.database().ref(`/presence/${uid}`);
-  const connRef = firebase.database().ref('.info/connected');
-
-  connRef.on('value', snap => {
-    if (snap.val() === false) return;
-    userRef.onDisconnect().set({ state: 'offline', ts: Date.now() });
-    userRef.set({ state: 'online', ts: Date.now() });
-  });
 });
 </script>
 
