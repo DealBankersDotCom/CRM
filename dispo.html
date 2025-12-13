@@ -1,112 +1,281 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>DealBankers | Live Deals</title>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&display=swap" rel="stylesheet" />
+  <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet" />
   <style>
-    body { margin: 0; font-family: 'Inter', sans-serif; background: #0e0e0e; color: #f0f0f0; }
-    header { padding: 16px 24px; background: #121212; border-bottom: 1px solid #333; display: flex;
-             align-items: center; justify-content: space-between; }
-    header h1 { margin: 0; font-size: 1.4rem; letter-spacing: 1px; color: #00cfff; }
-    .deal-container { padding: 20px; display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 20px; }
-    .deal-card { background: #171717; border-radius: 14px; overflow: hidden; box-shadow: 0 4px 10px rgba(0,0,0,0.65);
-                 transition: transform 0.2s ease-in-out; }
-    .deal-card:hover { transform: scale(1.02); }
-    .deal-gallery img { width: 100%; height: 200px; object-fit: cover; display: block; }
-    .deal-details { padding: 14px 18px; }
-    .deal-title { font-size: 1.1rem; font-weight: 600; margin-bottom: 6px; color: #fff; }
-    .deal-location { font-size: 0.9rem; margin-bottom: 8px; color: #bbb; }
-    .deal-price { color: #00ff6a; font-weight: 600; margin-bottom: 10px; }
-    .deal-terms { font-size: 0.85rem; color: #ccc; margin-bottom: 10px; }
-    .viewDealBtn { width: 100%; padding: 12px; border: none; background: linear-gradient(45deg,#006aff,#00c9ff);
-                   color: #fff; cursor: pointer; border-radius: 6px; font-size: 0.95rem; }
+    /* --- DARK THEME STYLING --- */
+    body { margin: 0; font-family: 'Inter', sans-serif; background: #0b0f14; color: #e5e7eb; }
+    
+    header { 
+      padding: 16px 24px; background: #111827; border-bottom: 1px solid #1f2937; 
+      display: flex; align-items: center; justify-content: space-between; 
+      position: sticky; top: 0; z-index: 50;
+    }
+    header h1 { margin: 0; font-size: 1.25rem; letter-spacing: 0.5px; color: #3b82f6; font-weight: 800; text-transform: uppercase; }
+    
+    .nav-links a { color: #9ca3af; text-decoration: none; margin-left: 15px; font-size: 0.9rem; transition: color 0.2s; }
+    .nav-links a:hover { color: #fff; }
+
+    /* DEAL GRID */
+    .deal-container { 
+      padding: 20px; 
+      display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); 
+      gap: 25px; 
+      max-width: 1400px; margin: 0 auto;
+    }
+    
+    .deal-card { 
+      background: #161e2b; border: 1px solid #374151; border-radius: 12px; overflow: hidden; 
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5); 
+      transition: transform 0.2s, box-shadow 0.2s;
+      display: flex; flex-direction: column;
+    }
+    .deal-card:hover { transform: translateY(-4px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5); border-color: #3b82f6; }
+    
+    .deal-gallery { position: relative; width: 100%; aspect-ratio: 16/9; background: #000; }
+    .deal-gallery img { width: 100%; height: 100%; object-fit: cover; display: block; }
+    
+    .deal-details { padding: 16px; flex: 1; display: flex; flex-direction: column; }
+    .deal-title { font-size: 1.1rem; font-weight: 700; margin: 0 0 4px 0; color: #f3f4f6; }
+    .deal-location { font-size: 0.85rem; color: #9ca3af; margin-bottom: 12px; }
+    
+    .deal-price { font-size: 1.25rem; color: #10b981; font-weight: 700; margin-bottom: 8px; }
+    .deal-notes { font-size: 0.85rem; color: #d1d5db; white-space: pre-line; margin-bottom: 16px; line-height: 1.4; flex: 1; }
+    
+    .viewDealBtn { 
+      width: 100%; padding: 12px; border: none; 
+      background: #2563eb; color: #fff; cursor: pointer; 
+      border-radius: 6px; font-weight: 600; 
+      transition: background 0.2s;
+    }
+    .viewDealBtn:hover { background: #1d4ed8; }
+
+    /* --- CHAT BUBBLE (Hidden by default, shown via JS) --- */
+    #chatBubble {
+      position: fixed; bottom: 20px; right: 20px; width: 60px; height: 60px;
+      border-radius: 50%; background: #2563eb; color: white;
+      border: 2px solid #fff; box-shadow: 0 0 15px rgba(37, 99, 235, 0.5);
+      align-items: center; justify-content: center;
+      font-size: 30px; cursor: pointer; z-index: 9999;
+      transition: transform 0.2s;
+      display: none; /* Logic determines visibility */
+    }
+    #chatBubble:hover { transform: scale(1.1); }
+
+    .chat-panel {
+      position: fixed; bottom: 90px; right: 20px; width: 350px; height: 500px;
+      background: rgba(17, 24, 39, 0.95); backdrop-filter: blur(10px);
+      border: 1px solid #374151; border-radius: 12px;
+      display: none; flex-direction: column; z-index: 9999;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5);
+    }
+    .chat-panel.open { display: flex; }
+    
+    .chat-header { padding: 15px; border-bottom: 1px solid #374151; background: rgba(0,0,0,0.2); font-weight: 700; display: flex; justify-content: space-between; }
+    .chat-body { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
+    .chat-input-area { padding: 15px; border-top: 1px solid #374151; display: flex; gap: 10px; }
+    .chat-input { flex: 1; background: #374151; border: none; padding: 10px; border-radius: 6px; color: white; outline: none; }
+    .chat-send { background: #2563eb; border: none; color: white; padding: 0 15px; border-radius: 6px; cursor: pointer; }
+
+    /* Messages */
+    .msg { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
+    .msg.me { align-self: flex-end; background: #2563eb; color: white; border-bottom-right-radius: 2px; }
+    .msg.them { align-self: flex-start; background: #374151; color: #e5e7eb; border-bottom-left-radius: 2px; }
   </style>
 </head>
 
 <body>
   <header>
-    <h1>Live Deals Marketplace</h1>
-    <nav>
-      <a href="index.html" style="color:#00c9ff; margin-right:15px;">🏠 Overview</a>
-      <a href="wholesaler.html" style="color:#00c9ff; margin-right:15px;">Wholesaler</a>
-      <a href="investor.html" style="color:#00c9ff; margin-right:15px;">Investor</a>
-      <a href="contractor.html" style="color:#00c9ff; margin-right:15px;">Contractor</a>
-      <a href="realtor.html" style="color:#00c9ff;">Realtor</a>
+    <h1>DealBankers <span style="color:#fff; font-weight:300;">| Live Deals</span></h1>
+    <nav class="nav-links">
+      <a href="index.html">Home</a>
+      <a href="wholesaler.html">Wholesaler</a>
+      <a href="contractor.html">Contractor</a>
     </nav>
   </header>
 
-  <div id="dealsContainer" class="deal-container"></div>
+  <div id="dealsContainer" class="deal-container">
+    <div style="color:#9ca3af; text-align:center; grid-column: 1/-1; padding: 40px;">Loading live deals...</div>
+  </div>
+
+  <div id="chatBubble">💬</div>
+  
+  <div id="chatPanel" class="chat-panel">
+    <div class="chat-header">
+      <span>Support / Inquiries</span>
+      <span style="cursor:pointer;" onclick="document.getElementById('chatPanel').classList.remove('open')">✕</span>
+    </div>
+    <div id="chatBody" class="chat-body">
+      <div style="text-align:center; color:#6b7280; font-size:0.8rem; margin-top:20px;">
+        Start a conversation with us.<br>We are online.
+      </div>
+    </div>
+    <div class="chat-input-area">
+      <input id="chatInput" class="chat-input" placeholder="Ask about a deal..." />
+      <button id="chatSend" class="chat-send">➤</button>
+    </div>
+  </div>
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-    import { getDatabase, ref, onValue } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+    import { getDatabase, ref, onValue, push, onChildAdded, serverTimestamp, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+    import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
-    // 🔹 Firebase connection (correct)
     const firebaseConfig = {
-      apiKey: "AIzaSyAVIFYOURREALKEY",
+      apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
       authDomain: "deal-bankers.firebaseapp.com",
       databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
       projectId: "deal-bankers",
       storageBucket: "deal-bankers.appspot.com",
-      messagingSenderId: "780517313588",
-      appId: "1:780517313588:web:d90506a4bc5b547c7bd2b1"
+      messagingSenderId: "485110155601",
+      appId: "1:485110155601:web:b4c38350ac58c1a2ecab70"
     };
 
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
+    const auth = getAuth(app);
     const dealsContainer = document.getElementById('dealsContainer');
 
-    // ⛔ Old: const dealsRef = ref(db, 'dispoDeals');
-    // 🔥 Correct path:
+    /* ----------------------------------------------------
+       1. SMART FRAME DETECTION
+       ---------------------------------------------------- */
+    // Only show chat bubble if we are NOT inside an iframe
+    if (window.self === window.top) {
+        document.getElementById('chatBubble').style.display = 'flex';
+    }
+
+    /* ----------------------------------------------------
+       2. DEAL LOADING
+       ---------------------------------------------------- */
     const dealsRef = ref(db, 'deals');
 
     onValue(dealsRef, (snapshot) => {
       dealsContainer.innerHTML = '';
-
       if (!snapshot.exists()) {
-        dealsContainer.innerHTML = `<p style="padding:20px;">No active deals found.</p>`;
+        dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals found.</p>`;
         return;
       }
 
       snapshot.forEach(uidSnap => {
         uidSnap.forEach(dealSnap => {
           const deal = dealSnap.val();
-          if (!deal || !deal.status || deal.status.toLowerCase() !== 'active') return;
+          if (!deal || (deal.status && deal.status.toLowerCase() !== 'active')) return;
 
           const dealData = {
             title: deal.title || 'Untitled Deal',
-            location: deal.location || deal.address || 'Unknown Location',
-            price: deal.price ? `$${deal.price}` : 'Price Not Listed',
-            terms: deal.terms || '',
-            photos: Array.isArray(deal.photos) ? deal.photos.slice(0, 3) : [],
-            id: dealSnap.key,
-            createdBy: deal.createdBy || uidSnap.key
+            location: deal.location || deal.address || 'Unknown',
+            price: deal.price ? `$${Number(deal.price).toLocaleString()}` : 'Contact for Price',
+            notes: deal.notes || '',
+            photos: Array.isArray(deal.photos) ? deal.photos : [],
+            id: dealSnap.key
           };
+
+          const mainImg = dealData.photos.length > 0 ? dealData.photos[0] : 'https://via.placeholder.com/400x225?text=DealBankers';
 
           const card = document.createElement('div');
           card.classList.add('deal-card');
           card.innerHTML = `
             <div class="deal-gallery">
-              ${dealData.photos.length ?
-                dealData.photos.map(p => `<img src="${p}" alt="Deal Image"/>`).join('') :
-                `<img src="https://via.placeholder.com/400x200?text=No+Image" />`}
+              <img src="${mainImg}" alt="Deal Image" loading="lazy" />
             </div>
             <div class="deal-details">
               <h2 class="deal-title">${dealData.title}</h2>
-              <p class="deal-location">${dealData.location}</p>
+              <p class="deal-location">📍 ${dealData.location}</p>
               <p class="deal-price">${dealData.price}</p>
-              <p class="deal-terms">${dealData.terms}</p>
-              <button class="viewDealBtn" onclick="window.location.href='deal.html?id=${dealData.id}&uid=${dealData.createdBy}'">
-                View Full Deal
+              <div class="deal-notes">${dealData.notes}</div>
+              <button class="viewDealBtn" onclick="openChatWithContext('${dealData.title}')">
+                I'm Interested
               </button>
             </div>`;
           dealsContainer.appendChild(card);
         });
       });
     });
+
+    /* ----------------------------------------------------
+       3. CHAT LOGIC
+       ---------------------------------------------------- */
+    let currentUser = null;
+    let chatPath = null;
+
+    const chatBubble = document.getElementById('chatBubble');
+    const chatPanel = document.getElementById('chatPanel');
+    const chatInput = document.getElementById('chatInput');
+    const chatBody = document.getElementById('chatBody');
+
+    chatBubble.onclick = () => {
+      chatPanel.classList.toggle('open');
+      if(chatPanel.classList.contains('open')) chatBody.scrollTop = chatBody.scrollHeight;
+    };
+
+    window.openChatWithContext = (dealTitle) => {
+        // If inside iframe, we can't open THIS chat panel (it's hidden).
+        // Standalone page logic:
+        if (window.self === window.top) {
+            chatPanel.classList.add('open');
+            chatInput.value = `I'm interested in: ${dealTitle}`;
+            chatInput.focus();
+        } else {
+            // Inside Portal? Maybe alert or just console log for now
+            alert("Please use the support chat in your dashboard sidebar.");
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        if (user) {
+            currentUser = user;
+            setupChat(user.uid);
+            
+            // Only track presence if we are on the public page
+            if (window.self === window.top) {
+                const presenceRef = ref(db, `presence/global/${user.uid}`);
+                onDisconnect(presenceRef).set({state: "offline", last: serverTimestamp()});
+                set(presenceRef, {
+                    state: "online",
+                    name: user.isAnonymous ? "Guest Visitor" : (user.displayName || user.email),
+                    email: user.isAnonymous ? "N/A" : user.email,
+                    ts: serverTimestamp(),
+                    page: "Dispo Portal (Public)"
+                });
+            }
+        } else {
+            signInAnonymously(auth).catch(console.error);
+        }
+    });
+
+    function setupChat(uid) {
+        chatPath = `direct_messages/${uid}`;
+        const chatRef = ref(db, chatPath);
+        onChildAdded(chatRef, (snap) => {
+            const msg = snap.val();
+            const div = document.createElement('div');
+            const isMe = (msg.sender === uid);
+            div.className = "msg " + (isMe ? "me" : "them");
+            div.innerText = msg.text;
+            chatBody.appendChild(div);
+            chatBody.scrollTop = chatBody.scrollHeight;
+        });
+    }
+
+    document.getElementById('chatSend').onclick = sendMessage;
+    chatInput.addEventListener('keypress', (e) => { if(e.key === "Enter") sendMessage(); });
+
+    function sendMessage() {
+        const text = chatInput.value.trim();
+        if (!text || !currentUser) return;
+
+        push(ref(db, chatPath), {
+            text: text,
+            sender: currentUser.uid,
+            ts: serverTimestamp()
+        });
+        chatInput.value = "";
+    }
   </script>
 </body>
 </html>
