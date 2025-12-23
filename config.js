@@ -11,5 +11,5 @@ window.firebaseConfig = {
   measurementId: "G-KTNXZM14F7"
 };
 
-// Google Maps Embed key (client-side OK if HTTP referrer restricted to your domains)
-window.MAPS_EMBED_KEY = "AIzaSyC3bn6cYLdP53ITSPLO1jx_CmKIMOGO8Q4";
+// This is the key the runtime Street View + Geocoder code uses:
+window.MAPS_JS_KEY = "AIzaSyC3bn6cYLdP53ITSPLO1jx_CmKIMOGO8Q4";
