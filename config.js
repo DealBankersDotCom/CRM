@@ -12,4 +12,4 @@ window.firebaseConfig = {
 };
 
 // Google Maps Embed key (client-side OK if HTTP referrer restricted to your domains)
-window.MAPS_EMBED_KEY = "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs";
+window.MAPS_EMBED_KEY = "AIzaSyC3bn6cYLdP53ITSPLO1jx_CmKIMOGO8Q4";
