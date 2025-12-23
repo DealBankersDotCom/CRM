@@ -21,7 +21,6 @@ body{
   background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
   min-height:100vh;
 }
-/* HEADER */
 .header{
   display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;
@@ -39,7 +38,6 @@ body{
 .chip:hover{background:#14314d;transform:scale(1.03)}
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
-/* Settings Gear */
 .icon-btn{
   background:rgba(255,255,255,0.12);
   border:1px solid rgba(255,255,255,0.25);
@@ -49,7 +47,6 @@ body{
   display:flex;align-items:center;justify-content:center;
 }
 .icon-btn:hover{background:rgba(255,255,255,0.25)}
-/* LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
 .card{
   background:rgba(255,255,255,.07);
@@ -73,7 +70,6 @@ body{
   background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff
 }
 .status{font-size:12px;color:#9ab9d6}
-/* GRID */
 .body{
   padding:14px;
   display:grid;
@@ -81,7 +77,6 @@ body{
   gap:16px;
 }
 @media(max-width:960px){.body{grid-template-columns:1fr}}
-/* LEADS TABLE */
 .search{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
 .input{
   flex:1;background:#0d1f2d;border:1px solid #254a63;
@@ -99,7 +94,6 @@ td.notes-cell{
   white-space:pre-wrap;
   word-break:break-word;
 }
-/* DETAIL PANEL */
 .right-col{
   background:#0b1825;border-radius:16px;padding:12px;
   border:1px solid rgba(255,255,255,.14);
@@ -111,7 +105,6 @@ td.notes-cell{
   background:#0d2233;border-radius:10px;
   padding:10px;font-size:13px;line-height:1.5;margin-top:8px;
 }
-/* NOTES EDITOR */
 .notes-head{
   margin-top:10px;
   display:flex;align-items:center;justify-content:space-between;
@@ -120,7 +113,6 @@ td.notes-cell{
 .notes-actions{display:flex;gap:8px;align-items:center}
 .mini{width:28px;height:28px;font-size:14px}
 .note-status{font-size:12px;color:#9ab9d6;opacity:.9}
-/* MAP */
 .map-head{
   margin-top:12px;
   display:flex;align-items:center;justify-content:space-between;
@@ -154,7 +146,7 @@ td.notes-cell{
   font-size:13px;
   display:none;
 }
-/* --- CHAT BUBBLE & PANEL STYLES --- */
+/* chat */
 #chatBubble{
   position:fixed;bottom:24px;right:24px;width:60px;height:60px;
   border-radius:50%;background:#133e6a;color:white;
@@ -165,7 +157,6 @@ td.notes-cell{
   font-size: 30px;
 }
 #chatBubble:hover{transform:scale(1.1);box-shadow:0 0 30px rgba(43,116,255,1);}
-/* SIDEBAR PANEL */
 .sidebar-panel {
   position: fixed; top: 0; right: -360px; width: 340px; height: 100vh;
   background: rgba(11, 24, 37, 0.98); backdrop-filter: blur(12px);
@@ -182,7 +173,6 @@ td.notes-cell{
 }
 .panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
 .close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
-/* Radar (Admin) */
 #radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
 .radar-user {
   padding: 12px; margin-bottom: 8px; border-radius: 8px;
@@ -191,7 +181,6 @@ td.notes-cell{
 }
 .radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
 .status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; }
-/* Chat Area */
 #chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
 #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
 .msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
@@ -285,7 +274,7 @@ td.notes-cell{
         </div>
 
         <div class="map-wrap" id="mapWrap" style="display:none;">
-          <iframe id="streetFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"></iframe>
+          <iframe id="streetFrame" loading="lazy"></iframe>
         </div>
 
         <div class="map-warn" id="mapWarn"></div>
@@ -344,9 +333,6 @@ function getMapsKey(){
   return (window.MAPS_EMBED_KEY || "").trim();
 }
 
-/** ==========================
- * AUTH
- * ========================== */
 firebase.auth().onAuthStateChanged(u => {
   if (!u) return location.href = 'index.html';
   UID = u.uid;
@@ -561,11 +547,9 @@ function showSaved() {
   $("noteStatus").style.display = "block";
   setTimeout(() => { $("noteStatus").style.display = "none"; }, 900);
 }
-
 function leadIdFor(lead) {
   return (lead && (lead.id || lead.docnum)) ? String(lead.id || lead.docnum) : "";
 }
-
 async function loadUserNote(lead) {
   if (!UID || !lead) return "";
   const id = leadIdFor(lead);
@@ -575,7 +559,6 @@ async function loadUserNote(lead) {
   if (v && typeof v.text === "string") return v.text;
   return "";
 }
-
 function saveUserNote(lead, text) {
   if (!UID || !lead) return Promise.resolve();
   const id = leadIdFor(lead);
@@ -585,7 +568,6 @@ function saveUserNote(lead, text) {
     updatedAt: firebase.database.ServerValue.TIMESTAMP
   });
 }
-
 async function saveNotesNow() {
   if (currentIndex < 0 || !sellerView[currentIndex]) return;
   const lead = sellerView[currentIndex];
@@ -594,21 +576,17 @@ async function saveNotesNow() {
   notesDirty = false;
   showSaved();
 }
-
 $("noteSaveBtn").addEventListener('click', () => { saveNotesNow(); });
 $("noteEditor").addEventListener('input', () => {
   notesDirty = true;
   clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    if (notesDirty) saveNotesNow();
-  }, 650);
+  saveTimer = setTimeout(() => { if (notesDirty) saveNotesNow(); }, 650);
 });
 
 /** ==========================
- * MAP (WORKING NOW)
- * - Default: no-key Street View embed (layer=c) ✅
- * - Optional: if MAPS_EMBED_KEY exists, try Embed API streetview first using "q="
- *   (Embed API supports q for place searches; if it errors, fallback to no-key)
+ * MAP (FIXED)
+ * - Embed API streetview uses location= (NOT q=)
+ * - If key fails, fallback to no-key Street View (layer=c)
  * ========================== */
 function showMapUI() {
   $("mapHead").style.display = "flex";
@@ -631,23 +609,25 @@ function clearMapWarn() {
 function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
 
 function setStreetViewNoKey(addr) {
-  const src = "https://www.google.com/maps?q=" + encodeURIComponent(addr) + "&layer=c&output=embed";
-  $("streetFrame").src = src;
+  $("streetFrame").src =
+    "https://www.google.com/maps?q=" + encodeURIComponent(addr) + "&layer=c&output=embed";
 }
 function setAreaMapNoKey(addr) {
-  const src = "https://www.google.com/maps?q=" + encodeURIComponent(addr) + "&output=embed&z=18";
-  $("streetFrame").src = src;
+  $("streetFrame").src =
+    "https://www.google.com/maps?q=" + encodeURIComponent(addr) + "&output=embed&z=18";
 }
 
-// Try keyed embed (q=address) THEN fallback to no-key
+// Embed API streetview (correct param: location=)
 function setStreetViewEmbedWithKey(addr) {
   const key = getMapsKey();
   if (!key) return false;
-  const src =
+
+  $("streetFrame").src =
     "https://www.google.com/maps/embed/v1/streetview" +
     "?key=" + encodeURIComponent(key) +
-    "&q=" + encodeURIComponent(addr);
-  $("streetFrame").src = src;
+    "&location=" + encodeURIComponent(addr) +
+    "&heading=210&pitch=10&fov=90";
+
   return true;
 }
 
@@ -656,26 +636,25 @@ async function loadStreetViewFirst(addr) {
   clearMapWarn();
   setMapHint("");
 
-  $("streetFrame").src = "about:blank";
+  const frame = $("streetFrame");
+  frame.onload = null;
 
+  // Try keyed embed first (if you set MAPS_EMBED_KEY)
   const usedKey = setStreetViewEmbedWithKey(addr);
   if (!usedKey) {
     setStreetViewNoKey(addr);
     return;
   }
 
-  // If the keyed iframe errors (bad key / restrictions), user will see Google error screen.
-  // We auto-fallback after a short delay by switching to no-key if the iframe didn't load clean.
   setMapHint("Loading Street View…");
-  const frame = $("streetFrame");
 
+  // If keyed embed fails/rejected, fallback quickly
   const fallbackTimer = setTimeout(() => {
     setMapHint("");
-    showMapWarn("Embed API key rejected or restricted. Falling back to no-key Street View.");
+    showMapWarn("Embed API key rejected/restricted or address not accepted. Falling back to no-key Street View.");
     setStreetViewNoKey(addr);
-  }, 1200);
+  }, 1400);
 
-  // If iframe loads, cancel fallback
   frame.onload = () => {
     clearTimeout(fallbackTimer);
     setMapHint("");
@@ -748,9 +727,6 @@ async function updateDetail(lead) {
   }
 }
 
-/** ==========================
- * UI LISTENERS
- * ========================== */
 $("s_reload").onclick = () => renderLeads();
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
@@ -779,5 +755,6 @@ document.addEventListener('DOMContentLoaded', () => {
   };
 });
 </script>
+
 </body>
 </html>
