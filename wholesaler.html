@@ -149,15 +149,12 @@ td.notes-cell{
   padding:0;
 }
 .map-link:hover{color:#ffffff}
-.map-hint{
-  font-size:12px;color:#9ab9d6;
-}
+.map-hint{font-size:12px;color:#9ab9d6;}
 .map-wrap{
   margin-top:8px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.2);
   background:rgba(0,0,0,.18);
 }
 .map-wrap iframe{width:100%;height:280px;border:0}
-
 .map-warn{
   margin-top:8px;
   padding:10px;
@@ -322,6 +319,61 @@ td.notes-cell{
 <div id="chatBubble">💬</div>
 
 <div id="sidePanel" class="sidebar-panel">
+  <div class_toggle style="display:none; height: 80vh;">
+        <iframe
+          id="iframeDispo"
+          src="dispo.html"
+          style="width:100%; height:100%; border:none; border-radius:12px; background:#0b1825;">
+        </iframe>
+      </div>
+
+      <div class="right-col" id="detailPanel">
+        <div class="detail-header">
+          <h3 id="detailTitle">No lead selected</h3>
+          <div class="sub" id="detailSub">Select a lead to load details.</div>
+        </div>
+
+        <div class="detail-info" id="detailInfo" style="display:none;">
+          <div><strong>Address:</strong> <span id="detailAddr"></span></div>
+          <div><strong>Owner:</strong> <span id="detailOwner"></span></div>
+          <div><strong>Phone:</strong> <span id="detailPhone"></span></div>
+        </div>
+
+        <div class="script-box" id="scriptBox">Select a lead to load script.</div>
+
+        <!-- NOTES EDITOR -->
+        <div class="notes-head">
+          <div class="notes-title">Notes</div>
+          <div class="notes-actions">
+            <div id="noteStatus" class="note-status" style="display:none;">Saved ✓</div>
+            <button id="noteSaveBtn" class="icon-btn mini" title="Save notes">✓</button>
+          </div>
+        </div>
+        <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
+
+        <!-- STREET VIEW (AUTO LOAD) + AREA MAP LINK -->
+        <div class="map-head" id="mapHead" style="display:none;">
+          <div class="map-title">Street View</div>
+          <div class="map-actions">
+            <button class="map-link" id="areaMapLink" type="button">Area Map</button>
+            <span class="map-hint" id="mapHint"></span>
+          </div>
+        </div>
+
+        <div class="map-wrap" id="mapWrap" style="display:none;">
+          <iframe id="streetFrame" loading="lazy"></iframe>
+        </div>
+
+        <div class="map-warn" id="mapWarn"></div>
+
+      </div>
+    </div>
+  </section>
+</div>
+
+<div id="chatBubble">💬</div>
+
+<div id="sidePanel" class="sidebar-panel">
   <div class="panel-header">
     <div style="display:flex; align-items:center;">
       <span id="backToRadar">◀ Back</span>
@@ -376,7 +428,7 @@ const $ = (id) => document.getElementById(id);
 function getMapsKey() {
   // You already have window.firebaseConfig.apiKey in config.js
   if (window.firebaseConfig && window.firebaseConfig.apiKey) return window.firebaseConfig.apiKey;
-  return ""; // will fallback to non-key embeds if empty
+  return "";
 }
 
 /** ==========================
@@ -607,18 +659,52 @@ function showSaved() {
   setTimeout(() => { $("noteStatus").style.display = "none"; }, 900);
 }
 
-function saveNotesNow() {
+/** ==========================
+ *  NOTES: per-user notes in Firebase
+ *  - initial notes come from leads.js (lead.notes)
+ *  - user edits are saved to: lead_notes/{uid}/{leadId}
+ *  - every user sees their OWN notes
+ *  ========================== */
+function leadIdFor(lead) {
+  return (lead && (lead.id || lead.docnum)) ? String(lead.id || lead.docnum) : "";
+}
+
+async function loadUserNote(lead) {
+  if (!UID || !lead) return "";
+  const id = leadIdFor(lead);
+  if (!id) return "";
+
+  const snap = await firebase.database().ref('lead_notes/' + UID + '/' + id).once('value');
+  const v = snap.val();
+  if (v && typeof v.text === "string") return v.text;
+  return "";
+}
+
+function saveUserNote(lead, text) {
+  if (!UID || !lead) return Promise.resolve();
+  const id = leadIdFor(lead);
+  if (!id) return Promise.resolve();
+
+  return firebase.database().ref('lead_notes/' + UID + '/' + id).set({
+    text: text || "",
+    updatedAt: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+async function saveNotesNow() {
   if (currentIndex < 0 || !sellerView[currentIndex]) return;
   const lead = sellerView[currentIndex];
   const txt = ($("noteEditor").value || "");
 
-  lead.notes = txt;
+  // Save per-user notes to Firebase (NOT shared)
+  await saveUserNote(lead, txt);
+
   notesDirty = false;
   showSaved();
-  renderLeads();
+  // table shows lead.js notes (static) - we won't overwrite shared notes
 }
 
-$("noteSaveBtn").addEventListener('click', () => saveNotesNow());
+$("noteSaveBtn").addEventListener('click', () => { saveNotesNow(); });
 
 $("noteEditor").addEventListener('input', () => {
   notesDirty = true;
@@ -629,10 +715,8 @@ $("noteEditor").addEventListener('input', () => {
 });
 
 /** ==========================
- *  MAP (AUTO STREET VIEW FIRST)
+ *  MAP (AUTO STREET VIEW FIRST + VERIFY COVERAGE)
  *  ========================== */
-
-// Geocode -> lat/lng (required for reliable streetview embed)
 async function geocodeAddress(addr) {
   const key = getMapsKey();
   if (!key) return null;
@@ -654,6 +738,23 @@ async function geocodeAddress(addr) {
   return { lat: loc.lat, lng: loc.lng };
 }
 
+async function streetViewMetadata(lat, lng) {
+  const key = getMapsKey();
+  if (!key) return null;
+
+  const url =
+    "https://maps.googleapis.com/maps/api/streetview/metadata" +
+    "?location=" + encodeURIComponent(lat + "," + lng) +
+    "&radius=80" +
+    "&key=" + encodeURIComponent(key);
+
+  const res = await fetch(url);
+  if (!res.ok) return null;
+
+  const data = await res.json();
+  return data || null;
+}
+
 function setStreetViewEmbed(lat, lng) {
   const key = getMapsKey();
   const src =
@@ -661,7 +762,6 @@ function setStreetViewEmbed(lat, lng) {
     "?key=" + encodeURIComponent(key) +
     "&location=" + encodeURIComponent(lat + "," + lng) +
     "&heading=210&pitch=10&fov=90";
-
   $("streetFrame").src = src;
 }
 
@@ -683,36 +783,62 @@ async function loadStreetViewFirst(addr) {
   mapWrap.style.display = "block";
   mapWarn.style.display = "none";
   mapHint.textContent = "Loading Street View…";
-
-  // Clear old iframe quickly
   $("streetFrame").src = "about:blank";
 
-  const geo = await geocodeAddress(addr);
-
-  if (geo && getMapsKey()) {
-    // Try embedded street view
-    setStreetViewEmbed(geo.lat, geo.lng);
-    mapHint.textContent = "";
-  } else {
-    // If geocode fails or key missing, fallback to area map embed
+  const key = getMapsKey();
+  if (!key) {
     setAreaMapEmbed(addr);
     mapHint.textContent = "";
     mapWarn.style.display = "block";
-    mapWarn.innerHTML =
-      "Street View embed unavailable (check Maps Embed API + Geocoding API + key restrictions). " +
-      "Showing Area Map instead.";
+    mapWarn.textContent = "Missing API key (window.firebaseConfig.apiKey). Showing Area Map.";
+    return;
   }
+
+  const geo = await geocodeAddress(addr);
+  if (!geo) {
+    setAreaMapEmbed(addr);
+    mapHint.textContent = "";
+    mapWarn.style.display = "block";
+    mapWarn.textContent = "Geocoding failed (check Geocoding API + key restrictions). Showing Area Map.";
+    return;
+  }
+
+  const meta = await streetViewMetadata(geo.lat, geo.lng);
+  if (!meta || !meta.status) {
+    setAreaMapEmbed(addr);
+    mapHint.textContent = "";
+    mapWarn.style.display = "block";
+    mapWarn.textContent = "Street View metadata check failed. Showing Area Map.";
+    return;
+  }
+
+  if (meta.status === "OK") {
+    const panoLoc = meta.location || { lat: geo.lat, lng: geo.lng };
+    setStreetViewEmbed(panoLoc.lat, panoLoc.lng);
+    mapHint.textContent = "";
+    return;
+  }
+
+  setAreaMapEmbed(addr);
+  mapHint.textContent = "";
+  mapWarn.style.display = "block";
+  mapWarn.textContent =
+    (meta.status === "ZERO_RESULTS")
+      ? "No Street View coverage found near this address. Showing Area Map."
+      : ("Street View blocked: " + meta.status + ". Check API enablement + key restrictions.");
 }
 
 function wireAreaMapLink(addr) {
   $("areaMapLink").onclick = () => {
-    // Switch iframe to bird’s-eye (area map)
     setAreaMapEmbed(addr);
     $("mapWarn").style.display = "none";
     $("mapHint").textContent = "";
   };
 }
 
+/** ==========================
+ *  DETAIL (loads notes from leads.js, then per-user override from Firebase)
+ *  ========================== */
 async function updateDetail(lead) {
   const detailTitle = $("detailTitle");
   const detailSub = $("detailSub");
@@ -751,14 +877,21 @@ async function updateDetail(lead) {
   detailPhone.textContent = leadPhone(lead);
 
   // Script
-  scriptBox.textContent = `Hi ${lead.owner || 'there'}, this is Bill regarding ${lead.address || 'your property'}. Are you the owner?`;
+  scriptBox.textContent = "Hi " + (lead.owner || "there") + ", this is Bill regarding " + (lead.address || "your property") + ". Are you the owner?";
 
-  // Notes
+  // Notes: start with leads.js, then override with per-user Firebase note if it exists
   noteEditor.disabled = false;
   noteEditor.value = lead.notes || "";
   notesDirty = false;
 
-  // Map
+  try {
+    const userNote = await loadUserNote(lead);
+    if (userNote) noteEditor.value = userNote;
+  } catch (e) {
+    // ignore
+  }
+
+  // Map: auto Street View first; Area Map link available
   if (lead.address) {
     currentAddress = lead.address;
     wireAreaMapLink(currentAddress);
