@@ -154,7 +154,7 @@ td.notes-cell{
   display:flex;align-items:center;justify-content:center;
   cursor:pointer;box-shadow:0 0 20px rgba(43,116,255,0.8);
   z-index:9999;transition:transform .2s, box-shadow 0.2s;
-  font-size:30px;
+  font-size: 30px;
 }
 #chatBubble:hover{transform:scale(1.1);box-shadow:0 0 30px rgba(43,116,255,1);}
 
@@ -193,7 +193,6 @@ td.notes-cell{
 .msg-bubble{padding:8px 12px;border-radius:12px;max-width:85%;font-size:0.9rem;word-wrap:break-word}
 .msg-me{align-self:flex-end;background:var(--accent);color:white;border-bottom-right-radius:2px}
 .msg-them{align-self:flex-start;background:#1e2c3a;color:#ddd;border-bottom-left-radius:2px}
-
 .chat-input-row{padding:15px;border-top:1px solid var(--line);display:flex;gap:10px}
 .chat-input{flex:1;padding:10px;border-radius:8px;border:1px solid #333;background:#080f16;color:white}
 .send-btn{padding:0 15px;background:var(--accent);color:white;border:none;border-radius:8px;cursor:pointer}
@@ -245,7 +244,9 @@ td.notes-cell{
       </div>
 
       <div id="panel-dispo" style="display:none; height: 80vh;">
-        <iframe id="iframeDispo" src="dispo.html"
+        <iframe
+          id="iframeDispo"
+          src="dispo.html"
           style="width:100%; height:100%; border:none; border-radius:12px; background:#0b1825;">
         </iframe>
       </div>
@@ -264,29 +265,26 @@ td.notes-cell{
 
         <div class="script-box" id="scriptBox">Select a lead to load script.</div>
 
-        <!-- NOTES EDITOR -->
+        <!-- NOTES EDITOR (shared for everyone) -->
         <div class="notes-head">
-          <div class="notes-title">Notes</div>
+          <div class="notes-title">Notes (shared)</div>
           <div class="notes-actions">
             <div id="noteStatus" class="note-status" style="display:none;">Saved ✓</div>
             <button id="noteSaveBtn" class="icon-btn mini" title="Save notes">✓</button>
           </div>
         </div>
-        <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;"
-          placeholder="Type notes here..." disabled></textarea>
+        <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
 
         <!-- MAP -->
         <div class="map-wrap" id="mapWrap" style="display:none;">
-          <iframe id="streetFrame" loading="lazy"></iframe>
+          <iframe id="mapFrame" loading="lazy"></iframe>
         </div>
 
         <div class="map-fallback" id="mapFallback">
-          <div style="margin-bottom:8px;opacity:.9;">
-            If embed is blocked, use the buttons (they always work).
-          </div>
+          <div style="margin-bottom:8px;opacity:.9;">Open Street View in Google Maps:</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="chip" id="btnOpenMaps">🗺️ Open in Google Maps</button>
-            <button class="chip" id="btnOpenStreet">📍 Try Street View</button>
+            <button class="chip" id="btnOpenStreet">📍 Street View</button>
           </div>
         </div>
 
@@ -323,22 +321,43 @@ td.notes-cell{
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<!-- Your configs -->
+<!-- Your files -->
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
-
-<!-- Your local leads list (manual mode) -->
 <script src="leads.js"></script>
 
 <script>
 /** ==========================
- *  UTIL / SAFE INIT
+ *  STATE
  *  ========================== */
+let UID = null;
+let userName = "User";
+
+let baseLeads = [];              // from leads.js
+let overrides = {};              // from firebase lead_overrides/shared/{leadId}
+let sellerView = [];             // merged + filtered view
+let currentIndex = -1;           // index in sellerView
+
+// Notes state
+let saveTimer = null;
+let notesDirty = false;
+
+// Chat Variables
+let currentChatPath = null;
+let isAdmin = false;
+let activeChatRef = null;
+
+// Helpers
 const $ = (id) => document.getElementById(id);
 
-(function bootFirebase(){
+function safeStr(v){ return (v == null) ? "" : String(v); }
+
+/** ==========================
+ *  FIREBASE INIT (safe)
+ *  ========================== */
+(function initFirebase(){
   if (!window.firebaseConfig) {
-    console.error("config.js missing window.firebaseConfig");
+    console.error("config.js missing: window.firebaseConfig not found.");
     return;
   }
   if (!firebase.apps || !firebase.apps.length) {
@@ -346,155 +365,190 @@ const $ = (id) => document.getElementById(id);
   }
 })();
 
-// Maps key: you can reuse the same key (restricted) for Embed,
-// OR set window.googleMapsApiKey in config.js later if you want.
-const MAPS_KEY = (window.googleMapsApiKey || (window.firebaseConfig && window.firebaseConfig.apiKey) || "");
-
-/** ==========================
- *  STATE
- *  ========================== */
-let UID = null;
-let sellerList = [];
-let sellerView = [];
-let currentIndex = -1;
-
-// Notes autosave state
-let saveTimer = null;
-let notesDirty = false;
-
-// Chat state
-let currentChatPath = null;
-let isAdmin = false;
-let activeChatRef = null;
-
-// Notes location (per-user notes)
-function notesRefForLeadId(leadId){
-  return firebase.database().ref("user_notes/" + UID + "/" + leadId);
-}
-
 /** ==========================
  *  AUTH
  *  ========================== */
-firebase.auth().onAuthStateChanged(async (u) => {
-  if (!u) { location.href = "index.html"; return; }
+firebase.auth().onAuthStateChanged(u => {
+  if (!u) return location.href = 'index.html';
+
   UID = u.uid;
+  userName = u.displayName || u.email || "User";
 
-  // Leads
-  subscribeLeads();
+  // 1) Load base leads from leads.js
+  loadBaseLeads();
 
-  // Presence
+  // 2) Start shared overrides listener
+  subscribeSharedOverrides();
+
+  // 3) Presence
   trackPresence(u);
 
-  // Role & Chat
-  const roleSnap = await firebase.database().ref("roles/" + UID).once("value");
-  const role = roleSnap.val();
-  if (role === "admin" || role === "god" || u.email === "dealbankers@gmail.com") {
-    isAdmin = true;
-    startRadar();
-  } else {
-    isAdmin = false;
-    currentChatPath = "direct_messages/" + UID;
-    setupChat(currentChatPath);
-  }
+  // 4) Role & Chat init
+  firebase.database().ref("roles/" + UID).once("value").then(snap => {
+    const role = snap.val();
+    if (role === "admin" || role === "god" || u.email === "dealbankers@gmail.com") {
+      isAdmin = true;
+      startRadar();
+    } else {
+      isAdmin = false;
+      currentChatPath = "direct_messages/" + UID;
+      setupChat(currentChatPath);
+    }
+  });
 });
 
 /** ==========================
- *  LEADS (Manual: leads.js -> window.leads)
+ *  BASE LEADS (from leads.js)
  *  ========================== */
-function subscribeLeads(){
-  if (Array.isArray(window.leads)) {
-    sellerList = window.leads.map((v, i) => ({ id: (v.docnum || String(i)), ...v }));
-  } else {
-    sellerList = [];
-  }
-  renderLeads();
+function makeLeadId(v, i){
+  // Prefer docnum. Fallback if needed.
+  const doc = safeStr(v.docnum).trim();
+  if (doc) return doc;
+  const addr = safeStr(v.address).trim();
+  const owner = safeStr(v.owner).trim();
+  if (addr || owner) return (addr + "|" + owner).slice(0, 180);
+  return String(i);
 }
 
-function leadPhone(v){
-  return v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || "";
+function loadBaseLeads(){
+  if (Array.isArray(window.leads)) {
+    baseLeads = window.leads.map((v, i) => ({ id: makeLeadId(v,i), ...v }));
+  } else {
+    baseLeads = [];
+  }
+  recomputeAndRender();
 }
 
 /** ==========================
- *  RENDER
+ *  SHARED OVERRIDES (Firebase)
+ *  Path: lead_overrides/shared/{leadId}
  *  ========================== */
-function renderLeads(){
-  const q = ( ($("s_q").value || "") ).toLowerCase();
-
-  sellerView = sellerList.filter(v =>
-    !q ||
-    (v.address || "").toLowerCase().includes(q) ||
-    (v.owner || "").toLowerCase().includes(q)
-  );
-
-  $("status").textContent = "Acq: " + sellerView.length + " items";
-
-  const tbody = $("sellerRows");
-  if (!sellerView.length){
-    tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found.</td></tr>';
-    updateDetail(null);
-    return;
-  }
-
-  tbody.innerHTML = sellerView.map((v, i) => `
-    <tr class="lead-row ${i === currentIndex ? "selected" : ""}" data-idx="${i}">
-      <td>${escapeHtml(v.address || "")}</td>
-      <td>${escapeHtml(v.owner || "")}</td>
-      <td>${escapeHtml(leadPhone(v))}</td>
-      <td>${escapeHtml(v.status || "new")}</td>
-      <td class="notes-cell">${escapeHtml(v.notes || "")}</td>
-    </tr>
-  `).join("");
-
-  tbody.querySelectorAll("tr.lead-row").forEach(r => {
-    r.onclick = () => {
-      currentIndex = parseInt(r.dataset.idx, 10);
-      renderLeads();
-      updateDetail(sellerView[currentIndex]);
-    };
+function subscribeSharedOverrides(){
+  const ref = firebase.database().ref("lead_overrides/shared");
+  // Keep overrides current
+  ref.on("child_added", snap => {
+    overrides[snap.key] = snap.val() || {};
+    recomputeAndRender(true);
+  });
+  ref.on("child_changed", snap => {
+    overrides[snap.key] = snap.val() || {};
+    recomputeAndRender(true);
+  });
+  ref.on("child_removed", snap => {
+    delete overrides[snap.key];
+    recomputeAndRender(true);
   });
 }
 
-function escapeHtml(str){
-  return String(str)
-    .replaceAll("&","&amp;")
-    .replaceAll("<","&lt;")
-    .replaceAll(">","&gt;")
-    .replaceAll('"',"&quot;")
-    .replaceAll("'","&#039;");
+/** ==========================
+ *  MERGE + FILTER + RENDER
+ *  ========================== */
+function mergedLead(base){
+  const o = overrides[base.id] || {};
+  // Override wins
+  return { ...base, ...o, id: base.id };
+}
+
+function leadPhone(v){
+  return (
+    v.phone ||
+    (v.contacts && v.contacts[0] && v.contacts[0].phone) ||
+    ""
+  );
+}
+
+function recomputeAndRender(keepSelection){
+  const q = (safeStr($("s_q").value)).toLowerCase().trim();
+
+  const merged = baseLeads.map(mergedLead);
+
+  sellerView = merged.filter(v => {
+    if (!q) return true;
+    return (safeStr(v.address)).toLowerCase().includes(q) ||
+           (safeStr(v.owner)).toLowerCase().includes(q);
+  });
+
+  // keep selection by id if asked
+  if (keepSelection && currentIndex >= 0 && sellerView[currentIndex]) {
+    const curId = sellerView[currentIndex].id;
+    const newIndex = sellerView.findIndex(x => x.id === curId);
+    currentIndex = newIndex;
+  }
+
+  renderTable();
+
+  // update detail panel
+  if (currentIndex >= 0 && sellerView[currentIndex]) {
+    updateDetail(sellerView[currentIndex]);
+  } else {
+    updateDetail(null);
+  }
+}
+
+function renderTable(){
+  $("status").textContent = "Acq: " + sellerView.length + " items";
+
+  const tbody = $("sellerRows");
+  if (!sellerView.length) {
+    tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found.</td></tr>';
+    return;
+  }
+
+  const rows = sellerView.map((v, i) => {
+    const sel = (i === currentIndex) ? "selected" : "";
+    return `
+      <tr class="lead-row ${sel}" data-idx="${i}">
+        <td>${safeStr(v.address)}</td>
+        <td>${safeStr(v.owner)}</td>
+        <td>${safeStr(leadPhone(v))}</td>
+        <td>${safeStr(v.status || "new")}</td>
+        <td class="notes-cell">${safeStr(v.notes)}</td>
+      </tr>
+    `;
+  }).join("");
+
+  tbody.innerHTML = rows;
+
+  tbody.querySelectorAll("tr.lead-row").forEach(r => {
+    r.addEventListener("click", () => {
+      currentIndex = parseInt(r.getAttribute("data-idx"), 10);
+      renderTable();
+      updateDetail(sellerView[currentIndex]);
+    });
+  });
 }
 
 /** ==========================
- *  DETAIL + NOTES (PERSISTENT)
+ *  DETAIL + NOTES (shared)
  *  ========================== */
 function showSaved(){
   $("noteStatus").style.display = "block";
   setTimeout(() => { $("noteStatus").style.display = "none"; }, 900);
 }
 
-async function loadNotesForLead(lead){
-  if (!UID || !lead || !lead.id) return "";
-  const snap = await notesRefForLeadId(lead.id).once("value");
-  return snap.val() || "";
-}
-
-async function saveNotesNow(){
+function saveNotesNow(){
   if (currentIndex < 0 || !sellerView[currentIndex]) return;
+
   const lead = sellerView[currentIndex];
-  const txt = ($("noteEditor").value || "");
+  const leadId = lead.id;
+  const txt = safeStr($("noteEditor").value);
 
-  // Update local memory + table
-  lead.notes = txt;
   notesDirty = false;
-  renderLeads();
 
-  // Save to Firebase
-  if (UID && lead.id){
-    await notesRefForLeadId(lead.id).set(txt);
-  }
-  showSaved();
+  // write override only (shared)
+  firebase.database().ref("lead_overrides/shared/" + leadId).update({
+    notes: txt,
+    updatedAt: firebase.database.ServerValue.TIMESTAMP,
+    updatedBy: UID,
+    updatedByName: userName
+  }).then(() => {
+    showSaved();
+  }).catch(err => {
+    console.error("Save notes failed:", err);
+  });
 }
 
-$("noteSaveBtn").addEventListener("click", () => { saveNotesNow(); });
+$("noteSaveBtn").addEventListener("click", () => saveNotesNow());
 
 $("noteEditor").addEventListener("input", () => {
   notesDirty = true;
@@ -504,20 +558,19 @@ $("noteEditor").addEventListener("input", () => {
   }, 650);
 });
 
-async function updateDetail(lead){
+function updateDetail(lead){
   const detailTitle = $("detailTitle");
-  const detailSub   = $("detailSub");
-  const detailInfo  = $("detailInfo");
-  const detailAddr  = $("detailAddr");
+  const detailSub = $("detailSub");
+  const detailInfo = $("detailInfo");
+  const detailAddr = $("detailAddr");
   const detailOwner = $("detailOwner");
-  const detailPhoneEl = $("detailPhone");
-  const scriptBox   = $("scriptBox");
+  const detailPhone = $("detailPhone");
+  const scriptBox = $("scriptBox");
+  const noteEditor = $("noteEditor");
 
-  const mapWrap     = $("mapWrap");
-  const streetFrame = $("streetFrame");
+  const mapWrap = $("mapWrap");
+  const mapFrame = $("mapFrame");
   const mapFallback = $("mapFallback");
-
-  const noteEditor  = $("noteEditor");
 
   if (!lead){
     detailTitle.textContent = "No lead selected";
@@ -530,53 +583,42 @@ async function updateDetail(lead){
 
     mapWrap.style.display = "none";
     mapFallback.style.display = "none";
-    streetFrame.src = "about:blank";
+    mapFrame.src = "about:blank";
     return;
   }
 
-  // Details
   detailTitle.textContent = lead.owner || "Lead Details";
   detailSub.textContent = lead.status || "new";
   detailInfo.style.display = "block";
+
   detailAddr.textContent = lead.address || "";
   detailOwner.textContent = lead.owner || "";
-  detailPhoneEl.textContent = leadPhone(lead);
+  detailPhone.textContent = leadPhone(lead);
 
-  // Script
-  scriptBox.textContent =
-    "Hi " + (lead.owner || "there") +
-    ", this is Bill regarding " + (lead.address || "your property") +
-    ". Are you the owner?";
+  scriptBox.textContent = "Hi " + (lead.owner || "there") + ", this is Bill regarding " + (lead.address || "your property") + ". Are you the owner?";
 
-  // Notes (load from Firebase, then show)
+  // Notes (merged from leads.js + firebase override)
   noteEditor.disabled = false;
-  noteEditor.value = "Loading notes…";
-  const savedNotes = await loadNotesForLead(lead);
-  noteEditor.value = savedNotes || (lead.notes || "");
-  lead.notes = noteEditor.value; // keep table consistent
+  noteEditor.value = safeStr(lead.notes);
   notesDirty = false;
-  renderLeads();
 
-  // Map
+  // Map (embed place map; Street View via open buttons)
   mapWrap.style.display = "none";
   mapFallback.style.display = "none";
-  streetFrame.src = "about:blank";
+  mapFrame.src = "about:blank";
 
   if (lead.address){
     const addr = encodeURIComponent(lead.address);
+    const key = (window.firebaseConfig && window.firebaseConfig.apiKey) ? window.firebaseConfig.apiKey : "";
 
-    // Use Maps Embed API (place). This accepts an address query.
-    // NOTE: Enable "Maps Embed API" and add it to this key’s API restrictions.
-    if (MAPS_KEY){
-      streetFrame.src =
-        "https://www.google.com/maps/embed/v1/place" +
-        "?key=" + encodeURIComponent(MAPS_KEY) +
-        "&q=" + addr;
-
+    // Place map embed uses Maps Embed API
+    // NOTE: key is OK in frontend IF restricted by HTTP referrers to your domain(s).
+    if (key) {
+      mapFrame.src = "https://www.google.com/maps/embed/v1/place?key=" + encodeURIComponent(key) + "&q=" + addr;
       mapWrap.style.display = "block";
     }
 
-    // Fallback buttons always available
+    // Always show open buttons (no API issues)
     mapFallback.style.display = "block";
     $("btnOpenMaps").onclick = () => window.open("https://www.google.com/maps?q=" + addr, "_blank");
     $("btnOpenStreet").onclick = () => window.open("https://www.google.com/maps?q=" + addr + "&layer=c", "_blank");
@@ -586,11 +628,13 @@ async function updateDetail(lead){
 /** ==========================
  *  UI LISTENERS
  *  ========================== */
-$("s_reload").onclick = () => renderLeads();
+$("s_reload").onclick = () => recomputeAndRender(true);
 $("btnSettings").onclick = () => location.href = "settings.html";
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
-// Tabs
+/** ==========================
+ *  TABS
+ *  ========================== */
 document.addEventListener("DOMContentLoaded", () => {
   const tabAcq = $("tabAcq");
   const tabDispo = $("tabDispo");
@@ -616,19 +660,24 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 /** ==========================
- *  CHAT LOGIC
+ *  CHAT LOGIC (unchanged)
  *  ========================== */
 const sidePanel = $("sidePanel");
 const radarList = $("radarList");
-const chatArea  = $("chatArea");
-const backBtn   = $("backToRadar");
+const chatArea = $("chatArea");
+const backBtn = $("backToRadar");
 const panelTitle = $("panelTitle");
 
 $("chatBubble").onclick = () => {
   sidePanel.classList.toggle("open");
   if (sidePanel.classList.contains("open")) {
-    if (isAdmin && !currentChatPath) showRadarView();
-    else if (!isAdmin) showChatView(currentChatPath, "Support Chat");
+    if (isAdmin && !currentChatPath) {
+      showRadarView();
+    } else {
+      if (chatArea.style.display !== "flex") {
+        if (!isAdmin) showChatView(currentChatPath, "Support Chat");
+      }
+    }
   }
 };
 $("closePanel").onclick = () => sidePanel.classList.remove("open");
@@ -647,12 +696,14 @@ function showChatView(path, name){
   radarList.style.display = "none";
   chatArea.style.display = "flex";
   backBtn.style.display = isAdmin ? "inline" : "none";
-  panelTitle.innerText = name || "Chat";
+  panelTitle.innerText = name;
   currentChatPath = path;
   loadMessages(path);
 }
 
-function setupChat(path){ loadMessages(path); }
+function setupChat(path){
+  loadMessages(path);
+}
 
 function startRadar(){
   firebase.database().ref("presence/global").on("value", snap => {
@@ -660,39 +711,35 @@ function startRadar(){
     radarList.innerHTML = "";
     let count = 0;
 
-    Object.keys(data).forEach(otherUid => {
-      if (otherUid === UID) return;
-      const u = data[otherUid];
-      if (u && u.state === "online"){
+    Object.keys(data).forEach(uid => {
+      if (uid === UID) return;
+      const u = data[uid];
+      if (u && u.state === "online") {
         count++;
         const div = document.createElement("div");
         div.className = "radar-user";
-        const loc = u.page ? "<br><small style='color:#88a5bf'>On: " + escapeHtml(u.page) + "</small>" : "";
 
+        const loc = u.page ? "<br><small style=\"color:#88a5bf\">On: " + safeStr(u.page) + "</small>" : "";
         div.innerHTML =
           "<div>" +
-            "<div style='font-weight:bold; color:#fff'>" + escapeHtml(u.name || "User") + "</div>" +
-            "<small style='color:#666'>" + escapeHtml(u.email || "") + "</small>" +
+            "<div style=\"font-weight:bold; color:#fff\">" + safeStr(u.name || "User") + "</div>" +
+            "<small style=\"color:#666\">" + safeStr(u.email || "") + "</small>" +
             loc +
           "</div>" +
-          "<div class='status-dot'></div>";
+          "<div class=\"status-dot\"></div>";
 
-        // FIXED: no broken template literals
-        div.onclick = () => showChatView("direct_messages/" + otherUid, u.name || "User");
+        div.onclick = () => showChatView("direct_messages/" + uid, u.name || "User");
         radarList.appendChild(div);
       }
     });
 
-    if (count === 0){
-      radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
-    }
+    if (count === 0) radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
   });
 }
 
 function loadMessages(path){
   const box = $("chatMsgs");
   box.innerHTML = "";
-  if (!path) return;
   if (activeChatRef) activeChatRef.off();
 
   activeChatRef = firebase.database().ref(path);
@@ -701,7 +748,7 @@ function loadMessages(path){
     const div = document.createElement("div");
     const isMe = (msg.sender === UID);
     div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
-    div.innerText = msg.text || "";
+    div.innerText = safeStr(msg.text);
     box.appendChild(div);
     box.scrollTop = box.scrollHeight;
   });
@@ -712,7 +759,7 @@ $("chatInput").addEventListener("keypress", (e) => { if (e.key === "Enter") send
 
 function sendMsg(){
   const input = $("chatInput");
-  const txt = (input.value || "").trim();
+  const txt = safeStr(input.value).trim();
   if (!txt || !currentChatPath) return;
 
   firebase.database().ref(currentChatPath).push({
@@ -734,17 +781,17 @@ function trackPresence(u){
   connRef.on("value", snap => {
     if (snap.val() === false) return;
 
-    globalRef.onDisconnect().set({ state:"offline", last: firebase.database.ServerValue.TIMESTAMP });
-    statusRef.onDisconnect().set({ state:"offline", ts: firebase.database.ServerValue.TIMESTAMP });
+    globalRef.onDisconnect().set({ state: "offline", last: firebase.database.ServerValue.TIMESTAMP });
+    statusRef.onDisconnect().set({ state: "offline", ts: firebase.database.ServerValue.TIMESTAMP });
 
     globalRef.set({
-      state:"online",
+      state: "online",
       name: u.displayName || u.email,
       email: u.email,
       ts: firebase.database.ServerValue.TIMESTAMP,
-      page:"Wholesaler Portal"
+      page: "Wholesaler Portal"
     });
-    statusRef.set({ state:"online", ts: firebase.database.ServerValue.TIMESTAMP });
+    statusRef.set({ state: "online", ts: firebase.database.ServerValue.TIMESTAMP });
   });
 }
 </script>
