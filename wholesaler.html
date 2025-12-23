@@ -368,6 +368,11 @@ let currentAddress = "";
 // Helpers
 const $ = (id) => document.getElementById(id);
 
+// ✅ Use MAPS key from config.js (NOT Firebase apiKey)
+function getMapsKey(){
+  return (window.MAPS_EMBED_KEY || "").trim();
+}
+
 /** ==========================
  *  AUTH
  *  ========================== */
@@ -590,9 +595,6 @@ function renderLeads() {
 
 /** ==========================
  *  NOTES: per-user notes in Firebase
- *  - initial notes come from leads.js (lead.notes)
- *  - user edits are saved to: lead_notes/{uid}/{leadId}
- *  - every user sees their OWN notes
  *  ========================== */
 function showSaved() {
   $("noteStatus").style.display = "block";
@@ -647,20 +649,70 @@ $("noteEditor").addEventListener('input', () => {
 });
 
 /** ==========================
- *  MAP (NO API KEY) — Street View loads first automatically
- *  Uses public google maps embed URLs:
- *   - street view: layer=c
- *   - area map: default embed
+ *  MAP (KEYED: Geocode -> Embed Street View)
+ *  Requires:
+ *   - window.MAPS_EMBED_KEY set in config.js
+ *   - Geocoding API enabled
+ *   - Maps Embed API enabled
  * ========================== */
-function setStreetViewNoKey(addr) {
-  const src =
-    "https://www.google.com/maps?q=" +
+function showMapUI() {
+  $("mapHead").style.display = "flex";
+  $("mapWrap").style.display = "block";
+}
+function hideMapUI() {
+  $("mapHead").style.display = "none";
+  $("mapWrap").style.display = "none";
+}
+function showMapWarn(msg) {
+  const w = $("mapWarn");
+  w.style.display = "block";
+  w.textContent = msg || "";
+}
+function clearMapWarn() {
+  const w = $("mapWarn");
+  w.style.display = "none";
+  w.textContent = "";
+}
+function setMapHint(msg) {
+  $("mapHint").textContent = msg || "";
+}
+
+async function geocodeAddress(addr) {
+  const key = getMapsKey();
+  if (!key) throw new Error("Missing MAPS_EMBED_KEY in config.js");
+
+  const url =
+    "https://maps.googleapis.com/maps/api/geocode/json?address=" +
     encodeURIComponent(addr) +
-    "&layer=c&output=embed";
+    "&key=" + encodeURIComponent(key);
+
+  const res = await fetch(url);
+  const data = await res.json();
+
+  if (!data || data.status !== "OK" || !data.results || !data.results[0]) {
+    const msg = (data && data.error_message) ? (" — " + data.error_message) : "";
+    throw new Error("Geocoding failed: " + (data && data.status ? data.status : "UNKNOWN") + msg);
+  }
+
+  const loc = data.results[0].geometry && data.results[0].geometry.location;
+  if (!loc || typeof loc.lat !== "number" || typeof loc.lng !== "number") {
+    throw new Error("Geocoding returned no lat/lng");
+  }
+
+  return { lat: loc.lat, lng: loc.lng };
+}
+
+function setStreetViewEmbed(lat, lng) {
+  const key = getMapsKey();
+  const src =
+    "https://www.google.com/maps/embed/v1/streetview" +
+    "?key=" + encodeURIComponent(key) +
+    "&location=" + encodeURIComponent(lat + "," + lng) +
+    "&heading=210&pitch=10&fov=90";
   $("streetFrame").src = src;
 }
 
-function setAreaMapNoKey(addr) {
+function setAreaMapEmbed(addr) {
   const src =
     "https://www.google.com/maps?q=" +
     encodeURIComponent(addr) +
@@ -669,25 +721,28 @@ function setAreaMapNoKey(addr) {
 }
 
 async function loadStreetViewFirst(addr) {
-  const mapHead = $("mapHead");
-  const mapWrap = $("mapWrap");
-  const mapWarn = $("mapWarn");
-  const mapHint = $("mapHint");
-
-  mapHead.style.display = "flex";
-  mapWrap.style.display = "block";
-  mapWarn.style.display = "none";
-  mapHint.textContent = "";
-
+  showMapUI();
+  clearMapWarn();
+  setMapHint("Loading Street View…");
   $("streetFrame").src = "about:blank";
-  setStreetViewNoKey(addr);
+
+  try {
+    const { lat, lng } = await geocodeAddress(addr);
+    setStreetViewEmbed(lat, lng);
+    setMapHint("");
+  } catch (e) {
+    console.warn(e);
+    setAreaMapEmbed(addr);
+    setMapHint("");
+    showMapWarn(String(e && e.message ? e.message : e) + " (showing Area Map)");
+  }
 }
 
 function wireAreaMapLink(addr) {
   $("areaMapLink").onclick = () => {
-    setAreaMapNoKey(addr);
-    $("mapWarn").style.display = "none";
-    $("mapHint").textContent = "";
+    clearMapWarn();
+    setMapHint("");
+    setAreaMapEmbed(addr);
   };
 }
 
@@ -705,10 +760,9 @@ async function updateDetail(lead) {
   const noteEditor = $("noteEditor");
 
   // Reset map UI
-  $("mapHead").style.display = "none";
-  $("mapWrap").style.display = "none";
-  $("mapWarn").style.display = "none";
-  $("mapHint").textContent = "";
+  hideMapUI();
+  clearMapWarn();
+  setMapHint("");
   $("streetFrame").src = "about:blank";
   currentAddress = "";
 
@@ -737,7 +791,7 @@ async function updateDetail(lead) {
     ", this is Bill regarding " + (lead.address || "your property") +
     ". Are you the owner?";
 
-  // Notes: start with leads.js, then override with per-user Firebase note if it exists
+  // Notes
   noteEditor.disabled = false;
   noteEditor.value = lead.notes || "";
   notesDirty = false;
@@ -745,11 +799,9 @@ async function updateDetail(lead) {
   try {
     const userNote = await loadUserNote(lead);
     if (userNote) noteEditor.value = userNote;
-  } catch (e) {
-    // ignore
-  }
+  } catch (e) {}
 
-  // Map: auto Street View first; Area Map link available
+  // Map
   if (lead.address) {
     currentAddress = lead.address;
     wireAreaMapLink(currentAddress);
