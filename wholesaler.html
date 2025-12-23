@@ -95,11 +95,18 @@ body{
 }
 .table-wrap{overflow-x:auto;border-radius:12px}
 table{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
-th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2)}
+th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2);vertical-align:top}
 thead th{border-top:0;color:#cfe3ff}
 tr.lead-row{cursor:pointer}
 tr.lead-row:hover{background:rgba(255,255,255,.06)}
 tr.lead-row.selected{background:rgba(43,116,255,.25)}
+
+/* Make long notes readable */
+td.notes-cell{
+  max-width:420px;
+  white-space:pre-wrap;
+  word-break:break-word;
+}
 
 /* DETAIL PANEL */
 .right-col{
@@ -114,9 +121,34 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
   padding:10px;font-size:13px;line-height:1.5;margin-top:8px;
 }
 
+/* NOTES EDITOR */
+.notes-head{
+  margin-top:10px;
+  display:flex;align-items:center;justify-content:space-between;
+}
+.notes-title{font-weight:600;color:#cfe3ff;font-size:13px}
+.notes-actions{display:flex;gap:8px;align-items:center}
+.mini{
+  width:28px;height:28px;font-size:14px;
+}
+.note-status{
+  font-size:12px;color:#9ab9d6;opacity:.9;
+}
+
 /* MAP */
 .map-wrap{margin-top:12px;border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,.2)}
 .map-wrap iframe{width:100%;height:250px;border:0}
+.map-fallback{
+  margin-top:10px;
+  padding:10px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:12px;
+  background:rgba(0,0,0,.18);
+  color:#cfe3ff;
+  font-size:13px;
+  display:none;
+}
+.map-fallback .chip{display:inline-flex;align-items:center;gap:6px}
 
 /* --- CHAT BUBBLE & PANEL STYLES --- */
 #chatBubble{
@@ -217,9 +249,9 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
       </div>
 
       <div id="panel-dispo" style="display:none; height: 80vh;">
-        <iframe 
-          id="iframeDispo" 
-          src="dispo.html" 
+        <iframe
+          id="iframeDispo"
+          src="dispo.html"
           style="width:100%; height:100%; border:none; border-radius:12px; background:#0b1825;">
         </iframe>
       </div>
@@ -238,9 +270,29 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 
         <div class="script-box" id="scriptBox">Select a lead to load script.</div>
 
+        <!-- NOTES EDITOR -->
+        <div class="notes-head">
+          <div class="notes-title">Notes</div>
+          <div class="notes-actions">
+            <div id="noteStatus" class="note-status" style="display:none;">Saved ✓</div>
+            <button id="noteSaveBtn" class="icon-btn mini" title="Save notes">✓</button>
+          </div>
+        </div>
+        <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
+
+        <!-- MAP (Embed tries first, falls back to open-in-maps when API blocks) -->
         <div class="map-wrap" id="mapWrap" style="display:none;">
           <iframe id="streetFrame" loading="lazy"></iframe>
         </div>
+
+        <div class="map-fallback" id="mapFallback">
+          <div style="margin-bottom:8px;opacity:.9;">Street View embed is blocked by your Google API key settings.</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="chip" id="btnOpenMaps">🗺️ Open in Google Maps</button>
+            <button class="chip" id="btnOpenStreet">📍 Try Street View</button>
+          </div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -251,8 +303,8 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 <div id="sidePanel" class="sidebar-panel">
   <div class="panel-header">
     <div style="display:flex; align-items:center;">
-        <span id="backToRadar">◀ Back</span>
-        <span id="panelTitle" class="panel-title">Support Chat</span>
+      <span id="backToRadar">◀ Back</span>
+      <span id="panelTitle" class="panel-title">Support Chat</span>
     </div>
     <button class="close-btn" id="closePanel">✕</button>
   </div>
@@ -264,8 +316,8 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
   <div id="chatArea">
     <div id="chatMsgs"></div>
     <div class="chat-input-row">
-        <input id="chatInput" class="chat-input" type="text" placeholder="Type a message...">
-        <button id="chatSend" class="send-btn">➤</button>
+      <input id="chatInput" class="chat-input" type="text" placeholder="Type a message...">
+      <button id="chatSend" class="send-btn">➤</button>
     </div>
   </div>
 </div>
@@ -276,193 +328,223 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 <script src="leads.js"></script>
+
 <script>
+/** ==========================
+ *  STATE
+ *  ========================== */
 let UID = null;
 let sellerList = [], sellerView = [], currentIndex = -1;
+
+// Notes state
+let saveTimer = null;
+let notesDirty = false;
 
 // Chat Variables
 let currentChatPath = null;
 let isAdmin = false;
 let activeChatRef = null;
 
-// Auth State
+// Helpers
+const $ = (id) => document.getElementById(id);
+
+/** ==========================
+ *  AUTH
+ *  ========================== */
 firebase.auth().onAuthStateChanged(u => {
   if (!u) return location.href = 'index.html';
   UID = u.uid;
-  
-  // 1. Start Lead Subscription (Original Logic)
+
+  // 1) Leads (manual from leads.js)
   subscribeLeads();
-  
-  // 2. Presence Logic (Tracking Online Status)
+
+  // 2) Presence
   trackPresence(u);
 
-  // 3. Check Role & Initialize Chat (God Mode Logic)
+  // 3) Role & Chat init
   firebase.database().ref(`roles/${UID}`).once('value').then(snap => {
     const role = snap.val();
     if (role === 'admin' || role === 'god' || u.email === "dealbankers@gmail.com") {
-        isAdmin = true;
-        startRadar();
+      isAdmin = true;
+      startRadar();
     } else {
-        isAdmin = false;
-        currentChatPath = `direct_messages/${UID}`;
-        setupChat(currentChatPath); // User listens to their own channel
+      isAdmin = false;
+      currentChatPath = `direct_messages/${UID}`;
+      setupChat(currentChatPath);
     }
   });
 });
 
-/* --- CHAT LOGIC --- */
-const sidePanel = document.getElementById("sidePanel");
-const radarList = document.getElementById("radarList");
-const chatArea = document.getElementById("chatArea");
-const backBtn = document.getElementById("backToRadar");
-const panelTitle = document.getElementById("panelTitle");
+/** ==========================
+ *  CHAT LOGIC
+ *  ========================== */
+const sidePanel = $("sidePanel");
+const radarList = $("radarList");
+const chatArea = $("chatArea");
+const backBtn = $("backToRadar");
+const panelTitle = $("panelTitle");
 
-// Toggle Panel
-document.getElementById("chatBubble").onclick = () => {
-    sidePanel.classList.toggle("open");
-    if(sidePanel.classList.contains("open")) {
-        if(isAdmin && !currentChatPath) {
-            showRadarView();
-        } else {
-            // If user or admin already in chat
-            if(chatArea.style.display !== 'flex') {
-                if(!isAdmin) showChatView(currentChatPath, "Support Chat");
-            }
-        }
+$("chatBubble").onclick = () => {
+  sidePanel.classList.toggle("open");
+  if (sidePanel.classList.contains("open")) {
+    if (isAdmin && !currentChatPath) {
+      showRadarView();
+    } else {
+      if (chatArea.style.display !== 'flex') {
+        if (!isAdmin) showChatView(currentChatPath, "Support Chat");
+      }
     }
+  }
 };
-document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
+$("closePanel").onclick = () => sidePanel.classList.remove("open");
 backBtn.onclick = () => showRadarView();
 
 function showRadarView() {
-    radarList.style.display = "block";
-    chatArea.style.display = "none";
-    backBtn.style.display = "none";
-    panelTitle.innerText = "📡 Live Radar";
-    currentChatPath = null;
-    if(activeChatRef) { activeChatRef.off(); activeChatRef = null; }
+  radarList.style.display = "block";
+  chatArea.style.display = "none";
+  backBtn.style.display = "none";
+  panelTitle.innerText = "📡 Live Radar";
+  currentChatPath = null;
+  if (activeChatRef) { activeChatRef.off(); activeChatRef = null; }
 }
 
 function showChatView(path, name) {
-    radarList.style.display = "none";
-    chatArea.style.display = "flex";
-    backBtn.style.display = isAdmin ? "inline" : "none";
-    panelTitle.innerText = name;
-    currentChatPath = path;
-    loadMessages(path);
+  radarList.style.display = "none";
+  chatArea.style.display = "flex";
+  backBtn.style.display = isAdmin ? "inline" : "none";
+  panelTitle.innerText = name;
+  currentChatPath = path;
+  loadMessages(path);
 }
 
-// Setup User Chat (Listen to their own messages)
 function setupChat(path) {
-    // Just a wrapper to load messages for the user
-    loadMessages(path);
+  loadMessages(path);
 }
 
 function startRadar() {
-    firebase.database().ref('presence/global').on('value', snap => {
-        const data = snap.val() || {};
-        radarList.innerHTML = "";
-        let count = 0;
-        
-        Object.keys(data).forEach(uid => {
-            if(uid === UID) return;
-            const u = data[uid];
-            if(u.state === 'online') {
-                count++;
-                const div = document.createElement("div");
-                div.className = "radar-user";
-                const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold; color:#fff">${u.name || 'User'}</div>
-                        <small style="color:#666">${u.email}</small>
-                        ${loc}
-                    </div>
-                    <div class="status-dot"></div>
-                `;
-                div.onclick = () => showChatView(`direct_messages/${uid}`, u.name || 'User');
-                radarList.appendChild(div);
-            }
-        });
-        
-        if(count === 0) radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
+  firebase.database().ref('presence/global').on('value', snap => {
+    const data = snap.val() || {};
+    radarList.innerHTML = "";
+    let count = 0;
+
+    Object.keys(data).forEach(uid => {
+      if (uid === UID) return;
+      const u = data[uid];
+      if (u.state === 'online') {
+        count++;
+        const div = document.createElement("div");
+        div.className = "radar-user";
+        const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
+        div.innerHTML = `
+          <div>
+            <div style="font-weight:bold; color:#fff">${u.name || 'User'}</div>
+            <small style="color:#666">${u.email}</small>
+            ${loc}
+          </div>
+          <div class="status-dot"></div>
+        `;
+        div.onclick = () => showChatView(`direct_messages/${uid}`, u.name || 'User');
+        radarList.appendChild(div);
+      }
     });
+
+    if (count === 0) radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
+  });
 }
 
 function loadMessages(path) {
-    const box = document.getElementById("chatMsgs");
-    box.innerHTML = "";
-    if(activeChatRef) activeChatRef.off();
-    
-    activeChatRef = firebase.database().ref(path);
-    activeChatRef.on('child_added', snap => {
-        const msg = snap.val();
-        const div = document.createElement("div");
-        const isMe = (msg.sender === UID);
-        div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
-        div.innerText = msg.text;
-        box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
-    });
+  const box = $("chatMsgs");
+  box.innerHTML = "";
+  if (activeChatRef) activeChatRef.off();
+
+  activeChatRef = firebase.database().ref(path);
+  activeChatRef.on('child_added', snap => {
+    const msg = snap.val();
+    const div = document.createElement("div");
+    const isMe = (msg.sender === UID);
+    div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
+    div.innerText = msg.text;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  });
 }
 
-// Send Message
-document.getElementById("chatSend").onclick = sendMsg;
-document.getElementById("chatInput").addEventListener("keypress", (e) => { if(e.key==="Enter") sendMsg(); });
+$("chatSend").onclick = sendMsg;
+$("chatInput").addEventListener("keypress", (e) => { if (e.key === "Enter") sendMsg(); });
 
 function sendMsg() {
-    const input = document.getElementById("chatInput");
-    const txt = input.value.trim();
-    if(!txt || !currentChatPath) return;
-    
-    firebase.database().ref(currentChatPath).push({
-        sender: UID,
-        text: txt,
-        ts: firebase.database.ServerValue.TIMESTAMP
-    });
-    input.value = "";
+  const input = $("chatInput");
+  const txt = input.value.trim();
+  if (!txt || !currentChatPath) return;
+
+  firebase.database().ref(currentChatPath).push({
+    sender: UID,
+    text: txt,
+    ts: firebase.database.ServerValue.TIMESTAMP
+  });
+  input.value = "";
 }
 
-/* --- PRESENCE TRACKING --- */
+/** ==========================
+ *  PRESENCE TRACKING
+ *  ========================== */
 function trackPresence(u) {
-    const globalRef = firebase.database().ref(`presence/global/${u.uid}`);
-    const statusRef = firebase.database().ref(`presence/${u.uid}`);
-    const connRef = firebase.database().ref('.info/connected');
+  const globalRef = firebase.database().ref(`presence/global/${u.uid}`);
+  const statusRef = firebase.database().ref(`presence/${u.uid}`);
+  const connRef = firebase.database().ref('.info/connected');
 
-    connRef.on('value', snap => {
-        if (snap.val() === false) return;
-        globalRef.onDisconnect().set({state: "offline", last: firebase.database.ServerValue.TIMESTAMP});
-        statusRef.onDisconnect().set({state: "offline", ts: firebase.database.ServerValue.TIMESTAMP});
+  connRef.on('value', snap => {
+    if (snap.val() === false) return;
 
-        globalRef.set({
-            state: "online",
-            name: u.displayName || u.email,
-            email: u.email,
-            ts: firebase.database.ServerValue.TIMESTAMP,
-            page: "Wholesaler Portal"
-        });
-        statusRef.set({state: "online", ts: firebase.database.ServerValue.TIMESTAMP});
+    globalRef.onDisconnect().set({ state: "offline", last: firebase.database.ServerValue.TIMESTAMP });
+    statusRef.onDisconnect().set({ state: "offline", ts: firebase.database.ServerValue.TIMESTAMP });
+
+    globalRef.set({
+      state: "online",
+      name: u.displayName || u.email,
+      email: u.email,
+      ts: firebase.database.ServerValue.TIMESTAMP,
+      page: "Wholesaler Portal"
     });
+    statusRef.set({ state: "online", ts: firebase.database.ServerValue.TIMESTAMP });
+  });
 }
 
-/* --- ORIGINAL LEAD LOGIC (PRESERVED) --- */
+/** ==========================
+ *  LEADS (Manual: leads.js -> window.leads)
+ *  ========================== */
 function subscribeLeads() {
-  // Manual mode: load leads from leads.js (window.leads)
-  sellerList = Array.isArray(window.leads) ? window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v })) : [];
+  // Supports either window.leads (array) or window.leads.sellers (object) just in case
+  if (Array.isArray(window.leads)) {
+    sellerList = window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v }));
+  } else if (window.leads && typeof window.leads === 'object' && window.leads.sellers) {
+    const obj = window.leads.sellers || {};
+    sellerList = Object.entries(obj).map(([id, v]) => ({ id, ...v }));
+  } else {
+    sellerList = [];
+  }
   renderLeads();
 }
 
+function leadPhone(v) {
+  return (
+    v.phone ||
+    (v.contacts && v.contacts[0] && v.contacts[0].phone) ||
+    ""
+  );
+}
 
 function renderLeads() {
-  const q = (document.getElementById('s_q').value || '').toLowerCase();
+  const q = (($("s_q").value || '')).toLowerCase();
   sellerView = sellerList.filter(v =>
-    !q || (v.address || '').toLowerCase().includes(q) ||
+    !q ||
+    (v.address || '').toLowerCase().includes(q) ||
     (v.owner || '').toLowerCase().includes(q)
   );
 
-  document.getElementById('status').textContent = 'Acq: ' + sellerView.length + ' items';
-  const tbody = document.getElementById('sellerRows');
+  $("status").textContent = 'Acq: ' + sellerView.length + ' items';
 
+  const tbody = $("sellerRows");
   if (!sellerView.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found.</td></tr>';
     updateDetail(null);
@@ -470,68 +552,135 @@ function renderLeads() {
   }
 
   tbody.innerHTML = sellerView.map((v, i) => `
-    <tr class="lead-row" data-idx="${i}">
+    <tr class="lead-row ${i === currentIndex ? 'selected' : ''}" data-idx="${i}">
       <td>${v.address || ''}</td>
       <td>${v.owner || ''}</td>
-<td>${(v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || '')}</td>
+      <td>${leadPhone(v)}</td>
       <td>${v.status || 'new'}</td>
-      <td>${v.notes || ''}</td>
+      <td class="notes-cell">${v.notes || ''}</td>
     </tr>`).join('');
 
   tbody.querySelectorAll('tr.lead-row').forEach(r => {
     r.onclick = () => {
-      currentIndex = parseInt(r.dataset.idx);
+      currentIndex = parseInt(r.dataset.idx, 10);
+      renderLeads();                 // re-highlight selected row
       updateDetail(sellerView[currentIndex]);
     };
   });
 }
 
+/** ==========================
+ *  DETAIL + NOTES
+ *  ========================== */
+function showSaved() {
+  $("noteStatus").style.display = "block";
+  setTimeout(() => { $("noteStatus").style.display = "none"; }, 900);
+}
+
+function saveNotesNow() {
+  if (currentIndex < 0 || !sellerView[currentIndex]) return;
+  const lead = sellerView[currentIndex];
+  const txt = ($("noteEditor").value || "");
+
+  lead.notes = txt;        // update memory
+  notesDirty = false;
+  showSaved();
+  renderLeads();           // reflect in table
+}
+
+$("noteSaveBtn").addEventListener('click', () => saveNotesNow());
+
+$("noteEditor").addEventListener('input', () => {
+  notesDirty = true;
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(() => {
+    if (notesDirty) saveNotesNow();
+  }, 650);
+});
+
 function updateDetail(lead) {
-  const detailTitle = document.getElementById('detailTitle');
-  const detailSub = document.getElementById('detailSub');
-  const detailInfo = document.getElementById('detailInfo');
-  const detailAddr = document.getElementById('detailAddr');
-  const detailOwner = document.getElementById('detailOwner');
-  const detailPhone = document.getElementById('detailPhone');
-  const scriptBox = document.getElementById('scriptBox');
-  const mapWrap = document.getElementById('mapWrap');
-  const streetFrame = document.getElementById('streetFrame');
+  const detailTitle = $("detailTitle");
+  const detailSub = $("detailSub");
+  const detailInfo = $("detailInfo");
+  const detailAddr = $("detailAddr");
+  const detailOwner = $("detailOwner");
+  const detailPhone = $("detailPhone");
+  const scriptBox = $("scriptBox");
+  const mapWrap = $("mapWrap");
+  const streetFrame = $("streetFrame");
+  const mapFallback = $("mapFallback");
+  const noteEditor = $("noteEditor");
 
   if (!lead) {
     detailTitle.textContent = 'No lead selected';
     detailSub.textContent = 'Select a lead to view information.';
     detailInfo.style.display = 'none';
     scriptBox.textContent = 'Select a lead to load script.';
+
+    noteEditor.value = "";
+    noteEditor.disabled = true;
+
     mapWrap.style.display = 'none';
+    mapFallback.style.display = 'none';
+    streetFrame.src = "about:blank";
     return;
   }
 
+  // Details
   detailTitle.textContent = lead.owner || 'Lead Details';
   detailSub.textContent = lead.status || 'new';
   detailInfo.style.display = 'block';
 
   detailAddr.textContent = lead.address || '';
   detailOwner.textContent = lead.owner || '';
-  detailPhone.textContent = lead.phone || '';
+  detailPhone.textContent = leadPhone(lead);
+
+  // Script
   scriptBox.textContent = `Hi ${lead.owner || 'there'}, this is Bill regarding ${lead.address || 'your property'}. Are you the owner?`;
 
+  // Notes
+  noteEditor.disabled = false;
+  noteEditor.value = lead.notes || "";
+  notesDirty = false;
+
+  // Map
+  mapWrap.style.display = 'none';
+  mapFallback.style.display = 'none';
+  streetFrame.src = "about:blank";
+
   if (lead.address) {
-    streetFrame.src = 'https://www.google.com/maps/embed/v1/place?key=AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs&q=' + encodeURIComponent(lead.address);
+    // Try embed (will fail if key not authorized). We'll also show fallback buttons.
+    const addr = encodeURIComponent(lead.address);
+    streetFrame.src = 'https://www.google.com/maps/embed/v1/place?key=AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs&q=' + addr;
     mapWrap.style.display = 'block';
+
+    // Always allow fallback open buttons (fast + no API restrictions)
+    mapFallback.style.display = 'block';
+
+    $("btnOpenMaps").onclick = () => {
+      window.open('https://www.google.com/maps?q=' + addr, '_blank');
+    };
+    $("btnOpenStreet").onclick = () => {
+      // "layer=c" forces Street View mode when available
+      window.open('https://www.google.com/maps?q=' + addr + '&layer=c', '_blank');
+    };
   }
 }
 
-/* UI Listeners */
-document.getElementById('s_reload').onclick = () => renderLeads();
-document.getElementById('btnSettings').onclick = () => location.href = 'settings.html';
-document.getElementById('logoutBtn').onclick = () => firebase.auth().signOut();
+/** ==========================
+ *  UI LISTENERS
+ *  ========================== */
+$("s_reload").onclick = () => renderLeads();
+$("btnSettings").onclick = () => location.href = 'settings.html';
+$("logoutBtn").onclick = () => firebase.auth().signOut();
 
+// Tabs
 document.addEventListener('DOMContentLoaded', () => {
-  const tabAcq = document.getElementById('tabAcq');
-  const tabDispo = document.getElementById('tabDispo');
-  const panelAcq = document.getElementById('panel-acq');
-  const panelDispo = document.getElementById('panel-dispo');
-  const crumb = document.getElementById('crumb');
+  const tabAcq = $("tabAcq");
+  const tabDispo = $("tabDispo");
+  const panelAcq = $("panel-acq");
+  const panelDispo = $("panel-dispo");
+  const crumb = $("crumb");
 
   tabAcq.onclick = () => {
     tabAcq.classList.add('active');
