@@ -275,7 +275,7 @@ tr.lead-row.selected{background:rgba(43,116,255,.25)}
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
-
+<script src="leads.js"></script>
 <script>
 let UID = null;
 let sellerList = [], sellerView = [], currentIndex = -1;
@@ -447,12 +447,11 @@ function trackPresence(u) {
 
 /* --- ORIGINAL LEAD LOGIC (PRESERVED) --- */
 function subscribeLeads() {
-  firebase.database().ref('leads/sellers').on('value', snap => {
-    const obj = snap.val() || {};
-    sellerList = Object.entries(obj).map(([id, v]) => ({ id, ...v }));
-    renderLeads();
-  });
+  // Manual mode: load leads from leads.js (window.leads)
+  sellerList = Array.isArray(window.leads) ? window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v })) : [];
+  renderLeads();
 }
+
 
 function renderLeads() {
   const q = (document.getElementById('s_q').value || '').toLowerCase();
@@ -474,7 +473,7 @@ function renderLeads() {
     <tr class="lead-row" data-idx="${i}">
       <td>${v.address || ''}</td>
       <td>${v.owner || ''}</td>
-      <td>${v.phone || ''}</td>
+<td>${(v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || '')}</td>
       <td>${v.status || 'new'}</td>
       <td>${v.notes || ''}</td>
     </tr>`).join('');
