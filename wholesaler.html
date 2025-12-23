@@ -286,7 +286,7 @@ td.notes-cell{
         </div>
 
         <div class="map-fallback" id="mapFallback">
-          <div style="margin-bottom:8px;opacity:.9;">Street View embed is blocked by your Google API key settings.</div>
+          <div style="margin-bottom:8px;opacity:.9;" id="mapFallbackMsg">Street View is unavailable. Use the buttons below.</div>
           <div style="display:flex;gap:8px;flex-wrap:wrap;">
             <button class="chip" id="btnOpenMaps">🗺️ Open in Google Maps</button>
             <button class="chip" id="btnOpenStreet">📍 Try Street View</button>
@@ -347,6 +347,9 @@ let activeChatRef = null;
 
 // Helpers
 const $ = (id) => document.getElementById(id);
+
+// Pull Maps key from config.js (DO NOT hardcode here)
+const MAPS_EMBED_KEY = (window.MAPS_EMBED_KEY || "").trim();
 
 /** ==========================
  *  AUTH
@@ -443,7 +446,7 @@ function startRadar() {
           </div>
           <div class="status-dot"></div>
         `;
-        div.onclick = () => showChatView(`direct_messages/${uid}`, u.name || 'User');
+        div.onclick = () => showChatView(\`direct_messages/\${uid}\`, u.name || 'User');
         radarList.appendChild(div);
       }
     });
@@ -489,8 +492,8 @@ function sendMsg() {
  *  PRESENCE TRACKING
  *  ========================== */
 function trackPresence(u) {
-  const globalRef = firebase.database().ref(`presence/global/${u.uid}`);
-  const statusRef = firebase.database().ref(`presence/${u.uid}`);
+  const globalRef = firebase.database().ref(\`presence/global/\${u.uid}\`);
+  const statusRef = firebase.database().ref(\`presence/\${u.uid}\`);
   const connRef = firebase.database().ref('.info/connected');
 
   connRef.on('value', snap => {
@@ -514,7 +517,6 @@ function trackPresence(u) {
  *  LEADS (Manual: leads.js -> window.leads)
  *  ========================== */
 function subscribeLeads() {
-  // Supports either window.leads (array) or window.leads.sellers (object) just in case
   if (Array.isArray(window.leads)) {
     sellerList = window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v }));
   } else if (window.leads && typeof window.leads === 'object' && window.leads.sellers) {
@@ -527,11 +529,7 @@ function subscribeLeads() {
 }
 
 function leadPhone(v) {
-  return (
-    v.phone ||
-    (v.contacts && v.contacts[0] && v.contacts[0].phone) ||
-    ""
-  );
+  return (v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || "");
 }
 
 function renderLeads() {
@@ -563,7 +561,7 @@ function renderLeads() {
   tbody.querySelectorAll('tr.lead-row').forEach(r => {
     r.onclick = () => {
       currentIndex = parseInt(r.dataset.idx, 10);
-      renderLeads();                 // re-highlight selected row
+      renderLeads();
       updateDetail(sellerView[currentIndex]);
     };
   });
@@ -582,10 +580,10 @@ function saveNotesNow() {
   const lead = sellerView[currentIndex];
   const txt = ($("noteEditor").value || "");
 
-  lead.notes = txt;        // update memory
+  lead.notes = txt;        // updates in-memory list
   notesDirty = false;
   showSaved();
-  renderLeads();           // reflect in table
+  renderLeads();
 }
 
 $("noteSaveBtn").addEventListener('click', () => saveNotesNow());
@@ -609,6 +607,7 @@ function updateDetail(lead) {
   const mapWrap = $("mapWrap");
   const streetFrame = $("streetFrame");
   const mapFallback = $("mapFallback");
+  const mapFallbackMsg = $("mapFallbackMsg");
   const noteEditor = $("noteEditor");
 
   if (!lead) {
@@ -626,7 +625,6 @@ function updateDetail(lead) {
     return;
   }
 
-  // Details
   detailTitle.textContent = lead.owner || 'Lead Details';
   detailSub.textContent = lead.status || 'new';
   detailInfo.style.display = 'block';
@@ -635,7 +633,6 @@ function updateDetail(lead) {
   detailOwner.textContent = lead.owner || '';
   detailPhone.textContent = leadPhone(lead);
 
-  // Script
   scriptBox.textContent = `Hi ${lead.owner || 'there'}, this is Bill regarding ${lead.address || 'your property'}. Are you the owner?`;
 
   // Notes
@@ -643,28 +640,36 @@ function updateDetail(lead) {
   noteEditor.value = lead.notes || "";
   notesDirty = false;
 
-  // Map
+  // Map defaults
   mapWrap.style.display = 'none';
   mapFallback.style.display = 'none';
   streetFrame.src = "about:blank";
 
-  if (lead.address) {
-    // Try embed (will fail if key not authorized). We'll also show fallback buttons.
-    const addr = encodeURIComponent(lead.address);
-    streetFrame.src = 'https://www.google.com/maps/embed/v1/place?key=AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs&q=' + addr;
-    mapWrap.style.display = 'block';
+  if (!lead.address) return;
 
-    // Always allow fallback open buttons (fast + no API restrictions)
-    mapFallback.style.display = 'block';
+  const addrEnc = encodeURIComponent(lead.address);
 
-    $("btnOpenMaps").onclick = () => {
-      window.open('https://www.google.com/maps?q=' + addr, '_blank');
-    };
-    $("btnOpenStreet").onclick = () => {
-      // "layer=c" forces Street View mode when available
-      window.open('https://www.google.com/maps?q=' + addr + '&layer=c', '_blank');
-    };
+  // Always show fallback buttons (they work even when API restrictions block embeds)
+  mapFallback.style.display = 'block';
+  $("btnOpenMaps").onclick = () => window.open('https://www.google.com/maps?q=' + addrEnc, '_blank');
+  $("btnOpenStreet").onclick = () => window.open('https://www.google.com/maps?q=' + addrEnc + '&layer=c', '_blank');
+
+  // If no key in config.js, just show fallback message
+  if (!MAPS_EMBED_KEY) {
+    mapFallbackMsg.textContent = "No Maps Embed key configured. Add window.MAPS_EMBED_KEY in config.js to enable embeds.";
+    return;
   }
+
+  // Use q= (more reliable for addresses than location=)
+  // If streetview fails for a given address, Google may show an error inside the iframe.
+  // The fallback buttons still work.
+  streetFrame.src =
+    'https://www.google.com/maps/embed/v1/streetview' +
+    '?key=' + encodeURIComponent(MAPS_EMBED_KEY) +
+    '&q=' + addrEnc;
+
+  mapWrap.style.display = 'block';
+  mapFallbackMsg.textContent = "If Street View embed is blocked or unavailable, use the buttons below.";
 }
 
 /** ==========================
