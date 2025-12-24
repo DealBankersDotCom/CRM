@@ -137,7 +137,7 @@ td.notes-cell{
   gap:10px;
 }
 .map-title{font-weight:600;color:#cfe3ff;font-size:13px}
-.map-actions{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.map-actions{display:flex;gap:10px;flex-wrap:wrap;align-items:center}
 .map-link{
   border:none;
   background:transparent;
@@ -296,11 +296,12 @@ td.notes-cell{
         </div>
         <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
 
-        <!-- STREET VIEW -->
+        <!-- MAP / STREET VIEW -->
         <div class="map-head" id="mapHead" style="display:none;">
-          <div class="map-title">Street View</div>
+          <div class="map-title" id="mapTitle">Area Map</div>
           <div class="map-actions">
             <button class="map-link" id="areaMapLink" type="button">Area Map</button>
+            <button class="map-link" id="streetViewLink" type="button">Street View</button>
             <span class="map-hint" id="mapHint"></span>
           </div>
         </div>
@@ -375,6 +376,10 @@ function getMapsKey(){
   ).trim();
 }
 
+// IMPORTANT: This upgrade makes Street View ONLY load on click.
+// Area Map loads on lead selection by default.
+const STREETVIEW_ON_LOAD = false;
+
 // OPTIONAL: enable one-time geocode+cache (cost controlled by caching)
 const ENABLE_GEOCODE_CACHE = false; // set true if you enable Geocoding API + billing
 const GEOCODE_RATE_LIMIT_MS = 1200; // gentle pacing
@@ -391,6 +396,9 @@ let notesDirty = false;
 let currentChatPath = null;
 let isAdmin = false;
 let activeChatRef = null;
+
+// Map mode state (per selected lead)
+let mapMode = "area"; // "area" | "street"
 
 const $ = (id) => document.getElementById(id);
 
@@ -684,68 +692,127 @@ $("noteEditor").addEventListener('input', () => {
 });
 
 /** ==========================
- * MAP / STREET VIEW
+ * MAP / STREET VIEW (UPGRADED)
  *
- * Goal:
- * - Works even when lat/lng is missing (address-based embed)
- * - Uses key if present, otherwise no-key fallback
- * - OPTIONAL: geocode+cache once if enabled
+ * Upgrade goals:
+ * - Area Map loads by default (no Street View lookup on load)
+ * - Street View loads ONLY when user clicks Street View
+ * - Toggle between Area Map and Street View
+ * - Fix: DO NOT use "&q=" for /embed/v1/streetview (use location OR query)
+ * - Optional: cache geocode + streetview metadata in Firebase (off by default)
  * ========================== */
 function showMapUI() { $("mapHead").style.display = "flex"; $("mapWrap").style.display = "block"; }
 function hideMapUI() { $("mapHead").style.display = "none"; $("mapWrap").style.display = "none"; }
 function showMapWarn(msg) { const w = $("mapWarn"); w.style.display = "block"; w.textContent = msg || ""; }
 function clearMapWarn() { const w = $("mapWarn"); w.style.display = "none"; w.textContent = ""; }
 function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
+function setMapTitle(msg) { $("mapTitle").textContent = msg || "Area Map"; }
 
-function setStreetViewNoKeyByAddress(address) {
-  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed";
+function setFrameSrc(url) {
+  $("streetFrame").src = url;
 }
+
+// No-key embeds (free-ish, but not guaranteed; uses maps.google.com embed)
 function setAreaMapNoKeyByAddress(address) {
-  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18";
+  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18");
 }
-
-function setStreetViewNoKeyLocation(lat, lng) {
-  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed";
+function setStreetViewNoKeyByAddress(address) {
+  // layer=c is street view camera layer
+  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed");
 }
 function setAreaMapNoKeyLocation(lat, lng) {
-  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18";
+  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18");
+}
+function setStreetViewNoKeyLocation(lat, lng) {
+  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed");
 }
 
-// Maps Embed API streetview by coords (keyed)
+// Keyed Maps Embed API (recommended reliability)
+function setAreaMapEmbedWithKeyAddress(address) {
+  const key = getMapsKey();
+  if (!key) return false;
+  setFrameSrc(
+    "https://www.google.com/maps/embed/v1/place" +
+    "?key=" + encodeURIComponent(key) +
+    "&q=" + encodeURIComponent(address)
+  );
+  return true;
+}
+
+function setAreaMapEmbedWithKeyLocation(lat, lng) {
+  const key = getMapsKey();
+  if (!key) return false;
+  setFrameSrc(
+    "https://www.google.com/maps/embed/v1/view" +
+    "?key=" + encodeURIComponent(key) +
+    "&center=" + encodeURIComponent(`${lat},${lng}`) +
+    "&zoom=18&maptype=roadmap"
+  );
+  return true;
+}
+
 function setStreetViewEmbedWithKeyLocation(lat, lng) {
   const key = getMapsKey();
   if (!key) return false;
-
-  const loc = `${lat},${lng}`;
-  $("streetFrame").src =
+  setFrameSrc(
     "https://www.google.com/maps/embed/v1/streetview" +
     "?key=" + encodeURIComponent(key) +
-    "&location=" + encodeURIComponent(loc) +
-    "&heading=210&pitch=10&fov=90";
+    "&location=" + encodeURIComponent(`${lat},${lng}`) +
+    "&heading=210&pitch=10&fov=90"
+  );
   return true;
 }
 
-// Maps Embed API streetview by address (keyed) — works without lat/lng
+// FIXED: /embed/v1/streetview does NOT accept q= in your earlier version.
+// It accepts "location" (lat,lng) OR "query" (address string). Use query here.
 function setStreetViewEmbedWithKeyAddress(address) {
   const key = getMapsKey();
   if (!key) return false;
-
-  $("streetFrame").src =
+  setFrameSrc(
     "https://www.google.com/maps/embed/v1/streetview" +
     "?key=" + encodeURIComponent(key) +
-    "&q=" + encodeURIComponent(address);
+    "&query=" + encodeURIComponent(address)
+  );
   return true;
 }
 
-async function loadStreetViewPreferKeyThenFallback({ address, lat, lng }) {
+/** Default map: Area Map ONLY (no Street View on load) */
+async function loadAreaMap({ address, lat, lng }) {
   showMapUI();
   clearMapWarn();
   setMapHint("");
+  setMapTitle("Area Map");
 
   const frame = $("streetFrame");
   frame.onload = null;
 
-  // If we have coords, try coords-first
+  // Prefer keyed embed if key is present; otherwise fallback to no-key
+  if (lat && lng) {
+    const usedKey = setAreaMapEmbedWithKeyLocation(lat, lng);
+    if (!usedKey) setAreaMapNoKeyLocation(lat, lng);
+    return;
+  }
+
+  if (address) {
+    const usedKey = setAreaMapEmbedWithKeyAddress(address);
+    if (!usedKey) setAreaMapNoKeyByAddress(address);
+    return;
+  }
+
+  showMapWarn("No address on this lead.");
+}
+
+/** Street View loads ONLY on click */
+async function loadStreetView({ address, lat, lng }) {
+  showMapUI();
+  clearMapWarn();
+  setMapHint("");
+  setMapTitle("Street View");
+
+  const frame = $("streetFrame");
+  frame.onload = null;
+
+  // coords best
   if (lat && lng) {
     const usedKey = setStreetViewEmbedWithKeyLocation(lat, lng);
     if (!usedKey) { setStreetViewNoKeyLocation(lat, lng); return; }
@@ -761,7 +828,7 @@ async function loadStreetViewPreferKeyThenFallback({ address, lat, lng }) {
     return;
   }
 
-  // No coords: use address-based embed (this is the big missing piece)
+  // address-based street view (works now: uses query=, not q=)
   if (address) {
     const usedKey = setStreetViewEmbedWithKeyAddress(address);
     if (!usedKey) { setStreetViewNoKeyByAddress(address); return; }
@@ -780,12 +847,16 @@ async function loadStreetViewPreferKeyThenFallback({ address, lat, lng }) {
   showMapWarn("No address on this lead.");
 }
 
-function wireAreaMapLink({ address, lat, lng }) {
-  $("areaMapLink").onclick = () => {
-    clearMapWarn();
-    setMapHint("");
-    if (lat && lng) return setAreaMapNoKeyLocation(lat, lng);
-    if (address) return setAreaMapNoKeyByAddress(address);
+function wireMapToggles(getCtxFn) {
+  $("areaMapLink").onclick = async () => {
+    mapMode = "area";
+    const ctx = getCtxFn();
+    await loadAreaMap(ctx);
+  };
+  $("streetViewLink").onclick = async () => {
+    mapMode = "street";
+    const ctx = getCtxFn();
+    await loadStreetView(ctx);
   };
 }
 
@@ -841,10 +912,13 @@ async function updateDetail(lead) {
   const scriptBox = $("scriptBox");
   const noteEditor = $("noteEditor");
 
+  // Reset map UI
   hideMapUI();
   clearMapWarn();
   setMapHint("");
+  setMapTitle("Area Map");
   $("streetFrame").src = "about:blank";
+  mapMode = "area";
 
   if (!lead) {
     detailTitle.textContent = 'No lead selected';
@@ -895,27 +969,38 @@ async function updateDetail(lead) {
     if (userNote) noteEditor.value = userNote;
   } catch (e) {}
 
-  // MAP:
-  // - If we have coords, use coords
-  // - If not, embed by address (works immediately)
-  wireAreaMapLink({ address: lead.address || "", lat, lng });
-  await loadStreetViewPreferKeyThenFallback({ address: lead.address || "", lat, lng });
+  // SHOW MAP UI + WIRE TOGGLES
+  showMapUI();
+  wireMapToggles(() => ({ address: lead.address || "", lat, lng }));
 
-  // OPTIONAL: if enabled, geocode once and cache
+  // Default: Area Map on load (NO Street View lookup)
+  await loadAreaMap({ address: lead.address || "", lat, lng });
+
+  // OPTIONAL: if enabled, geocode once and cache (still OFF by default)
+  // NOTE: We do NOT auto-switch to Street View after geocoding. We only improve coords for future clicks.
   if (ENABLE_GEOCODE_CACHE && (!lat || !lng) && lead.address && id) {
     setMapHint("Geocoding address once…");
     try {
       const geo = await geocodeAddressOnce(lead.address);
       if (geo && geo.lat && geo.lng) {
         await setCachedGeo(id, geo.lat, geo.lng);
-        setMapHint("Saved lat/lng ✓");
-        // Reload with coords for best Street View accuracy
-        await loadStreetViewPreferKeyThenFallback({ address: lead.address, lat: geo.lat, lng: geo.lng });
+        lat = geo.lat; lng = geo.lng;
         detailLatLng.textContent = `${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`;
+        setMapHint("Saved lat/lng ✓");
+        // reload area map to center precisely
+        if (mapMode === "area") await loadAreaMap({ address: lead.address, lat, lng });
+        setTimeout(() => setMapHint(""), 900);
       } else {
         setMapHint("");
       }
     } catch (e) { setMapHint(""); }
+  }
+
+  // If you ever want to revert to old behavior (not recommended), flip STREETVIEW_ON_LOAD true
+  // but by default we avoid it to control costs.
+  if (STREETVIEW_ON_LOAD) {
+    mapMode = "street";
+    await loadStreetView({ address: lead.address || "", lat, lng });
   }
 }
 
