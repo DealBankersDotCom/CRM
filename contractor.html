@@ -30,7 +30,7 @@ body{
   border-bottom:1px solid rgba(255,255,255,.2);
   background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));
 }
-.nav{display:flex;gap:8px;flex-wrap:wrap}
+.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
 .chip{
   padding:6px 14px;border-radius:100px;
   border:1px solid rgba(255,255,255,.22);
@@ -50,8 +50,17 @@ body{
   width: 34px;height: 34px;font-size: 18px;
   color: white;cursor: pointer;
   display: flex;align-items: center;justify-content: center;
+  position:relative;
 }
 .icon-btn:hover { background: rgba(255,255,255,0.25); }
+
+/* Pulse (for onboarding) */
+.pulse{ animation:pulse 1.2s infinite; }
+@keyframes pulse{
+  0%{ box-shadow:0 0 0 0 rgba(45,124,255,.65); }
+  70%{ box-shadow:0 0 0 10px rgba(45,124,255,0); }
+  100%{ box-shadow:0 0 0 0 rgba(45,124,255,0); }
+}
 
 /* MAIN LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
@@ -95,6 +104,24 @@ body{
   cursor:pointer;font-weight:600;
 }
 
+/* Setup Banner */
+.banner{
+  display:none;
+  margin:12px 14px 0;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(12,24,36,.75);
+  color:#d9ecff;
+  font-size:14px;
+}
+.banner b{color:#fff}
+.banner .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .btn{
+  padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
+  background:#133e6a;color:#fff;font-weight:700;cursor:pointer;
+}
+
 /* CHAT BUBBLE */
 #chatBubble{
   position:fixed;bottom:24px;right:24px;width:54px;height:54px;
@@ -114,11 +141,65 @@ body{
   padding:16px;max-width:720px;width:92%;
   box-shadow:0 28px 70px rgba(0,0,0,.55)
 }
+.modal .grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px;
+}
+@media(max-width:720px){ .modal .grid{grid-template-columns:1fr} }
+
 .modal input,.modal select,.modal textarea{
   width:100%;padding:10px;border:1px solid #254a63;
   background:#0d1f2d;color:#fff;border-radius:10px;margin:6px 0;
 }
-.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px}
+.actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
+.small{font-size:12px;opacity:.85}
+.hr{height:1px;background:rgba(255,255,255,.12);margin:10px 0}
+
+/* Toggle */
+.toggle{
+  display:flex;align-items:center;justify-content:space-between;
+  gap:10px;padding:10px 12px;border-radius:12px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(13,31,45,.6);
+}
+.switch{
+  width:46px;height:26px;border-radius:999px;
+  background:rgba(255,255,255,.18);
+  position:relative;cursor:pointer;border:1px solid rgba(255,255,255,.18);
+}
+.knob{
+  width:22px;height:22px;border-radius:50%;
+  background:#fff;position:absolute;top:1px;left:1px;
+  transition:transform .15s ease;
+}
+.switch.on{background:rgba(43,116,255,.55);border-color:rgba(43,116,255,.65)}
+.switch.on .knob{transform:translateX(20px)}
+
+/* Onboarding overlay/callout */
+#setupOverlay{
+  position:fixed;inset:0;background:rgba(0,0,0,.55);
+  z-index:10000;
+  display:none;
+}
+#setupCallout{
+  position:absolute;width:320px;max-width:calc(100vw - 24px);
+  padding:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(10,20,30,.96);
+  border-radius:16px;
+  box-shadow:0 18px 60px rgba(0,0,0,.6);
+  color:#eaf3ff;
+}
+#setupCallout .title{ font-weight:800; margin-bottom:4px; font-size:16px; }
+#setupCallout .msg{ opacity:.92; margin-bottom:10px; font-size:13px; line-height:1.3; }
+#setupCallout .actions{ display:flex; gap:10px; justify-content:flex-end; margin-top:8px; }
+#setupCallout button{
+  height:38px; padding:0 12px; border-radius:12px; border:0; cursor:pointer;
+  font-weight:800;
+}
+#setupCallout .primary{ background:#2d7cff; color:white; }
+#setupCallout .ghost{ background:transparent; color:#d7e7ff; border:1px solid rgba(255,255,255,.16); }
 </style>
 </head>
 
@@ -130,23 +211,94 @@ body{
     <a class="chip" href="profile.html">Dashboard</a>
     <button class="chip" id="btnBlue">🌀 Blue</button>
     <button class="chip danger" id="btnRed">🚨 Red</button>
-    <button class="icon-btn" id="btnSettings">⚙️</button>
+    <button class="icon-btn" id="btnSettings" title="Settings">⚙️</button>
     <a class="chip" id="logoutBtn">Log Out</a>
   </nav>
 </header>
+
+<!-- Onboarding Callout Overlay -->
+<div id="setupOverlay" aria-hidden="true">
+  <div id="setupCallout" role="dialog" aria-label="Complete setup">
+    <div class="title">One quick step</div>
+    <div class="msg">Complete your contractor profile so DealBankers can route jobs to you.</div>
+    <div class="actions">
+      <button id="setupLater" class="ghost">Not now</button>
+      <button id="setupGo" class="primary">Open Settings</button>
+    </div>
+  </div>
+</div>
 
 <!-- Settings Modal -->
 <div class="modal-backdrop" id="settingsModal">
   <div class="modal wide">
     <h3>Contractor Account Setup</h3>
-    <p>Tell us how you want to receive jobs.</p>
-    <input id="bizName" placeholder="Business Name" />
-    <input id="serviceArea" placeholder="Cities, Zip Codes" />
-    <input id="trades" placeholder="Trades You Perform" />
-    <select id="liveShare">
-      <option>Disabled</option>
-      <option>Enabled</option>
-    </select>
+    <p class="small">30-second setup. This helps us route jobs to you correctly.</p>
+
+    <div class="hr"></div>
+
+    <div class="grid">
+      <div>
+        <label class="small">Business Name</label>
+        <input id="bizName" placeholder="Business Name" />
+      </div>
+
+      <div>
+        <label class="small">Trades You Perform</label>
+        <input id="trades" placeholder="Drywall, Painting, Flooring…" />
+      </div>
+
+      <div style="grid-column:1 / -1">
+        <label class="small">Service Areas</label>
+        <input id="serviceArea" placeholder="Cities, Zip Codes (ex: San Antonio, 78210, 78212)" />
+      </div>
+
+      <div>
+        <label class="small">Phone</label>
+        <input id="contactPhone" placeholder="(210) 555-1234" inputmode="tel" />
+      </div>
+
+      <div>
+        <label class="small">Email</label>
+        <input id="contactEmail" placeholder="you@email.com" inputmode="email" />
+      </div>
+
+      <div>
+        <label class="small">Preferred Contact</label>
+        <select id="prefContact">
+          <option value="text">Text</option>
+          <option value="call">Call</option>
+          <option value="email">Email</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="small">Trust Badges</label>
+        <div style="display:flex;gap:14px;align-items:center;margin-top:8px;flex-wrap:wrap">
+          <label style="display:flex;gap:8px;align-items:center">
+            <input type="checkbox" id="isLicensed" />
+            <span>Licensed</span>
+          </label>
+          <label style="display:flex;gap:8px;align-items:center">
+            <input type="checkbox" id="isInsured" />
+            <span>Insured</span>
+          </label>
+        </div>
+      </div>
+
+      <div style="grid-column:1 / -1">
+        <div class="toggle">
+          <div>
+            <div style="font-weight:800">Accepting Jobs</div>
+            <div class="small">Turn this on to receive new job offers.</div>
+          </div>
+          <div class="switch" id="acceptSwitch" aria-label="Accepting Jobs Toggle">
+            <div class="knob"></div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
     <div class="actions">
       <button class="chip" id="closeSettings">Cancel</button>
       <button class="chip primary" id="saveSettings">Save</button>
@@ -158,7 +310,7 @@ body{
 <div class="modal-backdrop" id="rbModal">
   <div class="modal">
     <h3 id="rbTitle">Request</h3>
-    <label>Category</label>
+    <label class="small">Category</label>
     <select id="rbCategory">
       <option>Acquisition</option>
       <option>Sales</option>
@@ -166,9 +318,9 @@ body{
       <option>Realtor</option>
       <option>Website</option>
     </select>
-    <label>Subject</label>
+    <label class="small">Subject</label>
     <input id="rbSubject" placeholder="Short summary" />
-    <label>Details</label>
+    <label class="small">Details</label>
     <textarea id="rbDetails" rows="4" placeholder="What do you need?"></textarea>
     <div class="actions">
       <button class="chip" id="rbCancel">Cancel</button>
@@ -180,6 +332,17 @@ body{
 <!-- MAIN CONTENT -->
 <div class="wrap">
   <section class="card">
+
+    <!-- Setup Banner -->
+    <div class="banner" id="setupBanner">
+      <div class="row">
+        <div>
+          <b>Setup incomplete.</b> Add service areas + trades + a contact method to start receiving jobs.
+        </div>
+        <button class="btn" id="bannerFix">Finish Setup</button>
+      </div>
+    </div>
+
     <div class="top">
       <div>
         <div id="crumb">Active Jobs</div>
@@ -220,11 +383,101 @@ body{
 <script>
 // AUTH & USER STATUS
 let UID = null;
+let lastSettings = null;
+let rbUrgent = false;
+let acceptingJobs = true;
+
+const REQUIRED_HINT = "Please enter: Service Areas + Trades + a contact method (Phone or Email).";
+
+function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
+
+function normalizePhone(p){
+  const d = (p||"").replace(/[^\d]/g,'');
+  if(d.length===10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+  return (p||"").trim();
+}
+
+function needsSetup(s){
+  if(!s) return true;
+  const hasCoverage = !!(s.serviceArea && s.serviceArea.trim().length);
+  const hasTrades = !!(s.trades && s.trades.trim().length);
+  const hasContact = !!((s.phone && s.phone.trim().length) || (s.email && s.email.trim().length));
+  return !(hasCoverage && hasTrades && hasContact);
+}
+
+function setSwitch(el, on){
+  if(on){ el.classList.add('on'); }
+  else{ el.classList.remove('on'); }
+  acceptingJobs = !!on;
+}
+
+function showSettingsModal(){
+  settingsModal.style.display='flex';
+}
+
+function hideSettingsModal(){
+  settingsModal.style.display='none';
+}
+
+function showOnboardingCallout(){
+  const gear = document.getElementById('btnSettings');
+  if(!gear) return;
+
+  // show overlay
+  const overlay = document.getElementById('setupOverlay');
+  overlay.style.display = 'block';
+  overlay.setAttribute('aria-hidden','false');
+
+  // pulse gear
+  gear.classList.add('pulse');
+
+  // position callout near gear
+  const r = gear.getBoundingClientRect();
+  const callout = document.getElementById('setupCallout');
+  const top = Math.max(12, r.bottom + 10);
+  const left = Math.min(window.innerWidth - callout.offsetWidth - 12, Math.max(12, r.left - 220));
+  callout.style.top = `${top}px`;
+  callout.style.left = `${left}px`;
+
+  // buttons
+  setupGo.onclick = ()=>{
+    overlay.style.display='none';
+    overlay.setAttribute('aria-hidden','true');
+    gear.classList.remove('pulse');
+    showSettingsModal();
+  };
+  setupLater.onclick = ()=>{
+    overlay.style.display='none';
+    overlay.setAttribute('aria-hidden','true');
+    gear.classList.remove('pulse');
+  };
+
+  // click outside to dismiss (optional)
+  overlay.addEventListener('click', (e)=>{
+    if(e.target === overlay){
+      overlay.style.display='none';
+      overlay.setAttribute('aria-hidden','true');
+      gear.classList.remove('pulse');
+    }
+  }, { once:true });
+}
+
+function setBannerVisible(v){
+  setupBanner.style.display = v ? 'block' : 'none';
+}
+
+// Keep banner button working
+bannerFix.onclick = ()=> showSettingsModal();
+
+// Toggle switch click
+acceptSwitch.onclick = ()=>{
+  setSwitch(acceptSwitch, !acceptSwitch.classList.contains('on'));
+};
 
 firebase.auth().onAuthStateChanged(async u => {
   if (!u) return location.href = "index.html";
   UID = u.uid;
-  loadSettings();
+  await loadSettings();
   subscribeJobs();
 });
 
@@ -232,52 +485,112 @@ firebase.auth().onAuthStateChanged(async u => {
 async function loadSettings() {
   const snap = await firebase.database().ref(`users/${UID}/contractorSettings`).once('value');
   const s = snap.val();
+  lastSettings = s || null;
+
   if (s) {
     bizName.value = s.businessName || "";
     serviceArea.value = s.serviceArea || "";
     trades.value = s.trades || "";
-    liveShare.value = s.liveShare ? "Enabled" : "Disabled";
+
+    contactPhone.value = s.phone || "";
+    contactEmail.value = s.email || "";
+    prefContact.value = s.preferredContact || "text";
+    isLicensed.checked = !!s.licensed;
+    isInsured.checked = !!s.insured;
+
+    // Backward compat with your old field:
+    // if you previously used liveShare as a boolean, map it to acceptingJobs if acceptingJobs is undefined.
+    const on = (typeof s.acceptingJobs === 'boolean')
+      ? s.acceptingJobs
+      : (typeof s.liveShare === 'boolean' ? s.liveShare : true);
+
+    setSwitch(acceptSwitch, on);
+
     emptyState.style.display = "none";
   } else {
+    // brand new user
     emptyState.style.display = "block";
+    // default toggles
+    setSwitch(acceptSwitch, true);
+    prefContact.value = "text";
+  }
+
+  const missing = needsSetup(s);
+  setBannerVisible(missing);
+
+  // Auto-nudge first time / incomplete profiles
+  if(missing){
+    // show callout only if not dismissed this session
+    showOnboardingCallout();
   }
 }
 
 // Save Settings
 saveSettings.onclick = async () => {
-  await firebase.database().ref(`users/${UID}/contractorSettings`).set({
+  const payload = {
     businessName: bizName.value.trim(),
     serviceArea: serviceArea.value.trim(),
     trades: trades.value.trim(),
-    liveShare: liveShare.value === "Enabled",
+
+    phone: normalizePhone(contactPhone.value),
+    email: contactEmail.value.trim(),
+    preferredContact: prefContact.value,
+
+    licensed: !!isLicensed.checked,
+    insured: !!isInsured.checked,
+
+    acceptingJobs: !!acceptingJobs,
+
     updatedAt: new Date().toISOString()
-  });
+  };
+
+  // minimal validation — keep it light, but enforce routing essentials
+  if(needsSetup(payload)){
+    alert(REQUIRED_HINT);
+    return;
+  }
+
+  await firebase.database().ref(`users/${UID}/contractorSettings`).set(payload);
+
   alert("Settings saved!");
-  settingsModal.style.display = "none";
+  hideSettingsModal();
   emptyState.style.display = "none";
+  setBannerVisible(false);
+  lastSettings = payload;
 };
 
 // Modals Open/Close
-btnSettings.onclick = ()=>settingsModal.style.display='flex';
-closeSettings.onclick = ()=>settingsModal.style.display='none';
-setupServices.onclick=()=>settingsModal.style.display='flex';
+btnSettings.onclick = ()=> showSettingsModal();
+closeSettings.onclick = ()=> hideSettingsModal();
+setupServices.onclick = ()=> showSettingsModal();
 
 // Placeholder for actual job loading
 function subscribeJobs(){
-  jobTable.innerHTML = "<p style='padding:14px;'>No active jobs.</p>";
+  // If setup not complete, make the “no jobs” message explain why
+  const msg = needsSetup(lastSettings)
+    ? `<div style="padding:14px;opacity:.9">
+         <b>Complete setup to receive jobs.</b><br/>
+         Click <span style="color:#7fb3ff">⚙️ Settings</span> and add service areas, trades, and contact info.
+       </div>`
+    : `<p style="padding:14px;">No active jobs.</p>`;
+
+  jobTable.innerHTML = msg;
+  status.textContent = "Loaded";
 }
 
 // Blue/Red Phone Support Requests
 document.addEventListener('click',e=>{
-  if(e.target.id==='btnRed') showModal(true);
-  if(e.target.id==='btnBlue') showModal(false);
-  if(e.target.id==='rbCancel') hideModal();
+  if(e.target.id==='btnRed') showRBModal(true);
+  if(e.target.id==='btnBlue') showRBModal(false);
+  if(e.target.id==='rbCancel') hideRBModal();
 });
-function showModal(urgent){
+
+function showRBModal(urgent){
+  rbUrgent = !!urgent;
   rbModal.style.display='flex';
   rbTitle.textContent = urgent ? '🚨 Urgent Request' : '🌀 Blue Request';
 }
-function hideModal(){ rbModal.style.display='none'; }
+function hideRBModal(){ rbModal.style.display='none'; }
 
 rbSubmit.onclick = async ()=>{
   await firebase.database().ref('requests').push({
@@ -285,12 +598,12 @@ rbSubmit.onclick = async ()=>{
     cat:rbCategory.value,
     subject:rbSubject.value,
     details:rbDetails.value,
-    urgent:false,
+    urgent: rbUrgent,
     uid:UID,
     ts:firebase.database.ServerValue.TIMESTAMP
   });
   alert('Request Sent!');
-  hideModal();
+  hideRBModal();
 };
 
 // Chat button
@@ -317,8 +630,6 @@ firebase.auth().onAuthStateChanged(u=>{
     ts:firebase.database.ServerValue.TIMESTAMP
   });
 });
-
-function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 </script>
 
 </body>
