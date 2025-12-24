@@ -296,7 +296,7 @@ td.notes-cell{
         </div>
         <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
 
-        <!-- STREET VIEW (LAT/LNG FIRST) + AREA MAP LINK -->
+        <!-- STREET VIEW -->
         <div class="map-head" id="mapHead" style="display:none;">
           <div class="map-title">Street View</div>
           <div class="map-actions">
@@ -349,6 +349,37 @@ td.notes-cell{
 
 <script>
 /** ==========================
+ * CONFIG / SAFETY INIT
+ * ========================== */
+
+// If app-auth.js didn't init Firebase, do it safely here.
+(function ensureFirebaseInit(){
+  try{
+    if (!firebase.apps || !firebase.apps.length) {
+      if (!window.firebaseConfig) {
+        console.error("Missing window.firebaseConfig. Check config.js path and load order.");
+        return;
+      }
+      firebase.initializeApp(window.firebaseConfig);
+      console.log("Firebase initialized (fallback init in wholesaler.html).");
+    }
+  }catch(e){
+    console.error("Firebase init error:", e);
+  }
+})();
+
+// Accept either name so you don't brick yourself again.
+function getMapsKey(){
+  return String(
+    (window.MAPS_EMBED_KEY || window.MAPS_JS_KEY || "")
+  ).trim();
+}
+
+// OPTIONAL: enable one-time geocode+cache (cost controlled by caching)
+const ENABLE_GEOCODE_CACHE = false; // set true if you enable Geocoding API + billing
+const GEOCODE_RATE_LIMIT_MS = 1200; // gentle pacing
+
+/** ==========================
  * STATE
  * ========================== */
 let UID = null;
@@ -363,10 +394,6 @@ let activeChatRef = null;
 
 const $ = (id) => document.getElementById(id);
 
-function getMapsKey(){
-  return (window.MAPS_EMBED_KEY || "").trim();
-}
-
 /** ==========================
  * AUTH
  * ========================== */
@@ -374,8 +401,8 @@ firebase.auth().onAuthStateChanged(u => {
   if (!u) return location.href = 'index.html';
   UID = u.uid;
 
-  subscribeLeads();
-  trackPresence(u);
+  subscribeLeads();     // local leads.js
+  trackPresence(u);     // online status
 
   firebase.database().ref('roles/' + UID).once('value').then(snap => {
     const role = snap.val();
@@ -529,6 +556,11 @@ function trackPresence(u) {
  * LEADS (Manual: leads.js -> window.leads)
  * ========================== */
 function subscribeLeads() {
+  // Diagnostics: if leads.js not loaded or wrong var name, you'll see it.
+  if (!window.leads) {
+    console.warn("window.leads is missing. Check that leads.js is loading (Network tab) and it sets window.leads = [...]");
+  }
+
   if (Array.isArray(window.leads)) {
     sellerList = window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v }));
   } else if (window.leads && typeof window.leads === 'object' && window.leads.sellers) {
@@ -537,6 +569,7 @@ function subscribeLeads() {
   } else {
     sellerList = [];
   }
+
   normalizeLeadCoords();
   renderLeads();
 }
@@ -547,32 +580,21 @@ function normalizeLeadCoords() {
     let lat = v.lat ?? v.latitude ?? v.Lat ?? v.LAT ?? null;
     let lng = v.lng ?? v.lon ?? v.long ?? v.longitude ?? v.Lng ?? v.LNG ?? null;
 
-    // If someone stored as "lat,lng" in a single field
     if ((!lat || !lng) && typeof v.latlng === "string" && v.latlng.includes(",")) {
       const parts = v.latlng.split(",").map(s => s.trim());
-      if (parts.length >= 2) {
-        lat = lat || parts[0];
-        lng = lng || parts[1];
-      }
+      if (parts.length >= 2) { lat = lat || parts[0]; lng = lng || parts[1]; }
     }
 
-    // Parse strings -> numbers
     const nlat = (lat !== null && lat !== undefined && lat !== "") ? Number(lat) : NaN;
     const nlng = (lng !== null && lng !== undefined && lng !== "") ? Number(lng) : NaN;
 
-    if (Number.isFinite(nlat) && Number.isFinite(nlng)) {
-      return { ...v, lat: nlat, lng: nlng };
-    }
+    if (Number.isFinite(nlat) && Number.isFinite(nlng)) return { ...v, lat: nlat, lng: nlng };
     return { ...v, lat: null, lng: null };
   });
 }
 
 function leadPhone(v) {
-  return (
-    v.phone ||
-    (v.contacts && v.contacts[0] && v.contacts[0].phone) ||
-    ""
-  );
+  return v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || "";
 }
 
 function renderLeads() {
@@ -587,7 +609,7 @@ function renderLeads() {
 
   const tbody = $("sellerRows");
   if (!sellerView.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found.</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found. (If you expected leads: confirm leads.js is loading and sets window.leads)</td></tr>';
     updateDetail(null);
     return;
   }
@@ -626,11 +648,9 @@ async function loadUserNote(lead) {
   if (!UID || !lead) return "";
   const id = leadIdFor(lead);
   if (!id) return "";
-
   const snap = await firebase.database().ref('lead_notes/' + UID + '/' + id).once('value');
   const v = snap.val();
-  if (v && typeof v.text === "string") return v.text;
-  return "";
+  return (v && typeof v.text === "string") ? v.text : "";
 }
 
 function saveUserNote(lead, text) {
@@ -648,9 +668,7 @@ async function saveNotesNow() {
   if (currentIndex < 0 || !sellerView[currentIndex]) return;
   const lead = sellerView[currentIndex];
   const txt = ($("noteEditor").value || "");
-
   await saveUserNote(lead, txt);
-
   notesDirty = false;
   showSaved();
 }
@@ -666,46 +684,34 @@ $("noteEditor").addEventListener('input', () => {
 });
 
 /** ==========================
- * MAP (LAT/LNG FIRST — NO GEOCODING)
+ * MAP / STREET VIEW
  *
- * - Uses Maps Embed API Street View:
- *     /maps/embed/v1/streetview?key=...&location=LAT,LNG
- * - If no key or embed fails/rejected, falls back to public no-key:
- *     https://www.google.com/maps?q=LAT,LNG&layer=c&output=embed
- * - Area Map uses no-key embed:
- *     https://www.google.com/maps?q=LAT,LNG&output=embed
+ * Goal:
+ * - Works even when lat/lng is missing (address-based embed)
+ * - Uses key if present, otherwise no-key fallback
+ * - OPTIONAL: geocode+cache once if enabled
  * ========================== */
-function showMapUI() {
-  $("mapHead").style.display = "flex";
-  $("mapWrap").style.display = "block";
-}
-function hideMapUI() {
-  $("mapHead").style.display = "none";
-  $("mapWrap").style.display = "none";
-}
-function showMapWarn(msg) {
-  const w = $("mapWarn");
-  w.style.display = "block";
-  w.textContent = msg || "";
-}
-function clearMapWarn() {
-  const w = $("mapWarn");
-  w.style.display = "none";
-  w.textContent = "";
-}
+function showMapUI() { $("mapHead").style.display = "flex"; $("mapWrap").style.display = "block"; }
+function hideMapUI() { $("mapHead").style.display = "none"; $("mapWrap").style.display = "none"; }
+function showMapWarn(msg) { const w = $("mapWarn"); w.style.display = "block"; w.textContent = msg || ""; }
+function clearMapWarn() { const w = $("mapWarn"); w.style.display = "none"; w.textContent = ""; }
 function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
 
+function setStreetViewNoKeyByAddress(address) {
+  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed";
+}
+function setAreaMapNoKeyByAddress(address) {
+  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18";
+}
+
 function setStreetViewNoKeyLocation(lat, lng) {
-  $("streetFrame").src =
-    "https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed";
+  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed";
 }
-
 function setAreaMapNoKeyLocation(lat, lng) {
-  $("streetFrame").src =
-    "https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18";
+  $("streetFrame").src = "https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18";
 }
 
-// Maps Embed API streetview (correct param: location=LAT,LNG)
+// Maps Embed API streetview by coords (keyed)
 function setStreetViewEmbedWithKeyLocation(lat, lng) {
   const key = getMapsKey();
   if (!key) return false;
@@ -716,11 +722,22 @@ function setStreetViewEmbedWithKeyLocation(lat, lng) {
     "?key=" + encodeURIComponent(key) +
     "&location=" + encodeURIComponent(loc) +
     "&heading=210&pitch=10&fov=90";
-
   return true;
 }
 
-async function loadStreetViewFirstByCoords(lat, lng) {
+// Maps Embed API streetview by address (keyed) — works without lat/lng
+function setStreetViewEmbedWithKeyAddress(address) {
+  const key = getMapsKey();
+  if (!key) return false;
+
+  $("streetFrame").src =
+    "https://www.google.com/maps/embed/v1/streetview" +
+    "?key=" + encodeURIComponent(key) +
+    "&q=" + encodeURIComponent(address);
+  return true;
+}
+
+async function loadStreetViewPreferKeyThenFallback({ address, lat, lng }) {
   showMapUI();
   clearMapWarn();
   setMapHint("");
@@ -728,34 +745,86 @@ async function loadStreetViewFirstByCoords(lat, lng) {
   const frame = $("streetFrame");
   frame.onload = null;
 
-  // Try keyed embed first (if MAPS_EMBED_KEY exists)
-  const usedKey = setStreetViewEmbedWithKeyLocation(lat, lng);
-  if (!usedKey) {
-    setStreetViewNoKeyLocation(lat, lng);
+  // If we have coords, try coords-first
+  if (lat && lng) {
+    const usedKey = setStreetViewEmbedWithKeyLocation(lat, lng);
+    if (!usedKey) { setStreetViewNoKeyLocation(lat, lng); return; }
+
+    setMapHint("Loading Street View…");
+    const fallbackTimer = setTimeout(() => {
+      setMapHint("");
+      showMapWarn("Embed key rejected/restricted or Street View not available. Falling back to no-key Street View.");
+      setStreetViewNoKeyLocation(lat, lng);
+    }, 1400);
+
+    frame.onload = () => { clearTimeout(fallbackTimer); setMapHint(""); };
     return;
   }
 
-  setMapHint("Loading Street View…");
+  // No coords: use address-based embed (this is the big missing piece)
+  if (address) {
+    const usedKey = setStreetViewEmbedWithKeyAddress(address);
+    if (!usedKey) { setStreetViewNoKeyByAddress(address); return; }
 
-  // If keyed embed fails/rejected, fallback quickly
-  const fallbackTimer = setTimeout(() => {
-    setMapHint("");
-    showMapWarn("Embed API key rejected/restricted or Street View not available here. Falling back to no-key Street View.");
-    setStreetViewNoKeyLocation(lat, lng);
-  }, 1400);
+    setMapHint("Loading Street View…");
+    const fallbackTimer = setTimeout(() => {
+      setMapHint("");
+      showMapWarn("Embed key rejected/restricted. Falling back to no-key Street View by address.");
+      setStreetViewNoKeyByAddress(address);
+    }, 1400);
 
-  frame.onload = () => {
-    clearTimeout(fallbackTimer);
-    setMapHint("");
-  };
+    frame.onload = () => { clearTimeout(fallbackTimer); setMapHint(""); };
+    return;
+  }
+
+  showMapWarn("No address on this lead.");
 }
 
-function wireAreaMapLinkCoords(lat, lng) {
+function wireAreaMapLink({ address, lat, lng }) {
   $("areaMapLink").onclick = () => {
     clearMapWarn();
     setMapHint("");
-    setAreaMapNoKeyLocation(lat, lng);
+    if (lat && lng) return setAreaMapNoKeyLocation(lat, lng);
+    if (address) return setAreaMapNoKeyByAddress(address);
   };
+}
+
+/** OPTIONAL: Geocode + cache in Firebase once */
+let lastGeocodeAt = 0;
+
+async function getCachedGeo(leadId) {
+  if (!UID || !leadId) return null;
+  const snap = await firebase.database().ref('lead_geo/' + leadId).once('value');
+  return snap.val() || null;
+}
+
+async function setCachedGeo(leadId, lat, lng) {
+  if (!leadId) return;
+  return firebase.database().ref('lead_geo/' + leadId).set({
+    lat, lng,
+    updatedAt: firebase.database.ServerValue.TIMESTAMP
+  });
+}
+
+async function geocodeAddressOnce(address) {
+  const key = getMapsKey();
+  if (!key) return null;
+
+  // simple rate limit
+  const now = Date.now();
+  if (now - lastGeocodeAt < GEOCODE_RATE_LIMIT_MS) return null;
+  lastGeocodeAt = now;
+
+  const url = "https://maps.googleapis.com/maps/api/geocode/json?address=" +
+    encodeURIComponent(address) + "&key=" + encodeURIComponent(key);
+
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data && data.status === "OK" && data.results && data.results[0] && data.results[0].geometry) {
+    const loc = data.results[0].geometry.location;
+    return { lat: loc.lat, lng: loc.lng };
+  }
+  return null;
 }
 
 /** ==========================
@@ -772,7 +841,6 @@ async function updateDetail(lead) {
   const scriptBox = $("scriptBox");
   const noteEditor = $("noteEditor");
 
-  // Reset map UI
   hideMapUI();
   clearMapWarn();
   setMapHint("");
@@ -788,7 +856,6 @@ async function updateDetail(lead) {
     return;
   }
 
-  // Details
   detailTitle.textContent = lead.owner || 'Lead Details';
   detailSub.textContent = lead.status || 'new';
   detailInfo.style.display = 'block';
@@ -797,19 +864,28 @@ async function updateDetail(lead) {
   detailOwner.textContent = lead.owner || '';
   detailPhone.textContent = leadPhone(lead);
 
-  if (lead.lat && lead.lng) {
-    detailLatLng.textContent = `${lead.lat.toFixed(6)}, ${lead.lng.toFixed(6)}`;
-  } else {
-    detailLatLng.textContent = "missing";
+  let lat = lead.lat, lng = lead.lng;
+
+  // If missing coords, try cached coords from Firebase (free reads, saves future API calls)
+  const id = leadIdFor(lead);
+  if ((!lat || !lng) && id) {
+    try {
+      const cached = await getCachedGeo(id);
+      if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lng))) {
+        lat = Number(cached.lat); lng = Number(cached.lng);
+      }
+    } catch (e) {}
   }
 
-  // Script
+  if (lat && lng) detailLatLng.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+  else detailLatLng.textContent = "missing";
+
   scriptBox.textContent =
     "Hi " + (lead.owner || "there") +
     ", this is Bill regarding " + (lead.address || "your property") +
     ". Are you the owner?";
 
-  // Notes: start with leads.js, then override with per-user Firebase note if it exists
+  // Notes
   noteEditor.disabled = false;
   noteEditor.value = lead.notes || "";
   notesDirty = false;
@@ -819,14 +895,27 @@ async function updateDetail(lead) {
     if (userNote) noteEditor.value = userNote;
   } catch (e) {}
 
-  // MAP: LAT/LNG REQUIRED (no more geocoding)
-  if (lead.lat && lead.lng) {
-    wireAreaMapLinkCoords(lead.lat, lead.lng);
-    await loadStreetViewFirstByCoords(lead.lat, lead.lng);
-  } else {
-    showMapUI();
-    showMapWarn("No lat/lng on this lead yet. Add lat/lng fields in leads.js (lat, lng) and Street View will auto-load.");
-    setMapHint("");
+  // MAP:
+  // - If we have coords, use coords
+  // - If not, embed by address (works immediately)
+  wireAreaMapLink({ address: lead.address || "", lat, lng });
+  await loadStreetViewPreferKeyThenFallback({ address: lead.address || "", lat, lng });
+
+  // OPTIONAL: if enabled, geocode once and cache
+  if (ENABLE_GEOCODE_CACHE && (!lat || !lng) && lead.address && id) {
+    setMapHint("Geocoding address once…");
+    try {
+      const geo = await geocodeAddressOnce(lead.address);
+      if (geo && geo.lat && geo.lng) {
+        await setCachedGeo(id, geo.lat, geo.lng);
+        setMapHint("Saved lat/lng ✓");
+        // Reload with coords for best Street View accuracy
+        await loadStreetViewPreferKeyThenFallback({ address: lead.address, lat: geo.lat, lng: geo.lng });
+        detailLatLng.textContent = `${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`;
+      } else {
+        setMapHint("");
+      }
+    } catch (e) { setMapHint(""); }
   }
 }
 
