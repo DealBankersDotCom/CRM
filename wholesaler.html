@@ -81,7 +81,8 @@ body{
 .body{
   padding:14px;
   display:grid;
-  grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);
+  /* widen right panel so Notes editor feels bigger */
+  grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);
   gap:16px;
 }
 @media(max-width:960px){.body{grid-template-columns:1fr}}
@@ -120,6 +121,30 @@ td.notes-cell{
   padding:10px;font-size:13px;line-height:1.5;margin-top:8px;
 }
 
+/* Lead NAV (Prev/Next) */
+.lead-nav{
+  display:flex;
+  gap:8px;
+  align-items:center;
+}
+.lead-nav .nav-btn{
+  background:rgba(255,255,255,0.10);
+  border:1px solid rgba(255,255,255,0.20);
+  color:#cfe3ff;
+  border-radius:10px;
+  padding:6px 10px;
+  cursor:pointer;
+  font-weight:800;
+  line-height:1;
+}
+.lead-nav .nav-btn:hover{background:rgba(255,255,255,0.18)}
+.lead-nav .nav-count{
+  font-size:12px;
+  color:#9ab9d6;
+  min-width:72px;
+  text-align:center;
+}
+
 /* NOTES EDITOR */
 .notes-head{
   margin-top:10px;
@@ -130,24 +155,20 @@ td.notes-cell{
 .mini{width:28px;height:28px;font-size:14px}
 .note-status{font-size:12px;color:#9ab9d6;opacity:.9}
 
-/* MAP */
+/* MAP (no title; Area left, Street right) */
 .map-head{
   margin-top:12px;
   display:flex;
   align-items:center;
-  justify-content:flex-end; /* no title anymore, so actions sit to the right */
+  justify-content:space-between;
   gap:10px;
 }
-
-/* REMOVED: .map-title (no longer used) */
-
 .map-actions{
   display:flex;
-  gap:10px;
-  flex-wrap:wrap;
   align-items:center;
+  gap:10px;
+  width:100%;
 }
-
 .map-link{
   border:none;
   background:transparent;
@@ -158,10 +179,12 @@ td.notes-cell{
   padding:0;
 }
 .map-link:hover{color:#ffffff}
-
+#streetViewLink{ margin-left:auto; } /* push street view to the far right */
 .map-hint{
   font-size:12px;
   color:#9ab9d6;
+  margin-left:10px;
+  white-space:nowrap;
 }
 
 .map-wrap{
@@ -297,7 +320,16 @@ td.notes-cell{
 
       <div class="right-col" id="detailPanel">
         <div class="detail-header">
-          <h3 id="detailTitle">No lead selected</h3>
+          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+            <h3 id="detailTitle">No lead selected</h3>
+
+            <div class="lead-nav">
+              <button class="nav-btn" id="prevLead" type="button" title="Previous lead">◀</button>
+              <div class="nav-count" id="leadCount">0 / 0</div>
+              <button class="nav-btn" id="nextLead" type="button" title="Next lead">▶</button>
+            </div>
+          </div>
+
           <div class="sub" id="detailSub">Select a lead to load details.</div>
         </div>
 
@@ -320,9 +352,8 @@ td.notes-cell{
         </div>
         <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
 
-        <!-- MAP / STREET VIEW -->
+        <!-- MAP / STREET VIEW (NO TITLE) -->
         <div class="map-head" id="mapHead" style="display:none;">
-          <div class="map-title" id="mapTitle">Area Map</div>
           <div class="map-actions">
             <button class="map-link" id="areaMapLink" type="button">Area Map</button>
             <button class="map-link" id="streetViewLink" type="button">Street View</button>
@@ -629,6 +660,34 @@ function leadPhone(v) {
   return v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || "";
 }
 
+function updateLeadCount(){
+  const total = sellerView ? sellerView.length : 0;
+  const pos = (currentIndex >= 0 && total) ? (currentIndex + 1) : 0;
+  const el = $("leadCount");
+  if (el) el.textContent = `${pos} / ${total}`;
+
+  // disable buttons when not usable
+  const prev = $("prevLead"), next = $("nextLead");
+  if (prev) prev.disabled = !(total && currentIndex > 0);
+  if (next) next.disabled = !(total && currentIndex >= 0 && currentIndex < total - 1);
+
+  if (prev) prev.style.opacity = prev.disabled ? "0.35" : "1";
+  if (next) next.style.opacity = next.disabled ? "0.35" : "1";
+}
+
+function selectLeadByIndex(idx){
+  if (!sellerView || !sellerView.length) return;
+  if (idx < 0) idx = 0;
+  if (idx >= sellerView.length) idx = sellerView.length - 1;
+
+  currentIndex = idx;
+  renderLeads();
+  updateDetail(sellerView[currentIndex]);
+
+  const row = document.querySelector(`tr.lead-row[data-idx="${currentIndex}"]`);
+  if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
+}
+
 function renderLeads() {
   const q = (($("s_q").value || '')).toLowerCase();
   sellerView = sellerList.filter(v =>
@@ -637,12 +696,16 @@ function renderLeads() {
     (v.owner || '').toLowerCase().includes(q)
   );
 
+  // If currentIndex is out of range after filtering, reset
+  if (currentIndex >= sellerView.length) currentIndex = sellerView.length - 1;
+
   $("status").textContent = 'Acq: ' + sellerView.length + ' items';
 
   const tbody = $("sellerRows");
   if (!sellerView.length) {
     tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found. (If you expected leads: confirm leads.js is loading and sets window.leads)</td></tr>';
     updateDetail(null);
+    updateLeadCount();
     return;
   }
 
@@ -662,6 +725,8 @@ function renderLeads() {
       updateDetail(sellerView[currentIndex]);
     };
   });
+
+  updateLeadCount();
 }
 
 /** ==========================
@@ -730,7 +795,6 @@ function hideMapUI() { $("mapHead").style.display = "none"; $("mapWrap").style.d
 function showMapWarn(msg) { const w = $("mapWarn"); w.style.display = "block"; w.textContent = msg || ""; }
 function clearMapWarn() { const w = $("mapWarn"); w.style.display = "none"; w.textContent = ""; }
 function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
-function setMapTitle(msg) { $("mapTitle").textContent = msg || "Area Map"; }
 
 function setFrameSrc(url) {
   $("streetFrame").src = url;
@@ -741,7 +805,6 @@ function setAreaMapNoKeyByAddress(address) {
   setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18");
 }
 function setStreetViewNoKeyByAddress(address) {
-  // layer=c is street view camera layer
   setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed");
 }
 function setAreaMapNoKeyLocation(lat, lng) {
@@ -787,8 +850,8 @@ function setStreetViewEmbedWithKeyLocation(lat, lng) {
   return true;
 }
 
-// FIXED: /embed/v1/streetview does NOT accept q= in your earlier version.
-// It accepts "location" (lat,lng) OR "query" (address string). Use query here.
+// FIXED: /embed/v1/streetview does NOT accept q=
+// It accepts "location" (lat,lng) OR "query" (address string).
 function setStreetViewEmbedWithKeyAddress(address) {
   const key = getMapsKey();
   if (!key) return false;
@@ -805,7 +868,6 @@ async function loadAreaMap({ address, lat, lng }) {
   showMapUI();
   clearMapWarn();
   setMapHint("");
-  setMapTitle("Area Map");
 
   const frame = $("streetFrame");
   frame.onload = null;
@@ -831,7 +893,6 @@ async function loadStreetView({ address, lat, lng }) {
   showMapUI();
   clearMapWarn();
   setMapHint("");
-  setMapTitle("Street View");
 
   const frame = $("streetFrame");
   frame.onload = null;
@@ -852,7 +913,7 @@ async function loadStreetView({ address, lat, lng }) {
     return;
   }
 
-  // address-based street view (works now: uses query=, not q=)
+  // address-based street view (uses query=)
   if (address) {
     const usedKey = setStreetViewEmbedWithKeyAddress(address);
     if (!usedKey) { setStreetViewNoKeyByAddress(address); return; }
@@ -940,7 +1001,6 @@ async function updateDetail(lead) {
   hideMapUI();
   clearMapWarn();
   setMapHint("");
-  setMapTitle("Area Map");
   $("streetFrame").src = "about:blank";
   mapMode = "area";
 
@@ -951,6 +1011,7 @@ async function updateDetail(lead) {
     scriptBox.textContent = 'Select a lead to load script.';
     noteEditor.value = "";
     noteEditor.disabled = true;
+    updateLeadCount();
     return;
   }
 
@@ -1001,7 +1062,6 @@ async function updateDetail(lead) {
   await loadAreaMap({ address: lead.address || "", lat, lng });
 
   // OPTIONAL: if enabled, geocode once and cache (still OFF by default)
-  // NOTE: We do NOT auto-switch to Street View after geocoding. We only improve coords for future clicks.
   if (ENABLE_GEOCODE_CACHE && (!lat || !lng) && lead.address && id) {
     setMapHint("Geocoding address once…");
     try {
@@ -1011,7 +1071,6 @@ async function updateDetail(lead) {
         lat = geo.lat; lng = geo.lng;
         detailLatLng.textContent = `${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`;
         setMapHint("Saved lat/lng ✓");
-        // reload area map to center precisely
         if (mapMode === "area") await loadAreaMap({ address: lead.address, lat, lng });
         setTimeout(() => setMapHint(""), 900);
       } else {
@@ -1020,12 +1079,12 @@ async function updateDetail(lead) {
     } catch (e) { setMapHint(""); }
   }
 
-  // If you ever want to revert to old behavior (not recommended), flip STREETVIEW_ON_LOAD true
-  // but by default we avoid it to control costs.
   if (STREETVIEW_ON_LOAD) {
     mapMode = "street";
     await loadStreetView({ address: lead.address || "", lat, lng });
   }
+
+  updateLeadCount();
 }
 
 /** ==========================
@@ -1034,6 +1093,27 @@ async function updateDetail(lead) {
 $("s_reload").onclick = () => renderLeads();
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
+
+/* Lead nav buttons */
+$("prevLead").onclick = () => {
+  if (!sellerView || !sellerView.length) return;
+  if (currentIndex < 0) return selectLeadByIndex(0);
+  selectLeadByIndex(currentIndex - 1);
+};
+$("nextLead").onclick = () => {
+  if (!sellerView || !sellerView.length) return;
+  if (currentIndex < 0) return selectLeadByIndex(0);
+  selectLeadByIndex(currentIndex + 1);
+};
+/* Keyboard arrows */
+document.addEventListener("keydown", (e) => {
+  // don't hijack typing inside inputs/textarea
+  const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
+  if (tag === "input" || tag === "textarea") return;
+
+  if (e.key === "ArrowLeft") $("prevLead")?.click();
+  if (e.key === "ArrowRight") $("nextLead")?.click();
+});
 
 // Tabs
 document.addEventListener('DOMContentLoaded', () => {
