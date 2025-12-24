@@ -75,7 +75,7 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2)
 }
-.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px}
+.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
 .seg button{
   padding:8px 14px;border:0;background:#0e2332;
   color:#cfe6ff;cursor:pointer
@@ -90,6 +90,44 @@ body{
   gap:16px;
 }
 @media(max-width:960px){ .body{grid-template-columns:1fr} }
+
+/* LIST */
+.list{
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:14px;
+  overflow:hidden;
+}
+.row{
+  padding:10px 12px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  cursor:pointer;
+  background:rgba(10,20,30,.35);
+}
+.row:hover{background:rgba(20,45,70,.35)}
+.row.active{background:rgba(43,116,255,.22)}
+.row .t{font-weight:800}
+.row .m{font-size:12px;opacity:.85;margin-top:2px}
+.pill{
+  display:inline-block;
+  font-size:11px;
+  padding:3px 8px;
+  border:1px solid rgba(255,255,255,.18);
+  border-radius:999px;
+  opacity:.9;
+}
+
+/* DETAILS */
+.panel{
+  border:1px solid rgba(255,255,255,.15);
+  border-radius:14px;
+  padding:12px;
+  background:rgba(10,20,30,.35);
+}
+.panel h3{margin:0 0 6px}
+.kv{font-size:13px;line-height:1.45;opacity:.95}
+.kv b{opacity:1}
+.small{font-size:12px;opacity:.85}
+.hr{height:1px;background:rgba(255,255,255,.12);margin:10px 0}
 
 /* EMPTY STATE */
 .empty-state {text-align:center;padding:40px;color:#cfe3ff;}
@@ -116,7 +154,7 @@ body{
   font-size:14px;
 }
 .banner b{color:#fff}
-.banner .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.banner .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap;border:0;background:transparent;cursor:default;padding:0}
 .banner .btn{
   padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
   background:#133e6a;color:#fff;font-weight:700;cursor:pointer;
@@ -138,7 +176,7 @@ body{
   display:none;align-items:center;justify-content:center;z-index:9999}
 .modal{
   background:#0f1b27;border:1px solid #254a63;border-radius:16px;
-  padding:16px;max-width:720px;width:92%;
+  padding:16px;max-width:760px;width:92%;
   box-shadow:0 28px 70px rgba(0,0,0,.55)
 }
 .modal .grid{
@@ -153,7 +191,7 @@ body{
   background:#0d1f2d;color:#fff;border-radius:10px;margin:6px 0;
 }
 .actions{display:flex;gap:8px;justify-content:flex-end;margin-top:12px;flex-wrap:wrap}
-.small{font-size:12px;opacity:.85}
+.actions .danger{background:#6b1111}
 .hr{height:1px;background:rgba(255,255,255,.12);margin:10px 0}
 
 /* Toggle */
@@ -200,6 +238,22 @@ body{
 }
 #setupCallout .primary{ background:#2d7cff; color:white; }
 #setupCallout .ghost{ background:transparent; color:#d7e7ff; border:1px solid rgba(255,255,255,.16); }
+
+/* God Mode admin strip */
+.admin-strip{
+  display:none;
+  margin:12px 14px 0;
+  padding:10px 12px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.18);
+  background:rgba(20,40,60,.55);
+}
+.admin-strip .row{display:flex;justify-content:space-between;gap:10px;align-items:center;flex-wrap:wrap}
+.admin-strip .btn{
+  padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
+  background:#133e6a;color:#fff;font-weight:800;cursor:pointer;
+}
+.admin-strip .btn:hover{background:#1b4e86}
 </style>
 </head>
 
@@ -329,6 +383,75 @@ body{
   </div>
 </div>
 
+<!-- Job Admin Modal (God Mode only) -->
+<div class="modal-backdrop" id="jobModal">
+  <div class="modal wide">
+    <h3 id="jobModalTitle">Create Job</h3>
+    <p class="small">God Mode only. Writes to <span style="opacity:.95">/jobs/&lt;jobId&gt;</span>.</p>
+
+    <div class="hr"></div>
+
+    <div class="grid">
+      <div style="grid-column:1 / -1">
+        <label class="small">Title</label>
+        <input id="jobTitle" placeholder="e.g., Patch & paint 2 bedrooms" />
+      </div>
+
+      <div>
+        <label class="small">Status</label>
+        <select id="jobStatus">
+          <option value="active">Active</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="archived">Archived</option>
+        </select>
+      </div>
+
+      <div>
+        <label class="small">Trade</label>
+        <input id="jobTrade" placeholder="Drywall / Paint / Flooring" />
+      </div>
+
+      <div style="grid-column:1 / -1">
+        <label class="small">Address</label>
+        <input id="jobAddress" placeholder="Street, City, State ZIP" />
+      </div>
+
+      <div>
+        <label class="small">City</label>
+        <input id="jobCity" placeholder="San Antonio" />
+      </div>
+
+      <div>
+        <label class="small">ZIP</label>
+        <input id="jobZip" placeholder="78210" inputmode="numeric" />
+      </div>
+
+      <div>
+        <label class="small">Target Date</label>
+        <input id="jobDate" placeholder="Optional (e.g., 2025-12-26)" />
+      </div>
+
+      <div>
+        <label class="small">Budget</label>
+        <input id="jobBudget" placeholder="Optional (e.g., $1,200)" />
+      </div>
+
+      <div style="grid-column:1 / -1">
+        <label class="small">Description</label>
+        <textarea id="jobDesc" rows="4" placeholder="Scope, access notes, photos link, etc."></textarea>
+      </div>
+    </div>
+
+    <div class="actions" style="justify-content:space-between">
+      <button class="chip danger" id="jobDeleteBtn" style="display:none;">Delete</button>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="chip" id="jobCancel">Cancel</button>
+        <button class="chip primary" id="jobSave">Save</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- MAIN CONTENT -->
 <div class="wrap">
   <section class="card">
@@ -340,6 +463,20 @@ body{
           <b>Setup incomplete.</b> Add service areas + trades + a contact method to start receiving jobs.
         </div>
         <button class="btn" id="bannerFix">Finish Setup</button>
+      </div>
+    </div>
+
+    <!-- God Mode Admin Strip -->
+    <div class="admin-strip" id="adminStrip">
+      <div class="row">
+        <div>
+          <b>God Mode:</b> Create / edit / delete jobs.
+          <span class="small" style="margin-left:8px;opacity:.85">Only visible to dealbankers@gmail.com</span>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="btnNewJob">+ New Job</button>
+          <button class="btn" id="btnEditJob" disabled>Edit Selected</button>
+        </div>
       </div>
     </div>
 
@@ -381,14 +518,28 @@ body{
 <script src="app-auth.js"></script>
 
 <script>
-// AUTH & USER STATUS
+/* ==========================
+   AUTH & STATE
+========================== */
 let UID = null;
+let USER_EMAIL = null;
+
 let lastSettings = null;
 let rbUrgent = false;
 let acceptingJobs = true;
 
+let isGodMode = false;
+
+let jobsCache = {};           // jobId -> job object
+let selectedJobId = null;
+let currentTab = 'active';
+
+const GOD_EMAIL = 'dealbankers@gmail.com';
 const REQUIRED_HINT = "Please enter: Service Areas + Trades + a contact method (Phone or Email).";
 
+/* ==========================
+   HELPERS
+========================== */
 function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 function normalizePhone(p){
@@ -411,27 +562,21 @@ function setSwitch(el, on){
   acceptingJobs = !!on;
 }
 
-function showSettingsModal(){
-  settingsModal.style.display='flex';
-}
+function showSettingsModal(){ settingsModal.style.display='flex'; }
+function hideSettingsModal(){ settingsModal.style.display='none'; }
 
-function hideSettingsModal(){
-  settingsModal.style.display='none';
-}
+function setBannerVisible(v){ setupBanner.style.display = v ? 'block' : 'none'; }
 
 function showOnboardingCallout(){
   const gear = document.getElementById('btnSettings');
   if(!gear) return;
 
-  // show overlay
   const overlay = document.getElementById('setupOverlay');
   overlay.style.display = 'block';
   overlay.setAttribute('aria-hidden','false');
 
-  // pulse gear
   gear.classList.add('pulse');
 
-  // position callout near gear
   const r = gear.getBoundingClientRect();
   const callout = document.getElementById('setupCallout');
   const top = Math.max(12, r.bottom + 10);
@@ -439,7 +584,6 @@ function showOnboardingCallout(){
   callout.style.top = `${top}px`;
   callout.style.left = `${left}px`;
 
-  // buttons
   setupGo.onclick = ()=>{
     overlay.style.display='none';
     overlay.setAttribute('aria-hidden','true');
@@ -452,7 +596,6 @@ function showOnboardingCallout(){
     gear.classList.remove('pulse');
   };
 
-  // click outside to dismiss (optional)
   overlay.addEventListener('click', (e)=>{
     if(e.target === overlay){
       overlay.style.display='none';
@@ -462,26 +605,173 @@ function showOnboardingCallout(){
   }, { once:true });
 }
 
-function setBannerVisible(v){
-  setupBanner.style.display = v ? 'block' : 'none';
+/* ==========================
+   GOD MODE: JOB ADMIN UI
+========================== */
+function setAdminVisible(v){
+  adminStrip.style.display = v ? 'block' : 'none';
+  btnEditJob.disabled = !v || !selectedJobId;
+}
+function openJobModal(mode){
+  // mode: 'new' | 'edit'
+  jobModal.style.display = 'flex';
+  const isEdit = (mode === 'edit');
+
+  jobModalTitle.textContent = isEdit ? 'Edit Job' : 'Create Job';
+
+  if(isEdit){
+    const j = jobsCache[selectedJobId];
+    if(!j){ alert('No job selected'); return; }
+    jobTitle.value = j.title || '';
+    jobStatus.value = j.status || 'active';
+    jobTrade.value = j.trade || '';
+    jobAddress.value = j.address || '';
+    jobCity.value = j.city || '';
+    jobZip.value = j.zip || '';
+    jobDate.value = j.targetDate || '';
+    jobBudget.value = j.budget || '';
+    jobDesc.value = j.description || '';
+    jobDeleteBtn.style.display = 'inline-flex';
+  }else{
+    selectedJobId = selectedJobId; // keep selection unchanged
+    jobTitle.value = '';
+    jobStatus.value = currentTab === 'upcoming' ? 'upcoming' : 'active';
+    jobTrade.value = '';
+    jobAddress.value = '';
+    jobCity.value = '';
+    jobZip.value = '';
+    jobDate.value = '';
+    jobBudget.value = '';
+    jobDesc.value = '';
+    jobDeleteBtn.style.display = 'none';
+  }
+
+  jobSave.dataset.mode = mode;
+}
+function closeJobModal(){ jobModal.style.display='none'; }
+
+function jobPayload(){
+  return {
+    title: jobTitle.value.trim(),
+    status: jobStatus.value,
+    trade: jobTrade.value.trim(),
+    address: jobAddress.value.trim(),
+    city: jobCity.value.trim(),
+    zip: jobZip.value.trim(),
+    targetDate: jobDate.value.trim(),
+    budget: jobBudget.value.trim(),
+    description: jobDesc.value.trim(),
+    updatedAt: new Date().toISOString(),
+    updatedBy: USER_EMAIL || null
+  };
 }
 
-// Keep banner button working
-bannerFix.onclick = ()=> showSettingsModal();
+/* ==========================
+   JOB LIST + DETAILS
+========================== */
+function setTab(tab){
+  currentTab = tab;
+  tabActive.classList.toggle('active', tab === 'active');
+  tabUpcoming.classList.toggle('active', tab === 'upcoming');
+  crumb.textContent = tab === 'active' ? 'Active Jobs' : 'Upcoming Jobs';
+  renderJobs();
+}
 
-// Toggle switch click
-acceptSwitch.onclick = ()=>{
-  setSwitch(acceptSwitch, !acceptSwitch.classList.contains('on'));
-};
+function jobMatchesTab(j){
+  if(!j) return false;
+  if(currentTab === 'active') return (j.status || 'active') === 'active';
+  if(currentTab === 'upcoming') return (j.status || 'active') === 'upcoming';
+  return true;
+}
 
-firebase.auth().onAuthStateChanged(async u => {
-  if (!u) return location.href = "index.html";
-  UID = u.uid;
-  await loadSettings();
-  subscribeJobs();
-});
+function renderJobs(){
+  const ids = Object.keys(jobsCache)
+    .filter(id => jobMatchesTab(jobsCache[id]))
+    .sort((a,b)=>{
+      const ta = jobsCache[a]?.createdAt || jobsCache[a]?.updatedAt || '';
+      const tb = jobsCache[b]?.createdAt || jobsCache[b]?.updatedAt || '';
+      return (tb > ta ? 1 : -1);
+    });
 
-// Load Contractor Settings
+  if(ids.length === 0){
+    jobTable.innerHTML = `<div style="padding:14px;opacity:.9">No ${currentTab} jobs.</div>`;
+    detailPanel.innerHTML = `Select a job to view details...`;
+    selectedJobId = null;
+    if(isGodMode) btnEditJob.disabled = true;
+    return;
+  }
+
+  let html = `<div class="list">`;
+  for(const id of ids){
+    const j = jobsCache[id] || {};
+    const active = (id === selectedJobId) ? 'active' : '';
+    const meta = [j.trade, j.city || j.zip, j.targetDate].filter(Boolean).join(' • ');
+    html += `
+      <div class="row ${active}" data-jobid="${esc(id)}">
+        <div class="t">${esc(j.title || '(Untitled job)')}</div>
+        <div class="m">${esc(meta || '')}</div>
+        <div class="m"><span class="pill">${esc((j.status||'active').toUpperCase())}</span></div>
+      </div>
+    `;
+  }
+  html += `</div>`;
+  jobTable.innerHTML = html;
+
+  // auto-select first if none selected
+  if(!selectedJobId){
+    selectedJobId = ids[0];
+  }
+  renderJobDetail(selectedJobId);
+  if(isGodMode) btnEditJob.disabled = !selectedJobId;
+}
+
+function renderJobDetail(id){
+  const j = jobsCache[id];
+  if(!j){
+    detailPanel.innerHTML = `Select a job to view details...`;
+    return;
+  }
+  detailPanel.innerHTML = `
+    <div class="panel">
+      <h3>${esc(j.title || '(Untitled job)')}</h3>
+      <div class="kv"><b>Status:</b> ${esc(j.status || 'active')}</div>
+      <div class="kv"><b>Trade:</b> ${esc(j.trade || '')}</div>
+      <div class="kv"><b>Address:</b> ${esc(j.address || '')}</div>
+      <div class="kv"><b>City/ZIP:</b> ${esc([j.city, j.zip].filter(Boolean).join(' '))}</div>
+      <div class="kv"><b>Target Date:</b> ${esc(j.targetDate || '')}</div>
+      <div class="kv"><b>Budget:</b> ${esc(j.budget || '')}</div>
+      <div class="hr"></div>
+      <div class="kv"><b>Description:</b><br/>${esc(j.description || '').replace(/\n/g,'<br/>')}</div>
+      <div class="hr"></div>
+      <div class="small">Updated: ${esc(j.updatedAt || '')}</div>
+    </div>
+  `;
+
+  // highlight selection
+  document.querySelectorAll('.row[data-jobid]').forEach(r=>{
+    r.classList.toggle('active', r.dataset.jobid === id);
+  });
+}
+
+/* ==========================
+   FIREBASE: LOAD JOBS
+========================== */
+function subscribeJobs(){
+  status.textContent = 'Loading…';
+
+  firebase.database().ref('jobs').on('value', snap=>{
+    jobsCache = snap.val() || {};
+    status.textContent = 'Loaded';
+    renderJobs();
+  }, err=>{
+    console.warn(err);
+    status.textContent = 'Error loading jobs';
+  });
+}
+
+/* ==========================
+   UX: SETTINGS LOAD/SAVE
+========================== */
 async function loadSettings() {
   const snap = await firebase.database().ref(`users/${UID}/contractorSettings`).once('value');
   const s = snap.val();
@@ -498,19 +788,14 @@ async function loadSettings() {
     isLicensed.checked = !!s.licensed;
     isInsured.checked = !!s.insured;
 
-    // Backward compat with your old field:
-    // if you previously used liveShare as a boolean, map it to acceptingJobs if acceptingJobs is undefined.
     const on = (typeof s.acceptingJobs === 'boolean')
       ? s.acceptingJobs
       : (typeof s.liveShare === 'boolean' ? s.liveShare : true);
 
     setSwitch(acceptSwitch, on);
-
     emptyState.style.display = "none";
   } else {
-    // brand new user
     emptyState.style.display = "block";
-    // default toggles
     setSwitch(acceptSwitch, true);
     prefContact.value = "text";
   }
@@ -518,14 +803,11 @@ async function loadSettings() {
   const missing = needsSetup(s);
   setBannerVisible(missing);
 
-  // Auto-nudge first time / incomplete profiles
   if(missing){
-    // show callout only if not dismissed this session
     showOnboardingCallout();
   }
 }
 
-// Save Settings
 saveSettings.onclick = async () => {
   const payload = {
     businessName: bizName.value.trim(),
@@ -544,7 +826,6 @@ saveSettings.onclick = async () => {
     updatedAt: new Date().toISOString()
   };
 
-  // minimal validation — keep it light, but enforce routing essentials
   if(needsSetup(payload)){
     alert(REQUIRED_HINT);
     return;
@@ -559,32 +840,9 @@ saveSettings.onclick = async () => {
   lastSettings = payload;
 };
 
-// Modals Open/Close
-btnSettings.onclick = ()=> showSettingsModal();
-closeSettings.onclick = ()=> hideSettingsModal();
-setupServices.onclick = ()=> showSettingsModal();
-
-// Placeholder for actual job loading
-function subscribeJobs(){
-  // If setup not complete, make the “no jobs” message explain why
-  const msg = needsSetup(lastSettings)
-    ? `<div style="padding:14px;opacity:.9">
-         <b>Complete setup to receive jobs.</b><br/>
-         Click <span style="color:#7fb3ff">⚙️ Settings</span> and add service areas, trades, and contact info.
-       </div>`
-    : `<p style="padding:14px;">No active jobs.</p>`;
-
-  jobTable.innerHTML = msg;
-  status.textContent = "Loaded";
-}
-
-// Blue/Red Phone Support Requests
-document.addEventListener('click',e=>{
-  if(e.target.id==='btnRed') showRBModal(true);
-  if(e.target.id==='btnBlue') showRBModal(false);
-  if(e.target.id==='rbCancel') hideRBModal();
-});
-
+/* ==========================
+   BLUE/RED REQUESTS
+========================== */
 function showRBModal(urgent){
   rbUrgent = !!urgent;
   rbModal.style.display='flex';
@@ -600,20 +858,110 @@ rbSubmit.onclick = async ()=>{
     details:rbDetails.value,
     urgent: rbUrgent,
     uid:UID,
+    email: USER_EMAIL || null,
     ts:firebase.database.ServerValue.TIMESTAMP
   });
   alert('Request Sent!');
   hideRBModal();
 };
 
-// Chat button
+/* ==========================
+   EVENTS / WIRING
+========================== */
+bannerFix.onclick = ()=> showSettingsModal();
+acceptSwitch.onclick = ()=> setSwitch(acceptSwitch, !acceptSwitch.classList.contains('on'));
+
+btnSettings.onclick = ()=> showSettingsModal();
+closeSettings.onclick = ()=> hideSettingsModal();
+setupServices.onclick = ()=> showSettingsModal();
+
+tabActive.onclick = ()=> setTab('active');
+tabUpcoming.onclick = ()=> setTab('upcoming');
+
+document.addEventListener('click',e=>{
+  if(e.target.id==='btnRed') showRBModal(true);
+  if(e.target.id==='btnBlue') showRBModal(false);
+  if(e.target.id==='rbCancel') hideRBModal();
+
+  // job list row click
+  const row = e.target.closest && e.target.closest('.row[data-jobid]');
+  if(row){
+    selectedJobId = row.dataset.jobid;
+    renderJobDetail(selectedJobId);
+    if(isGodMode) btnEditJob.disabled = !selectedJobId;
+  }
+});
+
+// Job modal buttons
+btnNewJob.onclick = ()=> openJobModal('new');
+btnEditJob.onclick = ()=> {
+  if(!selectedJobId) return alert('Select a job first');
+  openJobModal('edit');
+};
+jobCancel.onclick = ()=> closeJobModal();
+
+// Save job
+jobSave.onclick = async ()=>{
+  if(!isGodMode) return alert('Not authorized');
+  const mode = jobSave.dataset.mode || 'new';
+  const payload = jobPayload();
+
+  if(!payload.title){
+    alert('Title is required');
+    return;
+  }
+
+  if(mode === 'edit'){
+    if(!selectedJobId) return alert('No job selected');
+    await firebase.database().ref(`jobs/${selectedJobId}`).update(payload);
+    closeJobModal();
+    return;
+  }
+
+  // new
+  const ref = firebase.database().ref('jobs').push();
+  const jobId = ref.key;
+  const created = {
+    ...payload,
+    createdAt: new Date().toISOString(),
+    createdBy: USER_EMAIL || null
+  };
+  await firebase.database().ref(`jobs/${jobId}`).set(created);
+  selectedJobId = jobId;
+  closeJobModal();
+};
+
+// Delete job
+jobDeleteBtn.onclick = async ()=>{
+  if(!isGodMode) return alert('Not authorized');
+  if(!selectedJobId) return;
+  const ok = confirm('Delete this job permanently?');
+  if(!ok) return;
+  await firebase.database().ref(`jobs/${selectedJobId}`).remove();
+  selectedJobId = null;
+  closeJobModal();
+};
+
+/* ==========================
+   CHAT + PRESENCE + AUTH
+========================== */
 chatBubble.onclick = ()=>location.href="townhall.html?from=contractor";
 
-// Presence Tracking
-firebase.auth().onAuthStateChanged(u=>{
-  if(!u) return;
-  const uid=u.uid;
-  const userStatusRef=firebase.database().ref(`/presence/${uid}`);
+document.getElementById('logoutBtn').onclick = ()=> firebase.auth().signOut();
+
+firebase.auth().onAuthStateChanged(async u => {
+  if (!u) return location.href = "index.html";
+  UID = u.uid;
+  USER_EMAIL = (u.email || '').toLowerCase();
+  isGodMode = (USER_EMAIL === GOD_EMAIL);
+
+  setAdminVisible(isGodMode);
+
+  await loadSettings();
+  subscribeJobs();
+
+  // presence tracking
+  const userStatusRef=firebase.database().ref(`/presence/${UID}`);
   const isOffline={state:'offline',last_changed:firebase.database.ServerValue.TIMESTAMP};
   const isOnline={
     state:'online',
