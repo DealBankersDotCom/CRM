@@ -18,7 +18,8 @@
     body {
       font-family: "Orbitron", system-ui, sans-serif;
       background: radial-gradient(circle at 30% 10%, #0b1523 0%, #050910 100%);
-      color: var(--text); overflow-x: hidden;
+      color: var(--text);
+      overflow-x: hidden;
     }
     header {
       display: flex; justify-content: space-between; align-items: center;
@@ -37,49 +38,76 @@
     }
     nav a:hover { background: var(--accent); color: #fff; box-shadow: 0 0 12px var(--accent-glow); }
     .status { font-size: .8rem; color: var(--muted); }
+
+    /* ===== Layout (Adjusted to fit 100% zoom better) ===== */
     main {
-      display: grid; grid-template-columns: 1.1fr .9fr; gap: 20px;
+      display: grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap: 16px;                 /* was 20px */
       max-width: 1200px;
-      margin: 40px auto; padding: 0 16px;
+      margin: clamp(14px, 3vh, 28px) auto;  /* was 40px */
+      padding: 0 14px;           /* was 0 16px */
     }
     .left-col, .right-col {
       background: rgba(15,24,35,.4);
-      border: 1px solid var(--line); border-radius: 14px;
-      padding: 24px; box-shadow: inset 0 0 20px rgba(43,116,255,.15);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 18px;             /* was 24px */
+      box-shadow: inset 0 0 20px rgba(43,116,255,.15);
+      min-height: 0;             /* important for flex/scroll children */
     }
-    .hero { text-align: center; margin-bottom: 24px; }
-    .hero h1 { font-size: 2.4rem; margin-bottom: 6px; color: var(--chrome); }
-    .hero p { color: #b5cbe0; margin-bottom: 20px; }
+
+    .hero { text-align: center; margin-bottom: 18px; } /* was 24px */
+    .hero h1 {
+      font-size: clamp(1.8rem, 3.2vw, 2.4rem); /* was 2.4rem fixed */
+      margin-bottom: 6px;
+      color: var(--chrome);
+    }
+    .hero p { color: #b5cbe0; margin-bottom: 14px; } /* was 20px */
+
     .gbtn {
       display: inline-flex; align-items: center; gap: 10px;
-      padding: 12px 20px;
+      padding: 10px 16px;        /* was 12px 20px */
       border-radius: 12px; border: 1px solid #747775;
       background: #1f1f1f; color: #e8eaed; font-weight: 700; cursor: pointer;
       box-shadow: 0 0 10px rgba(43,116,255,.3);
     }
     .gbtn:hover { background: #2c2c2c; box-shadow: 0 0 14px var(--accent-glow); }
     .gbtn img { width: 20px; height: 20px; }
+
     .tiles {
-      display: grid; grid-template-columns: repeat(auto-fit,minmax(220px,1fr));
-      gap: 16px; margin-top: 10px;
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 14px;                 /* was 16px */
+      margin-top: 8px;           /* was 10px */
     }
     .tile {
       background: linear-gradient(180deg,#111b27,#0c1219);
       border: 1px solid #1d2b3a; border-radius: 16px;
-      padding: 20px; text-align: center; cursor: pointer; transition: .3s;
+      padding: 16px;             /* was 20px */
+      text-align: center; cursor: pointer; transition: .3s;
     }
     .tile:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(43,116,255,.4); }
     .tile h3 { margin: 6px 0; color: #fff; font-size: 1.1rem; }
     .tile p { font-size: .9rem; color: #9db2c7; }
 
-    /* Townhall Chat */
+    /* ===== Townhall Chat (Adaptive height to keep Send visible) ===== */
     .chat-container {
       border-radius: 14px;
-      background: rgba(15,24,35,.7); border: 1px solid #1e2c3a; padding: 16px;
-      display: flex; flex-direction: column; height: 480px;
+      background: rgba(15,24,35,.7);
+      border: 1px solid #1e2c3a;
+      padding: 14px;             /* was 16px */
+      display: flex;
+      flex-direction: column;
+      height: clamp(340px, 52vh, 480px); /* was fixed 480px */
+      min-height: 0;
       box-shadow: inset 0 0 12px rgba(43,116,255,.25);
     }
-    .chat-messages { flex: 1; overflow-y: auto; }
+    .chat-messages {
+      flex: 1;
+      overflow-y: auto;
+      min-height: 0;
+    }
     .msg {
       margin-bottom: 10px; padding: 10px;
       border-radius: 10px; background: rgba(255,255,255,.05);
@@ -101,7 +129,15 @@
       background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);
     }
 
-    footer { text-align: center; margin: 40px auto; color: #88a5bf; font-size: .9rem; }
+    /* Extra insurance for short-height displays */
+    @media (max-height: 820px){
+      header { padding: 10px 18px; }
+      .hero { margin-bottom: 14px; }
+      .hero p { margin-bottom: 12px; }
+      .chat-container { height: clamp(300px, 50vh, 420px); }
+    }
+
+    footer { text-align: center; margin: 34px auto; color: #88a5bf; font-size: .9rem; } /* was 40px */
     footer span { display: block; margin-top: 4px; color: var(--accent); font-weight: 700; }
   </style>
 </head>
@@ -128,7 +164,7 @@
         <img src="https://developers.google.com/identity/images/g-logo.png" /> Sign in with Google
       </button>
     </div>
- 
+
     <div class="tiles">
       <div class="tile"><h3>Wholesalers</h3><p>Upload leads, view in street view, edit inline, skip trace.</p></div>
       <div class="tile"><h3>Contractors</h3><p>Tools, jobs, micro-loans, and profile filters.</p></div>
@@ -153,8 +189,8 @@
   © <span id="year"></span> DealBankers.com
   <span>Built for Trust. Driven by Data</span>
   <div style="margin-top:10px; font-size: 0.85rem;">
-    <a href="https://drive.google.com/drive/u/2/folders/1x4xbW0Vbb5FSP0292WC7qwMIyzsTzgop" 
-       target="_blank" 
+    <a href="https://drive.google.com/drive/u/2/folders/1x4xbW0Vbb5FSP0292WC7qwMIyzsTzgop"
+       target="_blank"
        style="color: var(--muted); text-decoration: underline;">
       📘 Family Advocacy Docs (Open Source)
     </a>
@@ -183,10 +219,10 @@
   const googleBtn = document.getElementById("googleBtn");
 
   // --- FIXED FUNCTION (No Syntax Error) ---
-  function esc(s){ 
-      return (''+(s||'')).replace(/[&<>"']/g, function(m) { 
-          return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m]; 
-      }); 
+  function esc(s){
+      return (''+(s||'')).replace(/[&<>"']/g, function(m) {
+          return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m];
+      });
   }
 
   function attachChat(){
@@ -250,7 +286,7 @@
             email: user.email,
             role: userRole,
             ts: serverTimestamp(),
-            page: "Townhall" 
+            page: "Townhall"
         });
       }
     });
@@ -260,7 +296,7 @@
     if(user){
       authStatus.innerHTML = `Signed in as ${user.displayName||user.email} <a id='logout' style='color:#2b74ff;cursor:pointer;margin-left:6px;'>Sign out</a>`;
       msgInput.disabled = false; sendBtn.disabled = false;
-      
+
       attachChat();
       setPresence(user); // TRACKING ON
 
