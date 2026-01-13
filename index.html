@@ -2,311 +2,985 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>DealBankers — Real Estate Command Hub</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>DealBankers — Command Hub</title>
   <link rel="icon" href="icon (1).jpg" />
+
+  <!-- Optional: clean modern font -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
   <style>
-    :root {
-      --bg: #060b11;
-      --accent: #2b74ff; --accent-glow: #4f8cff;
-      --text: #eaf2ff; --line: #1e2c3a; --muted: #9db2c7; --chrome: #a8c1ff; --neon: #33aaff;
+    :root{
+      --bg0:#050712;
+      --bg1:#070b16;
+      --bg2:#0a1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.04);
+      --line: rgba(255,255,255,.10);
+      --text:#eaf2ff;
+      --muted: rgba(255,255,255,.55);
+      --muted2: rgba(255,255,255,.40);
+
+      --blue:#2b74ff;
+      --blue2:#6aa7ff;
+      --purple:#8b5cf6;
+      --teal:#22c55e;
+      --amber:#fbbf24;
+      --red:#ef4444;
+
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --shadowSoft: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 22px;
     }
-    * { box-sizing: border-box; margin: 0; padding: 0; }
-    body {
-      font-family: "Orbitron", system-ui, sans-serif;
-      background: radial-gradient(circle at 30% 10%, #0b1523 0%, #050910 100%);
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
       color: var(--text);
-      overflow-x: hidden;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(43,116,255,.18), transparent 55%),
+        radial-gradient(circle at 80% 30%, rgba(139,92,246,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 35%, var(--bg2));
+      overflow-x:hidden;
     }
-    header {
-      display: flex; justify-content: space-between; align-items: center;
-      padding: 12px 20px;
-      border-bottom: 1px solid var(--line);
-      background: linear-gradient(90deg, #070d16, #0e1b30 80%, #070d16);
-      box-shadow: 0 0 18px rgba(43,116,255,0.25);
+
+    /* Ambient blobs */
+    .ambient{
+      position: fixed; inset: 0; pointer-events:none; z-index:0;
+      overflow:hidden;
     }
-    .brand { display: flex; align-items: center; gap: 10px; font-weight: 800; color: var(--chrome); }
-    .brand img { width: 42px; height: 42px; border-radius: 10px; box-shadow: 0 0 10px var(--neon); }
-    nav { display: flex; gap: 10px; }
-    nav a {
-      padding: 6px 14px; border-radius: 8px; background: #162238;
+    .blob{
+      position:absolute;
+      width: 420px; height: 420px;
+      border-radius: 999px;
+      filter: blur(48px);
+      opacity:.35;
+    }
+    .b1{ top: 12%; left: 8%; background: rgba(43,116,255,.35); }
+    .b2{ bottom: 18%; right: 10%; background: rgba(139,92,246,.30); }
+    .grid{
+      position:absolute; inset:0;
+      opacity:.06;
+      background-image:
+        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size:56px 56px;
+      mix-blend-mode: overlay;
+    }
+
+    /* Header */
+    header{
+      position: sticky;
+      top: 0;
+      z-index: 50;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(5,7,18,.78), rgba(5,7,18,.18));
+      backdrop-filter: blur(14px);
+    }
+    .hwrap{
+      max-width: 1240px;
+      margin: 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap: 12px;
+      min-width: 190px;
+    }
+    .brand img{
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      box-shadow: 0 0 18px rgba(43,116,255,.35);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .brandTitle{
+      font-weight: 800;
+      letter-spacing: .02em;
+      font-size: 16px;
+      line-height: 1.1;
+    }
+    .brandSub{
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 2px;
+      line-height: 1.1;
+    }
+
+    nav{
+      display:flex; gap: 10px; flex-wrap:wrap;
+      justify-content:center;
+    }
+    nav a{
+      text-decoration:none;
+      color: rgba(255,255,255,.78);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 8px 12px;
+      border-radius: 12px;
       font-weight: 700;
-      color: #bcd1ff; transition: .25s; text-decoration: none;
+      font-size: 13px;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      white-space:nowrap;
     }
-    nav a:hover { background: var(--accent); color: #fff; box-shadow: 0 0 12px var(--accent-glow); }
-    .status { font-size: .8rem; color: var(--muted); }
+    nav a:hover{
+      background: rgba(43,116,255,.16);
+      border-color: rgba(43,116,255,.35);
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
 
-    /* ===== Layout (Adjusted to fit 100% zoom better) ===== */
-    main {
-      display: grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap: 16px;                 /* was 20px */
-      max-width: 1200px;
-      margin: clamp(14px, 3vh, 28px) auto;  /* was 40px */
-      padding: 0 14px;           /* was 0 16px */
+    .rightHead{
+      display:flex; align-items:center; gap: 10px; flex-wrap:wrap;
+      justify-content:flex-end;
+      min-width: 220px;
     }
-    .left-col, .right-col {
-      background: rgba(15,24,35,.4);
-      border: 1px solid var(--line);
+    .bell{
+      position: relative;
+      width: 42px; height: 42px;
       border-radius: 14px;
-      padding: 18px;             /* was 24px */
-      box-shadow: inset 0 0 20px rgba(43,116,255,.15);
-      min-height: 0;             /* important for flex/scroll children */
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .bell:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .badge{
+      position:absolute;
+      top: -6px; right: -6px;
+      width: 18px; height: 18px;
+      border-radius: 999px;
+      background: var(--red);
+      color: white;
+      font-size: 11px;
+      font-weight: 800;
+      display:flex; align-items:center; justify-content:center;
+      border: 2px solid rgba(5,7,18,.95);
+    }
+    .status{
+      font-size: 12px;
+      color: var(--muted);
+      max-width: 320px;
+      text-align:right;
+      line-height: 1.2;
+    }
+    .status a{ color: #6aa7ff; text-decoration: none; font-weight: 800; }
+    .status a:hover{ text-decoration: underline; }
+
+    /* Main container */
+    .wrap{
+      position: relative;
+      z-index: 2;
+      max-width: 1240px;
+      margin: 18px auto 46px;
+      padding: 0 16px;
     }
 
-    .hero { text-align: center; margin-bottom: 18px; } /* was 24px */
-    .hero h1 {
-      font-size: clamp(1.8rem, 3.2vw, 2.4rem); /* was 2.4rem fixed */
-      margin-bottom: 6px;
-      color: var(--chrome);
+    /* Welcome header */
+    .topRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin: 14px 0 16px;
     }
-    .hero p { color: #b5cbe0; margin-bottom: 14px; } /* was 20px */
+    .welcome h1{
+      font-size: clamp(22px, 2.4vw, 34px);
+      font-weight: 900;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+    .welcome h1 .grad{
+      background: linear-gradient(90deg, rgba(106,167,255,1), rgba(139,92,246,1));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .welcome p{
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 13px;
+    }
 
-    .gbtn {
-      display: inline-flex; align-items: center; gap: 10px;
-      padding: 10px 16px;        /* was 12px 20px */
-      border-radius: 12px; border: 1px solid #747775;
-      background: #1f1f1f; color: #e8eaed; font-weight: 700; cursor: pointer;
-      box-shadow: 0 0 10px rgba(43,116,255,.3);
-    }
-    .gbtn:hover { background: #2c2c2c; box-shadow: 0 0 14px var(--accent-glow); }
-    .gbtn img { width: 20px; height: 20px; }
-
-    .tiles {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-      gap: 14px;                 /* was 16px */
-      margin-top: 8px;           /* was 10px */
-    }
-    .tile {
-      background: linear-gradient(180deg,#111b27,#0c1219);
-      border: 1px solid #1d2b3a; border-radius: 16px;
-      padding: 16px;             /* was 20px */
-      text-align: center; cursor: pointer; transition: .3s;
-    }
-    .tile:hover { transform: translateY(-5px); box-shadow: 0 0 20px rgba(43,116,255,.4); }
-    .tile h3 { margin: 6px 0; color: #fff; font-size: 1.1rem; }
-    .tile p { font-size: .9rem; color: #9db2c7; }
-
-    /* ===== Townhall Chat (Adaptive height to keep Send visible) ===== */
-    .chat-container {
+    /* Google sign-in button (pro skin) */
+    .gbtn{
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 12px 14px;
       border-radius: 14px;
-      background: rgba(15,24,35,.7);
-      border: 1px solid #1e2c3a;
-      padding: 14px;             /* was 16px */
-      display: flex;
-      flex-direction: column;
-      height: clamp(380px, 60vh, 560px); /* was fixed 480px */
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      font-weight: 800;
+      cursor: pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      box-shadow: 0 0 18px rgba(43,116,255,.18);
+      white-space:nowrap;
+    }
+    .gbtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.14); }
+    .gbtn img{ width: 18px; height: 18px; }
+
+    /* Stats grid */
+    .stats{
+      display:grid;
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px;
+      margin: 14px 0 18px;
+    }
+    .stat{
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      min-height: 86px;
+    }
+    .stat .label{
+      color: rgba(255,255,255,.42);
+      font-size: 12px;
+      margin-top: 8px;
+    }
+    .stat .value{
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: -.02em;
+    }
+    .stat .icon{
+      width: 26px; height: 26px;
+      opacity: .95;
+    }
+    .rowIcon{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+
+    /* Main grid */
+    .gridMain{
+      display:grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+
+    /* Portal cards */
+    .portals{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .pCard{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      position: relative;
+      box-shadow: var(--shadowSoft);
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+      min-height: 150px;
+    }
+    .pCard:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+    .pInner{
+      padding: 16px 16px 14px;
+      position: relative;
+      z-index: 2;
+    }
+    .pTop{
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    }
+    .pTitle{
+      font-weight: 900;
+      font-size: 18px;
+      letter-spacing: -.01em;
+    }
+    .pDesc{
+      margin-top: 8px;
+      color: rgba(255,255,255,.70);
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 520px;
+    }
+    .pStats{
+      display:flex; gap: 14px; flex-wrap:wrap;
+      margin-top: 12px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .ps{
+      display:flex; flex-direction:column;
+      min-width: 90px;
+    }
+    .ps .v{ font-weight: 900; font-size: 16px; }
+    .ps .l{ font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+    .bgGlow{
+      position:absolute; inset:0;
+      opacity: .95;
+      z-index: 1;
+    }
+    .bgNoise{
+      position:absolute; inset:0;
+      z-index: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.12), transparent 55%),
+        radial-gradient(circle at 70% 50%, rgba(0,0,0,.18), transparent 60%);
+      opacity: .18;
+      mix-blend-mode: overlay;
+    }
+
+    /* Sidebar panels */
+    .side{
+      display:flex;
+      flex-direction:column;
+      gap: 14px;
+    }
+    .panel{
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      overflow:hidden;
+    }
+    .panelHead{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .panelHead h3{
+      font-size: 13px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+      font-weight: 800;
+      white-space:nowrap;
+    }
+    .panelBody{ padding: 12px 14px 14px; }
+
+    /* Presence list */
+    .presenceList{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+    }
+    .pItem{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .pLeft{
+      display:flex; align-items:center; gap: 10px;
+      min-width:0;
+    }
+    .avatar{
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900;
+      color: rgba(255,255,255,.88);
+      flex: 0 0 auto;
+    }
+    .pMeta{ min-width:0; }
+    .pName{
+      font-weight: 800;
+      font-size: 13px;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 160px;
+    }
+    .pSub{
+      font-size: 11px;
+      color: rgba(255,255,255,.48);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      max-width: 160px;
+      margin-top: 2px;
+    }
+    .dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34,197,94,.25);
+      flex: 0 0 auto;
+    }
+
+    /* Chat panel (your working chat, upgraded skin) */
+    .chatShell{
+      display:flex;
+      flex-direction:column;
+      height: clamp(360px, 52vh, 560px);
       min-height: 0;
-      box-shadow: inset 0 0 12px rgba(43,116,255,.25);
     }
-    .chat-messages {
+    .chatMessages{
       flex: 1;
-      overflow-y: auto;
-      min-height: 0;
+      overflow-y:auto;
+      min-height:0;
+      padding-right: 4px;
     }
-    .msg {
-      margin-bottom: 10px; padding: 10px;
-      border-radius: 10px; background: rgba(255,255,255,.05);
+    .msg{
+      margin-bottom: 10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
     }
-    .msg strong { color: var(--neon); }
-    .msg small { color: #9db2c7; font-size: .7rem; margin-left: 4px; }
-    .chat-input { display: flex; gap: 10px; margin-top: 10px; }
-    .chat-input input {
-      flex: 1; padding: 10px; border-radius: 10px;
-      border: 1px solid #294861;
-      background: #0e2332; color: #fff;
+    .msg strong{ color: #6aa7ff; }
+    .msg small{ color: rgba(255,255,255,.45); font-size: 11px; margin-left: 6px; }
+    .chatInput{
+      display:flex;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.08);
     }
-    .chat-input button {
-      padding: 10px 14px;
-      border-radius: 10px; border: 1px solid var(--accent);
-      background: #173764; color: #fff; font-weight: 700; cursor: pointer;
+    .chatInput input{
+      flex:1;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: white;
+      outline:none;
     }
-    .chat-input button:hover {
-      background: var(--accent); box-shadow: 0 0 10px var(--accent-glow);
+    .chatInput input:focus{
+      border-color: rgba(106,167,255,.55);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.14);
     }
+    .chatInput button{
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,116,255,.55);
+      background: rgba(43,116,255,.20);
+      color: white;
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .chatInput button:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .chatInput button:active{ transform: translateY(0); }
 
-    /* Extra insurance for short-height displays */
-    @media (max-height: 820px){
-      header { padding: 10px 18px; }
-      .hero { margin-bottom: 14px; }
-      .hero p { margin-bottom: 12px; }
-      .chat-container { height: clamp(340px, 56vh, 480px); }
+    footer{
+      max-width: 1240px;
+      margin: 26px auto 40px;
+      padding: 0 16px;
+      color: rgba(255,255,255,.46);
+      font-size: 12px;
+      text-align:center;
     }
+    footer a{ color: rgba(255,255,255,.62); }
 
-    footer { text-align: center; margin: 34px auto; color: #88a5bf; font-size: .9rem; } /* was 40px */
-    footer span { display: block; margin-top: 4px; color: var(--accent); font-weight: 700; }
+    /* Responsive */
+    @media (max-width: 980px){
+      nav{ display:none; }
+      .stats{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gridMain{ grid-template-columns: 1fr; }
+      .portals{ grid-template-columns: 1fr; }
+      .status{ text-align:left; max-width:none; }
+      .rightHead{ min-width: unset; justify-content:flex-start; }
+    }
   </style>
 </head>
-<body>
-<header>
-  <div class="brand">
-    <img src="icon (1).jpg" /><span>DealBankers</span>
-  </div>
-  <nav>
-    <a href="#">Home</a>
-    <a href="profile.html">Tools</a>
-    <a href="#townhall">Townhall</a>
-    <a href="claims-exchange.html">ClaimChain</a>
-  </nav>
-  <div class="status" id="authStatus">Signed out</div>
-</header>
 
-<main>
-  <div class="left-col">
-    <div class="hero">
-      <h1>DealBankers</h1>
-      <p>Your One-Stop Real Estate Portal</p>
+<body>
+  <div class="ambient">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header>
+    <div class="hwrap">
+      <div class="brand">
+        <img src="icon (1).jpg" alt="DealBankers"/>
+        <div>
+          <div class="brandTitle">DealBankers</div>
+          <div class="brandSub">Real Estate Command Hub</div>
+        </div>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="profile.html">Tools</a>
+        <a href="#townhall">Townhall</a>
+        <a href="claims-exchange.html">ClaimChain</a>
+      </nav>
+
+      <div class="rightHead">
+        <button class="bell" id="bellBtn" title="Notifications (placeholder)">
+          <!-- Bell icon -->
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.75)">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="badge" id="notifBadge">3</span>
+        </button>
+
+        <div class="status" id="authStatus">Signed out</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="topRow">
+      <div class="welcome">
+        <h1>
+          Welcome back, <span class="grad" id="welcomeName">Deal Banker</span>
+        </h1>
+        <p>Your command center for all deal operations.</p>
+      </div>
+
       <button id="googleBtn" class="gbtn">
-        <img src="https://developers.google.com/identity/images/g-logo.png" /> Sign in with Google
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google"/>
+        Sign in with Google
       </button>
     </div>
 
-    <div class="tiles">
-      <div class="tile"><h3>Wholesalers</h3><p>Upload leads, view in street view, edit inline, skip trace.</p></div>
-      <div class="tile"><h3>Contractors</h3><p>Tools, jobs, micro-loans, and profile filters.</p></div>
-      <div class="tile"><h3>Realtors</h3><p>Analyze property data, upload listings, refer deals.</p></div>
-      <div class="tile"><h3>Investors</h3><p>Capital, returns, networking, market pulse.</p></div>
-    </div>
-  </div>
+    <!-- Quick stats -->
+    <div class="stats">
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(251,191,36,.95)">
+            <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+          </svg>
+          <div class="pill">LIVE</div>
+        </div>
+        <div class="value" id="statLeads">—</div>
+        <div class="label">Active Leads</div>
+      </div>
 
-  <div class="right-col" id="townhall">
-    <h2 style="text-align:center;color:var(--chrome);text-shadow:0 0 5px var(--accent)">🔵 Townhall Chat</h2>
-    <div class="chat-container">
-      <div id="messages" class="chat-messages"></div>
-      <div class="chat-input">
-        <input id="msgInput" placeholder="Sign in to chat..." disabled />
-        <button id="sendBtn" disabled>Send</button>
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(34,197,94,.95)">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <div class="pill">OPS</div>
+        </div>
+        <div class="value" id="statJobs">—</div>
+        <div class="label">Open Jobs</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(106,167,255,.95)">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <div class="pill"><span id="onlinePill">0</span> active</div>
+        </div>
+        <div class="value" id="statOnline">0</div>
+        <div class="label">Online Now</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(139,92,246,.95)">
+            <path d="M12 20V10"></path>
+            <path d="M18 20V4"></path>
+            <path d="M6 20v-6"></path>
+          </svg>
+          <div class="pill">MONTH</div>
+        </div>
+        <div class="value" id="statMonth">$—</div>
+        <div class="label">This Month</div>
+      </div>
+    </div>
+
+    <div class="gridMain">
+      <!-- Portal cards -->
+      <div class="portals">
+        <div class="pCard" data-href="wholesaler.html" role="button" tabindex="0" aria-label="Wholesaler Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(30,64,175,.85), rgba(67,56,202,.75));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Wholesaler</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Manage seller leads, dispo buyers, call scripts, and contracts.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="whActive">—</div><div class="l">Active Leads</div></div>
+              <div class="ps"><div class="v" id="whNew">—</div><div class="l">New</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="contractor.html" role="button" tabindex="0" aria-label="Contractor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(249,115,22,.95), rgba(234,88,12,.85), rgba(185,28,28,.72));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Contractor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Job postings, project management, payroll, and subcontracting.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="ctOpen">—</div><div class="l">Open Jobs</div></div>
+              <div class="ps"><div class="v" id="ctProg">—</div><div class="l">In Progress</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="realtor.html" role="button" tabindex="0" aria-label="Realtor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(16,185,129,.95), rgba(5,150,105,.85), rgba(13,148,136,.75));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Realtor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Transaction coordination, client resources, learning modules.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="rtListings">—</div><div class="l">Listings</div></div>
+              <div class="ps"><div class="v" id="rtPending">—</div><div class="l">Pending</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="investor.html" role="button" tabindex="0" aria-label="Investor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(124,58,237,.85), rgba(219,39,119,.72));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Investor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Deal analysis, private money portal, JV structures, funding docs.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="ivDeals">—</div><div class="l">Deals</div></div>
+              <div class="ps"><div class="v" id="ivFunded">—</div><div class="l">Funded</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sidebar -->
+      <div class="side">
+        <div class="panel">
+          <div class="panelHead">
+            <h3>Online Now</h3>
+            <div class="pill" id="onlineMini">0 active</div>
+          </div>
+          <div class="panelBody">
+            <div class="presenceList" id="presenceList">
+              <div style="color:rgba(255,255,255,.45); font-size:12px;">No one online yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="townhall">
+          <div class="panelHead">
+            <h3>Townhall Chat</h3>
+            <div class="pill">Live</div>
+          </div>
+          <div class="panelBody">
+            <div class="chatShell">
+              <div id="messages" class="chatMessages"></div>
+              <div class="chatInput">
+                <input id="msgInput" placeholder="Sign in to chat..." disabled />
+                <button id="sendBtn" disabled>Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
       </div>
     </div>
   </div>
-</main>
 
-<footer>
-  © <span id="year"></span> DealBankers.com
-  <span>Built for Trust. Driven by Data</span>
-  <div style="margin-top:10px; font-size: 0.85rem;">
-    <a href="https://drive.google.com/drive/u/2/folders/1x4xbW0Vbb5FSP0292WC7qwMIyzsTzgop"
-       target="_blank"
-       style="color: var(--muted); text-decoration: underline;">
-      📘 Family Advocacy Docs (Open Source)
-    </a>
-  </div>
-</footer>
+  <footer>
+    © <span id="year"></span> DealBankers.com • Built for Trust. Driven by Data
+    <div style="margin-top:10px;">
+      <a href="https://drive.google.com/drive/u/2/folders/1x4xbW0Vbb5FSP0292WC7qwMIyzsTzgop" target="_blank" rel="noreferrer">
+        📘 Family Advocacy Docs (Open Source)
+      </a>
+    </div>
+  </footer>
 
-<script src="config.js"></script>
+  <script src="config.js"></script>
 
-<script type="module">
-  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-  import { getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut, setPersistence, browserLocalPersistence } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-  import { getDatabase, ref, push, onChildAdded, serverTimestamp, set, onDisconnect, onValue, get } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
+      setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import {
+      getDatabase, ref, push, onChildAdded, serverTimestamp, set, onDisconnect,
+      onValue, get
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-  // Init with Global Config
-  const app = initializeApp(window.firebaseConfig);
-  const auth = getAuth(app);
-  const db = getDatabase(app);
-  const provider = new GoogleAuthProvider();
+    // --- Init ---
+    const app = initializeApp(window.firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
 
-  const year = document.getElementById("year");
-  year.textContent = new Date().getFullYear();
-  const msgList = document.getElementById("messages");
-  const msgInput = document.getElementById("msgInput");
-  const sendBtn = document.getElementById("sendBtn");
-  const authStatus = document.getElementById("authStatus");
-  const googleBtn = document.getElementById("googleBtn");
+    // --- UI ---
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const authStatus = document.getElementById("authStatus");
+    const googleBtn = document.getElementById("googleBtn");
+    const welcomeName = document.getElementById("welcomeName");
 
-  // --- FIXED FUNCTION (No Syntax Error) ---
-  function esc(s){
-      return (''+(s||'')).replace(/[&<>"']/g, function(m) {
-          return {'&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;'}[m];
+    // Stats
+    const statOnline = document.getElementById("statOnline");
+    const onlinePill = document.getElementById("onlinePill");
+    const onlineMini = document.getElementById("onlineMini");
+
+    const statLeads = document.getElementById("statLeads");
+    const statJobs  = document.getElementById("statJobs");
+    const statMonth = document.getElementById("statMonth");
+
+    // Portal stat placeholders (safe defaults)
+    const whActive = document.getElementById("whActive");
+    const whNew = document.getElementById("whNew");
+    const ctOpen = document.getElementById("ctOpen");
+    const ctProg = document.getElementById("ctProg");
+    const rtListings = document.getElementById("rtListings");
+    const rtPending = document.getElementById("rtPending");
+    const ivDeals = document.getElementById("ivDeals");
+    const ivFunded = document.getElementById("ivFunded");
+
+    // Presence UI
+    const presenceList = document.getElementById("presenceList");
+
+    // Chat
+    const msgList = document.getElementById("messages");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function esc(s){
+      return (''+(s||'')).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    // --- Portal card navigation ---
+    function wirePortalCards(){
+      document.querySelectorAll(".pCard").forEach(card=>{
+        const go = ()=> {
+          const href = card.getAttribute("data-href");
+          if(href) window.location.href = href;
+        };
+        card.addEventListener("click", go);
+        card.addEventListener("keypress", (e)=>{ if(e.key==="Enter") go(); });
       });
-  }
+    }
+    wirePortalCards();
 
-  function attachChat(){
-    const chatRef = ref(db,"townhall/messages");
-    onChildAdded(chatRef, snap=>{
-      const d=snap.val()||{};
-      const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-      const div=document.createElement("div");
-      div.className="msg";
-      div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
-      msgList.appendChild(div);
-      msgList.scrollTop = msgList.scrollHeight;
+    // --- Chat ---
+    function attachChat(){
+      const chatRef = ref(db,"townhall/messages");
+      onChildAdded(chatRef, snap=>{
+        const d=snap.val()||{};
+        const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        const div=document.createElement("div");
+        div.className="msg";
+        div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
+        msgList.appendChild(div);
+        msgList.scrollTop = msgList.scrollHeight;
+      });
+    }
+    attachChat(); // read-only for signed-out
+
+    sendBtn.onclick = ()=>{
+      if(!auth.currentUser) return alert("Please sign in first.");
+      const text = msgInput.value.trim();
+      if(!text) return;
+      push(ref(db,"townhall/messages"), {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || auth.currentUser.email,
+        text,
+        ts: serverTimestamp()
+      });
+      msgInput.value = "";
+    };
+    msgInput.addEventListener("keypress", e => {
+      if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); }
     });
-  }
 
-  sendBtn.onclick = ()=>{
-    if(!auth.currentUser) return alert("Please sign in first.");
-    const text = msgInput.value.trim();
-    if(!text) return;
-    push(ref(db,"townhall/messages"), {
-      uid: auth.currentUser.uid,
-      name: auth.currentUser.displayName || auth.currentUser.email,
-      text,
-      ts: serverTimestamp()
-    });
-    msgInput.value = "";
-  };
+    // --- Presence tracking (your existing logic, enhanced UI) ---
+    async function setPresence(user) {
+      const roleSnap = await get(ref(db, `roles/${user.uid}`));
+      const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
-  msgInput.addEventListener("keypress", e => {
-    if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); }
-  });
+      const presRef = ref(db, `presence/global/${user.uid}`);
+      const connectedRef = ref(db, ".info/connected");
 
-  googleBtn.onclick = async () => {
-    await setPersistence(auth, browserLocalPersistence);
-    await signInWithPopup(auth, provider);
-    window.location.href = "profile.html";
-  };
-
-  /* =========================================
-     PRESENCE TRACKING (For God Mode)
-  ========================================= */
-  async function setPresence(user) {
-    // 1. Check Role first
-    const roleSnap = await get(ref(db, `roles/${user.uid}`));
-    const userRole = roleSnap.exists() ? roleSnap.val() : "user";
-
-    const presRef = ref(db, `presence/global/${user.uid}`);
-    const connectedRef = ref(db, ".info/connected");
-
-    onValue(connectedRef, (snap) => {
-      if (snap.val() === true) {
-        // If we disconnect, go offline
-        onDisconnect(presRef).set({
+      onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+          onDisconnect(presRef).set({
             state: "offline",
             lastOnline: serverTimestamp(),
-        });
-        // We are here! Broadcast to God Mode
-        set(presRef, {
+          });
+          set(presRef, {
             state: "online",
             name: user.displayName || user.email,
             email: user.email,
             role: userRole,
             ts: serverTimestamp(),
-            page: "Townhall"
-        });
+            page: "Overview"
+          });
+        }
+      });
+    }
+
+    function initials(nameOrEmail){
+      const s = (nameOrEmail||"").trim();
+      if(!s) return "?";
+      const parts = s.split(/\s+/).filter(Boolean);
+      if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return (s[0]||"?").toUpperCase();
+    }
+
+    function renderPresence(list){
+      const online = list
+        .filter(u => u && u.state === "online")
+        .sort((a,b)=> (b.ts||0) - (a.ts||0));
+
+      const n = online.length;
+      statOnline.textContent = String(n);
+      onlinePill.textContent = String(n);
+      onlineMini.textContent = `${n} active`;
+
+      presenceList.innerHTML = "";
+      if(!n){
+        presenceList.innerHTML = `<div style="color:rgba(255,255,255,.45); font-size:12px;">No one online yet.</div>`;
+        return;
+      }
+
+      online.slice(0, 10).forEach(u=>{
+        const div = document.createElement("div");
+        div.className = "pItem";
+        const nm = u.name || u.email || "User";
+        const role = u.role || "user";
+        const page = u.page || "";
+        div.innerHTML = `
+          <div class="pLeft">
+            <div class="avatar">${esc(initials(nm))}</div>
+            <div class="pMeta">
+              <div class="pName" title="${esc(nm)}">${esc(nm)}</div>
+              <div class="pSub" title="${esc(role + (page ? " • " + page : ""))}">${esc(role)}${page ? " • " + esc(page) : ""}</div>
+            </div>
+          </div>
+          <div class="dot" title="online"></div>
+        `;
+        presenceList.appendChild(div);
+      });
+    }
+
+    function subscribePresence(){
+      onValue(ref(db, "presence/global"), (snap)=>{
+        const obj = snap.val() || {};
+        const list = Object.values(obj);
+        renderPresence(list);
+      });
+    }
+    subscribePresence();
+
+    // --- Optional stats: safe reads (won’t break if paths don’t exist) ---
+    async function tryLoadOptionalStats(){
+      // You can later write stats into these locations from your other portals.
+      // If they don't exist, we show "—" and stay stable.
+      const paths = {
+        leads: "stats/activeLeads",
+        jobs: "stats/openJobs",
+        month: "stats/monthVolume"
+      };
+
+      try{
+        const a = await get(ref(db, paths.leads));
+        if(a.exists()) statLeads.textContent = String(a.val());
+      }catch{}
+
+      try{
+        const b = await get(ref(db, paths.jobs));
+        if(b.exists()) statJobs.textContent = String(b.val());
+      }catch{}
+
+      try{
+        const c = await get(ref(db, paths.month));
+        if(c.exists()){
+          const v = c.val();
+          statMonth.textContent = typeof v === "number" ? `$${v.toLocaleString()}` : String(v);
+        }
+      }catch{}
+    }
+    tryLoadOptionalStats();
+
+    // --- Auth ---
+    googleBtn.onclick = async () => {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithPopup(auth, provider);
+      window.location.href = "profile.html";
+    };
+
+    onAuthStateChanged(auth, user => {
+      if(user){
+        const dn = user.displayName || user.email || "Deal Banker";
+        welcomeName.textContent = (dn.split(" ")[0] || dn);
+
+        authStatus.innerHTML =
+          `Signed in as ${esc(dn)} <a id="logout" href="#">Sign out</a>`;
+
+        msgInput.disabled = false;
+        sendBtn.disabled = false;
+        msgInput.placeholder = "Message Townhall...";
+
+        setPresence(user);
+
+        document.getElementById("logout").onclick = (e) => {
+          e.preventDefault();
+          signOut(auth);.html
+        };
+      } else {
+        welcomeName.textContent = "Deal Banker";
+        authStatus.textContent = "Signed out";
+        msgInput.disabled = true;
+        sendBtn.disabled = true;
+        msgInput.placeholder = "Sign in to chat...";
       }
     });
-  }
 
-  onAuthStateChanged(auth, user => {
-    if(user){
-      authStatus.innerHTML = `Signed in as ${user.displayName||user.email} <a id='logout' style='color:#2b74ff;cursor:pointer;margin-left:6px;'>Sign out</a>`;
-      msgInput.disabled = false; sendBtn.disabled = false;
-
-      attachChat();
-      setPresence(user); // TRACKING ON
-
-      document.getElementById("logout").onclick = () => signOut(auth);
-    } else {
-      authStatus.textContent = "Signed out";
-      msgInput.disabled = true; sendBtn.disabled = true;
-      attachChat(); // read-only
-    }
-  });
-</script>
+    // Notifications placeholder
+    document.getElementById("bellBtn").addEventListener("click", ()=>{
+      alert("Notifications panel is next. This badge is placeholder UI for now.");
+    });
+  </script>
 </body>
 </html>
