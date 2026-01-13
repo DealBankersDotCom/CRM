@@ -1,602 +1,496 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DealBankers Dispatch | Property Management Emergency + Make Ready</title>
-  <meta name="description" content="One-call dispatch for property managers. Red Phone for emergencies, Blue Phone for make-readies." />
+import React, { useEffect, useMemo, useState } from "react";
+import { motion } from "framer-motion";
+import {
+  Radio,
+  Target,
+  ChevronDown,
+  Droplets,
+  Zap,
+  Home,
+  Brush,
+  Wrench,
+  Building2,
+  Shield,
+  Clock,
+  MapPin,
+  FileText,
+  Navigation,
+} from "lucide-react";
 
-  <style>
-    :root{
-      --bg:#070b16;
-      --panel:rgba(255,255,255,.06);
-      --line:rgba(255,255,255,.10);
-      --text:#eaf0ff;
-      --muted:#a9b5db;
-      --shadow: 0 18px 55px rgba(0,0,0,.55);
-      --radius:22px;
-      --red:#ff2a2a;
-      --blue:#2a6bff;
-      --ok:#31d07f;
-    }
+/**
+ * DealBankers Dispatch — Landing Page
+ * - James Bond "mission control" vibe
+ * - Big round CTA button
+ * - Standard / Emergency toggle
+ *
+ * Hook this up to YOUR dispatch flow by changing DISPATCH_URL + EMERGENCY_URL
+ */
+export default function DispatchLandingPage() {
+  const [mode, setMode] = useState("standard"); // 'standard' | 'emergency'
+  const [scanLine, setScanLine] = useState(0);
 
-    *{box-sizing:border-box}
-    body{
-      margin:0;
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
-      color:var(--text);
-      background:
-        radial-gradient(1200px 700px at 20% 10%, rgba(42,107,255,.20), transparent 60%),
-        radial-gradient(900px 600px at 80% 20%, rgba(255,42,42,.18), transparent 55%),
-        radial-gradient(1000px 700px at 50% 100%, rgba(49,208,127,.10), transparent 55%),
-        var(--bg);
-    }
-    a{color:inherit;text-decoration:none}
-    .wrap{max-width:1150px;margin:0 auto;padding:18px 16px 80px}
+  // ✅ CHANGE THESE to your real endpoints
+  const DISPATCH_URL = "/dispatch"; // or your Google Form / internal route
+  const EMERGENCY_URL = "/dispatch?mode=emergency"; // or tel: / route / form
 
-    /* Top bar */
-    .topbar{
-      position:sticky; top:0; z-index:50;
-      padding:12px 0;
-      backdrop-filter: blur(14px);
-      background: linear-gradient(180deg, rgba(7,11,22,.88), rgba(7,11,22,.50));
-      border-bottom:1px solid rgba(255,255,255,.06);
-    }
-    .topbar-inner{
-      display:flex; gap:12px; align-items:center; justify-content:space-between;
-      max-width:1150px; margin:0 auto; padding:0 16px;
-    }
-    .brand{
-      display:flex; align-items:center; gap:12px;
-      padding:10px 14px;
-      border:1px solid var(--line);
-      border-radius:999px;
-      background:rgba(255,255,255,.05);
-      box-shadow:0 10px 30px rgba(0,0,0,.25);
-    }
-    .logo{
-      width:36px;height:36px;border-radius:12px;
-      background:linear-gradient(135deg, rgba(255,42,42,.95), rgba(42,107,255,.95));
-      display:grid;place-items:center;font-weight:900;letter-spacing:.5px;
-      box-shadow:0 10px 25px rgba(0,0,0,.35);
-    }
-    .brand .t1{font-weight:900}
-    .brand .t2{font-size:12px;color:var(--muted);margin-top:1px}
-    .pill{
-      padding:10px 14px;
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:999px;
-      background:rgba(255,255,255,.04);
-      font-size:13px;color:var(--muted);
-      white-space:nowrap;
-    }
-    @media (max-width:980px){ .pill{display:none} }
+  const isEmergency = mode === "emergency";
 
-    /* Layout */
-    .hero{
-      margin-top:18px;
-      display:grid;
-      grid-template-columns: 1.1fr .9fr;
-      gap:18px;
-      align-items:stretch;
-    }
-    @media (max-width:980px){ .hero{grid-template-columns:1fr} }
+  const { accent, accentDim } = useMemo(() => {
+    const accentColor = isEmergency ? "#ff2a2a" : "#2a6bff";
+    const accentColorDim = isEmergency
+      ? "rgba(255, 42, 42, 0.18)"
+      : "rgba(42, 107, 255, 0.18)";
+    return { accent: accentColor, accentDim: accentColorDim };
+  }, [isEmergency]);
 
-    .card{
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
-      box-shadow:var(--shadow);
-      overflow:hidden;
-    }
+  useEffect(() => {
+    const interval = setInterval(() => setScanLine((p) => (p + 1) % 100), 30);
+    return () => clearInterval(interval);
+  }, []);
 
-    .hero-left{padding:22px; position:relative;}
-    .hero-left:before{
-      content:""; position:absolute; inset:-2px; pointer-events:none; opacity:.85;
-      background:
-        radial-gradient(650px 240px at 20% 0%, rgba(42,107,255,.22), transparent 60%),
-        radial-gradient(520px 240px at 90% 10%, rgba(255,42,42,.20), transparent 60%);
-    }
-    .hero-left > *{position:relative; z-index:1}
+  const services = [
+    { icon: Droplets, title: "Emergency Plumbing", desc: "Burst pipes, leaks, flooding" },
+    { icon: Zap, title: "Water Extraction", desc: "Rapid flood response" },
+    { icon: Home, title: "Make-Ready", desc: "Unit turnovers, prep work" },
+    { icon: Brush, title: "Porter / Cleanup", desc: "Quick turns, debris removal" },
+    { icon: Wrench, title: "Commercial Repairs", desc: "HVAC, electrical, structural" },
+    { icon: Building2, title: "Hydro-Jet Service", desc: "Drain clearing, sewer lines" },
+  ];
 
-    h1{margin:0 0 10px;font-size:44px;line-height:1.05;letter-spacing:-.8px}
-    .sub{margin:0 0 18px;font-size:16px;line-height:1.55;color:var(--muted);max-width:62ch}
-    @media (max-width:560px){ h1{font-size:36px} }
+  const benefits = [
+    { icon: Clock, title: "SLA-Driven Response", desc: "Clear response expectations" },
+    { icon: Shield, title: "Vetted Technicians", desc: "Trusted operators, verified skills" },
+    { icon: MapPin, title: "Real-Time Updates", desc: "Status + ETA you can rely on" },
+    { icon: FileText, title: "One Thread", desc: "Notes, photos, invoice in one place" },
+  ];
 
-    .badges{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px}
-    .badge{
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.18);
-      padding:10px 12px;border-radius:999px;
-      font-size:13px; display:flex; align-items:center; gap:10px;
-    }
-    .badge span{color:var(--muted)}
+  const onPrimaryCTA = () => {
+    window.location.href = isEmergency ? EMERGENCY_URL : DISPATCH_URL;
+  };
 
-    .cta-grid{
-      display:grid;
-      grid-template-columns: 1fr 1fr;
-      gap:14px;
-    }
-    @media (max-width:720px){ .cta-grid{grid-template-columns:1fr} }
+  return (
+    <div className="min-h-screen bg-[#070b16] text-white overflow-hidden">
+      {/* Subtle grid */}
+      <div
+        className="fixed inset-0 opacity-[0.05]"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.10) 1px, transparent 1px)",
+          backgroundSize: "52px 52px",
+        }}
+      />
 
-    .cta{
-      padding:16px;border-radius:18px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.18);
-    }
-    .cta h3{margin:0 0 8px;font-size:18px;display:flex;gap:10px;align-items:center}
-    .cta p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}
+      {/* Scan line */}
+      <div
+        className="fixed inset-0 pointer-events-none z-10"
+        style={{
+          background: `linear-gradient(180deg,
+            transparent ${scanLine - 2}%,
+            ${accentDim} ${scanLine}%,
+            transparent ${scanLine + 2}%)`,
+        }}
+      />
 
-    .btnrow{display:flex;gap:10px;flex-wrap:wrap}
-    .btn{
-      display:inline-flex;align-items:center;justify-content:center;gap:10px;
-      padding:12px 14px;border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      font-weight:900;font-size:14px;
-      -webkit-tap-highlight-color: transparent;
-      cursor:pointer;
-    }
-    .btn.red{border-color: rgba(255,42,42,.55);background: rgba(255,42,42,.12)}
-    .btn.blue{border-color: rgba(42,107,255,.60);background: rgba(42,107,255,.14)}
-    .btn.ghost{background: rgba(255,255,255,.04)}
-    .mini{margin-top:10px;font-size:12px;color:var(--muted)}
-
-    /* Right side */
-    .right{padding:16px; display:flex; flex-direction:column; gap:12px;}
-
-    /* ✅ ONLY CHANGE: make the video module smaller + centered (everything else same) */
-    .videoShell{
-      position:relative;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.22);
-      overflow:hidden;
-      aspect-ratio: 16/10;
-      box-shadow:0 20px 60px rgba(0,0,0,.55);
-
-      max-width: 520px;   /* <<< smaller */
-      margin: 0 auto;     /* <<< centered */
-    }
-    .videoShell video{
-      width:100%; height:100%;
-      object-fit:cover;
-      display:block;
-      background:#000;
-    }
-    .hud{
-      position:absolute; inset:0;
-      pointer-events:none;
-      background:
-        radial-gradient(900px 400px at 50% 110%, rgba(0,0,0,.55), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35));
-    }
-
-    /* Big circular master control button */
-    .dispatchCenter{
-      position:absolute;
-      left:50%; top:46%;
-      transform: translate(-50%,-50%);
-      z-index:10;
-      width:240px; height:240px;
-      border-radius:999px;
-      border:4px solid rgba(255,42,42,.95);
-      background: radial-gradient(circle at 30% 25%, rgba(255,140,140,.95), rgba(255,42,42,.92) 35%, rgba(120,0,0,.92) 100%);
-      box-shadow:
-        0 0 0 10px rgba(255,42,42,.12),
-        0 0 50px rgba(255,42,42,.55),
-        0 20px 60px rgba(0,0,0,.65);
-      display:flex; flex-direction:column;
-      align-items:center; justify-content:center;
-      text-align:center;
-      cursor:pointer;
-      color:white;
-      font-weight:1000;
-      letter-spacing:.8px;
-      user-select:none;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .dispatchCenter .big{font-size:22px;line-height:1.05}
-    .dispatchCenter .small{
-      margin-top:10px;
-      font-size:12px;
-      opacity:.9;
-      letter-spacing:.4px;
-      font-weight:800;
-      background:rgba(0,0,0,.22);
-      border:1px solid rgba(255,255,255,.18);
-      padding:7px 10px;
-      border-radius:999px;
-    }
-    .dispatchCenter:before{
-      content:"";
-      position:absolute; inset:-14px;
-      border-radius:999px;
-      border:2px solid rgba(255,42,42,.55);
-      animation: pulse 1.55s infinite ease-out;
-    }
-    @keyframes pulse{
-      0%{transform: scale(.98); opacity:.85}
-      70%{transform: scale(1.06); opacity:.10}
-      100%{transform: scale(1.07); opacity:0}
-    }
-
-    .etaStrip{
-      position:absolute;
-      left:12px; right:12px; bottom:12px;
-      z-index:9;
-      display:flex; gap:10px;
-      flex-wrap:wrap;
-      align-items:center; justify-content:space-between;
-      pointer-events:none;
-    }
-    .chip{
-      display:inline-flex;align-items:center;gap:10px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.35);
-      padding:10px 12px;border-radius:999px;
-      color:var(--muted);font-size:12px;
-      backdrop-filter: blur(10px);
-    }
-    .chip b{color:var(--text)}
-    .chipDot{width:10px;height:10px;border-radius:999px;background:var(--ok);box-shadow:0 0 18px rgba(49,208,127,.45)}
-
-    /* Below-video controls */
-    .videoControls{
-      max-width:520px;
-      margin:12px auto 0;
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:10px;
-    }
-    @media (max-width:520px){
-      .videoControls{grid-template-columns:1fr}
-    }
-
-    /* Slide-up menu panel (in-page, no popup window) */
-    .sheet{
-      max-width:520px;
-      margin:12px auto 0;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.20);
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow:0 18px 55px rgba(0,0,0,.55);
-    }
-    .sheetHeader{
-      display:flex;align-items:center;justify-content:space-between;gap:10px;
-      padding:12px 14px;
-      background:rgba(255,255,255,.04);
-      border-bottom:1px solid rgba(255,255,255,.10);
-    }
-    .sheetHeader b{font-size:13px}
-    .sheetHeader .x{
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      border-radius:12px;
-      padding:8px 10px;
-      cursor:pointer;
-      font-weight:900;
-    }
-    .sheetBody{
-      padding:14px;
-      display:grid;
-      gap:10px;
-    }
-    .field{
-      display:grid;
-      gap:6px;
-    }
-    label{font-size:12px;color:var(--muted)}
-    input, select, textarea{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.14);
-      background:rgba(0,0,0,.25);
-      color:var(--text);
-      outline:none;
-      font:inherit;
-    }
-    textarea{min-height:92px;resize:vertical}
-
-    .sheetActions{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      padding:0 14px 14px;
-    }
-    .btn.primary{
-      border-color: rgba(49,208,127,.55);
-      background: rgba(49,208,127,.12);
-    }
-
-    /* Debug message if video fails */
-    .debug{
-      max-width:520px;
-      margin:10px auto 0;
-      border:1px dashed rgba(255,255,255,.18);
-      background:rgba(0,0,0,.18);
-      border-radius:16px;
-      padding:12px;
-      font-size:12px;
-      color:var(--muted);
-    }
-    .debug strong{color:var(--text)}
-
-    .footer{
-      margin-top:18px;
-      border-top:1px solid rgba(255,255,255,.08);
-      padding-top:14px;
-      display:flex; flex-wrap:wrap; gap:10px;
-      align-items:center; justify-content:space-between;
-      color:var(--muted); font-size:12px;
-    }
-    .hotline{display:flex; gap:10px; flex-wrap:wrap}
-    .hotline a{
-      border:1px solid rgba(255,255,255,.10);
-      padding:8px 10px;
-      border-radius:999px;
-      background:rgba(255,255,255,.04);
-    }
-
-    @media (max-width:520px){
-      .dispatchCenter{width:210px;height:210px}
-      .dispatchCenter .big{font-size:20px}
-      .videoShell{aspect-ratio: 16/11; max-width:100%}
-      .debug,.videoControls,.sheet{max-width:100%}
-    }
-  </style>
-</head>
-
-<body>
-  <div class="topbar">
-    <div class="topbar-inner">
-      <div class="brand">
-        <div class="logo">DB</div>
-        <div>
-          <div class="t1">DealBankers Dispatch</div>
-          <div class="t2">Property Management • Emergency + Turnovers</div>
+      {/* HERO */}
+      <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
+        {/* Video background (placeholder). Swap src to your file */}
+        <div className="absolute inset-0 z-0">
+          <div className="absolute inset-0 bg-gradient-to-b from-[#070b16] via-transparent to-[#070b16]" />
+          <video
+            className="w-full h-full object-cover opacity-30"
+            autoPlay
+            muted
+            loop
+            playsInline
+            // ✅ Set poster to your own image if you want
+            poster=""
+          >
+            {/* ✅ Put your mp4 here */}
+            <source src="" type="video/mp4" />
+          </video>
+          <div className="absolute inset-0 bg-[#070b16]/60" />
         </div>
-      </div>
-      <div class="pill">One number • Verified techs • Fast dispatch</div>
+
+        {/* TOP NAV */}
+        <motion.nav
+          initial={{ opacity: 0, y: -16 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className="relative">
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center"
+                  style={{ backgroundColor: accentDim, border: `1px solid ${accent}` }}
+                >
+                  <Radio className="w-5 h-5" style={{ color: accent }} />
+                </div>
+                <motion.div
+                  animate={{ scale: [1, 1.5, 1], opacity: [0.45, 0, 0.45] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="absolute inset-0 rounded-xl"
+                  style={{ border: `1px solid ${accent}` }}
+                />
+              </div>
+
+              <div className="leading-tight">
+                <div className="text-lg font-semibold tracking-wider">DEALBANKERS</div>
+                <div className="text-xs tracking-[0.32em] opacity-60">DISPATCH</div>
+              </div>
+            </div>
+
+            {/* Mode toggle */}
+            <div className="flex items-center gap-2 p-1 rounded-full bg-white/5 backdrop-blur-xl border border-white/10">
+              <button
+                onClick={() => setMode("standard")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  !isEmergency ? "text-white" : "text-white/50 hover:text-white/80"
+                }`}
+                style={!isEmergency ? { backgroundColor: accentDim, color: accent } : undefined}
+              >
+                <span className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${!isEmergency ? "animate-pulse" : ""}`} style={{ backgroundColor: !isEmergency ? accent : "rgba(255,255,255,0.25)" }} />
+                  Standard
+                </span>
+              </button>
+
+              <button
+                onClick={() => setMode("emergency")}
+                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  isEmergency ? "text-white" : "text-white/50 hover:text-white/80"
+                }`}
+                style={isEmergency ? { backgroundColor: accentDim, color: accent } : undefined}
+              >
+                <span className="flex items-center gap-2">
+                  <span className={`w-2 h-2 rounded-full ${isEmergency ? "animate-pulse" : ""}`} style={{ backgroundColor: isEmergency ? accent : "rgba(255,255,255,0.25)" }} />
+                  Emergency
+                </span>
+              </button>
+            </div>
+          </div>
+        </motion.nav>
+
+        {/* HERO CONTENT */}
+        <div className="relative z-20 text-center max-w-4xl mx-auto">
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.15 }}
+            className="text-xs tracking-[0.45em] mb-8 opacity-70"
+            style={{ color: accent }}
+          >
+            PROPERTY OPERATIONS COMMAND
+          </motion.p>
+
+          <motion.h1
+            initial={{ opacity: 0, y: 18 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.25 }}
+            className="text-4xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6"
+          >
+            When things go wrong,
+            <br />
+            <span className="font-semibold" style={{ color: accent }}>
+              you activate.
+            </span>
+          </motion.h1>
+
+          <motion.p
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.35 }}
+            className="text-lg md:text-xl text-white/60 mb-14 max-w-2xl mx-auto"
+          >
+            On-demand expert dispatch for property managers.
+            <br />
+            Emergency. Make-ready. Rapid cleanup. One command.
+          </motion.p>
+
+          {/* BIG ROUND BUTTON */}
+          <motion.div
+            initial={{ opacity: 0, scale: 0.92 }}
+            animate={{ opacity: 1, scale: 1 }}
+            transition={{ delay: 0.45, type: "spring", stiffness: 110 }}
+            className="relative inline-flex items-center justify-center"
+          >
+            {/* Rings */}
+            {[1, 2, 3].map((ring) => (
+              <motion.div
+                key={ring}
+                className="absolute rounded-full"
+                style={{
+                  width: 200 + ring * 56,
+                  height: 200 + ring * 56,
+                  border: `1px solid ${accent}`,
+                  opacity: 0.07 + ring * 0.04,
+                }}
+                animate={{ scale: [1, 1.08, 1], opacity: [0.08, 0.18, 0.08] }}
+                transition={{ duration: 3.2, repeat: Infinity, delay: ring * 0.25 }}
+              />
+            ))}
+
+            {/* Pulse */}
+            <motion.div
+              className="absolute w-48 h-48 rounded-full"
+              style={{ backgroundColor: accent }}
+              animate={{ scale: [1, 1.5], opacity: [0.25, 0] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            />
+
+            <motion.button
+              onClick={onPrimaryCTA}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.96 }}
+              className="relative w-48 h-48 rounded-full flex flex-col items-center justify-center gap-2 transition-all duration-300"
+              style={{
+                background: `radial-gradient(circle at 30% 30%, ${accentDim}, transparent 70%)`,
+                border: `2px solid ${accent}`,
+                boxShadow: `0 0 60px ${accentDim}, inset 0 0 60px ${accentDim}`,
+              }}
+            >
+              <Target className="w-8 h-8" style={{ color: accent }} />
+              <span className="text-sm font-semibold tracking-wider" style={{ color: accent }}>
+                {isEmergency ? "ACTIVATE" : "DISPATCH"}
+              </span>
+              <span className="text-xs opacity-60">{isEmergency ? "EMERGENCY" : "TECHNICIAN"}</span>
+            </motion.button>
+          </motion.div>
+
+          <div className="mt-10 text-sm text-white/45">
+            Avg response: {isEmergency ? "< 30 minutes" : "< 2 hours"}
+          </div>
+
+          {/* Secondary CTAs */}
+          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
+            <a
+              href={DISPATCH_URL}
+              className="px-6 py-3 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 transition"
+            >
+              Create Dispatch Console
+            </a>
+            <a
+              href={EMERGENCY_URL}
+              className="px-6 py-3 rounded-full border transition"
+              style={{ borderColor: `${accent}55`, color: accent }}
+            >
+              Request First Mission
+            </a>
+          </div>
+        </div>
+
+        {/* Scroll indicator */}
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ delay: 0.9 }}
+          className="absolute bottom-7 left-1/2 -translate-x-1/2"
+        >
+          <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
+            <ChevronDown className="w-6 h-6 opacity-40" />
+          </motion.div>
+        </motion.div>
+      </section>
+
+      {/* HOW IT WORKS */}
+      <section className="relative py-28 px-4">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="text-xs tracking-[0.45em] mb-3 opacity-60" style={{ color: accent }}>
+              MISSION PROTOCOL
+            </div>
+            <h2 className="text-3xl md:text-5xl font-light">How It Works</h2>
+          </div>
+
+          <div className="grid md:grid-cols-3 gap-6">
+            {[
+              { step: "01", title: "Select Mission Type", desc: "Emergency response or standard request", icon: Radio },
+              { step: "02", title: "Pin Location", desc: "Mark property + unit + notes", icon: Navigation },
+              { step: "03", title: "Operator Deployed", desc: "Confirmed ETA + updates", icon: Target },
+            ].map((item, i) => (
+              <motion.div
+                key={item.step}
+                initial={{ opacity: 0, y: 16 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.12 }}
+                className="relative"
+              >
+                <div
+                  className="relative p-7 rounded-2xl backdrop-blur-xl"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+                    border: "1px solid rgba(255,255,255,0.10)",
+                  }}
+                >
+                  <div className="absolute -top-4 -left-3 text-6xl font-bold opacity-10" style={{ color: accent }}>
+                    {item.step}
+                  </div>
+
+                  <div
+                    className="w-14 h-14 rounded-xl flex items-center justify-center mb-5"
+                    style={{ backgroundColor: accentDim, border: `1px solid ${accent}40` }}
+                  >
+                    <item.icon className="w-6 h-6" style={{ color: accent }} />
+                  </div>
+
+                  <div className="text-xl font-semibold mb-2">{item.title}</div>
+                  <div className="text-white/55">{item.desc}</div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* SERVICES */}
+      <section className="relative py-28 px-4 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent">
+        <div className="max-w-6xl mx-auto">
+          <div className="text-center mb-16">
+            <div className="text-xs tracking-[0.45em] mb-3 opacity-60" style={{ color: accent }}>
+              OPERATIONAL CAPABILITIES
+            </div>
+            <h2 className="text-3xl md:text-5xl font-light">Services</h2>
+          </div>
+
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
+            {services.map((s, i) => (
+              <motion.div
+                key={s.title}
+                initial={{ opacity: 0, scale: 0.98 }}
+                whileInView={{ opacity: 1, scale: 1 }}
+                viewport={{ once: true }}
+                transition={{ delay: i * 0.08 }}
+                whileHover={{ y: -4 }}
+                className="group cursor-pointer"
+              >
+                <div
+                  className="relative p-6 rounded-xl backdrop-blur-xl overflow-hidden"
+                  style={{
+                    background: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
+                    border: "1px solid rgba(255,255,255,0.08)",
+                  }}
+                >
+                  <div
+                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
+                    style={{ background: `radial-gradient(circle at 50% 50%, ${accentDim}, transparent 70%)` }}
+                  />
+                  <div className="relative">
+                    <s.icon className="w-8 h-8 mb-4" style={{ color: "rgba(255,255,255,0.5)" }} />
+                    <div className="text-lg font-medium mb-1">{s.title}</div>
+                    <div className="text-sm text-white/45">{s.desc}</div>
+                  </div>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* BENEFITS */}
+      <section className="relative py-28 px-4">
+        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
+          <div>
+            <div className="text-xs tracking-[0.45em] mb-3 opacity-60" style={{ color: accent }}>
+              FOR PROPERTY MANAGERS
+            </div>
+            <h2 className="text-3xl md:text-5xl font-light mb-5">
+              Your property.
+              <br />
+              <span className="font-semibold">Our operators.</span>
+            </h2>
+            <p className="text-lg text-white/55 mb-8">
+              Stop calling around. Activate a response team with one command.
+            </p>
+
+            <div className="space-y-4">
+              {benefits.map((b, i) => (
+                <motion.div
+                  key={b.title}
+                  initial={{ opacity: 0, x: -12 }}
+                  whileInView={{ opacity: 1, x: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ delay: i * 0.08 }}
+                  className="flex items-start gap-4"
+                >
+                  <div
+                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
+                    style={{ backgroundColor: accentDim, border: `1px solid ${accent}30` }}
+                  >
+                    <b.icon className="w-5 h-5" style={{ color: accent }} />
+                  </div>
+                  <div>
+                    <div className="font-medium">{b.title}</div>
+                    <div className="text-sm text-white/45">{b.desc}</div>
+                  </div>
+                </motion.div>
+              ))}
+            </div>
+          </div>
+
+          <div
+            className="p-8 md:p-12 rounded-3xl backdrop-blur-xl"
+            style={{
+              background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
+              border: "1px solid rgba(255,255,255,0.10)",
+            }}
+          >
+            <div className="grid grid-cols-2 gap-8">
+              {[
+                { value: "< 30", unit: "min", label: "Emergency Response" },
+                { value: "On-Demand", unit: "", label: "Porter / Turns" },
+                { value: "One", unit: "", label: "Command Center" },
+                { value: "Fast", unit: "", label: "Status Updates" },
+              ].map((stat) => (
+                <div key={stat.label} className="text-center">
+                  <div className="mb-2">
+                    <span className="text-3xl md:text-4xl font-light" style={{ color: accent }}>
+                      {stat.value}
+                    </span>
+                    <span className="text-xl text-white/60">{stat.unit}</span>
+                  </div>
+                  <div className="text-xs text-white/45 tracking-wide">{stat.label}</div>
+                </div>
+              ))}
+            </div>
+
+            <div className="mt-10 flex gap-3 justify-center">
+              <a
+                href={DISPATCH_URL}
+                className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 transition border border-white/10"
+              >
+                Standard Dispatch
+              </a>
+              <a
+                href={EMERGENCY_URL}
+                className="px-6 py-3 rounded-full transition border"
+                style={{ borderColor: `${accent}55`, color: accent }}
+              >
+                Emergency Dispatch
+              </a>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER */}
+      <footer className="relative py-12 px-4 border-t border-white/5">
+        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
+          <div className="flex items-center gap-3">
+            <div
+              className="w-8 h-8 rounded-xl flex items-center justify-center"
+              style={{ backgroundColor: accentDim, border: `1px solid ${accent}40` }}
+            >
+              <Radio className="w-4 h-4" style={{ color: accent }} />
+            </div>
+            <div className="text-sm tracking-wider opacity-70">DEALBANKERS DISPATCH</div>
+          </div>
+
+          <div className="text-sm text-white/45">Rapid Response for Real Assets</div>
+
+          <div className="text-xs text-white/35">© {new Date().getFullYear()} DealBankers</div>
+        </div>
+      </footer>
     </div>
-  </div>
-
-  <div class="wrap">
-    <div class="hero">
-
-      <!-- LEFT -->
-      <div class="card hero-left">
-        <h1>Red Phone for Emergencies.<br/>Blue Phone for Make-Readies.</h1>
-        <p class="sub">
-          Stop leaks, sewer backups, hydro-jet flushes, camera inspections, leak detection, and turnover work —
-          dispatched fast with one point of contact.
-        </p>
-
-        <div class="badges">
-          <div class="badge">✅ <strong>Dispatch</strong> <span>we coordinate</span></div>
-          <div class="badge">🧰 <strong>Verified Techs</strong> <span>insured / ready</span></div>
-          <div class="badge">📍 <strong>ETA</strong> <span>live status</span></div>
-        </div>
-
-        <div class="cta-grid">
-          <div class="cta">
-            <h3>🔴 📞 Red Phone — Emergency</h3>
-            <p>Active leaks, backups, no water, flooding, urgent commercial repairs. We dispatch the closest available tech.</p>
-            <div class="btnrow">
-              <a class="btn red" href="tel:+15128435181">Call Emergency Dispatch</a>
-              <a class="btn ghost" href="#request">Request Without Calling</a>
-            </div>
-            <div class="mini">Stop-leak • Hydro-jet • Camera • Leak detection • Static pressure test</div>
-          </div>
-
-          <div class="cta">
-            <h3>🔵 📞 Blue Phone — Make-Ready</h3>
-            <p>Turnovers, unit resets, punch lists, scheduling, and rapid re-occupancy workflows.</p>
-            <div class="btnrow">
-              <a class="btn blue" href="tel:+15128435181">Call Make-Ready Dispatch</a>
-              <a class="btn ghost" href="#request">Request Without Calling</a>
-            </div>
-            <div class="mini">Optional add-on: “Turnover Certification” to prevent move-in failures</div>
-          </div>
-        </div>
-      </div>
-
-      <!-- RIGHT -->
-      <div class="card right">
-        <div class="videoShell">
-          <video id="dispatchVideo" autoplay muted loop playsinline preload="auto"></video>
-          <div class="hud"></div>
-
-          <button class="dispatchCenter" id="dispatchBtn" type="button" aria-expanded="false">
-            <div class="big">DISPATCH<br/>NOW</div>
-            <div class="small">MASTER CONTROL • TAP</div>
-          </button>
-
-          <div class="etaStrip">
-            <div class="chip"><span class="chipDot"></span> <b>Master Technician</b> • 2 min / 2 miles</div>
-            <div class="chip">🟢 Status: <b>Available</b></div>
-          </div>
-        </div>
-
-        <!-- Below video: Red / Blue phone buttons (like you asked) -->
-        <div class="videoControls">
-          <a class="btn red" href="tel:+15128435181">🔴 Emergency Line</a>
-          <a class="btn blue" href="tel:+15128435181">🔵 Make-Ready Line</a>
-        </div>
-
-        <!-- Slide-up / drop-down request menu (in-page, no new window) -->
-        <div class="sheet" id="requestSheet" hidden>
-          <div class="sheetHeader">
-            <b>📝 Dispatch Request</b>
-            <button class="x" id="closeSheet" type="button">✕</button>
-          </div>
-
-          <div class="sheetBody">
-            <div class="field">
-              <label for="type">Request Type</label>
-              <select id="type">
-                <option value="Emergency">🔴 Emergency</option>
-                <option value="Make-Ready">🔵 Make-Ready</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label for="property">Property / Address</label>
-              <input id="property" placeholder="123 Main St, Unit 4B" />
-            </div>
-
-            <div class="field">
-              <label for="contact">Your Name / Company</label>
-              <input id="contact" placeholder="Property Manager Name / Company" />
-            </div>
-
-            <div class="field">
-              <label for="phone">Callback Phone</label>
-              <input id="phone" placeholder="(###) ###-####" />
-            </div>
-
-            <div class="field">
-              <label for="details">Work Order Details</label>
-              <textarea id="details" placeholder="What happened? Any access notes, gate codes, water shutoff location, photos available, etc."></textarea>
-            </div>
-          </div>
-
-          <div class="sheetActions">
-            <button class="btn primary" id="submitRequest" type="button">✅ Submit Request</button>
-            <button class="btn ghost" id="copyRequest" type="button">📋 Copy Text</button>
-          </div>
-        </div>
-
-        <!-- Debug panel stays, but now centered under the smaller module -->
-        <div id="request" class="debug">
-          <div><strong>Video source:</strong> <span id="srcLabel"></span></div>
-          <div id="videoStatus" style="margin-top:6px;">Loading video…</div>
-          <div class="mini" style="margin-top:10px;">Or call: <strong>512-843-5181</strong></div>
-        </div>
-      </div>
-
-    </div>
-
-    <div class="footer">
-      <div>© <span id="year"></span> DealBankers.com — Dispatch Services</div>
-      <div class="hotline">
-        <a href="tel:+15128435181">🔴 Emergency: 512-843-5181</a>
-        <a href="tel:+15128435181">🔵 Make-Ready: 512-843-5181</a>
-      </div>
-    </div>
-  </div>
-
-  <script>
-    document.getElementById('year').textContent = new Date().getFullYear();
-
-    // ✅ SET YOUR VIDEO PATH (you already uploaded it here)
-    const VIDEO_SRC = "/CRM/images/dispatch.mp4";
-
-    // Show what src we are trying
-    document.getElementById('srcLabel').textContent = VIDEO_SRC;
-
-    // Create video source at runtime (more reliable + debuggable)
-    const v = document.getElementById('dispatchVideo');
-    const s = document.createElement('source');
-    s.src = VIDEO_SRC;
-    s.type = "video/mp4";
-    v.appendChild(s);
-
-    const statusEl = document.getElementById('videoStatus');
-
-    v.addEventListener('loadeddata', () => {
-      statusEl.textContent = "✅ Video loaded.";
-      statusEl.style.color = "#9effc6";
-    });
-
-    v.addEventListener('error', () => {
-      statusEl.textContent =
-        "❌ Video failed to load. Test this URL: " + location.origin + VIDEO_SRC;
-      statusEl.style.color = "#ffb3b3";
-    });
-
-    // Try autoplay again after load
-    function tryPlay(){
-      const p = v.play();
-      if (p && typeof p.then === 'function') p.catch(()=>{});
-    }
-    window.addEventListener('load', tryPlay);
-    document.addEventListener('visibilitychange', () => { if(!document.hidden) tryPlay(); });
-
-    // In-page dispatch menu (no popups / new window)
-    const btn = document.getElementById('dispatchBtn');
-    const sheet = document.getElementById('requestSheet');
-    const closeSheet = document.getElementById('closeSheet');
-    const submit = document.getElementById('submitRequest');
-    const copy = document.getElementById('copyRequest');
-
-    function openSheet(){
-      sheet.hidden = false;
-      btn.setAttribute('aria-expanded','true');
-      // scroll it into view nicely
-      sheet.scrollIntoView({behavior:'smooth', block:'nearest'});
-    }
-    function hideSheet(){
-      sheet.hidden = true;
-      btn.setAttribute('aria-expanded','false');
-    }
-
-    btn.addEventListener('click', () => {
-      if (sheet.hidden) openSheet(); else hideSheet();
-    });
-    closeSheet.addEventListener('click', hideSheet);
-
-    function buildText(){
-      const type = document.getElementById('type').value;
-      const property = document.getElementById('property').value.trim();
-      const contact = document.getElementById('contact').value.trim();
-      const phone = document.getElementById('phone').value.trim();
-      const details = document.getElementById('details').value.trim();
-
-      return [
-        "DealBankers Dispatch Request",
-        "Type: " + type,
-        "Property: " + (property || "(not provided)"),
-        "Contact: " + (contact || "(not provided)"),
-        "Callback: " + (phone || "(not provided)"),
-        "Details: " + (details || "(not provided)")
-      ].join("\\n");
-    }
-
-    copy.addEventListener('click', async () => {
-      const txt = buildText();
-      try{
-        await navigator.clipboard.writeText(txt);
-        copy.textContent = "✅ Copied";
-        setTimeout(()=>copy.textContent="📋 Copy Text", 1200);
-      }catch(e){
-        alert("Copy failed. Here is the text:\\n\\n" + txt);
-      }
-    });
-
-    // Submit = opens SMS draft (mobile) or email fallback (desktop)
-    submit.addEventListener('click', () => {
-      const txt = buildText();
-      const phone = "15128435181"; // SMS target (no symbols)
-      const smsHref = "sms:" + phone + "?&body=" + encodeURIComponent(txt);
-
-      // Most phones will open Messages; desktop may ignore -> fallback to mailto
-      const mailHref = "mailto:aptbidsonline@gmail.com?subject=" + encodeURIComponent("DealBankers Dispatch Request") +
-                       "&body=" + encodeURIComponent(txt);
-
-      // Try sms first
-      window.location.href = smsHref;
-
-      // Fallback after a beat (desktop)
-      setTimeout(() => {
-        if (!/Mobi|Android/i.test(navigator.userAgent)) {
-          window.location.href = mailHref;
-        }
-      }, 600);
-    });
-  </script>
-</body>
-</html>
+  );
+}
