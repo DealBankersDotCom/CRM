@@ -1,137 +1,416 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>DealBankers Dispatch</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DealBankers Dispatch | Property Management Emergency + Make Ready</title>
+  <meta name="description" content="One-call dispatch for property managers. Red Phone for emergencies, Blue Phone for make-readies." />
 
-<style>
-body{
-  margin:0;
-  background:radial-gradient(circle at top,#1b2450,#050816);
-  font-family:system-ui,Segoe UI,Arial;
-  color:white;
-}
-.container{max-width:1200px;margin:auto;padding:24px}
-.header{
-  display:flex;
-  justify-content:space-between;
-  align-items:center;
-  margin-bottom:20px;
-}
-.badge{
-  background:rgba(255,255,255,.08);
-  padding:12px 16px;
-  border-radius:20px;
-  backdrop-filter:blur(10px);
-}
-.hero{
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(0,0,0,.4));
-  border-radius:24px;
-  padding:24px;
-  box-shadow:0 20px 50px rgba(0,0,0,.6);
-}
-h1{font-size:40px;margin-bottom:10px}
-p{color:#b8c6ff}
-.video-wrapper{
-  position:relative;
-  margin-top:20px;
-  border-radius:22px;
-  overflow:hidden;
-}
-video{
-  width:100%;
-  height:auto;
-  display:block;
-}
-.dispatch-btn{
-  position:absolute;
-  top:50%;
-  left:50%;
-  transform:translate(-50%,-50%);
-  width:240px;
-  height:240px;
-  border-radius:50%;
-  background:radial-gradient(circle at 30% 30%,#ff4a4a,#a40000);
-  border:4px solid #ffaaaa;
-  box-shadow:0 0 60px rgba(255,60,60,.9);
-  color:white;
-  font-size:22px;
-  font-weight:900;
-  letter-spacing:1px;
-  text-align:center;
-  cursor:pointer;
-}
-.dispatch-btn span{
-  display:block;
-  margin-top:8px;
-  font-size:14px;
-  font-weight:500;
-  opacity:.85;
-}
-.status{
-  position:absolute;
-  bottom:20px;
-  left:50%;
-  transform:translateX(-50%);
-  background:rgba(0,0,0,.5);
-  padding:10px 16px;
-  border-radius:16px;
-  font-size:13px;
-  color:#9effc6;
-}
-.actions{
-  margin-top:20px;
-  display:flex;
-  gap:14px;
-  flex-wrap:wrap;
-}
-.btn{
-  padding:14px 20px;
-  border-radius:14px;
-  border:none;
-  font-weight:700;
-  cursor:pointer;
-}
-.red{background:#ff2a2a;color:white}
-.blue{background:#2a6bff;color:white}
-</style>
+  <style>
+    :root{
+      --bg:#070b16;
+      --panel:rgba(255,255,255,.06);
+      --line:rgba(255,255,255,.10);
+      --text:#eaf0ff;
+      --muted:#a9b5db;
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --radius:22px;
+      --red:#ff2a2a;
+      --blue:#2a6bff;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 700px at 20% 10%, rgba(42,107,255,.20), transparent 60%),
+        radial-gradient(900px 600px at 80% 20%, rgba(255,42,42,.18), transparent 55%),
+        radial-gradient(1000px 700px at 50% 100%, rgba(49,208,127,.10), transparent 55%),
+        var(--bg);
+    }
+    a{color:inherit;text-decoration:none}
+    .wrap{max-width:1150px;margin:0 auto;padding:18px 16px 80px}
+
+    /* Top bar */
+    .topbar{
+      position:sticky; top:0; z-index:50;
+      padding:12px 0;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,11,22,.88), rgba(7,11,22,.50));
+      border-bottom:1px solid rgba(255,255,255,.06);
+    }
+    .topbar-inner{
+      display:flex; gap:12px; align-items:center; justify-content:space-between;
+      max-width:1150px; margin:0 auto; padding:0 16px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      padding:10px 14px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.05);
+      box-shadow:0 10px 30px rgba(0,0,0,.25);
+    }
+    .logo{
+      width:36px;height:36px;border-radius:12px;
+      background:linear-gradient(135deg, rgba(255,42,42,.95), rgba(42,107,255,.95));
+      display:grid;place-items:center;font-weight:900;letter-spacing:.5px;
+      box-shadow:0 10px 25px rgba(0,0,0,.35);
+    }
+    .brand .t1{font-weight:900}
+    .brand .t2{font-size:12px;color:var(--muted);margin-top:1px}
+    .pill{
+      padding:10px 14px;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      font-size:13px;color:var(--muted);
+      white-space:nowrap;
+    }
+    @media (max-width:980px){ .pill{display:none} }
+
+    /* Layout */
+    .hero{
+      margin-top:18px;
+      display:grid;
+      grid-template-columns: 1.1fr .9fr;
+      gap:18px;
+      align-items:stretch;
+    }
+    @media (max-width:980px){ .hero{grid-template-columns:1fr} }
+
+    .card{
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.07), rgba(255,255,255,.03));
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+
+    .hero-left{padding:22px; position:relative;}
+    .hero-left:before{
+      content:""; position:absolute; inset:-2px; pointer-events:none; opacity:.85;
+      background:
+        radial-gradient(650px 240px at 20% 0%, rgba(42,107,255,.22), transparent 60%),
+        radial-gradient(520px 240px at 90% 10%, rgba(255,42,42,.20), transparent 60%);
+    }
+    .hero-left > *{position:relative; z-index:1}
+
+    h1{margin:0 0 10px;font-size:44px;line-height:1.05;letter-spacing:-.8px}
+    .sub{margin:0 0 18px;font-size:16px;line-height:1.55;color:var(--muted);max-width:62ch}
+    @media (max-width:560px){ h1{font-size:36px} }
+
+    .badges{display:flex;flex-wrap:wrap;gap:10px;margin:14px 0 18px}
+    .badge{
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+      padding:10px 12px;border-radius:999px;
+      font-size:13px; display:flex; align-items:center; gap:10px;
+    }
+    .badge span{color:var(--muted)}
+
+    .cta-grid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:14px;
+    }
+    @media (max-width:720px){ .cta-grid{grid-template-columns:1fr} }
+
+    .cta{
+      padding:16px;border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.18);
+    }
+    .cta h3{margin:0 0 8px;font-size:18px;display:flex;gap:10px;align-items:center}
+    .cta p{margin:0 0 12px;color:var(--muted);font-size:13px;line-height:1.5}
+
+    .btnrow{display:flex;gap:10px;flex-wrap:wrap}
+    .btn{
+      display:inline-flex;align-items:center;justify-content:center;gap:10px;
+      padding:12px 14px;border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      font-weight:900;font-size:14px;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .btn.red{border-color: rgba(255,42,42,.55);background: rgba(255,42,42,.12)}
+    .btn.blue{border-color: rgba(42,107,255,.60);background: rgba(42,107,255,.14)}
+    .btn.ghost{background: rgba(255,255,255,.04)}
+    .mini{margin-top:10px;font-size:12px;color:var(--muted)}
+
+    /* Right side */
+    .right{padding:16px; display:flex; flex-direction:column; gap:12px;}
+
+    .videoShell{
+      position:relative;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.22);
+      overflow:hidden;
+      aspect-ratio: 16/10;
+      box-shadow:0 20px 60px rgba(0,0,0,.55);
+    }
+    .videoShell video{
+      width:100%; height:100%;
+      object-fit:cover;
+      display:block;
+      background:#000;
+    }
+    .hud{
+      position:absolute; inset:0;
+      pointer-events:none;
+      background:
+        radial-gradient(900px 400px at 50% 110%, rgba(0,0,0,.55), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35));
+    }
+
+    /* Big circular master control button */
+    .dispatchCenter{
+      position:absolute;
+      left:50%; top:52%;
+      transform: translate(-50%,-50%);
+      z-index:10;
+      width:240px; height:240px;
+      border-radius:999px;
+      border:4px solid rgba(255,42,42,.95);
+      background: radial-gradient(circle at 30% 25%, rgba(255,140,140,.95), rgba(255,42,42,.92) 35%, rgba(120,0,0,.92) 100%);
+      box-shadow:
+        0 0 0 10px rgba(255,42,42,.12),
+        0 0 50px rgba(255,42,42,.55),
+        0 20px 60px rgba(0,0,0,.65);
+      display:flex; flex-direction:column;
+      align-items:center; justify-content:center;
+      text-align:center;
+      cursor:pointer;
+      color:white;
+      font-weight:1000;
+      letter-spacing:.8px;
+      user-select:none;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .dispatchCenter .big{font-size:22px;line-height:1.05}
+    .dispatchCenter .small{
+      margin-top:10px;
+      font-size:12px;
+      opacity:.9;
+      letter-spacing:.4px;
+      font-weight:800;
+      background:rgba(0,0,0,.22);
+      border:1px solid rgba(255,255,255,.18);
+      padding:7px 10px;
+      border-radius:999px;
+    }
+    .dispatchCenter:before{
+      content:"";
+      position:absolute; inset:-14px;
+      border-radius:999px;
+      border:2px solid rgba(255,42,42,.55);
+      animation: pulse 1.55s infinite ease-out;
+    }
+    @keyframes pulse{
+      0%{transform: scale(.98); opacity:.85}
+      70%{transform: scale(1.06); opacity:.10}
+      100%{transform: scale(1.07); opacity:0}
+    }
+
+    .etaStrip{
+      position:absolute;
+      left:12px; right:12px; bottom:12px;
+      z-index:9;
+      display:flex; gap:10px;
+      flex-wrap:wrap;
+      align-items:center; justify-content:space-between;
+      pointer-events:none;
+    }
+    .chip{
+      display:inline-flex;align-items:center;gap:10px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.35);
+      padding:10px 12px;border-radius:999px;
+      color:var(--muted);font-size:12px;
+      backdrop-filter: blur(10px);
+    }
+    .chip b{color:var(--text)}
+
+    /* Debug message if video fails */
+    .debug{
+      margin-top:10px;
+      border:1px dashed rgba(255,255,255,.18);
+      background:rgba(0,0,0,.18);
+      border-radius:16px;
+      padding:12px;
+      font-size:12px;
+      color:var(--muted);
+    }
+    .debug strong{color:var(--text)}
+
+    .footer{
+      margin-top:18px;
+      border-top:1px solid rgba(255,255,255,.08);
+      padding-top:14px;
+      display:flex; flex-wrap:wrap; gap:10px;
+      align-items:center; justify-content:space-between;
+      color:var(--muted); font-size:12px;
+    }
+    .hotline{display:flex; gap:10px; flex-wrap:wrap}
+    .hotline a{
+      border:1px solid rgba(255,255,255,.10);
+      padding:8px 10px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+    }
+
+    @media (max-width:520px){
+      .dispatchCenter{width:210px;height:210px}
+      .dispatchCenter .big{font-size:20px}
+      .videoShell{aspect-ratio: 16/11}
+    }
+  </style>
 </head>
 
 <body>
-
-<div class="container">
-
-  <div class="header">
-    <div class="badge">DealBankers Dispatch<br><small>Property Ops Command Center</small></div>
-    <div class="badge">One Number • Verified Techs • Live ETA</div>
+  <div class="topbar">
+    <div class="topbar-inner">
+      <div class="brand">
+        <div class="logo">DB</div>
+        <div>
+          <div class="t1">DealBankers Dispatch</div>
+          <div class="t2">Property Management • Emergency + Turnovers</div>
+        </div>
+      </div>
+      <div class="pill">One number • Verified techs • Fast dispatch</div>
+    </div>
   </div>
 
-  <div class="hero">
-    <h1>Red Phone for Emergencies.<br>Blue Phone for Make-Readies.</h1>
-    <p>Stop leaks, sewer backups, hydro-jetting, camera inspections, pressure tests, and unit turnovers — dispatched instantly.</p>
+  <div class="wrap">
+    <div class="hero">
 
-    <div class="video-wrapper">
-      <video autoplay muted loop playsinline>
-        <source src="images/dispatch.mp4" type="video/mp4">
-      </video>
+      <!-- LEFT -->
+      <div class="card hero-left">
+        <h1>Red Phone for Emergencies.<br/>Blue Phone for Make-Readies.</h1>
+        <p class="sub">
+          Stop leaks, sewer backups, hydro-jet flushes, camera inspections, leak detection, and turnover work —
+          dispatched fast with one point of contact.
+        </p>
 
-      <button class="dispatch-btn" onclick="window.location.href='https://YOUR-FORM-LINK-HERE'">
-        DISPATCH TECH
-        <span>Nearest Master Technician</span>
-      </button>
+        <div class="badges">
+          <div class="badge">✅ <strong>Dispatch</strong> <span>we coordinate</span></div>
+          <div class="badge">🧰 <strong>Verified Techs</strong> <span>insured / ready</span></div>
+          <div class="badge">📍 <strong>ETA</strong> <span>live status</span></div>
+        </div>
 
-      <div class="status">Live Network • Avg ETA 2 min • 2 miles</div>
+        <div class="cta-grid">
+          <div class="cta">
+            <h3>🔴 📞 Red Phone — Emergency</h3>
+            <p>Active leaks, backups, no water, flooding, urgent commercial repairs. We dispatch the closest available tech.</p>
+            <div class="btnrow">
+              <a class="btn red" href="tel:+15128435181">Call Emergency Dispatch</a>
+              <a class="btn ghost" href="#request">Request Without Calling</a>
+            </div>
+            <div class="mini">Stop-leak • Hydro-jet • Camera • Leak detection • Static pressure test</div>
+          </div>
+
+          <div class="cta">
+            <h3>🔵 📞 Blue Phone — Make-Ready</h3>
+            <p>Turnovers, unit resets, punch lists, scheduling, and rapid re-occupancy workflows.</p>
+            <div class="btnrow">
+              <a class="btn blue" href="tel:+15128435181">Call Make-Ready Dispatch</a>
+              <a class="btn ghost" href="#request">Request Without Calling</a>
+            </div>
+            <div class="mini">Optional add-on: “Turnover Certification” to prevent move-in failures</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT (THIS IS THE PART YOU ARE NOT SEEING ON THE LIVE PAGE) -->
+      <div class="card right">
+        <div class="videoShell">
+          <video id="dispatchVideo" autoplay muted loop playsinline preload="auto"></video>
+          <div class="hud"></div>
+
+          <button class="dispatchCenter" id="dispatchBtn" type="button">
+            <div class="big">REQUEST<br/>TECH NOW</div>
+            <div class="small">MASTER CONTROL • DISPATCH CHECK</div>
+          </button>
+
+          <div class="etaStrip">
+            <div class="chip">🧑‍🔧 <b>Master Technician</b> • 2 min / 2 miles</div>
+            <div class="chip">🟢 Status: <b>Available</b></div>
+          </div>
+        </div>
+
+        <div id="request" class="debug" style="margin-top:12px;">
+          <div><strong>Video source:</strong> <span id="srcLabel"></span></div>
+          <div id="videoStatus" style="margin-top:6px;">Loading video…</div>
+          <div style="margin-top:10px;">
+            <a class="btn" id="requestBtn" href="#" target="_blank" rel="noopener">📝 Submit Work Order Request</a>
+          </div>
+          <div class="mini">Or call: <strong>512-843-5181</strong></div>
+        </div>
+      </div>
+
     </div>
 
-    <div class="actions">
-      <button class="btn red" onclick="location.href='tel:+15128435181'">🔴 Emergency Line</button>
-      <button class="btn blue" onclick="location.href='tel:+15128435181'">🔵 Make Ready Line</button>
+    <div class="footer">
+      <div>© <span id="year"></span> DealBankers.com — Dispatch Services</div>
+      <div class="hotline">
+        <a href="tel:+15128435181">🔴 Emergency: 512-843-5181</a>
+        <a href="tel:+15128435181">🔵 Make-Ready: 512-843-5181</a>
+      </div>
     </div>
-
   </div>
 
-</div>
+  <script>
+    document.getElementById('year').textContent = new Date().getFullYear();
 
+    // ✅ SET THESE TWO ONCE:
+    const VIDEO_SRC = "/CRM/images/dispatch.mp4";   // <-- MOST LIKELY FIX for your setup
+    const FORM_LINK = "https://YOUR-FORM-LINK-HERE"; // <-- your request form link
+
+    // Show what src we are trying
+    document.getElementById('srcLabel').textContent = VIDEO_SRC;
+
+    // Wire up request buttons
+    const dispatchBtn = document.getElementById('dispatchBtn');
+    const requestBtn  = document.getElementById('requestBtn');
+    dispatchBtn.addEventListener('click', () => window.open(FORM_LINK, "_blank", "noopener"));
+    requestBtn.addEventListener('click', (e) => {
+      if (FORM_LINK.includes("YOUR-FORM-LINK-HERE")) {
+        e.preventDefault();
+        alert("Set your FORM_LINK in the code (search for YOUR-FORM-LINK-HERE).");
+      }
+    });
+    requestBtn.href = FORM_LINK;
+
+    // Create video source at runtime (more reliable + debuggable)
+    const v = document.getElementById('dispatchVideo');
+    const s = document.createElement('source');
+    s.src = VIDEO_SRC;
+    s.type = "video/mp4";
+    v.appendChild(s);
+
+    const statusEl = document.getElementById('videoStatus');
+
+    v.addEventListener('loadeddata', () => {
+      statusEl.textContent = "✅ Video loaded.";
+      statusEl.style.color = "#9effc6";
+    });
+
+    v.addEventListener('error', () => {
+      statusEl.textContent =
+        "❌ Video failed to load. Open this in a new tab to test: " + location.origin + VIDEO_SRC;
+      statusEl.style.color = "#ffb3b3";
+    });
+
+    // Try autoplay again after load
+    function tryPlay(){
+      const p = v.play();
+      if (p && typeof p.then === 'function') p.catch(()=>{});
+    }
+    window.addEventListener('load', tryPlay);
+    document.addEventListener('visibilitychange', () => { if(!document.hidden) tryPlay(); });
+  </script>
 </body>
 </html>
