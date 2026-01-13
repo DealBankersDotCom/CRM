@@ -499,6 +499,7 @@
       user-select:none;
       white-space:nowrap;
     }
+    .btn[disabled]{ opacity:.6; cursor:not-allowed; transform:none !important; }
     .btnPrimary{
       background: var(--accent);
       color: #08101a;
@@ -1006,28 +1007,86 @@
     </div>
   </div>
 
-  <script>
+  <!-- =========================
+       FIREBASE + APP LOGIC
+       =========================
+       Fixes added:
+       1) Writes every mission to Firestore (real database, not only localStorage)
+       2) Real-time listener on the created mission for live status updates ("actual responses")
+       3) VIEW LOG pulls from Firestore (and falls back to localStorage)
+       4) Optional Cloud Function call (either URL endpoint OR callable name)
+  -->
+  <script type="module">
     // =========================
-    // CONFIG
+    // FIREBASE CONFIG (PASTE YOURS)
+    // =========================
+    // In Firebase Console: Project settings -> Your apps -> Web app -> "Firebase SDK snippet" -> config
+    const firebaseConfig = {
+      apiKey: "PASTE_API_KEY",
+      authDomain: "deal-bankers.firebaseapp.com",
+      projectId: "deal-bankers",
+      storageBucket: "deal-bankers.appspot.com",
+      messagingSenderId: "PASTE_SENDER_ID",
+      appId: "PASTE_APP_ID"
+      // measurementId optional
+    };
+
+    /**
+     * Where missions are stored:
+     * Firestore: collection "dispatchMissions"
+     * Each mission document includes: status, statusMessage, assignedTo, etaMinutes, etc (Ops can update)
+     *
+     * Example ops-side updates you can make later:
+     * status: "received" | "dispatched" | "enroute" | "arrived" | "complete"
+     * statusMessage: "Tech confirmed, heading your way."
+     */
+
+    // =========================
+    // OPTIONAL: EMAIL / FUNCTION CONFIG
     // =========================
     const OPS_PHONE_E164 = "+15128435181"; // (512) 843-5181
 
-    /**
-     * To actually send email from a static HTML page, you need a backend endpoint.
-     * Since you're on Firebase + GitHub, use a Firebase HTTPS Cloud Function.
-     *
-     * Set this to your deployed function URL, e.g.:
-     * https://us-central1-deal-bankers.cloudfunctions.net/dispatchEmail
-     */
-    const EMAIL_ENDPOINT = ""; // <-- PASTE YOUR CLOUD FUNCTION URL HERE (recommended)
+    // Option A: raw HTTPS function endpoint (keeps your existing fetch behavior)
+    // Example:
+    // const EMAIL_ENDPOINT = "https://us-central1-deal-bankers.cloudfunctions.net/dispatchEmail";
+    const EMAIL_ENDPOINT = ""; // <-- optional
 
-    /**
-     * Mailto fallback (works without backend, but depends on user's mail client).
-     * Update the email address if needed.
-     */
+    // Option B: callable function name (recommended once you deploy callable)
+    // Example:
+    // const FUNCTIONS_CALLABLE_NAME = "dispatchEmail";
+    const FUNCTIONS_CALLABLE_NAME = ""; // <-- optional
+
+    // Mailto fallback
     const MAILTO_TO = "aptbidsonline@gmail.com";
 
-    // ====== SERVICES ======
+    // =========================
+    // FIREBASE IMPORTS
+    // =========================
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
+    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, limit, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
+
+    // =========================
+    // INIT FIREBASE
+    // =========================
+    let app = null;
+    let db = null;
+    let functions = null;
+    let firebaseReady = false;
+
+    try{
+      app = initializeApp(firebaseConfig);
+      db = getFirestore(app);
+      functions = getFunctions(app);
+      firebaseReady = true;
+    }catch(err){
+      console.warn("Firebase init failed (running in fallback mode):", err);
+      firebaseReady = false;
+    }
+
+    // =========================
+    // SERVICES
+    // =========================
     const SERVICES = [
       { value: "emergency-plumbing", label: "Emergency Plumbing", desc: "Burst pipes, leaks, flooding", icon: "droplets" },
       { value: "water-extraction", label: "Water Extraction", desc: "Rapid flood response", icon: "zap" },
@@ -1051,6 +1110,7 @@
     const callOpsBtn = document.getElementById("callOpsBtn");
 
     const form = document.getElementById("dispatchForm");
+    const submitBtn = document.getElementById("submitBtn");
     const companyEl = document.getElementById("company");
     const serviceEl = document.getElementById("service");
     const nameEl = document.getElementById("name");
@@ -1068,8 +1128,6 @@
     const toastClose = document.getElementById("toastClose");
 
     document.getElementById("year").textContent = new Date().getFullYear();
-
-    // Set tel link in case you change number
     callOpsBtn.href = "tel:" + OPS_PHONE_E164;
 
     // =========================
@@ -1077,6 +1135,7 @@
     // =========================
     let mode = "standard"; // standard | emergency
     let selectedService = "make-ready";
+    let activeMissionUnsub = null; // realtime listener unsubscribe
 
     // =========================
     // HELPERS
@@ -1192,24 +1251,50 @@
       return "M-" + Date.now().toString().slice(-9);
     }
 
-    function saveMission(payload){
+    // Local fallback log
+    function saveMissionLocal(payload){
       const key = "db_dispatch_missions";
       const existing = JSON.parse(localStorage.getItem(key) || "[]");
       existing.unshift(payload);
       localStorage.setItem(key, JSON.stringify(existing));
     }
 
-    function openMissionLog(){
-      const key = "db_dispatch_missions";
-      const existing = JSON.parse(localStorage.getItem(key) || "[]");
-      if(!existing.length){
-        showToast("No missions yet", "Submit a dispatch request to start the mission log.");
-        return;
+    // Firestore write (REAL)
+    async function saveMissionFirestore(payload){
+      if(!firebaseReady) return { ok:false, reason:"firebase-not-ready" };
+      const ref = doc(collection(db, "dispatchMissions"), payload.id);
+      await setDoc(ref, {
+        ...payload,
+        createdAtServer: serverTimestamp(),
+        // Ops fields (can be updated later by dispatcher dashboard / staff):
+        status: "new",
+        statusMessage: "Received. Awaiting confirmation.",
+        etaMinutes: payload.mode === "emergency" ? 30 : 120
+      }, { merge: true });
+      return { ok:true, ref };
+    }
+
+    // Real-time listener for "actual responses"
+    function listenForMissionUpdates(missionDocRef){
+      if(activeMissionUnsub){
+        try{ activeMissionUnsub(); }catch(_){}
+        activeMissionUnsub = null;
       }
-      const lines = existing.slice(0, 14).map(m =>
-        `${m.id} | ${m.mode.toUpperCase()} | ${m.serviceLabel} | ${m.address} | ${m.name} | ${m.phone}`
-      );
-      alert("Recent Missions (local log):\n\n" + lines.join("\n"));
+      activeMissionUnsub = onSnapshot(missionDocRef, (snap) => {
+        if(!snap.exists()) return;
+        const d = snap.data();
+        if(!d) return;
+
+        // Only show updates after creation:
+        const status = (d.status || "").toUpperCase();
+        const msg = d.statusMessage || "";
+        const eta = (typeof d.etaMinutes === "number") ? ` • ETA ~${d.etaMinutes}m` : "";
+
+        // These toasts are the "actual responses"
+        if(status && status !== "NEW"){
+          showToast(`UPDATE: ${status}`, `${msg}${eta}`);
+        }
+      });
     }
 
     function buildMailto(payload){
@@ -1230,15 +1315,25 @@
     }
 
     async function sendToEndpoint(payload){
-      if(!EMAIL_ENDPOINT) return { ok:false, reason:"no-endpoint" };
+      // Option B: callable function
+      if(firebaseReady && FUNCTIONS_CALLABLE_NAME){
+        try{
+          const fn = httpsCallable(functions, FUNCTIONS_CALLABLE_NAME);
+          const res = await fn(payload);
+          return { ok:true, result: res?.data };
+        }catch(err){
+          return { ok:false, reason:"callable-failed", err: String(err) };
+        }
+      }
 
+      // Option A: raw URL
+      if(!EMAIL_ENDPOINT) return { ok:false, reason:"no-endpoint" };
       try{
         const res = await fetch(EMAIL_ENDPOINT, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify(payload)
         });
-
         if(!res.ok){
           const txt = await res.text().catch(()=> "");
           return { ok:false, reason:"bad-status", status:res.status, txt };
@@ -1247,6 +1342,42 @@
       }catch(err){
         return { ok:false, reason:"network", err: String(err) };
       }
+    }
+
+    async function openMissionLog(){
+      // Firestore log (REAL)
+      if(firebaseReady){
+        try{
+          const qy = query(collection(db, "dispatchMissions"), orderBy("createdAt", "desc"), limit(20));
+          const snap = await getDocs(qy);
+          if(snap.empty){
+            showToast("No missions yet", "Submit a dispatch request to start the mission log.");
+            return;
+          }
+          const lines = [];
+          snap.forEach(docSnap => {
+            const m = docSnap.data();
+            const status = (m.status || "new").toUpperCase();
+            lines.push(`${m.id} | ${status} | ${m.mode?.toUpperCase()} | ${m.serviceLabel} | ${m.address} | ${m.name} | ${m.phone}`);
+          });
+          alert("Recent Missions (Firestore log):\n\n" + lines.join("\n"));
+          return;
+        }catch(err){
+          console.warn("Firestore log read failed, using local fallback:", err);
+        }
+      }
+
+      // Local fallback
+      const key = "db_dispatch_missions";
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      if(!existing.length){
+        showToast("No missions yet", "Submit a dispatch request to start the mission log.");
+        return;
+      }
+      const lines = existing.slice(0, 14).map(m =>
+        `${m.id} | ${(m.status || m.mode || "").toUpperCase()} | ${m.serviceLabel} | ${m.address} | ${m.name} | ${m.phone}`
+      );
+      alert("Recent Missions (local log):\n\n" + lines.join("\n"));
     }
 
     // =========================
@@ -1301,14 +1432,47 @@
         opsPhone: OPS_PHONE_E164
       };
 
-      saveMission(payload);
+      // UX: lock button while sending
+      const oldBtnText = submitBtn.textContent;
+      submitBtn.disabled = true;
+      submitBtn.textContent = "SENDING…";
 
-      // Try backend email first
+      // Always save local (fallback)
+      saveMissionLocal(payload);
+
+      // Save to Firestore (REAL)
+      let firestoreRef = null;
+      if(firebaseReady){
+        try{
+          showToast("Logging…", "Saving mission to DealBankers HQ.");
+          const saved = await saveMissionFirestore(payload);
+          if(saved.ok) firestoreRef = saved.ref;
+
+          // Real-time status updates for "actual responses"
+          if(firestoreRef) listenForMissionUpdates(firestoreRef);
+        }catch(err){
+          console.warn("Firestore save failed:", err);
+          showToast("Offline Mode", "Could not reach database. Saved locally for now.");
+        }
+      } else {
+        showToast("Offline Mode", "Firebase not configured yet. Saved locally for now.");
+      }
+
+      // Try backend notify (email/function) next
       showToast("Transmitting…", "Sending mission to Ops.");
       const sent = await sendToEndpoint(payload);
 
       if(sent.ok){
         showToast("Mission Activated", `${payload.id} sent • ${payload.serviceLabel} • ${mode === "emergency" ? "RED" : "BLUE"} channel`);
+        // If Firestore exists, mark "received" immediately as a baseline
+        if(firebaseReady && firestoreRef){
+          try{
+            await setDoc(firestoreRef, {
+              status: "received",
+              statusMessage: "Ops notified. Awaiting technician confirmation."
+            }, { merge: true });
+          }catch(_){}
+        }
       } else {
         // Fallback: mailto
         showToast("Fallback Mode", "Opening email draft to send mission to Ops.");
@@ -1318,6 +1482,10 @@
       // Clear notes/unit (keep other fields for repeat requests)
       unitEl.value = "";
       notesEl.value = "";
+
+      // Unlock button
+      submitBtn.disabled = false;
+      submitBtn.textContent = oldBtnText;
     });
 
     // =========================
@@ -1326,6 +1494,11 @@
     renderServiceOptions();
     renderServiceGrid();
     setAccent("standard");
+
+    // Optional: tiny hint in console if config not set
+    if(firebaseReady === false){
+      console.warn("Firebase is not ready. Paste firebaseConfig values in this file to enable real missions + realtime updates.");
+    }
   </script>
 </body>
 </html>
