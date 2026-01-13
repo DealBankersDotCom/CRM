@@ -17,6 +17,7 @@
       --radius:22px;
       --red:#ff2a2a;
       --blue:#2a6bff;
+      --ok:#31d07f;
     }
 
     *{box-sizing:border-box}
@@ -134,6 +135,7 @@
       background:rgba(255,255,255,.06);
       font-weight:900;font-size:14px;
       -webkit-tap-highlight-color: transparent;
+      cursor:pointer;
     }
     .btn.red{border-color: rgba(255,42,42,.55);background: rgba(255,42,42,.12)}
     .btn.blue{border-color: rgba(42,107,255,.60);background: rgba(42,107,255,.14)}
@@ -143,6 +145,7 @@
     /* Right side */
     .right{padding:16px; display:flex; flex-direction:column; gap:12px;}
 
+    /* ✅ ONLY CHANGE: make the video module smaller + centered (everything else same) */
     .videoShell{
       position:relative;
       border-radius:18px;
@@ -151,6 +154,9 @@
       overflow:hidden;
       aspect-ratio: 16/10;
       box-shadow:0 20px 60px rgba(0,0,0,.55);
+
+      max-width: 520px;   /* <<< smaller */
+      margin: 0 auto;     /* <<< centered */
     }
     .videoShell video{
       width:100%; height:100%;
@@ -169,7 +175,7 @@
     /* Big circular master control button */
     .dispatchCenter{
       position:absolute;
-      left:50%; top:52%;
+      left:50%; top:46%;
       transform: translate(-50%,-50%);
       z-index:10;
       width:240px; height:240px;
@@ -233,10 +239,83 @@
       backdrop-filter: blur(10px);
     }
     .chip b{color:var(--text)}
+    .chipDot{width:10px;height:10px;border-radius:999px;background:var(--ok);box-shadow:0 0 18px rgba(49,208,127,.45)}
+
+    /* Below-video controls */
+    .videoControls{
+      max-width:520px;
+      margin:12px auto 0;
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+    @media (max-width:520px){
+      .videoControls{grid-template-columns:1fr}
+    }
+
+    /* Slide-up menu panel (in-page, no popup window) */
+    .sheet{
+      max-width:520px;
+      margin:12px auto 0;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.20);
+      border-radius:18px;
+      overflow:hidden;
+      box-shadow:0 18px 55px rgba(0,0,0,.55);
+    }
+    .sheetHeader{
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      padding:12px 14px;
+      background:rgba(255,255,255,.04);
+      border-bottom:1px solid rgba(255,255,255,.10);
+    }
+    .sheetHeader b{font-size:13px}
+    .sheetHeader .x{
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      color:var(--text);
+      border-radius:12px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .sheetBody{
+      padding:14px;
+      display:grid;
+      gap:10px;
+    }
+    .field{
+      display:grid;
+      gap:6px;
+    }
+    label{font-size:12px;color:var(--muted)}
+    input, select, textarea{
+      width:100%;
+      padding:12px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
+      outline:none;
+      font:inherit;
+    }
+    textarea{min-height:92px;resize:vertical}
+
+    .sheetActions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      padding:0 14px 14px;
+    }
+    .btn.primary{
+      border-color: rgba(49,208,127,.55);
+      background: rgba(49,208,127,.12);
+    }
 
     /* Debug message if video fails */
     .debug{
-      margin-top:10px;
+      max-width:520px;
+      margin:10px auto 0;
       border:1px dashed rgba(255,255,255,.18);
       background:rgba(0,0,0,.18);
       border-radius:16px;
@@ -265,7 +344,8 @@
     @media (max-width:520px){
       .dispatchCenter{width:210px;height:210px}
       .dispatchCenter .big{font-size:20px}
-      .videoShell{aspect-ratio: 16/11}
+      .videoShell{aspect-ratio: 16/11; max-width:100%}
+      .debug,.videoControls,.sheet{max-width:100%}
     }
   </style>
 </head>
@@ -324,30 +404,77 @@
         </div>
       </div>
 
-      <!-- RIGHT (THIS IS THE PART YOU ARE NOT SEEING ON THE LIVE PAGE) -->
+      <!-- RIGHT -->
       <div class="card right">
         <div class="videoShell">
           <video id="dispatchVideo" autoplay muted loop playsinline preload="auto"></video>
           <div class="hud"></div>
 
-          <button class="dispatchCenter" id="dispatchBtn" type="button">
-            <div class="big">REQUEST<br/>TECH NOW</div>
-            <div class="small">MASTER CONTROL • DISPATCH CHECK</div>
+          <button class="dispatchCenter" id="dispatchBtn" type="button" aria-expanded="false">
+            <div class="big">DISPATCH<br/>NOW</div>
+            <div class="small">MASTER CONTROL • TAP</div>
           </button>
 
           <div class="etaStrip">
-            <div class="chip">🧑‍🔧 <b>Master Technician</b> • 2 min / 2 miles</div>
+            <div class="chip"><span class="chipDot"></span> <b>Master Technician</b> • 2 min / 2 miles</div>
             <div class="chip">🟢 Status: <b>Available</b></div>
           </div>
         </div>
 
-        <div id="request" class="debug" style="margin-top:12px;">
+        <!-- Below video: Red / Blue phone buttons (like you asked) -->
+        <div class="videoControls">
+          <a class="btn red" href="tel:+15128435181">🔴 Emergency Line</a>
+          <a class="btn blue" href="tel:+15128435181">🔵 Make-Ready Line</a>
+        </div>
+
+        <!-- Slide-up / drop-down request menu (in-page, no new window) -->
+        <div class="sheet" id="requestSheet" hidden>
+          <div class="sheetHeader">
+            <b>📝 Dispatch Request</b>
+            <button class="x" id="closeSheet" type="button">✕</button>
+          </div>
+
+          <div class="sheetBody">
+            <div class="field">
+              <label for="type">Request Type</label>
+              <select id="type">
+                <option value="Emergency">🔴 Emergency</option>
+                <option value="Make-Ready">🔵 Make-Ready</option>
+              </select>
+            </div>
+
+            <div class="field">
+              <label for="property">Property / Address</label>
+              <input id="property" placeholder="123 Main St, Unit 4B" />
+            </div>
+
+            <div class="field">
+              <label for="contact">Your Name / Company</label>
+              <input id="contact" placeholder="Property Manager Name / Company" />
+            </div>
+
+            <div class="field">
+              <label for="phone">Callback Phone</label>
+              <input id="phone" placeholder="(###) ###-####" />
+            </div>
+
+            <div class="field">
+              <label for="details">Work Order Details</label>
+              <textarea id="details" placeholder="What happened? Any access notes, gate codes, water shutoff location, photos available, etc."></textarea>
+            </div>
+          </div>
+
+          <div class="sheetActions">
+            <button class="btn primary" id="submitRequest" type="button">✅ Submit Request</button>
+            <button class="btn ghost" id="copyRequest" type="button">📋 Copy Text</button>
+          </div>
+        </div>
+
+        <!-- Debug panel stays, but now centered under the smaller module -->
+        <div id="request" class="debug">
           <div><strong>Video source:</strong> <span id="srcLabel"></span></div>
           <div id="videoStatus" style="margin-top:6px;">Loading video…</div>
-          <div style="margin-top:10px;">
-            <a class="btn" id="requestBtn" href="#" target="_blank" rel="noopener">📝 Submit Work Order Request</a>
-          </div>
-          <div class="mini">Or call: <strong>512-843-5181</strong></div>
+          <div class="mini" style="margin-top:10px;">Or call: <strong>512-843-5181</strong></div>
         </div>
       </div>
 
@@ -365,24 +492,11 @@
   <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // ✅ SET THESE TWO ONCE:
-    const VIDEO_SRC = "/CRM/images/dispatch.mp4";   // <-- MOST LIKELY FIX for your setup
-    const FORM_LINK = "https://YOUR-FORM-LINK-HERE"; // <-- your request form link
+    // ✅ SET YOUR VIDEO PATH (you already uploaded it here)
+    const VIDEO_SRC = "/CRM/images/dispatch.mp4";
 
     // Show what src we are trying
     document.getElementById('srcLabel').textContent = VIDEO_SRC;
-
-    // Wire up request buttons
-    const dispatchBtn = document.getElementById('dispatchBtn');
-    const requestBtn  = document.getElementById('requestBtn');
-    dispatchBtn.addEventListener('click', () => window.open(FORM_LINK, "_blank", "noopener"));
-    requestBtn.addEventListener('click', (e) => {
-      if (FORM_LINK.includes("YOUR-FORM-LINK-HERE")) {
-        e.preventDefault();
-        alert("Set your FORM_LINK in the code (search for YOUR-FORM-LINK-HERE).");
-      }
-    });
-    requestBtn.href = FORM_LINK;
 
     // Create video source at runtime (more reliable + debuggable)
     const v = document.getElementById('dispatchVideo');
@@ -400,7 +514,7 @@
 
     v.addEventListener('error', () => {
       statusEl.textContent =
-        "❌ Video failed to load. Open this in a new tab to test: " + location.origin + VIDEO_SRC;
+        "❌ Video failed to load. Test this URL: " + location.origin + VIDEO_SRC;
       statusEl.style.color = "#ffb3b3";
     });
 
@@ -411,6 +525,78 @@
     }
     window.addEventListener('load', tryPlay);
     document.addEventListener('visibilitychange', () => { if(!document.hidden) tryPlay(); });
+
+    // In-page dispatch menu (no popups / new window)
+    const btn = document.getElementById('dispatchBtn');
+    const sheet = document.getElementById('requestSheet');
+    const closeSheet = document.getElementById('closeSheet');
+    const submit = document.getElementById('submitRequest');
+    const copy = document.getElementById('copyRequest');
+
+    function openSheet(){
+      sheet.hidden = false;
+      btn.setAttribute('aria-expanded','true');
+      // scroll it into view nicely
+      sheet.scrollIntoView({behavior:'smooth', block:'nearest'});
+    }
+    function hideSheet(){
+      sheet.hidden = true;
+      btn.setAttribute('aria-expanded','false');
+    }
+
+    btn.addEventListener('click', () => {
+      if (sheet.hidden) openSheet(); else hideSheet();
+    });
+    closeSheet.addEventListener('click', hideSheet);
+
+    function buildText(){
+      const type = document.getElementById('type').value;
+      const property = document.getElementById('property').value.trim();
+      const contact = document.getElementById('contact').value.trim();
+      const phone = document.getElementById('phone').value.trim();
+      const details = document.getElementById('details').value.trim();
+
+      return [
+        "DealBankers Dispatch Request",
+        "Type: " + type,
+        "Property: " + (property || "(not provided)"),
+        "Contact: " + (contact || "(not provided)"),
+        "Callback: " + (phone || "(not provided)"),
+        "Details: " + (details || "(not provided)")
+      ].join("\\n");
+    }
+
+    copy.addEventListener('click', async () => {
+      const txt = buildText();
+      try{
+        await navigator.clipboard.writeText(txt);
+        copy.textContent = "✅ Copied";
+        setTimeout(()=>copy.textContent="📋 Copy Text", 1200);
+      }catch(e){
+        alert("Copy failed. Here is the text:\\n\\n" + txt);
+      }
+    });
+
+    // Submit = opens SMS draft (mobile) or email fallback (desktop)
+    submit.addEventListener('click', () => {
+      const txt = buildText();
+      const phone = "15128435181"; // SMS target (no symbols)
+      const smsHref = "sms:" + phone + "?&body=" + encodeURIComponent(txt);
+
+      // Most phones will open Messages; desktop may ignore -> fallback to mailto
+      const mailHref = "mailto:aptbidsonline@gmail.com?subject=" + encodeURIComponent("DealBankers Dispatch Request") +
+                       "&body=" + encodeURIComponent(txt);
+
+      // Try sms first
+      window.location.href = smsHref;
+
+      // Fallback after a beat (desktop)
+      setTimeout(() => {
+        if (!/Mobi|Android/i.test(navigator.userAgent)) {
+          window.location.href = mailHref;
+        }
+      }, 600);
+    });
   </script>
 </body>
 </html>
