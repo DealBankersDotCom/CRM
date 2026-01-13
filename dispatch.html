@@ -1,496 +1,1165 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { motion } from "framer-motion";
-import {
-  Radio,
-  Target,
-  ChevronDown,
-  Droplets,
-  Zap,
-  Home,
-  Brush,
-  Wrench,
-  Building2,
-  Shield,
-  Clock,
-  MapPin,
-  FileText,
-  Navigation,
-} from "lucide-react";
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>DealBankers Dispatch | Mission Control</title>
+  <meta name="description" content="On-demand expert dispatch for property managers. Emergency + Make-Ready. Activate response." />
 
-/**
- * DealBankers Dispatch — Landing Page
- * - James Bond "mission control" vibe
- * - Big round CTA button
- * - Standard / Emergency toggle
- *
- * Hook this up to YOUR dispatch flow by changing DISPATCH_URL + EMERGENCY_URL
- */
-export default function DispatchLandingPage() {
-  const [mode, setMode] = useState("standard"); // 'standard' | 'emergency'
-  const [scanLine, setScanLine] = useState(0);
+  <style>
+    :root{
+      --bg:#070b16;
+      --bg2:#0a0f1a;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(255,255,255,.04);
+      --line:rgba(255,255,255,.10);
+      --text:#eaf0ff;
+      --muted:rgba(255,255,255,.58);
+      --muted2:rgba(255,255,255,.40);
+      --radius:22px;
 
-  // ✅ CHANGE THESE to your real endpoints
-  const DISPATCH_URL = "/dispatch"; // or your Google Form / internal route
-  const EMERGENCY_URL = "/dispatch?mode=emergency"; // or tel: / route / form
+      --blue:#00d4ff;
+      --blueDim:rgba(0,212,255,.18);
 
-  const isEmergency = mode === "emergency";
+      --red:#ff3b3b;
+      --redDim:rgba(255,59,59,.18);
 
-  const { accent, accentDim } = useMemo(() => {
-    const accentColor = isEmergency ? "#ff2a2a" : "#2a6bff";
-    const accentColorDim = isEmergency
-      ? "rgba(255, 42, 42, 0.18)"
-      : "rgba(42, 107, 255, 0.18)";
-    return { accent: accentColor, accentDim: accentColorDim };
-  }, [isEmergency]);
+      --accent: var(--blue);
+      --accentDim: var(--blueDim);
 
-  useEffect(() => {
-    const interval = setInterval(() => setScanLine((p) => (p + 1) % 100), 30);
-    return () => clearInterval(interval);
-  }, []);
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --shadowSoft: 0 10px 30px rgba(0,0,0,.35);
+    }
 
-  const services = [
-    { icon: Droplets, title: "Emergency Plumbing", desc: "Burst pipes, leaks, flooding" },
-    { icon: Zap, title: "Water Extraction", desc: "Rapid flood response" },
-    { icon: Home, title: "Make-Ready", desc: "Unit turnovers, prep work" },
-    { icon: Brush, title: "Porter / Cleanup", desc: "Quick turns, debris removal" },
-    { icon: Wrench, title: "Commercial Repairs", desc: "HVAC, electrical, structural" },
-    { icon: Building2, title: "Hydro-Jet Service", desc: "Drain clearing, sewer lines" },
-  ];
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      background: radial-gradient(circle at 20% 20%, rgba(0,212,255,.12), transparent 55%),
+                  radial-gradient(circle at 80% 25%, rgba(255,59,59,.08), transparent 55%),
+                  linear-gradient(180deg, var(--bg), var(--bg2));
+      color:var(--text);
+      overflow-x:hidden;
+    }
 
-  const benefits = [
-    { icon: Clock, title: "SLA-Driven Response", desc: "Clear response expectations" },
-    { icon: Shield, title: "Vetted Technicians", desc: "Trusted operators, verified skills" },
-    { icon: MapPin, title: "Real-Time Updates", desc: "Status + ETA you can rely on" },
-    { icon: FileText, title: "One Thread", desc: "Notes, photos, invoice in one place" },
-  ];
+    /* Subtle grid */
+    .grid{
+      position:fixed; inset:0;
+      opacity:.05;
+      background-image:
+        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size:52px 52px;
+      pointer-events:none;
+      z-index:0;
+    }
 
-  const onPrimaryCTA = () => {
-    window.location.href = isEmergency ? EMERGENCY_URL : DISPATCH_URL;
-  };
+    /* Scan line */
+    .scan{
+      position:fixed; inset:0;
+      pointer-events:none;
+      z-index:1;
+      background: linear-gradient(180deg,
+        transparent 45%,
+        var(--accentDim) 50%,
+        transparent 55%);
+      opacity:.95;
+      animation: scan 2.2s linear infinite;
+      mix-blend-mode: screen;
+    }
+    @keyframes scan{
+      0%{ transform: translateY(-60%); }
+      100%{ transform: translateY(60%); }
+    }
 
-  return (
-    <div className="min-h-screen bg-[#070b16] text-white overflow-hidden">
-      {/* Subtle grid */}
-      <div
-        className="fixed inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage:
-            "linear-gradient(rgba(255,255,255,0.10) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.10) 1px, transparent 1px)",
-          backgroundSize: "52px 52px",
-        }}
-      />
+    /* Top nav */
+    .nav{
+      position:fixed; top:0; left:0; right:0;
+      z-index:50;
+      padding:16px 18px;
+      backdrop-filter: blur(14px);
+      background: linear-gradient(180deg, rgba(7,11,22,.70), rgba(7,11,22,.15));
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .navInner{
+      width:min(1180px, 100%);
+      margin:0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap:12px;
+      user-select:none;
+    }
+    .badgeIcon{
+      width:44px; height:44px;
+      border-radius:14px;
+      border:1px solid color-mix(in srgb, var(--accent) 60%, transparent);
+      background: var(--accentDim);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 0 30px var(--accentDim);
+      position:relative;
+      overflow:hidden;
+    }
+    .badgeIcon:after{
+      content:"";
+      position:absolute; inset:-40%;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.35), transparent 55%);
+      transform: rotate(25deg);
+      opacity:.15;
+    }
+    .brandTitle{
+      font-weight:800;
+      letter-spacing:.14em;
+      font-size:14px;
+    }
+    .brandSub{
+      font-size:11px;
+      letter-spacing:.34em;
+      opacity:.55;
+      margin-top:2px;
+    }
 
-      {/* Scan line */}
-      <div
-        className="fixed inset-0 pointer-events-none z-10"
-        style={{
-          background: `linear-gradient(180deg,
-            transparent ${scanLine - 2}%,
-            ${accentDim} ${scanLine}%,
-            transparent ${scanLine + 2}%)`,
-        }}
-      />
+    /* Toggle */
+    .toggle{
+      display:flex;
+      gap:6px;
+      padding:6px;
+      border-radius:999px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .tbtn{
+      border:0;
+      padding:10px 14px;
+      border-radius:999px;
+      background:transparent;
+      color: rgba(255,255,255,.60);
+      cursor:pointer;
+      font-weight:700;
+      letter-spacing:.02em;
+      transition: all .18s ease;
+      display:flex; align-items:center; gap:10px;
+    }
+    .dot{
+      width:9px; height:9px;
+      border-radius:999px;
+      background: rgba(255,255,255,.22);
+    }
+    .tbtn.active{
+      background: var(--accentDim);
+      color: var(--accent);
+    }
+    .tbtn.active .dot{
+      background: var(--accent);
+      box-shadow: 0 0 14px var(--accentDim);
+      animation: pulseDot 1.5s ease-in-out infinite;
+    }
+    @keyframes pulseDot{
+      0%,100%{ transform: scale(1); opacity:1;}
+      50%{ transform: scale(1.35); opacity:.55;}
+    }
 
-      {/* HERO */}
-      <section className="relative min-h-screen flex flex-col items-center justify-center px-4">
-        {/* Video background (placeholder). Swap src to your file */}
-        <div className="absolute inset-0 z-0">
-          <div className="absolute inset-0 bg-gradient-to-b from-[#070b16] via-transparent to-[#070b16]" />
-          <video
-            className="w-full h-full object-cover opacity-30"
-            autoPlay
-            muted
-            loop
-            playsInline
-            // ✅ Set poster to your own image if you want
-            poster=""
-          >
-            {/* ✅ Put your mp4 here */}
-            <source src="" type="video/mp4" />
-          </video>
-          <div className="absolute inset-0 bg-[#070b16]/60" />
+    /* Layout */
+    .wrap{
+      width:min(1180px, 100%);
+      margin:0 auto;
+      padding: 110px 18px 60px;
+      position:relative;
+      z-index:5;
+    }
+
+    /* Hero / header strip */
+    .hero{
+      position:relative;
+      border-radius: 28px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.10);
+      background: linear-gradient(135deg, rgba(255,255,255,.06), rgba(255,255,255,.02));
+      box-shadow: var(--shadow);
+    }
+    .heroMedia{
+      position:absolute; inset:0;
+      z-index:0;
+      background:
+        radial-gradient(circle at 30% 20%, var(--accentDim), transparent 55%),
+        radial-gradient(circle at 75% 35%, rgba(255,255,255,.06), transparent 55%),
+        linear-gradient(180deg, rgba(7,11,22,.70), rgba(7,11,22,.85));
+    }
+    .hero video{
+      position:absolute; inset:0;
+      width:100%; height:100%;
+      object-fit:cover;
+      opacity:.28;
+      filter: contrast(1.05) saturate(1.05);
+    }
+    .heroShade{
+      position:absolute; inset:0;
+      background: linear-gradient(180deg, rgba(7,11,22,.55), rgba(7,11,22,.92));
+    }
+    .heroInner{
+      position:relative;
+      z-index:2;
+      padding: 34px 26px;
+    }
+    .kicker{
+      font-size:11px;
+      letter-spacing:.45em;
+      opacity:.70;
+      color: var(--accent);
+    }
+    h1{
+      margin: 14px 0 10px;
+      font-size: clamp(28px, 4vw, 46px);
+      font-weight: 300;
+      letter-spacing: -.02em;
+      line-height:1.05;
+    }
+    .accentText{ color: var(--accent); font-weight:800; }
+    .lead{
+      margin: 0;
+      max-width: 780px;
+      color: rgba(255,255,255,.62);
+      font-size: 15px;
+      line-height:1.45;
+    }
+
+    /* Big round CTA */
+    .ctaRow{
+      display:flex;
+      gap: 22px;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      margin-top: 26px;
+    }
+
+    .ctaWrap{
+      position:relative;
+      width: 220px;
+      height: 220px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      flex: 0 0 auto;
+    }
+    .ring{
+      position:absolute;
+      border-radius:999px;
+      border:1px solid var(--accent);
+      opacity:.12;
+      animation: pulse 3.0s ease-in-out infinite;
+    }
+    .r1{ width:240px; height:240px; animation-delay:0s;}
+    .r2{ width:300px; height:300px; animation-delay:.25s; opacity:.10;}
+    .r3{ width:360px; height:360px; animation-delay:.5s; opacity:.08;}
+    @keyframes pulse{
+      0%,100%{ transform:scale(1); opacity:inherit;}
+      50%{ transform:scale(1.08); opacity: calc(inherit + .06); }
+    }
+
+    .btnMain{
+      width:190px;
+      height:190px;
+      border-radius:999px;
+      border:2px solid var(--accent);
+      background: radial-gradient(circle at 30% 30%, var(--accentDim), transparent 70%);
+      box-shadow: 0 0 60px var(--accentDim), inset 0 0 60px var(--accentDim);
+      cursor:pointer;
+      color: var(--text);
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      transition: transform .18s ease, filter .18s ease;
+      user-select:none;
+    }
+    .btnMain:hover{ transform: scale(1.04); filter: brightness(1.05);}
+    .btnMain:active{ transform: scale(.98); }
+    .btnTop{
+      font-size: 12px;
+      font-weight: 900;
+      letter-spacing: .28em;
+      color: var(--accent);
+    }
+    .btnSub{
+      font-size: 11px;
+      letter-spacing: .12em;
+      opacity:.65;
+    }
+
+    .heroStats{
+      flex: 1 1 420px;
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+      min-width: 280px;
+    }
+    .statCard{
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      border-radius: 18px;
+      padding: 14px 14px;
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+      backdrop-filter: blur(10px);
+    }
+    .statIcon{
+      width:42px; height:42px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: var(--accentDim);
+      display:flex; align-items:center; justify-content:center;
+      box-shadow: 0 0 26px rgba(0,0,0,.35);
+      flex: 0 0 auto;
+    }
+    .statTitle{ font-weight:800; font-size: 12px; letter-spacing:.06em; }
+    .statDesc{ font-size: 12px; color: rgba(255,255,255,.55); margin-top:4px; line-height:1.35; }
+
+    /* Main two-column */
+    .grid2{
+      margin-top: 20px;
+      display:grid;
+      grid-template-columns: 1.35fr .65fr;
+      gap: 16px;
+    }
+    @media (max-width: 980px){
+      .grid2{ grid-template-columns: 1fr; }
+      .heroStats{ grid-template-columns: 1fr; }
+      .ctaRow{ justify-content:center; }
+    }
+
+    /* Form card */
+    .card{
+      background: linear-gradient(135deg, rgba(255,255,255,.05), rgba(255,255,255,.02));
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 22px;
+      box-shadow: var(--shadowSoft);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding: 18px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:12px;
+      flex-wrap:wrap;
+    }
+    .cardHead h2{
+      margin:0;
+      font-size: 16px;
+      letter-spacing:.08em;
+      font-weight:900;
+      text-transform: uppercase;
+    }
+    .badgePill{
+      border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+      color: var(--accent);
+      background: var(--accentDim);
+      padding: 8px 12px;
+      border-radius: 999px;
+      font-size: 12px;
+      letter-spacing: .12em;
+      font-weight: 900;
+    }
+
+    .cardBody{ padding: 18px; }
+
+    .formGrid{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+    }
+    @media (max-width: 720px){
+      .formGrid{ grid-template-columns: 1fr; }
+    }
+
+    label{
+      display:block;
+      font-size: 11px;
+      letter-spacing:.18em;
+      text-transform: uppercase;
+      opacity:.62;
+      margin-bottom:8px;
+    }
+    input, select, textarea{
+      width:100%;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.05);
+      color: var(--text);
+      padding: 12px 12px;
+      outline:none;
+      transition: border-color .15s ease, box-shadow .15s ease;
+      font-size: 14px;
+    }
+    textarea{ min-height: 120px; resize: vertical; }
+    input::placeholder, textarea::placeholder{ color: rgba(255,255,255,.35); }
+    input:focus, select:focus, textarea:focus{
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      box-shadow: 0 0 0 4px var(--accentDim);
+    }
+    .full{ grid-column: 1 / -1; }
+
+    .actions{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-top: 14px;
+      flex-wrap:wrap;
+    }
+    .btn{
+      border:0;
+      cursor:pointer;
+      border-radius: 999px;
+      padding: 12px 16px;
+      font-weight: 900;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      font-size: 12px;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      user-select:none;
+    }
+    .btnPrimary{
+      background: var(--accent);
+      color: #08101a;
+      box-shadow: 0 0 24px var(--accentDim);
+      padding: 13px 18px;
+    }
+    .btnPrimary:hover{ transform: scale(1.02); filter: brightness(1.05); }
+    .btnPrimary:active{ transform: scale(.98); }
+
+    .btnGhost{
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.80);
+      border: 1px solid rgba(255,255,255,.12);
+    }
+    .btnGhost:hover{ filter: brightness(1.08); }
+    .hint{
+      font-size: 12px;
+      color: rgba(255,255,255,.45);
+      line-height:1.35;
+    }
+
+    /* Sidebar */
+    .sideItem{
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+      padding: 14px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      margin-bottom: 12px;
+    }
+    .sideIcon{
+      width:44px; height:44px;
+      border-radius: 16px;
+      background: var(--accentDim);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      flex: 0 0 auto;
+      box-shadow: 0 0 22px rgba(0,0,0,.35);
+    }
+    .sideTitle{ font-weight:900; letter-spacing:.06em; font-size: 12px; }
+    .sideDesc{ font-size: 12px; color: rgba(255,255,255,.52); margin-top:4px; line-height:1.35; }
+
+    /* Services grid */
+    .services{
+      margin-top: 16px;
+      display:grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 10px;
+    }
+    @media (max-width: 980px){
+      .services{ grid-template-columns: repeat(2, minmax(0,1fr)); }
+    }
+    .svc{
+      padding: 12px;
+      border-radius: 18px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+      transition: transform .15s ease, border-color .15s ease, background .15s ease;
+      cursor:pointer;
+    }
+    .svc:hover{ transform: translateY(-3px); border-color: color-mix(in srgb, var(--accent) 35%, rgba(255,255,255,.08)); }
+    .svc.active{
+      border-color: color-mix(in srgb, var(--accent) 55%, transparent);
+      background: color-mix(in srgb, var(--accentDim) 50%, rgba(255,255,255,.04));
+    }
+    .svcTop{
+      display:flex; align-items:center; gap:10px;
+    }
+    .svcIcon{
+      width:38px; height:38px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.05);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+    }
+    .svcTitle{ font-weight:900; font-size: 12px; letter-spacing:.05em; }
+    .svcDesc{ font-size: 11px; color: rgba(255,255,255,.50); margin-top:6px; line-height:1.25; }
+
+    /* Footer */
+    .footer{
+      margin-top: 18px;
+      padding: 18px 6px 0;
+      opacity:.65;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      flex-wrap:wrap;
+      gap:10px;
+      font-size: 12px;
+      border-top: 1px solid rgba(255,255,255,.06);
+    }
+
+    /* Toast */
+    .toast{
+      position: fixed;
+      right: 16px;
+      bottom: 16px;
+      z-index: 9999;
+      width: min(420px, calc(100% - 32px));
+      padding: 14px 14px;
+      border-radius: 18px;
+      background: rgba(10,15,26,.92);
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      transform: translateY(20px);
+      opacity: 0;
+      pointer-events:none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.show{
+      opacity:1;
+      transform: translateY(0);
+      pointer-events:auto;
+    }
+    .toastRow{
+      display:flex;
+      gap: 12px;
+      align-items:flex-start;
+    }
+    .toastIcon{
+      width:40px; height:40px;
+      border-radius: 14px;
+      background: var(--accentDim);
+      border: 1px solid color-mix(in srgb, var(--accent) 50%, transparent);
+      display:flex; align-items:center; justify-content:center;
+      flex: 0 0 auto;
+    }
+    .toastTitle{
+      font-weight: 900;
+      letter-spacing:.06em;
+      font-size: 13px;
+      margin:0;
+    }
+    .toastDesc{
+      margin: 6px 0 0;
+      font-size: 12px;
+      color: rgba(255,255,255,.55);
+      line-height:1.35;
+    }
+    .toastClose{
+      margin-left:auto;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.80);
+      border-radius: 999px;
+      padding: 6px 10px;
+      cursor:pointer;
+      font-weight:800;
+      letter-spacing:.08em;
+      font-size: 11px;
+    }
+    .toastClose:hover{ filter: brightness(1.08); }
+
+    /* Tiny SVG icons */
+    .ico{ width:20px; height:20px; display:block; }
+    .icoSmall{ width:18px; height:18px; display:block; }
+  </style>
+</head>
+
+<body>
+  <div class="grid"></div>
+  <div class="scan"></div>
+
+  <!-- NAV -->
+  <div class="nav">
+    <div class="navInner">
+      <div class="brand">
+        <div class="badgeIcon" aria-hidden="true">
+          <!-- Radio icon -->
+          <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+            stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+            <path d="M4.9 19.1a10 10 0 0 1 0-14.2" />
+            <path d="M7.8 16.2a6 6 0 0 1 0-8.4" />
+            <path d="M16.2 7.8a6 6 0 0 1 0 8.4" />
+            <path d="M19.1 4.9a10 10 0 0 1 0 14.2" />
+            <circle cx="12" cy="12" r="1" />
+          </svg>
         </div>
-
-        {/* TOP NAV */}
-        <motion.nav
-          initial={{ opacity: 0, y: -16 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="fixed top-0 left-0 right-0 z-50 px-6 py-4"
-        >
-          <div className="max-w-7xl mx-auto flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="relative">
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center"
-                  style={{ backgroundColor: accentDim, border: `1px solid ${accent}` }}
-                >
-                  <Radio className="w-5 h-5" style={{ color: accent }} />
-                </div>
-                <motion.div
-                  animate={{ scale: [1, 1.5, 1], opacity: [0.45, 0, 0.45] }}
-                  transition={{ duration: 2, repeat: Infinity }}
-                  className="absolute inset-0 rounded-xl"
-                  style={{ border: `1px solid ${accent}` }}
-                />
-              </div>
-
-              <div className="leading-tight">
-                <div className="text-lg font-semibold tracking-wider">DEALBANKERS</div>
-                <div className="text-xs tracking-[0.32em] opacity-60">DISPATCH</div>
-              </div>
-            </div>
-
-            {/* Mode toggle */}
-            <div className="flex items-center gap-2 p-1 rounded-full bg-white/5 backdrop-blur-xl border border-white/10">
-              <button
-                onClick={() => setMode("standard")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  !isEmergency ? "text-white" : "text-white/50 hover:text-white/80"
-                }`}
-                style={!isEmergency ? { backgroundColor: accentDim, color: accent } : undefined}
-              >
-                <span className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${!isEmergency ? "animate-pulse" : ""}`} style={{ backgroundColor: !isEmergency ? accent : "rgba(255,255,255,0.25)" }} />
-                  Standard
-                </span>
-              </button>
-
-              <button
-                onClick={() => setMode("emergency")}
-                className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                  isEmergency ? "text-white" : "text-white/50 hover:text-white/80"
-                }`}
-                style={isEmergency ? { backgroundColor: accentDim, color: accent } : undefined}
-              >
-                <span className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full ${isEmergency ? "animate-pulse" : ""}`} style={{ backgroundColor: isEmergency ? accent : "rgba(255,255,255,0.25)" }} />
-                  Emergency
-                </span>
-              </button>
-            </div>
-          </div>
-        </motion.nav>
-
-        {/* HERO CONTENT */}
-        <div className="relative z-20 text-center max-w-4xl mx-auto">
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.15 }}
-            className="text-xs tracking-[0.45em] mb-8 opacity-70"
-            style={{ color: accent }}
-          >
-            PROPERTY OPERATIONS COMMAND
-          </motion.p>
-
-          <motion.h1
-            initial={{ opacity: 0, y: 18 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.25 }}
-            className="text-4xl md:text-6xl lg:text-7xl font-light tracking-tight mb-6"
-          >
-            When things go wrong,
-            <br />
-            <span className="font-semibold" style={{ color: accent }}>
-              you activate.
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ delay: 0.35 }}
-            className="text-lg md:text-xl text-white/60 mb-14 max-w-2xl mx-auto"
-          >
-            On-demand expert dispatch for property managers.
-            <br />
-            Emergency. Make-ready. Rapid cleanup. One command.
-          </motion.p>
-
-          {/* BIG ROUND BUTTON */}
-          <motion.div
-            initial={{ opacity: 0, scale: 0.92 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ delay: 0.45, type: "spring", stiffness: 110 }}
-            className="relative inline-flex items-center justify-center"
-          >
-            {/* Rings */}
-            {[1, 2, 3].map((ring) => (
-              <motion.div
-                key={ring}
-                className="absolute rounded-full"
-                style={{
-                  width: 200 + ring * 56,
-                  height: 200 + ring * 56,
-                  border: `1px solid ${accent}`,
-                  opacity: 0.07 + ring * 0.04,
-                }}
-                animate={{ scale: [1, 1.08, 1], opacity: [0.08, 0.18, 0.08] }}
-                transition={{ duration: 3.2, repeat: Infinity, delay: ring * 0.25 }}
-              />
-            ))}
-
-            {/* Pulse */}
-            <motion.div
-              className="absolute w-48 h-48 rounded-full"
-              style={{ backgroundColor: accent }}
-              animate={{ scale: [1, 1.5], opacity: [0.25, 0] }}
-              transition={{ duration: 2, repeat: Infinity }}
-            />
-
-            <motion.button
-              onClick={onPrimaryCTA}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.96 }}
-              className="relative w-48 h-48 rounded-full flex flex-col items-center justify-center gap-2 transition-all duration-300"
-              style={{
-                background: `radial-gradient(circle at 30% 30%, ${accentDim}, transparent 70%)`,
-                border: `2px solid ${accent}`,
-                boxShadow: `0 0 60px ${accentDim}, inset 0 0 60px ${accentDim}`,
-              }}
-            >
-              <Target className="w-8 h-8" style={{ color: accent }} />
-              <span className="text-sm font-semibold tracking-wider" style={{ color: accent }}>
-                {isEmergency ? "ACTIVATE" : "DISPATCH"}
-              </span>
-              <span className="text-xs opacity-60">{isEmergency ? "EMERGENCY" : "TECHNICIAN"}</span>
-            </motion.button>
-          </motion.div>
-
-          <div className="mt-10 text-sm text-white/45">
-            Avg response: {isEmergency ? "< 30 minutes" : "< 2 hours"}
-          </div>
-
-          {/* Secondary CTAs */}
-          <div className="mt-10 flex flex-col sm:flex-row items-center justify-center gap-3">
-            <a
-              href={DISPATCH_URL}
-              className="px-6 py-3 rounded-full border border-white/15 bg-white/5 hover:bg-white/10 transition"
-            >
-              Create Dispatch Console
-            </a>
-            <a
-              href={EMERGENCY_URL}
-              className="px-6 py-3 rounded-full border transition"
-              style={{ borderColor: `${accent}55`, color: accent }}
-            >
-              Request First Mission
-            </a>
-          </div>
+        <div>
+          <div class="brandTitle">DEALBANKERS</div>
+          <div class="brandSub">DISPATCH</div>
         </div>
+      </div>
 
-        {/* Scroll indicator */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 0.9 }}
-          className="absolute bottom-7 left-1/2 -translate-x-1/2"
-        >
-          <motion.div animate={{ y: [0, 10, 0] }} transition={{ duration: 2, repeat: Infinity }}>
-            <ChevronDown className="w-6 h-6 opacity-40" />
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* HOW IT WORKS */}
-      <section className="relative py-28 px-4">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="text-xs tracking-[0.45em] mb-3 opacity-60" style={{ color: accent }}>
-              MISSION PROTOCOL
-            </div>
-            <h2 className="text-3xl md:text-5xl font-light">How It Works</h2>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-6">
-            {[
-              { step: "01", title: "Select Mission Type", desc: "Emergency response or standard request", icon: Radio },
-              { step: "02", title: "Pin Location", desc: "Mark property + unit + notes", icon: Navigation },
-              { step: "03", title: "Operator Deployed", desc: "Confirmed ETA + updates", icon: Target },
-            ].map((item, i) => (
-              <motion.div
-                key={item.step}
-                initial={{ opacity: 0, y: 16 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.12 }}
-                className="relative"
-              >
-                <div
-                  className="relative p-7 rounded-2xl backdrop-blur-xl"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-                    border: "1px solid rgba(255,255,255,0.10)",
-                  }}
-                >
-                  <div className="absolute -top-4 -left-3 text-6xl font-bold opacity-10" style={{ color: accent }}>
-                    {item.step}
-                  </div>
-
-                  <div
-                    className="w-14 h-14 rounded-xl flex items-center justify-center mb-5"
-                    style={{ backgroundColor: accentDim, border: `1px solid ${accent}40` }}
-                  >
-                    <item.icon className="w-6 h-6" style={{ color: accent }} />
-                  </div>
-
-                  <div className="text-xl font-semibold mb-2">{item.title}</div>
-                  <div className="text-white/55">{item.desc}</div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* SERVICES */}
-      <section className="relative py-28 px-4 bg-gradient-to-b from-transparent via-white/[0.02] to-transparent">
-        <div className="max-w-6xl mx-auto">
-          <div className="text-center mb-16">
-            <div className="text-xs tracking-[0.45em] mb-3 opacity-60" style={{ color: accent }}>
-              OPERATIONAL CAPABILITIES
-            </div>
-            <h2 className="text-3xl md:text-5xl font-light">Services</h2>
-          </div>
-
-          <div className="grid grid-cols-2 md:grid-cols-3 gap-4 md:gap-6">
-            {services.map((s, i) => (
-              <motion.div
-                key={s.title}
-                initial={{ opacity: 0, scale: 0.98 }}
-                whileInView={{ opacity: 1, scale: 1 }}
-                viewport={{ once: true }}
-                transition={{ delay: i * 0.08 }}
-                whileHover={{ y: -4 }}
-                className="group cursor-pointer"
-              >
-                <div
-                  className="relative p-6 rounded-xl backdrop-blur-xl overflow-hidden"
-                  style={{
-                    background: "linear-gradient(135deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01))",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  <div
-                    className="absolute inset-0 opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                    style={{ background: `radial-gradient(circle at 50% 50%, ${accentDim}, transparent 70%)` }}
-                  />
-                  <div className="relative">
-                    <s.icon className="w-8 h-8 mb-4" style={{ color: "rgba(255,255,255,0.5)" }} />
-                    <div className="text-lg font-medium mb-1">{s.title}</div>
-                    <div className="text-sm text-white/45">{s.desc}</div>
-                  </div>
-                </div>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* BENEFITS */}
-      <section className="relative py-28 px-4">
-        <div className="max-w-6xl mx-auto grid lg:grid-cols-2 gap-14 items-center">
-          <div>
-            <div className="text-xs tracking-[0.45em] mb-3 opacity-60" style={{ color: accent }}>
-              FOR PROPERTY MANAGERS
-            </div>
-            <h2 className="text-3xl md:text-5xl font-light mb-5">
-              Your property.
-              <br />
-              <span className="font-semibold">Our operators.</span>
-            </h2>
-            <p className="text-lg text-white/55 mb-8">
-              Stop calling around. Activate a response team with one command.
-            </p>
-
-            <div className="space-y-4">
-              {benefits.map((b, i) => (
-                <motion.div
-                  key={b.title}
-                  initial={{ opacity: 0, x: -12 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="flex items-start gap-4"
-                >
-                  <div
-                    className="w-12 h-12 rounded-xl flex items-center justify-center flex-shrink-0"
-                    style={{ backgroundColor: accentDim, border: `1px solid ${accent}30` }}
-                  >
-                    <b.icon className="w-5 h-5" style={{ color: accent }} />
-                  </div>
-                  <div>
-                    <div className="font-medium">{b.title}</div>
-                    <div className="text-sm text-white/45">{b.desc}</div>
-                  </div>
-                </motion.div>
-              ))}
-            </div>
-          </div>
-
-          <div
-            className="p-8 md:p-12 rounded-3xl backdrop-blur-xl"
-            style={{
-              background: "linear-gradient(135deg, rgba(255,255,255,0.05), rgba(255,255,255,0.02))",
-              border: "1px solid rgba(255,255,255,0.10)",
-            }}
-          >
-            <div className="grid grid-cols-2 gap-8">
-              {[
-                { value: "< 30", unit: "min", label: "Emergency Response" },
-                { value: "On-Demand", unit: "", label: "Porter / Turns" },
-                { value: "One", unit: "", label: "Command Center" },
-                { value: "Fast", unit: "", label: "Status Updates" },
-              ].map((stat) => (
-                <div key={stat.label} className="text-center">
-                  <div className="mb-2">
-                    <span className="text-3xl md:text-4xl font-light" style={{ color: accent }}>
-                      {stat.value}
-                    </span>
-                    <span className="text-xl text-white/60">{stat.unit}</span>
-                  </div>
-                  <div className="text-xs text-white/45 tracking-wide">{stat.label}</div>
-                </div>
-              ))}
-            </div>
-
-            <div className="mt-10 flex gap-3 justify-center">
-              <a
-                href={DISPATCH_URL}
-                className="px-6 py-3 rounded-full bg-white/10 hover:bg-white/15 transition border border-white/10"
-              >
-                Standard Dispatch
-              </a>
-              <a
-                href={EMERGENCY_URL}
-                className="px-6 py-3 rounded-full transition border"
-                style={{ borderColor: `${accent}55`, color: accent }}
-              >
-                Emergency Dispatch
-              </a>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* FOOTER */}
-      <footer className="relative py-12 px-4 border-t border-white/5">
-        <div className="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6">
-          <div className="flex items-center gap-3">
-            <div
-              className="w-8 h-8 rounded-xl flex items-center justify-center"
-              style={{ backgroundColor: accentDim, border: `1px solid ${accent}40` }}
-            >
-              <Radio className="w-4 h-4" style={{ color: accent }} />
-            </div>
-            <div className="text-sm tracking-wider opacity-70">DEALBANKERS DISPATCH</div>
-          </div>
-
-          <div className="text-sm text-white/45">Rapid Response for Real Assets</div>
-
-          <div className="text-xs text-white/35">© {new Date().getFullYear()} DealBankers</div>
-        </div>
-      </footer>
+      <div class="toggle" role="tablist" aria-label="Dispatch mode">
+        <button class="tbtn active" id="standardBtn" role="tab" aria-selected="true">
+          <span class="dot"></span> Standard
+        </button>
+        <button class="tbtn" id="emergencyBtn" role="tab" aria-selected="false">
+          <span class="dot"></span> Emergency
+        </button>
+      </div>
     </div>
-  );
-}
+  </div>
+
+  <div class="wrap">
+
+    <!-- HERO -->
+    <div class="hero">
+      <div class="heroMedia">
+        <video autoplay muted loop playsinline>
+          <!-- Put your actual mp4 here (or delete video tag if you want) -->
+          <source src="/media/dispatch.mp4" type="video/mp4">
+        </video>
+      </div>
+      <div class="heroShade"></div>
+
+      <div class="heroInner">
+        <div class="kicker">PROPERTY OPERATIONS COMMAND</div>
+        <h1>
+          When things go wrong,<br>
+          <span class="accentText" id="accentPhrase">you activate.</span>
+        </h1>
+        <p class="lead">
+          On-demand expert dispatch for property managers. Emergency, make-ready, rapid cleanup — one command.
+        </p>
+
+        <div class="ctaRow">
+          <!-- Big round button -->
+          <div class="ctaWrap" aria-label="Primary dispatch action">
+            <div class="ring r1"></div>
+            <div class="ring r2"></div>
+            <div class="ring r3"></div>
+
+            <button class="btnMain" id="primaryBtn">
+              <!-- Target icon -->
+              <svg class="ico" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                <circle cx="12" cy="12" r="10"></circle>
+                <circle cx="12" cy="12" r="6"></circle>
+                <circle cx="12" cy="12" r="2"></circle>
+              </svg>
+              <div class="btnTop" id="btnTop">DISPATCH</div>
+              <div class="btnSub" id="btnSub">TECHNICIAN</div>
+            </button>
+          </div>
+
+          <!-- Stats -->
+          <div class="heroStats">
+            <div class="statCard">
+              <div class="statIcon">
+                <!-- Clock -->
+                <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                  <circle cx="12" cy="12" r="10"></circle>
+                  <path d="M12 6v6l4 2"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="statTitle" id="etaTitle">RESPONSE WINDOW</div>
+                <div class="statDesc" id="etaDesc">Target response: &lt; 2 hours</div>
+              </div>
+            </div>
+
+            <div class="statCard">
+              <div class="statIcon">
+                <!-- Shield -->
+                <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                  <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="statTitle">VETTED OPERATORS</div>
+                <div class="statDesc">Trusted techs + quality control</div>
+              </div>
+            </div>
+
+            <div class="statCard">
+              <div class="statIcon">
+                <!-- MapPin -->
+                <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                  <path d="M12 21s-6-5-6-10a6 6 0 0 1 12 0c0 5-6 10-6 10z"></path>
+                  <circle cx="12" cy="11" r="2"></circle>
+                </svg>
+              </div>
+              <div>
+                <div class="statTitle">REAL-TIME UPDATES</div>
+                <div class="statDesc">Status + ETA you can rely on</div>
+              </div>
+            </div>
+
+            <div class="statCard">
+              <div class="statIcon">
+                <!-- FileText -->
+                <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                  stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                  <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                  <path d="M14 2v6h6"></path>
+                  <path d="M16 13H8"></path>
+                  <path d="M16 17H8"></path>
+                  <path d="M10 9H8"></path>
+                </svg>
+              </div>
+              <div>
+                <div class="statTitle">ONE THREAD</div>
+                <div class="statDesc">Notes, photos, invoice in one place</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Services selector -->
+        <div class="services" id="servicesGrid" aria-label="Services">
+          <!-- Filled by JS -->
+        </div>
+      </div>
+    </div>
+
+    <!-- MAIN: Form + Sidebar -->
+    <div class="grid2">
+      <!-- FORM -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <h2>Dispatch Portal</h2>
+            <div class="hint">Create a mission request. Required: name, phone, address.</div>
+          </div>
+          <div class="badgePill" id="modePill">BLUE CHANNEL</div>
+        </div>
+
+        <div class="cardBody">
+          <form id="dispatchForm" autocomplete="on">
+            <div class="formGrid">
+              <div>
+                <label for="company">Company / Portfolio (optional)</label>
+                <input id="company" name="company" placeholder="ABC Property Management" />
+              </div>
+
+              <div>
+                <label for="service">Service Type</label>
+                <select id="service" name="service"></select>
+              </div>
+
+              <div>
+                <label for="name">Requester Name *</label>
+                <input id="name" name="name" placeholder="Your name" required />
+              </div>
+
+              <div>
+                <label for="phone">Phone *</label>
+                <input id="phone" name="phone" placeholder="(210) 555-1234" required />
+              </div>
+
+              <div class="full">
+                <label for="address">Property Address *</label>
+                <input id="address" name="address" placeholder="123 Main St, San Antonio, TX" required />
+              </div>
+
+              <div>
+                <label for="unit">Unit / Suite (optional)</label>
+                <input id="unit" name="unit" placeholder="Unit 204 / Suite B" />
+              </div>
+
+              <div class="full">
+                <label for="notes">Problem Notes</label>
+                <textarea id="notes" name="notes" placeholder="What happened? Access instructions? Water shutoff? Gate code?"></textarea>
+              </div>
+            </div>
+
+            <div class="actions">
+              <button class="btn btnPrimary" type="submit" id="submitBtn">
+                ACTIVATE MISSION
+              </button>
+
+              <button class="btn btnGhost" type="button" id="viewMissionsBtn">
+                VIEW LOG
+              </button>
+
+              <div class="hint" id="formHint">
+                Tip: include shutoff location / lockbox / gate code for faster response.
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- SIDEBAR -->
+      <div class="card">
+        <div class="cardHead">
+          <div>
+            <h2>Command Guarantees</h2>
+            <div class="hint">What PMs feel when they use this portal.</div>
+          </div>
+          <div class="badgePill" style="opacity:.9;">MISSION READY</div>
+        </div>
+
+        <div class="cardBody">
+          <div class="sideItem">
+            <div class="sideIcon">
+              <!-- Navigation icon -->
+              <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                <path d="M3 11l19-9-9 19-2-8-8-2z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="sideTitle">SELECT → PIN → DEPLOY</div>
+              <div class="sideDesc">Choose service, add notes, and dispatch an operator with one command.</div>
+            </div>
+          </div>
+
+          <div class="sideItem">
+            <div class="sideIcon">
+              <!-- Radio icon -->
+              <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                <path d="M4.9 19.1a10 10 0 0 1 0-14.2" />
+                <path d="M7.8 16.2a6 6 0 0 1 0-8.4" />
+                <path d="M16.2 7.8a6 6 0 0 1 0 8.4" />
+                <path d="M19.1 4.9a10 10 0 0 1 0 14.2" />
+                <circle cx="12" cy="12" r="1" />
+              </svg>
+            </div>
+            <div>
+              <div class="sideTitle">SINGLE CHANNEL</div>
+              <div class="sideDesc">One thread for status, photos, notes, and invoice.</div>
+            </div>
+          </div>
+
+          <div class="sideItem">
+            <div class="sideIcon">
+              <!-- Clock icon -->
+              <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                <circle cx="12" cy="12" r="10"></circle>
+                <path d="M12 6v6l4 2"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="sideTitle" id="sideEtaTitle">RESPONSE WINDOW</div>
+              <div class="sideDesc" id="sideEtaDesc">Target response: &lt; 2 hours (standard)</div>
+            </div>
+          </div>
+
+          <div class="sideItem" style="margin-bottom:0;">
+            <div class="sideIcon">
+              <!-- Shield icon -->
+              <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+                stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+              </svg>
+            </div>
+            <div>
+              <div class="sideTitle">VETTED OPERATORS</div>
+              <div class="sideDesc">Trusted technicians. Quality control. No chasing vendors.</div>
+            </div>
+          </div>
+
+          <div class="footer">
+            <div>Rapid Response for Real Assets</div>
+            <div>© <span id="year"></span> DealBankers</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- TOAST -->
+  <div class="toast" id="toast" role="status" aria-live="polite">
+    <div class="toastRow">
+      <div class="toastIcon" aria-hidden="true">
+        <!-- Target -->
+        <svg class="icoSmall" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"
+          stroke-linecap="round" stroke-linejoin="round" style="color:var(--accent)">
+          <circle cx="12" cy="12" r="10"></circle>
+          <circle cx="12" cy="12" r="6"></circle>
+          <circle cx="12" cy="12" r="2"></circle>
+        </svg>
+      </div>
+      <div>
+        <p class="toastTitle" id="toastTitle">Mission Activated</p>
+        <p class="toastDesc" id="toastDesc">Request logged.</p>
+      </div>
+      <button class="toastClose" id="toastClose" type="button">CLOSE</button>
+    </div>
+  </div>
+
+  <script>
+    // ====== CONFIG ======
+    // If you want emergency to CALL instead of submit, set EMERGENCY_CALL to a tel: link:
+    // const EMERGENCY_CALL = "tel:+12108165112";
+    const EMERGENCY_CALL = ""; // leave blank to just submit normally
+
+    // ====== SERVICES ======
+    const SERVICES = [
+      { value: "emergency-plumbing", label: "Emergency Plumbing", desc: "Burst pipes, leaks, flooding", icon: "droplets" },
+      { value: "water-extraction", label: "Water Extraction", desc: "Rapid flood response", icon: "zap" },
+      { value: "make-ready", label: "Make-Ready", desc: "Unit turnovers, prep work", icon: "home" },
+      { value: "porter-cleanup", label: "Porter / Cleanup", desc: "Deep clean, debris removal", icon: "brush" },
+      { value: "commercial-repairs", label: "Commercial Repairs", desc: "HVAC, electrical, structural", icon: "wrench" },
+      { value: "hydro-jet", label: "Hydro-Jet Service", desc: "Drain clearing, sewer lines", icon: "building" }
+    ];
+
+    // ====== ELEMENTS ======
+    const standardBtn = document.getElementById("standardBtn");
+    const emergencyBtn = document.getElementById("emergencyBtn");
+    const btnTop = document.getElementById("btnTop");
+    const btnSub = document.getElementById("btnSub");
+    const etaDesc = document.getElementById("etaDesc");
+    const modePill = document.getElementById("modePill");
+    const sideEtaDesc = document.getElementById("sideEtaDesc");
+    const primaryBtn = document.getElementById("primaryBtn");
+
+    const form = document.getElementById("dispatchForm");
+    const companyEl = document.getElementById("company");
+    const serviceEl = document.getElementById("service");
+    const nameEl = document.getElementById("name");
+    const phoneEl = document.getElementById("phone");
+    const addressEl = document.getElementById("address");
+    const unitEl = document.getElementById("unit");
+    const notesEl = document.getElementById("notes");
+    const viewMissionsBtn = document.getElementById("viewMissionsBtn");
+
+    const servicesGrid = document.getElementById("servicesGrid");
+
+    const toast = document.getElementById("toast");
+    const toastTitle = document.getElementById("toastTitle");
+    const toastDesc = document.getElementById("toastDesc");
+    const toastClose = document.getElementById("toastClose");
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // ====== STATE ======
+    let mode = "standard"; // standard | emergency
+    let selectedService = "make-ready";
+
+    // ====== HELPERS ======
+    function showToast(title, desc){
+      toastTitle.textContent = title;
+      toastDesc.textContent = desc;
+      toast.classList.add("show");
+      clearTimeout(showToast._t);
+      showToast._t = setTimeout(()=> toast.classList.remove("show"), 4500);
+    }
+
+    toastClose.addEventListener("click", () => toast.classList.remove("show"));
+
+    function setAccent(nextMode){
+      mode = nextMode;
+      const root = document.documentElement;
+
+      if(mode === "emergency"){
+        root.style.setProperty("--accent", "var(--red)");
+        root.style.setProperty("--accentDim", "var(--redDim)");
+
+        emergencyBtn.classList.add("active");
+        standardBtn.classList.remove("active");
+        emergencyBtn.setAttribute("aria-selected", "true");
+        standardBtn.setAttribute("aria-selected", "false");
+
+        btnTop.textContent = "ACTIVATE";
+        btnSub.textContent = "EMERGENCY";
+        etaDesc.textContent = "Target response: < 30 minutes";
+        sideEtaDesc.textContent = "Target response: < 30 minutes (emergency)";
+        modePill.textContent = "RED CHANNEL";
+        selectedService = "emergency-plumbing";
+
+      } else {
+        root.style.setProperty("--accent", "var(--blue)");
+        root.style.setProperty("--accentDim", "var(--blueDim)");
+
+        standardBtn.classList.add("active");
+        emergencyBtn.classList.remove("active");
+        standardBtn.setAttribute("aria-selected", "true");
+        emergencyBtn.setAttribute("aria-selected", "false");
+
+        btnTop.textContent = "DISPATCH";
+        btnSub.textContent = "TECHNICIAN";
+        etaDesc.textContent = "Target response: < 2 hours";
+        sideEtaDesc.textContent = "Target response: < 2 hours (standard)";
+        modePill.textContent = "BLUE CHANNEL";
+        selectedService = "make-ready";
+      }
+
+      // Update selects + grid
+      serviceEl.value = selectedService;
+      updateServiceGridActive();
+    }
+
+    function renderServiceOptions(){
+      serviceEl.innerHTML = "";
+      for(const s of SERVICES){
+        const opt = document.createElement("option");
+        opt.value = s.value;
+        opt.textContent = s.label;
+        serviceEl.appendChild(opt);
+      }
+      serviceEl.value = selectedService;
+    }
+
+    function iconSvg(name){
+      // Simple inline icons
+      const stroke = 'stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" fill="none"';
+      const color = 'style="color:rgba(255,255,255,.55)"';
+      if(name === "droplets") return `<svg class="icoSmall" viewBox="0 0 24 24" ${color} ${stroke}><path d="M12 2s6 7 6 12a6 6 0 0 1-12 0c0-5 6-12 6-12z"/></svg>`;
+      if(name === "zap") return `<svg class="icoSmall" viewBox="0 0 24 24" ${color} ${stroke}><path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/></svg>`;
+      if(name === "home") return `<svg class="icoSmall" viewBox="0 0 24 24" ${color} ${stroke}><path d="M3 10l9-7 9 7v10a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M9 22V12h6v10"/></svg>`;
+      if(name === "brush") return `<svg class="icoSmall" viewBox="0 0 24 24" ${color} ${stroke}><path d="M9 11l8-8 4 4-8 8"/><path d="M7 13c-2 0-4 2-4 4 0 1 1 2 2 2 2 0 4-2 4-4 0-1-1-2-2-2z"/><path d="M14 6l4 4"/></svg>`;
+      if(name === "wrench") return `<svg class="icoSmall" viewBox="0 0 24 24" ${color} ${stroke}><path d="M14.7 6.3a4 4 0 0 0-5.7 5.6l-6.3 6.3a2 2 0 0 0 2.8 2.8l6.3-6.3a4 4 0 0 0 5.6-5.7l-2.2 2.2-3-3 2.5-2.4z"/></svg>`;
+      if(name === "building") return `<svg class="icoSmall" viewBox="0 0 24 24" ${color} ${stroke}><path d="M3 22V2h14v20"/><path d="M7 6h6"/><path d="M7 10h6"/><path d="M7 14h6"/><path d="M19 22V8h2v14"/></svg>`;
+      return "";
+    }
+
+    function renderServiceGrid(){
+      servicesGrid.innerHTML = "";
+      SERVICES.forEach(s => {
+        const div = document.createElement("div");
+        div.className = "svc";
+        div.dataset.value = s.value;
+        div.innerHTML = `
+          <div class="svcTop">
+            <div class="svcIcon">${iconSvg(s.icon)}</div>
+            <div class="svcTitle">${s.label}</div>
+          </div>
+          <div class="svcDesc">${s.desc}</div>
+        `;
+        div.addEventListener("click", () => {
+          selectedService = s.value;
+          serviceEl.value = s.value;
+          updateServiceGridActive();
+        });
+        servicesGrid.appendChild(div);
+      });
+      updateServiceGridActive();
+    }
+
+    function updateServiceGridActive(){
+      [...servicesGrid.querySelectorAll(".svc")].forEach(el => {
+        el.classList.toggle("active", el.dataset.value === selectedService);
+      });
+    }
+
+    function getServiceLabel(value){
+      const s = SERVICES.find(x => x.value === value);
+      return s ? s.label : value;
+    }
+
+    function missionId(){
+      return "M-" + Date.now().toString().slice(-9);
+    }
+
+    function saveMission(payload){
+      const key = "db_dispatch_missions";
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      existing.unshift(payload);
+      localStorage.setItem(key, JSON.stringify(existing));
+    }
+
+    function openMissionLog(){
+      const key = "db_dispatch_missions";
+      const existing = JSON.parse(localStorage.getItem(key) || "[]");
+      if(!existing.length){
+        showToast("No missions yet", "Submit a dispatch request to start the mission log.");
+        return;
+      }
+      // Simple alert view (works everywhere). We can upgrade to modal if you want.
+      const lines = existing.slice(0, 12).map(m =>
+        `${m.id} | ${m.mode.toUpperCase()} | ${m.serviceLabel} | ${m.address} | ${m.name} | ${m.phone}`
+      );
+      alert("Recent Missions (local log):\n\n" + lines.join("\n"));
+    }
+
+    // ====== EVENTS ======
+    standardBtn.addEventListener("click", () => setAccent("standard"));
+    emergencyBtn.addEventListener("click", () => setAccent("emergency"));
+
+    serviceEl.addEventListener("change", (e) => {
+      selectedService = e.target.value;
+      updateServiceGridActive();
+    });
+
+    primaryBtn.addEventListener("click", () => {
+      // Focus the form
+      nameEl.scrollIntoView({ behavior: "smooth", block: "center" });
+      nameEl.focus();
+    });
+
+    viewMissionsBtn.addEventListener("click", openMissionLog);
+
+    form.addEventListener("submit", (e) => {
+      e.preventDefault();
+
+      const name = nameEl.value.trim();
+      const phone = phoneEl.value.trim();
+      const address = addressEl.value.trim();
+
+      if(!name || !phone || !address){
+        showToast("Missing required fields", "Name, phone, and property address are required.");
+        return;
+      }
+
+      if(mode === "emergency" && EMERGENCY_CALL){
+        // optional: call instead of submit
+        window.location.href = EMERGENCY_CALL;
+        return;
+      }
+
+      const payload = {
+        id: missionId(),
+        createdAt: new Date().toISOString(),
+        mode,
+        service: selectedService,
+        serviceLabel: getServiceLabel(selectedService),
+        company: companyEl.value.trim(),
+        name,
+        phone,
+        address,
+        unit: unitEl.value.trim(),
+        notes: notesEl.value.trim()
+      };
+
+      saveMission(payload);
+
+      showToast(
+        "Mission Activated",
+        `${payload.id} logged • ${payload.serviceLabel} • ${mode === "emergency" ? "RED" : "BLUE"} channel`
+      );
+
+      // keep important fields; clear notes/unit
+      unitEl.value = "";
+      notesEl.value = "";
+    });
+
+    // ====== INIT ======
+    renderServiceOptions();
+    renderServiceGrid();
+    setAccent("standard");
+  </script>
+</body>
+</html>
