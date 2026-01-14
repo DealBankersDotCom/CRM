@@ -232,16 +232,50 @@
         radial-gradient(circle at 75% 35%, rgba(255,255,255,.06), transparent 55%),
         linear-gradient(180deg, rgba(7,11,22,.70), rgba(7,11,22,.85));
     }
-    .hero video{
-      position:absolute; inset:0;
-      width:100%; height:100%;
-      object-fit:cover;
-      opacity:.28;
-      filter: contrast(1.05) saturate(1.05);
+
+    /* ✅ Polished: smaller hero video (keeps your "way smaller" request) */
+    .heroVideo{
+      position:absolute;
+      right: 18px;
+      bottom: 18px;
+      width: min(320px, 42vw);
+      aspect-ratio: 16 / 9;
+      border-radius: 18px;
+      overflow:hidden;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.25);
+      box-shadow: 0 16px 45px rgba(0,0,0,.55);
+      z-index:1;
     }
+    .heroVideo video{
+      width:100%;
+      height:100%;
+      object-fit:cover;
+      opacity:.65;
+      filter: contrast(1.05) saturate(1.05);
+      display:block;
+    }
+    @media (max-width: 980px){
+      .heroVideo{
+        width: min(300px, 76vw);
+        right: 14px;
+        bottom: 14px;
+      }
+    }
+    @media (max-width: 560px){
+      .heroVideo{
+        position:relative;
+        right:auto;
+        bottom:auto;
+        width: 100%;
+        margin-top: 14px;
+      }
+    }
+
     .heroShade{
       position:absolute; inset:0;
       background: linear-gradient(180deg, rgba(7,11,22,.50), rgba(7,11,22,.92));
+      z-index:0;
     }
     .heroInner{
       position:relative;
@@ -728,12 +762,15 @@
 
     <!-- HERO -->
     <div class="hero">
-      <div class="heroMedia">
+      <div class="heroMedia"></div>
+
+      <!-- ✅ Smaller video window -->
+      <div class="heroVideo" aria-label="Dispatch preview video">
         <video autoplay muted loop playsinline>
-          <!-- Put your actual mp4 here (or delete video tag if you want) -->
           <source src="/images/dispatch.mp4" type="video/mp4">
         </video>
       </div>
+
       <div class="heroShade"></div>
 
       <div class="heroInner">
@@ -1009,18 +1046,11 @@
 
   <!-- =========================
        FIREBASE + APP LOGIC
-       =========================
-       Fixes added:
-       1) Writes every mission to Firestore (real database, not only localStorage)
-       2) Real-time listener on the created mission for live status updates ("actual responses")
-       3) VIEW LOG pulls from Firestore (and falls back to localStorage)
-       4) Optional Cloud Function call (either URL endpoint OR callable name)
-  -->
+       ========================= -->
   <script type="module">
     // =========================
     // FIREBASE CONFIG (PASTE YOURS)
     // =========================
-    // In Firebase Console: Project settings -> Your apps -> Web app -> "Firebase SDK snippet" -> config
     const firebaseConfig = {
       apiKey: "PASTE_API_KEY",
       authDomain: "deal-bankers.firebaseapp.com",
@@ -1031,30 +1061,16 @@
       // measurementId optional
     };
 
-    /**
-     * Where missions are stored:
-     * Firestore: collection "dispatchMissions"
-     * Each mission document includes: status, statusMessage, assignedTo, etaMinutes, etc (Ops can update)
-     *
-     * Example ops-side updates you can make later:
-     * status: "received" | "dispatched" | "enroute" | "arrived" | "complete"
-     * statusMessage: "Tech confirmed, heading your way."
-     */
-
     // =========================
     // OPTIONAL: EMAIL / FUNCTION CONFIG
     // =========================
     const OPS_PHONE_E164 = "+15128435181"; // (512) 843-5181
 
-    // Option A: raw HTTPS function endpoint (keeps your existing fetch behavior)
-    // Example:
-    // const EMAIL_ENDPOINT = "https://us-central1-deal-bankers.cloudfunctions.net/dispatchEmail";
-    const EMAIL_ENDPOINT = ""; // <-- optional
+    // Option A: raw HTTPS function endpoint
+    const EMAIL_ENDPOINT = ""; // optional
 
     // Option B: callable function name (recommended once you deploy callable)
-    // Example:
-    // const FUNCTIONS_CALLABLE_NAME = "dispatchEmail";
-    const FUNCTIONS_CALLABLE_NAME = ""; // <-- optional
+    const FUNCTIONS_CALLABLE_NAME = ""; // optional
 
     // Mailto fallback
     const MAILTO_TO = "aptbidsonline@gmail.com";
@@ -1063,7 +1079,10 @@
     // FIREBASE IMPORTS
     // =========================
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-app.js";
-    import { getFirestore, collection, doc, setDoc, getDoc, getDocs, query, orderBy, limit, serverTimestamp, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
+    import {
+      getFirestore, collection, doc, setDoc, getDocs,
+      query, orderBy, limit, serverTimestamp, onSnapshot
+    } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-firestore.js";
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/10.12.5/firebase-functions.js";
 
     // =========================
@@ -1135,7 +1154,7 @@
     // =========================
     let mode = "standard"; // standard | emergency
     let selectedService = "make-ready";
-    let activeMissionUnsub = null; // realtime listener unsubscribe
+    let activeMissionUnsub = null;
 
     // =========================
     // HELPERS
@@ -1259,14 +1278,13 @@
       localStorage.setItem(key, JSON.stringify(existing));
     }
 
-    // Firestore write (REAL)
+    // Firestore write
     async function saveMissionFirestore(payload){
       if(!firebaseReady) return { ok:false, reason:"firebase-not-ready" };
       const ref = doc(collection(db, "dispatchMissions"), payload.id);
       await setDoc(ref, {
         ...payload,
         createdAtServer: serverTimestamp(),
-        // Ops fields (can be updated later by dispatcher dashboard / staff):
         status: "new",
         statusMessage: "Received. Awaiting confirmation.",
         etaMinutes: payload.mode === "emergency" ? 30 : 120
@@ -1285,12 +1303,10 @@
         const d = snap.data();
         if(!d) return;
 
-        // Only show updates after creation:
         const status = (d.status || "").toUpperCase();
         const msg = d.statusMessage || "";
         const eta = (typeof d.etaMinutes === "number") ? ` • ETA ~${d.etaMinutes}m` : "";
 
-        // These toasts are the "actual responses"
         if(status && status !== "NEW"){
           showToast(`UPDATE: ${status}`, `${msg}${eta}`);
         }
@@ -1315,7 +1331,7 @@
     }
 
     async function sendToEndpoint(payload){
-      // Option B: callable function
+      // Callable function
       if(firebaseReady && FUNCTIONS_CALLABLE_NAME){
         try{
           const fn = httpsCallable(functions, FUNCTIONS_CALLABLE_NAME);
@@ -1326,7 +1342,7 @@
         }
       }
 
-      // Option A: raw URL
+      // Raw URL
       if(!EMAIL_ENDPOINT) return { ok:false, reason:"no-endpoint" };
       try{
         const res = await fetch(EMAIL_ENDPOINT, {
@@ -1345,7 +1361,6 @@
     }
 
     async function openMissionLog(){
-      // Firestore log (REAL)
       if(firebaseReady){
         try{
           const qy = query(collection(db, "dispatchMissions"), orderBy("createdAt", "desc"), limit(20));
@@ -1367,7 +1382,6 @@
         }
       }
 
-      // Local fallback
       const key = "db_dispatch_missions";
       const existing = JSON.parse(localStorage.getItem(key) || "[]");
       if(!existing.length){
@@ -1391,9 +1405,6 @@
       updateServiceGridActive();
     });
 
-    // Big round button:
-    // - Standard: scroll to form
-    // - Emergency: CALL ops number immediately
     primaryBtn.addEventListener("click", () => {
       if(mode === "emergency"){
         window.location.href = "tel:" + OPS_PHONE_E164;
@@ -1432,23 +1443,18 @@
         opsPhone: OPS_PHONE_E164
       };
 
-      // UX: lock button while sending
       const oldBtnText = submitBtn.textContent;
       submitBtn.disabled = true;
       submitBtn.textContent = "SENDING…";
 
-      // Always save local (fallback)
       saveMissionLocal(payload);
 
-      // Save to Firestore (REAL)
       let firestoreRef = null;
       if(firebaseReady){
         try{
           showToast("Logging…", "Saving mission to DealBankers HQ.");
           const saved = await saveMissionFirestore(payload);
           if(saved.ok) firestoreRef = saved.ref;
-
-          // Real-time status updates for "actual responses"
           if(firestoreRef) listenForMissionUpdates(firestoreRef);
         }catch(err){
           console.warn("Firestore save failed:", err);
@@ -1458,13 +1464,11 @@
         showToast("Offline Mode", "Firebase not configured yet. Saved locally for now.");
       }
 
-      // Try backend notify (email/function) next
       showToast("Transmitting…", "Sending mission to Ops.");
       const sent = await sendToEndpoint(payload);
 
       if(sent.ok){
         showToast("Mission Activated", `${payload.id} sent • ${payload.serviceLabel} • ${mode === "emergency" ? "RED" : "BLUE"} channel`);
-        // If Firestore exists, mark "received" immediately as a baseline
         if(firebaseReady && firestoreRef){
           try{
             await setDoc(firestoreRef, {
@@ -1474,16 +1478,13 @@
           }catch(_){}
         }
       } else {
-        // Fallback: mailto
         showToast("Fallback Mode", "Opening email draft to send mission to Ops.");
         window.location.href = buildMailto(payload);
       }
 
-      // Clear notes/unit (keep other fields for repeat requests)
       unitEl.value = "";
       notesEl.value = "";
 
-      // Unlock button
       submitBtn.disabled = false;
       submitBtn.textContent = oldBtnText;
     });
@@ -1495,7 +1496,6 @@
     renderServiceGrid();
     setAccent("standard");
 
-    // Optional: tiny hint in console if config not set
     if(firebaseReady === false){
       console.warn("Firebase is not ready. Paste firebaseConfig values in this file to enable real missions + realtime updates.");
     }
