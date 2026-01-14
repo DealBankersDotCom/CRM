@@ -1081,20 +1081,35 @@ const firebaseConfig = window.firebaseConfig; // coming from /config.js
     // =========================
     // INIT FIREBASE
     // =========================
-    let app = null;
-    let db = null;
-    let functions = null;
-    let firebaseReady = false;
+const firebaseConfig = window.firebaseConfig; // coming from config.js
 
-    try{
-      app = initializeApp(firebaseConfig);
-      db = getFirestore(app);
-      functions = getFunctions(app);
-      firebaseReady = true;
-    }catch(err){
-      console.warn("Firebase init failed (running in fallback mode):", err);
-      firebaseReady = false;
-    }
+// ✅ INIT GUARD: only init Firebase if config exists + looks real
+const hasFirebaseConfig =
+  firebaseConfig &&
+  typeof firebaseConfig === "object" &&
+  typeof firebaseConfig.apiKey === "string" && firebaseConfig.apiKey.length > 10 &&
+  typeof firebaseConfig.projectId === "string" && firebaseConfig.projectId.length > 2;
+
+let app = null;
+let db = null;
+let functions = null;
+let firebaseReady = false;
+
+if (!hasFirebaseConfig) {
+  console.warn("Firebase config missing/invalid. Check config.js and window.firebaseConfig.");
+  firebaseReady = false;
+} else {
+  try {
+    app = initializeApp(firebaseConfig);
+    db = getFirestore(app);
+    functions = getFunctions(app);
+    firebaseReady = true;
+  } catch (err) {
+    console.warn("Firebase init failed (running in fallback mode):", err);
+    firebaseReady = false;
+  }
+}
+
 
     // =========================
     // SERVICES
