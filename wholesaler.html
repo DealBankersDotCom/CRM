@@ -13,6 +13,15 @@
 :root{
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
   --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+
+  --panel:rgba(255,255,255,.07);
+  --panel2:rgba(0,0,0,.18);
+  --good:#00ff6a;
+  --warn:#ffd24d;
+  --bad:#ff5555;
+  --hot:#ff2a2a;
+  --work:#ffb020;
+  --new:#2b74ff;
 }
 *{box-sizing:border-box;margin:0;padding:0}
 body{
@@ -22,7 +31,7 @@ body{
   min-height:100vh;
 }
 
-/* HEADER */
+/* HEADER (kept) */
 .header{
   display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;
@@ -41,7 +50,7 @@ body{
 .chip.primary{background:#133e6a}
 .chip.danger{background:#6b1111}
 
-/* Settings Gear */
+/* Settings Gear (kept) */
 .icon-btn{
   background:rgba(255,255,255,0.12);
   border:1px solid rgba(255,255,255,0.25);
@@ -51,9 +60,10 @@ body{
   display:flex;align-items:center;justify-content:center;
 }
 .icon-btn:hover{background:rgba(255,255,255,0.25)}
+.icon-btn.mini{width:28px;height:28px;font-size:14px}
 
-/* LAYOUT */
-.wrap{max-width:1200px;margin:0 auto;padding:16px}
+/* SHELL */
+.wrap{max-width:1280px;margin:0 auto;padding:16px}
 .card{
   background:rgba(255,255,255,.07);
   border:1px solid rgba(255,255,255,.15);
@@ -65,9 +75,7 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
 }
-.seg{
-  display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px
-}
+.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px}
 .seg button{
   padding:8px 14px;border:0;background:#0e2332;
   color:#cfe6ff;cursor:pointer
@@ -77,57 +85,142 @@ body{
 }
 .status{font-size:12px;color:#9ab9d6}
 
-/* GRID */
+/* BASE44-LIKE GRID (but your skin) */
 .body{
   padding:14px;
   display:grid;
-  /* widen right panel so Notes editor feels bigger */
-  grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);
+  grid-template-columns: 320px minmax(0,1fr) 360px;
   gap:16px;
 }
-@media(max-width:960px){.body{grid-template-columns:1fr}}
-
-/* LEADS TABLE */
-.search{display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap}
-.input{
-  flex:1;background:#0d1f2d;border:1px solid #254a63;
-  color:#fff;border-radius:12px;padding:8px 10px;
+@media(max-width:1180px){
+  .body{grid-template-columns: 300px minmax(0,1fr)}
+  .col-right{display:none}
 }
-.table-wrap{overflow-x:auto;border-radius:12px}
-table{width:100%;border-collapse:collapse;font-size:14px;min-width:600px}
-th,td{padding:10px;border-top:1px solid rgba(255,255,255,.2);vertical-align:top}
-thead th{border-top:0;color:#cfe3ff}
-tr.lead-row{cursor:pointer}
-tr.lead-row:hover{background:rgba(255,255,255,.06)}
-tr.lead-row.selected{background:rgba(43,116,255,.25)}
-
-/* Make long notes readable */
-td.notes-cell{
-  max-width:420px;
-  white-space:pre-wrap;
-  word-break:break-word;
+@media(max-width:960px){
+  .body{grid-template-columns: 1fr}
+  .col-right{display:block}
 }
 
-/* DETAIL PANEL */
-.right-col{
-  background:#0b1825;border-radius:16px;padding:12px;
+/* PANELS */
+.panel{
+  border-radius:16px;
   border:1px solid rgba(255,255,255,.14);
+  background:#0b1825;
+  overflow:hidden;
 }
-.detail-header h3{margin:0;font-size:16px}
-.detail-header .sub{font-size:12px;color:#9ab9d6;margin-bottom:8px}
-.detail-info{font-size:13px;margin-bottom:10px}
-.script-box{
-  background:#0d2233;border-radius:10px;
-  padding:10px;font-size:13px;line-height:1.5;margin-top:8px;
+.panel-head{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:12px 12px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
 }
+.panel-title{
+  font-weight:800;
+  letter-spacing:.08em;
+  font-size:12px;
+  color:#cfe3ff;
+  display:flex;align-items:center;gap:10px;
+}
+.pill{
+  font-size:11px;
+  padding:3px 10px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(0,0,0,.18);
+  color:#9ab9d6;
+}
+.panel-body{padding:12px}
 
-/* Lead NAV (Prev/Next) */
-.lead-nav{
-  display:flex;
-  gap:8px;
-  align-items:center;
+/* Inputs */
+.input{
+  width:100%;
+  background:#0d1f2d;border:1px solid #254a63;
+  color:#fff;border-radius:12px;padding:9px 10px;
 }
-.lead-nav .nav-btn{
+.row{display:flex;gap:10px;align-items:center}
+.row.wrap{flex-wrap:wrap}
+
+/* Lead Queue */
+.queue{display:flex;flex-direction:column;gap:10px}
+.queue-search{display:flex;gap:10px}
+.queue-list{
+  display:flex;flex-direction:column;
+  gap:10px;
+  max-height:64vh;
+  overflow:auto;
+  padding-right:4px;
+}
+.lead-item{
+  padding:12px;
+  border-radius:14px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.10);
+  cursor:pointer;
+  transition:transform .08s ease, background .12s ease, border-color .12s ease;
+}
+.lead-item:hover{
+  transform:translateY(-1px);
+  background:rgba(255,255,255,.07);
+  border-color:rgba(43,116,255,.35);
+}
+.lead-item.selected{
+  background:rgba(43,116,255,.18);
+  border-color:rgba(43,116,255,.6);
+}
+.lead-item .addr{font-weight:800}
+.lead-item .meta{margin-top:6px;font-size:12px;color:#9ab9d6;display:flex;flex-direction:column;gap:2px}
+.badges{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
+.badge{
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  color:#cfe3ff;
+}
+.badge.new{border-color:rgba(43,116,255,.6); color:#cfe6ff}
+.badge.working{border-color:rgba(255,176,32,.65); color:#ffe3b3}
+.badge.hot{border-color:rgba(255,42,42,.65); color:#ffd0d0}
+.badge.dnc{border-color:rgba(255,85,85,.65); color:#ffd0d0}
+.badge.done{border-color:rgba(0,255,106,.45); color:#c9ffe2}
+
+/* Center Console Header */
+.lead-header{
+  display:flex;
+  align-items:flex-start;
+  justify-content:space-between;
+  gap:10px;
+}
+.lead-title{
+  display:flex;
+  flex-direction:column;
+  gap:6px;
+}
+.lead-title h2{
+  font-size:18px;
+  margin:0;
+}
+.lead-sub{
+  display:flex;
+  gap:10px;
+  flex-wrap:wrap;
+  font-size:12px;
+  color:#9ab9d6;
+}
+.lead-sub a{
+  color:#cfe3ff;
+  text-decoration:none;
+  border-bottom:1px dashed rgba(207,227,255,.45);
+}
+.lead-sub a:hover{color:#fff;border-bottom-color:#fff}
+
+/* Pager */
+.pager{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.pager .nav-btn{
   background:rgba(255,255,255,0.10);
   border:1px solid rgba(255,255,255,0.20);
   color:#cfe3ff;
@@ -137,25 +230,75 @@ td.notes-cell{
   font-weight:800;
   line-height:1;
 }
-.lead-nav .nav-btn:hover{background:rgba(255,255,255,0.18)}
-.lead-nav .nav-count{
-  font-size:12px;
-  color:#9ab9d6;
-  min-width:72px;
-  text-align:center;
-}
+.pager .nav-btn:hover{background:rgba(255,255,255,0.18)}
+.pager .nav-count{font-size:12px;color:#9ab9d6;min-width:64px;text-align:center}
 
-/* NOTES EDITOR */
-.notes-head{
-  margin-top:10px;
-  display:flex;align-items:center;justify-content:space-between;
+/* Active Number */
+.field{
+  margin-top:12px;
+  padding:12px;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.03);
 }
-.notes-title{font-weight:600;color:#cfe3ff;font-size:13px}
-.notes-actions{display:flex;gap:8px;align-items:center}
-.mini{width:28px;height:28px;font-size:14px}
+.field-label{
+  font-size:11px;
+  letter-spacing:.08em;
+  font-weight:800;
+  color:#9ab9d6;
+  margin-bottom:8px;
+}
+.select{
+  width:100%;
+  padding:10px 10px;
+  border-radius:12px;
+  border:1px solid #254a63;
+  background:#0d1f2d;
+  color:#fff;
+  outline:none;
+}
+.select:disabled{opacity:.55}
+
+/* Quick Status buttons */
+.quick-grid{
+  margin-top:10px;
+  display:grid;
+  grid-template-columns: repeat(4, minmax(0,1fr));
+  gap:10px;
+}
+@media(max-width:1100px){ .quick-grid{grid-template-columns: repeat(3, minmax(0,1fr));} }
+@media(max-width:520px){ .quick-grid{grid-template-columns: repeat(2, minmax(0,1fr));} }
+
+.qbtn{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  gap:8px;
+  padding:10px 10px;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.18);
+  color:#cfe3ff;
+  cursor:pointer;
+  font-weight:800;
+  font-size:12px;
+}
+.qbtn:hover{background:rgba(255,255,255,.08);border-color:rgba(43,116,255,.35)}
+.qbtn.noanswer{color:#cfe3ff}
+.qbtn.vm{color:#d8c7ff}
+.qbtn.owner{color:#8dffcf}
+.qbtn.rel{color:#7fe5ff}
+.qbtn.wrong{color:#ffd24d}
+.qbtn.dnc{color:#ff7777}
+.qbtn.hot{color:#ffb3b3}
+.qbtn.follow{color:#8ad3ff}
+
+/* Notes composer */
+.note-row{display:flex;gap:10px;align-items:flex-start}
+.note-box{flex:1;min-height:96px;resize:vertical}
 .note-status{font-size:12px;color:#9ab9d6;opacity:.9}
 
-/* MAP (no title; Area left, Street right) */
+/* Location Intel */
 .map-head{
   margin-top:12px;
   display:flex;
@@ -175,18 +318,17 @@ td.notes-cell{
   color:#cfe3ff;
   cursor:pointer;
   text-decoration:underline;
-  font-weight:600;
+  font-weight:800;
   padding:0;
 }
 .map-link:hover{color:#ffffff}
-#streetViewLink{ margin-left:auto; } /* push street view to the far right */
+#streetViewLink{ margin-left:auto; }
 .map-hint{
   font-size:12px;
   color:#9ab9d6;
   margin-left:10px;
   white-space:nowrap;
 }
-
 .map-wrap{
   margin-top:8px;
   border-radius:12px;
@@ -194,12 +336,7 @@ td.notes-cell{
   border:1px solid rgba(255,255,255,.2);
   background:rgba(0,0,0,.18);
 }
-.map-wrap iframe{
-  width:100%;
-  height:280px;
-  border:0;
-}
-
+.map-wrap iframe{width:100%;height:280px;border:0}
 .map-warn{
   margin-top:8px;
   padding:10px;
@@ -211,8 +348,53 @@ td.notes-cell{
   display:none;
 }
 
+/* Call Log Terminal */
+.log{
+  max-height:74vh;
+  overflow:auto;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  padding-right:4px;
+}
+.log-empty{
+  padding:26px 12px;
+  text-align:center;
+  color:#9ab9d6;
+  opacity:.85;
+}
+.log-item{
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  padding:10px 10px;
+}
+.log-top{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  font-size:12px;color:#9ab9d6;
+}
+.log-tag{
+  font-size:11px;
+  padding:3px 8px;
+  border-radius:999px;
+  border:1px solid rgba(255,255,255,.16);
+  background:rgba(0,0,0,.18);
+  color:#cfe3ff;
+}
+.log-tag.note{border-color:rgba(43,116,255,.55)}
+.log-tag.status{border-color:rgba(255,176,32,.55)}
+.log-tag.dnc{border-color:rgba(255,85,85,.65)}
+.log-tag.hot{border-color:rgba(255,42,42,.65)}
+.log-text{
+  margin-top:8px;
+  white-space:pre-wrap;
+  word-break:break-word;
+  font-size:13px;
+  line-height:1.35;
+  color:#f1f7fb;
+}
 
-/* --- CHAT BUBBLE & PANEL STYLES --- */
+/* --- CHAT BUBBLE & PANEL (kept vibe) --- */
 #chatBubble{
   position:fixed;bottom:24px;right:24px;width:60px;height:60px;
   border-radius:50%;background:#133e6a;color:white;
@@ -240,7 +422,7 @@ td.notes-cell{
   padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--line);
   display: flex; justify-content: space-between; align-items: center;
 }
-.panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
+.panel-title2 { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
 .close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
 
 /* Radar (Admin) */
@@ -294,78 +476,122 @@ td.notes-cell{
     </div>
 
     <div class="body">
-      <div id="panel-acq">
-        <div class="search">
-          <input id="s_q" class="input" placeholder="Search address / owner" />
-          <button class="chip small" id="s_reload">Search</button>
+      <!-- ================= LEFT: LEAD QUEUE ================= -->
+      <div id="panel-acq" class="panel">
+        <div class="panel-head">
+          <div class="panel-title">● LEAD QUEUE <span class="pill" id="leadCountPill">0 leads</span></div>
+          <div class="pill" id="queueHint">System Online</div>
         </div>
+        <div class="panel-body queue">
+          <div class="queue-search">
+            <input id="s_q" class="input" placeholder="Search address, name, phone…" />
+            <button class="chip" id="s_reload" type="button">Search</button>
+          </div>
 
-        <div class="table-wrap">
-          <table>
-            <thead>
-              <tr><th>Address</th><th>Owner</th><th>Phone</th><th>Status</th><th>Notes</th></tr>
-            </thead>
-            <tbody id="sellerRows"></tbody>
-          </table>
+          <div class="queue-list" id="leadList"></div>
         </div>
       </div>
 
-      <div id="panel-dispo" style="display:none; height: 80vh;">
+      <!-- ================= CENTER: CONSOLE ================= -->
+      <div class="panel col-center">
+        <div class="panel-head">
+          <div class="panel-title">⌁ CONSOLE</div>
+          <div class="pager">
+            <button class="nav-btn" id="prevLead" type="button" title="Previous lead">◀</button>
+            <div class="nav-count" id="leadPager">0 / 0</div>
+            <button class="nav-btn" id="nextLead" type="button" title="Next lead">▶</button>
+          </div>
+        </div>
+
+        <div class="panel-body">
+          <div class="lead-header">
+            <div class="lead-title">
+              <h2 id="leadAddress">No lead selected</h2>
+              <div class="lead-sub">
+                <span id="leadOwner">Select a lead from the queue.</span>
+                <a id="tpsLink" href="#" target="_blank" rel="noreferrer" style="display:none;">TruePeopleSearch</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Active Number -->
+          <div class="field">
+            <div class="field-label">ACTIVE NUMBER</div>
+            <select id="phoneSelect" class="select" disabled></select>
+          </div>
+
+          <!-- Quick Status -->
+          <div class="field">
+            <div class="field-label">QUICK STATUS</div>
+            <div class="quick-grid">
+              <button class="qbtn noanswer" type="button" data-status="No Answer">No Answer</button>
+              <button class="qbtn vm" type="button" data-status="Left VM">Left VM</button>
+              <button class="qbtn owner" type="button" data-status="Spoke to Owner">Spoke to Owner</button>
+              <button class="qbtn rel" type="button" data-status="Relative">Relative</button>
+
+              <button class="qbtn wrong" type="button" data-status="Wrong Party">Wrong Party</button>
+              <button class="qbtn dnc" type="button" data-status="Do Not Call">Do Not Call</button>
+              <button class="qbtn hot" type="button" data-status="Hot Lead">Hot Lead</button>
+              <button class="qbtn follow" type="button" data-status="Follow-Up">Follow-Up</button>
+            </div>
+          </div>
+
+          <!-- Notes -->
+          <div class="field">
+            <div class="field-label">ADD NOTE (SAVES TO TEAM CALL LOG FOR THIS NUMBER)</div>
+            <div class="note-row">
+              <textarea id="noteComposer" class="input note-box" placeholder="Type your note here…"></textarea>
+              <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+                <button id="noteSaveBtn" class="icon-btn mini" type="button" title="Save note">✓</button>
+                <div id="noteStatus" class="note-status" style="display:none;">Saved ✓</div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Location Intel (keeps your map behavior: Area on selection, Street on click) -->
+          <div class="field">
+            <div class="field-label">LOCATION INTEL</div>
+
+            <div class="map-head" id="mapHead" style="display:none;">
+              <div class="map-actions">
+                <button class="map-link" id="areaMapLink" type="button">Area Map</button>
+                <button class="map-link" id="streetViewLink" type="button">Street View</button>
+                <span class="map-hint" id="mapHint"></span>
+              </div>
+            </div>
+
+            <div class="map-wrap" id="mapWrap" style="display:none;">
+              <iframe id="streetFrame" loading="lazy"></iframe>
+            </div>
+
+            <div class="map-warn" id="mapWarn"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= RIGHT: CALL LOG TERMINAL ================= -->
+      <div class="panel col-right">
+        <div class="panel-head">
+          <div class="panel-title">⌁ CALL LOG TERMINAL</div>
+          <div class="pill" id="logCount">0 entries</div>
+        </div>
+        <div class="panel-body">
+          <div class="log" id="callLog">
+            <div class="log-empty" id="logEmpty">
+              No call history for this number.<br><br>
+              Select a lead + number, then log a status or add a note.
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ================= DISPO (kept) ================= -->
+      <div id="panel-dispo" style="display:none; height: 80vh; grid-column: 1 / -1;">
         <iframe
           id="iframeDispo"
           src="dispo.html"
           style="width:100%; height:100%; border:none; border-radius:12px; background:#0b1825;">
         </iframe>
-      </div>
-
-      <div class="right-col" id="detailPanel">
-        <div class="detail-header">
-          <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-            <h3 id="detailTitle">No lead selected</h3>
-
-            <div class="lead-nav">
-              <button class="nav-btn" id="prevLead" type="button" title="Previous lead">◀</button>
-              <div class="nav-count" id="leadCount">0 / 0</div>
-              <button class="nav-btn" id="nextLead" type="button" title="Next lead">▶</button>
-            </div>
-          </div>
-
-          <div class="sub" id="detailSub">Select a lead to load details.</div>
-        </div>
-
-        <div class="detail-info" id="detailInfo" style="display:none;">
-          <div><strong>Address:</strong> <span id="detailAddr"></span></div>
-          <div><strong>Owner:</strong> <span id="detailOwner"></span></div>
-          <div><strong>Phone:</strong> <span id="detailPhone"></span></div>
-          <div><strong>Lat/Lng:</strong> <span id="detailLatLng"></span></div>
-        </div>
-
-        <div class="script-box" id="scriptBox">Select a lead to load script.</div>
-
-        <!-- NOTES EDITOR -->
-        <div class="notes-head">
-          <div class="notes-title">Notes</div>
-          <div class="notes-actions">
-            <div id="noteStatus" class="note-status" style="display:none;">Saved ✓</div>
-            <button id="noteSaveBtn" class="icon-btn mini" title="Save notes">✓</button>
-          </div>
-        </div>
-        <textarea id="noteEditor" class="input" style="min-height:120px;resize:vertical;" placeholder="Type notes here..." disabled></textarea>
-
-        <!-- MAP / STREET VIEW (NO TITLE) -->
-        <div class="map-head" id="mapHead" style="display:none;">
-          <div class="map-actions">
-            <button class="map-link" id="areaMapLink" type="button">Area Map</button>
-            <button class="map-link" id="streetViewLink" type="button">Street View</button>
-            <span class="map-hint" id="mapHint"></span>
-          </div>
-        </div>
-
-        <div class="map-wrap" id="mapWrap" style="display:none;">
-          <iframe id="streetFrame" loading="lazy"></iframe>
-        </div>
-
-        <div class="map-warn" id="mapWarn"></div>
       </div>
     </div>
   </section>
@@ -377,7 +603,7 @@ td.notes-cell{
   <div class="panel-header">
     <div style="display:flex; align-items:center;">
       <span id="backToRadar">◀ Back</span>
-      <span id="panelTitle" class="panel-title">Support Chat</span>
+      <span id="panelTitle" class="panel-title2">Support Chat</span>
     </div>
     <button class="close-btn" id="closePanel">✕</button>
   </div>
@@ -395,20 +621,20 @@ td.notes-cell{
   </div>
 </div>
 
+<!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
+<!-- Your existing order -->
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 <script src="leads.js"></script>
 
 <script>
 /** ==========================
- * CONFIG / SAFETY INIT
+ * SAFETY INIT (kept pattern)
  * ========================== */
-
-// If app-auth.js didn't init Firebase, do it safely here.
 (function ensureFirebaseInit(){
   try{
     if (!firebase.apps || !firebase.apps.length) {
@@ -424,51 +650,83 @@ td.notes-cell{
   }
 })();
 
-// Accept either name so you don't brick yourself again.
 function getMapsKey(){
-  return String(
-    (window.MAPS_EMBED_KEY || window.MAPS_JS_KEY || "")
-  ).trim();
+  return String((window.MAPS_EMBED_KEY || window.MAPS_JS_KEY || "")).trim();
 }
 
-// IMPORTANT: This upgrade makes Street View ONLY load on click.
-// Area Map loads on lead selection by default.
+// Street View ONLY on click
 const STREETVIEW_ON_LOAD = false;
 
-// OPTIONAL: enable one-time geocode+cache (cost controlled by caching)
-const ENABLE_GEOCODE_CACHE = false; // set true if you enable Geocoding API + billing
-const GEOCODE_RATE_LIMIT_MS = 1200; // gentle pacing
+// Optional geocode cache (OFF)
+const ENABLE_GEOCODE_CACHE = false;
+const GEOCODE_RATE_LIMIT_MS = 1200;
+
+/** ==========================
+ * HELPERS
+ * ========================== */
+const $ = (id) => document.getElementById(id);
+function esc(s){
+  return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+}
+function fmtPhoneKey(p){
+  return String(p || "").trim().replace(/[^\d+]/g,"") || "unknown";
+}
+function tsToLocal(ts){
+  try{
+    const d = new Date(ts);
+    if (isNaN(d.getTime())) return "";
+    return d.toLocaleString();
+  }catch(e){ return ""; }
+}
+function initialsFromUser(u){
+  const base = (u && (u.displayName || u.email)) ? (u.displayName || u.email) : "";
+  const parts = String(base).split(/[\s._-]+/).filter(Boolean);
+  const ini = parts.map(p => p[0]?.toUpperCase() || "").join("").slice(0,2);
+  return ini || "U";
+}
 
 /** ==========================
  * STATE
  * ========================== */
 let UID = null;
-let sellerList = [], sellerView = [], currentIndex = -1;
+let ME = null;
+let ME_INITIALS = "U";
 
-let saveTimer = null;
-let notesDirty = false;
-
-let currentChatPath = null;
 let isAdmin = false;
+let currentChatPath = null;
 let activeChatRef = null;
 
-// Map mode state (per selected lead)
-let mapMode = "area"; // "area" | "street"
+let sellerList = [];
+let sellerView = [];
+let currentIndex = -1;
+let currentLead = null;
 
-const $ = (id) => document.getElementById(id);
+let currentPhone = "";
+let currentPhoneLabel = "";
+let currentLeadId = "";
+
+let activeLogRef = null;
+let logEntryCount = 0;
+
+// Map state
+let mapMode = "area"; // "area" | "street"
+let lastGeocodeAt = 0;
 
 /** ==========================
  * AUTH
  * ========================== */
-firebase.auth().onAuthStateChanged(u => {
+firebase.auth().onAuthStateChanged(async (u) => {
   if (!u) return location.href = 'index.html';
   UID = u.uid;
+  ME = u;
+  ME_INITIALS = initialsFromUser(u);
 
-  subscribeLeads();     // local leads.js
-  trackPresence(u);     // online status
+  subscribeLeads();
+  trackPresence(u);
 
-  firebase.database().ref('roles/' + UID).once('value').then(snap => {
-    const role = snap.val();
+  try{
+    const roleSnap = await firebase.database().ref('roles/' + UID).once('value');
+    const role = roleSnap.val();
     if (role === 'admin' || role === 'god' || u.email === "dealbankers@gmail.com") {
       isAdmin = true;
       startRadar();
@@ -477,11 +735,592 @@ firebase.auth().onAuthStateChanged(u => {
       currentChatPath = 'direct_messages/' + UID;
       setupChat(currentChatPath);
     }
+  }catch(e){
+    console.warn("Role check failed:", e);
+    isAdmin = false;
+    currentChatPath = 'direct_messages/' + UID;
+    setupChat(currentChatPath);
+  }
+});
+
+/** ==========================
+ * LEADS (from leads.js)
+ * ========================== */
+function leadIdFor(lead){
+  return String((lead && (lead.id || lead.docnum)) ? (lead.id || lead.docnum) : "");
+}
+function leadPhones(lead){
+  const out = [];
+
+  // 1) explicit arrays
+  if (Array.isArray(lead?.phones)) out.push(...lead.phones);
+  if (Array.isArray(lead?.phone_numbers)) out.push(...lead.phone_numbers);
+
+  // 2) contacts array objects
+  if (Array.isArray(lead?.contacts)){
+    lead.contacts.forEach(c=>{
+      if (!c) return;
+      if (c.phone) out.push(c.phone);
+      if (Array.isArray(c.phones)) out.push(...c.phones);
+    });
+  }
+
+  // 3) single phone string
+  if (lead?.phone) out.push(lead.phone);
+
+  // normalize + unique (keep original labels too)
+  const clean = [];
+  const seen = new Set();
+  out
+    .map(v => String(v || "").trim())
+    .filter(Boolean)
+    .forEach(v=>{
+      const key = fmtPhoneKey(v);
+      if (!key) return;
+      if (seen.has(key)) return;
+      seen.add(key);
+      clean.push({ key, label: v });
+    });
+
+  // if none, still show "unknown"
+  if (!clean.length) clean.push({ key:"unknown", label:"(no phone on lead)" });
+
+  return clean;
+}
+function normalizeLeadCoords(){
+  sellerList = sellerList.map(v => {
+    let lat = v.lat ?? v.latitude ?? v.Lat ?? v.LAT ?? null;
+    let lng = v.lng ?? v.lon ?? v.long ?? v.longitude ?? v.Lng ?? v.LNG ?? null;
+
+    if ((!lat || !lng) && typeof v.latlng === "string" && v.latlng.includes(",")) {
+      const parts = v.latlng.split(",").map(s => s.trim());
+      if (parts.length >= 2) { lat = lat || parts[0]; lng = lng || parts[1]; }
+    }
+
+    const nlat = (lat !== null && lat !== undefined && lat !== "") ? Number(lat) : NaN;
+    const nlng = (lng !== null && lng !== undefined && lng !== "") ? Number(lng) : NaN;
+
+    if (Number.isFinite(nlat) && Number.isFinite(nlng)) return { ...v, lat: nlat, lng: nlng };
+    return { ...v, lat: null, lng: null };
+  });
+}
+function subscribeLeads(){
+  if (!window.leads) {
+    console.warn("window.leads missing. Confirm leads.js sets window.leads = [...]");
+  }
+
+  if (Array.isArray(window.leads)) {
+    sellerList = window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v }));
+  } else if (window.leads && typeof window.leads === 'object' && window.leads.sellers) {
+    const obj = window.leads.sellers || {};
+    sellerList = Object.entries(obj).map(([id, v]) => ({ id, ...v }));
+  } else {
+    sellerList = [];
+  }
+
+  normalizeLeadCoords();
+  renderQueue();
+  // auto-select first if available
+  if (sellerList.length && currentIndex < 0) {
+    currentIndex = 0;
+    selectLeadByIndex(0);
+  }
+}
+
+/** ==========================
+ * QUEUE RENDER
+ * ========================== */
+function statusBadgeClass(status){
+  const s = String(status || "").toLowerCase();
+  if (s.includes("hot")) return "hot";
+  if (s.includes("work")) return "working";
+  if (s.includes("dnc") || s.includes("do not")) return "dnc";
+  if (s.includes("done") || s.includes("closed")) return "done";
+  return "new";
+}
+function renderQueue(){
+  const q = String($("s_q").value || "").toLowerCase().trim();
+  sellerView = sellerList.filter(v => {
+    if (!q) return true;
+    const addr = String(v.address || "").toLowerCase();
+    const owner = String(v.owner || "").toLowerCase();
+    const phones = leadPhones(v).map(p => p.label.toLowerCase()).join(" ");
+    return addr.includes(q) || owner.includes(q) || phones.includes(q);
+  });
+
+  $("leadCountPill").textContent = `${sellerView.length} leads`;
+  $("status").textContent = `Acq: ${sellerView.length} items`;
+
+  if (currentIndex >= sellerView.length) currentIndex = sellerView.length - 1;
+
+  const list = $("leadList");
+  if (!sellerView.length){
+    list.innerHTML = `<div class="log-empty" style="border:1px dashed rgba(255,255,255,.14);border-radius:14px;">
+      No leads found. Check leads.js is loading and window.leads exists.
+    </div>`;
+    clearConsole();
+    updatePager();
+    return;
+  }
+
+  list.innerHTML = sellerView.map((v,i)=>{
+    const phones = leadPhones(v);
+    const topPhone = phones[0]?.label || "";
+    const badge = statusBadgeClass(v.status);
+    const badgeLabel = String(v.status || "NEW").toUpperCase().slice(0,18);
+
+    return `
+      <div class="lead-item ${i===currentIndex ? "selected":""}" data-idx="${i}">
+        <div class="addr">${esc(v.address || "(no address)")}</div>
+        <div class="meta">
+          <div>${esc(v.owner || "(no owner)")}</div>
+          <div>${esc(topPhone)}</div>
+        </div>
+        <div class="badges">
+          <span class="badge ${badge}">${esc(badgeLabel)}</span>
+        </div>
+      </div>
+    `;
+  }).join("");
+
+  list.querySelectorAll(".lead-item").forEach(el=>{
+    el.onclick = ()=>{
+      const idx = Number(el.dataset.idx);
+      selectLeadByIndex(idx);
+    };
+  });
+
+  updatePager();
+}
+$("s_reload").onclick = () => renderQueue();
+$("s_q").addEventListener("input", () => {
+  // fast filter while typing
+  renderQueue();
+});
+
+/** ==========================
+ * SELECT LEAD
+ * ========================== */
+function updatePager(){
+  const total = sellerView.length || 0;
+  const pos = (currentIndex >= 0 && total) ? (currentIndex + 1) : 0;
+  $("leadPager").textContent = `${pos} / ${total}`;
+  const prev = $("prevLead");
+  const next = $("nextLead");
+  prev.disabled = !(total && currentIndex > 0);
+  next.disabled = !(total && currentIndex >= 0 && currentIndex < total - 1);
+  prev.style.opacity = prev.disabled ? "0.35":"1";
+  next.style.opacity = next.disabled ? "0.35":"1";
+}
+function selectLeadByIndex(idx){
+  if (!sellerView.length) return;
+  if (idx < 0) idx = 0;
+  if (idx >= sellerView.length) idx = sellerView.length - 1;
+
+  currentIndex = idx;
+  currentLead = sellerView[currentIndex];
+  currentLeadId = leadIdFor(currentLead);
+
+  // re-render queue selection styling
+  renderQueue();
+
+  // center console fields
+  $("leadAddress").textContent = currentLead?.address || "Lead";
+  $("leadOwner").textContent = currentLead?.owner || "";
+  const tps = $("tpsLink");
+  const addr = String(currentLead?.address || "").trim();
+  if (addr){
+    tps.style.display = "inline";
+    // Simple TPS entry point (you can change this later)
+    tps.href = "https://www.truepeoplesearch.com/results?name=" + encodeURIComponent(currentLead?.owner || "") +
+              "&citystatezip=" + encodeURIComponent(addr);
+  }else{
+    tps.style.display = "none";
+    tps.href = "#";
+  }
+
+  // phone select
+  const phones = leadPhones(currentLead);
+  const sel = $("phoneSelect");
+  sel.disabled = false;
+  sel.innerHTML = phones.map(p => `<option value="${esc(p.key)}">${esc(p.label)}</option>`).join("");
+
+  // choose first phone by default
+  currentPhone = phones[0]?.key || "unknown";
+  currentPhoneLabel = phones[0]?.label || "";
+  sel.value = currentPhone;
+
+  // bind phone change
+  sel.onchange = ()=>{
+    currentPhone = sel.value;
+    const found = phones.find(p => p.key === currentPhone);
+    currentPhoneLabel = found?.label || "";
+    bindCallLog(); // re-bind terminal to this number
+  };
+
+  // map + log
+  updateMapForLead(currentLead);
+  bindCallLog();
+
+  // clear composer
+  $("noteComposer").value = "";
+  hideSaved();
+
+  // scroll selected into view
+  const selectedEl = document.querySelector(`.lead-item[data-idx="${currentIndex}"]`);
+  if (selectedEl) selectedEl.scrollIntoView({ block:"nearest", behavior:"smooth" });
+
+  updatePager();
+}
+$("prevLead").onclick = () => { if (sellerView.length) selectLeadByIndex(currentIndex - 1); };
+$("nextLead").onclick = () => { if (sellerView.length) selectLeadByIndex(currentIndex + 1); };
+document.addEventListener("keydown", (e)=>{
+  const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
+  if (tag === "input" || tag === "textarea" || tag === "select") return;
+  if (e.key === "ArrowLeft") $("prevLead").click();
+  if (e.key === "ArrowRight") $("nextLead").click();
+});
+
+function clearConsole(){
+  currentLead = null;
+  currentLeadId = "";
+  currentPhone = "";
+  currentPhoneLabel = "";
+  $("leadAddress").textContent = "No lead selected";
+  $("leadOwner").textContent = "Select a lead from the queue.";
+  $("tpsLink").style.display = "none";
+  $("phoneSelect").innerHTML = "";
+  $("phoneSelect").disabled = true;
+  $("noteComposer").value = "";
+  unbindCallLog();
+  hideMapUI();
+}
+
+/** ==========================
+ * TEAM CALL LOG (lead + phone)
+ * RTDB path: call_logs/{leadId}/{phoneKey}/{pushId}
+ * entry: { uid, initials, kind, status, text, ts }
+ * ========================== */
+function logPath(){
+  if (!currentLeadId) return null;
+  const pk = fmtPhoneKey(currentPhone);
+  return `call_logs/${currentLeadId}/${pk}`;
+}
+function unbindCallLog(){
+  if (activeLogRef) { activeLogRef.off(); activeLogRef = null; }
+  logEntryCount = 0;
+  $("logCount").textContent = "0 entries";
+  $("callLog").innerHTML = `<div class="log-empty" id="logEmpty">
+    No call history for this number.<br><br>
+    Select a lead + number, then log a status or add a note.
+  </div>`;
+}
+function bindCallLog(){
+  const path = logPath();
+  if (!path){
+    unbindCallLog();
+    return;
+  }
+  if (activeLogRef) { activeLogRef.off(); activeLogRef = null; }
+
+  const box = $("callLog");
+  box.innerHTML = "";
+  logEntryCount = 0;
+
+  const empty = document.createElement("div");
+  empty.className = "log-empty";
+  empty.id = "logEmpty";
+  empty.innerHTML = `No call history for this number.<br><br>Log a status or add a note.`;
+  box.appendChild(empty);
+
+  activeLogRef = firebase.database().ref(path).limitToLast(200);
+
+  activeLogRef.on("child_added", (snap)=>{
+    const v = snap.val() || {};
+    logEntryCount++;
+    $("logCount").textContent = `${logEntryCount} entries`;
+
+    if ($("logEmpty")) $("logEmpty").remove();
+
+    const tagKind = String(v.kind || "note").toLowerCase();
+    const tagClass =
+      tagKind === "status" ? "status" :
+      (String(v.status||"").toLowerCase().includes("do not") ? "dnc" :
+      (String(v.status||"").toLowerCase().includes("hot") ? "hot" : "note"));
+
+    const who = (v.initials || "U") + (v.uid === UID ? " (me)" : "");
+    const when = v.ts ? tsToLocal(v.ts) : "";
+    const label = tagKind === "status" ? (v.status || "Status") : "Note";
+
+    const div = document.createElement("div");
+    div.className = "log-item";
+    div.innerHTML = `
+      <div class="log-top">
+        <div>${esc(who)} • ${esc(when)}</div>
+        <span class="log-tag ${esc(tagClass)}">${esc(label)}</span>
+      </div>
+      <div class="log-text">${esc(v.text || "")}</div>
+    `;
+    box.appendChild(div);
+    box.scrollTop = box.scrollHeight;
+  });
+
+  activeLogRef.on("value", (snap)=>{
+    const exists = snap.exists();
+    if (!exists){
+      logEntryCount = 0;
+      $("logCount").textContent = "0 entries";
+      box.innerHTML = `<div class="log-empty" id="logEmpty">
+        No call history for this number.<br><br>
+        Log a status or add a note.
+      </div>`;
+    }
+  });
+}
+function pushLogEntry({ kind="note", status="", text="" }){
+  const path = logPath();
+  if (!path || !UID) return;
+
+  const entry = {
+    uid: UID,
+    initials: ME_INITIALS,
+    kind,
+    status: status || "",
+    text: String(text || "").trim(),
+    ts: firebase.database.ServerValue.TIMESTAMP
+  };
+  return firebase.database().ref(path).push(entry);
+}
+
+// Add note
+function showSaved(){
+  $("noteStatus").style.display = "block";
+  setTimeout(()=>hideSaved(), 900);
+}
+function hideSaved(){ $("noteStatus").style.display = "none"; }
+
+$("noteSaveBtn").onclick = async ()=>{
+  const txt = String($("noteComposer").value || "").trim();
+  if (!currentLeadId) return;
+  if (!txt) return;
+
+  await pushLogEntry({ kind:"note", text: txt });
+  $("noteComposer").value = "";
+  showSaved();
+};
+
+// Quick status buttons => log entry (status + small auto text)
+document.querySelectorAll("[data-status]").forEach(btn=>{
+  btn.addEventListener("click", async ()=>{
+    if (!currentLeadId) return;
+    const status = btn.getAttribute("data-status") || "Status";
+    const addr = currentLead?.address || "";
+    const owner = currentLead?.owner || "";
+    const phone = currentPhoneLabel || currentPhone || "";
+    const text = `Status: ${status}\nOwner: ${owner}\nPhone: ${phone}\nAddress: ${addr}`;
+    await pushLogEntry({ kind:"status", status, text });
+    showSaved();
   });
 });
 
 /** ==========================
- * CHAT LOGIC
+ * MAP / STREET VIEW (kept behavior from your file)
+ * ========================== */
+function showMapUI() { $("mapHead").style.display = "flex"; $("mapWrap").style.display = "block"; }
+function hideMapUI() { $("mapHead").style.display = "none"; $("mapWrap").style.display = "none"; }
+function showMapWarn(msg) { const w = $("mapWarn"); w.style.display = "block"; w.textContent = msg || ""; }
+function clearMapWarn() { const w = $("mapWarn"); w.style.display = "none"; w.textContent = ""; }
+function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
+function setFrameSrc(url) { $("streetFrame").src = url; }
+
+// No-key
+function setAreaMapNoKeyByAddress(address) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18"); }
+function setStreetViewNoKeyByAddress(address) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed"); }
+function setAreaMapNoKeyLocation(lat, lng) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18"); }
+function setStreetViewNoKeyLocation(lat, lng) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed"); }
+
+// Keyed embed
+function setAreaMapEmbedWithKeyAddress(address) {
+  const key = getMapsKey(); if (!key) return false;
+  setFrameSrc("https://www.google.com/maps/embed/v1/place?key=" + encodeURIComponent(key) + "&q=" + encodeURIComponent(address));
+  return true;
+}
+function setAreaMapEmbedWithKeyLocation(lat, lng) {
+  const key = getMapsKey(); if (!key) return false;
+  setFrameSrc("https://www.google.com/maps/embed/v1/view?key=" + encodeURIComponent(key) + "&center=" + encodeURIComponent(`${lat},${lng}`) + "&zoom=18&maptype=roadmap");
+  return true;
+}
+function setStreetViewEmbedWithKeyLocation(lat, lng) {
+  const key = getMapsKey(); if (!key) return false;
+  setFrameSrc("https://www.google.com/maps/embed/v1/streetview?key=" + encodeURIComponent(key) + "&location=" + encodeURIComponent(`${lat},${lng}`) + "&heading=210&pitch=10&fov=90");
+  return true;
+}
+function setStreetViewEmbedWithKeyAddress(address) {
+  const key = getMapsKey(); if (!key) return false;
+  setFrameSrc("https://www.google.com/maps/embed/v1/streetview?key=" + encodeURIComponent(key) + "&query=" + encodeURIComponent(address));
+  return true;
+}
+
+async function loadAreaMap({ address, lat, lng }) {
+  showMapUI(); clearMapWarn(); setMapHint("");
+  const frame = $("streetFrame"); frame.onload = null;
+
+  if (lat && lng) {
+    const usedKey = setAreaMapEmbedWithKeyLocation(lat, lng);
+    if (!usedKey) setAreaMapNoKeyLocation(lat, lng);
+    return;
+  }
+  if (address) {
+    const usedKey = setAreaMapEmbedWithKeyAddress(address);
+    if (!usedKey) setAreaMapNoKeyByAddress(address);
+    return;
+  }
+  showMapWarn("No address on this lead.");
+}
+async function loadStreetView({ address, lat, lng }) {
+  showMapUI(); clearMapWarn(); setMapHint("");
+  const frame = $("streetFrame"); frame.onload = null;
+
+  if (lat && lng) {
+    const usedKey = setStreetViewEmbedWithKeyLocation(lat, lng);
+    if (!usedKey) { setStreetViewNoKeyLocation(lat, lng); return; }
+
+    setMapHint("Loading Street View…");
+    const fallbackTimer = setTimeout(() => {
+      setMapHint("");
+      showMapWarn("Embed key rejected/restricted or Street View not available. Falling back to no-key Street View.");
+      setStreetViewNoKeyLocation(lat, lng);
+    }, 1400);
+
+    frame.onload = () => { clearTimeout(fallbackTimer); setMapHint(""); };
+    return;
+  }
+
+  if (address) {
+    const usedKey = setStreetViewEmbedWithKeyAddress(address);
+    if (!usedKey) { setStreetViewNoKeyByAddress(address); return; }
+
+    setMapHint("Loading Street View…");
+    const fallbackTimer = setTimeout(() => {
+      setMapHint("");
+      showMapWarn("Embed key rejected/restricted. Falling back to no-key Street View by address.");
+      setStreetViewNoKeyByAddress(address);
+    }, 1400);
+
+    frame.onload = () => { clearTimeout(fallbackTimer); setMapHint(""); };
+    return;
+  }
+
+  showMapWarn("No address on this lead.");
+}
+
+function wireMapToggles(getCtxFn) {
+  $("areaMapLink").onclick = async () => { mapMode = "area"; await loadAreaMap(getCtxFn()); };
+  $("streetViewLink").onclick = async () => { mapMode = "street"; await loadStreetView(getCtxFn()); };
+}
+
+async function getCachedGeo(leadId) {
+  if (!leadId) return null;
+  const snap = await firebase.database().ref('lead_geo/' + leadId).once('value');
+  return snap.val() || null;
+}
+async function setCachedGeo(leadId, lat, lng) {
+  if (!leadId) return;
+  return firebase.database().ref('lead_geo/' + leadId).set({ lat, lng, updatedAt: firebase.database.ServerValue.TIMESTAMP });
+}
+async function geocodeAddressOnce(address) {
+  const key = getMapsKey(); if (!key) return null;
+  const now = Date.now();
+  if (now - lastGeocodeAt < GEOCODE_RATE_LIMIT_MS) return null;
+  lastGeocodeAt = now;
+
+  const url = "https://maps.googleapis.com/maps/api/geocode/json?address=" +
+    encodeURIComponent(address) + "&key=" + encodeURIComponent(key);
+
+  const res = await fetch(url);
+  const data = await res.json();
+  if (data && data.status === "OK" && data.results && data.results[0] && data.results[0].geometry) {
+    const loc = data.results[0].geometry.location;
+    return { lat: loc.lat, lng: loc.lng };
+  }
+  return null;
+}
+
+async function updateMapForLead(lead){
+  // reset
+  clearMapWarn(); setMapHint("");
+  $("streetFrame").src = "about:blank";
+  mapMode = "area";
+
+  if (!lead) { hideMapUI(); return; }
+
+  let lat = lead.lat, lng = lead.lng;
+  const id = leadIdFor(lead);
+
+  // cached coords
+  if ((!lat || !lng) && id){
+    try{
+      const cached = await getCachedGeo(id);
+      if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lng))){
+        lat = Number(cached.lat); lng = Number(cached.lng);
+      }
+    }catch(e){}
+  }
+
+  showMapUI();
+  wireMapToggles(() => ({ address: lead.address || "", lat, lng }));
+
+  // default Area Map
+  await loadAreaMap({ address: lead.address || "", lat, lng });
+
+  // optional geocode+cache (off)
+  if (ENABLE_GEOCODE_CACHE && (!lat || !lng) && lead.address && id){
+    setMapHint("Geocoding address once…");
+    try{
+      const geo = await geocodeAddressOnce(lead.address);
+      if (geo && geo.lat && geo.lng){
+        await setCachedGeo(id, geo.lat, geo.lng);
+        lat = geo.lat; lng = geo.lng;
+        setMapHint("Saved lat/lng ✓");
+        if (mapMode === "area") await loadAreaMap({ address: lead.address, lat, lng });
+        setTimeout(()=>setMapHint(""), 900);
+      } else setMapHint("");
+    }catch(e){ setMapHint(""); }
+  }
+
+  if (STREETVIEW_ON_LOAD){
+    mapMode = "street";
+    await loadStreetView({ address: lead.address || "", lat, lng });
+  }
+}
+
+/** ==========================
+ * PRESENCE (kept approach)
+ * ========================== */
+function trackPresence(u) {
+  const globalRef = firebase.database().ref('presence/global/' + u.uid);
+  const statusRef = firebase.database().ref('presence/' + u.uid);
+  const connRef = firebase.database().ref('.info/connected');
+
+  connRef.on('value', snap => {
+    if (snap.val() === false) return;
+
+    globalRef.onDisconnect().set({ state: "offline", last: firebase.database.ServerValue.TIMESTAMP });
+    statusRef.onDisconnect().set({ state: "offline", ts: firebase.database.ServerValue.TIMESTAMP });
+
+    globalRef.set({
+      state: "online",
+      name: u.displayName || u.email,
+      email: u.email,
+      ts: firebase.database.ServerValue.TIMESTAMP,
+      page: "Wholesaler Portal"
+    });
+    statusRef.set({ state: "online", ts: firebase.database.ServerValue.TIMESTAMP });
+  });
+}
+
+/** ==========================
+ * CHAT (kept)
  * ========================== */
 const sidePanel = $("sidePanel");
 const radarList = $("radarList");
@@ -521,10 +1360,7 @@ function showChatView(path, name) {
   currentChatPath = path;
   loadMessages(path);
 }
-
-function setupChat(path) {
-  loadMessages(path);
-}
+function setupChat(path) { loadMessages(path); }
 
 function startRadar() {
   firebase.database().ref('presence/global').on('value', snap => {
@@ -539,11 +1375,11 @@ function startRadar() {
         count++;
         const div = document.createElement("div");
         div.className = "radar-user";
-        const loc = u.page ? '<br><small style="color:#88a5bf">On: ' + u.page + '</small>' : "";
+        const loc = u.page ? '<br><small style="color:#88a5bf">On: ' + esc(u.page) + '</small>' : "";
         div.innerHTML =
           '<div>' +
-            '<div style="font-weight:bold; color:#fff">' + (u.name || 'User') + '</div>' +
-            '<small style="color:#666">' + (u.email || '') + '</small>' +
+            '<div style="font-weight:bold; color:#fff">' + esc(u.name || 'User') + '</div>' +
+            '<small style="color:#666">' + esc(u.email || '') + '</small>' +
             loc +
           '</div>' +
           '<div class="status-dot"></div>';
@@ -591,536 +1427,17 @@ function sendMsg() {
 }
 
 /** ==========================
- * PRESENCE TRACKING
+ * UI / NAV
  * ========================== */
-function trackPresence(u) {
-  const globalRef = firebase.database().ref('presence/global/' + u.uid);
-  const statusRef = firebase.database().ref('presence/' + u.uid);
-  const connRef = firebase.database().ref('.info/connected');
-
-  connRef.on('value', snap => {
-    if (snap.val() === false) return;
-
-    globalRef.onDisconnect().set({ state: "offline", last: firebase.database.ServerValue.TIMESTAMP });
-    statusRef.onDisconnect().set({ state: "offline", ts: firebase.database.ServerValue.TIMESTAMP });
-
-    globalRef.set({
-      state: "online",
-      name: u.displayName || u.email,
-      email: u.email,
-      ts: firebase.database.ServerValue.TIMESTAMP,
-      page: "Wholesaler Portal"
-    });
-    statusRef.set({ state: "online", ts: firebase.database.ServerValue.TIMESTAMP });
-  });
-}
-
-/** ==========================
- * LEADS (Manual: leads.js -> window.leads)
- * ========================== */
-function subscribeLeads() {
-  // Diagnostics: if leads.js not loaded or wrong var name, you'll see it.
-  if (!window.leads) {
-    console.warn("window.leads is missing. Check that leads.js is loading (Network tab) and it sets window.leads = [...]");
-  }
-
-  if (Array.isArray(window.leads)) {
-    sellerList = window.leads.map((v, i) => ({ id: v.docnum || String(i), ...v }));
-  } else if (window.leads && typeof window.leads === 'object' && window.leads.sellers) {
-    const obj = window.leads.sellers || {};
-    sellerList = Object.entries(obj).map(([id, v]) => ({ id, ...v }));
-  } else {
-    sellerList = [];
-  }
-
-  normalizeLeadCoords();
-  renderLeads();
-}
-
-// Normalize lat/lng from possible field names, strings, or "lat,lng" combos.
-function normalizeLeadCoords() {
-  sellerList = sellerList.map(v => {
-    let lat = v.lat ?? v.latitude ?? v.Lat ?? v.LAT ?? null;
-    let lng = v.lng ?? v.lon ?? v.long ?? v.longitude ?? v.Lng ?? v.LNG ?? null;
-
-    if ((!lat || !lng) && typeof v.latlng === "string" && v.latlng.includes(",")) {
-      const parts = v.latlng.split(",").map(s => s.trim());
-      if (parts.length >= 2) { lat = lat || parts[0]; lng = lng || parts[1]; }
-    }
-
-    const nlat = (lat !== null && lat !== undefined && lat !== "") ? Number(lat) : NaN;
-    const nlng = (lng !== null && lng !== undefined && lng !== "") ? Number(lng) : NaN;
-
-    if (Number.isFinite(nlat) && Number.isFinite(nlng)) return { ...v, lat: nlat, lng: nlng };
-    return { ...v, lat: null, lng: null };
-  });
-}
-
-function leadPhone(v) {
-  return v.phone || (v.contacts && v.contacts[0] && v.contacts[0].phone) || "";
-}
-
-function updateLeadCount(){
-  const total = sellerView ? sellerView.length : 0;
-  const pos = (currentIndex >= 0 && total) ? (currentIndex + 1) : 0;
-  const el = $("leadCount");
-  if (el) el.textContent = `${pos} / ${total}`;
-
-  // disable buttons when not usable
-  const prev = $("prevLead"), next = $("nextLead");
-  if (prev) prev.disabled = !(total && currentIndex > 0);
-  if (next) next.disabled = !(total && currentIndex >= 0 && currentIndex < total - 1);
-
-  if (prev) prev.style.opacity = prev.disabled ? "0.35" : "1";
-  if (next) next.style.opacity = next.disabled ? "0.35" : "1";
-}
-
-function selectLeadByIndex(idx){
-  if (!sellerView || !sellerView.length) return;
-  if (idx < 0) idx = 0;
-  if (idx >= sellerView.length) idx = sellerView.length - 1;
-
-  currentIndex = idx;
-  renderLeads();
-  updateDetail(sellerView[currentIndex]);
-
-  const row = document.querySelector(`tr.lead-row[data-idx="${currentIndex}"]`);
-  if (row) row.scrollIntoView({ block: "nearest", behavior: "smooth" });
-}
-
-function renderLeads() {
-  const q = (($("s_q").value || '')).toLowerCase();
-  sellerView = sellerList.filter(v =>
-    !q ||
-    (v.address || '').toLowerCase().includes(q) ||
-    (v.owner || '').toLowerCase().includes(q)
-  );
-
-  // If currentIndex is out of range after filtering, reset
-  if (currentIndex >= sellerView.length) currentIndex = sellerView.length - 1;
-
-  $("status").textContent = 'Acq: ' + sellerView.length + ' items';
-
-  const tbody = $("sellerRows");
-  if (!sellerView.length) {
-    tbody.innerHTML = '<tr><td colspan="5" class="status">No leads found. (If you expected leads: confirm leads.js is loading and sets window.leads)</td></tr>';
-    updateDetail(null);
-    updateLeadCount();
-    return;
-  }
-
-  tbody.innerHTML = sellerView.map((v, i) => `
-    <tr class="lead-row ${i === currentIndex ? 'selected' : ''}" data-idx="${i}">
-      <td>${v.address || ''}</td>
-      <td>${v.owner || ''}</td>
-      <td>${leadPhone(v)}</td>
-      <td>${v.status || 'new'}</td>
-      <td class="notes-cell">${v.notes || ''}</td>
-    </tr>`).join('');
-
-  tbody.querySelectorAll('tr.lead-row').forEach(r => {
-    r.onclick = () => {
-      currentIndex = parseInt(r.dataset.idx, 10);
-      renderLeads();
-      updateDetail(sellerView[currentIndex]);
-    };
-  });
-
-  updateLeadCount();
-}
-
-/** ==========================
- * NOTES: per-user notes in Firebase
- * ========================== */
-function showSaved() {
-  $("noteStatus").style.display = "block";
-  setTimeout(() => { $("noteStatus").style.display = "none"; }, 900);
-}
-
-function leadIdFor(lead) {
-  return (lead && (lead.id || lead.docnum)) ? String(lead.id || lead.docnum) : "";
-}
-
-async function loadUserNote(lead) {
-  if (!UID || !lead) return "";
-  const id = leadIdFor(lead);
-  if (!id) return "";
-  const snap = await firebase.database().ref('lead_notes/' + UID + '/' + id).once('value');
-  const v = snap.val();
-  return (v && typeof v.text === "string") ? v.text : "";
-}
-
-function saveUserNote(lead, text) {
-  if (!UID || !lead) return Promise.resolve();
-  const id = leadIdFor(lead);
-  if (!id) return Promise.resolve();
-
-  return firebase.database().ref('lead_notes/' + UID + '/' + id).set({
-    text: text || "",
-    updatedAt: firebase.database.ServerValue.TIMESTAMP
-  });
-}
-
-async function saveNotesNow() {
-  if (currentIndex < 0 || !sellerView[currentIndex]) return;
-  const lead = sellerView[currentIndex];
-  const txt = ($("noteEditor").value || "");
-  await saveUserNote(lead, txt);
-  notesDirty = false;
-  showSaved();
-}
-
-$("noteSaveBtn").addEventListener('click', () => { saveNotesNow(); });
-
-$("noteEditor").addEventListener('input', () => {
-  notesDirty = true;
-  clearTimeout(saveTimer);
-  saveTimer = setTimeout(() => {
-    if (notesDirty) saveNotesNow();
-  }, 650);
-});
-
-/** ==========================
- * MAP / STREET VIEW (UPGRADED)
- *
- * Upgrade goals:
- * - Area Map loads by default (no Street View lookup on load)
- * - Street View loads ONLY when user clicks Street View
- * - Toggle between Area Map and Street View
- * - Fix: DO NOT use "&q=" for /embed/v1/streetview (use location OR query)
- * - Optional: cache geocode + streetview metadata in Firebase (off by default)
- * ========================== */
-function showMapUI() { $("mapHead").style.display = "flex"; $("mapWrap").style.display = "block"; }
-function hideMapUI() { $("mapHead").style.display = "none"; $("mapWrap").style.display = "none"; }
-function showMapWarn(msg) { const w = $("mapWarn"); w.style.display = "block"; w.textContent = msg || ""; }
-function clearMapWarn() { const w = $("mapWarn"); w.style.display = "none"; w.textContent = ""; }
-function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
-
-function setFrameSrc(url) {
-  $("streetFrame").src = url;
-}
-
-// No-key embeds (free-ish, but not guaranteed; uses maps.google.com embed)
-function setAreaMapNoKeyByAddress(address) {
-  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18");
-}
-function setStreetViewNoKeyByAddress(address) {
-  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed");
-}
-function setAreaMapNoKeyLocation(lat, lng) {
-  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18");
-}
-function setStreetViewNoKeyLocation(lat, lng) {
-  setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed");
-}
-
-// Keyed Maps Embed API (recommended reliability)
-function setAreaMapEmbedWithKeyAddress(address) {
-  const key = getMapsKey();
-  if (!key) return false;
-  setFrameSrc(
-    "https://www.google.com/maps/embed/v1/place" +
-    "?key=" + encodeURIComponent(key) +
-    "&q=" + encodeURIComponent(address)
-  );
-  return true;
-}
-
-function setAreaMapEmbedWithKeyLocation(lat, lng) {
-  const key = getMapsKey();
-  if (!key) return false;
-  setFrameSrc(
-    "https://www.google.com/maps/embed/v1/view" +
-    "?key=" + encodeURIComponent(key) +
-    "&center=" + encodeURIComponent(`${lat},${lng}`) +
-    "&zoom=18&maptype=roadmap"
-  );
-  return true;
-}
-
-function setStreetViewEmbedWithKeyLocation(lat, lng) {
-  const key = getMapsKey();
-  if (!key) return false;
-  setFrameSrc(
-    "https://www.google.com/maps/embed/v1/streetview" +
-    "?key=" + encodeURIComponent(key) +
-    "&location=" + encodeURIComponent(`${lat},${lng}`) +
-    "&heading=210&pitch=10&fov=90"
-  );
-  return true;
-}
-
-// FIXED: /embed/v1/streetview does NOT accept q=
-// It accepts "location" (lat,lng) OR "query" (address string).
-function setStreetViewEmbedWithKeyAddress(address) {
-  const key = getMapsKey();
-  if (!key) return false;
-  setFrameSrc(
-    "https://www.google.com/maps/embed/v1/streetview" +
-    "?key=" + encodeURIComponent(key) +
-    "&query=" + encodeURIComponent(address)
-  );
-  return true;
-}
-
-/** Default map: Area Map ONLY (no Street View on load) */
-async function loadAreaMap({ address, lat, lng }) {
-  showMapUI();
-  clearMapWarn();
-  setMapHint("");
-
-  const frame = $("streetFrame");
-  frame.onload = null;
-
-  // Prefer keyed embed if key is present; otherwise fallback to no-key
-  if (lat && lng) {
-    const usedKey = setAreaMapEmbedWithKeyLocation(lat, lng);
-    if (!usedKey) setAreaMapNoKeyLocation(lat, lng);
-    return;
-  }
-
-  if (address) {
-    const usedKey = setAreaMapEmbedWithKeyAddress(address);
-    if (!usedKey) setAreaMapNoKeyByAddress(address);
-    return;
-  }
-
-  showMapWarn("No address on this lead.");
-}
-
-/** Street View loads ONLY on click */
-async function loadStreetView({ address, lat, lng }) {
-  showMapUI();
-  clearMapWarn();
-  setMapHint("");
-
-  const frame = $("streetFrame");
-  frame.onload = null;
-
-  // coords best
-  if (lat && lng) {
-    const usedKey = setStreetViewEmbedWithKeyLocation(lat, lng);
-    if (!usedKey) { setStreetViewNoKeyLocation(lat, lng); return; }
-
-    setMapHint("Loading Street View…");
-    const fallbackTimer = setTimeout(() => {
-      setMapHint("");
-      showMapWarn("Embed key rejected/restricted or Street View not available. Falling back to no-key Street View.");
-      setStreetViewNoKeyLocation(lat, lng);
-    }, 1400);
-
-    frame.onload = () => { clearTimeout(fallbackTimer); setMapHint(""); };
-    return;
-  }
-
-  // address-based street view (uses query=)
-  if (address) {
-    const usedKey = setStreetViewEmbedWithKeyAddress(address);
-    if (!usedKey) { setStreetViewNoKeyByAddress(address); return; }
-
-    setMapHint("Loading Street View…");
-    const fallbackTimer = setTimeout(() => {
-      setMapHint("");
-      showMapWarn("Embed key rejected/restricted. Falling back to no-key Street View by address.");
-      setStreetViewNoKeyByAddress(address);
-    }, 1400);
-
-    frame.onload = () => { clearTimeout(fallbackTimer); setMapHint(""); };
-    return;
-  }
-
-  showMapWarn("No address on this lead.");
-}
-
-function wireMapToggles(getCtxFn) {
-  $("areaMapLink").onclick = async () => {
-    mapMode = "area";
-    const ctx = getCtxFn();
-    await loadAreaMap(ctx);
-  };
-  $("streetViewLink").onclick = async () => {
-    mapMode = "street";
-    const ctx = getCtxFn();
-    await loadStreetView(ctx);
-  };
-}
-
-/** OPTIONAL: Geocode + cache in Firebase once */
-let lastGeocodeAt = 0;
-
-async function getCachedGeo(leadId) {
-  if (!UID || !leadId) return null;
-  const snap = await firebase.database().ref('lead_geo/' + leadId).once('value');
-  return snap.val() || null;
-}
-
-async function setCachedGeo(leadId, lat, lng) {
-  if (!leadId) return;
-  return firebase.database().ref('lead_geo/' + leadId).set({
-    lat, lng,
-    updatedAt: firebase.database.ServerValue.TIMESTAMP
-  });
-}
-
-async function geocodeAddressOnce(address) {
-  const key = getMapsKey();
-  if (!key) return null;
-
-  // simple rate limit
-  const now = Date.now();
-  if (now - lastGeocodeAt < GEOCODE_RATE_LIMIT_MS) return null;
-  lastGeocodeAt = now;
-
-  const url = "https://maps.googleapis.com/maps/api/geocode/json?address=" +
-    encodeURIComponent(address) + "&key=" + encodeURIComponent(key);
-
-  const res = await fetch(url);
-  const data = await res.json();
-  if (data && data.status === "OK" && data.results && data.results[0] && data.results[0].geometry) {
-    const loc = data.results[0].geometry.location;
-    return { lat: loc.lat, lng: loc.lng };
-  }
-  return null;
-}
-
-/** ==========================
- * DETAIL
- * ========================== */
-async function updateDetail(lead) {
-  const detailTitle = $("detailTitle");
-  const detailSub = $("detailSub");
-  const detailInfo = $("detailInfo");
-  const detailAddr = $("detailAddr");
-  const detailOwner = $("detailOwner");
-  const detailPhone = $("detailPhone");
-  const detailLatLng = $("detailLatLng");
-  const scriptBox = $("scriptBox");
-  const noteEditor = $("noteEditor");
-
-  // Reset map UI
-  hideMapUI();
-  clearMapWarn();
-  setMapHint("");
-  $("streetFrame").src = "about:blank";
-  mapMode = "area";
-
-  if (!lead) {
-    detailTitle.textContent = 'No lead selected';
-    detailSub.textContent = 'Select a lead to view information.';
-    detailInfo.style.display = 'none';
-    scriptBox.textContent = 'Select a lead to load script.';
-    noteEditor.value = "";
-    noteEditor.disabled = true;
-    updateLeadCount();
-    return;
-  }
-
-  detailTitle.textContent = lead.owner || 'Lead Details';
-  detailSub.textContent = lead.status || 'new';
-  detailInfo.style.display = 'block';
-
-  detailAddr.textContent = lead.address || '';
-  detailOwner.textContent = lead.owner || '';
-  detailPhone.textContent = leadPhone(lead);
-
-  let lat = lead.lat, lng = lead.lng;
-
-  // If missing coords, try cached coords from Firebase (free reads, saves future API calls)
-  const id = leadIdFor(lead);
-  if ((!lat || !lng) && id) {
-    try {
-      const cached = await getCachedGeo(id);
-      if (cached && Number.isFinite(Number(cached.lat)) && Number.isFinite(Number(cached.lng))) {
-        lat = Number(cached.lat); lng = Number(cached.lng);
-      }
-    } catch (e) {}
-  }
-
-  if (lat && lng) detailLatLng.textContent = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
-  else detailLatLng.textContent = "missing";
-
-  scriptBox.textContent =
-    "Hi " + (lead.owner || "there") +
-    ", this is Bill regarding " + (lead.address || "your property") +
-    ". Are you the owner?";
-
-  // Notes
-  noteEditor.disabled = false;
-  noteEditor.value = lead.notes || "";
-  notesDirty = false;
-
-  try {
-    const userNote = await loadUserNote(lead);
-    if (userNote) noteEditor.value = userNote;
-  } catch (e) {}
-
-  // SHOW MAP UI + WIRE TOGGLES
-  showMapUI();
-  wireMapToggles(() => ({ address: lead.address || "", lat, lng }));
-
-  // Default: Area Map on load (NO Street View lookup)
-  await loadAreaMap({ address: lead.address || "", lat, lng });
-
-  // OPTIONAL: if enabled, geocode once and cache (still OFF by default)
-  if (ENABLE_GEOCODE_CACHE && (!lat || !lng) && lead.address && id) {
-    setMapHint("Geocoding address once…");
-    try {
-      const geo = await geocodeAddressOnce(lead.address);
-      if (geo && geo.lat && geo.lng) {
-        await setCachedGeo(id, geo.lat, geo.lng);
-        lat = geo.lat; lng = geo.lng;
-        detailLatLng.textContent = `${geo.lat.toFixed(6)}, ${geo.lng.toFixed(6)}`;
-        setMapHint("Saved lat/lng ✓");
-        if (mapMode === "area") await loadAreaMap({ address: lead.address, lat, lng });
-        setTimeout(() => setMapHint(""), 900);
-      } else {
-        setMapHint("");
-      }
-    } catch (e) { setMapHint(""); }
-  }
-
-  if (STREETVIEW_ON_LOAD) {
-    mapMode = "street";
-    await loadStreetView({ address: lead.address || "", lat, lng });
-  }
-
-  updateLeadCount();
-}
-
-/** ==========================
- * UI LISTENERS
- * ========================== */
-$("s_reload").onclick = () => renderLeads();
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
-
-/* Lead nav buttons */
-$("prevLead").onclick = () => {
-  if (!sellerView || !sellerView.length) return;
-  if (currentIndex < 0) return selectLeadByIndex(0);
-  selectLeadByIndex(currentIndex - 1);
-};
-$("nextLead").onclick = () => {
-  if (!sellerView || !sellerView.length) return;
-  if (currentIndex < 0) return selectLeadByIndex(0);
-  selectLeadByIndex(currentIndex + 1);
-};
-/* Keyboard arrows */
-document.addEventListener("keydown", (e) => {
-  // don't hijack typing inside inputs/textarea
-  const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
-  if (tag === "input" || tag === "textarea") return;
-
-  if (e.key === "ArrowLeft") $("prevLead")?.click();
-  if (e.key === "ArrowRight") $("nextLead")?.click();
-});
 
 // Tabs
 document.addEventListener('DOMContentLoaded', () => {
   const tabAcq = $("tabAcq");
   const tabDispo = $("tabDispo");
-  const panelAcq = $("panel-acq");
   const panelDispo = $("panel-dispo");
+  const panelAcq = $("panel-acq");
   const crumb = $("crumb");
 
   tabAcq.onclick = () => {
