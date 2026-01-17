@@ -717,20 +717,28 @@ let mapMode = "area"; // "area" | "street"
 let lastGeocodeAt = 0;
 
 /** ==========================
- * AUTH
+ * AUTH (DROP-IN REPLACEMENT)
  * ========================== */
+let LEADS_PATH = "leads/sellers"; // default; can be overridden after login
+
 firebase.auth().onAuthStateChanged(async (u) => {
   if (!u) return location.href = 'index.html';
+
   UID = u.uid;
   ME = u;
   ME_INITIALS = initialsFromUser(u);
 
-  subscribeLeads();
-  trackPresence(u);
+  // ✅ If you want per-user lead buckets later, flip this on:
+  // LEADS_PATH = `user_leads/${UID}/sellers`;
 
+  // Start core systems
+  try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
+
+  // Role check
   try{
     const roleSnap = await firebase.database().ref('roles/' + UID).once('value');
     const role = roleSnap.val();
+
     if (role === 'admin' || role === 'god' || u.email === "dealbankers@gmail.com") {
       isAdmin = true;
       startRadar();
@@ -745,197 +753,20 @@ firebase.auth().onAuthStateChanged(async (u) => {
     currentChatPath = 'direct_messages/' + UID;
     setupChat(currentChatPath);
   }
+
+  // ✅ LAST: subscribe to leads (needs LEADS_PATH + auth ready)
+  try { subscribeLeads(); }
+  catch(e){ console.warn("subscribeLeads failed:", e); $("status").textContent = "Leads subscribe error (see console)."; }
 });
+
 /** ==========================
  * LEADS (from RTDB)
  * Path: leads/sellers/{leadId}
  * ========================== */
 
-// Choose where your leads live in RTDB:
-const LEADS_PATH = "leads/sellers";
+// REMOVE your old:  const LEADS_PATH = "leads/sellers";
+// because we now have: let LEADS_PATH = ... above
 
-// Optional: if you want per-user lead buckets later, you can do:
-// const LEADS_PATH = `user_leads/${UID}/sellers`;
-
-let leadsRef = null;
-
-function leadIdFor(lead){
-  return String((lead && (lead.id || lead.docnum)) ? (lead.id || lead.docnum) : "");
-}
-
-function leadPhones(lead){
-  const out = [];
-
-  // 1) explicit arrays
-  if (Array.isArray(lead?.phones)) out.push(...lead.phones);
-  if (Array.isArray(lead?.phone_numbers)) out.push(...lead.phone_numbers);
-
-  // 2) contacts array objects
-  if (Array.isArray(lead?.contacts)){
-    lead.contacts.forEach(c=>{
-      if (!c) return;
-      if (c.phone) out.push(c.phone);
-      if (Array.isArray(c.phones)) out.push(...c.phones);
-    });
-  }
-
-  // 3) single phone string
-  if (lead?.phone) out.push(lead.phone);
-
-  // normalize + unique
-  // Supports:
-  // - old strings: "Nick 43 yo (210) 845-9802"
-  // - new objects: { phone:"(210) 845-9802", digits:"210...", label:"Nick 43 yo", note:"..." }
-  const clean = [];
-  const seen = new Set();
-
-  function phoneDigitsFromAny(x){
-    const s = (typeof x === "string")
-      ? x
-      : (x && typeof x === "object")
-        ? (x.phone || x.digits || "")
-        : "";
-    const d = String(s).replace(/\D/g, "");
-    if (d.length === 11 && d.startsWith("1")) return d.slice(1);
-    return d.length === 10 ? d : "";
-  }
-
-  function labelFromAny(x){
-    if (typeof x === "string") return x.trim();
-    if (x && typeof x === "object") {
-      const phone = String(x.phone || "").trim();
-      const label = String(x.label || "").trim();
-      return label ? `${label} ${phone}`.trim() : phone;
-    }
-    return "";
-  }
-
-  out.forEach(v=>{
-    const digits = phoneDigitsFromAny(v);
-    const key = digits || fmtPhoneKey(typeof v === "string" ? v : (v?.phone || v?.digits || ""));
-    if (!key) return;
-    if (seen.has(key)) return;
-    seen.add(key);
-    clean.push({ key, label: labelFromAny(v) || "(no phone)" });
-  });
-
-  if (!clean.length) clean.push({ key:"unknown", label:"(no phone on lead)" });
-  return clean;
-}
-
-function normalizeLeadCoords(){
-  sellerList = sellerList.map(v => {
-    let lat = v.lat ?? v.latitude ?? v.Lat ?? v.LAT ?? null;
-    let lng = v.lng ?? v.lon ?? v.long ?? v.longitude ?? v.Lng ?? v.LNG ?? null;
-
-    if ((!lat || !lng) && typeof v.latlng === "string" && v.latlng.includes(",")) {
-      const parts = v.latlng.split(",").map(s => s.trim());
-      if (parts.length >= 2) { lat = lat || parts[0]; lng = lng || parts[1]; }
-    }
-
-    const nlat = (lat !== null && lat !== undefined && lat !== "") ? Number(lat) : NaN;
-    const nlng = (lng !== null && lng !== undefined && lng !== "") ? Number(lng) : NaN;
-
-    if (Number.isFinite(nlat) && Number.isFinite(nlng)) return { ...v, lat: nlat, lng: nlng };
-    return { ...v, lat: null, lng: null };
-  });
-}
-
-/**
- * Live subscribe to RTDB leads.
- * - Reads leads/sellers once + stays synced (child_added/changed/removed)
- * - Keeps current selection stable by lead id when possible
- */
-function subscribeLeads(){
-  // Tear down any prior listener
-  if (leadsRef) { leadsRef.off(); leadsRef = null; }
-
-  sellerList = [];
-  sellerView = [];
-  currentIndex = -1;
-  currentLead = null;
-
-  $("status").textContent = "Loading leads…";
-  $("leadCountPill").textContent = "0 leads";
-
-  leadsRef = firebase.database().ref(LEADS_PATH);
-
-  // Keep a map for fast updates
-  const byId = new Map();
-
-  function rebuildFromMap(){
-    const keepId = currentLeadId || (currentLead ? leadIdFor(currentLead) : "");
-    sellerList = Array.from(byId.values());
-
-    // If you want deterministic ordering, sort by address (or docnum)
-    sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
-
-    normalizeLeadCoords();
-    renderQueue();
-
-    // Restore selection if possible
-    if (sellerList.length){
-      if (keepId){
-        const idx = sellerView.findIndex(x => leadIdFor(x) === keepId);
-        if (idx >= 0) { selectLeadByIndex(idx); return; }
-      }
-      // otherwise keep currentIndex if still valid, else pick 0
-      if (currentIndex >= 0 && currentIndex < sellerView.length) {
-        selectLeadByIndex(currentIndex);
-      } else {
-        selectLeadByIndex(0);
-      }
-    } else {
-      clearConsole();
-      updatePager();
-    }
-
-    $("status").textContent = `Acq: ${sellerView.length} items`;
-    $("leadCountPill").textContent = `${sellerView.length} leads`;
-  }
-
-  leadsRef.on("child_added", (snap)=>{
-    const v = snap.val() || {};
-    const id = snap.key;
-    byId.set(id, { id, ...v });
-    rebuildFromMap();
-  });
-
-  leadsRef.on("child_changed", (snap)=>{
-    const v = snap.val() || {};
-    const id = snap.key;
-    byId.set(id, { id, ...v });
-    rebuildFromMap();
-  });
-
-  leadsRef.on("child_removed", (snap)=>{
-    const id = snap.key;
-    byId.delete(id);
-    rebuildFromMap();
-  });
-
-  // Also handle empty state quickly
-  leadsRef.once("value").then((snap)=>{
-    if (!snap.exists()){
-      sellerList = [];
-      sellerView = [];
-      renderQueue();
-      clearConsole();
-      updatePager();
-      $("status").textContent = "No leads found in RTDB.";
-      $("leadCountPill").textContent = "0 leads";
-    }
-  }).catch((e)=>{
-    console.warn("Leads read failed:", e);
-    sellerList = [];
-    sellerView = [];
-    renderQueue();
-    clearConsole();
-    updatePager();
-    $("status").textContent = "Leads permission denied or path missing.";
-    $("leadCountPill").textContent = "0 leads";
-  });
-}
 /** ==========================
  * QUEUE RENDER
  * ========================== */
