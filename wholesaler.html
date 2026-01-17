@@ -772,25 +772,48 @@ function leadPhones(lead){
   // 3) single phone string
   if (lead?.phone) out.push(lead.phone);
 
-  // normalize + unique (keep original labels too)
+  // normalize + unique
+  // Supports:
+  // - old strings: "Nick 43 yo (210) 845-9802"
+  // - new objects: { phone:"(210) 845-9802", digits:"210...", label:"Nick 43 yo", note:"..." }
   const clean = [];
   const seen = new Set();
-  out
-    .map(v => String(v || "").trim())
-    .filter(Boolean)
-    .forEach(v=>{
-      const key = fmtPhoneKey(v);
-      if (!key) return;
-      if (seen.has(key)) return;
-      seen.add(key);
-      clean.push({ key, label: v });
-    });
 
-  // if none, still show "unknown"
+  function phoneDigitsFromAny(x){
+    const s = (typeof x === "string")
+      ? x
+      : (x && typeof x === "object")
+        ? (x.phone || x.digits || "")
+        : "";
+    const d = String(s).replace(/\D/g, "");
+    if (d.length === 11 && d.startsWith("1")) return d.slice(1);
+    return d.length === 10 ? d : "";
+  }
+
+  function labelFromAny(x){
+    if (typeof x === "string") return x.trim();
+    if (x && typeof x === "object") {
+      // show number only in UI dropdown/queue; keep label if present
+      const phone = String(x.phone || "").trim();
+      const label = String(x.label || "").trim();
+      return label ? `${label} ${phone}`.trim() : phone;
+    }
+    return "";
+  }
+
+  out.forEach(v=>{
+    const digits = phoneDigitsFromAny(v);
+    const key = digits || fmtPhoneKey(typeof v === "string" ? v : (v?.phone || v?.digits || ""));
+    if (!key) return;
+    if (seen.has(key)) return;
+    seen.add(key);
+    clean.push({ key, label: labelFromAny(v) || "(no phone)" });
+  });
+
   if (!clean.length) clean.push({ key:"unknown", label:"(no phone on lead)" });
-
   return clean;
 }
+
 function normalizeLeadCoords(){
   sellerList = sellerList.map(v => {
     let lat = v.lat ?? v.latitude ?? v.Lat ?? v.LAT ?? null;
