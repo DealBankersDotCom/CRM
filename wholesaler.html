@@ -715,7 +715,18 @@ let logEntryCount = 0;
 // Map state
 let mapMode = "area"; // "area" | "street"
 let lastGeocodeAt = 0;
+function subscribeLeads(){
+  const ref = firebase.database().ref(LEADS_PATH);
 
+  ref.on("value", snap => {
+    const obj = snap.val() || {};
+    sellerList = Object.keys(obj).map(id => ({ _id: id, ...obj[id] }));
+    renderQueue();
+    if (currentIndex === -1 && sellerList.length) {
+      selectLeadByIndex(0);
+    }
+  });
+}
 /** ==========================
  * AUTH (DROP-IN REPLACEMENT)
  * ========================== */
