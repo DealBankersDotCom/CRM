@@ -1,15 +1,47 @@
-// AUTO-GENERATED: 2026-01-16T23:53:47.218411Z
-window.leads = [
+// AUTO-GENERATED: 2026-01-17T00:37:09.302243Z\nwindow.leads = [
   {
     "id": "20250166499",
     "docnum": "20250166499",
     "address": "5730 Bienville Dr, San Antonio, TX 78233",
     "owner": "Inez E. Moya",
     "phones": [
-      "Inez Moya 81 yo (210) 602-9488 left vm declined my offer. Just had a stroke said daughter is coming in town next week. Not sure if she wants to sell",
-      "Michelle Pryor 61 yo (832) 401-1513 (phone listed with relaive Forest stewart error msg",
-      "Tina Lester and John Lester 50 yo (210) 445-4095 straight to vm"
+      {
+        "phone": "(210) 602-9488",
+        "digits": "2106029488",
+        "label": "Inez Moya 81 yo",
+        "note": "left vm declined my offer. Just had a stroke said daughter is coming in town next week. Not sure if she wants to sell"
+      },
+      {
+        "phone": "(832) 401-1513",
+        "digits": "8324011513",
+        "label": "Michelle Pryor 61 yo",
+        "note": "(phone listed with relaive Forest stewart error msg"
+      },
+      {
+        "phone": "(210) 445-4095",
+        "digits": "2104454095",
+        "label": "Tina Lester and John Lester 50 yo",
+        "note": "straight to vm"
+      }
     ],
+    "phoneIndex": {
+      "(210) 602-9488": {
+        "digits": "2106029488",
+        "label": "Inez Moya 81 yo",
+        "note": "left vm declined my offer. Just had a stroke said daughter is coming in town next week. Not sure if she wants to sell"
+      },
+      "(832) 401-1513": {
+        "digits": "8324011513",
+        "label": "Michelle Pryor 61 yo",
+        "note": "(phone listed with relaive Forest stewart error msg"
+      },
+      "(210) 445-4095": {
+        "digits": "2104454095",
+        "label": "Tina Lester and John Lester 50 yo",
+        "note": "straight to vm"
+      }
+    },
+    "phoneRaw": "Inez Moya 81 yo (210) 602-9488 left vm declined my offer. Just had a stroke said daughter is coming in town next week. Not sure if she wants to sell\nMichelle Pryor 61 yo (832) 401-1513 (phone listed with relaive Forest stewart error msg\nTina Lester and John Lester 50 yo (210) 445-4095 straight to vm",
     "mailing": "12706 El SenderoSan Antonio TX 78233-6319",
     "notes": "3 bed / 1 bath, 940 sq ft 1972 build, carport, long-term ownership, clean tax record, aging structure likely needs refresh\n10k in taxes\n2k in city liens",
     "taxes": "",
@@ -27,11 +59,43 @@ window.leads = [
     "address": "9263 HUEBNER RD, SAN ANTONIO, TX 78240",
     "owner": "CONRAD JOSEPH P",
     "phones": [
-      "Pamela Conrad 63 yo (936) 321-9540 error message",
-      "Joseph deceased",
-      "Madeline Conrad (210) 344-3324 reg to Joe C. fast disconnect",
-      "Duane Conrad or Pam C. 68 yo (832) 771-4239 na left vm one ring to vm"
+      {
+        "phone": "(936) 321-9540",
+        "digits": "9363219540",
+        "label": "Pamela Conrad 63 yo",
+        "note": "error message"
+      },
+      {
+        "phone": "(210) 344-3324",
+        "digits": "2103443324",
+        "label": "Madeline Conrad",
+        "note": "reg to Joe C.  fast disconnect"
+      },
+      {
+        "phone": "(832) 771-4239",
+        "digits": "8327714239",
+        "label": "Duane Conrad or Pam C. 68 yo",
+        "note": "na left vm one ring to vm"
+      }
     ],
+    "phoneIndex": {
+      "(936) 321-9540": {
+        "digits": "9363219540",
+        "label": "Pamela Conrad 63 yo",
+        "note": "error message"
+      },
+      "(210) 344-3324": {
+        "digits": "2103443324",
+        "label": "Madeline Conrad",
+        "note": "reg to Joe C.  fast disconnect"
+      },
+      "(832) 771-4239": {
+        "digits": "8327714239",
+        "label": "Duane Conrad or Pam C. 68 yo",
+        "note": "na left vm one ring to vm"
+      }
+    },
+    "phoneRaw": "Pamela Conrad 63 yo (936) 321-9540 error message\nJoseph deceased\nMadeline Conrad (210) 344-3324 reg to Joe C.  fast disconnect\nDuane Conrad or Pam C. 68 yo (832) 771-4239 na left vm one ring to vm",
     "mailing": "2530 OLD BROOK LN, SAN ANTONIO, TX 78230-5229",
     "notes": "Commercial improvement noted (Daycare center record); Google Street View Feb 2025: small dilapidated structure, lot mostly vacant; drive-by poor condition\nOwner 95yo try relatives\nowner may be 43 yo died suddently in colorado lives in Spring texas Wife might be pamela C. \nPamela Conrad  63 yo (832) 771-4239\nboth son and died dead - Find pamela - realtives of \nhttps://www.dignitymemorial.com/obituaries/san-antonio-tx/joseph-conrad-12179242",
     "taxes": "$7,664.06",
@@ -49,12 +113,65 @@ window.leads = [
     "address": "1002 RUIZ ST, San Antonio, TX",
     "owner": "RESENDIZ FRANCISCO",
     "phones": [
-      "Laura Resendiz 33 yo (210) 420-9389 na na sent text",
-      "Francisco Resendiz 71 yo (214) 529-7424 straight to error msg",
-      "Andres Resendiz 45 (Rosenberg TX)(281) 935-7580",
-      "Evodio Resendiz 62 yo Or Laura R 31 yo (832) 526-4081",
-      "7132918831 given to me by Laura who was at the 4081 # - spanish speaker only"
+      {
+        "phone": "(210) 420-9389",
+        "digits": "2104209389",
+        "label": "Laura Resendiz 33 yo",
+        "note": "na na sent text"
+      },
+      {
+        "phone": "(214) 529-7424",
+        "digits": "2145297424",
+        "label": "Francisco Resendiz 71 yo",
+        "note": "straight to error msg"
+      },
+      {
+        "phone": "(281) 935-7580",
+        "digits": "2819357580",
+        "label": "Andres Resendiz 45 (Rosenberg TX)",
+        "note": ""
+      },
+      {
+        "phone": "(832) 526-4081",
+        "digits": "8325264081",
+        "label": "Evodio Resendiz 62 yo  Or Laura R 31 yo",
+        "note": ""
+      },
+      {
+        "phone": "(713) 291-8831",
+        "digits": "7132918831",
+        "label": "Unknown",
+        "note": "given to me by Laura who was at the 4081 # - spanish speaker only"
+      }
     ],
+    "phoneIndex": {
+      "(210) 420-9389": {
+        "digits": "2104209389",
+        "label": "Laura Resendiz 33 yo",
+        "note": "na na sent text"
+      },
+      "(214) 529-7424": {
+        "digits": "2145297424",
+        "label": "Francisco Resendiz 71 yo",
+        "note": "straight to error msg"
+      },
+      "(281) 935-7580": {
+        "digits": "2819357580",
+        "label": "Andres Resendiz 45 (Rosenberg TX)",
+        "note": ""
+      },
+      "(832) 526-4081": {
+        "digits": "8325264081",
+        "label": "Evodio Resendiz 62 yo  Or Laura R 31 yo",
+        "note": ""
+      },
+      "(713) 291-8831": {
+        "digits": "7132918831",
+        "label": "Unknown",
+        "note": "given to me by Laura who was at the 4081 # - spanish speaker only"
+      }
+    },
+    "phoneRaw": "Laura Resendiz 33 yo (210) 420-9389 na na sent text\nFrancisco Resendiz 71 yo (214) 529-7424 straight to error msg\nAndres Resendiz 45 (Rosenberg TX)(281) 935-7580\nEvodio Resendiz 62 yo  Or Laura R 31 yo (832) 526-4081\n7132918831 given to me by Laura who was at the 4081 # - spanish speaker only",
     "mailing": "8671 ABE LINCOLN",
     "notes": "Owner was last payee",
     "taxes": "$1,268.07",
@@ -67,11 +184,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "2018 Lamar St, San Antonio, TX 78202, San Antonio TX",
+    "id": "addr_48f5969c961c",
     "docnum": "",
     "address": "2018 Lamar St, San Antonio, TX 78202, San Antonio TX",
     "owner": "2472018 LAMAR TRUST & FLORENCIE GALLEGAS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2018 Lamar St San Antonio TX 78202-1621",
     "notes": "3 bed / 2 bath; 1,016 sqft; 7,100 sqft lot; 1960 build; no A/C; floor/wall heat; pier foundation; alum/vinyl siding; trust-owned; prior foreclosure activity; heavy tax delinquency (~36k)",
     "taxes": "36000",
@@ -84,13 +203,26 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1003 Delaware St, San Antonio, TX 78210, San Antonio TX",
+    "id": "addr_8cf86c47c307",
     "docnum": "",
     "address": "1003 Delaware St, San Antonio, TX 78210, San Antonio TX",
     "owner": "LEON HOLLAND",
     "phones": [
-      "Dave Holland 59 yo (512) 299-8161"
+      {
+        "phone": "(512) 299-8161",
+        "digits": "5122998161",
+        "label": "Dave Holland 59 yo",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(512) 299-8161": {
+        "digits": "5122998161",
+        "label": "Dave Holland 59 yo",
+        "note": ""
+      }
+    },
+    "phoneRaw": "Dave Holland 59 yo (512) 299-8161",
     "mailing": "10705 Leafwood Ln Austin TX 78750-3490",
     "notes": "Vacant residential lot; 5,141 sqft lot; Denver Heights; no improvements; value based on land only; long-term ownership; out-of-state owner\n$0 in taxes",
     "taxes": "",
@@ -103,11 +235,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "309 Princeton Ave, San Antonio, TX 78201, San Antonio TX",
+    "id": "addr_f6912218e31c",
     "docnum": "",
     "address": "309 Princeton Ave, San Antonio, TX 78201, San Antonio TX",
     "owner": "JOSE A. FLORES II",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "309 Princeton Ave San Antonio TX 78201-6321",
     "notes": "4 bed / 1 bath; 2,022 sqft; 6,750 sqft lot; 1930 build; 2-story; garage; no A/C; floor/wall heat; pier foundation; long-term owner (20+ yrs); seller-financed warranty deed",
     "taxes": "",
@@ -120,11 +254,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1520 Mercado, San Antonio, TX 78207, San Antonio TX",
+    "id": "addr_9c87904fe266",
     "docnum": "",
     "address": "1520 Mercado, San Antonio, TX 78207, San Antonio TX",
     "owner": "JOSE G. MUNOZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3507 Gracie St San Antonio TX 78211-3633",
     "notes": "Residential vacant lot; 5,400 sqft; 0.12 acres; 75x72 lot; AVM $34k; Denver Heights/Cupples area; long-term land hold",
     "taxes": "",
@@ -142,11 +278,54 @@ window.leads = [
     "address": "9714 HIDDEN, San Antonio, TX",
     "owner": "IRENE ROSE LEWIS",
     "phones": [
-      "Martha Ramirez 70 (210) 684-5845 voip",
-      "Rodolfo Ramirez Age 61 (956) 434-9936 - straight to error",
-      "Angel E Barton 50 yo (469) 835-7161 - na left vm sent text",
-      "Iraline Lewis 53 yo (210) 803-9185 - na left vm"
+      {
+        "phone": "(210) 684-5845",
+        "digits": "2106845845",
+        "label": "Martha Ramirez 70",
+        "note": "voip"
+      },
+      {
+        "phone": "(956) 434-9936",
+        "digits": "9564349936",
+        "label": "Rodolfo Ramirez Age 61",
+        "note": "straight to error"
+      },
+      {
+        "phone": "(469) 835-7161",
+        "digits": "4698357161",
+        "label": "Angel E Barton 50 yo",
+        "note": "na left vm sent text"
+      },
+      {
+        "phone": "(210) 803-9185",
+        "digits": "2108039185",
+        "label": "Iraline Lewis 53 yo",
+        "note": "na left vm"
+      }
     ],
+    "phoneIndex": {
+      "(210) 684-5845": {
+        "digits": "2106845845",
+        "label": "Martha Ramirez 70",
+        "note": "voip"
+      },
+      "(956) 434-9936": {
+        "digits": "9564349936",
+        "label": "Rodolfo Ramirez Age 61",
+        "note": "straight to error"
+      },
+      "(469) 835-7161": {
+        "digits": "4698357161",
+        "label": "Angel E Barton 50 yo",
+        "note": "na left vm sent text"
+      },
+      "(210) 803-9185": {
+        "digits": "2108039185",
+        "label": "Iraline Lewis 53 yo",
+        "note": "na left vm"
+      }
+    },
+    "phoneRaw": "Martha Ramirez 70 (210) 684-5845 voip \nRodolfo Ramirez Age 61  (956) 434-9936 - straight to error\nAngel E Barton 50 yo (469) 835-7161 - na left vm sent text\nIraline Lewis 53 yo (210) 803-9185 - na left vm",
     "mailing": "9714 Hidden Fld San Antonio TX 78250-4829",
     "notes": "recent death deed",
     "taxes": "",
@@ -164,8 +343,21 @@ window.leads = [
     "address": "9710 HIDDEN, San Antonio, TX",
     "owner": "Raquel Hernandez",
     "phones": [
-      "Raquel Hernandez 46 yo (210) 777-4474 na sent text - na left vm"
+      {
+        "phone": "(210) 777-4474",
+        "digits": "2107774474",
+        "label": "Raquel Hernandez 46 yo",
+        "note": "na sent text - na left vm"
+      }
     ],
+    "phoneIndex": {
+      "(210) 777-4474": {
+        "digits": "2107774474",
+        "label": "Raquel Hernandez 46 yo",
+        "note": "na sent text - na left vm"
+      }
+    },
+    "phoneRaw": "Raquel Hernandez 46 yo (210) 777-4474 na sent text - na left vm",
     "mailing": "9710 Hidden Fld San Antonio TX 78250-4829",
     "notes": "",
     "taxes": "",
@@ -183,6 +375,8 @@ window.leads = [
     "address": "5406 FIRESTAR TRL, San Antonio, TX",
     "owner": "BORALIS USA INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "8026 VANTAGE DR",
     "notes": "",
     "taxes": "",
@@ -200,6 +394,8 @@ window.leads = [
     "address": "2695 N FOSTER RD, San Antonio, TX",
     "owner": "ROSEROCK HOLDINGS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "10601 N PENNSYLVANIA AVE",
     "notes": "",
     "taxes": "",
@@ -217,15 +413,32 @@ window.leads = [
     "address": "9126 HARBOR, San Antonio, TX",
     "owner": "HAROLD HARRIS, KARN HARRIS",
     "phones": [
-      "Lead: Harold J Harris \u2014 Age 81",
-      "Phones (mobile only \u2014 most recent first)",
-      "(317) 750-4006 \u2014 na\u2014 connected (Mar\u2013Apr 2024) \u2190 BEST # na left vm",
-      "(210) 663-5958 \u2014 couldn't really understand name on vm\u2014 connected (Apr 2021)",
-      "Emails (validated only)",
-      "halharris@yahoo.com",
-      "hal319@hotmail.com",
-      "harris210@intergate.com"
+      {
+        "phone": "(317) 750-4006",
+        "digits": "3177504006",
+        "label": "Unknown",
+        "note": "\u2014 na\u2014 connected (Mar\u2013Apr 2024) \u2190 BEST # na left vm"
+      },
+      {
+        "phone": "(210) 663-5958",
+        "digits": "2106635958",
+        "label": "Unknown",
+        "note": "\u2014 couldn't really understand name on vm\u2014 connected (Apr 2021)"
+      }
     ],
+    "phoneIndex": {
+      "(317) 750-4006": {
+        "digits": "3177504006",
+        "label": "Unknown",
+        "note": "\u2014 na\u2014 connected (Mar\u2013Apr 2024) \u2190 BEST # na left vm"
+      },
+      "(210) 663-5958": {
+        "digits": "2106635958",
+        "label": "Unknown",
+        "note": "\u2014 couldn't really understand name on vm\u2014 connected (Apr 2021)"
+      }
+    },
+    "phoneRaw": "Lead: Harold J Harris \u2014 Age 81\n\nPhones (mobile only \u2014 most recent first)\n(317) 750-4006 \u2014 na\u2014 connected (Mar\u2013Apr 2024) \u2190 BEST # na left vm \n(210) 663-5958 \u2014 couldn't really understand name on vm\u2014 connected (Apr 2021)\n\nEmails (validated only)\nhalharris@yahoo.com\nhal319@hotmail.com\nharris210@intergate.com",
     "mailing": "133 Lanark Dr San Antonio TX 78218-1821",
     "notes": "",
     "taxes": "",
@@ -243,6 +456,8 @@ window.leads = [
     "address": "4439 MOONGOLD DR, San Antonio, TX",
     "owner": "COMET INTERNATIONAL INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "MAIN STREET",
     "notes": "",
     "taxes": "",
@@ -260,11 +475,32 @@ window.leads = [
     "address": "5847 SPRING VLY, San Antonio, TX",
     "owner": "CAVAZOS RICARDO & MARIA G",
     "phones": [
-      "(210) 342-2892 lan line - na left vm same",
-      "Consuelo Cavazos 50 yo (956) 246-1530 error msg",
-      "rubensdebo228@gmail.com",
-      "hellven6@yahoo.com"
+      {
+        "phone": "(210) 342-2892",
+        "digits": "2103422892",
+        "label": "Unknown",
+        "note": "lan line - na left vm  same"
+      },
+      {
+        "phone": "(956) 246-1530",
+        "digits": "9562461530",
+        "label": "Consuelo Cavazos 50 yo",
+        "note": "error msg"
+      }
     ],
+    "phoneIndex": {
+      "(210) 342-2892": {
+        "digits": "2103422892",
+        "label": "Unknown",
+        "note": "lan line - na left vm  same"
+      },
+      "(956) 246-1530": {
+        "digits": "9562461530",
+        "label": "Consuelo Cavazos 50 yo",
+        "note": "error msg"
+      }
+    },
+    "phoneRaw": "(210) 342-2892 lan line - na left vm  same\nConsuelo Cavazos 50 yo (956) 246-1530 error msg\nrubensdebo228@gmail.com, hellven6@yahoo.com",
     "mailing": "9202 REGAL",
     "notes": "own mailing - 8k in taxes",
     "taxes": "",
@@ -282,8 +518,21 @@ window.leads = [
     "address": "4123 HUNTERS SUN DR, San Antonio, TX",
     "owner": "SANCHEZ RAYMOND",
     "phones": [
-      "Raymond Sanchez 37 (210) 717-2078 error msg"
+      {
+        "phone": "(210) 717-2078",
+        "digits": "2107172078",
+        "label": "Raymond Sanchez 37",
+        "note": "error msg"
+      }
     ],
+    "phoneIndex": {
+      "(210) 717-2078": {
+        "digits": "2107172078",
+        "label": "Raymond Sanchez 37",
+        "note": "error msg"
+      }
+    },
+    "phoneRaw": "Raymond Sanchez 37 (210) 717-2078 error msg",
     "mailing": "4123 HUNTERS SUN DR",
     "notes": "25k in taxes",
     "taxes": "",
@@ -301,10 +550,21 @@ window.leads = [
     "address": "5618 SUMMER FEST DR, San Antonio, TX",
     "owner": "GRIEGO NICK M",
     "phones": [
-      "Nick Griego 43 yo (210) 845-9802",
-      "griegomnick@yahoo.com",
-      "nickgriego7@hotmail.com"
+      {
+        "phone": "(210) 845-9802",
+        "digits": "2108459802",
+        "label": "Nick Griego 43 yo",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(210) 845-9802": {
+        "digits": "2108459802",
+        "label": "Nick Griego 43 yo",
+        "note": ""
+      }
+    },
+    "phoneRaw": "Nick Griego 43 yo (210) 845-9802\n        griegomnick@yahoo.com,\nnickgriego7@hotmail.com,",
     "mailing": "13512 DUTCH MYRTLE",
     "notes": "",
     "taxes": "",
@@ -322,8 +582,21 @@ window.leads = [
     "address": "6460 TAHOKA, San Antonio, TX",
     "owner": "PATRICK ANIEKWENA",
     "phones": [
-      "Patrick Aniekwena 69 yo (210) 279-1574 wrong #"
+      {
+        "phone": "(210) 279-1574",
+        "digits": "2102791574",
+        "label": "Patrick Aniekwena 69 yo",
+        "note": "wrong #"
+      }
     ],
+    "phoneIndex": {
+      "(210) 279-1574": {
+        "digits": "2102791574",
+        "label": "Patrick Aniekwena 69 yo",
+        "note": "wrong #"
+      }
+    },
+    "phoneRaw": "Patrick Aniekwena 69 yo (210) 279-1574 wrong #",
     "mailing": "Po Box 762201 San Antonio TX 78245-7201",
     "notes": "vacant lot with slab - bought at tax auction for 4k",
     "taxes": "",
@@ -341,6 +614,8 @@ window.leads = [
     "address": "103 CINDY LOU DR, San Antonio, TX",
     "owner": "ROBLEDO PROPERTIES INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "6507 OVERLOOK DR",
     "notes": "",
     "taxes": "",
@@ -358,8 +633,21 @@ window.leads = [
     "address": "118 JETLYN DR, San Antonio, TX",
     "owner": "GARCIA ALEJANDRA",
     "phones": [
-      "Alejandra Garcia 34 yo (830) 325-6470 - Wireless"
+      {
+        "phone": "(830) 325-6470",
+        "digits": "8303256470",
+        "label": "Alejandra Garcia 34 yo",
+        "note": "Wireless"
+      }
     ],
+    "phoneIndex": {
+      "(830) 325-6470": {
+        "digits": "8303256470",
+        "label": "Alejandra Garcia 34 yo",
+        "note": "Wireless"
+      }
+    },
+    "phoneRaw": "Alejandra Garcia 34 yo (830) 325-6470 - Wireless",
     "mailing": "118 JETLYN DR",
     "notes": "",
     "taxes": "",
@@ -377,8 +665,21 @@ window.leads = [
     "address": "314 AMBERDALE OAK, San Antonio, TX",
     "owner": "JOHNSON BEVERLY & ANDREW",
     "phones": [
-      "Beverly K Johnson 62 yo (210) 452-4521 - straight to vm"
+      {
+        "phone": "(210) 452-4521",
+        "digits": "2104524521",
+        "label": "Beverly K Johnson 62 yo",
+        "note": "straight to vm"
+      }
     ],
+    "phoneIndex": {
+      "(210) 452-4521": {
+        "digits": "2104524521",
+        "label": "Beverly K Johnson 62 yo",
+        "note": "straight to vm"
+      }
+    },
+    "phoneRaw": "Beverly K Johnson 62 yo (210) 452-4521 - straight to vm",
     "mailing": "4527 STAR GROVE",
     "notes": "",
     "taxes": "",
@@ -396,6 +697,8 @@ window.leads = [
     "address": "315 AMBERDALE OAK, San Antonio, TX",
     "owner": "RIVERA CHRISTINE & PABLO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "315 AMBERDALE OAK",
     "notes": "",
     "taxes": "",
@@ -413,6 +716,8 @@ window.leads = [
     "address": "218 ADELAIDE OAKS, San Antonio, TX",
     "owner": "FRAZIER ROMY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2361 AUSTIN HWY",
     "notes": "",
     "taxes": "",
@@ -430,6 +735,8 @@ window.leads = [
     "address": "402 MAHOGANY CHEST, San Antonio, TX",
     "owner": "CLERVIL GERALD",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "402 MAHOGANY CHEST",
     "notes": "",
     "taxes": "",
@@ -447,6 +754,8 @@ window.leads = [
     "address": "306 MAHOGANY CHEST, San Antonio, TX",
     "owner": "LOPEZ LEONARD III",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "306 MAHOGANY CHEST",
     "notes": "",
     "taxes": "",
@@ -464,6 +773,8 @@ window.leads = [
     "address": "307 MAHOGANY CHEST, San Antonio, TX",
     "owner": "SUN YAN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "307 MAHOGANY CHEST",
     "notes": "",
     "taxes": "",
@@ -481,6 +792,8 @@ window.leads = [
     "address": "2706 WAYNE DR, San Antonio, TX",
     "owner": "MAHER PROPERTIES INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "13151 SPRING RUN",
     "notes": "",
     "taxes": "",
@@ -498,6 +811,8 @@ window.leads = [
     "address": "5805 CALLAGHAN RD, San Antonio, TX",
     "owner": "UNITED COMMUNITY INVESTORS LP",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "5805 CALLAGHAN RD STE 306",
     "notes": "",
     "taxes": "",
@@ -515,6 +830,8 @@ window.leads = [
     "address": "5314 STONESHIRE, San Antonio, TX",
     "owner": "MACIAS JOSE LUIS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "7435 ESTRID TRAIL",
     "notes": "",
     "taxes": "",
@@ -532,6 +849,8 @@ window.leads = [
     "address": "5006 VILLAGE WAY, San Antonio, TX",
     "owner": "PRYME HOME SOLUTIONS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "11230 WEST AVE STE 2204",
     "notes": "",
     "taxes": "",
@@ -549,6 +868,8 @@ window.leads = [
     "address": "260 REMOUNT, San Antonio, TX",
     "owner": "GRENDELL DANIEL R C",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "SOLAR HENRY\r\n407 MONTPELIER DR\r\nSAN ANTONIO, TX 78228",
     "notes": "",
     "taxes": "",
@@ -566,28 +887,43 @@ window.leads = [
     "address": "115 WESTLAKE DR, San Antonio, TX",
     "owner": "FLORES MARIANO (deceased ) & JANIE",
     "phones": [
-      "Owner Mariano C. Flores passed away April 27",
-      "2003",
-      "Janie S. Flores 76 yo (210) 902-6989 straight to vm",
-      "(210) 300-7682 straight to pers ivr - disconnect after name announcement",
-      "(210) 748-9219 vm after a couple rings na sent text",
-      "Survived by:",
-      "Spouse: Janie S. Flores",
-      "Children: Martin Flores (w",
-      "spouse Monica)",
-      "Jennifer Flores",
-      "Courtney Flores",
-      "Siblings:",
-      "Frances Flores",
-      "Margaret Flores",
-      "Alicia Delgado",
-      "Adolfo Flores (wife Tina)",
-      "Fred Flores",
-      "Lorenzo Flores (wife Frances)",
-      "Known grandchildren: Megan",
-      "Maryssa",
-      "Matthew Flores"
+      {
+        "phone": "(210) 902-6989",
+        "digits": "2109026989",
+        "label": "Janie S. Flores 76 yo",
+        "note": "straight to vm"
+      },
+      {
+        "phone": "(210) 300-7682",
+        "digits": "2103007682",
+        "label": "Unknown",
+        "note": "straight to pers ivr - disconnect after name announcement"
+      },
+      {
+        "phone": "(210) 748-9219",
+        "digits": "2107489219",
+        "label": "Unknown",
+        "note": "vm after a couple rings na sent text"
+      }
     ],
+    "phoneIndex": {
+      "(210) 902-6989": {
+        "digits": "2109026989",
+        "label": "Janie S. Flores 76 yo",
+        "note": "straight to vm"
+      },
+      "(210) 300-7682": {
+        "digits": "2103007682",
+        "label": "Unknown",
+        "note": "straight to pers ivr - disconnect after name announcement"
+      },
+      "(210) 748-9219": {
+        "digits": "2107489219",
+        "label": "Unknown",
+        "note": "vm after a couple rings na sent text"
+      }
+    },
+    "phoneRaw": "Owner Mariano C. Flores passed away April 27, 2003\n\nJanie S. Flores 76 yo (210) 902-6989        straight to vm\n(210) 300-7682        straight to pers ivr - disconnect after name announcement\n(210) 748-9219        vm after a couple rings na sent text\n\nSurvived by:\nSpouse: Janie S. Flores\nChildren: Martin Flores (w/ spouse Monica), Jennifer Flores, Courtney Flores\nSiblings:\nFrances Flores\nMargaret Flores\nAlicia Delgado\nAdolfo Flores (wife Tina)\nFred Flores\nLorenzo Flores (wife Frances)\nKnown grandchildren: Megan, Maryssa, Matthew Flores",
     "mailing": "115 WESTLAKE DR",
     "notes": "Photos",
     "taxes": "",
@@ -605,9 +941,21 @@ window.leads = [
     "address": "114 LELANI ST, San Antonio, TX",
     "owner": "GARCIA BLANCA",
     "phones": [
-      "Listed for 99 with jose epinoza",
-      "Blanca Garcia 49 yo (210) 789-6454 - na sent text"
+      {
+        "phone": "(210) 789-6454",
+        "digits": "2107896454",
+        "label": "Blanca Garcia 49 yo",
+        "note": "na sent text"
+      }
     ],
+    "phoneIndex": {
+      "(210) 789-6454": {
+        "digits": "2107896454",
+        "label": "Blanca Garcia 49 yo",
+        "note": "na sent text"
+      }
+    },
+    "phoneRaw": "Listed for 99 with jose epinoza\nBlanca Garcia 49 yo (210) 789-6454 - na sent text",
     "mailing": "10319 MANOR CREEK",
     "notes": "",
     "taxes": "",
@@ -625,6 +973,8 @@ window.leads = [
     "address": "9455 HINDI ST, San Antonio, TX",
     "owner": "BARBARA WEAVER",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "9455 Hindi St San Antonio TX 78224-2703",
     "notes": "",
     "taxes": "",
@@ -642,6 +992,8 @@ window.leads = [
     "address": "6348 CAMBRIDGE DR, San Antonio, TX",
     "owner": "MOHAMMED AMIN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "208 CINCINNATI AVE",
     "notes": "",
     "taxes": "",
@@ -659,6 +1011,8 @@ window.leads = [
     "address": "4138 MONACO DR, San Antonio, TX",
     "owner": "MCKNIGHT WESLEY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3911 TAMBLEWOOD DR",
     "notes": "",
     "taxes": "",
@@ -676,6 +1030,8 @@ window.leads = [
     "address": "5724 KENWICK ST, San Antonio, TX",
     "owner": "GEO TRUST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "6906 HEUERMANN RD #270",
     "notes": "",
     "taxes": "",
@@ -693,6 +1049,8 @@ window.leads = [
     "address": "4618 OLD COACH LN, San Antonio, TX",
     "owner": "STERLING CORRINE F",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4618 OLD COACH LN",
     "notes": "",
     "taxes": "",
@@ -710,6 +1068,8 @@ window.leads = [
     "address": "222 Tammy Dr, San Antonio, TX 78216",
     "owner": "SANDRA ALONSO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2302 N Zarzamora St San Antonio TX 78201-5407",
     "notes": "",
     "taxes": "N/A",
@@ -727,6 +1087,8 @@ window.leads = [
     "address": "5022 SEABREEZE DR, San Antonio, TX",
     "owner": "STERLING LEE M L",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "BOONE LUCY STERLING",
     "notes": "",
     "taxes": "",
@@ -744,6 +1106,8 @@ window.leads = [
     "address": "5035 WYCLIFF DR, San Antonio, TX",
     "owner": "BROWN ALTON VERNO JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "5035 WYCLIFF DR",
     "notes": "",
     "taxes": "",
@@ -756,11 +1120,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1902 Farwell Dr, San Antonio, TX 78213",
+    "id": "addr_c9d5b6ae2f7a",
     "docnum": "",
     "address": "1902 Farwell Dr, San Antonio, TX 78213",
     "owner": "TR\u200bOY GLYNN WELCH",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1106 W Agarita Ave, San Antonio, TX 78201-5605",
     "notes": "3 bed / 1 bath, 1,100 sqft; 1960 build; slab; asbestos shingle exterior; no central AC; city dangerous premises abatement $2,443; ~5k delinquent taxes; code enforcement activity",
     "taxes": "",
@@ -778,6 +1144,8 @@ window.leads = [
     "address": "3735 LA SABRE DR, San Antonio, TX",
     "owner": "SALAZAR GROUP LLC - ALPHA SERIES",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "12319 LITTLE EMILY WAY",
     "notes": "",
     "taxes": "",
@@ -795,6 +1163,8 @@ window.leads = [
     "address": "2931 TILLIE DR, San Antonio, TX",
     "owner": "RICHARDS MICHAEL ALLEN JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "7457 VAN NOY LOOP",
     "notes": "",
     "taxes": "",
@@ -812,6 +1182,8 @@ window.leads = [
     "address": "2518 CHRISTIAN DR, San Antonio, TX",
     "owner": "BELL GERALD R & INGRID Y",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2518 CHRISTIAN DR",
     "notes": "",
     "taxes": "",
@@ -829,6 +1201,8 @@ window.leads = [
     "address": "214 CRESWELL DR, San Antonio, TX",
     "owner": "PADOR PROPERTIES LTD",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% FROST BANK TR R/E (T-6)",
     "notes": "",
     "taxes": "",
@@ -846,6 +1220,8 @@ window.leads = [
     "address": "1322 ERVIN ST, San Antonio, TX",
     "owner": "HACKETT ALBERTA KATIE SMITH",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "323 JIM ST",
     "notes": "",
     "taxes": "",
@@ -863,6 +1239,8 @@ window.leads = [
     "address": "1407 ARROYA VISTA DR, San Antonio, TX",
     "owner": "ALAMO HOME SOURCE LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "6243 W INTERSTATE 10 STE 106",
     "notes": "POS",
     "taxes": "",
@@ -880,6 +1258,8 @@ window.leads = [
     "address": "610 DEELY PL, San Antonio, TX",
     "owner": "CARRILLO CATALINA ANGELINI",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "223 NOTRE DAME DR",
     "notes": "",
     "taxes": "",
@@ -897,6 +1277,8 @@ window.leads = [
     "address": "1847 MCCAULEY AVE, San Antonio, TX",
     "owner": "MORALES RICHARD D",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1847 MCCAULEY AVE",
     "notes": "",
     "taxes": "",
@@ -909,17 +1291,48 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "550 Springwood Ln, San Antonio, TX 78216",
+    "id": "addr_200726565233",
     "docnum": "",
     "address": "550 Springwood Ln, San Antonio, TX 78216",
     "owner": "ROSE FILIO",
     "phones": [
-      "Rose Filio 81 yo",
-      "Jose (210) 473-1582 ivr na called back",
-      "double sided lot offerred long term and short term solutions",
-      "Cristina Filio (210) 589-8557 straught to vm",
-      "Mark Filio 30 (NC) (984) 364-0044 - texted back -"
+      {
+        "phone": "(210) 473-1582",
+        "digits": "2104731582",
+        "label": "Jose",
+        "note": "ivr na called back"
+      },
+      {
+        "phone": "(210) 589-8557",
+        "digits": "2105898557",
+        "label": "Cristina Filio",
+        "note": "straught to vm"
+      },
+      {
+        "phone": "(984) 364-0044",
+        "digits": "9843640044",
+        "label": "Mark Filio 30 (NC)",
+        "note": "texted back"
+      }
     ],
+    "phoneIndex": {
+      "(210) 473-1582": {
+        "digits": "2104731582",
+        "label": "Jose",
+        "note": "ivr na called back"
+      },
+      "(210) 589-8557": {
+        "digits": "2105898557",
+        "label": "Cristina Filio",
+        "note": "straught to vm"
+      },
+      "(984) 364-0044": {
+        "digits": "9843640044",
+        "label": "Mark Filio 30 (NC)",
+        "note": "texted back"
+      }
+    },
+    "phoneRaw": "Rose Filio 81 yo\nJose  (210) 473-1582 ivr na called back\ndouble sided lot offerred long term and short term solutions\nCristina Filio (210) 589-8557 straught to vm\nMark Filio 30 (NC) (984) 364-0044 - texted back -",
     "mailing": "510 Cobble Dr San Antonio TX 78216-3726",
     "notes": "3 bed / 1 bath, 912 sqft; 1958 build; slab; asbestos shingle; no central AC; oversized 0.32 ac lot; corner lot; teardown or heavy rehab; investor remarks; long DOM (232 days); multifamily potential\n4k taxes - 900 city lien\nListed with terrible view count - 200 in 200 days\n\nAgent Deborah Proctor Office  210-415-0376 Phone 210-415-0376 E-Mail deb.re4you@gmail.com \nTexted agent",
     "taxes": "",
@@ -937,6 +1350,8 @@ window.leads = [
     "address": "310 ONE OAK DR, San Antonio, TX",
     "owner": "SHAMON MARTIN & PATRICIA E",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "310 ONE OAK DR",
     "notes": "",
     "taxes": "",
@@ -954,6 +1369,8 @@ window.leads = [
     "address": "4234 WILD OAK DR, San Antonio, TX",
     "owner": "GUTIERREZ HARRY P & ROSE M",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "205 APPERSON AVE",
     "notes": "",
     "taxes": "",
@@ -971,19 +1388,65 @@ window.leads = [
     "address": "111 GREENHILL PASS, San Antonio, TX",
     "owner": "CAMPA SYLVIA A",
     "phones": [
-      "Owner: Sylvia A Campa \u2014 91yo \u2014 No mobile",
-      "Likely Relatives",
-      "Heirs",
-      "Contacts:",
-      "Maria Campa \u2014 62yo \u2014 (210) 814-7775 error message\u2014 7631 Dyewood",
-      "Terry Campa \u2014 34yo \u2014 (210) 859-0994 na sent text wrong #",
-      "Marvin Campa \u2014 37yo \u2014 (210) 379-4861 straight to vm\u2014same",
-      "Previous Occupants",
-      "Neighbors",
-      "Related Names:",
-      "Luis Campa \u2014 65yo \u2014 (210) 659-8849 error message\u2014 7731 Dyewood",
-      "Nancy Campa \u2014 58yo \u2014 (210) 744-2283 na sent text\u2014na"
+      {
+        "phone": "(210) 814-7775",
+        "digits": "2108147775",
+        "label": "Maria Campa \u2014 62yo \u2014",
+        "note": "error message\u2014 7631 Dyewood"
+      },
+      {
+        "phone": "(210) 859-0994",
+        "digits": "2108590994",
+        "label": "Terry Campa \u2014 34yo \u2014",
+        "note": "na sent text wrong #"
+      },
+      {
+        "phone": "(210) 379-4861",
+        "digits": "2103794861",
+        "label": "Marvin Campa \u2014 37yo \u2014",
+        "note": "straight to vm\u2014same"
+      },
+      {
+        "phone": "(210) 659-8849",
+        "digits": "2106598849",
+        "label": "Luis Campa \u2014 65yo \u2014",
+        "note": "error message\u2014 7731 Dyewood"
+      },
+      {
+        "phone": "(210) 744-2283",
+        "digits": "2107442283",
+        "label": "Nancy Campa \u2014 58yo \u2014",
+        "note": "na sent text\u2014na"
+      }
     ],
+    "phoneIndex": {
+      "(210) 814-7775": {
+        "digits": "2108147775",
+        "label": "Maria Campa \u2014 62yo \u2014",
+        "note": "error message\u2014 7631 Dyewood"
+      },
+      "(210) 859-0994": {
+        "digits": "2108590994",
+        "label": "Terry Campa \u2014 34yo \u2014",
+        "note": "na sent text wrong #"
+      },
+      "(210) 379-4861": {
+        "digits": "2103794861",
+        "label": "Marvin Campa \u2014 37yo \u2014",
+        "note": "straight to vm\u2014same"
+      },
+      "(210) 659-8849": {
+        "digits": "2106598849",
+        "label": "Luis Campa \u2014 65yo \u2014",
+        "note": "error message\u2014 7731 Dyewood"
+      },
+      "(210) 744-2283": {
+        "digits": "2107442283",
+        "label": "Nancy Campa \u2014 58yo \u2014",
+        "note": "na sent text\u2014na"
+      }
+    },
+    "phoneRaw": "Owner: Sylvia A Campa \u2014 91yo \u2014 No mobile\n\nLikely Relatives / Heirs / Contacts:\nMaria Campa \u2014 62yo \u2014 (210) 814-7775 error message\u2014 7631 Dyewood  \nTerry Campa \u2014 34yo \u2014 (210) 859-0994 na sent text wrong #\nMarvin Campa \u2014 37yo \u2014 (210) 379-4861 straight to vm\u2014same\n\nPrevious Occupants / Neighbors / Related Names:\nLuis Campa \u2014 65yo \u2014 (210) 659-8849 error message\u2014 7731 Dyewood  \nNancy Campa \u2014 58yo \u2014 (210) 744-2283 na sent text\u2014na",
     "mailing": "111 GREENHILL PASS",
     "notes": "",
     "taxes": "possible mailing: 7631 Dyewood San Antonio TX | 3923 S Pine St San Antonio TX",
@@ -1001,8 +1464,21 @@ window.leads = [
     "address": "511 ARTEMIS DR, San Antonio, TX",
     "owner": "NOBLE MICHAEL E & MARGARET",
     "phones": [
-      "Marvin Nentwich 40 Yo (210) 393-1483 - Wireless"
+      {
+        "phone": "(210) 393-1483",
+        "digits": "2103931483",
+        "label": "Marvin Nentwich 40 Yo",
+        "note": "Wireless"
+      }
     ],
+    "phoneIndex": {
+      "(210) 393-1483": {
+        "digits": "2103931483",
+        "label": "Marvin Nentwich 40 Yo",
+        "note": "Wireless"
+      }
+    },
+    "phoneRaw": "Marvin Nentwich 40 Yo (210) 393-1483 - Wireless",
     "mailing": "511 ARTEMIS DR",
     "notes": "",
     "taxes": "",
@@ -1020,10 +1496,32 @@ window.leads = [
     "address": "319 Ashland Dr, San Antonio, TX 78218",
     "owner": "JOHNSON N L & RITA",
     "phones": [
-      "Rita 90 yo",
-      "Christine Johnson 69 (518) 376-9627",
-      "Ronnie Johnson or Hollie J. (210) 849-8847"
+      {
+        "phone": "(518) 376-9627",
+        "digits": "5183769627",
+        "label": "Christine Johnson 69",
+        "note": ""
+      },
+      {
+        "phone": "(210) 849-8847",
+        "digits": "2108498847",
+        "label": "Ronnie Johnson or Hollie J.",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(518) 376-9627": {
+        "digits": "5183769627",
+        "label": "Christine Johnson 69",
+        "note": ""
+      },
+      "(210) 849-8847": {
+        "digits": "2108498847",
+        "label": "Ronnie Johnson or Hollie J.",
+        "note": ""
+      }
+    },
+    "phoneRaw": "Rita 90 yo \nChristine Johnson 69 (518) 376-9627\nRonnie Johnson or Hollie J. (210) 849-8847",
     "mailing": "4015 Tropical Dr San Antonio TX 78218-3429",
     "notes": "2 bed / 1 bath, 871 sqft; 1955 build; Asbestos Shingle/Tar & Gravel roof (distressed features); sold for $7k in 2020 (likely family transfer)",
     "taxes": "",
@@ -1041,6 +1539,8 @@ window.leads = [
     "address": "319 ASHLAND DR, San Antonio, TX",
     "owner": "JOHNSON N L & RITA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4015 TROPICAL DR",
     "notes": "",
     "taxes": "",
@@ -1058,6 +1558,8 @@ window.leads = [
     "address": "7606 MERTZ DR, San Antonio, TX",
     "owner": "BLAKE VECERA, CASSANDRA VECERA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2801 Crystal Falls Pkwy Leander TX 78641-3586",
     "notes": "",
     "taxes": "",
@@ -1075,6 +1577,8 @@ window.leads = [
     "address": "575 CONGRESS AVE, San Antonio, TX",
     "owner": "PENA JOHN B JR & BEATRICE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "575 CONGRESS AVE",
     "notes": "",
     "taxes": "",
@@ -1092,6 +1596,8 @@ window.leads = [
     "address": "338 ADELPHIA AVE, San Antonio, TX",
     "owner": "MCELYEA TOMMY ALAN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "338 ADELPHIA AVE",
     "notes": "",
     "taxes": "",
@@ -1109,6 +1615,8 @@ window.leads = [
     "address": "230 RIDGECREST DR, San Antonio, TX",
     "owner": "KARGL INDUSTRIES INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "210 CRESCENT ST",
     "notes": "",
     "taxes": "",
@@ -1126,6 +1634,8 @@ window.leads = [
     "address": "226 RIDGECREST DR, San Antonio, TX",
     "owner": "KARGL INDUSTRIES INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "210 CRESCENT ST",
     "notes": "",
     "taxes": "",
@@ -1143,6 +1653,8 @@ window.leads = [
     "address": "815 E FORMOSA, San Antonio, TX",
     "owner": "HELEN OROSCO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "815 E Formosa Blvd San Antonio TX 78221-3031",
     "notes": "number in rpr",
     "taxes": "",
@@ -1160,6 +1672,8 @@ window.leads = [
     "address": "107 LOCKNERE LN, San Antonio, TX",
     "owner": "ROCKY MOUNTAIN EQUITY LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2255 E SUNNYSIDE AVE #58579",
     "notes": "",
     "taxes": "",
@@ -1177,6 +1691,8 @@ window.leads = [
     "address": "7403 SOMERSET, San Antonio, TX",
     "owner": "VALERIA RAMIREZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "742 Sw 38Th St San Antonio TX 78237-2618",
     "notes": "",
     "taxes": "",
@@ -1194,6 +1710,8 @@ window.leads = [
     "address": "3316 NIMITZ, San Antonio, TX",
     "owner": "INDC WORKING LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "16414 SAN PEDRO AVE STE 635",
     "notes": "",
     "taxes": "",
@@ -1211,6 +1729,8 @@ window.leads = [
     "address": "711 EMMETT AV, San Antonio, TX",
     "owner": "FRANCO J. CRUZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "711 Emmett Aved San Antonio TX 78221",
     "notes": "quit claim",
     "taxes": "",
@@ -1228,6 +1748,8 @@ window.leads = [
     "address": "534 BARBERRY ST, San Antonio, TX",
     "owner": "MENDOZA JUAN & YOLANDA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "162 DORSEY",
     "notes": "",
     "taxes": "",
@@ -1245,6 +1767,8 @@ window.leads = [
     "address": "526 E ANSLEY ST, San Antonio, TX",
     "owner": "4 J SOTO CONSTRUCTION LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "164 JANOE LANE",
     "notes": "",
     "taxes": "",
@@ -1262,6 +1786,8 @@ window.leads = [
     "address": "510 E ANSLEY ST, San Antonio, TX",
     "owner": "REYES RAUL & ARACELI",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "5719 DOLCETTO",
     "notes": "",
     "taxes": "",
@@ -1279,6 +1805,8 @@ window.leads = [
     "address": "138 PIMA ST, San Antonio, TX",
     "owner": "LOZANO TINA MICHELLE MANN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1002 MILVID",
     "notes": "",
     "taxes": "",
@@ -1296,6 +1824,8 @@ window.leads = [
     "address": "215 E ANSLEY ST, San Antonio, TX",
     "owner": "GARCIA MISAEL SIERRA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1818 BARRETT PALMS",
     "notes": "",
     "taxes": "",
@@ -1313,6 +1843,8 @@ window.leads = [
     "address": "963 GILLETTTE, San Antonio, TX",
     "owner": "DONNA THOMASON",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "112 N Sanders St Winters TX 79567-4925",
     "notes": "",
     "taxes": "",
@@ -1325,11 +1857,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1442 E Chavaneaux Rd, San Antonio, TX 78214, San Antonio TX",
+    "id": "addr_978ab49f931e",
     "docnum": "",
     "address": "1442 E Chavaneaux Rd, San Antonio, TX 78214, San Antonio TX",
     "owner": "LILLIE G. RODRIGUEZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "730 W Harding Blvd San Antonio TX 78221-1813",
     "notes": "600 SF 2/1 single-family; built 1940; very small house; likely heavy rehab or teardown; long-term owner (15\u201320 yrs); Southside ISD",
     "taxes": "",
@@ -1347,6 +1881,8 @@ window.leads = [
     "address": "118 CRESHAM DR, San Antonio, TX",
     "owner": "CHITTICK CYNTHIA SUE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "118 CRSHAM DR",
     "notes": "",
     "taxes": "",
@@ -1364,6 +1900,8 @@ window.leads = [
     "address": "1829 GOLIAD RD, San Antonio, TX",
     "owner": "REALTY INCOME PROPERTIES 17 LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "ATTN DEPT 300 STORE #26296",
     "notes": "",
     "taxes": "",
@@ -1381,11 +1919,32 @@ window.leads = [
     "address": "109 SAN JUAN RD, San Antonio, TX",
     "owner": "VILLARREAL RAUL",
     "phones": [
-      "Raul Villarreal 24 yo (956) 720-4265 keeps ringing",
-      "(956) 481-3240",
-      "raulvillarreal20@gmail.com",
-      "jvjbb23@gmail.com"
+      {
+        "phone": "(956) 720-4265",
+        "digits": "9567204265",
+        "label": "Raul Villarreal  24 yo",
+        "note": "keeps ringing"
+      },
+      {
+        "phone": "(956) 481-3240",
+        "digits": "9564813240",
+        "label": "Unknown",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(956) 720-4265": {
+        "digits": "9567204265",
+        "label": "Raul Villarreal  24 yo",
+        "note": "keeps ringing"
+      },
+      "(956) 481-3240": {
+        "digits": "9564813240",
+        "label": "Unknown",
+        "note": ""
+      }
+    },
+    "phoneRaw": "Raul Villarreal  24 yo (956) 720-4265 keeps ringing\n(956) 481-3240        \nraulvillarreal20@gmail.com  \njvjbb23@gmail.com",
     "mailing": "105 SAN JUAN",
     "notes": "9927 Auger Run, San Antonio TX might be real mailing",
     "taxes": "",
@@ -1403,6 +1962,8 @@ window.leads = [
     "address": "118 SARGENT ST, San Antonio, TX",
     "owner": "BARRIENTES ERNESTO V",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "127 SARGENT ST",
     "notes": "",
     "taxes": "",
@@ -1420,6 +1981,8 @@ window.leads = [
     "address": "547 DORIE ST, San Antonio, TX",
     "owner": "RCGA LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "14643 DALLAS PKWY STE 775",
     "notes": "",
     "taxes": "",
@@ -1437,6 +2000,8 @@ window.leads = [
     "address": "1007 YUCCA ST, San Antonio, TX",
     "owner": "RCGA LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "14643 DALLAS PKWY STE 775",
     "notes": "",
     "taxes": "",
@@ -1454,6 +2019,8 @@ window.leads = [
     "address": "554 BUNDY ST, San Antonio, TX",
     "owner": "HUGGINS JOHN JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "554 BUNDY",
     "notes": "",
     "taxes": "",
@@ -1471,6 +2038,8 @@ window.leads = [
     "address": "318 CHARCLIFF DR, San Antonio, TX",
     "owner": "AAAR PROPERTIES LTD CO LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4718 STONLEIGH DR",
     "notes": "",
     "taxes": "",
@@ -1488,6 +2057,8 @@ window.leads = [
     "address": "318 CHARCLIFF DR, San Antonio, TX",
     "owner": "AAAR PROPERTIES LTD CO LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4718 STONLEIGH DR",
     "notes": "",
     "taxes": "",
@@ -1505,6 +2076,8 @@ window.leads = [
     "address": "318 COLGLAZIER AVE, San Antonio, TX",
     "owner": "OTERO SOFIA H EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "318 COLGLAZIER AVE",
     "notes": "",
     "taxes": "",
@@ -1522,16 +2095,32 @@ window.leads = [
     "address": "114 POOL DR, San Antonio, TX",
     "owner": "SCHWARTZ LOTTIE MAY",
     "phones": [
-      "Lead: Beverley A Cook \u2013 Age 69",
-      "Phones (most recent",
-      "best first)",
-      "(210) 382-4674 \u2014 straight to vm\u2014 same",
-      "(210) 240-5008 \u2014 weird vm\u2014 same",
-      "Emails (only validated):",
-      "\u2022 beverleycook56@gmail.com",
-      "\u2022 cook136@gmail.com",
-      "\u2022 cook136@aol.com"
+      {
+        "phone": "(210) 382-4674",
+        "digits": "2103824674",
+        "label": "Unknown",
+        "note": "\u2014 straight to vm\u2014 same"
+      },
+      {
+        "phone": "(210) 240-5008",
+        "digits": "2102405008",
+        "label": "Unknown",
+        "note": "\u2014 weird vm\u2014 same"
+      }
     ],
+    "phoneIndex": {
+      "(210) 382-4674": {
+        "digits": "2103824674",
+        "label": "Unknown",
+        "note": "\u2014 straight to vm\u2014 same"
+      },
+      "(210) 240-5008": {
+        "digits": "2102405008",
+        "label": "Unknown",
+        "note": "\u2014 weird vm\u2014 same"
+      }
+    },
+    "phoneRaw": "Lead: Beverley A Cook \u2013 Age 69\n\n Phones (most recent / best first)\n(210) 382-4674 \u2014 straight to vm\u2014 same\n(210) 240-5008 \u2014 weird vm\u2014 same\n\nEmails (only validated):\n\u2022 beverleycook56@gmail.com\n\u2022 cook136@gmail.com\n\u2022 cook136@aol.com",
     "mailing": "% BEVERLY A COOK\r\n136 COUNTRY ACRES DR\r\nADKINS, TX 78101-2700",
     "notes": "",
     "taxes": "",
@@ -1549,6 +2138,8 @@ window.leads = [
     "address": "4934 LUZ AVE, San Antonio, TX",
     "owner": "SMART HAVEN HOUSES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 12110",
     "notes": "",
     "taxes": "",
@@ -1566,6 +2157,8 @@ window.leads = [
     "address": "244 DALEHURST DR, San Antonio, TX",
     "owner": "WARD JOHN DOUGLAS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "244 DALEHURST DR",
     "notes": "",
     "taxes": "",
@@ -1583,6 +2176,8 @@ window.leads = [
     "address": "206 NEWSON DR, San Antonio, TX",
     "owner": "LEYVA MIKE A",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "206 NEWSON DR",
     "notes": "",
     "taxes": "",
@@ -1600,6 +2195,8 @@ window.leads = [
     "address": "530 STERLING DR, San Antonio, TX",
     "owner": "VERTREES PHIL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1602 OAK ST",
     "notes": "",
     "taxes": "",
@@ -1617,6 +2214,8 @@ window.leads = [
     "address": "1640 AMANDA ST, San Antonio, TX",
     "owner": "RODRIGUEZ MANUEL E",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1640 AMANDA ST",
     "notes": "",
     "taxes": "",
@@ -1634,6 +2233,8 @@ window.leads = [
     "address": "1706 PECK AVE, San Antonio, TX",
     "owner": "NEIGHBORS MILTON A",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1706 PECK AVE",
     "notes": "",
     "taxes": "",
@@ -1651,6 +2252,8 @@ window.leads = [
     "address": "1703 PECK AVE, San Antonio, TX",
     "owner": "PORTER JUANITA R",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "307 W CYPRESS ST # 118",
     "notes": "",
     "taxes": "",
@@ -1668,6 +2271,8 @@ window.leads = [
     "address": "1006 HAMPTON ST, San Antonio, TX",
     "owner": "453767 PEGIL INVESTMENTS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "310 JUDSON ST",
     "notes": "",
     "taxes": "",
@@ -1685,6 +2290,8 @@ window.leads = [
     "address": "722 HAMPTON, San Antonio, TX",
     "owner": "MIKE GONZABA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "Po Box 23134 San Antonio TX 78223-0134",
     "notes": "vacant lot",
     "taxes": "",
@@ -1702,6 +2309,8 @@ window.leads = [
     "address": "218 DORIE ST, San Antonio, TX",
     "owner": "NTOKA IDOWU BOLANLE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "22906 US HWY 281 N #106-203",
     "notes": "",
     "taxes": "",
@@ -1719,6 +2328,8 @@ window.leads = [
     "address": "3170 MARTIN LUTHER KING DR, San Antonio, TX",
     "owner": "VECTOR PARTNERS V LTD",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 703",
     "notes": "",
     "taxes": "",
@@ -1736,6 +2347,8 @@ window.leads = [
     "address": "3170 MARTIN LUTHER KING DR, San Antonio, TX",
     "owner": "VECTOR PARTNERS V LTD",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 703",
     "notes": "",
     "taxes": "",
@@ -1753,6 +2366,8 @@ window.leads = [
     "address": "455 FERRIS AVE, San Antonio, TX",
     "owner": "GONZALEZ LUIS IVAN SANCHEZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "455 FERRIS AVE",
     "notes": "",
     "taxes": "",
@@ -1770,6 +2385,8 @@ window.leads = [
     "address": "478 CORLISS, San Antonio, TX",
     "owner": "NEW BIRTH CHURCH OF GOD IN CHRIST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "479 FERRIS AVE",
     "notes": "",
     "taxes": "",
@@ -1787,6 +2404,8 @@ window.leads = [
     "address": "430 CORLISS, San Antonio, TX",
     "owner": "GUAP LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3 FLINTSONE CT",
     "notes": "",
     "taxes": "",
@@ -1804,6 +2423,8 @@ window.leads = [
     "address": "354 CORLISS, San Antonio, TX",
     "owner": "CARTER WILLIE J EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "CARTER JESSIE L/E",
     "notes": "",
     "taxes": "",
@@ -1821,6 +2442,8 @@ window.leads = [
     "address": "2162 ARANSAS AVE, San Antonio, TX",
     "owner": "BEXAR COUNTY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% JOE NEWTON",
     "notes": "",
     "taxes": "",
@@ -1838,6 +2461,8 @@ window.leads = [
     "address": "2134 ARANSAS AVE, San Antonio, TX",
     "owner": "HIZEL HOLDINGS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 160562",
     "notes": "",
     "taxes": "",
@@ -1855,6 +2480,8 @@ window.leads = [
     "address": "302 FARGO AVE, San Antonio, TX",
     "owner": "JEFFERSON DAVID SR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "100 JERUSALEM WALK APT 501",
     "notes": "",
     "taxes": "",
@@ -1872,6 +2499,8 @@ window.leads = [
     "address": "7702 MAXWELL, San Antonio, TX",
     "owner": "LEONOR BURGESS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "Po Box 14613 San Antonio TX 78214-0613",
     "notes": "",
     "taxes": "",
@@ -1889,6 +2518,8 @@ window.leads = [
     "address": "215 WAUGH ST, San Antonio, TX",
     "owner": "ALVAREZ FRANK JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "215 WAUGH ST",
     "notes": "",
     "taxes": "",
@@ -1906,6 +2537,8 @@ window.leads = [
     "address": "107 KASHMUIR PL, San Antonio, TX",
     "owner": "RODRIGUEZ FRANK",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "107 KASHMUIR PL",
     "notes": "",
     "taxes": "",
@@ -1923,6 +2556,8 @@ window.leads = [
     "address": "635 YUCCA ST, San Antonio, TX",
     "owner": "CALVARY CEMETERY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "635 Yucca St San Antonio TX 78220",
     "notes": "Vacant lot",
     "taxes": "",
@@ -1940,6 +2575,8 @@ window.leads = [
     "address": "335 PAMELA DR, San Antonio, TX",
     "owner": "GUIDRY DAVID JOHN ET AL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "13603 BRIDGEVIEW",
     "notes": "",
     "taxes": "",
@@ -1957,6 +2594,8 @@ window.leads = [
     "address": "1402 W HUTCHINS PL, San Antonio, TX",
     "owner": "GXM INVESTMENTS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1103 TWO WOOD WAY",
     "notes": "",
     "taxes": "",
@@ -1974,6 +2613,8 @@ window.leads = [
     "address": "527 VERNE ST, San Antonio, TX",
     "owner": "LOPEZ RALPH",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% BEXAR COUNTY SHERIFFS OFFICE",
     "notes": "",
     "taxes": "",
@@ -1991,6 +2632,8 @@ window.leads = [
     "address": "623 ROYSTON AVE, San Antonio, TX",
     "owner": "NUSTART HOME SOLUTIONS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "902 KITTY HAWK RD STE 170-461",
     "notes": "",
     "taxes": "",
@@ -2008,6 +2651,8 @@ window.leads = [
     "address": "1631 MARDELL ST, San Antonio, TX",
     "owner": "SAMANIEGO MARIA MENDOZA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1631 MARDELL ST",
     "notes": "",
     "taxes": "",
@@ -2025,6 +2670,8 @@ window.leads = [
     "address": "614 HEARNE AVE, San Antonio, TX",
     "owner": "BEXAR COUNTY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% JOE NEWTON",
     "notes": "",
     "taxes": "",
@@ -2041,9 +2688,9 @@ window.leads = [
     "docnum": "20250151023",
     "address": "137 W WILDWOOD, San Antonio, TX",
     "owner": "ORTIZ MARYJANE & RICHARD & RUBEN &",
-    "phones": [
-      "no results"
-    ],
+    "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "no results",
     "mailing": "LUNA ROSARIO O & GARCIA ESPERANZA 137 W WILDWOOD SAN ANTONIO, TX 78212-1510",
     "notes": "Vacant lot",
     "taxes": "",
@@ -2061,6 +2708,8 @@ window.leads = [
     "address": "727 MARBAUCH, San Antonio, TX",
     "owner": "BYRON TRACY JR, JULLIETTE TRACY JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "727 Marbauch Ave San Antonio TX 78237-3354",
     "notes": "vacant lot",
     "taxes": "",
@@ -2078,6 +2727,8 @@ window.leads = [
     "address": "1212 VALENCIA, San Antonio, TX",
     "owner": "SALAS MARY DURON",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "601 W HARDING AVE",
     "notes": "",
     "taxes": "",
@@ -2095,6 +2746,8 @@ window.leads = [
     "address": "647 HUMBOLDT, San Antonio, TX",
     "owner": "ANNETTE PEREZ CANTU",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1914 Saltillo St San Antonio TX 78207-6818",
     "notes": "",
     "taxes": "",
@@ -2112,9 +2765,32 @@ window.leads = [
     "address": "1027 VERMONT ST, San Antonio, TX",
     "owner": "HAWKINS JOE & MORALES SUSANA",
     "phones": [
-      "Joe Hawkins or Rosalinda H. (210) 287-1618 rings to disconnect",
-      "Ailene Hawkins 42 yo (210) 782-5452 rings to disconnect"
+      {
+        "phone": "(210) 287-1618",
+        "digits": "2102871618",
+        "label": "Joe Hawkins or Rosalinda H.",
+        "note": "rings to disconnect"
+      },
+      {
+        "phone": "(210) 782-5452",
+        "digits": "2107825452",
+        "label": "Ailene Hawkins 42 yo",
+        "note": "rings to disconnect"
+      }
     ],
+    "phoneIndex": {
+      "(210) 287-1618": {
+        "digits": "2102871618",
+        "label": "Joe Hawkins or Rosalinda H.",
+        "note": "rings to disconnect"
+      },
+      "(210) 782-5452": {
+        "digits": "2107825452",
+        "label": "Ailene Hawkins 42 yo",
+        "note": "rings to disconnect"
+      }
+    },
+    "phoneRaw": "Joe Hawkins or Rosalinda H. (210) 287-1618  rings to disconnect\nAilene Hawkins 42 yo (210) 782-5452 rings to disconnect",
     "mailing": "1027 VERMONT ST",
     "notes": "",
     "taxes": "",
@@ -2132,6 +2808,8 @@ window.leads = [
     "address": "747 Mccauley Blvd, San Antonio, TX 78221",
     "owner": "ALEJANDRO M. YBARRA & TERESA S. YBARRA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "747 Mccauley Blvd, San Antonio, TX 78221-1334",
     "notes": "3 bed / 1 bath, 1,376 sqft; 1940 build; wood exterior; metal roof; pier foundation; no central HVAC; large 0.42-acre lot; estate vesting; dated condition likely\n$33,460.71 Last Payer:\r\nHARPER REALTY PARTNERS, LLC",
     "taxes": "",
@@ -2149,6 +2827,8 @@ window.leads = [
     "address": "519 S GENERAL MCMULLEN DR, San Antonio, TX",
     "owner": "COLUNGA FRANK V & JUANITA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "7414 REMUDA DR",
     "notes": "",
     "taxes": "",
@@ -2166,6 +2846,8 @@ window.leads = [
     "address": "175 TESLA DR, San Antonio, TX",
     "owner": "MESQUIAZ JOSE EST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2102 S TRINITY ST",
     "notes": "",
     "taxes": "",
@@ -2183,6 +2865,8 @@ window.leads = [
     "address": "5335 EL PASO ST, San Antonio, TX",
     "owner": "MERLO ANTONIO & OLGA T",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 760162",
     "notes": "",
     "taxes": "",
@@ -2200,6 +2884,8 @@ window.leads = [
     "address": "267 E MAYFIELD BLVD, San Antonio, TX",
     "owner": "COUNTY OF BEXAR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "ATTN: JOE NEWTON",
     "notes": "",
     "taxes": "",
@@ -2217,6 +2903,8 @@ window.leads = [
     "address": "122 SW 30TH ST, San Antonio, TX",
     "owner": "GUAJARDO CARMELA MONTEZ ETAL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1670 COUNTY ROAD 270",
     "notes": "",
     "taxes": "",
@@ -2234,6 +2922,8 @@ window.leads = [
     "address": "122 SW 30TH ST, San Antonio, TX",
     "owner": "GUAJARDO CARMELA MONTEZ ETAL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1670 COUNTY ROAD 270",
     "notes": "",
     "taxes": "",
@@ -2251,6 +2941,8 @@ window.leads = [
     "address": "3115 EL PASO ST, San Antonio, TX",
     "owner": "HERNANDEZ TERESA C EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 830731",
     "notes": "",
     "taxes": "",
@@ -2268,6 +2960,8 @@ window.leads = [
     "address": "4707 FORTUNA ST, San Antonio, TX",
     "owner": "TIRE ASSETS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3100 MAIN ST # 233",
     "notes": "",
     "taxes": "",
@@ -2285,6 +2979,8 @@ window.leads = [
     "address": "611 N SAN FELIPE AVE, San Antonio, TX",
     "owner": "DIAZ BRIAN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4350 SUNSHADOW ST",
     "notes": "",
     "taxes": "",
@@ -2302,6 +2998,8 @@ window.leads = [
     "address": "4822 W MARTIN ST, San Antonio, TX",
     "owner": "LOPEZ JOSUE EDUARDO &",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "NORMA ARACELY",
     "notes": "",
     "taxes": "",
@@ -2319,6 +3017,8 @@ window.leads = [
     "address": "137 FAUST AVE, San Antonio, TX",
     "owner": "BARRIENTES LONGINO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "137 FAUST AVE",
     "notes": "",
     "taxes": "",
@@ -2336,6 +3036,8 @@ window.leads = [
     "address": "204 S SAN FELIPE AVE, San Antonio, TX",
     "owner": "ALMARAS LUIS JR & STEVEN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "13137 INDEPENDENCE AVE",
     "notes": "",
     "taxes": "",
@@ -2353,6 +3055,8 @@ window.leads = [
     "address": "218 W DICKSON AVE, San Antonio, TX",
     "owner": "ASHTON JAMES T EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2331 BUTTERCUP LN",
     "notes": "",
     "taxes": "",
@@ -2370,6 +3074,8 @@ window.leads = [
     "address": "218 W DICKSON AVE, San Antonio, TX",
     "owner": "ASHTON JAMES T EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2331 BUTTERCUP LN",
     "notes": "",
     "taxes": "",
@@ -2387,6 +3093,8 @@ window.leads = [
     "address": "4107 SAN LUIS ST, San Antonio, TX",
     "owner": "MARTINEZ CECILIA RIVAS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4227 MONTEREY ST",
     "notes": "",
     "taxes": "",
@@ -2404,6 +3112,8 @@ window.leads = [
     "address": "426 SUTTON DR, San Antonio, TX",
     "owner": "OJEDA GENEVIEVE L",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "426 SUTTON DR",
     "notes": "",
     "taxes": "",
@@ -2421,6 +3131,8 @@ window.leads = [
     "address": "502 JOHN PAGE DR, San Antonio, TX",
     "owner": "SYNA LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "11126 ROCKY TRL",
     "notes": "",
     "taxes": "",
@@ -2438,6 +3150,8 @@ window.leads = [
     "address": "3862 NOGALITOS, San Antonio, TX",
     "owner": "MORA JOSEPH G",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "413 E YOUNG",
     "notes": "",
     "taxes": "",
@@ -2455,6 +3169,8 @@ window.leads = [
     "address": "325 W MAYFIELD BLVD, San Antonio, TX",
     "owner": "MUNOZ MARIA G",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "325 W MAYFIELD BLVD",
     "notes": "",
     "taxes": "",
@@ -2472,6 +3188,8 @@ window.leads = [
     "address": "134 HANDLEY, San Antonio, TX",
     "owner": "REYES CARLOS RUBEN APONTE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "134 HANDLEY ST",
     "notes": "",
     "taxes": "",
@@ -2489,6 +3207,8 @@ window.leads = [
     "address": "300 W PYRON AVE, San Antonio, TX",
     "owner": "1001 OAK LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "9934 ALMS PARK DR",
     "notes": "",
     "taxes": "",
@@ -2506,6 +3226,8 @@ window.leads = [
     "address": "300 W PYRON AVE, San Antonio, TX",
     "owner": "1001 OAK LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "9934 ALMS PARK DR",
     "notes": "",
     "taxes": "",
@@ -2523,6 +3245,8 @@ window.leads = [
     "address": "2219 MISSION RD, San Antonio, TX",
     "owner": "KURI KALIFE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "24 CHAMPION TRL",
     "notes": "",
     "taxes": "",
@@ -2540,6 +3264,8 @@ window.leads = [
     "address": "346 BELDEN AVE, San Antonio, TX",
     "owner": "GALVAN MARY LOU",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "346 BELDEN AVE",
     "notes": "",
     "taxes": "",
@@ -2557,6 +3283,8 @@ window.leads = [
     "address": "205 CLUTTER AVE, San Antonio, TX",
     "owner": "OROZCO FAMILY REV L",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "RAMON RIVERA TRSTE",
     "notes": "",
     "taxes": "",
@@ -2574,8 +3302,21 @@ window.leads = [
     "address": "109 CLUTTER AVE, San Antonio, TX",
     "owner": "SHANER MAURICE E",
     "phones": [
-      "Maurice Shaner \u2014 Age 65 210) 771-8693 straight to error - same"
+      {
+        "phone": "(210) 771-8693",
+        "digits": "2107718693",
+        "label": "Maurice Shaner \u2014 Age 65",
+        "note": "straight to error - same"
+      }
     ],
+    "phoneIndex": {
+      "(210) 771-8693": {
+        "digits": "2107718693",
+        "label": "Maurice Shaner \u2014 Age 65",
+        "note": "straight to error - same"
+      }
+    },
+    "phoneRaw": "Maurice Shaner \u2014 Age 65  210) 771-8693 straight to error - same",
     "mailing": "109 CLUTTER",
     "notes": "",
     "taxes": "",
@@ -2593,6 +3334,8 @@ window.leads = [
     "address": "212 E BONNER AVE, San Antonio, TX",
     "owner": "WILEY ELSIE M EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "212 E BONNER AVE",
     "notes": "",
     "taxes": "",
@@ -2610,6 +3353,8 @@ window.leads = [
     "address": "3118 MISSION RD, San Antonio, TX",
     "owner": "PACHECO ALBINO ESTE OF & PACHECO MANUELA ESTE OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3118 MISSION RD",
     "notes": "",
     "taxes": "",
@@ -2627,6 +3372,8 @@ window.leads = [
     "address": "227 WAHRMUND CT, San Antonio, TX",
     "owner": "MENDIOLA IRMA ELIZABETH",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "702 MIZUNO WAY",
     "notes": "",
     "taxes": "",
@@ -2644,6 +3391,8 @@ window.leads = [
     "address": "2911 STEVES AVE, San Antonio, TX",
     "owner": "ZAK LANDS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "17803 LA CANTERA TER APT 12607",
     "notes": "",
     "taxes": "",
@@ -2661,6 +3410,8 @@ window.leads = [
     "address": "127 INEZ AVE, San Antonio, TX",
     "owner": "EPSTEIN SIDNEY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1325 MENEFEE BLVD",
     "notes": "",
     "taxes": "",
@@ -2678,6 +3429,8 @@ window.leads = [
     "address": "136 ENRIQUE ST, San Antonio, TX",
     "owner": "DELUNA LUIS ESTATE OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "136 ENRIQUE ST",
     "notes": "",
     "taxes": "",
@@ -2695,6 +3448,8 @@ window.leads = [
     "address": "803 HISTORIC OLD, San Antonio, TX",
     "owner": "SHAMSUDDIN N. KHOJA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "803 Historic Old Hwy 90 San Antonio TX 78237-2635",
     "notes": "",
     "taxes": "",
@@ -2712,6 +3467,8 @@ window.leads = [
     "address": "311 W ACADEMY ST, San Antonio, TX",
     "owner": "MALDONADO DAVID SANCHEZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "MALDONADO DAVID S ETAL",
     "notes": "",
     "taxes": "",
@@ -2729,6 +3486,8 @@ window.leads = [
     "address": "2900 CHIHUAHUA ST, San Antonio, TX",
     "owner": "RAMIREZ FRANCISCO EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% GLORIA DE HARO",
     "notes": "",
     "taxes": "",
@@ -2746,6 +3505,8 @@ window.leads = [
     "address": "3134 COLIMA ST, San Antonio, TX",
     "owner": "MARTINEZ RUBEN S ETAL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3134 COLIMA ST",
     "notes": "",
     "taxes": "",
@@ -2763,6 +3524,8 @@ window.leads = [
     "address": "3269 COLIMA ST, San Antonio, TX",
     "owner": "GUERRERO NOEL ANTHONY & GUERRERO EULALIO III",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3269 COLIMA ST",
     "notes": "",
     "taxes": "",
@@ -2780,6 +3543,8 @@ window.leads = [
     "address": "1202 SIMS AVE, San Antonio, TX",
     "owner": "CAMACHO JOHN THOMAS & REBECCA CAMACHO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1202 SIMS AVE",
     "notes": "",
     "taxes": "",
@@ -2797,6 +3562,8 @@ window.leads = [
     "address": "3511 EL PASO ST, San Antonio, TX",
     "owner": "CASTRO JOSE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "14706 ACADEMY OAK",
     "notes": "",
     "taxes": "",
@@ -2814,6 +3581,8 @@ window.leads = [
     "address": "202 PARKVIEW DR, San Antonio, TX",
     "owner": "CORDERO FELICITAS R EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% SUSANA MENDOZA",
     "notes": "",
     "taxes": "",
@@ -2831,8 +3600,21 @@ window.leads = [
     "address": "1046 CANTON, San Antonio, TX",
     "owner": "NAVARRETE JESUS DE JOSE",
     "phones": [
-      "Jesus Dejose Navarrete 39 yo (210) 544-0027 na sent text straight to voicemail after one ring lvm"
+      {
+        "phone": "(210) 544-0027",
+        "digits": "2105440027",
+        "label": "Jesus Dejose Navarrete 39 yo",
+        "note": "na sent text straight to voicemail after one ring lvm"
+      }
     ],
+    "phoneIndex": {
+      "(210) 544-0027": {
+        "digits": "2105440027",
+        "label": "Jesus Dejose Navarrete 39 yo",
+        "note": "na sent text straight to voicemail after one ring lvm"
+      }
+    },
+    "phoneRaw": "Jesus Dejose Navarrete 39 yo (210) 544-0027 na sent text straight to voicemail after one ring lvm",
     "mailing": "1046 CANTON",
     "notes": "",
     "taxes": "",
@@ -2850,6 +3632,8 @@ window.leads = [
     "address": "1335 HICKS AVE, San Antonio, TX",
     "owner": "SMITHERMAN STEVE W",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1335 HICKS AVE",
     "notes": "",
     "taxes": "",
@@ -2867,6 +3651,8 @@ window.leads = [
     "address": "2243 BURNET ST, San Antonio, TX",
     "owner": "RUNNELS MARION I &",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "CORRINE E",
     "notes": "",
     "taxes": "",
@@ -2884,6 +3670,8 @@ window.leads = [
     "address": "2631 VERA CRUZ, San Antonio, TX",
     "owner": "PEREZ JANIE C EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2631 VERA CRUZ",
     "notes": "",
     "taxes": "",
@@ -2901,6 +3689,8 @@ window.leads = [
     "address": "1801 N CENTER, San Antonio, TX",
     "owner": "HOME EQUITY ASSET TRUST 2007-2",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% SELECT PORTFOLIO SERVICING INC",
     "notes": "",
     "taxes": "",
@@ -2918,6 +3708,8 @@ window.leads = [
     "address": "2611 E HOUSTON ST, San Antonio, TX",
     "owner": "DONJUAN ALEXIS NICOLE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1438 ARANSAS AVE",
     "notes": "",
     "taxes": "",
@@ -2935,6 +3727,8 @@ window.leads = [
     "address": "2306 E HOUSTON ST, San Antonio, TX",
     "owner": "SA AURA ENTERPRISES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "28916 238TH AVE ST",
     "notes": "",
     "taxes": "",
@@ -2952,6 +3746,8 @@ window.leads = [
     "address": "2243 E HOUSTON ST, San Antonio, TX",
     "owner": "HORIZON HEIGHTS HOMES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1100 NW LOOP 410 #700",
     "notes": "",
     "taxes": "",
@@ -2969,6 +3765,8 @@ window.leads = [
     "address": "1324 N CENTER, San Antonio, TX",
     "owner": "TIMBER KIRBY INVESTMENTS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "8615 BANDERA RD",
     "notes": "",
     "taxes": "",
@@ -2986,6 +3784,8 @@ window.leads = [
     "address": "1647 N CENTER, San Antonio, TX",
     "owner": "HARRIS JOHN W",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "ETAL",
     "notes": "",
     "taxes": "",
@@ -3003,6 +3803,8 @@ window.leads = [
     "address": "165 STRIBLING, San Antonio, TX",
     "owner": "DE LA GARZA VALDEMAR &",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "GLORIA",
     "notes": "",
     "taxes": "",
@@ -3020,6 +3822,8 @@ window.leads = [
     "address": "2503 W MARTIN ST, San Antonio, TX",
     "owner": "MARTIN STREET TRUST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "10010 SAN PEDRO AVE STE 120",
     "notes": "",
     "taxes": "",
@@ -3037,6 +3841,8 @@ window.leads = [
     "address": "606 CINCINNATI AVE, San Antonio, TX",
     "owner": "SUMRALL CHARLCIE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "606 CINCINNATI AVE",
     "notes": "",
     "taxes": "",
@@ -3054,6 +3860,8 @@ window.leads = [
     "address": "262 WINGATE AVE, San Antonio, TX",
     "owner": "SHARON PETERS REAL ESTATE INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "300 BACKUS RD",
     "notes": "",
     "taxes": "",
@@ -3071,6 +3879,8 @@ window.leads = [
     "address": "707 POTOMAC, San Antonio, TX",
     "owner": "GARCIA ARMANDINA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2719 SAN LUIS ST",
     "notes": "owns lot next door too",
     "taxes": "",
@@ -3088,6 +3898,8 @@ window.leads = [
     "address": "224 SOUTHOLME, San Antonio, TX",
     "owner": "ZAPATA MINERVA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "224 SOUTHOLME",
     "notes": "",
     "taxes": "",
@@ -3105,6 +3917,8 @@ window.leads = [
     "address": "1109 PORTER ST, San Antonio, TX",
     "owner": "PERALES JUAN & PERALES MIREYA N",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1109 PORTER ST",
     "notes": "",
     "taxes": "",
@@ -3122,6 +3936,8 @@ window.leads = [
     "address": "1421 DENVER BLVD, San Antonio, TX",
     "owner": "STANDARD RE HOLDINGS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "401 GUADALUPE ST",
     "notes": "",
     "taxes": "",
@@ -3139,6 +3955,8 @@ window.leads = [
     "address": "1843 DAWSON ST, San Antonio, TX",
     "owner": "BOOMERANG FINANCE SUB-REIT LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1700 PACIFIC AVE STE 4545",
     "notes": "",
     "taxes": "",
@@ -3156,6 +3974,8 @@ window.leads = [
     "address": "1906 BURNET ST, San Antonio, TX",
     "owner": "CARPENTER CELESTINE H",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1906 BURNET ST",
     "notes": "",
     "taxes": "",
@@ -3173,6 +3993,8 @@ window.leads = [
     "address": "923 ZARZAMORA, San Antonio, TX",
     "owner": "PEDRO SANCHEZ, FRANK SANCHEZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "205 Nancy Pl San Antonio TX 78204-2062",
     "notes": "Death deed",
     "taxes": "",
@@ -3190,6 +4012,8 @@ window.leads = [
     "address": "2926 EL PASO ST, San Antonio, TX",
     "owner": "AMERICAN NATIONAL BANK",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2732 MIDWESTERN PKWY",
     "notes": "",
     "taxes": "",
@@ -3207,6 +4031,8 @@ window.leads = [
     "address": "434 CONNER, San Antonio, TX",
     "owner": "FELAN TOMASA T",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "434 CONNER ST",
     "notes": "",
     "taxes": "",
@@ -3224,6 +4050,8 @@ window.leads = [
     "address": "1608 MENCHACA ST, San Antonio, TX",
     "owner": "WILSON ALMIRAH",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "5612 MONTEREY",
     "notes": "",
     "taxes": "",
@@ -3241,6 +4069,8 @@ window.leads = [
     "address": "1507 NOLAN ST, San Antonio, TX",
     "owner": "DIXON PROPERTIES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3150 W 600 S",
     "notes": "",
     "taxes": "",
@@ -3258,6 +4088,8 @@ window.leads = [
     "address": "8727 MEADOW SONG, San Antonio, TX",
     "owner": "EL PASO POWERHOUSE LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "14209 POETS ROCK LN",
     "notes": "",
     "taxes": "",
@@ -3275,6 +4107,8 @@ window.leads = [
     "address": "601 W GLENN AVE, San Antonio, TX",
     "owner": "YBARRA MOISES C",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "334 YUKON BLVD",
     "notes": "",
     "taxes": "",
@@ -3292,12 +4126,54 @@ window.leads = [
     "address": "103 DENVER BLVD, San Antonio, TX",
     "owner": "PINEDA JESSY CAROLINA0",
     "phones": [
-      "Scott Henekey - agent who sold it to them 210) 972-5506",
-      "Francisco Ontiveros 58 yo (915) 260-2158 confirmed but doesnt' know enough to trust me",
-      "na answer sent intro text - Wrong jesse - see middle name",
-      "Maria Hernandez 77 yo (FL ) (786) 747-2089",
-      "Joel Machado 52 yo (NJ) (973) 687-7064"
+      {
+        "phone": "(210) 972-5506",
+        "digits": "2109725506",
+        "label": "Scott Henekey - agent who sold it to them",
+        "note": ""
+      },
+      {
+        "phone": "(915) 260-2158",
+        "digits": "9152602158",
+        "label": "Francisco Ontiveros 58 yo",
+        "note": "confirmed but doesnt' know enough to trust me"
+      },
+      {
+        "phone": "(786) 747-2089",
+        "digits": "7867472089",
+        "label": "Maria Hernandez 77  yo (FL )",
+        "note": ""
+      },
+      {
+        "phone": "(973) 687-7064",
+        "digits": "9736877064",
+        "label": "Joel Machado 52 yo (NJ)",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(210) 972-5506": {
+        "digits": "2109725506",
+        "label": "Scott Henekey - agent who sold it to them",
+        "note": ""
+      },
+      "(915) 260-2158": {
+        "digits": "9152602158",
+        "label": "Francisco Ontiveros 58 yo",
+        "note": "confirmed but doesnt' know enough to trust me"
+      },
+      "(786) 747-2089": {
+        "digits": "7867472089",
+        "label": "Maria Hernandez 77  yo (FL )",
+        "note": ""
+      },
+      "(973) 687-7064": {
+        "digits": "9736877064",
+        "label": "Joel Machado 52 yo (NJ)",
+        "note": ""
+      }
+    },
+    "phoneRaw": "Scott Henekey - agent who sold it to them 210) 972-5506\nFrancisco Ontiveros 58 yo (915) 260-2158 confirmed but doesnt' know enough to trust me\nna answer sent intro text - Wrong jesse - see middle name\nMaria Hernandez 77  yo (FL )  (786) 747-2089 \nJoel Machado 52 yo (NJ) (973) 687-7064",
     "mailing": "103 DENVER BLVD",
     "notes": "",
     "taxes": "",
@@ -3315,6 +4191,8 @@ window.leads = [
     "address": "1423 NW 19TH ST, San Antonio, TX",
     "owner": "MADISON OTIS & WYETTA C",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% FRANCES FRANKLIN",
     "notes": "",
     "taxes": "",
@@ -3332,6 +4210,8 @@ window.leads = [
     "address": "3911 BREMEN ST, San Antonio, TX",
     "owner": "ACEVES ANDREW & ARMANDO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "525 GLAMIS AVE",
     "notes": "",
     "taxes": "",
@@ -3349,6 +4229,8 @@ window.leads = [
     "address": "206 MENEFEE BLVD, San Antonio, TX",
     "owner": "RODRIGUEZ ANDREA R EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "206 MENEFEE BLVD",
     "notes": "",
     "taxes": "",
@@ -3366,6 +4248,8 @@ window.leads = [
     "address": "230 MENEFEE BLVD, San Antonio, TX",
     "owner": "ELIZONDO ALFRED",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "238 MENEFEE BLVD",
     "notes": "",
     "taxes": "",
@@ -3383,6 +4267,8 @@ window.leads = [
     "address": "3603 W HOUSTON ST, San Antonio, TX",
     "owner": "JIMENEZ GILBERT JR ET AL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3603 W HOUSTON ST",
     "notes": "",
     "taxes": "",
@@ -3400,6 +4286,8 @@ window.leads = [
     "address": "3926 W MARTIN ST, San Antonio, TX",
     "owner": "ALPACA REALTY LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "8506 ROCKMOOR",
     "notes": "",
     "taxes": "",
@@ -3417,6 +4305,8 @@ window.leads = [
     "address": "2512 RUIZ ST, San Antonio, TX",
     "owner": "GONZALES BERNARDO T",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2512 RUIZ ST",
     "notes": "",
     "taxes": "",
@@ -3434,6 +4324,8 @@ window.leads = [
     "address": "1035 W MALONE AVE, San Antonio, TX",
     "owner": "ASSOCIATES FNCL SVCS CO INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "6400 LAS COLINAS BLVD",
     "notes": "",
     "taxes": "",
@@ -3451,6 +4343,8 @@ window.leads = [
     "address": "1035 W MALONE AVE, San Antonio, TX",
     "owner": "ASSOCIATES FNCL SVCS CO INC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "6400 LAS COLINAS BLVD",
     "notes": "",
     "taxes": "",
@@ -3468,6 +4362,8 @@ window.leads = [
     "address": "415 HEARNE AVE, San Antonio, TX",
     "owner": "RUIZ MARY ESTHER",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "415 HEARNE AVE",
     "notes": "",
     "taxes": "",
@@ -3485,6 +4381,8 @@ window.leads = [
     "address": "142 BAILEY AVE, San Antonio, TX",
     "owner": "LANDEROS RUBEN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1921 POTOSI ST",
     "notes": "",
     "taxes": "",
@@ -3502,6 +4400,8 @@ window.leads = [
     "address": "1251 E HIGHLAND BLVD, San Antonio, TX",
     "owner": "ALI SALEEM M & KHOJA SHAMSUDDIN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "20722 WILD SPRINGS DRIVE",
     "notes": "",
     "taxes": "",
@@ -3519,6 +4419,8 @@ window.leads = [
     "address": "1230 HAMMOND AVE, San Antonio, TX",
     "owner": "VACA GEORGE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1230 HAMMOND AVE",
     "notes": "",
     "taxes": "",
@@ -3536,6 +4438,8 @@ window.leads = [
     "address": "310 E DREXEL AVE, San Antonio, TX",
     "owner": "ESTATE OF THATCHER ESTELLA D",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "% BRENDA BARRAZA",
     "notes": "",
     "taxes": "",
@@ -3553,6 +4457,8 @@ window.leads = [
     "address": "2310 HICKS AVE, San Antonio, TX",
     "owner": "ALEMAN MAGDALENE NARVAIZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2310 HICKS AVE",
     "notes": "",
     "taxes": "",
@@ -3570,6 +4476,8 @@ window.leads = [
     "address": "2310 HICKS AVE, San Antonio, TX",
     "owner": "ALEMAN MAGDALENE NARVAIZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2310 HICKS AVE",
     "notes": "",
     "taxes": "",
@@ -3587,6 +4495,8 @@ window.leads = [
     "address": "1523 KAYTON AVE, San Antonio, TX",
     "owner": "PRICE STEVEN P",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "111 SOLEDAD ST STE 1325",
     "notes": "",
     "taxes": "",
@@ -3604,6 +4514,8 @@ window.leads = [
     "address": "2212 HICKS AVE, San Antonio, TX",
     "owner": "GONZALES MICAELA REYES &",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "ALEJANDRO REYES",
     "notes": "",
     "taxes": "",
@@ -3621,6 +4533,8 @@ window.leads = [
     "address": "1414 BAILEY AVE, San Antonio, TX",
     "owner": "HALL MERRELL E",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1414 BAILEY AVE",
     "notes": "",
     "taxes": "",
@@ -3638,6 +4552,8 @@ window.leads = [
     "address": "1436 BAILEY AVE, San Antonio, TX",
     "owner": "TORRES MOSES H",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1436 AVANT AVE",
     "notes": "",
     "taxes": "",
@@ -3655,6 +4571,8 @@ window.leads = [
     "address": "2634 WADE ST, San Antonio, TX",
     "owner": "AMOS JOSEPH A III &",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "MARY R",
     "notes": "",
     "taxes": "",
@@ -3672,6 +4590,8 @@ window.leads = [
     "address": "220 ANGELA ST, San Antonio, TX",
     "owner": "PRIETO JOSE EST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "C/O MARIA D R PADILLA",
     "notes": "",
     "taxes": "",
@@ -3689,6 +4609,8 @@ window.leads = [
     "address": "1422 E CARSON ST, San Antonio, TX",
     "owner": "LOUKPHOM HEIN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1422 E CARSON ST",
     "notes": "",
     "taxes": "",
@@ -3706,6 +4628,8 @@ window.leads = [
     "address": "1422 E CARSON ST, San Antonio, TX",
     "owner": "LOUKPHOM HEIN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1422 E CARSON ST",
     "notes": "",
     "taxes": "",
@@ -3723,6 +4647,8 @@ window.leads = [
     "address": "1322 E CARSON ST, San Antonio, TX",
     "owner": "FLORES FRANCIS M & FLORES OLGA L & FLORES CARLOTA M EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1322 E CARSON ST",
     "notes": "",
     "taxes": "",
@@ -3740,6 +4666,8 @@ window.leads = [
     "address": "459 FURNISH AVE, San Antonio, TX",
     "owner": "ARIAS JESUSA B",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "530 PHARIS ST",
     "notes": "",
     "taxes": "",
@@ -3757,6 +4685,8 @@ window.leads = [
     "address": "348 E HUISACHE AVE, San Antonio, TX",
     "owner": "NOVOSAD SUSIE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "330 ROSEMARY AVE",
     "notes": "",
     "taxes": "",
@@ -3774,6 +4704,8 @@ window.leads = [
     "address": "514 SCHLEY AVE, San Antonio, TX",
     "owner": "GONZALEZ ROBERT",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "514 SCHLEY AVE",
     "notes": "",
     "taxes": "",
@@ -3791,6 +4723,8 @@ window.leads = [
     "address": "409 MCKINLEY AVE, San Antonio, TX",
     "owner": "GARCIA OLGA M",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "409 MCKINLEY AVE",
     "notes": "",
     "taxes": "",
@@ -3808,6 +4742,8 @@ window.leads = [
     "address": "135 FUENTE ALY, San Antonio, TX",
     "owner": "DELACRUZ ANNA CHRISTINA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "135 FUENTE ALY",
     "notes": "",
     "taxes": "",
@@ -3825,6 +4761,8 @@ window.leads = [
     "address": "435 VINE ST, San Antonio, TX",
     "owner": "ALTMAN CHRIS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "435 VINE ST",
     "notes": "",
     "taxes": "",
@@ -3842,6 +4780,8 @@ window.leads = [
     "address": "336 STACE, San Antonio, TX",
     "owner": "MAURICIO ERNEST A",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "204 E BONNER AVE",
     "notes": "",
     "taxes": "",
@@ -3859,6 +4799,8 @@ window.leads = [
     "address": "336 STACE, San Antonio, TX",
     "owner": "MAURICIO ERNEST A",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "204 E BONNER AVE",
     "notes": "",
     "taxes": "",
@@ -3876,6 +4818,8 @@ window.leads = [
     "address": "2510 CHIHUAHUA ST, San Antonio, TX",
     "owner": "LOPEZ ARNULFO H",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "360 N SAN FELIPE AVE",
     "notes": "",
     "taxes": "",
@@ -3893,6 +4837,8 @@ window.leads = [
     "address": "1602 AMESTOY ST, San Antonio, TX",
     "owner": "CHINCHILLA JOHANNA ESTELA GUERRERO & RIVERA JOSUE DANIEL OLIVEROS",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1602 AMESTOY ST",
     "notes": "",
     "taxes": "",
@@ -3910,6 +4856,8 @@ window.leads = [
     "address": "1523 FULTON AVE, San Antonio, TX",
     "owner": "MUNOZ HEBE A EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "121 TRILLIUM LN",
     "notes": "",
     "taxes": "",
@@ -3927,6 +4875,8 @@ window.leads = [
     "address": "546 LEIGH ST, San Antonio, TX",
     "owner": "DILWORTH JAKE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "5608 VENTURA DR",
     "notes": "",
     "taxes": "",
@@ -3944,6 +4894,8 @@ window.leads = [
     "address": "118 CHICO ALY, San Antonio, TX",
     "owner": "CAMARILLO RAYMOND",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 10126",
     "notes": "",
     "taxes": "",
@@ -3961,6 +4913,8 @@ window.leads = [
     "address": "625 RIPFORD ST, San Antonio, TX",
     "owner": "LONGORIA ADELA QUINTANILLA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "818 W HARLAN AVE",
     "notes": "",
     "taxes": "",
@@ -3978,6 +4932,8 @@ window.leads = [
     "address": "621 RIPFORD ST, San Antonio, TX",
     "owner": "QUINTANILLA EDDIE M",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "621 RIPFORD ST",
     "notes": "",
     "taxes": "",
@@ -3990,11 +4946,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "110 New Aly, San Antonio, TX 78207, San Antonio TX",
+    "id": "addr_a1794986f369",
     "docnum": "",
     "address": "110 New Aly, San Antonio, TX 78207, San Antonio TX",
     "owner": "MONIQUE ROXANNE PUGH",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "348 Upland Ct Canyon Lake TX 78133-6070",
     "notes": "Residential vacant lot; 3,168 sqft; 0.07 acres; 44x72 lot; AVM $49k; S Laredo / Frio City Rd area",
     "taxes": "",
@@ -4012,6 +4970,8 @@ window.leads = [
     "address": "130 MERIDA ST, San Antonio, TX",
     "owner": "MONTALBO ANITA B",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "130 MERIDA ST",
     "notes": "",
     "taxes": "",
@@ -4029,6 +4989,8 @@ window.leads = [
     "address": "1807 HIDALGO ST, San Antonio, TX",
     "owner": "VINCERE REAL ESTATE LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2547 MACARTHUR VIEW",
     "notes": "",
     "taxes": "",
@@ -4046,6 +5008,8 @@ window.leads = [
     "address": "813 CIBLOS, San Antonio, TX",
     "owner": "ROSALIO CARDONA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1514 Buena Vista St San Antonio TX 78207-3910",
     "notes": "",
     "taxes": "",
@@ -4063,6 +5027,8 @@ window.leads = [
     "address": "2204 EL PASO ST, San Antonio, TX",
     "owner": "GB BUSINESS GROUP LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "22254 GOLDCREST RUN",
     "notes": "",
     "taxes": "",
@@ -4080,6 +5046,8 @@ window.leads = [
     "address": "2214 EL PASO ST, San Antonio, TX",
     "owner": "HERNANDEZ EUGENE & OFELIA ESTATE OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "447 KEMPER ST",
     "notes": "",
     "taxes": "",
@@ -4097,6 +5065,8 @@ window.leads = [
     "address": "2427 SAUNDERS AVE, San Antonio, TX",
     "owner": "PALOS JESUS EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3125 VIA SAN DELARRO",
     "notes": "",
     "taxes": "",
@@ -4114,6 +5084,8 @@ window.leads = [
     "address": "211 HUNTINGTON ST, San Antonio, TX",
     "owner": "GARCIA AUGUSTINE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1331 EL MONTE BLVD",
     "notes": "",
     "taxes": "",
@@ -4131,6 +5103,8 @@ window.leads = [
     "address": "3108 W MARTIN ST, San Antonio, TX",
     "owner": "RODRIGUEZ MARIA C EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3108 W MARTIN ST",
     "notes": "",
     "taxes": "",
@@ -4148,6 +5122,8 @@ window.leads = [
     "address": "2225 W MARTIN ST, San Antonio, TX",
     "owner": "ANIEKWENA PATRICK M &",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PATRICIA T",
     "notes": "",
     "taxes": "",
@@ -4165,6 +5141,8 @@ window.leads = [
     "address": "2707 MORALES ST, San Antonio, TX",
     "owner": "TELLEZ MIGUEL ANGEL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2707 MORALES ST",
     "notes": "",
     "taxes": "",
@@ -4182,6 +5160,8 @@ window.leads = [
     "address": "625 N BRAZOS ST, San Antonio, TX",
     "owner": "WEST SATX LIVING LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "317 NOGALITOS STREET",
     "notes": "",
     "taxes": "",
@@ -4199,6 +5179,8 @@ window.leads = [
     "address": "915 PEREZ ST, San Antonio, TX",
     "owner": "JESUS BOSQUEZ 98 years old",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "915 Perez St San Antonio TX 78207-2353",
     "notes": "pos",
     "taxes": "",
@@ -4216,6 +5198,8 @@ window.leads = [
     "address": "2527 PEREZ ST, San Antonio, TX",
     "owner": "DELAROSA EVANGELICA M",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1734 W CRAIG PL",
     "notes": "",
     "taxes": "",
@@ -4228,11 +5212,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "810 N Colorado St, San Antonio, TX 78207, San Antonio TX",
+    "id": "addr_f8f1ccefecdf",
     "docnum": "",
     "address": "810 N Colorado St, San Antonio, TX 78207, San Antonio TX",
     "owner": "ALICE O. SOTO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "810 N Colorado St San Antonio TX 78207-2306",
     "notes": "Residential vacant lot; 4,760 sqft; 0.11 acres; 85x56 lot; AVM $39k; Delgado/W Martin area",
     "taxes": "",
@@ -4250,6 +5236,8 @@ window.leads = [
     "address": "601 ARBOR PL, San Antonio, TX",
     "owner": "BARRON DANIEL W",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "135 E HIGHLAND BLVD",
     "notes": "",
     "taxes": "",
@@ -4267,6 +5255,8 @@ window.leads = [
     "address": "422 RIVAS ST, San Antonio, TX",
     "owner": "RAMOS JOSE A & VELIA A",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "233 E HAFER AVE",
     "notes": "",
     "taxes": "",
@@ -4284,6 +5274,8 @@ window.leads = [
     "address": "2034 LYONS ST, San Antonio, TX",
     "owner": "LOPEZ ORFA PEREZ ALVARADO",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "5527 KINGSWOOD ST",
     "notes": "",
     "taxes": "",
@@ -4301,9 +5293,32 @@ window.leads = [
     "address": "110 ROBERTS ST, San Antonio, TX",
     "owner": "MARTINEZ ARMANDO G",
     "phones": [
-      "Armando G Martinez 59 yo (210) 825-0006 na sent text na sent text from gv",
-      "(210) 223-2600 came up as Law offices.. :) amartinez4250@hotmail.com mailbox full sent sms tex"
+      {
+        "phone": "(210) 825-0006",
+        "digits": "2108250006",
+        "label": "Armando G Martinez        59 yo",
+        "note": "na sent text na sent text from gv"
+      },
+      {
+        "phone": "(210) 223-2600",
+        "digits": "2102232600",
+        "label": "Unknown",
+        "note": "came up as Law offices.. :)     amartinez4250@hotmail.com        mailbox full sent sms tex"
+      }
     ],
+    "phoneIndex": {
+      "(210) 825-0006": {
+        "digits": "2108250006",
+        "label": "Armando G Martinez        59 yo",
+        "note": "na sent text na sent text from gv"
+      },
+      "(210) 223-2600": {
+        "digits": "2102232600",
+        "label": "Unknown",
+        "note": "came up as Law offices.. :)     amartinez4250@hotmail.com        mailbox full sent sms tex"
+      }
+    },
+    "phoneRaw": "Armando G Martinez        59 yo         (210) 825-0006 na sent text na sent text from gv\n(210) 223-2600    came up as Law offices.. :)     amartinez4250@hotmail.com        mailbox full sent sms tex",
     "mailing": "3202 BOXTREE LN",
     "notes": "",
     "taxes": "",
@@ -4321,6 +5336,8 @@ window.leads = [
     "address": "2208 W POPLAR ST 1, San Antonio, TX",
     "owner": "LINAN RUBEN JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 8069",
     "notes": "",
     "taxes": "",
@@ -4338,6 +5355,8 @@ window.leads = [
     "address": "1315 N SABINAS ST, San Antonio, TX",
     "owner": "HERNANDEZ NORMA JEAN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1315 N SABINAS ST",
     "notes": "Lots of liens",
     "taxes": "",
@@ -4355,6 +5374,8 @@ window.leads = [
     "address": "1507 N NAVIDAD ST, San Antonio, TX",
     "owner": "1507 NAVIDAD LAND TRUST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1370 PANTHEON WAY STE 190",
     "notes": "",
     "taxes": "",
@@ -4372,6 +5393,8 @@ window.leads = [
     "address": "136 UNIVERSITY AVE, San Antonio, TX",
     "owner": "REYNA ESQUINO & ROSE M",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "136 UNIVERSITY AVE",
     "notes": "",
     "taxes": "",
@@ -4389,6 +5412,8 @@ window.leads = [
     "address": "822 TEXAS AV, San Antonio, TX",
     "owner": "RUSSELL STEUBING",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "Po Box 10478 San Antonio TX 78210-0478",
     "notes": "",
     "taxes": "",
@@ -4406,6 +5431,8 @@ window.leads = [
     "address": "1541 W CRAIG PL, San Antonio, TX",
     "owner": "RODRIGUEZ SERGIO ALFONSO & FALCON CAROLINA ALVA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1825 SACRAMENTO ST",
     "notes": "",
     "taxes": "",
@@ -4423,6 +5450,8 @@ window.leads = [
     "address": "2054 W MULBERRY AVE, San Antonio, TX",
     "owner": "BERNAL CELIA GONZALES",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2054 W MULBERRY AVE",
     "notes": "",
     "taxes": "",
@@ -4440,12 +5469,54 @@ window.leads = [
     "address": "1134 W KINGS HWY, San Antonio, TX",
     "owner": "GONZALES LENA D",
     "phones": [
-      "Lena D Gonzales (owner) 79yo \u2014 (210)793-8342 na sent text - na",
-      "Ramiro R Gonzales (spouse",
-      "prev owner) 82yo \u2014 (210)386-9987 wrong #",
-      "Mary L Gonzales (likely heir) 52yo \u2014 (210)860-2129 na sent text - na",
-      "Jennifer D Gonzales (likely heir) 48yo \u2014 (210)379-6643 straight to vm - hung up on me"
+      {
+        "phone": "(210) 793-8342",
+        "digits": "2107938342",
+        "label": "Lena D Gonzales (owner) 79yo \u2014",
+        "note": "na sent text - na"
+      },
+      {
+        "phone": "(210) 386-9987",
+        "digits": "2103869987",
+        "label": "Ramiro R Gonzales (spouse/prev owner) 82yo \u2014",
+        "note": "wrong #"
+      },
+      {
+        "phone": "(210) 860-2129",
+        "digits": "2108602129",
+        "label": "Mary L Gonzales (likely heir) 52yo \u2014",
+        "note": "na sent text - na"
+      },
+      {
+        "phone": "(210) 379-6643",
+        "digits": "2103796643",
+        "label": "Jennifer D Gonzales (likely heir) 48yo \u2014",
+        "note": "straight to vm - hung up on me"
+      }
     ],
+    "phoneIndex": {
+      "(210) 793-8342": {
+        "digits": "2107938342",
+        "label": "Lena D Gonzales (owner) 79yo \u2014",
+        "note": "na sent text - na"
+      },
+      "(210) 386-9987": {
+        "digits": "2103869987",
+        "label": "Ramiro R Gonzales (spouse/prev owner) 82yo \u2014",
+        "note": "wrong #"
+      },
+      "(210) 860-2129": {
+        "digits": "2108602129",
+        "label": "Mary L Gonzales (likely heir) 52yo \u2014",
+        "note": "na sent text - na"
+      },
+      "(210) 379-6643": {
+        "digits": "2103796643",
+        "label": "Jennifer D Gonzales (likely heir) 48yo \u2014",
+        "note": "straight to vm - hung up on me"
+      }
+    },
+    "phoneRaw": "Lena D Gonzales (owner) 79yo \u2014 (210)793-8342  na sent text - na\nRamiro R Gonzales (spouse/prev owner) 82yo \u2014 (210)386-9987 wrong #  \nMary L Gonzales (likely heir) 52yo \u2014 (210)860-2129  na sent text - na\nJennifer D Gonzales (likely heir) 48yo \u2014 (210)379-6643 straight to vm - hung up on me",
     "mailing": "1134 W KINGS HWY",
     "notes": "",
     "taxes": "",
@@ -4463,6 +5534,8 @@ window.leads = [
     "address": "714 W MAGNOLIA, San Antonio, TX",
     "owner": "ELOISE LUNA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "714 W Magnolia Ave San Antonio TX 78212-3255",
     "notes": "",
     "taxes": "",
@@ -4480,6 +5553,8 @@ window.leads = [
     "address": "1200 W MAGNOLIA AVE, San Antonio, TX",
     "owner": "210 PROPERTY VENTURES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "23026 FAIRWAY BRIDGE",
     "notes": "",
     "taxes": "",
@@ -4497,6 +5572,8 @@ window.leads = [
     "address": "903 W KINGS HWY, San Antonio, TX",
     "owner": "JILL MALONEY",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1531 County Road 129 # 4 Alvin TX 77511-1466",
     "notes": "",
     "taxes": "",
@@ -4514,6 +5591,8 @@ window.leads = [
     "address": "2011 N ALAMO ST, San Antonio, TX",
     "owner": "FLORIN CAPITAL ALLING STREET LTD",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "745 E MULBERRY STE 550",
     "notes": "",
     "taxes": "",
@@ -4531,6 +5610,8 @@ window.leads = [
     "address": "1023 NOLAN ST, San Antonio, TX",
     "owner": "RE UNIT I LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "P O BOX 6296",
     "notes": "",
     "taxes": "",
@@ -4548,6 +5629,8 @@ window.leads = [
     "address": "1023 NOLAN ST, San Antonio, TX",
     "owner": "RE UNIT I LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "P O BOX 6296",
     "notes": "",
     "taxes": "",
@@ -4565,6 +5648,8 @@ window.leads = [
     "address": "427 WESTFALL AVE, San Antonio, TX",
     "owner": "F&DM HOLDINGS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "24207 CAFE HL",
     "notes": "",
     "taxes": "",
@@ -4582,6 +5667,8 @@ window.leads = [
     "address": "1150 ESSEX ST, San Antonio, TX",
     "owner": "PASTORIZA ANGEL MANUEL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1150 ESSEX ST",
     "notes": "",
     "taxes": "",
@@ -4599,6 +5686,8 @@ window.leads = [
     "address": "648 DELMAR ST, San Antonio, TX",
     "owner": "APEP HOLDING LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3316 Westhill Dr Austin TX 78704-5814",
     "notes": "POS",
     "taxes": "",
@@ -4616,6 +5705,8 @@ window.leads = [
     "address": "243 JEMISON ST, San Antonio, TX",
     "owner": "RINCON ISABEL & ELVIRA",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "247 JEMISON ST",
     "notes": "",
     "taxes": "",
@@ -4633,6 +5724,8 @@ window.leads = [
     "address": "1836 ARANSAS AVE, San Antonio, TX",
     "owner": "BRETT JACK & ASHLEY ELGIE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1409 GREEN FOREST DR",
     "notes": "",
     "taxes": "",
@@ -4650,6 +5743,8 @@ window.leads = [
     "address": "135 ANDERSON AVE, San Antonio, TX",
     "owner": "CLARK ANDREA LYNN",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1809 MARYSOL TRL",
     "notes": "",
     "taxes": "",
@@ -4667,6 +5762,8 @@ window.leads = [
     "address": "111 VHOORIES ST, San Antonio, TX",
     "owner": "SAUCEDA JACQUELINE LIZZETTE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2410 ARANSAS AVE",
     "notes": "",
     "taxes": "",
@@ -4684,6 +5781,8 @@ window.leads = [
     "address": "2426 WYOMING ST, San Antonio, TX",
     "owner": "ARROW ADVENTURES ESTATES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "8521 blanco rd #2-197",
     "notes": "",
     "taxes": "",
@@ -4701,6 +5800,8 @@ window.leads = [
     "address": "606 BELMONT, San Antonio, TX",
     "owner": "COZA VENTURES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4007 MCCULLOUGH AVE",
     "notes": "",
     "taxes": "",
@@ -4718,6 +5819,8 @@ window.leads = [
     "address": "219 N GEVERS ST, San Antonio, TX",
     "owner": "GUZMAN QUIRINO CASTELLON",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "219 N GEVERS ST",
     "notes": "",
     "taxes": "",
@@ -4735,6 +5838,8 @@ window.leads = [
     "address": "107 FREDONIA ST, San Antonio, TX",
     "owner": "RODRIGUEZ JOSE ANTONIO JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "107 FREDONIA ST",
     "notes": "",
     "taxes": "",
@@ -4752,6 +5857,8 @@ window.leads = [
     "address": "719 PALMETTO, San Antonio, TX",
     "owner": "EUGENE F. DURHAM",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "Po Box 10668 San Antonio TX 78210-0668",
     "notes": "",
     "taxes": "",
@@ -4769,6 +5876,8 @@ window.leads = [
     "address": "120 GRAVEL ST 1, San Antonio, TX",
     "owner": "GILMORE JULIUS & MILDRED",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1818 W LAUREL",
     "notes": "",
     "taxes": "",
@@ -4781,11 +5890,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1221 E Crockett St, San Antonio, TX 78202, San Antonio TX",
+    "id": "addr_e67bfb662b5f",
     "docnum": "",
     "address": "1221 E Crockett St, San Antonio, TX 78202, San Antonio TX",
     "owner": "MCDONALD ETHEL V EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "2837 King Cole Ct Dallas TX 75216-3429",
     "notes": "Fire-damaged single-family home; historic Dignowity Hill; across from Fairchild Park; estate-owned; vacant; cash-only; heavy rehab",
     "taxes": "",
@@ -4803,6 +5914,8 @@ window.leads = [
     "address": "806 BURLESON, San Antonio, TX",
     "owner": "KURI & ASSOCIATES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "135 Claywell Dr Alamo Heights TX 78209-3341",
     "notes": "",
     "taxes": "",
@@ -4820,6 +5933,8 @@ window.leads = [
     "address": "1730 BURNET ST, San Antonio, TX",
     "owner": "RALPH INVESTMENTS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1506 CLOUD GATE",
     "notes": "",
     "taxes": "",
@@ -4837,6 +5952,8 @@ window.leads = [
     "address": "1710 BURNET ST, San Antonio, TX",
     "owner": "BURNET STREET TRUST NO 200911101",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "EQUITY HOLDING CORP TRUSTEE",
     "notes": "",
     "taxes": "",
@@ -4854,6 +5971,8 @@ window.leads = [
     "address": "2010 BURNET ST, San Antonio, TX",
     "owner": "SWS HOME BUYERS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1401 LAVACA STREET UNIT 246",
     "notes": "",
     "taxes": "",
@@ -4871,6 +5990,8 @@ window.leads = [
     "address": "1322 HAYS ST, San Antonio, TX",
     "owner": "SCF JAKE LP",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1302 WAUGH DR NO 831",
     "notes": "",
     "taxes": "",
@@ -4888,6 +6009,8 @@ window.leads = [
     "address": "1826 HAYS ST, San Antonio, TX",
     "owner": "AMIRAH PROPERTIES LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "4001 GAMBIT RD",
     "notes": "",
     "taxes": "",
@@ -4905,6 +6028,8 @@ window.leads = [
     "address": "1911 BURNET ST, San Antonio, TX",
     "owner": "WILLIAMS REGINAL EUGENE & RAMIREZ MARIA ISABEL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "822 GABRIEL ST",
     "notes": "",
     "taxes": "",
@@ -4922,6 +6047,8 @@ window.leads = [
     "address": "911 BURLESON, San Antonio, TX",
     "owner": "ANTONIO M. VILLARREAL",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "317 Lexington Ave San Antonio TX 78215-1901",
     "notes": "",
     "taxes": "",
@@ -4939,6 +6066,8 @@ window.leads = [
     "address": "1424 N PINE ST, San Antonio, TX",
     "owner": "ORTA JESSE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "406 LAMAR ST",
     "notes": "",
     "taxes": "",
@@ -4956,6 +6085,8 @@ window.leads = [
     "address": "1219 DUVAL ST, San Antonio, TX",
     "owner": "FERNANDEZ DAVID R",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "215 N SAN MARCOS",
     "notes": "",
     "taxes": "",
@@ -4973,6 +6104,8 @@ window.leads = [
     "address": "619 LARRY, San Antonio, TX",
     "owner": "HENDERSON RONNIE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "619 LARRY",
     "notes": "",
     "taxes": "",
@@ -4990,6 +6123,8 @@ window.leads = [
     "address": "224 UTAH ST, San Antonio, TX",
     "owner": "CAMCAR INVESTMENTS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1150 N LOOP 1604 #442",
     "notes": "",
     "taxes": "",
@@ -5007,6 +6142,8 @@ window.leads = [
     "address": "610 DREISS ST, San Antonio, TX",
     "owner": "SATTERFFIELD WILMA EST OF",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "ETAL",
     "notes": "",
     "taxes": "",
@@ -5024,6 +6161,8 @@ window.leads = [
     "address": "1501 S FLORES ST, San Antonio, TX",
     "owner": "MADE BY ALL HANDS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "1115 S ALAMO ST UNIT 2410",
     "notes": "",
     "taxes": "",
@@ -5041,9 +6180,32 @@ window.leads = [
     "address": "1021 LAMAR, San Antonio, TX",
     "owner": "PUTMAN JERRY",
     "phones": [
-      "Cynthia Putman 54 yo (210) 269-9808 wrong name on vm wrong num. Juston Roberts?",
-      "Beau Putman 46 yo (903) 376-4337 na sent text"
+      {
+        "phone": "(210) 269-9808",
+        "digits": "2102699808",
+        "label": "Cynthia Putman 54 yo",
+        "note": "wrong name on vm wrong num. Juston Roberts?"
+      },
+      {
+        "phone": "(903) 376-4337",
+        "digits": "9033764337",
+        "label": "Beau Putman 46 yo",
+        "note": "na sent text"
+      }
     ],
+    "phoneIndex": {
+      "(210) 269-9808": {
+        "digits": "2102699808",
+        "label": "Cynthia Putman 54 yo",
+        "note": "wrong name on vm wrong num. Juston Roberts?"
+      },
+      "(903) 376-4337": {
+        "digits": "9033764337",
+        "label": "Beau Putman 46 yo",
+        "note": "na sent text"
+      }
+    },
+    "phoneRaw": "Cynthia Putman 54 yo (210) 269-9808 wrong name on vm wrong num. Juston Roberts?\nBeau Putman 46 yo (903) 376-4337 na sent text",
     "mailing": "1021 LAMAR ST",
     "notes": "Owner deceased https://www.castillofuneralhome.com/obituary/jerry-putman",
     "taxes": "",
@@ -5061,6 +6223,8 @@ window.leads = [
     "address": "1016 N PALMETTO AVE, San Antonio, TX",
     "owner": "OLIVANDER HOLDINGS LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "15082 NW DOMINION DR",
     "notes": "",
     "taxes": "",
@@ -5078,6 +6242,8 @@ window.leads = [
     "address": "403 SAN PEDRO AVE, San Antonio, TX",
     "owner": "401 SAN PEDRO LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "PO BOX 162232",
     "notes": "$$36,607.12 in taxes",
     "taxes": "",
@@ -5095,6 +6261,8 @@ window.leads = [
     "address": "128 OMAHA ST, San Antonio, TX",
     "owner": "A2 TX ESTATE LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "11703 HUEBNER RD STE 201",
     "notes": "",
     "taxes": "",
@@ -5112,6 +6280,8 @@ window.leads = [
     "address": "122 POTOMAC, San Antonio, TX",
     "owner": "JACOBS CREATION LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "8930 WURZBACH RD #240",
     "notes": "4k in taxes",
     "taxes": "",
@@ -5129,6 +6299,8 @@ window.leads = [
     "address": "N OLIVE ST, San Antonio, TX",
     "owner": "OLIVEDAWSON LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "102 WINDSOR RD",
     "notes": "",
     "taxes": "",
@@ -5146,9 +6318,21 @@ window.leads = [
     "address": "427 ARMADILLO ALY, San Antonio, TX",
     "owner": "ESPINOZA GUADALUPE",
     "phones": [
-      "82 yo",
-      "Juan R Espinosa 46 yo (210) 328-5680 - ivr"
+      {
+        "phone": "(210) 328-5680",
+        "digits": "2103285680",
+        "label": "Juan R Espinosa 46 yo",
+        "note": "ivr"
+      }
     ],
+    "phoneIndex": {
+      "(210) 328-5680": {
+        "digits": "2103285680",
+        "label": "Juan R Espinosa 46 yo",
+        "note": "ivr"
+      }
+    },
+    "phoneRaw": "82 yo\nJuan R Espinosa 46 yo  (210) 328-5680 - ivr",
     "mailing": "1305 GIBBS",
     "notes": "",
     "taxes": "",
@@ -5166,8 +6350,21 @@ window.leads = [
     "address": "903 OLIVEN, San Antonio, TX",
     "owner": "LAWRENCE WATTS",
     "phones": [
-      "63 yo (469) 569-6929 - na left vm"
+      {
+        "phone": "(469) 569-6929",
+        "digits": "4695696929",
+        "label": "63 yo",
+        "note": "na left vm"
+      }
     ],
+    "phoneIndex": {
+      "(469) 569-6929": {
+        "digits": "4695696929",
+        "label": "63 yo",
+        "note": "na left vm"
+      }
+    },
+    "phoneRaw": "63 yo (469) 569-6929 - na left vm",
     "mailing": "Po Box 140557 Dallas TX 75214-0557",
     "notes": "",
     "taxes": "",
@@ -5185,6 +6382,8 @@ window.leads = [
     "address": "931 OLIVEN, San Antonio, TX",
     "owner": "CLARA E. JOHNSON",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "612 Dawson St San Antonio TX 78202-2219",
     "notes": "",
     "taxes": "",
@@ -5202,6 +6401,8 @@ window.leads = [
     "address": "214 BROOKS ST, San Antonio, TX",
     "owner": "DELAGARZA ALICE Y",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "214 BROOKS ST",
     "notes": "",
     "taxes": "",
@@ -5219,6 +6420,8 @@ window.leads = [
     "address": "513 DUVAL ST, San Antonio, TX",
     "owner": "JJL PROPERTY GROUP LLC",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "34 SENTRY CT",
     "notes": "On the market for 90 k",
     "taxes": "",
@@ -5231,11 +6434,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "3350 Martin Luther King Dr, San Antonio, TX 78220, San Antonio TX",
+    "id": "addr_4fd2efbb5c10",
     "docnum": "",
     "address": "3350 Martin Luther King Dr, San Antonio, TX 78220, San Antonio TX",
     "owner": "FLORENTINO CRUZ & FERNANDA CRUZ",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "3350 Martin Luther King Dr San Antonio TX 78220-2333",
     "notes": "2 bed / 1 bath; 1,060 sqft; 5,800 sqft lot; 1962 build; no A/C; floor/wall heat; pier foundation; wood exterior; long-term owner (20+ yrs); seller-financed vendor\u2019s lien; prior MLS attempts at $15k",
     "taxes": "",
@@ -5248,11 +6453,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "260 N San Ignacio Ave, San Antonio, TX 78237, San Antonio TX",
+    "id": "addr_74887ff6552d",
     "docnum": "",
     "address": "260 N San Ignacio Ave, San Antonio, TX 78237, San Antonio TX",
     "owner": "MUTH CONRADO EST",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "260 N San Ignacio Ave San Antonio TX 78237-1544",
     "notes": "3 bed / 1 bath; 970 sqft; 5,750 sqft lot; 1953 build; no A/C; floor/wall heat; metal roof; pier foundation; wood exterior; estate-owned; dated/as-is likely",
     "taxes": "79000",
@@ -5265,11 +6472,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "342 W Gramercy Pl, San Antonio, TX 78212, San Antonio TX",
+    "id": "addr_a4085eba3db3",
     "docnum": "",
     "address": "342 W Gramercy Pl, San Antonio, TX 78212, San Antonio TX",
     "owner": "JOSE RODRIGUEZ & RONALD SOELE",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "342 W Gramercy Pl, San Antonio, TX 78212",
     "notes": "2 bed / 2 bath; 1,944 sqft; 7,000 sqft lot; 1901 build; garage 2; central A/C; forced air; Monte Vista Historic; owner-occ 20+ yrs; Reverse Mortgage/HECM 2010 ($457,500)",
     "taxes": "",
@@ -5282,13 +6491,26 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1407 S Pine St, San Antonio, TX 78210, San Antonio TX",
+    "id": "addr_0234b8fab206",
     "docnum": "",
     "address": "1407 S Pine St, San Antonio, TX 78210, San Antonio TX",
     "owner": "ALEJANDRO NARVAIZ",
     "phones": [
-      "2102396628"
+      {
+        "phone": "(210) 239-6628",
+        "digits": "2102396628",
+        "label": "Unknown",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(210) 239-6628": {
+        "digits": "2102396628",
+        "label": "Unknown",
+        "note": ""
+      }
+    },
+    "phoneRaw": "2102396628",
     "mailing": "1407 S Pine St San Antonio TX 78210-2131",
     "notes": "3 bed / 1 bath; 840 sqft; 9,312 sqft lot; 1930 build; no HVAC; floor/wall heat; pier foundation; wood exterior; Denver Heights; estate; dated/as-is likely",
     "taxes": "",
@@ -5301,11 +6523,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "1019 S Pine St, San Antonio, TX 78210, San Antonio TX",
+    "id": "addr_ec0578942686",
     "docnum": "",
     "address": "1019 S Pine St, San Antonio, TX 78210, San Antonio TX",
     "owner": "ZIHAO SONG",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "622 Mauze Dr San Antonio TX 78216-3711",
     "notes": "Quarter-acre vacant lot; 52x213; Denver Heights; RM-4 zoning; townhome/duplex potential; active listing; close to downtown & Alamodome",
     "taxes": "27000",
@@ -5323,11 +6547,32 @@ window.leads = [
     "address": "9500 SIMPLICITY, San Antonio, TX",
     "owner": "WANDA HASH",
     "phones": [
-      "Owner 91 yo",
-      "Billy Hash 63 yo (210) 674-0421 fast disconnect same",
-      "Deborah Heyne 71 yo (210) 629-6217",
-      "Deborah L Heyne 71 yo (210) 629-6217 - na sent text"
+      {
+        "phone": "(210) 674-0421",
+        "digits": "2106740421",
+        "label": "Billy Hash 63 yo",
+        "note": "fast disconnect same"
+      },
+      {
+        "phone": "(210) 629-6217",
+        "digits": "2106296217",
+        "label": "Deborah Heyne 71 yo",
+        "note": ""
+      }
     ],
+    "phoneIndex": {
+      "(210) 674-0421": {
+        "digits": "2106740421",
+        "label": "Billy Hash 63 yo",
+        "note": "fast disconnect same"
+      },
+      "(210) 629-6217": {
+        "digits": "2106296217",
+        "label": "Deborah L Heyne 71 yo",
+        "note": "na sent text"
+      }
+    },
+    "phoneRaw": "Owner 91 yo\nBilly Hash 63 yo (210) 674-0421 fast disconnect same\nDeborah Heyne 71 yo (210) 629-6217\nDeborah L Heyne 71 yo (210) 629-6217 - na sent text",
     "mailing": "9500 Simplicity Dr San Antonio TX 78245-1546",
     "notes": "Small duplex",
     "taxes": "",
@@ -5345,9 +6590,21 @@ window.leads = [
     "address": "730 W Harding Blvd, San Antonio, TX 78221-1813",
     "owner": "LILLIE RODRIGUEZ",
     "phones": [
-      "Daughter Monica 210-330-4111 said she would talk to her mom 12",
-      "30"
+      {
+        "phone": "(210) 330-4111",
+        "digits": "2103304111",
+        "label": "Daughter Monica",
+        "note": "said she would talk to her mom 12/30"
+      }
     ],
+    "phoneIndex": {
+      "(210) 330-4111": {
+        "digits": "2103304111",
+        "label": "Daughter Monica",
+        "note": "said she would talk to her mom 12/30"
+      }
+    },
+    "phoneRaw": "Daughter Monica 210-330-4111 said she would talk to her mom 12/30",
     "mailing": "102 Proctor Blvd, San Antonio, TX 78221",
     "notes": "Possible RPR data mismatch; family callback confirmed owner is elderly mother; does not want to sell; taxes likely deferred; prior city enforcement involvement; lot/building confusion in RPR; street view shows small new construction nearby\n5000",
     "taxes": "Deferred / Unknown",
@@ -5360,13 +6617,13 @@ window.leads = [
     "lng": null
   },
   {
-    "id": "455 Clower San Antonio TX 78212-1535",
+    "id": "addr_fc60b04ccff4",
     "docnum": "",
     "address": "455 Clower San Antonio TX 78212-1535",
     "owner": "455 Clower San Antonio TX 78212-1535",
-    "phones": [
-      "No"
-    ],
+    "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "No",
     "mailing": "N/A",
     "notes": "FRANK ANAYA JR",
     "taxes": "",
@@ -5384,6 +6641,8 @@ window.leads = [
     "address": "214 W Mandalay Dr Property Information - Realtors Property Resource",
     "owner": "FRANK ANAYA JR",
     "phones": [],
+    "phoneIndex": {},
+    "phoneRaw": "",
     "mailing": "",
     "notes": "1Bath bed / 1,514Sq Ft bath; 8,820Sq Ft sqft; 1942 build; EstVal 1",
     "taxes": "",
@@ -5395,4 +6654,4 @@ window.leads = [
     "lat": null,
     "lng": null
   }
-];
+];\n
