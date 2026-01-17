@@ -718,13 +718,23 @@ let lastGeocodeAt = 0;
 function subscribeLeads(){
   const ref = firebase.database().ref(LEADS_PATH);
 
+  ref.off(); // prevents double listeners if auth fires twice
+
   ref.on("value", snap => {
     const obj = snap.val() || {};
-    sellerList = Object.keys(obj).map(id => ({ _id: id, ...obj[id] }));
+    sellerList = Object.keys(obj).map(id => ({ id, ...obj[id] })); // ✅ correct
+
     renderQueue();
+
     if (currentIndex === -1 && sellerList.length) {
       selectLeadByIndex(0);
     }
+  }, err => {
+    console.warn("Leads permission/subscribe error:", err);
+    $("status").textContent = "Leads permission denied or path missing.";
+    $("leadCountPill").textContent = "0 leads";
+    sellerList = [];
+    renderQueue();
   });
 }
 /** ==========================
