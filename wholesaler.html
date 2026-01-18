@@ -637,7 +637,16 @@ body{
 
 <script>
 /** ==========================
- * SAFETY INIT (kept pattern)
+ * SAFETY INIT (DROP-IN REPLACEMENT)
+ * Replace EVERYTHING from:
+ *   (function ensureFirebaseInit(){ ... })();
+ * down through your AUTH block + your old subscribeLeads()
+ *
+ * ✅ This version:
+ * - Initializes Firebase once
+ * - Uses a SINGLE LEADS_PATH (string)
+ * - Subscribes to RTDB leads at leads/sellers
+ * - Does NOT rely on leads.js / window.leads
  * ========================== */
 (function ensureFirebaseInit(){
   try{
@@ -647,7 +656,7 @@ body{
         return;
       }
       firebase.initializeApp(window.firebaseConfig);
-      console.log("Firebase initialized (fallback init in wholesaler.html).");
+      console.log("Firebase initialized.");
     }
   }catch(e){
     console.error("Firebase init error:", e);
@@ -669,12 +678,15 @@ const GEOCODE_RATE_LIMIT_MS = 1200;
  * HELPERS
  * ========================== */
 const $ = (id) => document.getElementById(id);
+
 function esc(s){
   return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
 }
+
 function fmtPhoneKey(p){
   return String(p || "").trim().replace(/[^\d+]/g,"") || "unknown";
 }
+
 function tsToLocal(ts){
   try{
     const d = new Date(ts);
@@ -682,6 +694,7 @@ function tsToLocal(ts){
     return d.toLocaleString();
   }catch(e){ return ""; }
 }
+
 function initialsFromUser(u){
   const base = (u && (u.displayName || u.email)) ? (u.displayName || u.email) : "";
   const parts = String(base).split(/[\s._-]+/).filter(Boolean);
@@ -715,33 +728,122 @@ let logEntryCount = 0;
 // Map state
 let mapMode = "area"; // "area" | "street"
 let lastGeocodeAt = 0;
+
+/** ==========================
+ * LEADS (from RTDB)
+ * Path: leads/sellers/{leadId}
+ * ========================== */
+let LEADS_PATH = "leads/sellers";     // ✅ default
+let leadsRef = null;
+
+function leadIdFor(lead){
+  return String((lead && (lead.id || lead.docnum)) ? (lead.id || lead.docnum) : "");
+}
+
+/**
+ * Live subscribe to RTDB leads.
+ * - Keeps current selection stable by lead id when possible
+ */
 function subscribeLeads(){
-  const ref = firebase.database().ref(LEADS_PATH);
+  if (!UID) {
+    console.warn("subscribeLeads called before UID is set.");
+    return;
+  }
 
-  ref.off(); // prevents double listeners if auth fires twice
+  // Tear down any prior listener
+  if (leadsRef) { try{ leadsRef.off(); }catch(e){} leadsRef = null; }
 
-  ref.on("value", snap => {
-    const obj = snap.val() || {};
-    sellerList = Object.keys(obj).map(id => ({ id, ...obj[id] })); // ✅ correct
+  sellerList = [];
+  sellerView = [];
+  currentIndex = -1;
+  currentLead = null;
+
+  $("status").textContent = "Loading leads…";
+  $("leadCountPill").textContent = "0 leads";
+
+  leadsRef = firebase.database().ref(LEADS_PATH);
+
+  // Map for fast updates
+  const byId = new Map();
+
+  function rebuild(){
+    const keepId = currentLeadId || (currentLead ? leadIdFor(currentLead) : "");
+
+    sellerList = Array.from(byId.values());
+
+    // deterministic ordering
+    sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
+
+    // If your file has normalizeLeadCoords(), this will work; otherwise it no-ops.
+    try { normalizeLeadCoords(); } catch(e) {}
 
     renderQueue();
 
-    if (currentIndex === -1 && sellerList.length) {
-      selectLeadByIndex(0);
+    // Restore selection if possible
+    if (sellerView.length){
+      if (keepId){
+        const idx = sellerView.findIndex(x => leadIdFor(x) === keepId);
+        if (idx >= 0) { selectLeadByIndex(idx); return; }
+      }
+      if (currentIndex >= 0 && currentIndex < sellerView.length) {
+        selectLeadByIndex(currentIndex);
+      } else {
+        selectLeadByIndex(0);
+      }
+    } else {
+      clearConsole();
+      updatePager();
     }
-  }, err => {
-    console.warn("Leads permission/subscribe error:", err);
+
+    $("status").textContent = `Acq: ${sellerView.length} items`;
+    $("leadCountPill").textContent = `${sellerView.length} leads`;
+  }
+
+  leadsRef.on("child_added", (snap)=>{
+    const id = snap.key;
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v });
+    rebuild();
+  });
+
+  leadsRef.on("child_changed", (snap)=>{
+    const id = snap.key;
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v });
+    rebuild();
+  });
+
+  leadsRef.on("child_removed", (snap)=>{
+    byId.delete(snap.key);
+    rebuild();
+  });
+
+  // Empty / permission check
+  leadsRef.once("value").then((snap)=>{
+    if (!snap.exists()){
+      sellerList = [];
+      sellerView = [];
+      renderQueue();
+      clearConsole();
+      updatePager();
+      $("status").textContent = "No leads found in RTDB.";
+      $("leadCountPill").textContent = "0 leads";
+    }
+  }).catch((err)=>{
+    console.warn("Leads read failed:", err);
+    sellerList = [];
+    sellerView = [];
+    renderQueue();
+    clearConsole();
+    updatePager();
     $("status").textContent = "Leads permission denied or path missing.";
     $("leadCountPill").textContent = "0 leads";
-    sellerList = [];
-    renderQueue();
   });
 }
+
 /** ==========================
  * AUTH (DROP-IN REPLACEMENT)
  * ========================== */
-let LEADS_PATH = "leads/sellers"; // default; can be overridden after login
-
 firebase.auth().onAuthStateChanged(async (u) => {
   if (!u) return location.href = 'index.html';
 
@@ -749,10 +851,10 @@ firebase.auth().onAuthStateChanged(async (u) => {
   ME = u;
   ME_INITIALS = initialsFromUser(u);
 
-  // ✅ If you want per-user lead buckets later, flip this on:
+  // ✅ Per-user lead buckets later (optional):
   // LEADS_PATH = `user_leads/${UID}/sellers`;
 
-  // Start core systems
+  // Start presence
   try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
 
   // Role check
@@ -775,187 +877,14 @@ firebase.auth().onAuthStateChanged(async (u) => {
     setupChat(currentChatPath);
   }
 
-  // ✅ LAST: subscribe to leads (needs LEADS_PATH + auth ready)
+  // ✅ LAST: subscribe to leads
   try { subscribeLeads(); }
-  catch(e){ console.warn("subscribeLeads failed:", e); $("status").textContent = "Leads subscribe error (see console)."; }
-});
-
-/** ==========================
- * LEADS (from RTDB)
- * Path: leads/sellers/{leadId}
- * ========================== */
-
-// REMOVE your old:  const LEADS_PATH = "leads/sellers";
-// because we now have: let LEADS_PATH = ... above
-
-/** ==========================
- * QUEUE RENDER
- * ========================== */
-function statusBadgeClass(status){
-  const s = String(status || "").toLowerCase();
-  if (s.includes("hot")) return "hot";
-  if (s.includes("work")) return "working";
-  if (s.includes("dnc") || s.includes("do not")) return "dnc";
-  if (s.includes("done") || s.includes("closed")) return "done";
-  return "new";
-}
-function renderQueue(){
-  const q = String($("s_q").value || "").toLowerCase().trim();
-  sellerView = sellerList.filter(v => {
-    if (!q) return true;
-    const addr = String(v.address || "").toLowerCase();
-    const owner = String(v.owner || "").toLowerCase();
-    const phones = leadPhones(v).map(p => p.label.toLowerCase()).join(" ");
-    return addr.includes(q) || owner.includes(q) || phones.includes(q);
-  });
-
-  $("leadCountPill").textContent = `${sellerView.length} leads`;
-  $("status").textContent = `Acq: ${sellerView.length} items`;
-
-  if (currentIndex >= sellerView.length) currentIndex = sellerView.length - 1;
-
-  const list = $("leadList");
-  if (!sellerView.length){
-    list.innerHTML = `<div class="log-empty" style="border:1px dashed rgba(255,255,255,.14);border-radius:14px;">
-      No leads found. Check leads.js is loading and window.leads exists.
-    </div>`;
-    clearConsole();
-    updatePager();
-    return;
+  catch(e){
+    console.warn("subscribeLeads failed:", e);
+    $("status").textContent = "Leads subscribe error (see console).";
   }
-
-  list.innerHTML = sellerView.map((v,i)=>{
-    const phones = leadPhones(v);
-    const topPhone = phones[0]?.label || "";
-    const badge = statusBadgeClass(v.status);
-    const badgeLabel = String(v.status || "NEW").toUpperCase().slice(0,18);
-
-    return `
-      <div class="lead-item ${i===currentIndex ? "selected":""}" data-idx="${i}">
-        <div class="addr">${esc(v.address || "(no address)")}</div>
-        <div class="meta">
-          <div>${esc(v.owner || "(no owner)")}</div>
-          <div>${esc(topPhone)}</div>
-        </div>
-        <div class="badges">
-          <span class="badge ${badge}">${esc(badgeLabel)}</span>
-        </div>
-      </div>
-    `;
-  }).join("");
-
-  list.querySelectorAll(".lead-item").forEach(el=>{
-    el.onclick = ()=>{
-      const idx = Number(el.dataset.idx);
-      selectLeadByIndex(idx);
-    };
-  });
-
-  updatePager();
-}
-$("s_reload").onclick = () => renderQueue();
-$("s_q").addEventListener("input", () => {
-  // fast filter while typing
-  renderQueue();
 });
 
-/** ==========================
- * SELECT LEAD
- * ========================== */
-function updatePager(){
-  const total = sellerView.length || 0;
-  const pos = (currentIndex >= 0 && total) ? (currentIndex + 1) : 0;
-  $("leadPager").textContent = `${pos} / ${total}`;
-  const prev = $("prevLead");
-  const next = $("nextLead");
-  prev.disabled = !(total && currentIndex > 0);
-  next.disabled = !(total && currentIndex >= 0 && currentIndex < total - 1);
-  prev.style.opacity = prev.disabled ? "0.35":"1";
-  next.style.opacity = next.disabled ? "0.35":"1";
-}
-function selectLeadByIndex(idx){
-  if (!sellerView.length) return;
-  if (idx < 0) idx = 0;
-  if (idx >= sellerView.length) idx = sellerView.length - 1;
-
-  currentIndex = idx;
-  currentLead = sellerView[currentIndex];
-  currentLeadId = leadIdFor(currentLead);
-
-  // re-render queue selection styling
-  renderQueue();
-
-  // center console fields
-  $("leadAddress").textContent = currentLead?.address || "Lead";
-  $("leadOwner").textContent = currentLead?.owner || "";
-  const tps = $("tpsLink");
-  const addr = String(currentLead?.address || "").trim();
-  if (addr){
-    tps.style.display = "inline";
-    // Simple TPS entry point (you can change this later)
-    tps.href = "https://www.truepeoplesearch.com/results?name=" + encodeURIComponent(currentLead?.owner || "") +
-              "&citystatezip=" + encodeURIComponent(addr);
-  }else{
-    tps.style.display = "none";
-    tps.href = "#";
-  }
-
-  // phone select
-  const phones = leadPhones(currentLead);
-  const sel = $("phoneSelect");
-  sel.disabled = false;
-  sel.innerHTML = phones.map(p => `<option value="${esc(p.key)}">${esc(p.label)}</option>`).join("");
-
-  // choose first phone by default
-  currentPhone = phones[0]?.key || "unknown";
-  currentPhoneLabel = phones[0]?.label || "";
-  sel.value = currentPhone;
-
-  // bind phone change
-  sel.onchange = ()=>{
-    currentPhone = sel.value;
-    const found = phones.find(p => p.key === currentPhone);
-    currentPhoneLabel = found?.label || "";
-    bindCallLog(); // re-bind terminal to this number
-  };
-
-  // map + log
-  updateMapForLead(currentLead);
-  bindCallLog();
-
-  // clear composer
-  $("noteComposer").value = "";
-  hideSaved();
-
-  // scroll selected into view
-  const selectedEl = document.querySelector(`.lead-item[data-idx="${currentIndex}"]`);
-  if (selectedEl) selectedEl.scrollIntoView({ block:"nearest", behavior:"smooth" });
-
-  updatePager();
-}
-$("prevLead").onclick = () => { if (sellerView.length) selectLeadByIndex(currentIndex - 1); };
-$("nextLead").onclick = () => { if (sellerView.length) selectLeadByIndex(currentIndex + 1); };
-document.addEventListener("keydown", (e)=>{
-  const tag = (document.activeElement && document.activeElement.tagName) ? document.activeElement.tagName.toLowerCase() : "";
-  if (tag === "input" || tag === "textarea" || tag === "select") return;
-  if (e.key === "ArrowLeft") $("prevLead").click();
-  if (e.key === "ArrowRight") $("nextLead").click();
-});
-
-function clearConsole(){
-  currentLead = null;
-  currentLeadId = "";
-  currentPhone = "";
-  currentPhoneLabel = "";
-  $("leadAddress").textContent = "No lead selected";
-  $("leadOwner").textContent = "Select a lead from the queue.";
-  $("tpsLink").style.display = "none";
-  $("phoneSelect").innerHTML = "";
-  $("phoneSelect").disabled = true;
-  $("noteComposer").value = "";
-  unbindCallLog();
-  hideMapUI();
-}
 
 /** ==========================
  * TEAM CALL LOG (lead + phone)
