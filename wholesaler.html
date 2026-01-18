@@ -799,19 +799,42 @@ function subscribeLeads(){
     $("leadCountPill").textContent = `${sellerView.length} leads`;
   }
 
-  leadsRef.on("child_added", (snap)=>{
-    const id = snap.key;
-    const v = snap.val() || {};
-    byId.set(id, { id, ...v });
-    rebuild();
-  });
+// --- RTDB live sync: child_added / child_changed / child_removed ---
+leadsRef.off(); // prevent duplicate listeners if subscribeLeads runs twice
 
-  leadsRef.on("child_changed", (snap)=>{
-    const id = snap.key;
-    const v = snap.val() || {};
-    byId.set(id, { id, ...v });
-    rebuild();
-  });
+leadsRef.on("child_added", (snap) => {
+  const id = snap.key;
+  const v = snap.val();
+
+  // v should be an object; guard anyway
+  const obj = (v && typeof v === "object") ? v : { value: v };
+
+  byId.set(id, { id, ...obj });
+  rebuildFromMap();
+}, (err) => {
+  console.warn("leads child_added failed:", err);
+});
+
+leadsRef.on("child_changed", (snap) => {
+  const id = snap.key;
+  const v = snap.val();
+
+  const obj = (v && typeof v === "object") ? v : { value: v };
+
+  byId.set(id, { id, ...obj });
+  rebuildFromMap();
+}, (err) => {
+  console.warn("leads child_changed failed:", err);
+});
+
+leadsRef.on("child_removed", (snap) => {
+  const id = snap.key;
+  byId.delete(id);
+  rebuildFromMap();
+}, (err) => {
+  console.warn("leads child_removed failed:", err);
+});
+
 
   leadsRef.on("child_removed", (snap)=>{
     byId.delete(snap.key);
