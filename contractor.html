@@ -642,6 +642,64 @@ const REQUIRED_HINT = "Please enter: Service Areas + Trades + a contact method (
 /* ==========================
    HELPERS
 ========================== */
+let sharingLocation = false;
+let geoWatchId = null;
+let lastGeoWriteMs = 0;
+
+function setLocSwitch(on){
+  sharingLocation = !!on;
+  locSwitch.classList.toggle('on', sharingLocation);
+  locStatus.textContent = sharingLocation ? 'Location sharing: ON' : 'Location sharing: OFF';
+}
+
+function writeLocation(pos){
+  const now = Date.now();
+  if(now - lastGeoWriteMs < 10000) return; // throttle
+  lastGeoWriteMs = now;
+
+  const payload = {
+    lat: pos.coords.latitude,
+    lng: pos.coords.longitude,
+    accuracy: pos.coords.accuracy,
+    ts: firebase.database.ServerValue.TIMESTAMP,
+    portal: "contractor"
+  };
+
+  firebase.database().ref(`contractorLocations/${UID}/current`).set(payload);
+  firebase.database().ref(`contractorLocations/${UID}/history`).push(payload);
+}
+
+function startLocationShare(){
+  if(!navigator.geolocation){
+    alert("GPS not supported on this device.");
+    setLocSwitch(false);
+    return;
+  }
+
+  navigator.geolocation.getCurrentPosition(pos=>{
+    writeLocation(pos);
+    setLocSwitch(true);
+
+    geoWatchId = navigator.geolocation.watchPosition(
+      p => writeLocation(p),
+      err => {
+        alert("Location error. Enable GPS to claim jobs.");
+        stopLocationShare();
+      },
+      { enableHighAccuracy:true, maximumAge:15000, timeout:20000 }
+    );
+  }, ()=>{
+    alert("Location permission denied.");
+    setLocSwitch(false);
+  });
+}
+
+function stopLocationShare(){
+  if(geoWatchId) navigator.geolocation.clearWatch(geoWatchId);
+  geoWatchId = null;
+  setLocSwitch(false);
+}
+
 function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 
 function normalizePhone(p){
