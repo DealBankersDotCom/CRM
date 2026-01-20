@@ -11,5 +11,8 @@ window.firebaseConfig = {
   measurementId: "G-KTNXZM14F7"
 };
 
-// This is the key the runtime Street View + Geocoder code uses:
+// Wholesale portal Street View + map key (keep this unchanged):
 window.MAPS_JS_KEY = "AIzaSyC3bn6cYLdP53ITSPLO1jx_CmKIMOGO8Q4";
+
+// Contractor tracking map key (NEW):
+window.CONTRACTOR_MAPS_KEY = "AIzaSyBGTUG4NyhUUGh9MW1JFof1NLyeszhNOVk";
