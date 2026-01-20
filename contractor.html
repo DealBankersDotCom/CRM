@@ -902,6 +902,30 @@ function renderJobDetail(id){
     detailPanel.innerHTML = `Select a job to view details...`;
     return;
   }
+    // ✅ Wire up Claim button (must happen AFTER innerHTML is set)
+  const claimBtn = document.getElementById("claimJobBtn");
+  if (claimBtn) {
+    claimBtn.onclick = async () => {
+      if (!sharingLocation) {
+        alert("Turn on Live Location to claim this job.");
+        showSettingsModal();
+        return;
+      }
+
+      try {
+        await firebase.database().ref(`jobs/${id}/claimedBy/${UID}`).set({
+          uid: UID,
+          email: USER_EMAIL || null,
+          ts: firebase.database.ServerValue.TIMESTAMP
+        });
+
+        alert("✅ Job claimed. You're assigned.");
+      } catch (e) {
+        console.error(e);
+        alert("Could not claim job (permissions/rules).");
+      }
+    };
+  }
   detailPanel.innerHTML = `
     <div class="panel">
       <h3>${esc(j.title || '(Untitled job)')}</h3>
