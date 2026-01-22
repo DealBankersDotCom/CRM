@@ -1,0 +1,804 @@
+<!-- brixton-portal.html
+     Brixton-only Work Order + Make-Ready Request Portal (single-file MVP)
+     ✅ Looks legit, works today
+     ✅ Sends requests to your webhook (Google Apps Script / Cloudflare / Firebase) OR falls back to email
+     How to use:
+       1) Save as: brixton-portal.html
+       2) Edit CONFIG below (WEBHOOK_URL + FALLBACK_EMAIL)
+       3) Upload to your hosting (A2 / Firebase Hosting / any static host)
+-->
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Brixton Vendor Work Order Portal | Powered by Deal Bankers</title>
+  <meta name="description" content="Submit Work Orders and Make-Ready Turn Requests for Brixton Apartments. Powered by Deal Bankers." />
+  <style>
+    :root{
+      --bg:#0b0f19;
+      --card:#121a2a;
+      --card2:#0f1626;
+      --text:#e9eefc;
+      --muted:#a9b5d6;
+      --line:rgba(255,255,255,.10);
+      --accent:#4da3ff;
+      --good:#3ee08f;
+      --warn:#ffd35a;
+      --bad:#ff5c7a;
+      --shadow: 0 12px 40px rgba(0,0,0,.35);
+      --radius: 16px;
+      --radius2: 22px;
+      --font: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, "Apple Color Emoji","Segoe UI Emoji";
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:var(--font);
+      color:var(--text);
+      background:
+        radial-gradient(900px 500px at 15% -10%, rgba(77,163,255,.25), transparent 55%),
+        radial-gradient(800px 550px at 90% 0%, rgba(62,224,143,.18), transparent 55%),
+        radial-gradient(900px 700px at 60% 110%, rgba(255,92,122,.16), transparent 60%),
+        var(--bg);
+      min-height:100vh;
+    }
+    a{color:var(--accent); text-decoration:none}
+    .wrap{max-width:1100px; margin:0 auto; padding:28px 18px 48px}
+    .topbar{
+      display:flex; gap:14px; align-items:center; justify-content:space-between; flex-wrap:wrap;
+      margin-bottom:18px;
+    }
+    .brand{
+      display:flex; gap:12px; align-items:center;
+    }
+    .logo{
+      width:44px; height:44px; border-radius:14px;
+      background: linear-gradient(135deg, rgba(77,163,255,.9), rgba(62,224,143,.85));
+      box-shadow: var(--shadow);
+      display:grid; place-items:center;
+      font-weight:900; letter-spacing:.6px;
+      color:#06101f;
+      user-select:none;
+    }
+    .titleblock h1{margin:0; font-size:18px; letter-spacing:.2px}
+    .titleblock p{margin:3px 0 0; color:var(--muted); font-size:13px}
+    .pillrow{display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+    .pill{
+      padding:8px 10px; border:1px solid var(--line); border-radius:999px; font-size:12px;
+      color:var(--muted); background:rgba(255,255,255,.03);
+    }
+    .pill b{color:var(--text); font-weight:700}
+    .grid{
+      display:grid; grid-template-columns: 1.05fr .95fr; gap:16px;
+      align-items:start;
+    }
+    @media (max-width: 980px){
+      .grid{grid-template-columns:1fr}
+    }
+
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius: var(--radius2);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .cardhead{
+      padding:16px 16px 12px;
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start; flex-wrap:wrap;
+      border-bottom:1px solid var(--line);
+      background: rgba(0,0,0,.12);
+    }
+    .cardhead h2{margin:0; font-size:15px}
+    .cardhead .sub{margin:4px 0 0; color:var(--muted); font-size:12px}
+    .cardbody{padding:16px}
+    .tabs{
+      display:flex; gap:10px; flex-wrap:wrap;
+    }
+    .tabbtn{
+      cursor:pointer;
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      color:var(--muted);
+      padding:10px 12px;
+      border-radius: 14px;
+      font-weight:700;
+      font-size:13px;
+      transition:.15s ease;
+      user-select:none;
+    }
+    .tabbtn[aria-selected="true"]{
+      color:var(--text);
+      border-color: rgba(77,163,255,.55);
+      box-shadow: 0 0 0 2px rgba(77,163,255,.12) inset;
+      background: rgba(77,163,255,.08);
+    }
+
+    form{display:none}
+    form.active{display:block}
+    .fields{display:grid; grid-template-columns: 1fr 1fr; gap:12px}
+    @media (max-width: 680px){ .fields{grid-template-columns:1fr} }
+    .field{display:flex; flex-direction:column; gap:6px}
+    label{font-size:12px; color:var(--muted)}
+    input, select, textarea{
+      width:100%;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      background: rgba(0,0,0,.18);
+      color: var(--text);
+      padding:11px 12px;
+      outline:none;
+      font-size:14px;
+    }
+    textarea{min-height:110px; resize:vertical}
+    .help{font-size:11px; color:var(--muted); margin-top:2px}
+    .row{
+      display:flex; gap:10px; flex-wrap:wrap; align-items:center;
+    }
+    .checkgrid{
+      display:grid; grid-template-columns: 1fr 1fr; gap:10px;
+    }
+    @media (max-width:680px){ .checkgrid{grid-template-columns:1fr} }
+    .check{
+      display:flex; gap:10px; align-items:flex-start;
+      border:1px dashed rgba(255,255,255,.14);
+      background: rgba(255,255,255,.03);
+      padding:10px 10px;
+      border-radius: 14px;
+    }
+    .check input{width:18px; height:18px; margin-top:2px}
+    .check span{font-size:13px; color:var(--text)}
+    .btnrow{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .btn{
+      cursor:pointer;
+      border:none;
+      border-radius: 14px;
+      padding:12px 14px;
+      font-weight:800;
+      letter-spacing:.2px;
+      background: linear-gradient(135deg, rgba(77,163,255,.95), rgba(62,224,143,.85));
+      color:#071326;
+      box-shadow: 0 10px 30px rgba(0,0,0,.25);
+    }
+    .btn.secondary{
+      background: rgba(255,255,255,.06);
+      border:1px solid var(--line);
+      color: var(--text);
+      box-shadow:none;
+      font-weight:800;
+    }
+    .btn.danger{
+      background: rgba(255,92,122,.14);
+      border:1px solid rgba(255,92,122,.28);
+      color: var(--text);
+    }
+    .notice{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius);
+      padding:12px 12px;
+      color: var(--muted);
+      font-size:12px;
+      line-height:1.35;
+    }
+    .notice b{color:var(--text)}
+    .status{
+      margin-top:10px;
+      border-radius: 14px;
+      border:1px solid var(--line);
+      padding:10px 12px;
+      font-size:13px;
+      color: var(--muted);
+      background: rgba(0,0,0,.14);
+      display:none;
+    }
+    .status.show{display:block}
+    .status.good{border-color: rgba(62,224,143,.35)}
+    .status.bad{border-color: rgba(255,92,122,.35)}
+    .status.warn{border-color: rgba(255,211,90,.35)}
+    .kpi{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:12px;
+      margin-top:12px;
+    }
+    .kpi .box{
+      border:1px solid var(--line);
+      background: rgba(255,255,255,.03);
+      border-radius: var(--radius);
+      padding:12px;
+    }
+    .kpi .box .big{font-size:18px; font-weight:900}
+    .kpi .box .small{font-size:12px; color:var(--muted); margin-top:4px}
+    .mini{
+      display:flex; justify-content:space-between; gap:10px; flex-wrap:wrap;
+      color:var(--muted); font-size:12px; margin-top:10px;
+    }
+    .filelist{margin-top:8px; display:flex; flex-direction:column; gap:6px}
+    .filetag{
+      padding:8px 10px; border:1px solid var(--line); border-radius: 12px;
+      background: rgba(0,0,0,.12); color:var(--muted); font-size:12px;
+      display:flex; justify-content:space-between; gap:10px;
+    }
+    .foot{
+      margin-top:14px; color:var(--muted); font-size:11px; line-height:1.4;
+    }
+    .divider{height:1px; background: var(--line); margin:14px 0}
+    .rightcard .cardbody{padding:14px}
+    .cta{
+      display:flex; flex-direction:column; gap:10px;
+    }
+    .cta .bigbtn{
+      cursor:pointer;
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:14px 14px;
+      border-radius: 18px;
+      border:1px solid rgba(77,163,255,.35);
+      background: rgba(77,163,255,.08);
+      color: var(--text);
+      font-weight:900;
+      letter-spacing:.2px;
+    }
+    .cta .bigbtn small{display:block; color:var(--muted); font-weight:600; margin-top:4px}
+    .arrow{opacity:.8}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="brand">
+        <div class="logo">DB</div>
+        <div class="titleblock">
+          <h1>Brixton Vendor Work Order Portal</h1>
+          <p>Powered by Deal Bankers • Work Orders + Make-Ready Turn Requests</p>
+        </div>
+      </div>
+      <div class="pillrow">
+        <div class="pill"><b>Property:</b> Brixton Apartments</div>
+        <div class="pill"><b>Address:</b> 2555 NE Loop 410, San Antonio</div>
+        <div class="pill"><b>Emergency:</b> <span id="emergencyLine">(set in config)</span></div>
+      </div>
+    </div>
+
+    <div class="grid">
+      <!-- LEFT: Forms -->
+      <div class="card">
+        <div class="cardhead">
+          <div>
+            <h2>Submit Request</h2>
+            <div class="sub">Choose a request type. Attach photos/video when helpful. You will receive a confirmation.</div>
+          </div>
+          <div class="tabs" role="tablist" aria-label="Request type">
+            <div class="tabbtn" id="tab-wo" role="tab" aria-selected="true" tabindex="0">Work Order (Repair)</div>
+            <div class="tabbtn" id="tab-mr" role="tab" aria-selected="false" tabindex="-1">Make-Ready Turn</div>
+          </div>
+        </div>
+
+        <div class="cardbody">
+          <div class="notice">
+            <b>Tip:</b> If water is actively leaking, electrical hazard exists, or security is compromised, mark <b>Emergency</b>.
+            Emergency requests trigger immediate dispatch notifications.
+          </div>
+
+          <div class="status" id="statusBox"></div>
+
+          <!-- WORK ORDER FORM -->
+          <form id="formWorkOrder" class="active" autocomplete="on">
+            <div class="divider"></div>
+            <div class="fields">
+              <div class="field">
+                <label>Requested By (Name)</label>
+                <input name="requestedBy" required placeholder="e.g., Celeste Parker" />
+              </div>
+              <div class="field">
+                <label>Requested By (Email)</label>
+                <input name="requestedEmail" type="email" required placeholder="name@brixton.com" />
+              </div>
+
+              <div class="field">
+                <label>Unit #</label>
+                <input name="unit" required placeholder="e.g., 1207" />
+              </div>
+              <div class="field">
+                <label>Building / Floor (optional)</label>
+                <input name="building" placeholder="e.g., Bldg 6 / 2nd floor" />
+              </div>
+
+              <div class="field">
+                <label>Category</label>
+                <select name="category" required>
+                  <option value="">Select…</option>
+                  <option>Plumbing</option>
+                  <option>Electrical</option>
+                  <option>Paint / Drywall</option>
+                  <option>Flooring</option>
+                  <option>Appliance</option>
+                  <option>Cabinet / Counter</option>
+                  <option>Bath / Tub</option>
+                  <option>Exterior / Grounds</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="field">
+                <label>Priority</label>
+                <select name="priority" required>
+                  <option value="">Select…</option>
+                  <option>Emergency</option>
+                  <option>Same Day</option>
+                  <option>24–48 Hours</option>
+                  <option>Routine</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Access Instructions</label>
+                <input name="access" placeholder="Lockbox? Office key? Tenant home? Call first?" />
+                <div class="help">If occupied, include permission + best time window.</div>
+              </div>
+              <div class="field">
+                <label>Is water shutoff required?</label>
+                <select name="waterShutoff" required>
+                  <option value="">Select…</option>
+                  <option>No</option>
+                  <option>Yes</option>
+                  <option>Not Sure</option>
+                </select>
+              </div>
+
+              <div class="field" style="grid-column:1/-1">
+                <label>Issue Details</label>
+                <textarea name="details" required placeholder="Describe the problem, what was observed, and any urgency."></textarea>
+              </div>
+
+              <div class="field" style="grid-column:1/-1">
+                <label>Attach Photos / Video (optional)</label>
+                <input name="attachments" id="woFiles" type="file" accept="image/*,video/*" multiple />
+                <div class="filelist" id="woFileList"></div>
+                <div class="help">Uploads depend on your webhook. If not configured, attachments are listed in the confirmation and you can email them.</div>
+              </div>
+            </div>
+
+            <div class="btnrow">
+              <button class="btn" type="submit">Submit Work Order</button>
+              <button class="btn secondary" type="button" id="saveWoDraft">Save Draft</button>
+              <button class="btn danger" type="button" id="clearWo">Clear</button>
+            </div>
+
+            <div class="foot">
+              Ticket numbers are automatically generated. You’ll receive confirmation on screen and via email (if webhook configured).
+            </div>
+          </form>
+
+          <!-- MAKE READY FORM -->
+          <form id="formMakeReady" autocomplete="on">
+            <div class="divider"></div>
+            <div class="fields">
+              <div class="field">
+                <label>Requested By (Name)</label>
+                <input name="requestedBy" required placeholder="e.g., Kaitlyn" />
+              </div>
+              <div class="field">
+                <label>Requested By (Email)</label>
+                <input name="requestedEmail" type="email" required placeholder="name@brixton.com" />
+              </div>
+
+              <div class="field">
+                <label>Unit #</label>
+                <input name="unit" required placeholder="e.g., 0814" />
+              </div>
+              <div class="field">
+                <label>Turn Type</label>
+                <select name="turnType" required>
+                  <option value="">Select…</option>
+                  <option>Basic</option>
+                  <option>Standard</option>
+                  <option>Heavy</option>
+                  <option>Rehab</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Move-Out Date (optional)</label>
+                <input name="moveOutDate" type="date" />
+              </div>
+              <div class="field">
+                <label>Target “Ready By” Date</label>
+                <input name="readyBy" type="date" required />
+              </div>
+
+              <div class="field" style="grid-column:1/-1">
+                <label>Requested Scope (check all that apply)</label>
+                <div class="checkgrid">
+                  <label class="check"><input type="checkbox" name="scope" value="Full Interior Paint" /><span>Full Interior Paint</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Paint Touch-Up Only" /><span>Paint Touch-Up Only</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Flooring Replace" /><span>Flooring Replace</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Flooring Repair" /><span>Flooring Repair</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Tub Resurface (Standard)" /><span>Tub Resurface (Standard)</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Tub Resurface (Corrective)" /><span>Tub Resurface (Corrective)</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Cabinet Resurface / Reface" /><span>Cabinet Resurface / Reface</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Countertop Resurface" /><span>Countertop Resurface</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Appliance Set Install" /><span>Appliance Set Install</span></label>
+                  <label class="check"><input type="checkbox" name="scope" value="Fixture Swaps (Lights/Fans/Faucets)" /><span>Fixture Swaps (Lights/Fans/Faucets)</span></label>
+                </div>
+                <div class="help">Final per-unit scope is verified during walkthrough.</div>
+              </div>
+
+              <div class="field">
+                <label>Access Instructions</label>
+                <input name="access" placeholder="Key pickup, lockbox, unit occupied?, etc." />
+              </div>
+              <div class="field">
+                <label>Walkthrough Needed?</label>
+                <select name="walkthrough" required>
+                  <option value="">Select…</option>
+                  <option>Yes – schedule walkthrough</option>
+                  <option>No – proceed with standard scope</option>
+                </select>
+              </div>
+
+              <div class="field" style="grid-column:1/-1">
+                <label>Known Issues / Notes</label>
+                <textarea name="details" placeholder="Anything unusual? settling cracks, failed resurfacing, water damage, etc."></textarea>
+              </div>
+
+              <div class="field" style="grid-column:1/-1">
+                <label>Attach Photos / Video (optional)</label>
+                <input name="attachments" id="mrFiles" type="file" accept="image/*,video/*" multiple />
+                <div class="filelist" id="mrFileList"></div>
+              </div>
+            </div>
+
+            <div class="btnrow">
+              <button class="btn" type="submit">Submit Make-Ready Request</button>
+              <button class="btn secondary" type="button" id="saveMrDraft">Save Draft</button>
+              <button class="btn danger" type="button" id="clearMr">Clear</button>
+            </div>
+
+            <div class="foot">
+              You’ll receive a confirmation ticket number immediately. Dispatch will follow up with ETA / walkthrough time.
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- RIGHT: Quick Actions + Status -->
+      <div class="card rightcard">
+        <div class="cardhead">
+          <div>
+            <h2>Quick Actions</h2>
+            <div class="sub">For Brixton staff + regional. Everything timestamped.</div>
+          </div>
+        </div>
+        <div class="cardbody">
+          <div class="cta">
+            <div class="bigbtn" id="btnEmergency">
+              Emergency Dispatch
+              <span class="arrow">➜</span>
+              <small>Immediate response line</small>
+            </div>
+            <div class="bigbtn" id="btnVendorDocs">
+              Vendor Docs / Onboarding
+              <span class="arrow">➜</span>
+              <small>W-9 • COI • Pricing • Contacts</small>
+            </div>
+            <div class="bigbtn" id="btnPricing">
+              Pricing Guide (Labor Only)
+              <span class="arrow">➜</span>
+              <small>Flat-rate menu + turn packages</small>
+            </div>
+          </div>
+
+          <div class="kpi">
+            <div class="box">
+              <div class="big mono" id="lastTicket">—</div>
+              <div class="small">Last Ticket Created</div>
+            </div>
+            <div class="box">
+              <div class="big mono" id="draftStatus">None</div>
+              <div class="small">Saved Draft</div>
+            </div>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="notice">
+            <b>How this works:</b> Submit a request → Ticket ID is generated → Your request is sent to Deal Bankers dispatch.
+            If the webhook isn’t configured yet, we’ll open an email draft automatically so nothing gets lost.
+          </div>
+
+          <div class="mini">
+            <div>© <span id="year"></span> Deal Bankers</div>
+            <div class="mono" id="envTag">MVP • Static</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+<script>
+  // =========================
+  // CONFIG (EDIT THESE)
+  // =========================
+  const CONFIG = {
+    PROPERTY_NAME: "Brixton Apartments",
+    PROPERTY_CODE: "BRX",
+    EMERGENCY_PHONE: "210-816-5112",          // set your real emergency line
+    FALLBACK_EMAIL: "aptbidsonline@gmail.com",// where requests go if webhook is not ready
+    WEBHOOK_URL: "",                          // paste your endpoint here (Google Apps Script / Firebase HTTPS / etc.)
+    VENDOR_DOCS_URL: "",                      // paste Vendor Docs portal link once they send it
+    PRICING_PDF_URL: "",                      // link to your pricing PDF
+    ALLOW_FILE_UPLOAD: false                  // set true only if your webhook supports multipart uploads
+  };
+
+  // UI hooks
+  const tabWO = document.getElementById("tab-wo");
+  const tabMR = document.getElementById("tab-mr");
+  const formWO = document.getElementById("formWorkOrder");
+  const formMR = document.getElementById("formMakeReady");
+  const statusBox = document.getElementById("statusBox");
+  const lastTicket = document.getElementById("lastTicket");
+  const draftStatus = document.getElementById("draftStatus");
+
+  document.getElementById("year").textContent = new Date().getFullYear();
+  document.getElementById("emergencyLine").textContent = CONFIG.EMERGENCY_PHONE;
+
+  // Right buttons
+  document.getElementById("btnEmergency").onclick = () => {
+    // mobile-friendly tel:
+    window.location.href = `tel:${CONFIG.EMERGENCY_PHONE.replace(/[^\d+]/g,"")}`;
+  };
+  document.getElementById("btnVendorDocs").onclick = () => {
+    if (!CONFIG.VENDOR_DOCS_URL) return showStatus("Vendor Docs link not set yet. Paste the portal link into CONFIG.VENDOR_DOCS_URL.", "warn");
+    window.open(CONFIG.VENDOR_DOCS_URL, "_blank");
+  };
+  document.getElementById("btnPricing").onclick = () => {
+    if (!CONFIG.PRICING_PDF_URL) return showStatus("Pricing PDF link not set yet. Paste it into CONFIG.PRICING_PDF_URL.", "warn");
+    window.open(CONFIG.PRICING_PDF_URL, "_blank");
+  };
+
+  // Tabs
+  function selectTab(which){
+    const isWO = which === "wo";
+    tabWO.setAttribute("aria-selected", String(isWO));
+    tabMR.setAttribute("aria-selected", String(!isWO));
+    tabWO.tabIndex = isWO ? 0 : -1;
+    tabMR.tabIndex = !isWO ? 0 : -1;
+    formWO.classList.toggle("active", isWO);
+    formMR.classList.toggle("active", !isWO);
+    clearStatus();
+  }
+  tabWO.onclick = () => selectTab("wo");
+  tabMR.onclick = () => selectTab("mr");
+  tabWO.onkeydown = (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); selectTab("wo"); } };
+  tabMR.onkeydown = (e)=>{ if(e.key==="Enter"||e.key===" "){ e.preventDefault(); selectTab("mr"); } };
+
+  // Helpers
+  function showStatus(msg, tone="good"){
+    statusBox.textContent = msg;
+    statusBox.className = `status show ${tone}`;
+  }
+  function clearStatus(){
+    statusBox.className = "status";
+    statusBox.textContent = "";
+  }
+
+  function ticketId(){
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth()+1).padStart(2,"0");
+    const day = String(d.getDate()).padStart(2,"0");
+    const rnd = Math.floor(1000 + Math.random()*9000);
+    return `${CONFIG.PROPERTY_CODE}-${y}${m}${day}-${rnd}`;
+  }
+
+  function toISO(d){
+    try { return new Date(d).toISOString(); } catch { return ""; }
+  }
+
+  function listFiles(inputEl, listEl){
+    listEl.innerHTML = "";
+    const files = Array.from(inputEl.files || []);
+    files.forEach(f=>{
+      const tag = document.createElement("div");
+      tag.className = "filetag";
+      tag.innerHTML = `<span>${escapeHtml(f.name)}</span><span>${Math.round(f.size/1024)} KB</span>`;
+      listEl.appendChild(tag);
+    });
+  }
+  function escapeHtml(s){ return (s||"").replace(/[&<>"']/g, m=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;" }[m])); }
+
+  // file previews
+  const woFiles = document.getElementById("woFiles");
+  const mrFiles = document.getElementById("mrFiles");
+  woFiles.addEventListener("change", ()=>listFiles(woFiles, document.getElementById("woFileList")));
+  mrFiles.addEventListener("change", ()=>listFiles(mrFiles, document.getElementById("mrFileList")));
+
+  // Draft save/restore
+  function saveDraft(key, form){
+    const data = formToObject(form);
+    localStorage.setItem(key, JSON.stringify(data));
+    draftStatus.textContent = key.includes("WO") ? "Work Order" : "Make-Ready";
+    showStatus("Draft saved on this device.", "good");
+  }
+  function loadDraft(key, form){
+    const raw = localStorage.getItem(key);
+    if (!raw) return;
+    try{
+      const data = JSON.parse(raw);
+      objectToForm(form, data);
+      draftStatus.textContent = key.includes("WO") ? "Work Order" : "Make-Ready";
+    }catch{}
+  }
+  function clearDraft(key){
+    localStorage.removeItem(key);
+    draftStatus.textContent = "None";
+  }
+
+  document.getElementById("saveWoDraft").onclick = ()=>saveDraft("BRX_WO_DRAFT", formWO);
+  document.getElementById("saveMrDraft").onclick = ()=>saveDraft("BRX_MR_DRAFT", formMR);
+  document.getElementById("clearWo").onclick = ()=>{ formWO.reset(); document.getElementById("woFileList").innerHTML=""; clearDraft("BRX_WO_DRAFT"); showStatus("Cleared.", "warn"); };
+  document.getElementById("clearMr").onclick = ()=>{ formMR.reset(); document.getElementById("mrFileList").innerHTML=""; clearDraft("BRX_MR_DRAFT"); showStatus("Cleared.", "warn"); };
+
+  loadDraft("BRX_WO_DRAFT", formWO);
+  loadDraft("BRX_MR_DRAFT", formMR);
+
+  function formToObject(form){
+    const obj = {};
+    const fd = new FormData(form);
+    // handle checkboxes with same name (scope)
+    const scope = [];
+    form.querySelectorAll('input[type="checkbox"][name="scope"]:checked').forEach(cb=>scope.push(cb.value));
+    for (const [k,v] of fd.entries()){
+      if (k === "scope") continue;
+      if (k === "attachments") continue;
+      obj[k] = v;
+    }
+    if (scope.length) obj.scope = scope;
+    return obj;
+  }
+
+  function objectToForm(form, obj){
+    Object.entries(obj||{}).forEach(([k,v])=>{
+      if (k === "scope" && Array.isArray(v)){
+        form.querySelectorAll('input[type="checkbox"][name="scope"]').forEach(cb=>{
+          cb.checked = v.includes(cb.value);
+        });
+        return;
+      }
+      const el = form.querySelector(`[name="${CSS.escape(k)}"]`);
+      if (!el) return;
+      el.value = v;
+    });
+  }
+
+  // Submit logic
+  async function sendPayload(payload){
+    // If no webhook configured, fallback to mailto
+    if (!CONFIG.WEBHOOK_URL){
+      fallbackEmail(payload);
+      return { ok:true, via:"email" };
+    }
+
+    // If webhook configured, post JSON
+    const res = await fetch(CONFIG.WEBHOOK_URL, {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify(payload)
+    });
+    const text = await res.text().catch(()=> "");
+    if (!res.ok) throw new Error(`Webhook error (${res.status}): ${text || "No response"}`);
+    return { ok:true, via:"webhook", response:text };
+  }
+
+  function fallbackEmail(payload){
+    const subject = encodeURIComponent(`[${payload.propertyCode}] ${payload.type} ${payload.ticketId} • Unit ${payload.unit || "N/A"} • ${payload.priority || payload.turnType || ""}`.trim());
+    const lines = [];
+    lines.push(`${payload.type} Request`);
+    lines.push(`Ticket: ${payload.ticketId}`);
+    lines.push(`Property: ${payload.propertyName}`);
+    lines.push(`Unit: ${payload.unit || ""}`);
+    if (payload.building) lines.push(`Building/Floor: ${payload.building}`);
+    if (payload.category) lines.push(`Category: ${payload.category}`);
+    if (payload.priority) lines.push(`Priority: ${payload.priority}`);
+    if (payload.turnType) lines.push(`Turn Type: ${payload.turnType}`);
+    if (payload.moveOutDate) lines.push(`Move-Out: ${payload.moveOutDate}`);
+    if (payload.readyBy) lines.push(`Ready-By: ${payload.readyBy}`);
+    if (payload.waterShutoff) lines.push(`Water Shutoff: ${payload.waterShutoff}`);
+    if (payload.walkthrough) lines.push(`Walkthrough: ${payload.walkthrough}`);
+    if (payload.access) lines.push(`Access: ${payload.access}`);
+    lines.push(`Requested By: ${payload.requestedBy} <${payload.requestedEmail}>`);
+    if (payload.scope && payload.scope.length) lines.push(`Scope: ${payload.scope.join(", ")}`);
+    lines.push("");
+    lines.push("Details:");
+    lines.push(payload.details || "");
+    lines.push("");
+    if (payload.attachments && payload.attachments.length){
+      lines.push("Attachments (names only — upload support not configured):");
+      payload.attachments.forEach(a=>lines.push(`- ${a}`));
+      lines.push("");
+    }
+    lines.push(`Submitted At: ${payload.submittedAt}`);
+    const body = encodeURIComponent(lines.join("\n"));
+    window.location.href = `mailto:${encodeURIComponent(CONFIG.FALLBACK_EMAIL)}?subject=${subject}&body=${body}`;
+  }
+
+  // Handle form submits
+  formWO.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    clearStatus();
+
+    const id = ticketId();
+    const data = formToObject(formWO);
+    const attachments = Array.from(woFiles.files || []).map(f=>f.name);
+
+    const payload = {
+      ticketId: id,
+      propertyCode: CONFIG.PROPERTY_CODE,
+      propertyName: CONFIG.PROPERTY_NAME,
+      type: "Work Order",
+      submittedAt: new Date().toISOString(),
+      ...data,
+      attachments
+    };
+
+    lastTicket.textContent = id;
+
+    try{
+      showStatus("Submitting…", "warn");
+      const out = await sendPayload(payload);
+      showStatus(`Submitted ✔ Ticket ${id} (${out.via}). Dispatch will follow up with ETA.`, "good");
+      // keep draft in case; but clear if you want:
+      localStorage.removeItem("BRX_WO_DRAFT");
+    }catch(err){
+      showStatus(`Could not submit to webhook. Opening email fallback. (${err.message})`, "bad");
+      fallbackEmail(payload);
+    }
+  });
+
+  formMR.addEventListener("submit", async (e)=>{
+    e.preventDefault();
+    clearStatus();
+
+    const id = ticketId();
+    const data = formToObject(formMR);
+    const attachments = Array.from(mrFiles.files || []).map(f=>f.name);
+
+    const payload = {
+      ticketId: id,
+      propertyCode: CONFIG.PROPERTY_CODE,
+      propertyName: CONFIG.PROPERTY_NAME,
+      type: "Make-Ready",
+      submittedAt: new Date().toISOString(),
+      ...data,
+      attachments
+    };
+
+    lastTicket.textContent = id;
+
+    try{
+      showStatus("Submitting…", "warn");
+      const out = await sendPayload(payload);
+      showStatus(`Submitted ✔ Ticket ${id} (${out.via}). We’ll confirm walkthrough/ETA shortly.`, "good");
+      localStorage.removeItem("BRX_MR_DRAFT");
+    }catch(err){
+      showStatus(`Could not submit to webhook. Opening email fallback. (${err.message})`, "bad");
+      fallbackEmail(payload);
+    }
+  });
+
+  // Small UX: prefill readyBy with tomorrow (for speed)
+  (function defaultDates(){
+    const tomorrow = new Date(Date.now()+24*60*60*1000);
+    const y = tomorrow.getFullYear();
+    const m = String(tomorrow.getMonth()+1).padStart(2,"0");
+    const d = String(tomorrow.getDate()).padStart(2,"0");
+    const val = `${y}-${m}-${d}`;
+    const rb = formMR.querySelector('[name="readyBy"]');
+    if (rb && !rb.value) rb.value = val;
+  })();
+</script>
+</body>
+</html>
