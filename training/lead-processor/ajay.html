@@ -1,0 +1,283 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>DealBankers — Ajay Lead Processor</title>
+  <style>
+    :root{
+      --bg:#0b0f14; --panel:#0f1722; --ink:#eaf1ff; --muted:#9fb3d1;
+      --line:#203046; --blue:#59b7ff; --green:#2ee59d; --red:#ff4d4d;
+      --shadow:0 14px 40px rgba(0,0,0,.48); --r:16px;
+      --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
+      --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; min-height:100vh; color:var(--ink); font-family:var(--sans);
+      background:
+        radial-gradient(900px 520px at 20% 12%, rgba(89,183,255,.17), transparent 55%),
+        radial-gradient(780px 420px at 82% 20%, rgba(46,229,157,.12), transparent 55%),
+        var(--bg);
+    }
+    header{
+      padding:14px 16px; display:flex; justify-content:space-between; align-items:center;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(15,23,34,.88), rgba(15,23,34,.72));
+      backdrop-filter: blur(10px);
+      position:sticky; top:0;
+    }
+    .brand{display:flex; gap:12px; align-items:center; user-select:none}
+    .logo{
+      width:38px;height:38px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(89,183,255,.28), rgba(46,229,157,.22));
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:0 10px 26px rgba(0,0,0,.35);
+      display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:900;
+    }
+    .t1{font-weight:900; letter-spacing:.08em; text-transform:uppercase; font-size:12px}
+    .t2{font-family:var(--mono); color:var(--muted); font-size:12px; margin-top:2px}
+    .wrap{padding:16px; max-width:1150px; margin:0 auto}
+    .card{
+      border-radius:var(--r);
+      border:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(15,23,34,.90), rgba(15,23,34,.70));
+      box-shadow: var(--shadow);
+      overflow:hidden;
+    }
+    .card .hdr{
+      padding:14px 14px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+    }
+    .pill{
+      font-family:var(--mono); font-size:11px; padding:5px 9px; border-radius:999px;
+      border:1px solid rgba(255,255,255,.12); background: rgba(11,15,20,.45); color:var(--muted);
+      white-space:nowrap;
+    }
+    .pill.green{border-color: rgba(46,229,157,.35); color:#dffbf0;}
+    .pill.blue{border-color: rgba(89,183,255,.35); color:#e3f3ff;}
+    .body{padding:14px}
+    .grid{display:grid; grid-template-columns: 340px 1fr; gap:12px}
+    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
+    input, textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(11,15,20,.55);
+      color:var(--ink);
+      padding:11px 12px;
+      outline:none;
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    textarea{min-height:120px; resize:vertical; line-height:1.45}
+    input:focus, textarea:focus{border-color: rgba(89,183,255,.65)}
+    .row{display:flex; gap:10px}
+    .btn{
+      font-family:var(--mono);
+      font-size:12px;
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(11,15,20,.55);
+      color:var(--ink);
+      cursor:pointer;
+    }
+    .btn:hover{border-color: rgba(89,183,255,.55)}
+    .btn.primary{border-color: rgba(46,229,157,.45)}
+    .btn.primary:hover{border-color: rgba(46,229,157,.75)}
+    .btn.danger{border-color: rgba(255,77,77,.45)}
+    .btn.danger:hover{border-color: rgba(255,77,77,.75)}
+    .muted{color:var(--muted); font-family:var(--mono); font-size:12px; line-height:1.45}
+    .links{display:flex; flex-wrap:wrap; gap:8px}
+    a.lk{
+      text-decoration:none; color:var(--ink);
+      font-family:var(--mono); font-size:12px;
+      padding:9px 10px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(11,15,20,.45);
+      display:inline-flex; align-items:center; gap:8px;
+    }
+    a.lk:hover{border-color: rgba(89,183,255,.55)}
+    .dot{width:10px; height:10px; border-radius:999px; background:var(--blue); box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+    .toast{
+      position:fixed; right:14px; bottom:14px;
+      padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(15,23,34,.84);
+      font-family:var(--mono); font-size:12px;
+      opacity:0; transform: translateY(8px);
+      transition: all .18s ease;
+      pointer-events:none;
+    }
+    .toast.show{opacity:1; transform: translateY(0)}
+    .hide{display:none !important;}
+  </style>
+</head>
+<body>
+<header>
+  <div class="brand">
+    <div class="logo">DB</div>
+    <div>
+      <div class="t1">Ajay · Lead Processor</div>
+      <div class="t2">Deliver call-ready leads in Bill’s format</div>
+    </div>
+  </div>
+  <div class="row">
+    <button class="btn" id="btnLock">Lock</button>
+    <button class="btn danger" id="btnClear">Clear Local</button>
+  </div>
+</header>
+
+<div class="wrap">
+
+  <!-- LOGIN CARD -->
+  <section class="card" id="loginCard">
+    <div class="hdr">
+      <div>
+        <div class="t1" style="font-size:13px;">Authorized Access</div>
+        <div class="t2">Friction lock (not real security)</div>
+      </div>
+      <span class="pill blue">Login</span>
+    </div>
+    <div class="body grid">
+      <div>
+        <div class="muted">
+          <b>Rules:</b> No calling. No negotiating. Follow workflows only.<br><br>
+          If unclear → mark “Needs Bill Review”.
+        </div>
+        <div style="height:12px;"></div>
+        <div class="row">
+          <input id="user" placeholder="username (ajay)" autocomplete="username">
+          <input id="pin" placeholder="pin" type="password" autocomplete="current-password">
+        </div>
+        <div style="height:10px;"></div>
+        <div class="row">
+          <button class="btn primary" id="btnLogin">Enter</button>
+          <button class="btn" id="btnHint">Hint</button>
+        </div>
+        <div style="height:10px;"></div>
+        <div class="muted" id="hintBox" style="display:none;">
+          Tip: You can use a rotating daily PIN (Bill changes it) or a fixed PIN.
+        </div>
+      </div>
+
+      <div>
+        <div class="muted"><b>Quick Links</b></div>
+        <div style="height:10px;"></div>
+        <div class="links">
+          <!-- PUT YOUR REAL LINKS HERE -->
+          <a class="lk" href="https://www.truepeoplesearch.com" target="_blank" rel="noopener"><span class="dot"></span>TruePeopleSearch</a>
+          <a class="lk" href="#" target="_blank" rel="noopener"><span class="dot" style="background:#f7c948"></span>Raw DB Sheet</a>
+          <a class="lk" href="#" target="_blank" rel="noopener"><span class="dot" style="background:#2ee59d"></span>KB – Workflows</a>
+          <a class="lk" href="#" target="_blank" rel="noopener"><span class="dot" style="background:#ff9f43"></span>KB – Tools</a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PORTAL IFRAME -->
+  <section class="card hide" id="portalCard">
+    <div class="hdr">
+      <div>
+        <div class="t1" style="font-size:13px;">Ajay Portal</div>
+        <div class="t2">Focused station · paste → build output → mark status</div>
+      </div>
+      <span class="pill green" id="statusPill">Unlocked</span>
+    </div>
+    <div class="body">
+      <!-- Swap this src to your actual portal file once you add it -->
+      <iframe id="portalFrame"
+        src="./ajay_portal_inner.html"
+        style="width:100%; height:78vh; border:1px solid rgba(255,255,255,.10); border-radius:12px; background: rgba(11,15,20,.35);"
+        loading="lazy"></iframe>
+      <div class="muted" style="margin-top:10px;">
+        If the iframe shows 404, create <b>ajay_portal_inner.html</b> in the same folder (training/lead_processor/).
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="toast" id="toast">Saved</div>
+
+<script>
+  // ⚠️ This is NOT secure on a public GitHub Pages site. It's a friction lock only.
+  const DEFAULT_USER = "ajay";
+
+  // ---- Choose ONE PIN mode ----
+  const MODE = "fixed"; // "fixed" or "daily"
+
+  // Fixed PIN (simple)
+  const FIXED_PIN = "4826"; // <-- CHANGE THIS
+
+  // Daily PIN (changes every day; both Bill & Ajay must know it)
+  // Example: DB + day-of-month + 2-digit year, like DB-28-26 => "2826"
+  function dailyPin(){
+    const d = new Date();
+    const day = String(d.getDate()).padStart(2,'0');
+    const yr  = String(d.getFullYear()).slice(-2);
+    return day + yr; // e.g. "2826"
+  }
+  function expectedPin(){
+    return MODE === "daily" ? dailyPin() : FIXED_PIN;
+  }
+
+  const KEY = "db_ajay_login_ok";
+
+  const loginCard = document.getElementById('loginCard');
+  const portalCard = document.getElementById('portalCard');
+  const toast = document.getElementById('toast');
+
+  function showToast(msg){
+    toast.textContent = msg;
+    toast.classList.add('show');
+    clearTimeout(window.__t);
+    window.__t = setTimeout(()=>toast.classList.remove('show'), 1300);
+  }
+
+  function lock(){
+    localStorage.removeItem(KEY);
+    loginCard.classList.remove('hide');
+    portalCard.classList.add('hide');
+    showToast("Locked");
+  }
+
+  function unlock(){
+    loginCard.classList.add('hide');
+    portalCard.classList.remove('hide');
+    showToast("Unlocked");
+  }
+
+  document.getElementById('btnLogin').addEventListener('click', ()=>{
+    const u = (document.getElementById('user').value || '').trim().toLowerCase();
+    const p = (document.getElementById('pin').value || '').trim();
+    if(u === DEFAULT_USER && p === expectedPin()){
+      localStorage.setItem(KEY, "yes");
+      unlock();
+    }else{
+      showToast("Nope");
+    }
+  });
+
+  document.getElementById('btnHint').addEventListener('click', ()=>{
+    const box = document.getElementById('hintBox');
+    box.style.display = (box.style.display === "none") ? "block" : "none";
+  });
+
+  document.getElementById('btnLock').addEventListener('click', lock);
+
+  document.getElementById('btnClear').addEventListener('click', ()=>{
+    if(!confirm("Clear local storage for this portal?")) return;
+    localStorage.clear();
+    lock();
+  });
+
+  // Auto-unlock if already logged in
+  if(localStorage.getItem(KEY) === "yes"){
+    unlock();
+  }
+</script>
+</body>
+</html>
