@@ -3,281 +3,796 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DealBankers — Ajay Lead Processor</title>
+  <title>Deal Bankers // Internal Ops Console v1.4 (Lead Processor)</title>
   <style>
     :root{
-      --bg:#0b0f14; --panel:#0f1722; --ink:#eaf1ff; --muted:#9fb3d1;
-      --line:#203046; --blue:#59b7ff; --green:#2ee59d; --red:#ff4d4d;
-      --shadow:0 14px 40px rgba(0,0,0,.48); --r:16px;
+      --bg:#070a0f;
+      --panel:#0d121b;
+      --panel2:#0b0f16;
+      --line:#1c2a3d;
+      --ink:#e9f2ff;
+      --muted:#9bb2d3;
+      --cyan:#59d3ff;
+      --green:#2ee59d;
+      --yellow:#ffd166;
+      --red:#ff4d4d;
+      --shadow:0 14px 40px rgba(0,0,0,.55);
+      --r:16px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
     *{box-sizing:border-box}
     body{
-      margin:0; min-height:100vh; color:var(--ink); font-family:var(--sans);
+      margin:0;
+      min-height:100vh;
+      color:var(--ink);
+      font-family:var(--sans);
       background:
-        radial-gradient(900px 520px at 20% 12%, rgba(89,183,255,.17), transparent 55%),
-        radial-gradient(780px 420px at 82% 20%, rgba(46,229,157,.12), transparent 55%),
-        var(--bg);
+        radial-gradient(900px 520px at 18% 14%, rgba(89,211,255,.16), transparent 55%),
+        radial-gradient(780px 420px at 82% 20%, rgba(46,229,157,.10), transparent 55%),
+        linear-gradient(180deg, #05070c, #070a0f);
     }
     header{
-      padding:14px 16px; display:flex; justify-content:space-between; align-items:center;
+      position:sticky; top:0; z-index:5;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px;
       border-bottom:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(15,23,34,.88), rgba(15,23,34,.72));
+      background: linear-gradient(180deg, rgba(13,18,27,.92), rgba(13,18,27,.74));
       backdrop-filter: blur(10px);
-      position:sticky; top:0;
     }
     .brand{display:flex; gap:12px; align-items:center; user-select:none}
     .logo{
-      width:38px;height:38px;border-radius:12px;
-      background: linear-gradient(135deg, rgba(89,183,255,.28), rgba(46,229,157,.22));
+      width:40px;height:40px;border-radius:12px;
+      background: linear-gradient(135deg, rgba(89,211,255,.25), rgba(46,229,157,.18));
       border:1px solid rgba(255,255,255,.10);
       box-shadow:0 10px 26px rgba(0,0,0,.35);
-      display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-weight:900;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--mono); font-weight:900;
+      letter-spacing:.08em;
     }
-    .t1{font-weight:900; letter-spacing:.08em; text-transform:uppercase; font-size:12px}
+    .t1{font-weight:900; letter-spacing:.12em; text-transform:uppercase; font-size:13px}
     .t2{font-family:var(--mono); color:var(--muted); font-size:12px; margin-top:2px}
-    .wrap{padding:16px; max-width:1150px; margin:0 auto}
+    .hdrRight{display:flex; gap:10px; align-items:center}
+    .pill{
+      font-family:var(--mono);
+      font-size:11px;
+      padding:6px 10px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background: rgba(7,10,15,.45);
+      color: var(--muted);
+      white-space:nowrap;
+    }
+    .pill.cyan{border-color: rgba(89,211,255,.35); color:#dff6ff;}
+    .pill.green{border-color: rgba(46,229,157,.35); color:#dcfff0;}
+    .pill.yellow{border-color: rgba(255,209,102,.35); color:#fff3d6;}
+    .pill.red{border-color: rgba(255,77,77,.35); color:#ffe3e3;}
+
+    .wrap{max-width:1400px; margin:0 auto; padding:16px;}
+    .layout{
+      display:grid;
+      grid-template-columns: 290px 1fr 460px;
+      gap:12px;
+      align-items:start;
+    }
+    @media (max-width: 1200px){
+      .layout{grid-template-columns: 290px 1fr;}
+      .right{grid-column: 1 / -1;}
+    }
+    @media (max-width: 760px){
+      .layout{grid-template-columns: 1fr;}
+      .left{grid-column: 1 / -1;}
+      .mid{grid-column: 1 / -1;}
+      .right{grid-column: 1 / -1;}
+    }
+
     .card{
       border-radius:var(--r);
       border:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(15,23,34,.90), rgba(15,23,34,.70));
+      background: linear-gradient(180deg, rgba(13,18,27,.92), rgba(13,18,27,.70));
       box-shadow: var(--shadow);
       overflow:hidden;
     }
-    .card .hdr{
-      padding:14px 14px 10px;
+    .card .chdr{
+      padding:12px 12px 10px;
       border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex; justify-content:space-between; gap:10px; align-items:flex-start;
+      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
     }
-    .pill{
-      font-family:var(--mono); font-size:11px; padding:5px 9px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12); background: rgba(11,15,20,.45); color:var(--muted);
-      white-space:nowrap;
-    }
-    .pill.green{border-color: rgba(46,229,157,.35); color:#dffbf0;}
-    .pill.blue{border-color: rgba(89,183,255,.35); color:#e3f3ff;}
-    .body{padding:14px}
-    .grid{display:grid; grid-template-columns: 340px 1fr; gap:12px}
-    @media (max-width: 900px){ .grid{grid-template-columns:1fr;} }
-    input, textarea{
-      width:100%;
-      border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(11,15,20,.55);
-      color:var(--ink);
-      padding:11px 12px;
-      outline:none;
-      font-family:var(--mono);
-      font-size:12px;
-    }
-    textarea{min-height:120px; resize:vertical; line-height:1.45}
-    input:focus, textarea:focus{border-color: rgba(89,183,255,.65)}
-    .row{display:flex; gap:10px}
+    .card .cbody{padding:12px;}
+    .title{font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px;}
+    .sub{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45;}
     .btn{
       font-family:var(--mono);
       font-size:12px;
       padding:10px 12px;
       border-radius:12px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(11,15,20,.55);
+      background: rgba(7,10,15,.40);
       color:var(--ink);
       cursor:pointer;
+      user-select:none;
     }
-    .btn:hover{border-color: rgba(89,183,255,.55)}
+    .btn:hover{border-color: rgba(89,211,255,.55)}
     .btn.primary{border-color: rgba(46,229,157,.45)}
     .btn.primary:hover{border-color: rgba(46,229,157,.75)}
     .btn.danger{border-color: rgba(255,77,77,.45)}
     .btn.danger:hover{border-color: rgba(255,77,77,.75)}
-    .muted{color:var(--muted); font-family:var(--mono); font-size:12px; line-height:1.45}
-    .links{display:flex; flex-wrap:wrap; gap:8px}
-    a.lk{
-      text-decoration:none; color:var(--ink);
-      font-family:var(--mono); font-size:12px;
-      padding:9px 10px; border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(11,15,20,.45);
-      display:inline-flex; align-items:center; gap:8px;
+    .btn.small{padding:7px 10px; font-size:11px; border-radius:10px;}
+    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
+    .col{display:flex; flex-direction:column; gap:8px}
+
+    .navBtn{
+      width:100%;
+      display:flex; align-items:center; justify-content:space-between;
+      padding:12px 12px;
+      border-radius:14px;
+      text-decoration:none;
+      border:1px solid rgba(89,211,255,.25);
+      background: linear-gradient(180deg, rgba(7,10,15,.40), rgba(7,10,15,.15));
+      color:var(--ink);
+      font-family:var(--mono);
+      letter-spacing:.02em;
     }
-    a.lk:hover{border-color: rgba(89,183,255,.55)}
-    .dot{width:10px; height:10px; border-radius:999px; background:var(--blue); box-shadow:0 0 0 3px rgba(255,255,255,.05)}
+    .navBtn:hover{border-color: rgba(89,211,255,.65)}
+    .navBtn span{opacity:.92}
+    .navBtn em{font-style:normal; color:var(--muted); font-size:11px}
+    .navList{display:flex; flex-direction:column; gap:10px}
+
+    iframe{
+      width:100%;
+      height:75vh;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:14px;
+      background: rgba(7,10,15,.35);
+    }
+
+    label{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      display:block;
+      margin-bottom:6px;
+    }
+    input, select, textarea{
+      width:100%;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(7,10,15,.45);
+      color:var(--ink);
+      padding:10px 11px;
+      outline:none;
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    textarea{min-height:88px; resize:vertical; line-height:1.45;}
+    input:focus, textarea:focus, select:focus{border-color: rgba(89,211,255,.65)}
+
+    .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
+    .grid3{display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;}
+    .kpi{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(7,10,15,.35);
+      padding:10px;
+    }
+    .kpi .n{font-family:var(--mono); font-size:20px; font-weight:900; letter-spacing:.02em}
+    .kpi .l{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:4px}
+    .hr{height:1px; background: rgba(255,255,255,.08); margin:12px 0;}
+    .mono{font-family:var(--mono); font-size:12px; color:var(--muted); line-height:1.45}
+    .sticky{position:sticky; top:78px;}
+
     .toast{
       position:fixed; right:14px; bottom:14px;
       padding:10px 12px; border-radius:12px;
       border:1px solid rgba(255,255,255,.10);
-      background: rgba(15,23,34,.84);
+      background: rgba(13,18,27,.88);
       font-family:var(--mono); font-size:12px;
       opacity:0; transform: translateY(8px);
       transition: all .18s ease;
       pointer-events:none;
+      max-width: 520px;
+      white-space: pre-line;
     }
     .toast.show{opacity:1; transform: translateY(0)}
-    .hide{display:none !important;}
+    .mini{font-size:11px;}
   </style>
 </head>
+
 <body>
 <header>
   <div class="brand">
     <div class="logo">DB</div>
     <div>
-      <div class="t1">Ajay · Lead Processor</div>
-      <div class="t2">Deliver call-ready leads in Bill’s format</div>
+      <div class="t1">Deal Bankers // Internal Ops Console</div>
+      <div class="t2">Lead Processor Station · flow mode</div>
     </div>
   </div>
-  <div class="row">
-    <button class="btn" id="btnLock">Lock</button>
-    <button class="btn danger" id="btnClear">Clear Local</button>
+  <div class="hdrRight">
+    <span class="pill cyan" id="clockPill">--:--</span>
+    <span class="pill green" id="kpiPill">KPI: 0 traced · 0 numbers</span>
+    <button class="btn small" id="btnResetKpis">Reset KPIs</button>
   </div>
 </header>
 
 <div class="wrap">
+  <div class="layout">
 
-  <!-- LOGIN CARD -->
-  <section class="card" id="loginCard">
-    <div class="hdr">
-      <div>
-        <div class="t1" style="font-size:13px;">Authorized Access</div>
-        <div class="t2">Friction lock (not real security)</div>
-      </div>
-      <span class="pill blue">Login</span>
-    </div>
-    <div class="body grid">
-      <div>
-        <div class="muted">
-          <b>Rules:</b> No calling. No negotiating. Follow workflows only.<br><br>
-          If unclear → mark “Needs Bill Review”.
+    <!-- LEFT NAV (your existing buttons/links go here) -->
+    <aside class="card left">
+      <div class="chdr">
+        <div>
+          <div class="title">TOOLS</div>
+          <div class="sub">Launcher (Ajay stays in lane)</div>
         </div>
-        <div style="height:12px;"></div>
+        <span class="pill cyan">v1.4</span>
+      </div>
+      <div class="cbody">
+        <div class="navList" id="leftNav">
+          <!-- Replace hrefs with your real internal URLs -->
+          <a class="navBtn" href="#" data-url="https://bexar.tx.publicsearch.us/" target="_blank" rel="noopener">
+            <span>🏛️ County Clerk</span><em>deeds / docs</em>
+          </a>
+          <a class="navBtn" href="#" data-url="https://bexar.acttax.com/act_webdev/bexar/index.jsp" target="_blank" rel="noopener">
+            <span>💰 Tax Assessor</span><em>delinquent</em>
+          </a>
+          <a class="navBtn" href="#" data-url="https://www.bcadtax.org/" target="_blank" rel="noopener">
+            <span>🏠 BCAD</span><em>owner / mailing</em>
+          </a>
+          <a class="navBtn" href="#" data-url="https://www.truepeoplesearch.com" target="_blank" rel="noopener">
+            <span>🔎 TruePeopleSearch</span><em>phones</em>
+          </a>
+          <a class="navBtn" href="#" data-url="https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=" target="_blank" rel="noopener">
+            <span>📄 ACTTax Detail</span><em>paste CAN</em>
+          </a>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="mono">
+          <b>Rule:</b> Ajay produces call-ready leads. No negotiation. No calling.<br>
+          If unclear → set status <b>Needs Bill Review</b>.
+        </div>
+      </div>
+    </aside>
+
+    <!-- MIDDLE: embedded browser / iframe workspace -->
+    <main class="card mid">
+      <div class="chdr">
+        <div>
+          <div class="title">WORKSPACE</div>
+          <div class="sub">Open tools inside the console (one screen)</div>
+        </div>
         <div class="row">
-          <input id="user" placeholder="username (ajay)" autocomplete="username">
-          <input id="pin" placeholder="pin" type="password" autocomplete="current-password">
+          <button class="btn small" id="btnTps">TPS</button>
+          <button class="btn small" id="btnBc">BCAD</button>
+          <button class="btn small" id="btnTax">ACTTax</button>
+          <button class="btn small" id="btnClearFrame">Clear</button>
         </div>
+      </div>
+      <div class="cbody">
+        <iframe id="workFrame" src="https://www.truepeoplesearch.com" title="workspace"></iframe>
+      </div>
+    </main>
+
+    <!-- RIGHT: FLOW CONSOLE -->
+    <aside class="card right sticky">
+      <div class="chdr">
+        <div>
+          <div class="title">WORKFLOW CONSOLE</div>
+          <div class="sub">Lead intake → skip trace → export → log result</div>
+        </div>
+        <span class="pill yellow" id="draftPill">Draft: none</span>
+      </div>
+
+      <div class="cbody">
+
+        <!-- KPIs -->
+        <div class="grid3">
+          <div class="kpi">
+            <div class="n" id="kpiTraced">0</div>
+            <div class="l">Leads Skip Traced</div>
+          </div>
+          <div class="kpi">
+            <div class="n" id="kpiNums">0</div>
+            <div class="l">Phone Numbers</div>
+          </div>
+          <div class="kpi">
+            <div class="n" id="kpiReviewed">0</div>
+            <div class="l">Needs Bill Review</div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Lead Intake -->
+        <div class="row" style="justify-content:space-between;">
+          <div class="title">LEAD INTAKE</div>
+          <div class="row">
+            <button class="btn small" id="btnNewLead">New Lead</button>
+            <button class="btn small" id="btnSaveDraft">Save Draft</button>
+          </div>
+        </div>
+
         <div style="height:10px;"></div>
+
+        <div class="col">
+          <div>
+            <label>Property Address</label>
+            <input id="addr" placeholder="214 W Mandalay Dr, San Antonio, TX">
+          </div>
+
+          <div class="grid2">
+            <div>
+              <label>Owner</label>
+              <input id="owner" placeholder="FRANK ANAYA JR">
+            </div>
+            <div>
+              <label>Mailing</label>
+              <input id="mailing" placeholder="455 Clower, San Antonio, TX 78212">
+            </div>
+          </div>
+
+          <div class="grid3">
+            <div>
+              <label>Source</label>
+              <select id="source">
+                <option>City Liens</option>
+                <option>Foreclosure / Notice</option>
+                <option>Probate / Estate</option>
+                <option>Code Enforcement</option>
+                <option>Golden Nug</option>
+                <option>Wholesale Group Deal</option>
+                <option>Other</option>
+              </select>
+            </div>
+            <div>
+              <label>Priority</label>
+              <select id="priority">
+                <option>A (call today)</option>
+                <option selected>B (call this week)</option>
+                <option>C (low)</option>
+              </select>
+            </div>
+            <div>
+              <label>Absentee?</label>
+              <select id="absentee">
+                <option>Unknown</option>
+                <option>Yes</option>
+                <option>No</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="grid2">
+            <div>
+              <label>Taxes / Red Flag</label>
+              <input id="taxes" placeholder="e.g. ~$19,681 delinquent / or $0">
+            </div>
+            <div>
+              <label>Deed / Clue</label>
+              <input id="deed" placeholder="Interfamily transfer 7/15/2019 / Deed of Distribution">
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Skip Trace Output -->
+        <div class="row" style="justify-content:space-between;">
+          <div class="title">SKIP TRACE OUTPUT</div>
+          <span class="pill cyan" id="confPill">Confidence: --</span>
+        </div>
+
+        <div style="height:10px;"></div>
+
+        <div class="grid2">
+          <div>
+            <label>Phones (one per line)</label>
+            <textarea id="phones" placeholder="(210) 827-8942&#10;(210) 555-0000"></textarea>
+          </div>
+          <div>
+            <label>Verification Notes</label>
+            <textarea id="vnotes" placeholder="Relatives checked / name match / age / wireless / VM / disconnects"></textarea>
+          </div>
+        </div>
+
+        <div class="grid3" style="margin-top:10px;">
+          <div>
+            <label>Confidence</label>
+            <select id="confidence">
+              <option value="">--</option>
+              <option value="✅ Confirmed">✅ Confirmed</option>
+              <option value="⚠️ Likely">⚠️ Likely</option>
+              <option value="❌ Bad Match">❌ Bad Match</option>
+            </select>
+          </div>
+          <div>
+            <label>Status</label>
+            <select id="status">
+              <option>New</option>
+              <option>Skip Traced</option>
+              <option>Needs Bill Review</option>
+              <option>Bad Match</option>
+              <option>Called</option>
+              <option>Texted</option>
+            </select>
+          </div>
+          <div>
+            <label>CAN / Link (optional)</label>
+            <input id="can" placeholder="012470550110 or paste link">
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Export -->
         <div class="row">
-          <button class="btn primary" id="btnLogin">Enter</button>
-          <button class="btn" id="btnHint">Hint</button>
+          <button class="btn primary" id="btnCopyBill">Copy Bill Format (TAB)</button>
+          <button class="btn" id="btnCopySummary">Copy Summary Note</button>
+          <button class="btn" id="btnLogResult">Log Result + Update KPI</button>
+        </div>
+
+        <div style="height:10px;"></div>
+
+        <div class="mono mini" id="previewBox">
+          <b>Preview:</b> fill fields to generate export.
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Activity Log -->
+        <div class="row" style="justify-content:space-between;">
+          <div class="title">ACTIVITY (last 50)</div>
+          <button class="btn small danger" id="btnClearLog">Clear Log</button>
         </div>
         <div style="height:10px;"></div>
-        <div class="muted" id="hintBox" style="display:none;">
-          Tip: You can use a rotating daily PIN (Bill changes it) or a fixed PIN.
-        </div>
-      </div>
+        <textarea id="logBox" readonly style="min-height:140px;"></textarea>
 
-      <div>
-        <div class="muted"><b>Quick Links</b></div>
-        <div style="height:10px;"></div>
-        <div class="links">
-          <!-- PUT YOUR REAL LINKS HERE -->
-          <a class="lk" href="https://www.truepeoplesearch.com" target="_blank" rel="noopener"><span class="dot"></span>TruePeopleSearch</a>
-          <a class="lk" href="#" target="_blank" rel="noopener"><span class="dot" style="background:#f7c948"></span>Raw DB Sheet</a>
-          <a class="lk" href="#" target="_blank" rel="noopener"><span class="dot" style="background:#2ee59d"></span>KB – Workflows</a>
-          <a class="lk" href="#" target="_blank" rel="noopener"><span class="dot" style="background:#ff9f43"></span>KB – Tools</a>
-        </div>
       </div>
-    </div>
-  </section>
+    </aside>
 
-  <!-- PORTAL IFRAME -->
-  <section class="card hide" id="portalCard">
-    <div class="hdr">
-      <div>
-        <div class="t1" style="font-size:13px;">Ajay Portal</div>
-        <div class="t2">Focused station · paste → build output → mark status</div>
-      </div>
-      <span class="pill green" id="statusPill">Unlocked</span>
-    </div>
-    <div class="body">
-      <!-- Swap this src to your actual portal file once you add it -->
-      <iframe id="portalFrame"
-        src="./ajay_portal_inner.html"
-        style="width:100%; height:78vh; border:1px solid rgba(255,255,255,.10); border-radius:12px; background: rgba(11,15,20,.35);"
-        loading="lazy"></iframe>
-      <div class="muted" style="margin-top:10px;">
-        If the iframe shows 404, create <b>ajay_portal_inner.html</b> in the same folder (training/lead_processor/).
-      </div>
-    </div>
-  </section>
-
+  </div>
 </div>
 
 <div class="toast" id="toast">Saved</div>
 
 <script>
-  // ⚠️ This is NOT secure on a public GitHub Pages site. It's a friction lock only.
-  const DEFAULT_USER = "ajay";
-
-  // ---- Choose ONE PIN mode ----
-  const MODE = "fixed"; // "fixed" or "daily"
-
-  // Fixed PIN (simple)
-  const FIXED_PIN = "4826"; // <-- CHANGE THIS
-
-  // Daily PIN (changes every day; both Bill & Ajay must know it)
-  // Example: DB + day-of-month + 2-digit year, like DB-28-26 => "2826"
-  function dailyPin(){
-    const d = new Date();
-    const day = String(d.getDate()).padStart(2,'0');
-    const yr  = String(d.getFullYear()).slice(-2);
-    return day + yr; // e.g. "2826"
-  }
-  function expectedPin(){
-    return MODE === "daily" ? dailyPin() : FIXED_PIN;
-  }
-
-  const KEY = "db_ajay_login_ok";
-
-  const loginCard = document.getElementById('loginCard');
-  const portalCard = document.getElementById('portalCard');
+  // -------------------------
+  // STORAGE KEYS
+  // -------------------------
+  const KPI_KEY = "db_lp_kpis_v1";
+  const LOG_KEY = "db_lp_log_v1";
+  const DRAFT_KEY = "db_lp_draft_v1"; // session draft
   const toast = document.getElementById('toast');
 
+  // -------------------------
+  // HELPERS
+  // -------------------------
   function showToast(msg){
     toast.textContent = msg;
     toast.classList.add('show');
     clearTimeout(window.__t);
-    window.__t = setTimeout(()=>toast.classList.remove('show'), 1300);
+    window.__t = setTimeout(()=>toast.classList.remove('show'), 1400);
   }
 
-  function lock(){
-    localStorage.removeItem(KEY);
-    loginCard.classList.remove('hide');
-    portalCard.classList.add('hide');
-    showToast("Locked");
+  function nowStamp(){
+    const d = new Date();
+    const mm = String(d.getMonth()+1).padStart(2,'0');
+    const dd = String(d.getDate()).padStart(2,'0');
+    const yy = String(d.getFullYear()).slice(-2);
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    return `${mm}/${dd}/${yy} ${hh}:${mi}`;
   }
 
-  function unlock(){
-    loginCard.classList.add('hide');
-    portalCard.classList.remove('hide');
-    showToast("Unlocked");
+  function cleanPhoneLines(s){
+    return (s || "")
+      .split(/\r?\n/)
+      .map(x=>x.trim())
+      .filter(Boolean);
   }
 
-  document.getElementById('btnLogin').addEventListener('click', ()=>{
-    const u = (document.getElementById('user').value || '').trim().toLowerCase();
-    const p = (document.getElementById('pin').value || '').trim();
-    if(u === DEFAULT_USER && p === expectedPin()){
-      localStorage.setItem(KEY, "yes");
-      unlock();
-    }else{
-      showToast("Nope");
+  function setClock(){
+    const d = new Date();
+    const hh = String(d.getHours()).padStart(2,'0');
+    const mi = String(d.getMinutes()).padStart(2,'0');
+    document.getElementById('clockPill').textContent = `${hh}:${mi}`;
+  }
+  setClock();
+  setInterval(setClock, 15000);
+
+  // -------------------------
+  // WORKSPACE IFRAME CONTROL
+  // -------------------------
+  const frame = document.getElementById('workFrame');
+  const TOOL_URLS = {
+    tps: "https://www.truepeoplesearch.com",
+    bcad: "https://www.bcadtax.org/",
+    acttax: "https://bexar.acttax.com/act_webdev/bexar/index.jsp"
+  };
+
+  document.getElementById('btnTps').onclick = ()=> frame.src = TOOL_URLS.tps;
+  document.getElementById('btnBc').onclick = ()=> frame.src = TOOL_URLS.bcad;
+  document.getElementById('btnTax').onclick = ()=> frame.src = TOOL_URLS.acttax;
+  document.getElementById('btnClearFrame').onclick = ()=> frame.src = "about:blank";
+
+  // LEFT NAV opens inside iframe (not new tab) for flow
+  document.querySelectorAll('#leftNav a.navBtn').forEach(a=>{
+    a.addEventListener('click', (e)=>{
+      e.preventDefault();
+      const url = a.getAttribute('data-url');
+      if(url && url !== "#"){
+        frame.src = url;
+        showToast("Opened in workspace");
+      }
+    });
+  });
+
+  // -------------------------
+  // FORM FIELDS
+  // -------------------------
+  const F = {
+    addr: el('addr'), owner: el('owner'), mailing: el('mailing'),
+    source: el('source'), priority: el('priority'), absentee: el('absentee'),
+    taxes: el('taxes'), deed: el('deed'), phones: el('phones'), vnotes: el('vnotes'),
+    confidence: el('confidence'), status: el('status'), can: el('can')
+  };
+  function el(id){ return document.getElementById(id); }
+
+  // Confidence pill
+  function syncConfidence(){
+    const v = F.confidence.value || "--";
+    document.getElementById('confPill').textContent = `Confidence: ${v}`;
+  }
+  F.confidence.addEventListener('change', syncConfidence);
+
+  // Preview
+  function buildBillExport(){
+    // Bill wants: owner phone address important notes (plus absentee, deed, taxes)
+    // We'll output one tab-delimited line:
+    // Owner \t Phone(s) \t Property \t Notes
+    const owner = (F.owner.value || "").trim();
+    const addr = (F.addr.value || "").trim();
+    const phones = cleanPhoneLines(F.phones.value).join(", ");
+    const notesBits = [];
+
+    const absentee = F.absentee.value;
+    const deed = (F.deed.value || "").trim();
+    const taxes = (F.taxes.value || "").trim();
+    const src = F.source.value;
+    const pri = F.priority.value;
+    const mailing = (F.mailing.value || "").trim();
+    const conf = (F.confidence.value || "").trim();
+    const vnotes = (F.vnotes.value || "").trim();
+    const can = (F.can.value || "").trim();
+
+    if(absentee && absentee !== "Unknown") notesBits.push(`Absentee: ${absentee}`);
+    if(deed) notesBits.push(deed);
+    if(taxes) notesBits.push(taxes);
+    if(src) notesBits.push(`Source: ${src}`);
+    if(pri) notesBits.push(`Priority: ${pri}`);
+    if(mailing) notesBits.push(`Mailing: ${mailing}`);
+    if(conf) notesBits.push(conf);
+    if(can) notesBits.push(`CAN/Link: ${can}`);
+    if(vnotes) notesBits.push(`Verify: ${vnotes}`);
+
+    const notes = notesBits.join(" | ");
+    return `${owner}\t${phones}\t${addr}\t${notes}`.trim();
+  }
+
+  function buildSummaryNote(){
+    const owner = (F.owner.value || "").trim();
+    const addr = (F.addr.value || "").trim();
+    const phones = cleanPhoneLines(F.phones.value);
+    const absentee = F.absentee.value;
+    const deed = (F.deed.value || "").trim();
+    const taxes = (F.taxes.value || "").trim();
+    const src = F.source.value;
+    const conf = (F.confidence.value || "").trim();
+    const vnotes = (F.vnotes.value || "").trim();
+    const mailing = (F.mailing.value || "").trim();
+
+    const phoneLine = phones.length ? phones.join(" / ") : "(no phones yet)";
+    const bits = [];
+    if(absentee && absentee !== "Unknown") bits.push(`Absentee: ${absentee}`);
+    if(deed) bits.push(deed);
+    if(taxes) bits.push(taxes);
+    if(src) bits.push(src);
+    if(conf) bits.push(conf);
+
+    return `${owner}\n${phoneLine}\nProperty: ${addr}\n\nNotes: ${bits.join(". ")}${vnotes ? `. ${vnotes}` : ""}${mailing ? `\nMailing: ${mailing}` : ""}`.trim();
+  }
+
+  function updatePreview(){
+    const exp = buildBillExport();
+    document.getElementById('previewBox').innerHTML =
+      `<b>Preview (tab-delimited):</b><br><span class="mono">${escapeHtml(exp || "fill fields to generate export.")}</span>`;
+  }
+
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, m=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  Object.values(F).forEach(x=>{
+    x.addEventListener('input', updatePreview);
+    x.addEventListener('change', updatePreview);
+  });
+  updatePreview();
+
+  // -------------------------
+  // KPIs + LOG
+  // -------------------------
+  function loadKpis(){
+    try{
+      return JSON.parse(localStorage.getItem(KPI_KEY)) || { traced:0, numbers:0, review:0 };
+    }catch(e){
+      return { traced:0, numbers:0, review:0 };
+    }
+  }
+  function saveKpis(k){
+    localStorage.setItem(KPI_KEY, JSON.stringify(k));
+  }
+  function renderKpis(){
+    const k = loadKpis();
+    document.getElementById('kpiTraced').textContent = k.traced;
+    document.getElementById('kpiNums').textContent = k.numbers;
+    document.getElementById('kpiReviewed').textContent = k.review;
+    document.getElementById('kpiPill').textContent = `KPI: ${k.traced} traced · ${k.numbers} numbers`;
+  }
+  renderKpis();
+
+  function loadLog(){
+    try{
+      return JSON.parse(localStorage.getItem(LOG_KEY)) || [];
+    }catch(e){
+      return [];
+    }
+  }
+  function saveLog(items){
+    localStorage.setItem(LOG_KEY, JSON.stringify(items.slice(-50)));
+  }
+  function renderLog(){
+    const items = loadLog();
+    document.getElementById('logBox').value = items.slice(-50).join("\n");
+  }
+  renderLog();
+
+  // -------------------------
+  // DRAFT (session)
+  // -------------------------
+  function saveDraft(){
+    const d = {};
+    Object.keys(F).forEach(k=> d[k] = F[k].value);
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    document.getElementById('draftPill').textContent = `Draft: saved ${nowStamp()}`;
+    showToast("Draft saved");
+  }
+  function loadDraft(){
+    try{
+      const raw = sessionStorage.getItem(DRAFT_KEY);
+      if(!raw) return false;
+      const d = JSON.parse(raw);
+      Object.keys(F).forEach(k=> { if(d[k] !== undefined) F[k].value = d[k]; });
+      syncConfidence();
+      updatePreview();
+      document.getElementById('draftPill').textContent = `Draft: loaded ${nowStamp()}`;
+      return true;
+    }catch(e){
+      return false;
+    }
+  }
+  loadDraft();
+
+  // -------------------------
+  // BUTTON ACTIONS
+  // -------------------------
+  document.getElementById('btnSaveDraft').onclick = saveDraft;
+
+  document.getElementById('btnNewLead').onclick = ()=>{
+    if(!confirm("Clear this lead and start new?")) return;
+    Object.values(F).forEach(x=> x.value = "");
+    F.source.value = "City Liens";
+    F.priority.value = "B (call this week)";
+    F.absentee.value = "Unknown";
+    F.status.value = "New";
+    syncConfidence();
+    updatePreview();
+    sessionStorage.removeItem(DRAFT_KEY);
+    document.getElementById('draftPill').textContent = "Draft: none";
+    showToast("New lead ready");
+  };
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard");
+    }catch(e){
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast("Copied (fallback)");
+    }
+  }
+
+  document.getElementById('btnCopyBill').onclick = ()=>{
+    const exp = buildBillExport();
+    if(!exp.trim()){ showToast("Nothing to copy yet"); return; }
+    copyToClipboard(exp);
+  };
+
+  document.getElementById('btnCopySummary').onclick = ()=>{
+    const note = buildSummaryNote();
+    if(!note.trim()){ showToast("Nothing to copy yet"); return; }
+    copyToClipboard(note);
+  };
+
+  document.getElementById('btnLogResult').onclick = ()=>{
+    const addr = (F.addr.value||"").trim();
+    const owner = (F.owner.value||"").trim();
+    if(!addr || !owner){
+      showToast("Need at least Owner + Address");
+      return;
+    }
+
+    const phones = cleanPhoneLines(F.phones.value);
+    const conf = F.confidence.value || "--";
+    const status = F.status.value || "New";
+    const taxes = (F.taxes.value||"").trim();
+
+    // KPIs update
+    const k = loadKpis();
+
+    // count as "traced" if status suggests skip trace done
+    const isTraced = ["Skip Traced","Needs Bill Review","Bad Match","Called","Texted"].includes(status);
+    if(isTraced) k.traced += 1;
+
+    // count phone numbers added
+    k.numbers += phones.length;
+
+    // review count
+    if(status === "Needs Bill Review") k.review += 1;
+
+    saveKpis(k);
+    renderKpis();
+
+    // log
+    const items = loadLog();
+    items.push(`[${nowStamp()}] ${status} | ${conf} | ${owner} | ${addr} | phones:${phones.length}${taxes ? " | "+taxes : ""}`);
+    saveLog(items);
+    renderLog();
+
+    showToast("Logged + KPI updated");
+  };
+
+  document.getElementById('btnClearLog').onclick = ()=>{
+    if(!confirm("Clear activity log?")) return;
+    localStorage.removeItem(LOG_KEY);
+    renderLog();
+    showToast("Log cleared");
+  };
+
+  document.getElementById('btnResetKpis').onclick = ()=>{
+    if(!confirm("Reset KPIs to 0?")) return;
+    localStorage.setItem(KPI_KEY, JSON.stringify({traced:0,numbers:0,review:0}));
+    renderKpis();
+    showToast("KPIs reset");
+  };
+
+  // Autofill CAN link if user pastes digits only
+  F.can.addEventListener('blur', ()=>{
+    const v = (F.can.value||"").trim();
+    if(/^\d{6,}$/.test(v)){
+      F.can.value = "https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=" + v;
+      updatePreview();
     }
   });
 
-  document.getElementById('btnHint').addEventListener('click', ()=>{
-    const box = document.getElementById('hintBox');
-    box.style.display = (box.style.display === "none") ? "block" : "none";
-  });
-
-  document.getElementById('btnLock').addEventListener('click', lock);
-
-  document.getElementById('btnClear').addEventListener('click', ()=>{
-    if(!confirm("Clear local storage for this portal?")) return;
-    localStorage.clear();
-    lock();
-  });
-
-  // Auto-unlock if already logged in
-  if(localStorage.getItem(KEY) === "yes"){
-    unlock();
-  }
 </script>
 </body>
 </html>
