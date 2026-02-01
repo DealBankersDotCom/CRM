@@ -26,8 +26,15 @@
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
       --orbit: "Orbitron", system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+
       --hdrH: 68px;
       --floatHdrH: 58px;
+
+      /* workspace header height */
+      --wHdrH: 56px;
+
+      /* iframe crop (used for Google Sheets only) */
+      --frameCropTop: 0px;
     }
 
     *{box-sizing:border-box}
@@ -82,7 +89,14 @@
       margin-top:2px;
       line-height:1.1;
     }
-    .hdrRight{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;}
+    .hdrRight{
+      display:flex;
+      gap:10px;
+      align-items:center;
+      flex-wrap:nowrap;
+      justify-content:flex-end;
+      min-width: 0;
+    }
 
     .pill{
       font-family:var(--mono);
@@ -108,6 +122,7 @@
       cursor:pointer;
       user-select:none;
       transition: transform .08s ease, border-color .12s ease, box-shadow .12s ease;
+      white-space:nowrap;
     }
     .btn:hover{border-color: rgba(89,211,255,.55)}
     .btn:active{transform: translateY(1px)}
@@ -185,25 +200,54 @@
       position:relative;
       min-width: 0;
     }
+
     .wHdr{
-      padding:12px 12px 10px;
+      height: var(--wHdrH);
+      padding:10px 10px;
       border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      min-width:0;
+      background: linear-gradient(180deg, rgba(7,10,15,.34), rgba(7,10,15,.14));
     }
     .wTitle{
       font-family:var(--orbit);
       font-weight:900; letter-spacing:.12em;
       text-transform:uppercase;
       font-size:12px;
+      white-space:nowrap;
     }
-    .wHdrLeft{display:flex; flex-direction:column}
-    .wHdrRight{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
+    .wHdrLeft{display:flex; align-items:center; gap:10px; min-width:0;}
+    .wHdrRight{
+      display:flex;
+      gap:8px;
+      align-items:center;
+      flex-wrap:nowrap;
+      overflow-x:auto;     /* keeps buttons ALWAYS accessible */
+      overflow-y:hidden;
+      scrollbar-width: thin;
+      min-width: 0;
+      padding-bottom: 2px;
+    }
+    .wHdrRight::-webkit-scrollbar{height:6px;}
+    .wHdrRight::-webkit-scrollbar-thumb{background: rgba(255,255,255,.10); border-radius:999px;}
+
+    /* iframe wrapper = lets us “tuck” sheet header under the frame */
+    .frameWrap{
+      position:relative;
+      height: calc(100% - var(--wHdrH));
+      overflow:hidden;     /* critical: crops the iframe top */
+      background: rgba(7,10,15,.35);
+    }
 
     iframe{
       width:100%;
-      height: calc(100% - 56px);
+      height: calc(100% + var(--frameCropTop));
       border:0;
       background: rgba(7,10,15,.35);
+      transform: translateY(calc(-1 * var(--frameCropTop)));
     }
 
     /* Loader (inside workspace) */
@@ -249,7 +293,7 @@
     .floatLead{
       position:absolute;
       left:330px;
-      top:92px;
+      top:86px;
       width:420px;
       height:640px;
       border-radius:20px;
@@ -313,8 +357,9 @@
     .iconBtn:hover{border-color: rgba(89,211,255,.55)}
     .iconBtn:active{transform: translateY(1px)}
 
+    /* tighter, no weird padding */
     .floatBody{
-      padding:12px;
+      padding:10px;
       height: calc(100% - var(--floatHdrH));
       overflow:auto;
     }
@@ -324,7 +369,7 @@
       font-size:11px;
       color:var(--muted);
       display:block;
-      margin-bottom:6px;
+      margin-bottom:5px;
     }
     input, select, textarea{
       width:100%;
@@ -332,16 +377,16 @@
       border:1px solid rgba(255,255,255,.10);
       background: rgba(7,10,15,.45);
       color:var(--ink);
-      padding:10px 11px;
+      padding:9px 10px;
       outline:none;
       font-family:var(--mono);
       font-size:12px;
     }
-    textarea{min-height:88px; resize:vertical; line-height:1.45;}
+    textarea{min-height:78px; resize:vertical; line-height:1.45;}
     input:focus, textarea:focus, select:focus{border-color: rgba(89,211,255,.65)}
     .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
     .grid3{display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;}
-    .hr{height:1px; background: rgba(255,255,255,.08); margin:12px 0;}
+    .hr{height:1px; background: rgba(255,255,255,.08); margin:10px 0;}
     .title{
       font-family:var(--orbit);
       font-weight:900;
@@ -443,6 +488,8 @@
       <div class="wHdrLeft">
         <div class="wTitle">Workspace</div>
       </div>
+
+      <!-- stays visible; scrolls horizontally if needed -->
       <div class="wHdrRight">
         <button class="btn small" id="btnTps">TPS</button>
         <button class="btn small" id="btnBc">BCAD</button>
@@ -452,7 +499,11 @@
     </div>
 
     <div class="loader" id="loader">LOADING…</div>
-    <iframe id="workFrame" src="https://www.truepeoplesearch.com" title="workspace"></iframe>
+
+    <!-- wrapper enables cropping (esp. for Google Sheets) -->
+    <div class="frameWrap" id="frameWrap">
+      <iframe id="workFrame" src="https://www.truepeoplesearch.com" title="workspace"></iframe>
+    </div>
 
     <!-- FLOATING LEAD WINDOW -->
     <div class="floatLead" id="leadFloat">
@@ -494,9 +545,9 @@
           Paste leads (one per line). Format:
           <br><b>owner | property address | mailing</b>
         </div>
-        <div style="height:8px;"></div>
+        <div style="height:6px;"></div>
         <textarea id="queueBox" placeholder="OWNER | PROPERTY | MAILING&#10;OWNER | PROPERTY | MAILING"></textarea>
-        <div class="grid2" style="margin-top:10px;">
+        <div class="grid2" style="margin-top:8px;">
           <button class="btn primary" id="btnLoadQueue">Load Queue</button>
           <button class="btn danger" id="btnClearQueue">Clear Queue</button>
         </div>
@@ -505,7 +556,7 @@
 
         <!-- Lead Intake -->
         <div class="title">Lead Intake</div>
-        <div style="height:10px;"></div>
+        <div style="height:6px;"></div>
 
         <div>
           <label>Property Address</label>
@@ -568,7 +619,7 @@
         <div class="hr"></div>
 
         <div class="title">Skip Trace Output</div>
-        <div style="height:10px;"></div>
+        <div style="height:6px;"></div>
 
         <div class="grid2">
           <div>
@@ -581,7 +632,7 @@
           </div>
         </div>
 
-        <div class="grid3" style="margin-top:10px;">
+        <div class="grid3" style="margin-top:8px;">
           <div>
             <label>Confidence</label>
             <select id="confidence">
@@ -615,19 +666,19 @@
           <button class="btn" id="btnCopySummary">Copy Summary Note</button>
         </div>
 
-        <div class="grid2" style="margin-top:10px;">
+        <div class="grid2" style="margin-top:8px;">
           <button class="btn" id="btnSaveDraft">Save Draft</button>
           <button class="btn" id="btnLogResult">Log Result + KPI</button>
         </div>
 
-        <div style="height:10px;"></div>
+        <div style="height:8px;"></div>
         <div class="preview" id="previewBox">Preview: fill fields…</div>
 
         <div class="hr"></div>
 
         <div class="title">Activity</div>
-        <div style="height:8px;"></div>
-        <textarea id="logBox" readonly style="min-height:120px;"></textarea>
+        <div style="height:6px;"></div>
+        <textarea id="logBox" readonly style="min-height:110px;"></textarea>
       </div>
     </div>
   </section>
@@ -673,17 +724,26 @@
   setClock(); setInterval(setClock, 15000);
 
   // =========================================================
-  // Workspace
+  // Workspace + smart iframe cropping for Google Sheets
   // =========================================================
   const frame = el('workFrame');
+  const frameWrap = el('frameWrap');
+
   const TOOL_URLS = {
     tps: "https://www.truepeoplesearch.com",
     bcad: "https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110",
     acttax: "https://bexar.acttax.com/act_webdev/bexar/index.jsp"
   };
 
+  function setCropForUrl(url){
+    const isSheet = /docs\\.google\\.com\\/spreadsheets/i.test(url || "");
+    // tweak this number if you want more/less hidden toolbar
+    document.documentElement.style.setProperty("--frameCropTop", isSheet ? "92px" : "0px");
+  }
+
   function openInWorkspace(url, label){
     loader.classList.add('show');
+    setCropForUrl(url);
     frame.src = url;
     if(label) showToast(label);
   }
@@ -695,6 +755,7 @@
   el('btnTax').onclick = ()=> openInWorkspace(TOOL_URLS.acttax, "ACTTax opened");
   el('btnClearFrame').onclick = ()=>{
     loader.classList.remove('show');
+    document.documentElement.style.setProperty("--frameCropTop", "0px");
     frame.src = "about:blank";
     showToast("Workspace cleared");
   };
@@ -783,7 +844,6 @@
       expandedH: lastExpandedH ?? (minimized ? null : r.height)
     };
 
-    // If not minimized, update expandedH from current height
     if(!minimized){
       data.expandedH = r.height;
       lastExpandedH = r.height;
@@ -811,7 +871,6 @@
     }
   }
 
-  // init float state
   (function initFloat(){
     const d = loadFloat();
     applyFloatState(d);
@@ -819,7 +878,6 @@
 
   el('btnMin').onclick = ()=>{
     if(!minimized){
-      // capture expanded height BEFORE minimizing
       const r = leadFloat.getBoundingClientRect();
       lastExpandedH = r.height;
       minimized = true;
@@ -837,7 +895,6 @@
     bringToFront();
   };
 
-  // save on resize (user drags corner) — but don't overwrite while minimized
   const ro = new ResizeObserver(()=>{
     if(minimized) return;
     saveFloat();
@@ -1044,7 +1101,6 @@
     idx = Math.max(0, Math.min(queue.length-1, i));
     const L = queue[idx];
 
-    // Only set key intake fields; do not wipe skip-trace fields automatically.
     F.owner.value = L.owner || "";
     F.addr.value = L.addr || "";
     F.mailing.value = L.mailing || "";
