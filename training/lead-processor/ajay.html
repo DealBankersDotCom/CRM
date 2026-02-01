@@ -3,23 +3,24 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deal Bankers // Internal Ops Console v1.5 (Lead Processor)</title>
+  <title>Deal Bankers // Internal Ops Console (Lead Processor)</title>
+
   <style>
     :root{
       --bg:#070a0f;
-      --panel:#0d121b;
-      --panel2:#0b0f16;
+      --panel:#0b0f16;
+      --panel2:#0d121b;
       --line:#1c2a3d;
       --ink:#e9f2ff;
       --muted:#9bb2d3;
       --cyan:#59d3ff;
+      --cyan2:#2bbcff;
       --green:#2ee59d;
       --yellow:#ffd166;
       --red:#ff4d4d;
-      --shadow:0 14px 40px rgba(0,0,0,.55);
-      --shadow2:0 10px 24px rgba(0,0,0,.45);
-      --r:16px;
-      --r2:20px;
+      --shadow:0 18px 46px rgba(0,0,0,.60);
+      --shadow2:0 12px 28px rgba(0,0,0,.50);
+      --r:18px;
       --mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono","Courier New", monospace;
       --sans: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
     }
@@ -34,16 +35,18 @@
         radial-gradient(900px 520px at 18% 14%, rgba(89,211,255,.16), transparent 55%),
         radial-gradient(780px 420px at 82% 20%, rgba(46,229,157,.10), transparent 55%),
         linear-gradient(180deg, #05070c, #070a0f);
-      overflow-x:hidden;
+      overflow:hidden;
     }
 
-    /* Header */
+    /* =====================================================
+       TOP BAR
+    ====================================================== */
     header{
-      position:sticky; top:0; z-index:50;
+      position:fixed; top:0; left:0; right:0; z-index:60;
       display:flex; align-items:center; justify-content:space-between;
       padding:14px 18px;
       border-bottom:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(13,18,27,.92), rgba(13,18,27,.74));
+      background: linear-gradient(180deg, rgba(13,18,27,.92), rgba(13,18,27,.72));
       backdrop-filter: blur(10px);
     }
     .brand{display:flex; gap:12px; align-items:center; user-select:none}
@@ -58,7 +61,6 @@
     }
     .t1{font-weight:900; letter-spacing:.12em; text-transform:uppercase; font-size:13px}
     .t2{font-family:var(--mono); color:var(--muted); font-size:12px; margin-top:2px}
-
     .hdrRight{display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;}
     .pill{
       font-family:var(--mono);
@@ -72,10 +74,6 @@
     }
     .pill.cyan{border-color: rgba(89,211,255,.35); color:#dff6ff;}
     .pill.green{border-color: rgba(46,229,157,.35); color:#dcfff0;}
-    .pill.yellow{border-color: rgba(255,209,102,.35); color:#fff3d6;}
-    .pill.red{border-color: rgba(255,77,77,.35); color:#ffe3e3;}
-
-    /* Buttons */
     .btn{
       font-family:var(--mono);
       font-size:12px;
@@ -86,74 +84,203 @@
       color:var(--ink);
       cursor:pointer;
       user-select:none;
-      transition: transform .08s ease, border-color .12s ease, background .12s ease;
+      transition: transform .08s ease, border-color .12s ease, box-shadow .12s ease;
     }
     .btn:hover{border-color: rgba(89,211,255,.55)}
     .btn:active{transform: translateY(1px)}
+    .btn.small{padding:7px 10px; font-size:11px; border-radius:10px;}
     .btn.primary{border-color: rgba(46,229,157,.45)}
     .btn.primary:hover{border-color: rgba(46,229,157,.75)}
     .btn.danger{border-color: rgba(255,77,77,.45)}
     .btn.danger:hover{border-color: rgba(255,77,77,.75)}
-    .btn.small{padding:7px 10px; font-size:11px; border-radius:10px;}
-    .btn.ghost{background: rgba(7,10,15,.22)}
-    .btn.on{border-color: rgba(46,229,157,.75); box-shadow: 0 0 0 3px rgba(46,229,157,.12) inset;}
 
-    /* Layout */
-    .wrap{max-width:1500px; margin:0 auto; padding:16px;}
-    .layout{
+    /* =====================================================
+       APP LAYOUT
+       Sidebar (big buttons) + Workspace
+    ====================================================== */
+    .app{
+      position:absolute;
+      top:68px; /* header height */
+      left:0; right:0; bottom:0;
       display:grid;
-      grid-template-columns: 1fr 460px;
-      gap:12px;
-      align-items:start;
-    }
-    @media (max-width: 1080px){
-      .layout{grid-template-columns: 1fr;}
-      .right{grid-column: 1 / -1;}
+      grid-template-columns: 290px 1fr;
+      gap:14px;
+      padding:14px;
     }
 
-    /* Cards */
-    .card{
-      border-radius:var(--r2);
+    /* BIG BUTTON SIDEBAR (v1.3 vibe) */
+    .side{
+      border-radius:22px;
       border:1px solid rgba(255,255,255,.08);
-      background: linear-gradient(180deg, rgba(13,18,27,.92), rgba(13,18,27,.70));
+      background: linear-gradient(180deg, rgba(13,18,27,.90), rgba(13,18,27,.62));
+      box-shadow: var(--shadow);
+      padding:16px;
+      overflow:auto;
+    }
+    .sideTitle{
+      font-family:var(--mono);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:12px;
+      color:#dff6ff;
+      margin-bottom:12px;
+      display:flex; align-items:center; justify-content:space-between;
+    }
+    .sideSub{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      margin-bottom:14px;
+      line-height:1.45;
+    }
+    .bigBtn{
+      width:100%;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:18px 14px;
+      min-height:62px;
+      border-radius:18px;
+      border:1px solid rgba(89,211,255,.45);
+      background:
+        radial-gradient(280px 160px at 14% 20%, rgba(89,211,255,.16), transparent 58%),
+        linear-gradient(180deg, rgba(7,10,15,.55), rgba(7,10,15,.20));
+      color:var(--ink);
+      font-family:var(--mono);
+      font-size:12px;
+      letter-spacing:.02em;
+      cursor:pointer;
+      user-select:none;
+      box-shadow: 0 0 0 1px rgba(0,0,0,.35) inset;
+      transition: transform .08s ease, border-color .12s ease, box-shadow .12s ease;
+      margin-bottom:12px;
+    }
+    .bigBtn:hover{
+      border-color: rgba(89,211,255,.90);
+      box-shadow: 0 0 0 3px rgba(89,211,255,.16) inset, 0 16px 26px rgba(0,0,0,.25);
+    }
+    .bigBtn:active{transform: translateY(1px)}
+    .bigBtn .ico{font-size:15px}
+    .bigBtn .txt{font-weight:800; text-transform:uppercase}
+    .bigBtn .mini{
+      display:block;
+      font-size:11px;
+      color:var(--muted);
+      margin-top:6px;
+      text-transform:none;
+      letter-spacing:0;
+    }
+
+    /* Workspace card */
+    .workspace{
+      border-radius:22px;
+      border:1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(13,18,27,.90), rgba(13,18,27,.62));
       box-shadow: var(--shadow);
       overflow:hidden;
+      position:relative;
+      min-width: 0;
     }
-    .card .chdr{
+    .wHdr{
       padding:12px 12px 10px;
       border-bottom:1px solid rgba(255,255,255,.08);
-      display:flex; align-items:flex-start; justify-content:space-between; gap:10px;
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
     }
-    .card .cbody{padding:12px;}
-    .title{font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px;}
-    .sub{font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:3px; line-height:1.45;}
-    .row{display:flex; gap:10px; align-items:center; flex-wrap:wrap}
-    .col{display:flex; flex-direction:column; gap:8px}
-    .hr{height:1px; background: rgba(255,255,255,.08); margin:12px 0;}
-    .mono{font-family:var(--mono); font-size:12px; color:var(--muted); line-height:1.45;}
-    .mini{font-size:11px;}
-    .sticky{position:sticky; top:78px;}
-
-    /* Workspace */
+    .wTitle{
+      font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px;
+    }
+    .wSub{
+      font-family:var(--mono); font-size:12px; color:var(--muted); margin-top:4px;
+    }
+    .wHdrLeft{display:flex; flex-direction:column}
+    .wHdrRight{display:flex; gap:8px; align-items:center; flex-wrap:wrap}
     iframe{
       width:100%;
-      height:76vh;
-      border:1px solid rgba(255,255,255,.10);
-      border-radius:16px;
+      height: calc(100% - 58px);
+      border:0;
       background: rgba(7,10,15,.35);
     }
-    .workspaceTop{
-      display:flex;
-      gap:10px;
-      align-items:center;
-      justify-content:space-between;
-      flex-wrap:wrap;
+
+    /* Toast */
+    .toast{
+      position:fixed; right:14px; bottom:14px;
+      padding:10px 12px; border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(13,18,27,.88);
+      font-family:var(--mono); font-size:12px;
+      opacity:0; transform: translateY(8px);
+      transition: all .18s ease;
+      pointer-events:none;
+      max-width: 520px;
+      white-space: pre-line;
+      z-index:9999;
     }
-    .seg{
-      display:flex; gap:8px; align-items:center; flex-wrap:wrap;
+    .toast.show{opacity:1; transform: translateY(0)}
+
+    /* =====================================================
+       FLOATING "CURRENT LEAD" WINDOW (draggable + resizable)
+    ====================================================== */
+    .floatLead{
+      position:absolute;
+      left:330px;
+      top:92px;
+      width:420px;
+      height:640px;
+      border-radius:20px;
+      border:1px solid rgba(255,255,255,.10);
+      background: linear-gradient(180deg, rgba(13,18,27,.95), rgba(13,18,27,.78));
+      box-shadow: var(--shadow2);
+      z-index:80;
+      overflow:hidden;
+      resize: both;
+      min-width: 320px;
+      min-height: 420px;
+      max-width: min(720px, calc(100vw - 40px));
+      max-height: calc(100vh - 110px);
+    }
+    .floatHdr{
+      padding:10px 10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap:10px;
+      background: linear-gradient(180deg, rgba(7,10,15,.38), rgba(7,10,15,.14));
+      cursor:grab;
+      user-select:none;
+    }
+    .floatHdr:active{cursor:grabbing;}
+    .floatHdr .leftBits{
+      display:flex; flex-direction:column; line-height:1.12;
+    }
+    .floatHdr .leftBits b{
+      font-family:var(--mono);
+      letter-spacing:.12em;
+      text-transform:uppercase;
+      font-size:11px;
+    }
+    .floatHdr .leftBits span{
+      font-family:var(--mono);
+      font-size:11px;
+      color:var(--muted);
+      margin-top:4px;
+    }
+    .floatHdr .controls{display:flex; gap:8px; align-items:center;}
+    .iconBtn{
+      width:34px;height:34px;border-radius:12px;
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(7,10,15,.35);
+      color:var(--ink);
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      font-family:var(--mono);
+      font-size:12px;
+    }
+    .iconBtn:hover{border-color: rgba(89,211,255,.55)}
+    .floatBody{
+      padding:12px;
+      height: calc(100% - 58px);
+      overflow:auto;
     }
 
-    /* Forms */
     label{
       font-family:var(--mono);
       font-size:11px;
@@ -174,141 +301,41 @@
     }
     textarea{min-height:88px; resize:vertical; line-height:1.45;}
     input:focus, textarea:focus, select:focus{border-color: rgba(89,211,255,.65)}
-
     .grid2{display:grid; grid-template-columns: 1fr 1fr; gap:10px;}
     .grid3{display:grid; grid-template-columns: 1fr 1fr 1fr; gap:10px;}
+    .hr{height:1px; background: rgba(255,255,255,.08); margin:12px 0;}
+    .title{font-weight:900; letter-spacing:.10em; text-transform:uppercase; font-size:12px;}
+    .mini{font-size:11px; color:var(--muted); font-family:var(--mono); line-height:1.45;}
+
+    .kpiRow{display:flex; gap:10px; flex-wrap:wrap}
     .kpi{
+      flex:1;
+      min-width: 120px;
       border-radius:14px;
       border:1px solid rgba(255,255,255,.08);
       background: rgba(7,10,15,.35);
       padding:10px;
     }
-    .kpi .n{font-family:var(--mono); font-size:20px; font-weight:900; letter-spacing:.02em}
+    .kpi .n{font-family:var(--mono); font-size:18px; font-weight:900}
     .kpi .l{font-family:var(--mono); font-size:11px; color:var(--muted); margin-top:4px}
 
-    /* Toast */
-    .toast{
-      position:fixed; right:14px; bottom:14px;
-      padding:10px 12px; border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(13,18,27,.88);
-      font-family:var(--mono); font-size:12px;
-      opacity:0; transform: translateY(8px);
-      transition: all .18s ease;
-      pointer-events:none;
-      max-width: 520px;
-      white-space: pre-line;
-      z-index:9999;
-    }
-    .toast.show{opacity:1; transform: translateY(0)}
-
-    /* Floating draggable tool palette */
-    .float{
-      position:fixed;
-      left:18px; top:92px;
-      width:280px;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.10);
-      background: linear-gradient(180deg, rgba(13,18,27,.92), rgba(13,18,27,.78));
-      box-shadow: var(--shadow2);
-      z-index:200;
-      overflow:hidden;
-      user-select:none;
-    }
-    .float.min{height:auto;}
-    .floatHeader{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:10px 10px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      cursor:grab;
-    }
-    .floatHeader:active{cursor:grabbing;}
-    .floatTitle{
-      display:flex; flex-direction:column;
-      line-height:1.15;
-    }
-    .floatTitle b{
-      font-family:var(--mono);
-      letter-spacing:.08em;
-      font-size:11px;
-      text-transform:uppercase;
-    }
-    .floatTitle span{
+    /* Preview box */
+    .preview{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(7,10,15,.30);
+      padding:10px;
       font-family:var(--mono);
       font-size:11px;
       color:var(--muted);
-      margin-top:4px;
+      white-space:pre-wrap;
+      line-height:1.45;
     }
-    .floatControls{display:flex; gap:8px; align-items:center;}
-    .iconBtn{
-      width:32px;height:32px;border-radius:12px;
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(7,10,15,.35);
-      color:var(--ink);
-      cursor:pointer;
-      display:flex;align-items:center;justify-content:center;
-      font-family:var(--mono);
-      font-size:12px;
-    }
-    .iconBtn:hover{border-color: rgba(89,211,255,.55)}
-    .floatBody{padding:10px;}
-    .toolGrid{display:grid; grid-template-columns:1fr; gap:10px;}
-    .toolBtn{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      padding:11px 12px;
-      border-radius:14px;
-      border:1px solid rgba(89,211,255,.22);
-      background: linear-gradient(180deg, rgba(7,10,15,.38), rgba(7,10,15,.16));
-      font-family:var(--mono);
-      cursor:pointer;
-      transition: transform .08s ease, border-color .12s ease;
-    }
-    .toolBtn:hover{border-color: rgba(89,211,255,.60)}
-    .toolBtn:active{transform: translateY(1px)}
-    .toolBtn em{font-style:normal; color:var(--muted); font-size:11px}
-    .toolBtn .l{display:flex; align-items:center; gap:10px;}
-    .dot{
-      width:9px; height:9px; border-radius:99px;
-      background: rgba(89,211,255,.65);
-      box-shadow: 0 0 0 4px rgba(89,211,255,.12);
-      flex:0 0 auto;
-    }
-    .dot.g{background: rgba(46,229,157,.80); box-shadow:0 0 0 4px rgba(46,229,157,.12);}
-    .dot.y{background: rgba(255,209,102,.90); box-shadow:0 0 0 4px rgba(255,209,102,.12);}
-    .dot.r{background: rgba(255,77,77,.90); box-shadow:0 0 0 4px rgba(255,77,77,.12);}
 
-    .float.min .floatBody{display:none;}
-    .float.slim{width:210px;}
-    .float.slim .toolBtn em{display:none;}
-    .float.slim .floatTitle span{display:none;}
-
-    /* Snap hint */
-    .snapHint{
-      position:fixed;
-      inset:0;
-      pointer-events:none;
-      border:2px dashed rgba(89,211,255,.18);
-      opacity:0;
-      transition: opacity .12s ease;
-      z-index:180;
-    }
-    .snapHint.show{opacity:1;}
-
-    /* Focus Mode */
-    .focus .layout{grid-template-columns: 1fr;}
-    .focus .right{display:none;}
-    .focus .wrap{max-width:1750px;}
-    .focus iframe{height:82vh;}
-
-    /* Small helper: keep float visible on mobile */
-    @media (max-width:760px){
-      .float{left:10px; right:10px; width:auto;}
+    @media (max-width: 980px){
+      .app{grid-template-columns: 1fr;}
+      .side{display:none;} /* optional: hide sidebar on small screens */
+      .floatLead{left:14px; top:82px;}
     }
   </style>
 </head>
@@ -319,207 +346,211 @@
     <div class="logo">DB</div>
     <div>
       <div class="t1">Deal Bankers // Internal Ops Console</div>
-      <div class="t2">Lead Processor Station · flow mode</div>
+      <div class="t2">Lead Processor Station · BIG tools + floating lead</div>
     </div>
   </div>
 
   <div class="hdrRight">
     <span class="pill cyan" id="clockPill">--:--</span>
     <span class="pill green" id="kpiPill">KPI: 0 traced · 0 numbers</span>
-    <button class="btn small ghost" id="btnFocus">Focus: Off</button>
+    <button class="btn small" id="btnBringToFront">Lead Window: Front</button>
     <button class="btn small" id="btnResetKpis">Reset KPIs</button>
   </div>
 </header>
 
-<!-- Floating draggable tool palette -->
-<div class="snapHint" id="snapHint"></div>
+<div class="app">
 
-<div class="float" id="toolFloat" aria-label="Tool palette">
-  <div class="floatHeader" id="toolFloatHeader">
-    <div class="floatTitle">
-      <b>TOOLS</b>
-      <span>Drag • open inside workspace</span>
+  <!-- LEFT: BIG BUTTONS -->
+  <aside class="side">
+    <div class="sideTitle">
+      <span>TOOLS</span>
+      <span class="pill cyan" style="padding:5px 10px;">v1.3+</span>
     </div>
-    <div class="floatControls">
-      <button class="iconBtn" id="btnSlim" title="Compact">≡</button>
-      <button class="iconBtn" id="btnMin" title="Minimize">—</button>
-      <button class="iconBtn" id="btnDock" title="Snap to edge">⤓</button>
+    <div class="sideSub">
+      Big buttons. One-click load inside workspace.<br>
+      Ajay stays in lane. Skip trace + input only.
     </div>
-  </div>
-  <div class="floatBody">
-    <div class="toolGrid" id="toolGrid">
-      <div class="toolBtn" data-url="https://bexar.tx.publicsearch.us/" title="County Clerk">
-        <div class="l"><span class="dot"></span>🏛️ County Clerk</div>
-        <em>deeds / docs</em>
-      </div>
-      <div class="toolBtn" data-url="https://bexar.acttax.com/act_webdev/bexar/index.jsp" title="ACTTax">
-        <div class="l"><span class="dot y"></span>💰 Tax Assessor</div>
-        <em>delinquent</em>
-      </div>
-      <div class="toolBtn" data-url="https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110" title="BCAD">
-        <div class="l"><span class="dot g"></span>🏠 BCAD</div>
-        <em>owner / mailing</em>
-      </div>
-      <div class="toolBtn" data-url="https://www.truepeoplesearch.com" title="TruePeopleSearch">
-        <div class="l"><span class="dot"></span>🔎 TruePeopleSearch</div>
-        <em>phones</em>
-      </div>
-      <div class="toolBtn" data-url="https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=" title="ACTTax Detail">
-        <div class="l"><span class="dot r"></span>📄 ACTTax Detail</div>
-        <em>paste CAN</em>
-      </div>
 
-      <div class="hr"></div>
+    <button class="bigBtn" data-url="https://bexar.tx.publicsearch.us/">
+      <span class="ico">🏛️</span>
+      <span>
+        <span class="txt">County Clerk Portal</span>
+        <span class="mini">deeds / docs</span>
+      </span>
+    </button>
 
-      <div class="mono">
-        <b>Rule:</b> Ajay produces call-ready leads. No negotiation. No calling.<br>
-        If unclear → set status <b>Needs Bill Review</b>.
+    <button class="bigBtn" data-url="https://bexar.acttax.com/act_webdev/bexar/index.jsp">
+      <span class="ico">💰</span>
+      <span>
+        <span class="txt">Tax Assessor</span>
+        <span class="mini">delinquent search</span>
+      </span>
+    </button>
+
+    <button class="bigBtn" data-url="https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110">
+      <span class="ico">🏠</span>
+      <span>
+        <span class="txt">BCAD Property Search</span>
+        <span class="mini">owner / mailing</span>
+      </span>
+    </button>
+
+    <button class="bigBtn" data-url="https://www.truepeoplesearch.com">
+      <span class="ico">🔎</span>
+      <span>
+        <span class="txt">Skip Trace</span>
+        <span class="mini">TruePeopleSearch</span>
+      </span>
+    </button>
+
+    <button class="bigBtn" data-url="https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=">
+      <span class="ico">📄</span>
+      <span>
+        <span class="txt">ACTTax Detail</span>
+        <span class="mini">paste CAN</span>
+      </span>
+    </button>
+
+    <div class="hr"></div>
+    <div class="mini">
+      <b>Rule:</b> call-ready leads only. No negotiation. No calling.<br>
+      If unclear → set status <b>Needs Bill Review</b>.
+    </div>
+  </aside>
+
+  <!-- WORKSPACE -->
+  <section class="workspace">
+    <div class="wHdr">
+      <div class="wHdrLeft">
+        <div class="wTitle">Workspace</div>
+        <div class="wSub">BCAD / TPS / ACTTax loads here — lead window stays floating</div>
+      </div>
+      <div class="wHdrRight">
+        <button class="btn small" id="btnTps">TPS</button>
+        <button class="btn small" id="btnBc">BCAD</button>
+        <button class="btn small" id="btnTax">ACTTax</button>
+        <button class="btn small" id="btnClearFrame">Clear</button>
       </div>
     </div>
-  </div>
-</div>
 
-<div class="wrap">
-  <div class="layout">
+    <iframe id="workFrame" src="https://www.truepeoplesearch.com" title="workspace"></iframe>
 
-    <!-- MIDDLE: embedded browser / iframe workspace -->
-    <main class="card mid">
-      <div class="chdr">
-        <div>
-          <div class="title">WORKSPACE</div>
-          <div class="sub">Open tools inside the console (one screen)</div>
+    <!-- FLOATING LEAD WINDOW -->
+    <div class="floatLead" id="leadFloat">
+      <div class="floatHdr" id="leadFloatHeader">
+        <div class="leftBits">
+          <b>Current Lead</b>
+          <span id="leadIndexPill">Queue: 0 / 0</span>
         </div>
-
-        <div class="workspaceTop">
-          <div class="seg">
-            <button class="btn small" id="btnTps">TPS</button>
-            <button class="btn small" id="btnBc">BCAD</button>
-            <button class="btn small" id="btnTax">ACTTax</button>
-            <button class="btn small" id="btnClearFrame">Clear</button>
-          </div>
-          <div class="seg">
-            <span class="pill yellow" id="draftPill">Draft: none</span>
-          </div>
+        <div class="controls">
+          <button class="iconBtn" id="btnPrev" title="Previous lead">◀</button>
+          <button class="iconBtn" id="btnNext" title="Next lead">▶</button>
+          <button class="iconBtn" id="btnCenter" title="Center window">⌖</button>
+          <button class="iconBtn" id="btnMin" title="Minimize">—</button>
         </div>
       </div>
-      <div class="cbody">
-        <iframe id="workFrame" src="https://www.truepeoplesearch.com" title="workspace"></iframe>
-      </div>
-    </main>
 
-    <!-- RIGHT: FLOW CONSOLE -->
-    <aside class="card right sticky">
-      <div class="chdr">
-        <div>
-          <div class="title">WORKFLOW CONSOLE</div>
-          <div class="sub">Lead intake → skip trace → export → log result</div>
-        </div>
-        <span class="pill cyan" id="confPill">Confidence: --</span>
-      </div>
-
-      <div class="cbody">
+      <div class="floatBody" id="leadFloatBody">
 
         <!-- KPIs -->
-        <div class="grid3">
+        <div class="kpiRow">
           <div class="kpi">
             <div class="n" id="kpiTraced">0</div>
-            <div class="l">Leads Skip Traced</div>
+            <div class="l">Leads traced</div>
           </div>
           <div class="kpi">
             <div class="n" id="kpiNums">0</div>
-            <div class="l">Phone Numbers</div>
+            <div class="l">Phone numbers</div>
           </div>
           <div class="kpi">
             <div class="n" id="kpiReviewed">0</div>
-            <div class="l">Needs Bill Review</div>
+            <div class="l">Needs review</div>
           </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <!-- Lead Queue Loader -->
+        <div class="title">Lead Queue</div>
+        <div class="mini">
+          Paste leads (one per line). Format:
+          <br><b>owner | property address | mailing</b>
+          <br>Example: <b>RUSSELL ECKERT | 12828 Starbrimson Trl, Elgin, TX | 123 Main St, Austin, TX</b>
+        </div>
+        <div style="height:8px;"></div>
+        <textarea id="queueBox" placeholder="OWNER | PROPERTY | MAILING&#10;OWNER | PROPERTY | MAILING"></textarea>
+        <div class="grid2" style="margin-top:10px;">
+          <button class="btn primary" id="btnLoadQueue">Load Queue</button>
+          <button class="btn danger" id="btnClearQueue">Clear Queue</button>
         </div>
 
         <div class="hr"></div>
 
         <!-- Lead Intake -->
-        <div class="row" style="justify-content:space-between;">
-          <div class="title">LEAD INTAKE</div>
-          <div class="row">
-            <button class="btn small" id="btnNewLead">New Lead</button>
-            <button class="btn small" id="btnSaveDraft">Save Draft</button>
+        <div class="title">Lead Intake</div>
+        <div style="height:10px;"></div>
+
+        <div>
+          <label>Property Address</label>
+          <input id="addr" placeholder="214 W Mandalay Dr, San Antonio, TX">
+        </div>
+
+        <div class="grid2">
+          <div>
+            <label>Owner</label>
+            <input id="owner" placeholder="FRANK ANAYA JR">
+          </div>
+          <div>
+            <label>Mailing</label>
+            <input id="mailing" placeholder="455 Clower, San Antonio, TX 78212">
           </div>
         </div>
 
-        <div style="height:10px;"></div>
-
-        <div class="col">
+        <div class="grid3">
           <div>
-            <label>Property Address</label>
-            <input id="addr" placeholder="214 W Mandalay Dr, San Antonio, TX">
+            <label>Source</label>
+            <select id="source">
+              <option>City Liens</option>
+              <option>Foreclosure / Notice</option>
+              <option>Probate / Estate</option>
+              <option>Code Enforcement</option>
+              <option>Golden Nug</option>
+              <option>Wholesale Group Deal</option>
+              <option>Other</option>
+            </select>
           </div>
-
-          <div class="grid2">
-            <div>
-              <label>Owner</label>
-              <input id="owner" placeholder="FRANK ANAYA JR">
-            </div>
-            <div>
-              <label>Mailing</label>
-              <input id="mailing" placeholder="455 Clower, San Antonio, TX 78212">
-            </div>
+          <div>
+            <label>Priority</label>
+            <select id="priority">
+              <option>A (call today)</option>
+              <option selected>B (call this week)</option>
+              <option>C (low)</option>
+            </select>
           </div>
-
-          <div class="grid3">
-            <div>
-              <label>Source</label>
-              <select id="source">
-                <option>City Liens</option>
-                <option>Foreclosure / Notice</option>
-                <option>Probate / Estate</option>
-                <option>Code Enforcement</option>
-                <option>Golden Nug</option>
-                <option>Wholesale Group Deal</option>
-                <option>Other</option>
-              </select>
-            </div>
-            <div>
-              <label>Priority</label>
-              <select id="priority">
-                <option>A (call today)</option>
-                <option selected>B (call this week)</option>
-                <option>C (low)</option>
-              </select>
-            </div>
-            <div>
-              <label>Absentee?</label>
-              <select id="absentee">
-                <option>Unknown</option>
-                <option>Yes</option>
-                <option>No</option>
-              </select>
-            </div>
+          <div>
+            <label>Absentee?</label>
+            <select id="absentee">
+              <option>Unknown</option>
+              <option>Yes</option>
+              <option>No</option>
+            </select>
           </div>
+        </div>
 
-          <div class="grid2">
-            <div>
-              <label>Taxes / Red Flag</label>
-              <input id="taxes" placeholder="e.g. ~$19,681 delinquent / or $0">
-            </div>
-            <div>
-              <label>Deed / Clue</label>
-              <input id="deed" placeholder="Interfamily transfer 7/15/2019 / Deed of Distribution">
-            </div>
+        <div class="grid2">
+          <div>
+            <label>Taxes / Red Flag</label>
+            <input id="taxes" placeholder="e.g. ~$19,681 delinquent / or $0">
+          </div>
+          <div>
+            <label>Deed / Clue</label>
+            <input id="deed" placeholder="Interfamily transfer 7/15/2019 / Trustee’s deed">
           </div>
         </div>
 
         <div class="hr"></div>
 
-        <!-- Skip Trace Output -->
-        <div class="row" style="justify-content:space-between;">
-          <div class="title">SKIP TRACE OUTPUT</div>
-          <div class="row">
-            <label style="margin:0; display:flex; gap:8px; align-items:center;">
-              <span class="pill green" style="padding:6px 10px;">Quick Paste</span>
-            </label>
-          </div>
-        </div>
-
+        <div class="title">Skip Trace Output</div>
         <div style="height:10px;"></div>
 
         <div class="grid2">
@@ -562,51 +593,38 @@
 
         <div class="hr"></div>
 
-        <!-- Export -->
-        <div class="row">
+        <div class="grid2">
           <button class="btn primary" id="btnCopyBill">Copy Bill Format (TAB)</button>
           <button class="btn" id="btnCopySummary">Copy Summary Note</button>
-          <button class="btn" id="btnLogResult">Log Result + Update KPI</button>
+        </div>
+
+        <div class="grid2" style="margin-top:10px;">
+          <button class="btn" id="btnSaveDraft">Save Draft</button>
+          <button class="btn" id="btnLogResult">Log Result + KPI</button>
         </div>
 
         <div style="height:10px;"></div>
-
-        <div class="mono mini" id="previewBox">
-          <b>Preview:</b> fill fields to generate export.
-        </div>
+        <div class="preview" id="previewBox">Preview: fill fields…</div>
 
         <div class="hr"></div>
 
-        <!-- Activity Log -->
-        <div class="row" style="justify-content:space-between;">
-          <div class="title">ACTIVITY (last 50)</div>
-          <button class="btn small danger" id="btnClearLog">Clear Log</button>
-        </div>
-        <div style="height:10px;"></div>
-        <textarea id="logBox" readonly style="min-height:140px;"></textarea>
+        <div class="title">Activity</div>
+        <div style="height:8px;"></div>
+        <textarea id="logBox" readonly style="min-height:120px;"></textarea>
 
       </div>
-    </aside>
-
-  </div>
+    </div>
+  </section>
 </div>
 
 <div class="toast" id="toast">Saved</div>
 
 <script>
   // =========================================================
-  // STORAGE KEYS
+  // Helpers
   // =========================================================
-  const KPI_KEY   = "db_lp_kpis_v1";
-  const LOG_KEY   = "db_lp_log_v1";
-  const DRAFT_KEY = "db_lp_draft_v1"; // session draft
-  const UI_KEY    = "db_lp_ui_v1";    // float palette position/state
-  const toast     = document.getElementById('toast');
-
-  // =========================================================
-  // HELPERS
-  // =========================================================
-  function el(id){ return document.getElementById(id); }
+  const toast = document.getElementById('toast');
+  const el = (id)=>document.getElementById(id);
   function showToast(msg){
     toast.textContent = msg;
     toast.classList.add('show');
@@ -623,31 +641,18 @@
     return `${mm}/${dd}/${yy} ${hh}:${mi}`;
   }
   function cleanPhoneLines(s){
-    return (s || "")
-      .split(/\r?\n/)
-      .map(x=>x.trim())
-      .filter(Boolean);
-  }
-  function escapeHtml(s){
-    return (s||"").replace(/[&<>"']/g, m=>({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
+    return (s||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
   }
 
-  // =========================================================
-  // CLOCK
-  // =========================================================
+  // Clock
   function setClock(){
     const d = new Date();
-    const hh = String(d.getHours()).padStart(2,'0');
-    const mi = String(d.getMinutes()).padStart(2,'0');
-    el('clockPill').textContent = `${hh}:${mi}`;
+    el('clockPill').textContent = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
   }
-  setClock();
-  setInterval(setClock, 15000);
+  setClock(); setInterval(setClock, 15000);
 
   // =========================================================
-  // WORKSPACE IFRAME CONTROL
+  // Workspace
   // =========================================================
   const frame = el('workFrame');
   const TOOL_URLS = {
@@ -655,55 +660,141 @@
     bcad: "https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110",
     acttax: "https://bexar.acttax.com/act_webdev/bexar/index.jsp"
   };
+  el('btnTps').onclick = ()=>{ frame.src = TOOL_URLS.tps; showToast("TPS opened"); };
+  el('btnBc').onclick  = ()=>{ frame.src = TOOL_URLS.bcad; showToast("BCAD opened"); };
+  el('btnTax').onclick = ()=>{ frame.src = TOOL_URLS.acttax; showToast("ACTTax opened"); };
+  el('btnClearFrame').onclick = ()=>{ frame.src="about:blank"; showToast("Workspace cleared"); };
 
-  el('btnTps').onclick = ()=> { frame.src = TOOL_URLS.tps; showToast("TPS opened"); };
-  el('btnBc').onclick  = ()=> { frame.src = TOOL_URLS.bcad; showToast("BCAD opened"); };
-  el('btnTax').onclick = ()=> { frame.src = TOOL_URLS.acttax; showToast("ACTTax opened"); };
-  el('btnClearFrame').onclick = ()=> { frame.src = "about:blank"; showToast("Workspace cleared"); };
-
-  // Floating palette opens tools inside iframe
-  document.querySelectorAll('#toolGrid .toolBtn').forEach(btn=>{
+  // Sidebar big buttons -> open in iframe
+  document.querySelectorAll('.bigBtn[data-url]').forEach(btn=>{
     btn.addEventListener('click', ()=>{
       const url = btn.getAttribute('data-url');
-      if(!url) return;
       frame.src = url;
       showToast("Opened in workspace");
     });
   });
 
   // =========================================================
-  // FORM FIELDS
+  // Floating lead window: drag + state
   // =========================================================
+  const leadFloat = el('leadFloat');
+  const leadHdr   = el('leadFloatHeader');
+  const leadBody  = el('leadFloatBody');
+
+  // bring to front
+  function bringToFront(){
+    leadFloat.style.zIndex = 999;
+    setTimeout(()=> leadFloat.style.zIndex = 80, 400); // quick bump
+  }
+  el('btnBringToFront').onclick = bringToFront;
+
+  // drag
+  let drag = {on:false, dx:0, dy:0};
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+  leadHdr.addEventListener('mousedown', (e)=>{
+    if(e.target.closest('button')) return;
+    drag.on = true;
+    const r = leadFloat.getBoundingClientRect();
+    drag.dx = e.clientX - r.left;
+    drag.dy = e.clientY - r.top;
+    leadHdr.style.cursor = "grabbing";
+    bringToFront();
+  });
+  window.addEventListener('mousemove', (e)=>{
+    if(!drag.on) return;
+    const r = leadFloat.getBoundingClientRect();
+    const w = r.width, h = r.height;
+    let x = e.clientX - drag.dx;
+    let y = e.clientY - drag.dy;
+    x = clamp(x, 10, window.innerWidth - w - 10);
+    y = clamp(y, 80, window.innerHeight - h - 10);
+    leadFloat.style.left = x + "px";
+    leadFloat.style.top  = y + "px";
+  });
+  window.addEventListener('mouseup', ()=>{
+    if(!drag.on) return;
+    drag.on = false;
+    leadHdr.style.cursor = "grab";
+    saveFloat();
+  });
+
+  // center
+  el('btnCenter').onclick = ()=>{
+    const r = leadFloat.getBoundingClientRect();
+    leadFloat.style.left = Math.max(10, (window.innerWidth - r.width)/2) + "px";
+    leadFloat.style.top  = Math.max(80, (window.innerHeight - r.height)/2) + "px";
+    saveFloat();
+    showToast("Centered");
+  };
+
+  // minimize
+  let minimized = false;
+  el('btnMin').onclick = ()=>{
+    minimized = !minimized;
+    leadBody.style.display = minimized ? "none" : "block";
+    leadFloat.style.height = minimized ? "58px" : (loadFloat()?.h || "640px");
+    showToast(minimized ? "Minimized" : "Restored");
+    saveFloat();
+  };
+
+  // persist float position/size
+  const FLOAT_KEY = "db_lp_float_v1";
+  function saveFloat(){
+    const r = leadFloat.getBoundingClientRect();
+    const data = { x:r.left, y:r.top, w:r.width, h:r.height, minimized };
+    localStorage.setItem(FLOAT_KEY, JSON.stringify(data));
+  }
+  function loadFloat(){
+    try{ return JSON.parse(localStorage.getItem(FLOAT_KEY)); }catch(e){ return null; }
+  }
+  // apply saved
+  (function initFloat(){
+    const d = loadFloat();
+    if(!d) return;
+    leadFloat.style.left = d.x + "px";
+    leadFloat.style.top  = d.y + "px";
+    leadFloat.style.width = d.w + "px";
+    if(!d.minimized) leadFloat.style.height = d.h + "px";
+    minimized = !!d.minimized;
+    if(minimized){
+      leadBody.style.display="none";
+      leadFloat.style.height="58px";
+    }
+  })();
+
+  // save on resize (user drags corner)
+  const ro = new ResizeObserver(()=>saveFloat());
+  ro.observe(leadFloat);
+
+  // =========================================================
+  // Lead form logic (same core as before)
+  // =========================================================
+  const KPI_KEY = "db_lp_kpis_v1";
+  const LOG_KEY = "db_lp_log_v1";
+  const DRAFT_KEY = "db_lp_draft_v1";
+
   const F = {
     addr: el('addr'), owner: el('owner'), mailing: el('mailing'),
     source: el('source'), priority: el('priority'), absentee: el('absentee'),
     taxes: el('taxes'), deed: el('deed'), phones: el('phones'), vnotes: el('vnotes'),
-    confidence: el('confidence'), status: el('status'), can: el('can')
+    confidence: el('confidence'), status: el('status'), can: el('can'),
   };
 
-  function syncConfidence(){
-    const v = F.confidence.value || "--";
-    el('confPill').textContent = `Confidence: ${v}`;
-  }
-  F.confidence.addEventListener('change', syncConfidence);
-
   function buildBillExport(){
-    // One tab-delimited line:
-    // Owner \t Phone(s) \t Property \t Notes
-    const owner = (F.owner.value || "").trim();
-    const addr  = (F.addr.value  || "").trim();
+    const owner = (F.owner.value||"").trim();
+    const addr  = (F.addr.value||"").trim();
     const phones = cleanPhoneLines(F.phones.value).join(", ");
-
     const notesBits = [];
+
     const absentee = F.absentee.value;
-    const deed = (F.deed.value || "").trim();
-    const taxes = (F.taxes.value || "").trim();
+    const deed = (F.deed.value||"").trim();
+    const taxes = (F.taxes.value||"").trim();
     const src = F.source.value;
     const pri = F.priority.value;
-    const mailing = (F.mailing.value || "").trim();
-    const conf = (F.confidence.value || "").trim();
-    const vnotes = (F.vnotes.value || "").trim();
-    const can = (F.can.value || "").trim();
+    const mailing = (F.mailing.value||"").trim();
+    const conf = (F.confidence.value||"").trim();
+    const vnotes = (F.vnotes.value||"").trim();
+    const can = (F.can.value||"").trim();
 
     if(absentee && absentee !== "Unknown") notesBits.push(`Absentee: ${absentee}`);
     if(deed) notesBits.push(deed);
@@ -715,23 +806,22 @@
     if(can) notesBits.push(`CAN/Link: ${can}`);
     if(vnotes) notesBits.push(`Verify: ${vnotes}`);
 
-    const notes = notesBits.join(" | ");
-    return `${owner}\t${phones}\t${addr}\t${notes}`.trim();
+    return `${owner}\t${phones}\t${addr}\t${notesBits.join(" | ")}`.trim();
   }
 
   function buildSummaryNote(){
-    const owner = (F.owner.value || "").trim();
-    const addr = (F.addr.value || "").trim();
+    const owner = (F.owner.value||"").trim();
+    const addr = (F.addr.value||"").trim();
     const phones = cleanPhoneLines(F.phones.value);
     const absentee = F.absentee.value;
-    const deed = (F.deed.value || "").trim();
-    const taxes = (F.taxes.value || "").trim();
+    const deed = (F.deed.value||"").trim();
+    const taxes = (F.taxes.value||"").trim();
     const src = F.source.value;
-    const conf = (F.confidence.value || "").trim();
-    const vnotes = (F.vnotes.value || "").trim();
-    const mailing = (F.mailing.value || "").trim();
-
+    const conf = (F.confidence.value||"").trim();
+    const vnotes = (F.vnotes.value||"").trim();
+    const mailing = (F.mailing.value||"").trim();
     const phoneLine = phones.length ? phones.join(" / ") : "(no phones yet)";
+
     const bits = [];
     if(absentee && absentee !== "Unknown") bits.push(`Absentee: ${absentee}`);
     if(deed) bits.push(deed);
@@ -744,8 +834,7 @@
 
   function updatePreview(){
     const exp = buildBillExport();
-    el('previewBox').innerHTML =
-      `<b>Preview (tab-delimited):</b><br><span class="mono">${escapeHtml(exp || "fill fields to generate export.")}</span>`;
+    el('previewBox').textContent = exp ? `Preview (TAB):\n${exp}` : "Preview: fill fields…";
   }
 
   Object.values(F).forEach(x=>{
@@ -754,13 +843,32 @@
   });
   updatePreview();
 
-  // =========================================================
-  // KPIs + LOG
-  // =========================================================
-  function loadKpis(){
+  async function copyToClipboard(text){
     try{
-      return JSON.parse(localStorage.getItem(KPI_KEY)) || { traced:0, numbers:0, review:0 };
-    }catch(e){ return { traced:0, numbers:0, review:0 }; }
+      await navigator.clipboard.writeText(text);
+      showToast("Copied");
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = text; document.body.appendChild(ta);
+      ta.select(); document.execCommand('copy'); ta.remove();
+      showToast("Copied (fallback)");
+    }
+  }
+
+  el('btnCopyBill').onclick = ()=>{
+    const t = buildBillExport();
+    if(!t.trim()) return showToast("Nothing to copy");
+    copyToClipboard(t);
+  };
+  el('btnCopySummary').onclick = ()=>{
+    const t = buildSummaryNote();
+    if(!t.trim()) return showToast("Nothing to copy");
+    copyToClipboard(t);
+  };
+
+  function loadKpis(){
+    try{ return JSON.parse(localStorage.getItem(KPI_KEY)) || { traced:0, numbers:0, review:0 }; }
+    catch(e){ return { traced:0, numbers:0, review:0 }; }
   }
   function saveKpis(k){ localStorage.setItem(KPI_KEY, JSON.stringify(k)); }
   function renderKpis(){
@@ -778,92 +886,18 @@
   }
   function saveLog(items){ localStorage.setItem(LOG_KEY, JSON.stringify(items.slice(-50))); }
   function renderLog(){
-    const items = loadLog();
-    el('logBox').value = items.slice(-50).join("\n");
+    el('logBox').value = loadLog().slice(-50).join("\n");
   }
   renderLog();
-
-  // =========================================================
-  // DRAFT (session)
-  // =========================================================
-  function saveDraft(){
-    const d = {};
-    Object.keys(F).forEach(k=> d[k] = F[k].value);
-    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-    el('draftPill').textContent = `Draft: saved ${nowStamp()}`;
-    showToast("Draft saved");
-  }
-  function loadDraft(){
-    try{
-      const raw = sessionStorage.getItem(DRAFT_KEY);
-      if(!raw) return false;
-      const d = JSON.parse(raw);
-      Object.keys(F).forEach(k=> { if(d[k] !== undefined) F[k].value = d[k]; });
-      syncConfidence();
-      updatePreview();
-      el('draftPill').textContent = `Draft: loaded ${nowStamp()}`;
-      return true;
-    }catch(e){ return false; }
-  }
-  loadDraft();
-
-  // =========================================================
-  // BUTTON ACTIONS
-  // =========================================================
-  el('btnSaveDraft').onclick = saveDraft;
-
-  el('btnNewLead').onclick = ()=>{
-    if(!confirm("Clear this lead and start new?")) return;
-    Object.values(F).forEach(x=> x.value = "");
-    F.source.value = "City Liens";
-    F.priority.value = "B (call this week)";
-    F.absentee.value = "Unknown";
-    F.status.value = "New";
-    syncConfidence();
-    updatePreview();
-    sessionStorage.removeItem(DRAFT_KEY);
-    el('draftPill').textContent = "Draft: none";
-    showToast("New lead ready");
-  };
-
-  async function copyToClipboard(text){
-    try{
-      await navigator.clipboard.writeText(text);
-      showToast("Copied to clipboard");
-    }catch(e){
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      showToast("Copied (fallback)");
-    }
-  }
-
-  el('btnCopyBill').onclick = ()=>{
-    const exp = buildBillExport();
-    if(!exp.trim()){ showToast("Nothing to copy yet"); return; }
-    copyToClipboard(exp);
-  };
-
-  el('btnCopySummary').onclick = ()=>{
-    const note = buildSummaryNote();
-    if(!note.trim()){ showToast("Nothing to copy yet"); return; }
-    copyToClipboard(note);
-  };
 
   el('btnLogResult').onclick = ()=>{
     const addr = (F.addr.value||"").trim();
     const owner = (F.owner.value||"").trim();
-    if(!addr || !owner){
-      showToast("Need at least Owner + Address");
-      return;
-    }
+    if(!addr || !owner) return showToast("Need Owner + Address");
 
     const phones = cleanPhoneLines(F.phones.value);
-    const conf = F.confidence.value || "--";
     const status = F.status.value || "New";
+    const conf = F.confidence.value || "--";
     const taxes = (F.taxes.value||"").trim();
 
     const k = loadKpis();
@@ -871,7 +905,6 @@
     if(isTraced) k.traced += 1;
     k.numbers += phones.length;
     if(status === "Needs Bill Review") k.review += 1;
-
     saveKpis(k);
     renderKpis();
 
@@ -880,14 +913,7 @@
     saveLog(items);
     renderLog();
 
-    showToast("Logged + KPI updated");
-  };
-
-  el('btnClearLog').onclick = ()=>{
-    if(!confirm("Clear activity log?")) return;
-    localStorage.removeItem(LOG_KEY);
-    renderLog();
-    showToast("Log cleared");
+    showToast("Logged + KPI");
   };
 
   el('btnResetKpis').onclick = ()=>{
@@ -897,7 +923,13 @@
     showToast("KPIs reset");
   };
 
-  // Autofill CAN link if user pastes digits only
+  el('btnSaveDraft').onclick = ()=>{
+    const d = {}; Object.keys(F).forEach(k=> d[k] = F[k].value);
+    sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
+    showToast("Draft saved");
+  };
+
+  // CAN -> link
   F.can.addEventListener('blur', ()=>{
     const v = (F.can.value||"").trim();
     if(/^\d{6,}$/.test(v)){
@@ -907,143 +939,88 @@
   });
 
   // =========================================================
-  // FOCUS MODE (maximize workspace)
+  // Lead Queue: Next/Prev + load current lead into form
   // =========================================================
-  const focusBtn = el('btnFocus');
-  function setFocus(on){
-    document.body.classList.toggle('focus', !!on);
-    focusBtn.textContent = `Focus: ${on ? "On" : "Off"}`;
-    focusBtn.classList.toggle('on', !!on);
-    saveUI();
-  }
-  focusBtn.onclick = ()=>{
-    const on = !document.body.classList.contains('focus');
-    setFocus(on);
-  };
+  const QUEUE_KEY = "db_lp_queue_v1";
+  let queue = [];
+  let idx = -1;
 
-  // =========================================================
-  // DRAGGABLE FLOAT PALETTE
-  // =========================================================
-  const floatEl = el('toolFloat');
-  const floatHeader = el('toolFloatHeader');
-  const snapHint = el('snapHint');
-
-  let drag = { on:false, dx:0, dy:0 };
-
-  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
-  function saveUI(){
-    const rect = floatEl.getBoundingClientRect();
-    const ui = {
-      x: rect.left,
-      y: rect.top,
-      min: floatEl.classList.contains('min'),
-      slim: floatEl.classList.contains('slim'),
-      focus: document.body.classList.contains('focus'),
-      dock: floatEl.dataset.dock || ""
-    };
-    localStorage.setItem(UI_KEY, JSON.stringify(ui));
+  function parseQueue(text){
+    const lines = (text||"").split(/\r?\n/).map(x=>x.trim()).filter(Boolean);
+    return lines.map(line=>{
+      const parts = line.split("|").map(s=>s.trim());
+      return {
+        owner: parts[0] || "",
+        addr:  parts[1] || "",
+        mailing: parts[2] || ""
+      };
+    });
   }
 
-  function loadUI(){
+  function setQueuePill(){
+    el('leadIndexPill').textContent = `Queue: ${queue.length ? (idx+1) : 0} / ${queue.length}`;
+  }
+
+  function loadLead(i){
+    if(!queue.length) return;
+    idx = Math.max(0, Math.min(queue.length-1, i));
+    const L = queue[idx];
+
+    // Only set the key intake fields; don't wipe skip-trace fields automatically.
+    F.owner.value = L.owner || "";
+    F.addr.value = L.addr || "";
+    F.mailing.value = L.mailing || "";
+    updatePreview();
+    setQueuePill();
+    showToast("Lead loaded");
+    saveQueueState();
+  }
+
+  function saveQueueState(){
+    localStorage.setItem(QUEUE_KEY, JSON.stringify({ queue, idx, raw: el('queueBox').value }));
+  }
+  function loadQueueState(){
     try{
-      const raw = localStorage.getItem(UI_KEY);
-      if(!raw) return;
-      const ui = JSON.parse(raw);
-      if(typeof ui.x === "number" && typeof ui.y === "number"){
-        floatEl.style.left = ui.x + "px";
-        floatEl.style.top  = ui.y + "px";
-      }
-      floatEl.classList.toggle('min', !!ui.min);
-      floatEl.classList.toggle('slim', !!ui.slim);
-      if(ui.focus) setFocus(true);
-      if(ui.dock){ floatEl.dataset.dock = ui.dock; }
+      const d = JSON.parse(localStorage.getItem(QUEUE_KEY));
+      if(!d) return;
+      queue = Array.isArray(d.queue) ? d.queue : [];
+      idx = typeof d.idx === "number" ? d.idx : -1;
+      if(typeof d.raw === "string") el('queueBox').value = d.raw;
+      setQueuePill();
+      if(queue.length && idx >= 0) loadLead(idx);
     }catch(e){}
   }
-  loadUI();
+  loadQueueState();
 
-  function snapToEdge(){
-    const rect = floatEl.getBoundingClientRect();
-    const midX = rect.left + rect.width/2;
-    const leftSnap = midX < window.innerWidth/2;
-    const x = leftSnap ? 10 : (window.innerWidth - rect.width - 10);
-    floatEl.style.left = clamp(x, 6, window.innerWidth - rect.width - 6) + "px";
-    floatEl.style.top  = clamp(rect.top, 80, window.innerHeight - rect.height - 10) + "px";
-    floatEl.dataset.dock = leftSnap ? "left" : "right";
-    showToast("Snapped to edge");
-    saveUI();
-  }
-
-  floatHeader.addEventListener('mousedown', (e)=>{
-    // ignore if clicking control buttons
-    if(e.target.closest('button')) return;
-    drag.on = true;
-    const rect = floatEl.getBoundingClientRect();
-    drag.dx = e.clientX - rect.left;
-    drag.dy = e.clientY - rect.top;
-    snapHint.classList.add('show');
-  });
-
-  window.addEventListener('mousemove', (e)=>{
-    if(!drag.on) return;
-    const w = floatEl.getBoundingClientRect().width;
-    const h = floatEl.getBoundingClientRect().height;
-
-    let x = e.clientX - drag.dx;
-    let y = e.clientY - drag.dy;
-
-    // clamp
-    x = clamp(x, 6, window.innerWidth - w - 6);
-    y = clamp(y, 72, window.innerHeight - h - 10);
-
-    floatEl.style.left = x + "px";
-    floatEl.style.top  = y + "px";
-
-    // if near edges, hint snap
-    const nearEdge = (x < 20) || (x > window.innerWidth - w - 20);
-    snapHint.style.opacity = nearEdge ? "1" : "";
-  });
-
-  window.addEventListener('mouseup', ()=>{
-    if(!drag.on) return;
-    drag.on = false;
-    snapHint.classList.remove('show');
-
-    // auto snap if close
-    const rect = floatEl.getBoundingClientRect();
-    if(rect.left < 18 || rect.right > window.innerWidth - 18){
-      snapToEdge();
-    }else{
-      floatEl.dataset.dock = "";
-      saveUI();
-    }
-  });
-
-  // Controls
-  el('btnMin').onclick = ()=>{
-    floatEl.classList.toggle('min');
-    saveUI();
+  el('btnLoadQueue').onclick = ()=>{
+    queue = parseQueue(el('queueBox').value);
+    idx = queue.length ? 0 : -1;
+    saveQueueState();
+    setQueuePill();
+    if(queue.length) loadLead(0);
+    showToast(queue.length ? `Queue loaded: ${queue.length}` : "Queue empty");
   };
-  el('btnSlim').onclick = ()=>{
-    floatEl.classList.toggle('slim');
-    saveUI();
-  };
-  el('btnDock').onclick = snapToEdge;
 
-  // keep float in bounds on resize
-  window.addEventListener('resize', ()=>{
-    const rect = floatEl.getBoundingClientRect();
-    floatEl.style.left = clamp(rect.left, 6, window.innerWidth - rect.width - 6) + "px";
-    floatEl.style.top  = clamp(rect.top, 72, window.innerHeight - rect.height - 10) + "px";
-    saveUI();
+  el('btnClearQueue').onclick = ()=>{
+    if(!confirm("Clear the queue?")) return;
+    queue = []; idx = -1;
+    el('queueBox').value = "";
+    localStorage.removeItem(QUEUE_KEY);
+    setQueuePill();
+    showToast("Queue cleared");
+  };
+
+  el('btnNext').onclick = ()=>{ if(queue.length) loadLead(idx+1); };
+  el('btnPrev').onclick = ()=>{ if(queue.length) loadLead(idx-1); };
+
+  // Keyboard shortcuts (when not typing)
+  window.addEventListener('keydown', (e)=>{
+    const tag = (document.activeElement && document.activeElement.tagName) || "";
+    if(["INPUT","TEXTAREA","SELECT"].includes(tag)) return;
+    if(e.key === "ArrowRight") el('btnNext').click();
+    if(e.key === "ArrowLeft") el('btnPrev').click();
   });
 
-  // =========================================================
-  // INIT
-  // =========================================================
-  syncConfidence();
-  renderKpis();
-  renderLog();
 </script>
 </body>
 </html>
