@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Deal Bankers // Internal Ops Console v1.4 (Lead Processor)</title>
+  <title>Deal Bankers // Internal Ops Console v1.5 (Lead Processor)</title>
   <style>
     :root{
       --bg:#070a0f;
@@ -33,7 +33,7 @@
         linear-gradient(180deg, #05070c, #070a0f);
     }
     header{
-      position:sticky; top:0; z-index:5;
+      position:sticky; top:0; z-index:20;
       display:flex; align-items:center; justify-content:space-between;
       padding:14px 18px;
       border-bottom:1px solid rgba(255,255,255,.08);
@@ -68,22 +68,20 @@
     .pill.yellow{border-color: rgba(255,209,102,.35); color:#fff3d6;}
     .pill.red{border-color: rgba(255,77,77,.35); color:#ffe3e3;}
 
-    .wrap{max-width:1400px; margin:0 auto; padding:16px;}
+    .wrap{max-width:1500px; margin:0 auto; padding:16px;}
     .layout{
       display:grid;
-      grid-template-columns: 290px 1fr 460px;
+      grid-template-columns: 290px 1fr 520px;
       gap:12px;
       align-items:start;
     }
-    @media (max-width: 1200px){
+    @media (max-width: 1280px){
       .layout{grid-template-columns: 290px 1fr;}
       .right{grid-column: 1 / -1;}
     }
     @media (max-width: 760px){
       .layout{grid-template-columns: 1fr;}
-      .left{grid-column: 1 / -1;}
-      .mid{grid-column: 1 / -1;}
-      .right{grid-column: 1 / -1;}
+      .left,.mid,.right{grid-column: 1 / -1;}
     }
 
     .card{
@@ -115,6 +113,8 @@
     .btn:hover{border-color: rgba(89,211,255,.55)}
     .btn.primary{border-color: rgba(46,229,157,.45)}
     .btn.primary:hover{border-color: rgba(46,229,157,.75)}
+    .btn.warn{border-color: rgba(255,209,102,.45)}
+    .btn.warn:hover{border-color: rgba(255,209,102,.75)}
     .btn.danger{border-color: rgba(255,77,77,.45)}
     .btn.danger:hover{border-color: rgba(255,77,77,.75)}
     .btn.small{padding:7px 10px; font-size:11px; border-radius:10px;}
@@ -192,9 +192,85 @@
       pointer-events:none;
       max-width: 520px;
       white-space: pre-line;
+      z-index:999;
     }
     .toast.show{opacity:1; transform: translateY(0)}
     .mini{font-size:11px;}
+
+    /* Lead queue */
+    .queueWrap{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(7,10,15,.32);
+      overflow:hidden;
+    }
+    .queueHdr{
+      display:flex; justify-content:space-between; align-items:center; gap:10px;
+      padding:10px;
+      border-bottom:1px solid rgba(255,255,255,.08);
+    }
+    .queueHdr .left{
+      display:flex; flex-direction:column; gap:2px;
+    }
+    .queueHdr .left .qtitle{
+      font-family:var(--mono);
+      font-weight:900;
+      letter-spacing:.08em;
+      font-size:11px;
+      text-transform:uppercase;
+    }
+    .queueHdr .left .qsub{
+      font-family:var(--mono);
+      color:var(--muted);
+      font-size:11px;
+    }
+    .queueBody{
+      padding:10px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+    }
+    .queueTools{
+      display:flex; gap:8px; flex-wrap:wrap; align-items:center;
+    }
+    .queueList{
+      max-height: 220px;
+      overflow:auto;
+      padding-right:6px;
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+    }
+    .qItem{
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background: rgba(7,10,15,.35);
+      padding:10px;
+      cursor:pointer;
+    }
+    .qItem:hover{border-color: rgba(89,211,255,.55)}
+    .qTop{
+      display:flex; justify-content:space-between; align-items:flex-start; gap:10px;
+      font-family:var(--mono);
+      font-size:11px;
+    }
+    .qAddr{color:var(--ink); font-weight:900}
+    .qMeta{color:var(--muted); margin-top:6px; font-family:var(--mono); font-size:11px; line-height:1.35}
+    .badge{
+      font-family:var(--mono);
+      font-size:10px;
+      padding:4px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      color:var(--muted);
+      white-space:nowrap;
+    }
+    .badge.cyan{border-color: rgba(89,211,255,.35); color:#dff6ff;}
+    .badge.green{border-color: rgba(46,229,157,.35); color:#dcfff0;}
+    .badge.yellow{border-color: rgba(255,209,102,.35); color:#fff3d6;}
+    .badge.red{border-color: rgba(255,77,77,.35); color:#ffe3e3;}
+
+    .fileInput{display:none}
   </style>
 </head>
 
@@ -204,7 +280,7 @@
     <div class="logo">DB</div>
     <div>
       <div class="t1">Deal Bankers // Internal Ops Console</div>
-      <div class="t2">Lead Processor Station · flow mode</div>
+      <div class="t2">Lead Processor Station · flow mode (Ajay)</div>
     </div>
   </div>
   <div class="hdrRight">
@@ -217,31 +293,30 @@
 <div class="wrap">
   <div class="layout">
 
-    <!-- LEFT NAV (your existing buttons/links go here) -->
+    <!-- LEFT -->
     <aside class="card left">
       <div class="chdr">
         <div>
           <div class="title">TOOLS</div>
           <div class="sub">Launcher (Ajay stays in lane)</div>
         </div>
-        <span class="pill cyan">v1.4</span>
+        <span class="pill cyan">v1.5</span>
       </div>
       <div class="cbody">
         <div class="navList" id="leftNav">
-          <!-- Replace hrefs with your real internal URLs -->
-          <a class="navBtn" href="#" data-url="https://bexar.tx.publicsearch.us/" target="_blank" rel="noopener">
+          <a class="navBtn" href="#" data-url="https://bexar.tx.publicsearch.us/">
             <span>🏛️ County Clerk</span><em>deeds / docs</em>
           </a>
-          <a class="navBtn" href="#" data-url="https://bexar.acttax.com/act_webdev/bexar/index.jsp" target="_blank" rel="noopener">
+          <a class="navBtn" href="#" data-url="https://bexar.acttax.com/act_webdev/bexar/index.jsp">
             <span>💰 Tax Assessor</span><em>delinquent</em>
           </a>
-          <a class="navBtn" href="#" data-url="https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110" target="_blank" rel="noopener">
+          <a class="navBtn" href="#" data-url="https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110">
             <span>🏠 BCAD</span><em>owner / mailing</em>
           </a>
-          <a class="navBtn" href="#" data-url="https://www.truepeoplesearch.com" target="_blank" rel="noopener">
+          <a class="navBtn" href="#" data-url="https://www.truepeoplesearch.com">
             <span>🔎 TruePeopleSearch</span><em>phones</em>
           </a>
-          <a class="navBtn" href="#" data-url="https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=" target="_blank" rel="noopener">
+          <a class="navBtn" href="#" data-url="https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=">
             <span>📄 ACTTax Detail</span><em>paste CAN</em>
           </a>
         </div>
@@ -249,13 +324,16 @@
         <div class="hr"></div>
 
         <div class="mono">
-          <b>Rule:</b> Ajay produces call-ready leads. No negotiation. No calling.<br>
-          If unclear → set status <b>Needs Bill Review</b>.
+          <b>Rules:</b><br>
+          • Ajay produces <b>call-ready</b> leads.<br>
+          • No negotiation. No calling.<br>
+          • If unclear → <b>Status: Needs Bill Review</b>.<br>
+          • Export as JSON when done.
         </div>
       </div>
     </aside>
 
-    <!-- MIDDLE: embedded browser / iframe workspace -->
+    <!-- MIDDLE -->
     <main class="card mid">
       <div class="chdr">
         <div>
@@ -274,17 +352,49 @@
       </div>
     </main>
 
-    <!-- RIGHT: FLOW CONSOLE -->
+    <!-- RIGHT -->
     <aside class="card right sticky">
       <div class="chdr">
         <div>
           <div class="title">WORKFLOW CONSOLE</div>
-          <div class="sub">Lead intake → skip trace → export → log result</div>
+          <div class="sub">Queue → open lead → skip trace → export → log result</div>
         </div>
         <span class="pill yellow" id="draftPill">Draft: none</span>
       </div>
 
       <div class="cbody">
+
+        <!-- QUEUE -->
+        <div class="queueWrap">
+          <div class="queueHdr">
+            <div class="left">
+              <div class="qtitle">Lead Queue</div>
+              <div class="qsub"><span id="queueCount">0</span> leads · click one to load</div>
+            </div>
+            <div class="row">
+              <span class="badge cyan" id="queueMode">Local</span>
+            </div>
+          </div>
+          <div class="queueBody">
+            <div class="queueTools">
+              <button class="btn small" id="btnImportJson">Import Leads JSON</button>
+              <input class="fileInput" id="fileImport" type="file" accept="application/json" />
+              <button class="btn small" id="btnSeedDemo">Seed Demo</button>
+              <button class="btn small danger" id="btnClearQueue">Clear Queue</button>
+            </div>
+
+            <div class="queueList" id="queueList">
+              <!-- items injected -->
+            </div>
+
+            <div class="mono mini">
+              <b>Import format:</b> JSON array of leads (we’ll standardize later).<br>
+              Minimum per lead: <b>address</b>, <b>owner</b> (mailing optional).
+            </div>
+          </div>
+        </div>
+
+        <div class="hr"></div>
 
         <!-- KPIs -->
         <div class="grid3">
@@ -426,14 +536,19 @@
         <div class="hr"></div>
 
         <!-- Export -->
-        <div class="row">
-          <button class="btn primary" id="btnCopyBill">Copy Bill Format (TAB)</button>
-          <button class="btn" id="btnCopySummary">Copy Summary Note</button>
-          <button class="btn" id="btnLogResult">Log Result + Update KPI</button>
+        <div class="row" style="justify-content:space-between;">
+          <div class="row">
+            <button class="btn primary" id="btnCopyBill">Copy Bill Format (TAB)</button>
+            <button class="btn" id="btnCopySummary">Copy Summary Note</button>
+          </div>
+          <div class="row">
+            <button class="btn warn" id="btnDownloadJson">Download Lead JSON</button>
+            <button class="btn" id="btnSaveToQueue">Save to Queue</button>
+            <button class="btn" id="btnLogResult">Log + KPI</button>
+          </div>
         </div>
 
         <div style="height:10px;"></div>
-
         <div class="mono mini" id="previewBox">
           <b>Preview:</b> fill fields to generate export.
         </div>
@@ -460,9 +575,11 @@
   // -------------------------
   // STORAGE KEYS
   // -------------------------
-  const KPI_KEY = "db_lp_kpis_v1";
-  const LOG_KEY = "db_lp_log_v1";
-  const DRAFT_KEY = "db_lp_draft_v1"; // session draft
+  const KPI_KEY   = "db_lp_kpis_v1";
+  const LOG_KEY   = "db_lp_log_v1";
+  const DRAFT_KEY = "db_lp_draft_v1";
+  const QUEUE_KEY = "db_lp_queue_v1";   // local queue store
+
   const toast = document.getElementById('toast');
 
   // -------------------------
@@ -501,22 +618,54 @@
   setClock();
   setInterval(setClock, 15000);
 
+  function escapeHtml(s){
+    return (s||"").replace(/[&<>"']/g, m=>({
+      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
+    }[m]));
+  }
+
+  async function copyToClipboard(text){
+    try{
+      await navigator.clipboard.writeText(text);
+      showToast("Copied to clipboard");
+    }catch(e){
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      ta.remove();
+      showToast("Copied (fallback)");
+    }
+  }
+
+  function downloadFile(filename, text, mime="application/json"){
+    const blob = new Blob([text], {type: mime});
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 500);
+  }
+
   // -------------------------
   // WORKSPACE IFRAME CONTROL
   // -------------------------
   const frame = document.getElementById('workFrame');
   const TOOL_URLS = {
     tps: "https://www.truepeoplesearch.com",
-    bcad: "https://www.bcadtax.org/",
+    bcad: "https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110",
     acttax: "https://bexar.acttax.com/act_webdev/bexar/index.jsp"
   };
 
   document.getElementById('btnTps').onclick = ()=> frame.src = TOOL_URLS.tps;
-  document.getElementById('btnBc').onclick = ()=> frame.src = TOOL_URLS.bcad;
+  document.getElementById('btnBc').onclick  = ()=> frame.src = TOOL_URLS.bcad;
   document.getElementById('btnTax').onclick = ()=> frame.src = TOOL_URLS.acttax;
   document.getElementById('btnClearFrame').onclick = ()=> frame.src = "about:blank";
 
-  // LEFT NAV opens inside iframe (not new tab) for flow
   document.querySelectorAll('#leftNav a.navBtn').forEach(a=>{
     a.addEventListener('click', (e)=>{
       e.preventDefault();
@@ -531,31 +680,28 @@
   // -------------------------
   // FORM FIELDS
   // -------------------------
+  function el(id){ return document.getElementById(id); }
+
   const F = {
     addr: el('addr'), owner: el('owner'), mailing: el('mailing'),
     source: el('source'), priority: el('priority'), absentee: el('absentee'),
     taxes: el('taxes'), deed: el('deed'), phones: el('phones'), vnotes: el('vnotes'),
     confidence: el('confidence'), status: el('status'), can: el('can')
   };
-  function el(id){ return document.getElementById(id); }
 
-  // Confidence pill
   function syncConfidence(){
     const v = F.confidence.value || "--";
     document.getElementById('confPill').textContent = `Confidence: ${v}`;
   }
   F.confidence.addEventListener('change', syncConfidence);
 
-  // Preview
   function buildBillExport(){
-    // Bill wants: owner phone address important notes (plus absentee, deed, taxes)
-    // We'll output one tab-delimited line:
     // Owner \t Phone(s) \t Property \t Notes
     const owner = (F.owner.value || "").trim();
-    const addr = (F.addr.value || "").trim();
+    const addr  = (F.addr.value  || "").trim();
     const phones = cleanPhoneLines(F.phones.value).join(", ");
-    const notesBits = [];
 
+    const notesBits = [];
     const absentee = F.absentee.value;
     const deed = (F.deed.value || "").trim();
     const taxes = (F.taxes.value || "").trim();
@@ -600,19 +746,67 @@
     if(src) bits.push(src);
     if(conf) bits.push(conf);
 
-    return `${owner}\n${phoneLine}\nProperty: ${addr}\n\nNotes: ${bits.join(". ")}${vnotes ? `. ${vnotes}` : ""}${mailing ? `\nMailing: ${mailing}` : ""}`.trim();
+    return `${owner}
+${phoneLine}
+Property: ${addr}
+
+Notes: ${bits.join(". ")}${vnotes ? `. ${vnotes}` : ""}${mailing ? `
+Mailing: ${mailing}` : ""}`.trim();
+  }
+
+  function currentLeadObject(){
+    const phones = cleanPhoneLines(F.phones.value);
+    const canVal = (F.can.value || "").trim();
+
+    // Stable-ish ID that we can replace later with Firebase push keys:
+    const idSeed = `${(F.addr.value||"").trim()}|${(F.owner.value||"").trim()}`.toLowerCase();
+    const id = "lp_" + hash32(idSeed);
+
+    return {
+      id,
+      updatedAt: new Date().toISOString(),
+      address: (F.addr.value||"").trim(),
+      owner: (F.owner.value||"").trim(),
+      mailing: (F.mailing.value||"").trim(),
+      source: F.source.value,
+      priority: F.priority.value,
+      absentee: F.absentee.value,
+      taxes: (F.taxes.value||"").trim(),
+      deed: (F.deed.value||"").trim(),
+      phones,
+      verificationNotes: (F.vnotes.value||"").trim(),
+      confidence: (F.confidence.value||"").trim(),
+      status: F.status.value,
+      canOrLink: canVal,
+      billTabExport: buildBillExport(),
+      summaryNote: buildSummaryNote()
+    };
+  }
+
+  function loadLeadIntoForm(lead){
+    F.addr.value = lead.address || "";
+    F.owner.value = lead.owner || "";
+    F.mailing.value = lead.mailing || "";
+    F.source.value = lead.source || "City Liens";
+    F.priority.value = lead.priority || "B (call this week)";
+    F.absentee.value = lead.absentee || "Unknown";
+    F.taxes.value = lead.taxes || "";
+    F.deed.value = lead.deed || "";
+    F.phones.value = (lead.phones || []).join("\n");
+    F.vnotes.value = lead.verificationNotes || "";
+    F.confidence.value = lead.confidence || "";
+    F.status.value = lead.status || "New";
+    F.can.value = lead.canOrLink || "";
+    syncConfidence();
+    updatePreview();
+    document.getElementById('draftPill').textContent = `Draft: loaded from queue ${nowStamp()}`;
+    showToast("Loaded lead into console");
   }
 
   function updatePreview(){
     const exp = buildBillExport();
     document.getElementById('previewBox').innerHTML =
       `<b>Preview (tab-delimited):</b><br><span class="mono">${escapeHtml(exp || "fill fields to generate export.")}</span>`;
-  }
-
-  function escapeHtml(s){
-    return (s||"").replace(/[&<>"']/g, m=>({
-      "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"
-    }[m]));
   }
 
   Object.values(F).forEach(x=>{
@@ -625,48 +819,38 @@
   // KPIs + LOG
   // -------------------------
   function loadKpis(){
-    try{
-      return JSON.parse(localStorage.getItem(KPI_KEY)) || { traced:0, numbers:0, review:0 };
-    }catch(e){
-      return { traced:0, numbers:0, review:0 };
-    }
+    try{ return JSON.parse(localStorage.getItem(KPI_KEY)) || { traced:0, numbers:0, review:0 }; }
+    catch(e){ return { traced:0, numbers:0, review:0 }; }
   }
-  function saveKpis(k){
-    localStorage.setItem(KPI_KEY, JSON.stringify(k));
-  }
+  function saveKpis(k){ localStorage.setItem(KPI_KEY, JSON.stringify(k)); }
   function renderKpis(){
     const k = loadKpis();
-    document.getElementById('kpiTraced').textContent = k.traced;
-    document.getElementById('kpiNums').textContent = k.numbers;
-    document.getElementById('kpiReviewed').textContent = k.review;
-    document.getElementById('kpiPill').textContent = `KPI: ${k.traced} traced · ${k.numbers} numbers`;
+    el('kpiTraced').textContent = k.traced;
+    el('kpiNums').textContent = k.numbers;
+    el('kpiReviewed').textContent = k.review;
+    el('kpiPill').textContent = `KPI: ${k.traced} traced · ${k.numbers} numbers`;
   }
   renderKpis();
 
   function loadLog(){
-    try{
-      return JSON.parse(localStorage.getItem(LOG_KEY)) || [];
-    }catch(e){
-      return [];
-    }
+    try{ return JSON.parse(localStorage.getItem(LOG_KEY)) || []; }
+    catch(e){ return []; }
   }
-  function saveLog(items){
-    localStorage.setItem(LOG_KEY, JSON.stringify(items.slice(-50)));
-  }
+  function saveLog(items){ localStorage.setItem(LOG_KEY, JSON.stringify(items.slice(-50))); }
   function renderLog(){
     const items = loadLog();
-    document.getElementById('logBox').value = items.slice(-50).join("\n");
+    el('logBox').value = items.slice(-50).join("\n");
   }
   renderLog();
 
   // -------------------------
-  // DRAFT (session)
+  // DRAFT
   // -------------------------
   function saveDraft(){
     const d = {};
     Object.keys(F).forEach(k=> d[k] = F[k].value);
     sessionStorage.setItem(DRAFT_KEY, JSON.stringify(d));
-    document.getElementById('draftPill').textContent = `Draft: saved ${nowStamp()}`;
+    el('draftPill').textContent = `Draft: saved ${nowStamp()}`;
     showToast("Draft saved");
   }
   function loadDraft(){
@@ -677,20 +861,83 @@
       Object.keys(F).forEach(k=> { if(d[k] !== undefined) F[k].value = d[k]; });
       syncConfidence();
       updatePreview();
-      document.getElementById('draftPill').textContent = `Draft: loaded ${nowStamp()}`;
+      el('draftPill').textContent = `Draft: loaded ${nowStamp()}`;
       return true;
-    }catch(e){
-      return false;
-    }
+    }catch(e){ return false; }
   }
   loadDraft();
 
   // -------------------------
-  // BUTTON ACTIONS
+  // QUEUE (LOCAL)
   // -------------------------
-  document.getElementById('btnSaveDraft').onclick = saveDraft;
+  function loadQueue(){
+    try{ return JSON.parse(localStorage.getItem(QUEUE_KEY)) || []; }
+    catch(e){ return []; }
+  }
+  function saveQueue(arr){
+    localStorage.setItem(QUEUE_KEY, JSON.stringify(arr));
+    renderQueue();
+  }
+  function upsertQueue(lead){
+    const q = loadQueue();
+    const idx = q.findIndex(x=>x.id === lead.id);
+    if(idx >= 0) q[idx] = lead;
+    else q.unshift(lead);
+    saveQueue(q);
+  }
+  function clearQueue(){
+    localStorage.removeItem(QUEUE_KEY);
+    renderQueue();
+  }
 
-  document.getElementById('btnNewLead').onclick = ()=>{
+  function statusBadge(lead){
+    const s = (lead.status || "New").toLowerCase();
+    if(s.includes("review")) return "yellow";
+    if(s.includes("bad")) return "red";
+    if(s.includes("skip")) return "green";
+    return "cyan";
+  }
+
+  function renderQueue(){
+    const q = loadQueue();
+    el('queueCount').textContent = q.length;
+    const list = el('queueList');
+    list.innerHTML = "";
+
+    if(q.length === 0){
+      const empty = document.createElement('div');
+      empty.className = "mono mini";
+      empty.textContent = "No leads yet. Import JSON or seed demo.";
+      list.appendChild(empty);
+      return;
+    }
+
+    q.forEach(lead=>{
+      const item = document.createElement('div');
+      item.className = "qItem";
+      item.innerHTML = `
+        <div class="qTop">
+          <div class="qAddr">${escapeHtml(lead.address || "(no address)")}</div>
+          <span class="badge ${statusBadge(lead)}">${escapeHtml(lead.status || "New")}</span>
+        </div>
+        <div class="qMeta">
+          Owner: <b>${escapeHtml(lead.owner || "(unknown)")}</b><br>
+          Source: ${escapeHtml(lead.source || "—")} · Priority: ${escapeHtml(lead.priority || "—")}<br>
+          Phones: ${(lead.phones||[]).length} · Updated: ${escapeHtml((lead.updatedAt||"").slice(0,19).replace("T"," "))}
+        </div>
+      `;
+      item.onclick = ()=> loadLeadIntoForm(lead);
+      list.appendChild(item);
+    });
+  }
+  renderQueue();
+
+  // -------------------------
+  // BUTTONS
+  // -------------------------
+  el('btnSaveDraft').onclick = saveDraft;
+
+  el('btnNewLead').onclick = ()=>{
     if(!confirm("Clear this lead and start new?")) return;
     Object.values(F).forEach(x=> x.value = "");
     F.source.value = "City Liens";
@@ -700,39 +947,45 @@
     syncConfidence();
     updatePreview();
     sessionStorage.removeItem(DRAFT_KEY);
-    document.getElementById('draftPill').textContent = "Draft: none";
+    el('draftPill').textContent = "Draft: none";
     showToast("New lead ready");
   };
 
-  async function copyToClipboard(text){
-    try{
-      await navigator.clipboard.writeText(text);
-      showToast("Copied to clipboard");
-    }catch(e){
-      // fallback
-      const ta = document.createElement('textarea');
-      ta.value = text;
-      document.body.appendChild(ta);
-      ta.select();
-      document.execCommand('copy');
-      ta.remove();
-      showToast("Copied (fallback)");
-    }
-  }
-
-  document.getElementById('btnCopyBill').onclick = ()=>{
+  el('btnCopyBill').onclick = ()=>{
     const exp = buildBillExport();
     if(!exp.trim()){ showToast("Nothing to copy yet"); return; }
     copyToClipboard(exp);
   };
 
-  document.getElementById('btnCopySummary').onclick = ()=>{
+  el('btnCopySummary').onclick = ()=>{
     const note = buildSummaryNote();
     if(!note.trim()){ showToast("Nothing to copy yet"); return; }
     copyToClipboard(note);
   };
 
-  document.getElementById('btnLogResult').onclick = ()=>{
+  el('btnSaveToQueue').onclick = ()=>{
+    const lead = currentLeadObject();
+    if(!lead.address || !lead.owner){
+      showToast("Need at least Owner + Address");
+      return;
+    }
+    upsertQueue(lead);
+    el('draftPill').textContent = `Draft: saved to queue ${nowStamp()}`;
+    showToast("Saved to queue");
+  };
+
+  el('btnDownloadJson').onclick = ()=>{
+    const lead = currentLeadObject();
+    if(!lead.address || !lead.owner){
+      showToast("Need at least Owner + Address");
+      return;
+    }
+    const safeAddr = (lead.address || "lead").replace(/[^a-z0-9]+/gi,"_").slice(0,40);
+    downloadFile(`lead_${safeAddr}_${new Date().toISOString().slice(0,10)}.json`, JSON.stringify(lead, null, 2));
+    showToast("Downloaded lead JSON");
+  };
+
+  el('btnLogResult').onclick = ()=>{
     const addr = (F.addr.value||"").trim();
     const owner = (F.owner.value||"").trim();
     if(!addr || !owner){
@@ -745,46 +998,40 @@
     const status = F.status.value || "New";
     const taxes = (F.taxes.value||"").trim();
 
-    // KPIs update
     const k = loadKpis();
-
-    // count as "traced" if status suggests skip trace done
     const isTraced = ["Skip Traced","Needs Bill Review","Bad Match","Called","Texted"].includes(status);
     if(isTraced) k.traced += 1;
-
-    // count phone numbers added
     k.numbers += phones.length;
-
-    // review count
     if(status === "Needs Bill Review") k.review += 1;
-
     saveKpis(k);
     renderKpis();
 
-    // log
     const items = loadLog();
     items.push(`[${nowStamp()}] ${status} | ${conf} | ${owner} | ${addr} | phones:${phones.length}${taxes ? " | "+taxes : ""}`);
     saveLog(items);
     renderLog();
 
+    // also persist in queue so status changes are remembered
+    upsertQueue(currentLeadObject());
+
     showToast("Logged + KPI updated");
   };
 
-  document.getElementById('btnClearLog').onclick = ()=>{
+  el('btnClearLog').onclick = ()=>{
     if(!confirm("Clear activity log?")) return;
     localStorage.removeItem(LOG_KEY);
     renderLog();
     showToast("Log cleared");
   };
 
-  document.getElementById('btnResetKpis').onclick = ()=>{
+  el('btnResetKpis').onclick = ()=>{
     if(!confirm("Reset KPIs to 0?")) return;
     localStorage.setItem(KPI_KEY, JSON.stringify({traced:0,numbers:0,review:0}));
     renderKpis();
     showToast("KPIs reset");
   };
 
-  // Autofill CAN link if user pastes digits only
+  // CAN auto-link
   F.can.addEventListener('blur', ()=>{
     const v = (F.can.value||"").trim();
     if(/^\d{6,}$/.test(v)){
@@ -793,6 +1040,125 @@
     }
   });
 
+  // Queue controls
+  el('btnClearQueue').onclick = ()=>{
+    if(!confirm("Clear lead queue?")) return;
+    clearQueue();
+    showToast("Queue cleared");
+  };
+
+  // Demo seed with your real example style
+  el('btnSeedDemo').onclick = ()=>{
+    const demo = [
+      {
+        id:"lp_demo_mandalay",
+        updatedAt:new Date().toISOString(),
+        address:"214 W Mandalay Dr, San Antonio, TX",
+        owner:"FRANK ANAYA JR",
+        mailing:"455 Clower, San Antonio, TX",
+        source:"City Liens",
+        priority:"B (call this week)",
+        absentee:"Yes",
+        taxes:"~$19,681 delinquent",
+        deed:"Interfamily transfer 7/15/2019",
+        phones:[],
+        verificationNotes:"",
+        confidence:"",
+        status:"New",
+        canOrLink:""
+      },
+      {
+        id:"lp_demo_kings",
+        updatedAt:new Date().toISOString(),
+        address:"903 W Kings Hwy, San Antonio, TX 78201",
+        owner:"JILL JEAN MALONEY",
+        mailing:"1531 County Road 129 #4, Alvin, TX 77511-1466",
+        source:"Probate / Estate",
+        priority:"A (call today)",
+        absentee:"Yes",
+        taxes:"~$34k delinquent taxes",
+        deed:"Deed of Distribution",
+        phones:["(832) 693-4674","(832) 518-0779"],
+        verificationNotes:"Jemmy Dwyer (45) went VM then disconnects; Thomas Maloney (68) rings",
+        confidence:"⚠️ Likely",
+        status:"Skip Traced",
+        canOrLink:"https://bexar.acttax.com/act_webdev/bexar/showdetail2.jsp?can=017870120470"
+      }
+    ];
+    const q = loadQueue();
+    saveQueue(demo.concat(q));
+    showToast("Seeded demo leads");
+  };
+
+  // Import JSON
+  el('btnImportJson').onclick = ()=> el('fileImport').click();
+  el('fileImport').addEventListener('change', async (e)=>{
+    const file = e.target.files && e.target.files[0];
+    if(!file) return;
+
+    try{
+      const text = await file.text();
+      const data = JSON.parse(text);
+
+      const leads = Array.isArray(data) ? data : [data];
+      const normalized = leads.map(x=> normalizeImportedLead(x)).filter(Boolean);
+
+      const q = loadQueue();
+      saveQueue(normalized.concat(q));
+      showToast(`Imported ${normalized.length} lead(s)`);
+    }catch(err){
+      console.error(err);
+      showToast("Import failed: invalid JSON");
+    }finally{
+      e.target.value = "";
+    }
+  });
+
+  function normalizeImportedLead(x){
+    if(!x) return null;
+
+    // Accept either your sheet-ish naming or a future standardized one.
+    const address = (x.address || x.Address || x.property || x.location || "").toString().trim();
+    const owner   = (x.owner || x.Owner || x.name || "").toString().trim();
+
+    if(!address || !owner) return null;
+
+    const idSeed = `${address}|${owner}`.toLowerCase();
+    const id = x.id || ("lp_" + hash32(idSeed));
+
+    const phonesRaw = x.phones || x.Phones || x.phone || x.Phone || [];
+    const phones = Array.isArray(phonesRaw)
+      ? phonesRaw.map(s=>String(s).trim()).filter(Boolean)
+      : String(phonesRaw).split(/[,;\n]/).map(s=>s.trim()).filter(Boolean);
+
+    return {
+      id,
+      updatedAt: new Date().toISOString(),
+      address,
+      owner,
+      mailing: (x.mailing || x.Mailing || x.mail || "").toString().trim(),
+      source: (x.source || x.Source || "City Liens").toString().trim(),
+      priority: (x.priority || x.Priority || "B (call this week)").toString().trim(),
+      absentee: (x.absentee || x.Absentee || "Unknown").toString().trim(),
+      taxes: (x.taxes || x.Taxes || "").toString().trim(),
+      deed: (x.deed || x.Deed || "").toString().trim(),
+      phones,
+      verificationNotes: (x.verificationNotes || x.verify || x.Notes || "").toString().trim(),
+      confidence: (x.confidence || x.Confidence || "").toString().trim(),
+      status: (x.status || x.Status || "New").toString().trim(),
+      canOrLink: (x.canOrLink || x.can || x.link || "").toString().trim()
+    };
+  }
+
+  // Simple deterministic hash for local IDs
+  function hash32(str){
+    let h = 2166136261;
+    for(let i=0;i<str.length;i++){
+      h ^= str.charCodeAt(i);
+      h = Math.imul(h, 16777619);
+    }
+    return (h >>> 0).toString(16);
+  }
 </script>
 </body>
 </html>
