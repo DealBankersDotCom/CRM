@@ -514,11 +514,11 @@ body{
   top:0;
   left:0;
   right:0;
-  height:56px;          /* masks the embedded dispo nav so it can't hijack the portal */
-  background:#0b1825;   /* visually removes the inner header */
+  height:56px;
+  background:#0b1825;
   border-bottom:1px solid rgba(255,255,255,.12);
   z-index:5;
-  pointer-events:auto;  /* blocks clicks */
+  pointer-events:auto;
 }
 </style>
 </head>
@@ -683,7 +683,6 @@ body{
               style="border:none;">
             </iframe>
 
-            <!-- masks the inner dispo header/nav + blocks clicks so it can't hijack this portal -->
             <div class="dispo-mask" aria-hidden="true"></div>
           </div>
         </div>
@@ -727,18 +726,6 @@ body{
 <script src="app-auth.js"></script>
 
 <script>
-/** ==========================
- * SAFETY INIT (DROP-IN REPLACEMENT)
- * Replace EVERYTHING from:
- *   (function ensureFirebaseInit(){ ... })();
- * down through your AUTH block + your old subscribeLeads()
- *
- * ✅ This version:
- * - Initializes Firebase once
- * - Uses a SINGLE LEADS_PATH (string)
- * - Subscribes to RTDB leads at leads/sellers
- * - Does NOT rely on leads.js / window.leads
- * ========================== */
 (function ensureFirebaseInit(){
   try{
     if (!firebase.apps || !firebase.apps.length) {
@@ -758,16 +745,11 @@ function getMapsKey(){
   return String((window.MAPS_EMBED_KEY || window.MAPS_JS_KEY || "")).trim();
 }
 
-// Street View ONLY on click
 const STREETVIEW_ON_LOAD = false;
 
-// Optional geocode cache (OFF)
 const ENABLE_GEOCODE_CACHE = false;
 const GEOCODE_RATE_LIMIT_MS = 1200;
 
-/** ==========================
- * HELPERS
- * ========================== */
 const $ = (id) => document.getElementById(id);
 
 function esc(s){
@@ -793,9 +775,6 @@ function initialsFromUser(u){
   return ini || "U";
 }
 
-/** ==========================
- * STATE
- * ========================== */
 let UID = null;
 let ME = null;
 let ME_INITIALS = "U";
@@ -816,32 +795,22 @@ let currentLeadId = "";
 let activeLogRef = null;
 let logEntryCount = 0;
 
-// Map state
-let mapMode = "area"; // "area" | "street"
+let mapMode = "area";
 let lastGeocodeAt = 0;
 
-/** ==========================
- * LEADS (from RTDB)
- * Path: leads/sellers/{leadId}
- * ========================== */
-let LEADS_PATH = "leads/sellers";     // ✅ default
+let LEADS_PATH = "leads/sellers";
 let leadsRef = null;
 
 function leadIdFor(lead){
   return String((lead && (lead.id || lead.docnum)) ? (lead.id || lead.docnum) : "");
 }
 
-/**
- * Live subscribe to RTDB leads.
- * - Keeps current selection stable by lead id when possible
- */
 function subscribeLeads(){
   if (!UID) {
     console.warn("subscribeLeads called before UID is set.");
     return;
   }
 
-  // Tear down any prior listener
   if (leadsRef) { try{ leadsRef.off(); }catch(e){} leadsRef = null; }
 
   sellerList = [];
@@ -854,7 +823,6 @@ function subscribeLeads(){
 
   leadsRef = firebase.database().ref(LEADS_PATH);
 
-  // Map for fast updates
   const byId = new Map();
 
   function rebuild(){
@@ -862,15 +830,12 @@ function subscribeLeads(){
 
     sellerList = Array.from(byId.values());
 
-    // deterministic ordering
     sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
 
-    // If your file has normalizeLeadCoords(), this will work; otherwise it no-ops.
     try { normalizeLeadCoords(); } catch(e) {}
 
     renderQueue();
 
-    // Restore selection if possible
     if (sellerView.length){
       if (keepId){
         const idx = sellerView.findIndex(x => leadIdFor(x) === keepId);
@@ -890,7 +855,6 @@ function subscribeLeads(){
     $("leadCountPill").textContent = `${sellerView.length} leads`;
   }
 
-  // --- RTDB live sync ---
   leadsRef.off();
 
   leadsRef.on("child_added", (snap) => {
@@ -914,7 +878,6 @@ function subscribeLeads(){
     rebuild();
   }, (err) => console.warn("leads child_removed failed:", err));
 
-  // Empty / permission check
   leadsRef.once("value").then((snap)=>{
     if (!snap.exists()){
       sellerList = [];
@@ -937,9 +900,6 @@ function subscribeLeads(){
   });
 }
 
-/** ==========================
- * AUTH (DROP-IN REPLACEMENT)
- * ========================== */
 firebase.auth().onAuthStateChanged(async (u) => {
   if (!u) return location.href = 'index.html';
 
@@ -947,10 +907,8 @@ firebase.auth().onAuthStateChanged(async (u) => {
   ME = u;
   ME_INITIALS = initialsFromUser(u);
 
-  // Start presence
   try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
 
-  // Role check
   try{
     const roleSnap = await firebase.database().ref('roles/' + UID).once('value');
     const role = roleSnap.val();
@@ -970,7 +928,6 @@ firebase.auth().onAuthStateChanged(async (u) => {
     setupChat(currentChatPath);
   }
 
-  // ✅ LAST: subscribe to leads
   try { subscribeLeads(); }
   catch(e){
     console.warn("subscribeLeads failed:", e);
@@ -978,11 +935,6 @@ firebase.auth().onAuthStateChanged(async (u) => {
   }
 });
 
-/** ==========================
- * TEAM CALL LOG (lead + phone)
- * RTDB path: call_logs/{leadId}/{phoneKey}/{pushId}
- * entry: { uid, initials, kind, status, text, ts }
- * ========================== */
 function logPath(){
   if (!currentLeadId) return null;
   const pk = fmtPhoneKey(currentPhone);
@@ -1074,7 +1026,6 @@ function pushLogEntry({ kind="note", status="", text="" }){
   return firebase.database().ref(path).push(entry);
 }
 
-// Add note
 function showSaved(){
   $("noteStatus").style.display = "block";
   setTimeout(()=>hideSaved(), 900);
@@ -1091,7 +1042,6 @@ $("noteSaveBtn").onclick = async ()=>{
   showSaved();
 };
 
-// Quick status buttons => log entry (status + small auto text)
 document.querySelectorAll("[data-status]").forEach(btn=>{
   btn.addEventListener("click", async ()=>{
     if (!currentLeadId) return;
@@ -1105,9 +1055,6 @@ document.querySelectorAll("[data-status]").forEach(btn=>{
   });
 });
 
-/** ==========================
- * MAP / STREET VIEW (kept behavior from your file)
- * ========================== */
 function showMapUI() { $("mapHead").style.display = "flex"; $("mapWrap").style.display = "block"; }
 function hideMapUI() { $("mapHead").style.display = "none"; $("mapWrap").style.display = "none"; }
 function showMapWarn(msg) { const w = $("mapWarn"); w.style.display = "block"; w.textContent = msg || ""; }
@@ -1115,13 +1062,11 @@ function clearMapWarn() { const w = $("mapWarn"); w.style.display = "none"; w.te
 function setMapHint(msg) { $("mapHint").textContent = msg || ""; }
 function setFrameSrc(url) { $("streetFrame").src = url; }
 
-// No-key
 function setAreaMapNoKeyByAddress(address) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&output=embed&z=18"); }
 function setStreetViewNoKeyByAddress(address) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(address) + "&layer=c&output=embed"); }
 function setAreaMapNoKeyLocation(lat, lng) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&output=embed&z=18"); }
 function setStreetViewNoKeyLocation(lat, lng) { setFrameSrc("https://www.google.com/maps?q=" + encodeURIComponent(`${lat},${lng}`) + "&layer=c&output=embed"); }
 
-// Keyed embed
 function setAreaMapEmbedWithKeyAddress(address) {
   const key = getMapsKey(); if (!key) return false;
   setFrameSrc("https://www.google.com/maps/embed/v1/place?key=" + encodeURIComponent(key) + "&q=" + encodeURIComponent(address));
@@ -1229,7 +1174,6 @@ async function geocodeAddressOnce(address) {
 }
 
 async function updateMapForLead(lead){
-  // reset
   clearMapWarn(); setMapHint("");
   $("streetFrame").src = "about:blank";
   mapMode = "area";
@@ -1239,7 +1183,6 @@ async function updateMapForLead(lead){
   let lat = lead.lat, lng = lead.lng;
   const id = leadIdFor(lead);
 
-  // cached coords
   if ((!lat || !lng) && id){
     try{
       const cached = await getCachedGeo(id);
@@ -1252,10 +1195,8 @@ async function updateMapForLead(lead){
   showMapUI();
   wireMapToggles(() => ({ address: lead.address || "", lat, lng }));
 
-  // default Area Map
   await loadAreaMap({ address: lead.address || "", lat, lng });
 
-  // optional geocode+cache (off)
   if (ENABLE_GEOCODE_CACHE && (!lat || !lng) && lead.address && id){
     setMapHint("Geocoding address once…");
     try{
@@ -1276,9 +1217,6 @@ async function updateMapForLead(lead){
   }
 }
 
-/** ==========================
- * PRESENCE (kept approach)
- * ========================== */
 function trackPresence(u) {
   const globalRef = firebase.database().ref('presence/global/' + u.uid);
   const statusRef = firebase.database().ref('presence/' + u.uid);
@@ -1301,9 +1239,6 @@ function trackPresence(u) {
   });
 }
 
-/** ==========================
- * CHAT (kept)
- * ========================== */
 const sidePanel = $("sidePanel");
 const radarList = $("radarList");
 const chatArea = $("chatArea");
@@ -1408,13 +1343,9 @@ function sendMsg() {
   input.value = "";
 }
 
-/** ==========================
- * UI / NAV
- * ========================== */
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
-/* Dispo refresh (UI only) */
 $("dispoRefreshBtn").onclick = () => {
   const f = $("iframeDispo");
   try{
@@ -1423,7 +1354,6 @@ $("dispoRefreshBtn").onclick = () => {
   }catch(e){}
 };
 
-// Tabs
 document.addEventListener('DOMContentLoaded', () => {
   const tabAcq = $("tabAcq");
   const tabDispo = $("tabDispo");
