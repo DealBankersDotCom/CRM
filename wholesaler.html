@@ -75,7 +75,7 @@ body{
   display:flex;align-items:center;justify-content:space-between;
   padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
 }
-.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px}
+.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
 .seg button{
   padding:8px 14px;border:0;background:#0e2332;
   color:#cfe6ff;cursor:pointer
@@ -446,6 +446,80 @@ body{
 .chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; }
 .send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
 #backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
+
+/* ===== DISPO PANEL (new UI wrapper for iframe) ===== */
+#panel-dispo{
+  display:none;
+  height: 80vh;
+  grid-column: 1 / -1;
+}
+.dispo-shell{
+  height:100%;
+  border-radius:16px;
+  border:1px solid rgba(255,255,255,.14);
+  background:#0b1825;
+  overflow:hidden;
+  box-shadow:0 18px 40px rgba(0,0,0,.55);
+  display:flex;
+  flex-direction:column;
+}
+.dispo-topbar{
+  height:56px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  padding:0 14px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+}
+.dispo-topbar .left{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.dispo-badge{
+  font-weight:800;
+  letter-spacing:.08em;
+  font-size:12px;
+  color:#cfe3ff;
+}
+.dispo-sub{
+  font-size:12px;
+  color:#9ab9d6;
+}
+.dispo-actions{
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.dispo-actions a{
+  text-decoration:none;
+}
+.dispo-framewrap{
+  position:relative;
+  width:100%;
+  height:100%;
+  flex:1;
+  background:#0b1825;
+}
+#iframeDispo{
+  width:100%;
+  height:100%;
+  border:none;
+  display:block;
+  background:#0b1825;
+}
+.dispo-mask{
+  position:absolute;
+  top:0;
+  left:0;
+  right:0;
+  height:56px;          /* masks the embedded dispo nav so it can't hijack the portal */
+  background:#0b1825;   /* visually removes the inner header */
+  border-bottom:1px solid rgba(255,255,255,.12);
+  z-index:5;
+  pointer-events:auto;  /* blocks clicks */
+}
 </style>
 </head>
 
@@ -548,7 +622,7 @@ body{
             </div>
           </div>
 
-          <!-- Location Intel (keeps your map behavior: Area on selection, Street on click) -->
+          <!-- Location Intel -->
           <div class="field">
             <div class="field-label">LOCATION INTEL</div>
 
@@ -585,14 +659,36 @@ body{
         </div>
       </div>
 
-      <!-- ================= DISPO (kept) ================= -->
-      <div id="panel-dispo" style="display:none; height: 80vh; grid-column: 1 / -1;">
-        <iframe
-          id="iframeDispo"
-          src="dispo.html"
-          style="width:100%; height:100%; border:none; border-radius:12px; background:#0b1825;">
-        </iframe>
+      <!-- ================= DISPO (UPDATED UI) ================= -->
+      <div id="panel-dispo">
+        <div class="dispo-shell">
+          <div class="dispo-topbar">
+            <div class="left">
+              <div class="dispo-badge">● DISPO</div>
+              <div class="dispo-sub">Live Deals / Inventory Board</div>
+              <span class="pill" id="dispoHintPill">System Online</span>
+            </div>
+            <div class="dispo-actions">
+              <a class="chip" href="dispo.html" target="_blank" rel="noreferrer">Open Fullscreen</a>
+              <button class="chip primary" id="dispoRefreshBtn" type="button">Refresh</button>
+            </div>
+          </div>
+
+          <div class="dispo-framewrap">
+            <iframe
+              id="iframeDispo"
+              src="dispo.html"
+              loading="lazy"
+              referrerpolicy="no-referrer"
+              style="border:none;">
+            </iframe>
+
+            <!-- masks the inner dispo header/nav + blocks clicks so it can't hijack this portal -->
+            <div class="dispo-mask" aria-hidden="true"></div>
+          </div>
+        </div>
       </div>
+
     </div>
   </section>
 </div>
@@ -629,11 +725,6 @@ body{
 <!-- Your existing order -->
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
-
-
-
-
-
 
 <script>
 /** ==========================
@@ -680,7 +771,7 @@ const GEOCODE_RATE_LIMIT_MS = 1200;
 const $ = (id) => document.getElementById(id);
 
 function esc(s){
-  return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+  return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;"," >":"&gt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c] || c));
 }
 
 function fmtPhoneKey(p){
@@ -799,47 +890,29 @@ function subscribeLeads(){
     $("leadCountPill").textContent = `${sellerView.length} leads`;
   }
 
-// --- RTDB live sync: child_added / child_changed / child_removed ---
-leadsRef.off(); // prevent duplicate listeners if subscribeLeads runs twice
+  // --- RTDB live sync ---
+  leadsRef.off();
 
-leadsRef.on("child_added", (snap) => {
-  const id = snap.key;
-  const v = snap.val();
+  leadsRef.on("child_added", (snap) => {
+    const id = snap.key;
+    const v = snap.val();
+    const obj = (v && typeof v === "object") ? v : { value: v };
+    byId.set(id, { id, ...obj });
+    rebuild();
+  }, (err) => console.warn("leads child_added failed:", err));
 
-  // v should be an object; guard anyway
-  const obj = (v && typeof v === "object") ? v : { value: v };
+  leadsRef.on("child_changed", (snap) => {
+    const id = snap.key;
+    const v = snap.val();
+    const obj = (v && typeof v === "object") ? v : { value: v };
+    byId.set(id, { id, ...obj });
+    rebuild();
+  }, (err) => console.warn("leads child_changed failed:", err));
 
-  byId.set(id, { id, ...obj });
-  rebuildFromMap();
-}, (err) => {
-  console.warn("leads child_added failed:", err);
-});
-
-leadsRef.on("child_changed", (snap) => {
-  const id = snap.key;
-  const v = snap.val();
-
-  const obj = (v && typeof v === "object") ? v : { value: v };
-
-  byId.set(id, { id, ...obj });
-  rebuildFromMap();
-}, (err) => {
-  console.warn("leads child_changed failed:", err);
-});
-
-leadsRef.on("child_removed", (snap) => {
-  const id = snap.key;
-  byId.delete(id);
-  rebuildFromMap();
-}, (err) => {
-  console.warn("leads child_removed failed:", err);
-});
-
-
-  leadsRef.on("child_removed", (snap)=>{
+  leadsRef.on("child_removed", (snap) => {
     byId.delete(snap.key);
     rebuild();
-  });
+  }, (err) => console.warn("leads child_removed failed:", err));
 
   // Empty / permission check
   leadsRef.once("value").then((snap)=>{
@@ -874,9 +947,6 @@ firebase.auth().onAuthStateChanged(async (u) => {
   ME = u;
   ME_INITIALS = initialsFromUser(u);
 
-  // ✅ Per-user lead buckets later (optional):
-  // LEADS_PATH = `user_leads/${UID}/sellers`;
-
   // Start presence
   try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
 
@@ -907,7 +977,6 @@ firebase.auth().onAuthStateChanged(async (u) => {
     $("status").textContent = "Leads subscribe error (see console).";
   }
 });
-
 
 /** ==========================
  * TEAM CALL LOG (lead + phone)
@@ -953,7 +1022,8 @@ function bindCallLog(){
     logEntryCount++;
     $("logCount").textContent = `${logEntryCount} entries`;
 
-    if ($("logEmpty")) $("logEmpty").remove();
+    const emptyEl = $("logEmpty");
+    if (emptyEl) emptyEl.remove();
 
     const tagKind = String(v.kind || "note").toLowerCase();
     const tagClass =
@@ -979,8 +1049,7 @@ function bindCallLog(){
   });
 
   activeLogRef.on("value", (snap)=>{
-    const exists = snap.exists();
-    if (!exists){
+    if (!snap.exists()){
       logEntryCount = 0;
       $("logCount").textContent = "0 entries";
       box.innerHTML = `<div class="log-empty" id="logEmpty">
@@ -1345,6 +1414,15 @@ function sendMsg() {
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
+/* Dispo refresh (UI only) */
+$("dispoRefreshBtn").onclick = () => {
+  const f = $("iframeDispo");
+  try{
+    const src = f.getAttribute("src") || "dispo.html";
+    f.setAttribute("src", src.split("?")[0] + "?t=" + Date.now());
+  }catch(e){}
+};
+
 // Tabs
 document.addEventListener('DOMContentLoaded', () => {
   const tabAcq = $("tabAcq");
@@ -1366,7 +1444,7 @@ document.addEventListener('DOMContentLoaded', () => {
     tabAcq.classList.remove('active');
     panelAcq.style.display = 'none';
     panelDispo.style.display = 'block';
-    crumb.textContent = 'Dispo';
+    crumb.textContent = 'Disposition';
   };
 });
 </script>
