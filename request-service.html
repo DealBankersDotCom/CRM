@@ -1,0 +1,807 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>DealBankers — Request Service</title>
+  <link rel="icon" href="icon (1).jpg" />
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
+
+  <style>
+    :root{
+      --bg0:#050712;
+      --bg1:#070b16;
+      --bg2:#0a1020;
+
+      --text:#eaf2ff;
+      --muted: rgba(255,255,255,.60);
+      --line: rgba(255,255,255,.10);
+
+      --shadowSoft: 0 10px 30px rgba(0,0,0,.35);
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+
+      --blue:#2b74ff;
+      --blue2:#6aa7ff;
+      --purple:#8b5cf6;
+      --teal:#22c55e;
+      --amber:#fbbf24;
+      --red:#ef4444;
+    }
+
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(43,116,255,.18), transparent 55%),
+        radial-gradient(circle at 80% 30%, rgba(139,92,246,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 35%, var(--bg2));
+      overflow-x:hidden;
+    }
+
+    /* Ambient */
+    .ambient{ position: fixed; inset: 0; pointer-events:none; z-index:0; overflow:hidden; }
+    .blob{ position:absolute; width: 420px; height: 420px; border-radius: 999px; filter: blur(48px); opacity:.35; }
+    .b1{ top: 12%; left: 8%; background: rgba(43,116,255,.35); }
+    .b2{ bottom: 18%; right: 10%; background: rgba(139,92,246,.30); }
+    .grid{
+      position:absolute; inset:0;
+      opacity:.06;
+      background-image:
+        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size:56px 56px;
+      mix-blend-mode: overlay;
+    }
+
+    header{
+      position: sticky; top: 0; z-index: 50;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(5,7,18,.78), rgba(5,7,18,.18));
+      backdrop-filter: blur(14px);
+    }
+    .hwrap{
+      max-width: 1240px;
+      margin: 0 auto;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 14px;
+    }
+    .brand{
+      display:flex; align-items:center; gap: 12px;
+    }
+    .brand img{
+      width: 42px; height: 42px;
+      border-radius: 12px;
+      box-shadow: 0 0 18px rgba(43,116,255,.35);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .brandTitle{ font-weight: 900; letter-spacing: .02em; font-size: 16px; line-height: 1.1; }
+    .brandSub{ font-size: 12px; color: rgba(255,255,255,.55); margin-top: 2px; line-height: 1.1; }
+
+    .topActions{
+      display:flex; align-items:center; gap: 10px; flex-wrap:wrap;
+      justify-content:flex-end;
+    }
+    .btn{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      text-decoration:none;
+      white-space:nowrap;
+    }
+    .btn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.14); }
+    .btnPrimary{
+      border-color: rgba(43,116,255,.55);
+      background: rgba(43,116,255,.18);
+    }
+
+    .wrap{
+      position: relative;
+      z-index: 2;
+      max-width: 1240px;
+      margin: 18px auto 46px;
+      padding: 0 16px;
+    }
+
+    .hero{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 14px;
+      flex-wrap:wrap;
+      margin: 14px 0 16px;
+    }
+    .hero h1{
+      font-size: clamp(22px, 2.4vw, 32px);
+      font-weight: 900;
+      letter-spacing: -.02em;
+      line-height: 1.1;
+    }
+    .hero h1 .grad{
+      background: linear-gradient(90deg, rgba(106,167,255,1), rgba(139,92,246,1));
+      -webkit-background-clip: text;
+      background-clip: text;
+      color: transparent;
+    }
+    .hero p{
+      margin-top: 8px;
+      color: rgba(255,255,255,.60);
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 780px;
+    }
+    .slo{
+      margin-top: 8px;
+      display:inline-flex;
+      gap: 8px;
+      flex-wrap:wrap;
+    }
+    .chip{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      font-weight: 800;
+      white-space:nowrap;
+    }
+
+    .gridMain{
+      display:grid;
+      grid-template-columns: 1.25fr .75fr;
+      gap: 16px;
+      align-items:start;
+      margin-top: 12px;
+    }
+
+    .panel{
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      overflow:hidden;
+    }
+    .panelHead{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .panelHead h3{
+      font-size: 13px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+      font-weight: 900;
+      white-space:nowrap;
+    }
+    .panelBody{ padding: 14px; }
+
+    /* Stepper */
+    .stepper{
+      display:flex; gap: 10px; flex-wrap:wrap;
+      margin-bottom: 14px;
+    }
+    .step{
+      display:flex; align-items:center; gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.04);
+      color: rgba(255,255,255,.72);
+      font-weight: 900;
+      font-size: 12px;
+    }
+    .step .num{
+      width: 26px; height: 26px; border-radius: 999px;
+      display:flex; align-items:center; justify-content:center;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.18);
+      color: rgba(255,255,255,.80);
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+    .step.active{
+      background: rgba(43,116,255,.12);
+      border-color: rgba(106,167,255,.35);
+      color: rgba(255,255,255,.92);
+    }
+    .step.active .num{
+      border-color: rgba(106,167,255,.45);
+      background: rgba(43,116,255,.22);
+      color: white;
+    }
+
+    /* Form */
+    .formGrid{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+    .field{ display:flex; flex-direction:column; gap: 6px; }
+    .field label{
+      font-size: 12px;
+      color: rgba(255,255,255,.72);
+      font-weight: 900;
+      letter-spacing: .01em;
+    }
+    .field input, .field select, .field textarea{
+      width: 100%;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: white;
+      outline:none;
+      font-size: 13px;
+    }
+    .field textarea{ min-height: 110px; resize: vertical; }
+    .field input:focus, .field select:focus, .field textarea:focus{
+      border-color: rgba(106,167,255,.55);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.14);
+    }
+    .span2{ grid-column: 1 / -1; }
+
+    .btnRow{
+      display:flex;
+      justify-content:space-between;
+      gap: 10px;
+      margin-top: 14px;
+      padding-top: 14px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      flex-wrap:wrap;
+    }
+
+    .hint{
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      line-height: 1.35;
+      margin-top: 10px;
+    }
+
+    /* Proof panel */
+    .proofStack{ display:flex; flex-direction:column; gap: 12px; }
+    .miniCard{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      padding: 12px;
+    }
+    .miniTitle{
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .quote{
+      margin-top: 8px;
+      color: rgba(255,255,255,.72);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+    .who{
+      margin-top: 8px;
+      color: rgba(255,255,255,.55);
+      font-size: 12px;
+      font-weight: 900;
+    }
+
+    .baGrid{
+      margin-top: 10px;
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+    }
+    .baTile{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.18);
+      overflow:hidden;
+      min-height: 88px;
+      position: relative;
+    }
+    .baTile img{
+      width: 100%;
+      height: 120px;
+      object-fit: cover;
+      display:block;
+      opacity: .92;
+    }
+    .tag{
+      position:absolute;
+      left: 10px; top: 10px;
+      padding: 6px 9px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(0,0,0,.35);
+      color: rgba(255,255,255,.88);
+      font-weight: 900;
+      font-size: 11px;
+      letter-spacing: .08em;
+    }
+
+    .capChips{ display:flex; flex-wrap:wrap; gap: 8px; margin-top: 10px; }
+
+    /* Confirmation */
+    .ok{
+      padding: 14px;
+      border-radius: 18px;
+      border: 1px solid rgba(34,197,94,.30);
+      background: rgba(34,197,94,.10);
+      box-shadow: 0 10px 26px rgba(0,0,0,.25);
+    }
+    .ok h4{ font-size: 15px; font-weight: 900; }
+    .ok p{ margin-top: 8px; color: rgba(255,255,255,.72); font-size: 13px; line-height: 1.35; }
+    .woid{
+      margin-top: 10px;
+      display:inline-flex;
+      align-items:center;
+      gap: 10px;
+      padding: 10px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      font-weight: 900;
+      letter-spacing: .06em;
+    }
+
+    footer{
+      max-width: 1240px;
+      margin: 26px auto 40px;
+      padding: 0 16px;
+      color: rgba(255,255,255,.46);
+      font-size: 12px;
+      text-align:center;
+    }
+
+    @media (max-width: 980px){
+      .gridMain{ grid-template-columns: 1fr; }
+      .formGrid{ grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="ambient">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="grid"></div>
+  </div>
+
+  <header>
+    <div class="hwrap">
+      <div class="brand">
+        <img src="icon (1).jpg" alt="DealBankers"/>
+        <div>
+          <div class="brandTitle">DealBankers</div>
+          <div class="brandSub">Service Intake Console</div>
+        </div>
+      </div>
+
+      <div class="topActions">
+        <a class="btn" href="index.html">← Back to Hub</a>
+        <button class="btn btnPrimary" id="googleBtn">
+          <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google" style="width:18px;height:18px;" />
+          Sign in (optional)
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="hero">
+      <div>
+        <h1>Submit a <span class="grad">Work Order</span></h1>
+        <p>No account needed. Submit your request now — sign in later to track status, add photos, and manage ongoing work.</p>
+        <div class="slo">
+          <div class="chip">⚡ Fast Dispatch</div>
+          <div class="chip">📸 Photo Documentation</div>
+          <div class="chip">🧾 Work Order Tracking</div>
+        </div>
+      </div>
+
+      <div class="pill" id="authStatus">Guest Mode</div>
+    </div>
+
+    <div class="gridMain">
+      <!-- Intake -->
+      <div class="panel">
+        <div class="panelHead">
+          <h3>Request Intake</h3>
+          <div class="pill" id="stepPill">Step 1 of 4</div>
+        </div>
+        <div class="panelBody">
+          <div class="stepper" id="stepper">
+            <div class="step active" data-step="1"><div class="num">1</div> Request Type</div>
+            <div class="step" data-step="2"><div class="num">2</div> Property & Access</div>
+            <div class="step" data-step="3"><div class="num">3</div> Details & Proof</div>
+            <div class="step" data-step="4"><div class="num">4</div> Contact & Submit</div>
+          </div>
+
+          <div id="confirmBox" style="display:none;"></div>
+
+          <form id="intakeForm">
+            <!-- STEP 1 -->
+            <div class="stepPage" data-page="1">
+              <div class="formGrid">
+                <div class="field">
+                  <label>Request Type</label>
+                  <select id="requestType" required>
+                    <option value="">Select…</option>
+                    <option>Make-Ready / Turn</option>
+                    <option>Work Order / Repair</option>
+                    <option>Estimate / Scope Walk</option>
+                    <option>Emergency</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Priority</label>
+                  <select id="priority" required>
+                    <option>Standard</option>
+                    <option>High</option>
+                    <option>Urgent</option>
+                  </select>
+                </div>
+
+                <div class="field span2">
+                  <label>What do you need done?</label>
+                  <textarea id="summary" placeholder="Brief scope: paint touch-up, trash-out, lock change, flooring, punch list, etc." required></textarea>
+                </div>
+              </div>
+
+              <div class="btnRow">
+                <span class="hint">Tip: The clearer the scope, the faster we can dispatch the right vendor.</span>
+                <div style="display:flex; gap:10px; flex-wrap:wrap;">
+                  <button type="button" class="btn btnPrimary" id="next1">Next →</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- STEP 2 -->
+            <div class="stepPage" data-page="2" style="display:none;">
+              <div class="formGrid">
+                <div class="field span2">
+                  <label>Property Address</label>
+                  <input id="address" placeholder="123 Main St, San Antonio, TX" required />
+                </div>
+
+                <div class="field">
+                  <label>Unit (if applicable)</label>
+                  <input id="unit" placeholder="Apt 204" />
+                </div>
+
+                <div class="field">
+                  <label>Deadline / Needed By</label>
+                  <input id="deadline" type="date" />
+                </div>
+
+                <div class="field">
+                  <label>Occupancy</label>
+                  <select id="occupancy">
+                    <option>Vacant</option>
+                    <option>Occupied</option>
+                    <option>Unknown</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Access</label>
+                  <select id="accessType">
+                    <option>Lockbox</option>
+                    <option>Key / On-site</option>
+                    <option>Code / Smart Lock</option>
+                    <option>Call for access</option>
+                  </select>
+                </div>
+
+                <div class="field span2">
+                  <label>Access Notes</label>
+                  <input id="accessNotes" placeholder="Lockbox location, gate code, who to call, parking notes…" />
+                </div>
+              </div>
+
+              <div class="btnRow">
+                <button type="button" class="btn" id="back2">← Back</button>
+                <button type="button" class="btn btnPrimary" id="next2">Next →</button>
+              </div>
+            </div>
+
+            <!-- STEP 3 -->
+            <div class="stepPage" data-page="3" style="display:none;">
+              <div class="formGrid">
+                <div class="field">
+                  <label>Budget Range (optional)</label>
+                  <select id="budget">
+                    <option value="">Select…</option>
+                    <option>Under $500</option>
+                    <option>$500 – $1,500</option>
+                    <option>$1,500 – $5,000</option>
+                    <option>$5,000+</option>
+                  </select>
+                </div>
+
+                <div class="field">
+                  <label>Preferred Contact</label>
+                  <select id="prefContact">
+                    <option>Call</option>
+                    <option>Text</option>
+                    <option>Email</option>
+                  </select>
+                </div>
+
+                <div class="field span2">
+                  <label>Photo Links (optional)</label>
+                  <textarea id="photoLinks" placeholder="Paste Google Photos / Drive links (one per line). Uploads can be added after submission too."></textarea>
+                </div>
+
+                <div class="field span2">
+                  <label>Extra Notes (optional)</label>
+                  <textarea id="details" placeholder="Anything that helps: materials on-site, hazards, special instructions…"></textarea>
+                </div>
+              </div>
+
+              <div class="btnRow">
+                <button type="button" class="btn" id="back3">← Back</button>
+                <button type="button" class="btn btnPrimary" id="next3">Next →</button>
+              </div>
+            </div>
+
+            <!-- STEP 4 -->
+            <div class="stepPage" data-page="4" style="display:none;">
+              <div class="formGrid">
+                <div class="field">
+                  <label>Name</label>
+                  <input id="name" placeholder="Full name" required />
+                </div>
+
+                <div class="field">
+                  <label>Company (optional)</label>
+                  <input id="company" placeholder="Company / LLC" />
+                </div>
+
+                <div class="field">
+                  <label>Phone</label>
+                  <input id="phone" placeholder="(210) 555-1234" required />
+                </div>
+
+                <div class="field">
+                  <label>Email</label>
+                  <input id="email" type="email" placeholder="you@email.com" required />
+                </div>
+              </div>
+
+              <div class="btnRow">
+                <button type="button" class="btn" id="back4">← Back</button>
+                <button type="submit" class="btn btnPrimary" id="submitBtn">Submit Work Order</button>
+              </div>
+
+              <div class="hint">
+                By submitting, you authorize DealBankers vendors to contact you about this request. You can sign in afterward to track status and updates.
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Proof -->
+      <div class="panel">
+        <div class="panelHead">
+          <h3>Proof & Capability</h3>
+          <div class="pill">Verified Work</div>
+        </div>
+        <div class="panelBody">
+          <div class="proofStack">
+            <div class="miniCard">
+              <div class="miniTitle">Testimonials</div>
+              <div class="quote">“Fast turnaround and great communication. Photos + notes made it easy to approve work.”</div>
+              <div class="who">— Client • Property Ops</div>
+            </div>
+
+            <div class="miniCard">
+              <div class="miniTitle">Before / After</div>
+              <div class="baGrid">
+                <div class="baTile">
+                  <div class="tag">BEFORE</div>
+                  <img src="https://images.unsplash.com/photo-1501183638710-841dd1904471?auto=format&fit=crop&w=900&q=60" alt="Before placeholder">
+                </div>
+                <div class="baTile">
+                  <div class="tag">AFTER</div>
+                  <img src="https://images.unsplash.com/photo-1502005229762-cf1b2da7c5d6?auto=format&fit=crop&w=900&q=60" alt="After placeholder">
+                </div>
+              </div>
+              <div class="hint">Replace these images with your real before/after photos for instant credibility.</div>
+            </div>
+
+            <div class="miniCard">
+              <div class="miniTitle">Service Coverage</div>
+              <div class="capChips">
+                <div class="chip">Make-Ready / Turns</div>
+                <div class="chip">Punch Lists</div>
+                <div class="chip">Paint</div>
+                <div class="chip">Flooring</div>
+                <div class="chip">Trash-Out</div>
+                <div class="chip">Lock Changes</div>
+                <div class="chip">Drywall</div>
+                <div class="chip">General Repairs</div>
+              </div>
+            </div>
+
+            <div class="miniCard">
+              <div class="miniTitle">How it works</div>
+              <div class="quote">1) Submit → 2) We dispatch → 3) You get updates → 4) Closeout w/ photos + testimonial.</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <footer>
+    © <span id="year"></span> DealBankers.com • Work Orders • Make-Readies • Dispatch
+  </footer>
+
+  <script src="config.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged,
+      setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+    // Init
+    const app = initializeApp(window.firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Auth UI
+    const authStatus = document.getElementById("authStatus");
+    const googleBtn = document.getElementById("googleBtn");
+
+    googleBtn.onclick = async () => {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithPopup(auth, provider);
+    };
+
+    onAuthStateChanged(auth, (user)=>{
+      if(user){
+        authStatus.textContent = `Signed in: ${user.displayName || user.email}`;
+        // soft autofill
+        document.getElementById("name").value = user.displayName || "";
+        document.getElementById("email").value = user.email || "";
+      } else {
+        authStatus.textContent = "Guest Mode";
+      }
+    });
+
+    // Stepper
+    let step = 1;
+    const stepPill = document.getElementById("stepPill");
+    const pages = Array.from(document.querySelectorAll(".stepPage"));
+    const steps = Array.from(document.querySelectorAll(".step"));
+
+    function showStep(n){
+      step = n;
+      pages.forEach(p => p.style.display = (Number(p.dataset.page) === n) ? "" : "none");
+      steps.forEach(s => s.classList.toggle("active", Number(s.dataset.step) === n));
+      stepPill.textContent = `Step ${n} of 4`;
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    document.getElementById("next1").onclick = ()=>{
+      if(!document.getElementById("requestType").value) return alert("Select a request type.");
+      if(!document.getElementById("summary").value.trim()) return alert("Add a short scope.");
+      showStep(2);
+    };
+    document.getElementById("back2").onclick = ()=> showStep(1);
+    document.getElementById("next2").onclick = ()=>{
+      if(!document.getElementById("address").value.trim()) return alert("Enter the property address.");
+      showStep(3);
+    };
+    document.getElementById("back3").onclick = ()=> showStep(2);
+    document.getElementById("next3").onclick = ()=> showStep(4);
+    document.getElementById("back4").onclick = ()=> showStep(3);
+
+    // Submit
+    const form = document.getElementById("intakeForm");
+    const confirmBox = document.getElementById("confirmBox");
+    const submitBtn = document.getElementById("submitBtn");
+
+    form.addEventListener("submit", async (e)=>{
+      e.preventDefault();
+      submitBtn.disabled = true;
+      submitBtn.textContent = "Submitting…";
+
+      const payload = {
+        requestType: document.getElementById("requestType").value,
+        priority: document.getElementById("priority").value,
+        summary: document.getElementById("summary").value.trim(),
+
+        address: document.getElementById("address").value.trim(),
+        unit: document.getElementById("unit").value.trim(),
+        deadline: document.getElementById("deadline").value || "",
+        occupancy: document.getElementById("occupancy").value,
+        accessType: document.getElementById("accessType").value,
+        accessNotes: document.getElementById("accessNotes").value.trim(),
+
+        budget: document.getElementById("budget").value,
+        prefContact: document.getElementById("prefContact").value,
+        photoLinks: document.getElementById("photoLinks").value.trim(),
+        details: document.getElementById("details").value.trim(),
+
+        name: document.getElementById("name").value.trim(),
+        company: document.getElementById("company").value.trim(),
+        phone: document.getElementById("phone").value.trim(),
+        email: document.getElementById("email").value.trim(),
+
+        submittedAt: serverTimestamp(),
+        source: "request-service",
+        status: "New",
+        uid: auth.currentUser ? auth.currentUser.uid : null
+      };
+
+      try{
+        const r = await push(ref(db, "serviceRequests/public"), payload);
+        const key = r.key || "";
+        const wo = "DB-" + key.slice(-6).toUpperCase();
+
+        confirmBox.style.display = "";
+        confirmBox.innerHTML = `
+          <div class="ok">
+            <h4>✅ Request received</h4>
+            <p>We’ve logged your work order and will reach out shortly. Save this ID for reference.</p>
+            <div class="woid">Work Order ID: <span style="color:rgba(255,255,255,.95)">${wo}</span></div>
+            <div style="margin-top:12px; display:flex; gap:10px; flex-wrap:wrap;">
+              <a class="btn" href="request-service.html">Submit another</a>
+              <a class="btn btnPrimary" href="index.html">Back to Hub</a>
+            </div>
+          </div>
+        `;
+
+        // hide form after submit
+        form.style.display = "none";
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }catch(err){
+        console.error(err);
+        alert("Could not submit right now. Try again in a moment.");
+        submitBtn.disabled = false;
+        submitBtn.textContent = "Submit Work Order";
+      }
+    });
+  </script>
+</body>
+</html>
