@@ -981,6 +981,62 @@
     document.getElementById("bellBtn").addEventListener("click", ()=>{
       alert("Notifications panel is next. This badge is placeholder UI for now.");
     });
+
+function wirePortalCards(){
+  const modal = document.getElementById("contractorModal");
+  const closeBtn = document.getElementById("contractorModalClose");
+
+  const openModal = ()=>{
+    modal.classList.add("show");
+    modal.setAttribute("aria-hidden","false");
+    // basic focus comfort
+    closeBtn?.focus();
+  };
+  const closeModal = ()=>{
+    modal.classList.remove("show");
+    modal.setAttribute("aria-hidden","true");
+  };
+
+  // Close behaviors
+  closeBtn?.addEventListener("click", closeModal);
+  modal?.addEventListener("click", (e)=>{
+    if(e.target === modal) closeModal();
+  });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && modal.classList.contains("show")) closeModal();
+  });
+
+  // Router buttons
+  document.getElementById("routeRequestService")?.addEventListener("click", ()=>{
+    window.location.href = "request-service.html";
+  });
+  document.getElementById("routeContractorJoin")?.addEventListener("click", ()=>{
+    window.location.href = "contractor.html";
+  });
+  document.getElementById("routeMicroLoan")?.addEventListener("click", ()=>{
+    // placeholder page you can create next (or point to investor.html temporarily)
+    window.location.href = "micro-loan.html";
+  });
+
+  // Cards
+  document.querySelectorAll(".pCard").forEach(card=>{
+    const href = card.getAttribute("data-href");
+
+    const go = ()=>{
+      // Only override Contractor card
+      if(href === "contractor.html"){
+        openModal();
+        return;
+      }
+      if(href) window.location.href = href;
+    };
+
+    card.addEventListener("click", go);
+    card.addEventListener("keypress", (e)=>{ if(e.key==="Enter") go(); });
+  });
+}
+wirePortalCards();
+    
   </script>
 </body>
 </html>
