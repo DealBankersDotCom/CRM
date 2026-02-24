@@ -138,12 +138,17 @@
       padding: 0 16px;
     }
 
-    /* ===== Top grid (fix alignment here) ===== */
+    /* ===== Top grid (layout fix) =====
+       - Equal height panels on desktop
+       - Prevent the right panel from looking "empty" by:
+         (a) using an aspect-ratio media frame, and
+         (b) adding an optional poster image fallback
+    */
     .topGrid{
       display:grid;
       grid-template-columns: 1.25fr .75fr;
       gap: 16px;
-      align-items: stretch;          /* key: equal height alignment */
+      align-items: stretch;
       margin-top: 10px;
     }
     @media (max-width: 980px){
@@ -213,29 +218,55 @@
       white-space:nowrap;
     }
 
-    /* Dispatch preview */
-    .videoBox{
+    /* Dispatch preview (FIXED) */
+    .mediaFrame{
       width: 100%;
       border-radius: 16px;
       border: 1px solid rgba(255,255,255,.10);
       background: rgba(0,0,0,.20);
       overflow:hidden;
-      min-height: 240px;
+      position: relative;
+      aspect-ratio: 16 / 9;     /* key: keeps right panel looking “designed” */
+      min-height: 220px;
       display:flex;
       align-items:center;
       justify-content:center;
-      color: rgba(255,255,255,.50);
-      font-size: 12px;
-      text-align:center;
-      padding: 10px;
     }
-    .videoBox video{
+    .mediaFrame video,
+    .mediaFrame img{
       width: 100%;
       height: 100%;
       display:block;
       object-fit: cover;
       background: rgba(0,0,0,.25);
     }
+
+    .mediaOverlay{
+      position:absolute;
+      inset:0;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      text-align:center;
+      padding: 14px;
+      color: rgba(255,255,255,.70);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(43,116,255,.18), transparent 55%),
+        radial-gradient(circle at 80% 30%, rgba(139,92,246,.14), transparent 55%),
+        linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35));
+      pointer-events:none;
+    }
+    .mediaOverlay .box{
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      backdrop-filter: blur(10px);
+      border-radius: 14px;
+      padding: 10px 12px;
+      max-width: 360px;
+      box-shadow: 0 10px 24px rgba(0,0,0,.35);
+    }
+    .mediaOverlay b{ color: rgba(255,255,255,.92); }
+
     .videoHint{
       margin-top: 10px;
       color: rgba(255,255,255,.52);
@@ -297,7 +328,7 @@
     .field{ display:flex; flex-direction:column; gap: 6px; }
     .field label{
       font-size: 12px;
-      color: rgba(255,255,255,.78);      /* brighter for readability */
+      color: rgba(255,255,255,.78);
       font-weight: 900;
       letter-spacing: .01em;
     }
@@ -309,7 +340,7 @@
       background: rgba(0,0,0,.20);
       color: white;
       outline:none;
-      font-size: 14px;                   /* slightly bigger */
+      font-size: 14px;
     }
     .field textarea{ min-height: 120px; resize: vertical; }
     .field input:focus, .field select:focus, .field textarea:focus{
@@ -372,7 +403,7 @@
     @media (max-width: 520px){
       .btn{ padding: 10px 10px; border-radius: 12px; }
       .panelBody{ padding: 12px; }
-      .videoBox{ min-height: 210px; }
+      .mediaFrame{ min-height: 210px; }
     }
   </style>
 </head>
@@ -407,7 +438,7 @@
 
   <div class="wrap">
 
-    <!-- TOP: left hero + right video (alignment fixed) -->
+    <!-- TOP: left hero + right video (layout fixed) -->
     <div class="topGrid">
       <div class="panel">
         <div class="panelBody hero">
@@ -431,21 +462,29 @@
           <div class="pill">Optional</div>
         </div>
         <div class="panelBody">
-          <div class="videoBox">
-            <!--
-              If you have your dispatch video in the repo, set it here.
-              Example:
-              <video src="videos/dispatch.mp4" autoplay muted loop playsinline></video>
+          <!-- ✅ This now actually uses your dispatch.mp4.
+               If the MP4 fails to load, it falls back to a poster image:
+               put any image at images/dispatch-poster.jpg (or change path). -->
+          <div class="mediaFrame" id="dispatchFrame">
+            <video id="dispatchVideo" controls preload="metadata" playsinline poster="images/dispatch-poster.jpg">
+              <source src="https://www.dealbankers.com/images/dispatch.mp4" type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
 
-              Leaving it as a placeholder keeps page light.
-            -->
-            <div>
-              Add your dispatch video here (optional).<br/>
-              Put <b>videos/dispatch.mp4</b> in your repo and uncomment the video line in this HTML.
+            <!-- Overlay only shows if video errors or is intentionally disabled -->
+            <div class="mediaOverlay" id="dispatchOverlay" style="display:none;">
+              <div class="box">
+                <div style="font-weight:900; margin-bottom:6px;">Dispatch Preview</div>
+                <div style="font-size:12px; color:rgba(255,255,255,.78); line-height:1.35;">
+                  Video unavailable. Add a poster image at <b>images/dispatch-poster.jpg</b>
+                  or verify the MP4 URL returns <b>video/mp4</b>.
+                </div>
+              </div>
             </div>
           </div>
+
           <div class="videoHint">
-            If you don’t want video, leave it off. This keeps the page fast and “app-like”.
+            This is optional. If you want it lighter, remove the <b>&lt;video&gt;</b> block and keep just a poster image.
           </div>
         </div>
       </div>
@@ -516,7 +555,7 @@
               <textarea id="summary" placeholder="Short scope: lock not latching, leak under sink, paint touch-up, trash-out, punch list, etc." required></textarea>
             </div>
 
-            <!-- Optional (collapsed by default UX-wise, but we keep simple here) -->
+            <!-- Optional -->
             <div class="field">
               <label>Unit (optional)</label>
               <input id="unit" placeholder="Ste 300 / Apt 204" />
@@ -589,6 +628,9 @@
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
     import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
+    // ✅ Answer: No mix-up — index.html modal uses the dispatch video inside the Contractor modal.
+    // This page now uses the same MP4 in the Dispatch Preview panel.
+
     // Init
     const app = initializeApp(window.firebaseConfig);
     const auth = getAuth(app);
@@ -632,6 +674,25 @@
         window.scrollTo({ top: 420, behavior: "smooth" });
       });
     });
+
+    // Dispatch preview fallback handling
+    const dispatchVideo = document.getElementById("dispatchVideo");
+    const dispatchOverlay = document.getElementById("dispatchOverlay");
+    const dispatchFrame = document.getElementById("dispatchFrame");
+
+    if(dispatchVideo){
+      const showOverlay = ()=>{
+        if(dispatchOverlay) dispatchOverlay.style.display = "";
+      };
+      dispatchVideo.addEventListener("error", showOverlay);
+      dispatchVideo.addEventListener("stalled", ()=>{ /* no-op */ });
+      dispatchVideo.addEventListener("loadeddata", ()=>{
+        if(dispatchOverlay) dispatchOverlay.style.display = "none";
+      });
+
+      // If MP4 source is blocked by CORS or returns HTML, it will error -> overlay shows.
+      // (No console spam needed.)
+    }
 
     // Submit
     const form = document.getElementById("intakeForm");
