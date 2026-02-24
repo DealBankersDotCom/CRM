@@ -85,7 +85,7 @@ body{
 }
 .status{font-size:12px;color:#9ab9d6}
 
-/* BASE44-LIKE GRID (but your skin) */
+/* GRID */
 .body{
   padding:14px;
   display:grid;
@@ -520,6 +520,61 @@ body{
   z-index:5;
   pointer-events:auto;
 }
+
+/* ===== ADD LEAD MODAL ===== */
+#leadModalBackdrop{
+  position:fixed; inset:0;
+  background:rgba(0,0,0,.62);
+  backdrop-filter: blur(6px);
+  z-index: 9997;
+  display:none;
+}
+#leadModal{
+  position:fixed; inset:0;
+  display:none;
+  align-items:center;
+  justify-content:center;
+  z-index: 9998;
+  padding: 18px;
+}
+.lm-card{
+  width:min(720px, 96vw);
+  border-radius:18px;
+  border:1px solid rgba(255,255,255,.16);
+  background:#0b1825;
+  box-shadow:0 28px 70px rgba(0,0,0,.65);
+  overflow:hidden;
+}
+.lm-head{
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:12px;
+  padding:12px 12px;
+  border-bottom:1px solid rgba(255,255,255,.12);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+}
+.lm-title{
+  font-weight:900;
+  letter-spacing:.04em;
+}
+.lm-body{ padding: 12px; }
+.lm-grid{
+  display:grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media(max-width:720px){
+  .lm-grid{ grid-template-columns: 1fr; }
+}
+.lm-actions{
+  margin-top: 12px;
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  padding-top: 12px;
+  border-top:1px solid rgba(255,255,255,.10);
+}
 </style>
 </head>
 
@@ -551,35 +606,24 @@ body{
 
     <div class="body">
       <!-- ================= LEFT: LEAD QUEUE ================= -->
-<div class="panel-head">
+      <div id="panel-acq" class="panel">
+        <div class="panel-head">
+          <div class="panel-title">
+            ● LEAD QUEUE
+            <span class="pill" id="leadCountPill">0 leads</span>
+          </div>
 
-  <div class="panel-title">
-    ● LEAD QUEUE
-    <span class="pill" id="leadCountPill">0 leads</span>
-  </div>
+          <div style="display:flex;gap:10px;align-items:center;">
+            <button id="btnAddLead" class="chip primary" type="button">➕ Add Lead</button>
+            <div class="pill" id="queueHint">System Online</div>
+          </div>
+        </div>
 
-  <div style="display:flex;gap:10px;align-items:center;">
-
-    <button
-      id="btnAddLead"
-      class="chip primary"
-      type="button">
-      ➕ Add Lead
-    </button>
-
-    <div class="pill" id="queueHint">
-      System Online
-    </div>
-
-  </div>
-
-</div>
         <div class="panel-body queue">
           <div class="queue-search">
             <input id="s_q" class="input" placeholder="Search address, name, phone…" />
             <button class="chip" id="s_reload" type="button">Search</button>
           </div>
-
           <div class="queue-list" id="leadList"></div>
         </div>
       </div>
@@ -601,6 +645,7 @@ body{
               <h2 id="leadAddress">No lead selected</h2>
               <div class="lead-sub">
                 <span id="leadOwner">Select a lead from the queue.</span>
+                <a id="callLink" href="#" style="display:none;">Click to Call</a>
                 <a id="tpsLink" href="#" target="_blank" rel="noreferrer" style="display:none;">TruePeopleSearch</a>
               </div>
             </div>
@@ -615,7 +660,7 @@ body{
           <!-- Quick Status -->
           <div class="field">
             <div class="field-label">QUICK STATUS</div>
-            <div class="quick-grid">
+            <div class="quick-grid" id="quickGrid">
               <button class="qbtn noanswer" type="button" data-status="No Answer">No Answer</button>
               <button class="qbtn vm" type="button" data-status="Left VM">Left VM</button>
               <button class="qbtn owner" type="button" data-status="Spoke to Owner">Spoke to Owner</button>
@@ -734,6 +779,77 @@ body{
   </div>
 </div>
 
+<!-- ===== ADD LEAD MODAL ===== -->
+<div id="leadModalBackdrop"></div>
+<div id="leadModal">
+  <div class="lm-card">
+    <div class="lm-head">
+      <div class="lm-title">➕ Add Lead</div>
+      <button class="icon-btn mini" id="leadModalClose" type="button">✕</button>
+    </div>
+
+    <div class="lm-body">
+      <div class="lm-grid">
+        <div class="field" style="margin-top:0;">
+          <div class="field-label">ADDRESS *</div>
+          <input id="lead_address" class="input" placeholder="4824 County Road 36, Robstown, TX" />
+        </div>
+
+        <div class="field" style="margin-top:0;">
+          <div class="field-label">OWNER</div>
+          <input id="lead_owner" class="input" placeholder="John Doe" />
+        </div>
+
+        <div class="field" style="margin-top:0;">
+          <div class="field-label">MAILING</div>
+          <input id="lead_mailing" class="input" placeholder="Mailing address (optional)" />
+        </div>
+
+        <div class="field" style="margin-top:0;">
+          <div class="field-label">STATUS</div>
+          <select id="lead_status" class="select">
+            <option>New</option>
+            <option>Working</option>
+            <option>Hot</option>
+            <option>Do Not Call</option>
+            <option>Dead</option>
+          </select>
+        </div>
+
+        <div class="field" style="grid-column:1/-1;margin-top:0;">
+          <div class="field-label">PHONES (ONE PER LINE)</div>
+          <textarea id="lead_phones" class="input note-box" placeholder="(210) 555-1234&#10;(210) 555-5678"></textarea>
+        </div>
+
+        <div class="field" style="grid-column:1/-1;margin-top:0;">
+          <div class="field-label">SHARE WITH (PARTNER UID - OPTIONAL)</div>
+          <input id="lead_partner_uid" class="input" placeholder="Paste the other acq's Firebase UID here (optional)" />
+          <div style="margin-top:6px;font-size:12px;color:#9ab9d6;">
+            This keeps <b>createdBy</b> as you (rules-safe), but adds <b>partners/{uid}=true</b> so your other acq can work it.
+          </div>
+        </div>
+
+        <div class="field" style="grid-column:1/-1;margin-top:0;">
+          <div class="field-label">TAG (OPTIONAL)</div>
+          <input id="lead_tag" class="input" placeholder="probate / pre-foreclosure / high equity / etc" />
+        </div>
+
+        <div class="field" style="grid-column:1/-1;margin-top:0;">
+          <div class="field-label">NOTES (OPTIONAL)</div>
+          <textarea id="lead_notes" class="input note-box" placeholder="Quick notes…"></textarea>
+        </div>
+      </div>
+
+      <div id="leadModalMsg" class="pill" style="display:none;margin-top:12px;"></div>
+
+      <div class="lm-actions">
+        <button class="chip" id="leadModalCancel" type="button">Cancel</button>
+        <button class="chip primary" id="leadModalSave" type="button">Save Lead</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -744,6 +860,7 @@ body{
 <script src="app-auth.js"></script>
 
 <script>
+/* ================== FIREBASE INIT ================== */
 (function ensureFirebaseInit(){
   try{
     if (!firebase.apps || !firebase.apps.length) {
@@ -759,38 +876,32 @@ body{
   }
 })();
 
-function getMapsKey(){
-  return String((window.MAPS_EMBED_KEY || window.MAPS_JS_KEY || "")).trim();
-}
-
-const STREETVIEW_ON_LOAD = false;
-
-const ENABLE_GEOCODE_CACHE = false;
-const GEOCODE_RATE_LIMIT_MS = 1200;
-
 const $ = (id) => document.getElementById(id);
-
-function esc(s){
-  return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;"," >":"&gt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c] || c));
-}
 
 function fmtPhoneKey(p){
   return String(p || "").trim().replace(/[^\d+]/g,"") || "unknown";
 }
-
 function tsToLocal(ts){
-  try{
-    const d = new Date(ts);
-    if (isNaN(d.getTime())) return "";
-    return d.toLocaleString();
-  }catch(e){ return ""; }
+  try{ const d = new Date(ts); if (isNaN(d.getTime())) return ""; return d.toLocaleString(); }
+  catch(e){ return ""; }
 }
-
 function initialsFromUser(u){
   const base = (u && (u.displayName || u.email)) ? (u.displayName || u.email) : "";
   const parts = String(base).split(/[\s._-]+/).filter(Boolean);
   const ini = parts.map(p => p[0]?.toUpperCase() || "").join("").slice(0,2);
   return ini || "U";
+}
+function safeText(s){ return String(s ?? "").trim(); }
+
+function buildMapsEmbed(address, mode){
+  // No API key needed (uses basic google maps embed URLs).
+  // Note: StreetView via "layer=c" doesn't always lock to exact house, but it's good enough for free mode.
+  const q = encodeURIComponent(address || "");
+  if (!q) return "";
+  if (mode === "street"){
+    return `https://www.google.com/maps?q=${q}&output=embed&layer=c`;
+  }
+  return `https://www.google.com/maps?q=${q}&output=embed`;
 }
 
 let UID = null;
@@ -798,47 +909,397 @@ let ME = null;
 let ME_INITIALS = "U";
 
 let isAdmin = false;
-let currentChatPath = null;
-let activeChatRef = null;
-
 let sellerList = [];
 let sellerView = [];
 let currentIndex = -1;
 let currentLead = null;
 
 let currentPhone = "";
-let currentPhoneLabel = "";
 let currentLeadId = "";
-
-let activeLogRef = null;
-let logEntryCount = 0;
-
-let mapMode = "area";
-let lastGeocodeAt = 0;
-
-let LEADS_PATH = "leads/sellers";
 let leadsRef = null;
+let activeLogRef = null;
 
-function leadIdFor(lead){
-  return String((lead && (lead.id || lead.docnum)) ? (lead.id || lead.docnum) : "");
+/* ================== BASIC UI RENDER ================== */
+function normalizeLead(lead){
+  const l = lead || {};
+  const phones = Array.isArray(l.phones) ? l.phones : [];
+  // support older formats
+  const normPhones = phones.map(p=>{
+    if (typeof p === "string") return { label: p, key: fmtPhoneKey(p) };
+    return { label: p.label || "", key: p.key || fmtPhoneKey(p.label || "") };
+  }).filter(p=>p.label || p.key);
+  return {
+    id: l.id,
+    address: l.address || "",
+    owner: l.owner || "",
+    mailing: l.mailing || "",
+    status: l.status || "New",
+    tag: l.tag || "",
+    notes: l.notes || "",
+    phones: normPhones,
+    createdBy: l.createdBy || "",
+    createdAt: l.createdAt || 0,
+    partners: l.partners || {}
+  };
 }
 
-/* NOTE: your other functions (renderQueue/selectLeadByIndex/etc.) stay as-is in your file.
-   You didn't include them in this paste, so I'm not inventing them.
-   Keep them below this point if they exist in your real file. */
-
-function subscribeLeads(){
-  if (!UID) {
-    console.warn("subscribeLeads called before UID is set.");
+function applySearch(){
+  const q = safeText($("s_q").value).toLowerCase();
+  if (!q){
+    sellerView = sellerList.slice();
+  } else {
+    sellerView = sellerList.filter(l=>{
+      const hay = [
+        l.address, l.owner, l.mailing, l.tag, l.status,
+        (l.phones||[]).map(p=>p.label).join(" ")
+      ].join(" ").toLowerCase();
+      return hay.includes(q);
+    });
+  }
+  renderQueue();
+  if (!sellerView.length){
+    clearConsole();
+    updatePager();
     return;
   }
+  if (currentIndex < 0 || currentIndex >= sellerView.length){
+    selectLeadByIndex(0);
+  } else {
+    selectLeadByIndex(currentIndex);
+  }
+}
+
+function renderQueue(){
+  const list = $("leadList");
+  list.innerHTML = "";
+
+  $("leadCountPill").textContent = `${sellerView.length} leads`;
+
+  sellerView.forEach((lead, idx)=>{
+    const div = document.createElement("div");
+    div.className = "lead-item" + (idx === currentIndex ? " selected" : "");
+    div.innerHTML = `
+      <div class="addr">${lead.address ? lead.address : "(no address)"}</div>
+      <div class="meta">
+        <div>${lead.owner ? lead.owner : "—"}</div>
+        <div>${lead.status ? lead.status : "—"}${lead.tag ? " • " + lead.tag : ""}</div>
+        <div>${(lead.phones && lead.phones.length) ? lead.phones[0].label : "No phone yet"}</div>
+      </div>
+      <div class="badges">
+        <span class="badge ${lead.status === "New" ? "new" : ""}">${lead.status || "New"}</span>
+        ${lead.tag ? `<span class="badge working">${lead.tag}</span>` : ``}
+      </div>
+    `;
+    div.addEventListener("click", ()=>selectLeadByIndex(idx));
+    list.appendChild(div);
+  });
+}
+
+function updatePager(){
+  $("leadPager").textContent = sellerView.length ? `${currentIndex+1} / ${sellerView.length}` : `0 / 0`;
+}
+
+function clearConsole(){
+  currentLead = null;
+  currentLeadId = "";
+  currentPhone = "";
+
+  $("leadAddress").textContent = "No lead selected";
+  $("leadOwner").textContent = "Select a lead from the queue.";
+  $("tpsLink").style.display = "none";
+  $("callLink").style.display = "none";
+
+  const sel = $("phoneSelect");
+  sel.innerHTML = "";
+  sel.disabled = true;
+
+  $("mapHead").style.display = "none";
+  $("mapWrap").style.display = "none";
+  $("mapWarn").style.display = "none";
+  $("mapWarn").textContent = "";
+  $("streetFrame").src = "";
+
+  detachLog();
+  clearCallLogUI();
+}
+
+function selectLeadByIndex(idx){
+  if (!sellerView.length) return;
+  if (idx < 0) idx = 0;
+  if (idx >= sellerView.length) idx = sellerView.length-1;
+
+  currentIndex = idx;
+  currentLead = sellerView[idx];
+  currentLeadId = String(currentLead.id || "");
+
+  // re-render highlight
+  renderQueue();
+  updatePager();
+
+  $("leadAddress").textContent = currentLead.address || "(no address)";
+  $("leadOwner").textContent = currentLead.owner || "—";
+
+  // TPS link (optional): just opens search query
+  const q = encodeURIComponent(`${currentLead.owner || ""} ${currentLead.address || ""}`.trim());
+  $("tpsLink").href = `https://www.truepeoplesearch.com/results?name=${q}`;
+  $("tpsLink").style.display = "inline";
+
+  // phones
+  const sel = $("phoneSelect");
+  sel.innerHTML = "";
+  const phones = currentLead.phones || [];
+  if (phones.length){
+    phones.forEach((p, i)=>{
+      const opt = document.createElement("option");
+      opt.value = p.key || fmtPhoneKey(p.label);
+      opt.textContent = p.label || p.key || "unknown";
+      sel.appendChild(opt);
+    });
+    sel.disabled = false;
+
+    // select first by default
+    sel.selectedIndex = 0;
+    currentPhone = sel.value;
+
+    // click-to-call
+    updateCallLinkFromSelectedPhone();
+    attachLog(currentLeadId, currentPhone);
+  } else {
+    sel.disabled = true;
+    currentPhone = "";
+    $("callLink").style.display = "none";
+    detachLog();
+    clearCallLogUI();
+  }
+
+  // map
+  refreshMap("area");
+}
+
+function updateCallLinkFromSelectedPhone(){
+  const sel = $("phoneSelect");
+  if (sel.disabled || !sel.value){
+    $("callLink").style.display = "none";
+    return;
+  }
+  const chosen = sel.options[sel.selectedIndex]?.textContent || sel.value;
+  const tel = "tel:" + String(chosen).replace(/[^\d+]/g,"");
+  const a = $("callLink");
+  a.href = tel;
+  a.textContent = "Click to Call";
+  a.style.display = "inline";
+}
+
+/* ================== MAP ================== */
+let mapMode = "area";
+function refreshMap(mode){
+  mapMode = mode || "area";
+  const addr = currentLead && currentLead.address ? currentLead.address : "";
+  if (!addr){
+    $("mapHead").style.display = "none";
+    $("mapWrap").style.display = "none";
+    $("mapWarn").style.display = "block";
+    $("mapWarn").textContent = "No address on this lead.";
+    return;
+  }
+
+  $("mapWarn").style.display = "none";
+  $("mapHead").style.display = "flex";
+  $("mapWrap").style.display = "block";
+
+  $("mapHint").textContent = (mapMode === "street") ? "Street-ish view (free mode)" : "Area map (free mode)";
+  $("streetFrame").src = buildMapsEmbed(addr, mapMode);
+}
+
+/* ================== CALL LOG ================== */
+function clearCallLogUI(){
+  $("callLog").innerHTML = `<div class="log-empty" id="logEmpty">
+    No call history for this number.<br><br>
+    Select a lead + number, then log a status or add a note.
+  </div>`;
+  $("logCount").textContent = "0 entries";
+}
+function detachLog(){
+  if (activeLogRef){
+    try{ activeLogRef.off(); }catch(e){}
+    activeLogRef = null;
+  }
+}
+function attachLog(leadId, phoneKey){
+  detachLog();
+  if (!leadId || !phoneKey) return;
+
+  const path = `call_logs/${leadId}/${phoneKey}`;
+  activeLogRef = firebase.database().ref(path);
+
+  activeLogRef.on("value", (snap)=>{
+    const v = snap.val() || {};
+    const entries = Object.entries(v).map(([id, obj])=>({ id, ...(obj||{}) }))
+      .sort((a,b)=>Number(b.ts||0)-Number(a.ts||0));
+
+    $("logCount").textContent = `${entries.length} entries`;
+
+    if (!entries.length){
+      clearCallLogUI();
+      return;
+    }
+
+    const wrap = document.createElement("div");
+    wrap.className = "log";
+    wrap.id = "callLog";
+
+    entries.forEach(e=>{
+      const tag = (e.type === "status") ? "status" : "note";
+      const tagLabel = e.type === "status" ? (e.status || "Status") : "Note";
+      const div = document.createElement("div");
+      div.className = "log-item";
+      div.innerHTML = `
+        <div class="log-top">
+          <div>${tsToLocal(e.ts || 0)}</div>
+          <div class="log-tag ${tag}">${tagLabel}</div>
+        </div>
+        <div class="log-text">${(e.text || "").replace(/[<>&"]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[s]))}</div>
+      `;
+      wrap.appendChild(div);
+    });
+
+    const container = $("panel-calllog").querySelector(".panel-body");
+    container.innerHTML = "";
+    container.appendChild(wrap);
+  }, (err)=>{
+    console.warn("call log read failed:", err);
+    clearCallLogUI();
+  });
+}
+
+async function writeCallLogEntry({leadId, phoneKey, type, status, text}){
+  if (!leadId || !phoneKey) return;
+  const base = firebase.database().ref(`call_logs/${leadId}/${phoneKey}`);
+  const ref = base.push();
+  const payload = {
+    type: type || "note",
+    status: status || "",
+    text: text || "",
+    by: UID || "",
+    ts: firebase.database.ServerValue.TIMESTAMP
+  };
+  await ref.set(payload);
+}
+
+/* ================== ADD LEAD MODAL (GOD MODE ENTRY) ================== */
+const leadModal = $("leadModal");
+const btnAddLead = $("btnAddLead");
+const leadModalBackdrop = $("leadModalBackdrop");
+const leadModalClose = $("leadModalClose");
+const leadModalCancel = $("leadModalCancel");
+const leadModalSave = $("leadModalSave");
+const leadModalMsg = $("leadModalMsg");
+
+function openLeadModal(){
+  if(!UID){
+    alert("Not signed in yet.");
+    return;
+  }
+  leadModalBackdrop.style.display = "block";
+  leadModal.style.display = "flex";
+
+  leadModalMsg.style.display = "none";
+  leadModalMsg.textContent = "";
+
+  $("lead_status").value = "New";
+  $("lead_address").focus();
+}
+function closeLeadModal(){
+  leadModalBackdrop.style.display = "none";
+  leadModal.style.display = "none";
+}
+function cleanPhones(text){
+  const lines = String(text || "").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
+  return lines.map(p => ({ label:p, key: fmtPhoneKey(p) }));
+}
+
+btnAddLead.addEventListener("click", openLeadModal);
+leadModalBackdrop.addEventListener("click", closeLeadModal);
+leadModalClose.addEventListener("click", closeLeadModal);
+leadModalCancel.addEventListener("click", closeLeadModal);
+
+document.addEventListener("keydown", (e)=>{
+  if(e.key === "Escape" && leadModal.style.display !== "none"){
+    closeLeadModal();
+  }
+});
+
+leadModalSave.addEventListener("click", async ()=>{
+  const address = $("lead_address").value.trim();
+  if(!address){
+    alert("Address is required.");
+    $("lead_address").focus();
+    return;
+  }
+
+  leadModalSave.disabled = true;
+  leadModalSave.textContent = "Saving…";
+
+  const partnerUid = $("lead_partner_uid").value.trim();
+
+  const payload = {
+    address,
+    owner: $("lead_owner").value.trim(),
+    mailing: $("lead_mailing").value.trim(),
+    status: $("lead_status").value || "New",
+    tag: $("lead_tag").value.trim(),
+    notes: $("lead_notes").value.trim(),
+    phones: cleanPhones($("lead_phones").value),
+    createdBy: UID,
+    createdAt: firebase.database.ServerValue.TIMESTAMP
+  };
+
+  // Share with another acq (rules-safe): add partners/{uid}=true
+  if (partnerUid){
+    payload.partners = {};
+    payload.partners[partnerUid] = true;
+  }
+
+  try{
+    const ref = firebase.database().ref("leads/sellers").push();
+    await ref.set(payload);
+
+    leadModalMsg.style.display = "inline-flex";
+    leadModalMsg.textContent = "Saved ✓ Lead added.";
+
+    // reset for rapid entry
+    $("lead_address").value = "";
+    $("lead_owner").value = "";
+    $("lead_mailing").value = "";
+    $("lead_phones").value = "";
+    $("lead_tag").value = "";
+    $("lead_notes").value = "";
+    $("lead_partner_uid").value = "";
+    $("lead_status").value = "New";
+    $("lead_address").focus();
+
+    setTimeout(()=>closeLeadModal(), 350);
+  }catch(e){
+    console.error("Add lead failed:", e);
+    alert("Add lead failed. Most common cause: RTDB rules (approvedUsers/roles). Open DevTools Console to see 'permission_denied'.");
+  }finally{
+    leadModalSave.disabled = false;
+    leadModalSave.textContent = "Save Lead";
+  }
+});
+
+/* ================== LEADS SUBSCRIBE ================== */
+const LEADS_PATH = "leads/sellers";
+
+function subscribeLeads(){
+  if (!UID) return;
 
   if (leadsRef) { try{ leadsRef.off(); }catch(e){} leadsRef = null; }
 
   sellerList = [];
   sellerView = [];
   currentIndex = -1;
-  currentLead = null;
+  clearConsole();
 
   $("status").textContent = "Loading leads…";
   $("leadCountPill").textContent = "0 leads";
@@ -848,30 +1309,12 @@ function subscribeLeads(){
   const byId = new Map();
 
   function rebuild(){
-    const keepId = currentLeadId || (currentLead ? leadIdFor(currentLead) : "");
-
-    sellerList = Array.from(byId.values());
-
+    sellerList = Array.from(byId.values()).map(normalizeLead);
     sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
 
-    try { normalizeLeadCoords(); } catch(e) {}
-
-    renderQueue();
-
-    if (sellerView.length){
-      if (keepId){
-        const idx = sellerView.findIndex(x => leadIdFor(x) === keepId);
-        if (idx >= 0) { selectLeadByIndex(idx); return; }
-      }
-      if (currentIndex >= 0 && currentIndex < sellerView.length) {
-        selectLeadByIndex(currentIndex);
-      } else {
-        selectLeadByIndex(0);
-      }
-    } else {
-      clearConsole();
-      updatePager();
-    }
+    // default view = all
+    sellerView = sellerList.slice();
+    applySearch();
 
     $("status").textContent = `Acq: ${sellerView.length} items`;
     $("leadCountPill").textContent = `${sellerView.length} leads`;
@@ -902,26 +1345,17 @@ function subscribeLeads(){
 
   leadsRef.once("value").then((snap)=>{
     if (!snap.exists()){
-      sellerList = [];
-      sellerView = [];
-      renderQueue();
-      clearConsole();
-      updatePager();
       $("status").textContent = "No leads found in RTDB.";
       $("leadCountPill").textContent = "0 leads";
     }
   }).catch((err)=>{
     console.warn("Leads read failed:", err);
-    sellerList = [];
-    sellerView = [];
-    renderQueue();
-    clearConsole();
-    updatePager();
     $("status").textContent = "Leads permission denied or path missing.";
     $("leadCountPill").textContent = "0 leads";
   });
 }
 
+/* ================== AUTH / ROLE ================== */
 firebase.auth().onAuthStateChanged(async (u) => {
   if (!u) return location.href = 'index.html';
 
@@ -929,7 +1363,7 @@ firebase.auth().onAuthStateChanged(async (u) => {
   ME = u;
   ME_INITIALS = initialsFromUser(u);
 
-  try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
+  try { trackPresence(u); } catch(e){ /* ok */ }
 
   try{
     const roleSnap = await firebase.database().ref('roles/' + UID).once('value');
@@ -937,31 +1371,82 @@ firebase.auth().onAuthStateChanged(async (u) => {
 
     if (role === 'admin' || role === 'god' || u.email === "dealbankers@gmail.com") {
       isAdmin = true;
-      startRadar();
+      try { startRadar(); } catch(e) {}
     } else {
       isAdmin = false;
-      currentChatPath = 'direct_messages/' + UID;
-      setupChat(currentChatPath);
+      try {
+        const currentChatPath = 'direct_messages/' + UID;
+        setupChat(currentChatPath);
+      } catch(e) {}
     }
   }catch(e){
     console.warn("Role check failed:", e);
-    isAdmin = false;
-    currentChatPath = 'direct_messages/' + UID;
-    setupChat(currentChatPath);
   }
 
-  try { subscribeLeads(); }
-  catch(e){
-    console.warn("subscribeLeads failed:", e);
-    $("status").textContent = "Leads subscribe error (see console).";
-  }
+  subscribeLeads();
 });
 
-/* ... all your existing functions remain unchanged ... */
-
+/* ================== EVENTS ================== */
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
+$("s_reload").onclick = applySearch;
+$("s_q").addEventListener("keydown", (e)=>{ if(e.key === "Enter") applySearch(); });
+
+$("prevLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex(Math.max(0, currentIndex-1)); };
+$("nextLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex(Math.min(sellerView.length-1, currentIndex+1)); };
+
+$("phoneSelect").addEventListener("change", ()=>{
+  currentPhone = $("phoneSelect").value || "";
+  updateCallLinkFromSelectedPhone();
+  if (currentLeadId && currentPhone) attachLog(currentLeadId, currentPhone);
+});
+
+$("areaMapLink").onclick = ()=>refreshMap("area");
+$("streetViewLink").onclick = ()=>refreshMap("street");
+
+/* Quick status -> writes call log entry */
+$("quickGrid").addEventListener("click", async (e)=>{
+  const btn = e.target.closest("button[data-status]");
+  if (!btn) return;
+  if (!currentLeadId || !currentPhone){
+    alert("Select a lead + phone number first.");
+    return;
+  }
+  const status = btn.getAttribute("data-status") || "";
+  try{
+    await writeCallLogEntry({leadId: currentLeadId, phoneKey: currentPhone, type:"status", status, text:""});
+    // also update lead status (optional)
+    // await firebase.database().ref(`leads/sellers/${currentLeadId}/status`).set(status);
+  }catch(err){
+    console.error("Status write failed:", err);
+    alert("Status save failed. (rules) Check DevTools Console.");
+  }
+});
+
+/* Notes save */
+$("noteSaveBtn").onclick = async ()=>{
+  if (!currentLeadId || !currentPhone){
+    alert("Select a lead + phone number first.");
+    return;
+  }
+  const text = $("noteComposer").value.trim();
+  if (!text){
+    $("noteComposer").focus();
+    return;
+  }
+  try{
+    await writeCallLogEntry({leadId: currentLeadId, phoneKey: currentPhone, type:"note", text});
+    $("noteComposer").value = "";
+    $("noteStatus").style.display = "block";
+    setTimeout(()=>$("noteStatus").style.display="none", 900);
+  }catch(err){
+    console.error("Note write failed:", err);
+    alert("Note save failed. (rules) Check DevTools Console.");
+  }
+};
+
+/* Dispo refresh */
 $("dispoRefreshBtn").onclick = () => {
   const f = $("iframeDispo");
   try{
@@ -970,7 +1455,7 @@ $("dispoRefreshBtn").onclick = () => {
   }catch(e){}
 };
 
-/* ===== TAB TOGGLE (FIXED) ===== */
+/* Tabs */
 document.addEventListener('DOMContentLoaded', () => {
   const tabAcq = $("tabAcq");
   const tabDispo = $("tabDispo");
@@ -1009,6 +1494,16 @@ document.addEventListener('DOMContentLoaded', () => {
 
   showAcq();
 });
+
+/* Chat bubble open/close (keeps vibe even if app-auth handles actual chat) */
+(function chatPanelWiring(){
+  const bubble = $("chatBubble");
+  const panel = $("sidePanel");
+  const close = $("closePanel");
+  if (!bubble || !panel || !close) return;
+  bubble.onclick = ()=>panel.classList.add("open");
+  close.onclick = ()=>panel.classList.remove("open");
+})();
 </script>
 
 </body>
