@@ -33,6 +33,8 @@
 
       --radius: 18px;
       --radius2: 22px;
+
+      --headerH: 64px;
     }
 
     *{box-sizing:border-box;margin:0;padding:0}
@@ -50,8 +52,8 @@
     /* Ambient */
     .ambient{ position: fixed; inset: 0; pointer-events:none; z-index:0; overflow:hidden; }
     .blob{ position:absolute; width: 420px; height: 420px; border-radius: 999px; filter: blur(48px); opacity:.35; }
-    .b1{ top: 12%; left: 8%; background: rgba(43,116,255,.35); }
-    .b2{ bottom: 18%; right: 10%; background: rgba(139,92,246,.30); }
+    .b1{ top: 10%; left: 6%; background: rgba(43,116,255,.35); }
+    .b2{ bottom: 14%; right: 8%; background: rgba(139,92,246,.30); }
     .grid{
       position:absolute; inset:0;
       opacity:.06;
@@ -62,34 +64,38 @@
       mix-blend-mode: overlay;
     }
 
-    /* Header */
+    /* Header (slightly tighter so we can fit above fold) */
     header{
       position: sticky; top: 0; z-index: 50;
-      padding: 14px 18px;
+      height: var(--headerH);
+      display:flex;
+      align-items:center;
+      padding: 10px 16px;
       border-bottom: 1px solid rgba(255,255,255,.08);
       background: linear-gradient(180deg, rgba(5,7,18,.78), rgba(5,7,18,.18));
       backdrop-filter: blur(14px);
     }
     .hwrap{
+      width:100%;
       max-width: 1240px;
       margin: 0 auto;
       display:flex;
       align-items:center;
       justify-content:space-between;
-      gap: 14px;
+      gap: 12px;
     }
     .brand{
-      display:flex; align-items:center; gap: 12px;
+      display:flex; align-items:center; gap: 10px;
       min-width: 220px;
     }
     .brand img{
-      width: 42px; height: 42px;
+      width: 40px; height: 40px;
       border-radius: 12px;
       box-shadow: 0 0 18px rgba(43,116,255,.35);
       border: 1px solid rgba(255,255,255,.10);
       flex:0 0 auto;
     }
-    .brandTitle{ font-weight: 900; letter-spacing: .02em; font-size: 16px; line-height: 1.1; }
+    .brandTitle{ font-weight: 900; letter-spacing: .02em; font-size: 15px; line-height: 1.1; }
     .brandSub{ font-size: 12px; color: rgba(255,255,255,.55); margin-top: 2px; line-height: 1.1; }
 
     .topActions{
@@ -102,7 +108,7 @@
       align-items:center;
       justify-content:center;
       gap: 10px;
-      padding: 10px 12px;
+      padding: 9px 11px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(255,255,255,.06);
@@ -130,29 +136,24 @@
       white-space:nowrap;
     }
 
+    /* Main wrapper sized to fit above the fold on desktop */
     .wrap{
       position: relative;
       z-index: 2;
       max-width: 1240px;
-      margin: 18px auto 46px;
+      margin: 14px auto 18px;
       padding: 0 16px;
     }
 
-    /* ===== Top grid (layout fix) =====
-       - Equal height panels on desktop
-       - Prevent the right panel from looking "empty" by:
-         (a) using an aspect-ratio media frame, and
-         (b) adding an optional poster image fallback
-    */
-    .topGrid{
+    .mainGrid{
       display:grid;
-      grid-template-columns: 1.25fr .75fr;
-      gap: 16px;
+      grid-template-columns: 1.12fr .88fr;
+      gap: 14px;
       align-items: stretch;
-      margin-top: 10px;
+      min-height: calc(100vh - var(--headerH) - 32px);
     }
     @media (max-width: 980px){
-      .topGrid{ grid-template-columns: 1fr; }
+      .mainGrid{ grid-template-columns: 1fr; min-height: auto; }
     }
 
     .panel{
@@ -164,8 +165,9 @@
       overflow:hidden;
       min-width:0;
     }
+
     .panelHead{
-      padding: 14px 14px 12px;
+      padding: 12px 14px;
       border-bottom: 1px solid rgba(255,255,255,.08);
       display:flex;
       align-items:center;
@@ -173,156 +175,106 @@
       gap: 10px;
     }
     .panelHead h3{
-      font-size: 13px;
-      letter-spacing: .10em;
+      font-size: 12px;
+      letter-spacing: .12em;
       text-transform: uppercase;
       color: rgba(255,255,255,.86);
     }
-    .panelBody{ padding: 14px; }
+    .panelBody{ padding: 12px 14px 14px; }
 
-    /* Hero */
-    .hero h1{
-      font-size: clamp(22px, 2.4vw, 34px);
+    /* Left: "app shell" header inside form panel */
+    .heroRow{
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .heroTitle{
+      font-size: 26px;
       font-weight: 900;
       letter-spacing: -.02em;
-      line-height: 1.1;
+      line-height: 1.08;
     }
-    .hero h1 .grad{
+    .heroTitle .grad{
       background: linear-gradient(90deg, rgba(106,167,255,1), rgba(139,92,246,1));
       -webkit-background-clip: text;
       background-clip: text;
       color: transparent;
     }
-    .hero p{
-      margin-top: 8px;
+    .heroSub{
+      margin-top: 6px;
       color: var(--muted);
-      font-size: 13px;
-      line-height: 1.4;
-      max-width: 760px;
+      font-size: 12.5px;
+      line-height: 1.35;
+      max-width: 620px;
     }
 
-    .chipRow{
+    /* Quick intake pills (Uber-like mode selector) */
+    .modeRow{
       margin-top: 10px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      flex-wrap:wrap;
+    }
+    .modePills{
       display:flex;
       gap: 8px;
       flex-wrap:wrap;
+      align-items:center;
     }
-    .chip{
+    .pillBtn{
+      appearance:none;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.86);
+      padding: 8px 10px;
+      border-radius: 999px;
+      font-weight: 900;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      user-select:none;
+    }
+    .pillBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.10); }
+    .pillBtn.active{
+      border-color: rgba(106,167,255,.55);
+      background: rgba(43,116,255,.16);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.10);
+    }
+    .modeRight{
+      display:flex;
+      gap: 8px;
+      align-items:center;
+      flex-wrap:wrap;
+    }
+    .kpi{
       padding: 7px 10px;
       border-radius: 999px;
       border: 1px solid rgba(255,255,255,.12);
-      background: rgba(255,255,255,.06);
+      background: rgba(0,0,0,.16);
       color: rgba(255,255,255,.78);
       font-size: 12px;
-      font-weight: 800;
+      font-weight: 900;
       white-space:nowrap;
     }
 
-    /* Dispatch preview (FIXED) */
-    .mediaFrame{
-      width: 100%;
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.20);
-      overflow:hidden;
-      position: relative;
-      aspect-ratio: 16 / 9;     /* key: keeps right panel looking “designed” */
-      min-height: 220px;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-    }
-    .mediaFrame video,
-    .mediaFrame img{
-      width: 100%;
-      height: 100%;
-      display:block;
-      object-fit: cover;
-      background: rgba(0,0,0,.25);
-    }
-
-    .mediaOverlay{
-      position:absolute;
-      inset:0;
-      display:flex;
-      align-items:center;
-      justify-content:center;
-      text-align:center;
-      padding: 14px;
-      color: rgba(255,255,255,.70);
-      background:
-        radial-gradient(circle at 20% 20%, rgba(43,116,255,.18), transparent 55%),
-        radial-gradient(circle at 80% 30%, rgba(139,92,246,.14), transparent 55%),
-        linear-gradient(180deg, rgba(0,0,0,.15), rgba(0,0,0,.35));
-      pointer-events:none;
-    }
-    .mediaOverlay .box{
-      border: 1px solid rgba(255,255,255,.12);
-      background: rgba(0,0,0,.18);
-      backdrop-filter: blur(10px);
-      border-radius: 14px;
-      padding: 10px 12px;
-      max-width: 360px;
-      box-shadow: 0 10px 24px rgba(0,0,0,.35);
-    }
-    .mediaOverlay b{ color: rgba(255,255,255,.92); }
-
-    .videoHint{
-      margin-top: 10px;
-      color: rgba(255,255,255,.52);
-      font-size: 12px;
-      line-height: 1.35;
-    }
-
-    /* Quick Intake */
-    .quickIntakeGrid{
-      display:grid;
-      grid-template-columns: repeat(4, minmax(0, 1fr));
-      gap: 10px;
-    }
-    @media (max-width: 980px){
-      .quickIntakeGrid{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
-    }
-
-    .tile{
-      border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      padding: 12px;
-      cursor:pointer;
-      transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
-      min-height: 92px;
-      display:flex;
-      flex-direction:column;
-      justify-content:center;
-    }
-    .tile:hover{
-      transform: translateY(-1px);
-      filter: brightness(1.06);
-      background: rgba(43,116,255,.10);
-      border-color: rgba(106,167,255,.30);
-    }
-    .tile strong{
-      font-size: 13px;
-      font-weight: 900;
-      letter-spacing: -.01em;
-    }
-    .tile span{
-      margin-top: 6px;
-      font-size: 12px;
-      color: rgba(255,255,255,.62);
-      line-height: 1.35;
-    }
-
-    /* Bottom form */
+    /* Form */
     .formGrid{
       display:grid;
       grid-template-columns: 1fr 1fr;
-      gap: 12px;
+      gap: 10px;
       margin-top: 12px;
     }
+    .span2{ grid-column: 1 / -1; }
     @media (max-width: 980px){
       .formGrid{ grid-template-columns: 1fr; }
+      .span2{ grid-column: auto; }
     }
 
     .field{ display:flex; flex-direction:column; gap: 6px; }
@@ -334,7 +286,7 @@
     }
     .field input, .field select, .field textarea{
       width: 100%;
-      padding: 12px 12px;
+      padding: 11px 12px;
       border-radius: 14px;
       border: 1px solid rgba(255,255,255,.12);
       background: rgba(0,0,0,.20);
@@ -342,18 +294,53 @@
       outline:none;
       font-size: 14px;
     }
-    .field textarea{ min-height: 120px; resize: vertical; }
+    .field textarea{ min-height: 92px; resize: vertical; }
     .field input:focus, .field select:focus, .field textarea:focus{
       border-color: rgba(106,167,255,.65);
       box-shadow: 0 0 0 4px rgba(43,116,255,.14);
     }
 
-    .span2{ grid-column: 1 / -1; }
+    /* Optional details collapse (keeps form above fold) */
+    details{
+      margin-top: 10px;
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      overflow:hidden;
+    }
+    summary{
+      list-style:none;
+      cursor:pointer;
+      padding: 10px 12px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+      color: rgba(255,255,255,.88);
+      font-weight: 900;
+      font-size: 12px;
+      letter-spacing: .06em;
+      text-transform: uppercase;
+    }
+    summary::-webkit-details-marker{ display:none; }
+    .caret{
+      width: 10px; height: 10px;
+      border-right: 2px solid rgba(255,255,255,.65);
+      border-bottom: 2px solid rgba(255,255,255,.65);
+      transform: rotate(45deg);
+      transition: transform .15s ease;
+      opacity:.85;
+    }
+    details[open] .caret{ transform: rotate(225deg); }
+    .detailsBody{
+      padding: 10px 12px 12px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
 
     .hint{
       color: rgba(255,255,255,.58);
       font-size: 12px;
-      line-height: 1.4;
+      line-height: 1.35;
       margin-top: 10px;
     }
 
@@ -362,12 +349,13 @@
       justify-content:space-between;
       align-items:center;
       gap: 10px;
-      margin-top: 14px;
-      padding-top: 14px;
+      margin-top: 12px;
+      padding-top: 12px;
       border-top: 1px solid rgba(255,255,255,.08);
       flex-wrap:wrap;
     }
 
+    /* Confirmation */
     .ok{
       padding: 14px;
       border-radius: 18px;
@@ -390,20 +378,126 @@
       letter-spacing: .06em;
     }
 
+    /* Right: "dispatch app" vibe (device frame + status chips) */
+    .dispatchTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .dispatchTag{
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(34,197,94,.28);
+      background: rgba(34,197,94,.08);
+      color: rgba(255,255,255,.86);
+      font-size: 12px;
+      font-weight: 900;
+      white-space:nowrap;
+    }
+
+    .device{
+      margin-top: 12px;
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      box-shadow: var(--shadow);
+      overflow:hidden;
+      position: relative;
+    }
+    /* phone-ish framing without eating too much height */
+    .deviceFrame{
+      aspect-ratio: 16 / 10;       /* wider than phone so it fits above fold */
+      min-height: 220px;
+      max-height: 340px;
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      position: relative;
+    }
+    .deviceFrame video{
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      display:block;
+      background: rgba(0,0,0,.25);
+    }
+    .deviceOverlayTop{
+      position:absolute;
+      top: 10px; left: 10px; right: 10px;
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap: 10px;
+      pointer-events:none;
+    }
+    .miniPill{
+      pointer-events:none;
+      display:inline-flex;
+      align-items:center;
+      gap: 8px;
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      backdrop-filter: blur(10px);
+      color: rgba(255,255,255,.86);
+      font-size: 12px;
+      font-weight: 900;
+      white-space:nowrap;
+    }
+    .ping{
+      width: 8px; height: 8px; border-radius: 999px;
+      background: rgba(34,197,94,.9);
+      box-shadow: 0 0 0 6px rgba(34,197,94,.18);
+    }
+
+    .dispatchStats{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      padding: 12px;
+      border-top: 1px solid rgba(255,255,255,.08);
+      background: rgba(255,255,255,.03);
+    }
+    .stat{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.16);
+      padding: 10px 10px;
+      min-width:0;
+    }
+    .stat .k{ font-size: 11px; letter-spacing:.12em; text-transform:uppercase; color: rgba(255,255,255,.62); font-weight:900; }
+    .stat .v{ margin-top:6px; font-weight:900; font-size: 13px; color: rgba(255,255,255,.90); line-height:1.2; }
+    .stat .s{ margin-top:6px; font-size:12px; color: rgba(255,255,255,.62); line-height:1.25; }
+
+    .sideHint{
+      margin-top: 10px;
+      color: rgba(255,255,255,.52);
+      font-size: 12px;
+      line-height: 1.35;
+    }
+
+    /* Footer (kept tiny so we stay above fold) */
     footer{
       max-width: 1240px;
-      margin: 26px auto 40px;
+      margin: 8px auto 18px;
       padding: 0 16px;
-      color: rgba(255,255,255,.46);
+      color: rgba(255,255,255,.42);
       font-size: 12px;
       text-align:center;
     }
 
-    /* Tiny mobile polish */
+    /* Mobile polish */
     @media (max-width: 520px){
-      .btn{ padding: 10px 10px; border-radius: 12px; }
-      .panelBody{ padding: 12px; }
-      .mediaFrame{ min-height: 210px; }
+      :root{ --headerH: 68px; }
+      .btn{ padding: 9px 10px; border-radius: 12px; }
+      .heroTitle{ font-size: 22px; }
+      .deviceFrame{ min-height: 210px; }
+      .dispatchStats{ grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -437,181 +531,185 @@
   </header>
 
   <div class="wrap">
+    <div class="mainGrid">
 
-    <!-- TOP: left hero + right video (layout fixed) -->
-    <div class="topGrid">
+      <!-- LEFT: FORM (primary focus) -->
       <div class="panel">
-        <div class="panelBody hero">
-          <h1>Request <span class="grad">Service</span> in under a minute</h1>
-          <p>
-            Built for property managers: quick info now, optional details later.
-            Submit as guest — sign in anytime to track updates and add photos.
-          </p>
-          <div class="chipRow">
-            <div class="chip">⚡ Fast dispatch</div>
-            <div class="chip">📸 Photo closeout</div>
-            <div class="chip">🧾 Work order tracking</div>
-            <div class="chip">✅ Clean communication</div>
+        <div class="panelBody">
+          <div class="heroRow">
+            <div>
+              <div class="heroTitle">Request <span class="grad">Service</span></div>
+              <div class="heroSub">
+                Enterprise-simple intake for property managers. Choose a category → enter address + scope → submit.
+                Optional details stay tucked away so this feels like a real app.
+              </div>
+            </div>
+            <div class="pill" id="modePill">Ready</div>
           </div>
+
+          <!-- Uber/Lyft style mode selector -->
+          <div class="modeRow">
+            <div class="modePills" id="quickPills" aria-label="Quick Intake">
+              <button class="pillBtn" type="button" data-type="Make-Ready / Turn">🧹 Make-Ready</button>
+              <button class="pillBtn" type="button" data-type="Work Order / Repair">🛠️ Repair</button>
+              <button class="pillBtn" type="button" data-type="Estimate / Scope Walk">📋 Estimate</button>
+              <button class="pillBtn" type="button" data-type="Emergency">🚨 Emergency</button>
+            </div>
+            <div class="modeRight">
+              <div class="kpi">⚡ 30–60 sec</div>
+              <div class="kpi">📸 Photo closeout</div>
+              <div class="kpi">🧾 Work order ID</div>
+            </div>
+          </div>
+
+          <div id="confirmBox" style="display:none; margin-top:12px;"></div>
+
+          <form id="intakeForm" style="margin-top:12px;">
+            <div class="formGrid">
+              <!-- Essentials -->
+              <div class="field">
+                <label>Request Type</label>
+                <select id="requestType" required>
+                  <option value="">Select…</option>
+                  <option>Make-Ready / Turn</option>
+                  <option>Work Order / Repair</option>
+                  <option>Estimate / Scope Walk</option>
+                  <option>Emergency</option>
+                </select>
+              </div>
+
+              <div class="field">
+                <label>Priority</label>
+                <select id="priority" required>
+                  <option>Standard</option>
+                  <option>High</option>
+                  <option>Urgent</option>
+                </select>
+              </div>
+
+              <div class="field span2">
+                <label>Property Address</label>
+                <input id="address" placeholder="823 Congress Ave, Austin, TX" required />
+              </div>
+
+              <div class="field span2">
+                <label>What do you need done?</label>
+                <textarea id="summary" placeholder="Short scope: lock not latching, leak under sink, paint touch-up, trash-out, punch list, etc." required></textarea>
+              </div>
+
+              <div class="field">
+                <label>Name</label>
+                <input id="name" placeholder="Full name" required />
+              </div>
+
+              <div class="field">
+                <label>Phone</label>
+                <input id="phone" placeholder="(210) 555-1234" required />
+              </div>
+
+              <div class="field span2">
+                <label>Email</label>
+                <input id="email" type="email" placeholder="you@email.com" required />
+              </div>
+            </div>
+
+            <!-- Optional details stay collapsed to keep everything above fold -->
+            <details id="moreDetails">
+              <summary>
+                Optional Details (access, unit, photos)
+                <span class="caret" aria-hidden="true"></span>
+              </summary>
+              <div class="detailsBody">
+                <div class="formGrid" style="margin-top:0;">
+                  <div class="field">
+                    <label>Unit (optional)</label>
+                    <input id="unit" placeholder="Ste 300 / Apt 204" />
+                  </div>
+
+                  <div class="field">
+                    <label>Access (optional)</label>
+                    <select id="accessType">
+                      <option value="">Select…</option>
+                      <option>Lockbox</option>
+                      <option>Key / On-site</option>
+                      <option>Code / Smart Lock</option>
+                      <option>Call for access</option>
+                    </select>
+                  </div>
+
+                  <div class="field span2">
+                    <label>Access Notes (optional)</label>
+                    <input id="accessNotes" placeholder="Lockbox location, gate code, who to call, parking notes…" />
+                  </div>
+
+                  <div class="field span2">
+                    <label>Photo Links (optional)</label>
+                    <textarea id="photoLinks" placeholder="Paste Google Photos / Drive links (one per line)."></textarea>
+                  </div>
+                </div>
+              </div>
+            </details>
+
+            <div class="btnRow">
+              <div class="hint" style="margin:0;">
+                Submit now — we’ll confirm and dispatch. (Guest is fine.)
+              </div>
+              <button type="submit" class="btn btnPrimary" id="submitBtn">Submit Work Order</button>
+            </div>
+
+            <div class="hint">
+              By submitting, you authorize DealBankers vendors to contact you about this request.
+            </div>
+          </form>
         </div>
       </div>
 
+      <!-- RIGHT: DISPATCH “APP” PREVIEW (supports vibe, doesn’t steal focus) -->
       <div class="panel">
         <div class="panelHead">
-          <h3>Dispatch Preview</h3>
+          <div class="dispatchTop">
+            <h3>Dispatch Preview</h3>
+            <div class="dispatchTag"><span class="ping"></span> Live-style</div>
+          </div>
           <div class="pill">Optional</div>
         </div>
-        <div class="panelBody">
-          <!-- ✅ This now actually uses your dispatch.mp4.
-               If the MP4 fails to load, it falls back to a poster image:
-               put any image at images/dispatch-poster.jpg (or change path). -->
-          <div class="mediaFrame" id="dispatchFrame">
-            <video id="dispatchVideo" controls preload="metadata" playsinline poster="images/dispatch-poster.jpg">
-              <source src="https://www.dealbankers.com/images/dispatch.mp4" type="video/mp4" />
-              Your browser does not support the video tag.
-            </video>
 
-            <!-- Overlay only shows if video errors or is intentionally disabled -->
-            <div class="mediaOverlay" id="dispatchOverlay" style="display:none;">
-              <div class="box">
-                <div style="font-weight:900; margin-bottom:6px;">Dispatch Preview</div>
-                <div style="font-size:12px; color:rgba(255,255,255,.78); line-height:1.35;">
-                  Video unavailable. Add a poster image at <b>images/dispatch-poster.jpg</b>
-                  or verify the MP4 URL returns <b>video/mp4</b>.
-                </div>
+        <div class="panelBody">
+          <div class="device">
+            <div class="deviceFrame">
+              <!-- Uber/Lyft vibe: autoplay muted loop (no sound), still allows click to view controls -->
+              <video id="dispatchVideo" muted loop playsinline preload="metadata" poster="images/dispatch-poster.jpg">
+                <source src="https://www.dealbankers.com/images/dispatch.mp4" type="video/mp4" />
+              </video>
+
+              <div class="deviceOverlayTop">
+                <div class="miniPill">🚗 Dispatch Map</div>
+                <div class="miniPill">✅ Verified Tech</div>
+              </div>
+            </div>
+
+            <div class="dispatchStats">
+              <div class="stat">
+                <div class="k">ETA</div>
+                <div class="v">Fast response</div>
+                <div class="s">Updates posted to your work order.</div>
+              </div>
+              <div class="stat">
+                <div class="k">Closeout</div>
+                <div class="v">Photos + notes</div>
+                <div class="s">Clean documentation for ownership.</div>
               </div>
             </div>
           </div>
 
-          <div class="videoHint">
-            This is optional. If you want it lighter, remove the <b>&lt;video&gt;</b> block and keep just a poster image.
+          <div class="sideHint">
+            This preview sells the “real dispatch app” feel — but the form stays primary.
+            (Video runs muted/looped; tap it if you want to watch.)
           </div>
         </div>
       </div>
+
     </div>
-
-    <!-- QUICK INTAKE -->
-    <div class="panel" style="margin-top:16px;">
-      <div class="panelHead">
-        <h3>Quick Intake</h3>
-        <div class="pill" id="modePill">Ready</div>
-      </div>
-      <div class="panelBody">
-        <div class="quickIntakeGrid" id="quickTiles">
-          <div class="tile" data-type="Make-Ready / Turn">
-            <strong>Make-Ready</strong>
-            <span>Turns, punch list, paint, flooring</span>
-          </div>
-          <div class="tile" data-type="Work Order / Repair">
-            <strong>Repair</strong>
-            <span>Locks, leaks, drywall, misc</span>
-          </div>
-          <div class="tile" data-type="Estimate / Scope Walk">
-            <strong>Estimate</strong>
-            <span>Walk + scope + budget</span>
-          </div>
-          <div class="tile" data-type="Emergency">
-            <strong>Emergency</strong>
-            <span>After-hours dispatch</span>
-          </div>
-        </div>
-
-        <div class="hint">
-          Tap one tile → fill the 4 essentials → submit. Everything else is optional.
-        </div>
-
-        <div id="confirmBox" style="display:none; margin-top:14px;"></div>
-
-        <form id="intakeForm" style="margin-top:12px;">
-          <div class="formGrid">
-            <!-- Essentials -->
-            <div class="field">
-              <label>Request Type</label>
-              <select id="requestType" required>
-                <option value="">Select…</option>
-                <option>Make-Ready / Turn</option>
-                <option>Work Order / Repair</option>
-                <option>Estimate / Scope Walk</option>
-                <option>Emergency</option>
-              </select>
-            </div>
-
-            <div class="field">
-              <label>Priority</label>
-              <select id="priority" required>
-                <option>Standard</option>
-                <option>High</option>
-                <option>Urgent</option>
-              </select>
-            </div>
-
-            <div class="field span2">
-              <label>Property Address</label>
-              <input id="address" placeholder="823 Congress Ave, Austin, TX" required />
-            </div>
-
-            <div class="field span2">
-              <label>What do you need done?</label>
-              <textarea id="summary" placeholder="Short scope: lock not latching, leak under sink, paint touch-up, trash-out, punch list, etc." required></textarea>
-            </div>
-
-            <!-- Optional -->
-            <div class="field">
-              <label>Unit (optional)</label>
-              <input id="unit" placeholder="Ste 300 / Apt 204" />
-            </div>
-
-            <div class="field">
-              <label>Access (optional)</label>
-              <select id="accessType">
-                <option value="">Select…</option>
-                <option>Lockbox</option>
-                <option>Key / On-site</option>
-                <option>Code / Smart Lock</option>
-                <option>Call for access</option>
-              </select>
-            </div>
-
-            <div class="field span2">
-              <label>Access Notes (optional)</label>
-              <input id="accessNotes" placeholder="Lockbox location, gate code, who to call, parking notes…" />
-            </div>
-
-            <div class="field">
-              <label>Name</label>
-              <input id="name" placeholder="Full name" required />
-            </div>
-
-            <div class="field">
-              <label>Phone</label>
-              <input id="phone" placeholder="(210) 555-1234" required />
-            </div>
-
-            <div class="field span2">
-              <label>Email</label>
-              <input id="email" type="email" placeholder="you@email.com" required />
-            </div>
-
-            <div class="field span2">
-              <label>Photo Links (optional)</label>
-              <textarea id="photoLinks" placeholder="Paste Google Photos / Drive links (one per line)."></textarea>
-            </div>
-          </div>
-
-          <div class="btnRow">
-            <div class="hint" style="margin:0;">
-              Submit in 30–60 seconds. We’ll confirm and follow up.
-            </div>
-            <button type="submit" class="btn btnPrimary" id="submitBtn">Submit Work Order</button>
-          </div>
-
-          <div class="hint">
-            By submitting, you authorize DealBankers vendors to contact you about this request.
-          </div>
-        </form>
-      </div>
-    </div>
-
   </div>
 
   <footer>
@@ -628,9 +726,6 @@
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
     import { getDatabase, ref, push, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
-    // ✅ Answer: No mix-up — index.html modal uses the dispatch video inside the Contractor modal.
-    // This page now uses the same MP4 in the Dispatch Preview panel.
-
     // Init
     const app = initializeApp(window.firebaseConfig);
     const auth = getAuth(app);
@@ -638,6 +733,18 @@
     const provider = new GoogleAuthProvider();
 
     document.getElementById("year").textContent = new Date().getFullYear();
+
+    // Dispatch preview: autoplay attempt (muted) for “app vibe”
+    const dispatchVideo = document.getElementById("dispatchVideo");
+    if (dispatchVideo) {
+      // If the browser blocks autoplay, no big deal.
+      dispatchVideo.play().catch(()=>{});
+      // Allow click to toggle play/pause without showing controls
+      dispatchVideo.addEventListener("click", ()=>{
+        if (dispatchVideo.paused) dispatchVideo.play().catch(()=>{});
+        else dispatchVideo.pause();
+      });
+    }
 
     // Helpers
     function esc(s){
@@ -656,7 +763,6 @@
     onAuthStateChanged(auth, (user)=>{
       if(user){
         authStatus.textContent = `Signed in: ${user.displayName || user.email}`;
-        // soft autofill
         document.getElementById("name").value = user.displayName || document.getElementById("name").value;
         document.getElementById("email").value = user.email || document.getElementById("email").value;
       } else {
@@ -664,35 +770,33 @@
       }
     });
 
-    // Quick tiles -> set request type fast + focus address
-    document.querySelectorAll("#quickTiles .tile").forEach(tile=>{
-      tile.addEventListener("click", ()=>{
-        const t = tile.getAttribute("data-type") || "";
-        document.getElementById("requestType").value = t;
-        document.getElementById("modePill").textContent = "Selected";
-        document.getElementById("address").focus();
-        window.scrollTo({ top: 420, behavior: "smooth" });
+    // Quick pills -> set request type fast + focus address
+    const modePill = document.getElementById("modePill");
+    const requestTypeEl = document.getElementById("requestType");
+    const addressEl = document.getElementById("address");
+
+    function setActivePill(type){
+      document.querySelectorAll("#quickPills .pillBtn").forEach(b=>{
+        b.classList.toggle("active", (b.getAttribute("data-type") === type));
+      });
+    }
+
+    document.querySelectorAll("#quickPills .pillBtn").forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        const t = btn.getAttribute("data-type") || "";
+        requestTypeEl.value = t;
+        setActivePill(t);
+        modePill.textContent = "Selected";
+        addressEl.focus();
       });
     });
 
-    // Dispatch preview fallback handling
-    const dispatchVideo = document.getElementById("dispatchVideo");
-    const dispatchOverlay = document.getElementById("dispatchOverlay");
-    const dispatchFrame = document.getElementById("dispatchFrame");
-
-    if(dispatchVideo){
-      const showOverlay = ()=>{
-        if(dispatchOverlay) dispatchOverlay.style.display = "";
-      };
-      dispatchVideo.addEventListener("error", showOverlay);
-      dispatchVideo.addEventListener("stalled", ()=>{ /* no-op */ });
-      dispatchVideo.addEventListener("loadeddata", ()=>{
-        if(dispatchOverlay) dispatchOverlay.style.display = "none";
-      });
-
-      // If MP4 source is blocked by CORS or returns HTML, it will error -> overlay shows.
-      // (No console spam needed.)
-    }
+    // If dropdown changes manually, reflect selection state
+    requestTypeEl.addEventListener("change", ()=>{
+      const t = requestTypeEl.value;
+      setActivePill(t);
+      modePill.textContent = t ? "Selected" : "Ready";
+    });
 
     // Submit
     const form = document.getElementById("intakeForm");
@@ -702,9 +806,8 @@
     form.addEventListener("submit", async (e)=>{
       e.preventDefault();
 
-      // lightweight validation
-      const rt = document.getElementById("requestType").value;
-      const addr = document.getElementById("address").value.trim();
+      const rt = requestTypeEl.value;
+      const addr = addressEl.value.trim();
       const sum = document.getElementById("summary").value.trim();
       if(!rt) return alert("Pick a Request Type.");
       if(!addr) return alert("Enter the property address.");
@@ -713,21 +816,26 @@
       submitBtn.disabled = true;
       submitBtn.textContent = "Submitting…";
 
+      // Optional fields (exist inside <details>)
+      const unitEl = document.getElementById("unit");
+      const accessTypeEl = document.getElementById("accessType");
+      const accessNotesEl = document.getElementById("accessNotes");
+      const photoLinksEl = document.getElementById("photoLinks");
+
       const payload = {
         requestType: rt,
         priority: document.getElementById("priority").value,
         address: addr,
-        unit: document.getElementById("unit").value.trim(),
         summary: sum,
-
-        accessType: document.getElementById("accessType").value || "",
-        accessNotes: document.getElementById("accessNotes").value.trim(),
 
         name: document.getElementById("name").value.trim(),
         phone: document.getElementById("phone").value.trim(),
         email: document.getElementById("email").value.trim(),
 
-        photoLinks: document.getElementById("photoLinks").value.trim(),
+        unit: unitEl ? unitEl.value.trim() : "",
+        accessType: accessTypeEl ? (accessTypeEl.value || "") : "",
+        accessNotes: accessNotesEl ? accessNotesEl.value.trim() : "",
+        photoLinks: photoLinksEl ? photoLinksEl.value.trim() : "",
 
         submittedAt: serverTimestamp(),
         source: "request-service",
