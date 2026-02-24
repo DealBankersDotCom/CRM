@@ -591,29 +591,22 @@
     }
     .modalClose:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(255,255,255,.08); }
 
-.modalBody{
-  padding: 16px;
-  max-height: calc(92vh - 74px); /* head height buffer */
-  overflow: hidden;             /* keeps right side steady */
-}
-.modalGrid{
-  display:grid;
-  grid-template-columns: 1.15fr .85fr;
-  gap: 14px;
-  align-items: stretch;
-  height: 100%;
-}
-@media (max-width: 980px){
-  .modalBody{ max-height: none; overflow: visible; }
-  .modalGrid{ grid-template-columns: 1fr; height: auto; }
-}
+    /* NEW modal sizing: right side steady, left scroll */
+    .modalBody{
+      padding: 16px;
+      max-height: calc(92vh - 74px);
+      overflow: hidden;
+    }
     .modalGrid{
       display:grid;
       grid-template-columns: 1.15fr .85fr;
       gap: 14px;
+      align-items: stretch;
+      height: 100%;
     }
     @media (max-width: 980px){
-      .modalGrid{ grid-template-columns: 1fr; }
+      .modalBody{ max-height: none; overflow: visible; }
+      .modalGrid{ grid-template-columns: 1fr; height: auto; }
     }
 
     .modalPanel{
@@ -638,9 +631,28 @@
     }
     .modalPanelBody{
       padding: 12px;
+      overflow: hidden;
     }
 
-    /* Left: trifold / proof area */
+    /* Left panel: lighter + scroll inside */
+    .modalPanel.proofPanel{
+      background: rgba(255,255,255,.06);
+    }
+    .proofScroll{
+      max-height: calc(92vh - 170px);
+      overflow: auto;
+      padding-right: 6px;
+    }
+    .proofScroll::-webkit-scrollbar{ width: 10px; }
+    .proofScroll::-webkit-scrollbar-track{ background: rgba(255,255,255,.06); border-radius: 999px; }
+    .proofScroll::-webkit-scrollbar-thumb{ background: rgba(255,255,255,.18); border-radius: 999px; }
+
+    /* Right panel: visually dominant */
+    .modalPanel.actionsPanel{
+      background: rgba(0,0,0,.18);
+    }
+
+    /* Proof grid/cards */
     .proofGrid{
       display:grid;
       grid-template-columns: 1fr 1fr;
@@ -651,8 +663,8 @@
     }
     .proofCard{
       border-radius: 16px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(0,0,0,.18);
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.07);
       padding: 12px;
       min-height: 110px;
     }
@@ -663,25 +675,9 @@
     }
     .proofCard p{
       font-size: 12px;
-      color: rgba(255,255,255,.62);
-      line-height: 1.35;
-    }
-    .miniList{
-      margin-top: 8px;
-      display:flex;
-      flex-direction:column;
-      gap: 8px;
-    }
-    .quote{
-      border-radius: 14px;
-      padding: 10px;
-      border: 1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.04);
-      font-size: 12px;
       color: rgba(255,255,255,.70);
       line-height: 1.35;
     }
-    .quote b{ color: rgba(255,255,255,.92); }
 
     .photoRow{
       display:grid;
@@ -691,16 +687,74 @@
     }
     .ph{
       border-radius: 14px;
-      border: 1px dashed rgba(255,255,255,.20);
-      background: rgba(255,255,255,.03);
-      min-height: 110px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      overflow: hidden;
+      padding: 0;
+    }
+    .ph img{
+      width: 100%;
+      height: 132px;
+      object-fit: cover;
+      display:block;
+    }
+
+    /* Ratings + reviews */
+    .ratingRow{
       display:flex;
       align-items:center;
-      justify-content:center;
-      color: rgba(255,255,255,.48);
-      font-size: 12px;
-      text-align:center;
+      justify-content:space-between;
+      gap: 10px;
+      margin-top: 10px;
+      padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.10);
+    }
+    .stars{ display:flex; gap: 4px; align-items:center; }
+    .star{
+      width: 14px;
+      height: 14px;
+      color: rgba(251,191,36,.95);
+      filter: drop-shadow(0 0 8px rgba(251,191,36,.12));
+    }
+    .ratingMeta{
+      font-size: 11px;
+      color: rgba(255,255,255,.60);
+      white-space:nowrap;
+    }
+    .miniList{
+      margin-top: 8px;
+      display:flex;
+      flex-direction:column;
+      gap: 8px;
+    }
+    .review{
+      border-radius: 14px;
       padding: 10px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.05);
+      display:flex;
+      flex-direction:column;
+      gap: 6px;
+    }
+    .reviewTop{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 10px;
+    }
+    .reviewName{
+      font-weight: 900;
+      font-size: 12px;
+      color: rgba(255,255,255,.92);
+    }
+    .reviewRole{
+      font-size: 11px;
+      color: rgba(255,255,255,.60);
+    }
+    .reviewText{
+      font-size: 12px;
+      color: rgba(255,255,255,.74);
+      line-height: 1.35;
     }
 
     /* Right: action buttons */
@@ -1010,49 +1064,125 @@
 
       <div class="modalBody">
         <div class="modalGrid">
-          <!-- Left: Proof / Trifold-style -->
-          <div class="modalPanel">
+
+          <!-- Left: Proof / Scroll Column -->
+          <div class="modalPanel proofPanel">
             <div class="modalPanelHead">
               <h4>Proof & Performance</h4>
               <div class="pill">Enterprise-ready</div>
             </div>
+
             <div class="modalPanelBody">
-              <div class="proofGrid">
-                <div class="proofCard">
-                  <h5>Before / After Library</h5>
-                  <p>Drop in your strongest transformations (trash-outs, make-ready, turnovers, water extraction).</p>
-<div class="photoRow">
+              <div class="proofScroll">
 
-  <div class="ph">
-    <img src="images/contractorbanda/3.jpg" alt="Before Example">
-  </div>
+                <div class="proofGrid">
 
-  <div class="ph">
-    <img src="images/contractorbanda/4.png" alt="After Example">
-  </div>
+                  <div class="proofCard">
+                    <h5>Before / After Library</h5>
+                    <p>Recent transformations — make-ready, turns, trash-outs, and emergency response.</p>
 
-</div>
-                </div>
+                    <div class="photoRow">
+                      <div class="ph">
+                        <img src="images/contractorbanda/3.jpg" alt="Before - Example 1">
+                      </div>
+                      <div class="ph">
+                        <img src="images/contractorbanda/4.png" alt="After - Example 1">
+                      </div>
+                    </div>
 
-                <div class="proofCard">
-                  <h5>Client Testimonials</h5>
-                  <p>Short, specific results beat generic praise. Use names/companies when allowed.</p>
-                  <div class="miniList">
-                    <div class="quote"><b>“Make-ready turned in 48 hours.”</b><br/>— Property Ops (Austin)</div>
-                    <div class="quote"><b>“Clean, fast, and documented.”</b><br/>— Office Manager</div>
+                    <div class="photoRow">
+                      <div class="ph">
+                        <img src="images/contractorbanda/5.jpg" alt="Before - Example 2">
+                      </div>
+                      <div class="ph">
+                        <img src="images/contractorbanda/6.png" alt="After - Example 2">
+                      </div>
+                    </div>
+
+                    <div class="ratingRow">
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                      <div class="ratingMeta">Rated 5.0 • Make-ready / Turns</div>
+                    </div>
                   </div>
-                </div>
-              </div>
 
-              <div class="finePrint">
-                Tip: create a single folder (Drive) that contains “Before/After” + “Invoices” + “W-9/COI” + “References”.
-                Link it from your Request form confirmation page.
+                  <div class="proofCard">
+                    <h5>Client Reviews</h5>
+                    <p>Short, specific outcomes (speed + documentation + reliability).</p>
+
+                    <div class="miniList">
+
+                      <div class="review">
+                        <div class="reviewTop">
+                          <div>
+                            <div class="reviewName">Property Ops • Austin</div>
+                            <div class="reviewRole">Turns + unit readiness</div>
+                          </div>
+                          <div class="stars" title="5 stars">
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                          </div>
+                        </div>
+                        <div class="reviewText"><b>“Turned the unit in 48 hours.”</b> Photos, notes, and invoice were clean and easy for ownership.</div>
+                      </div>
+
+                      <div class="review">
+                        <div class="reviewTop">
+                          <div>
+                            <div class="reviewName">Office Manager</div>
+                            <div class="reviewRole">Work orders + documentation</div>
+                          </div>
+                          <div class="stars" title="5 stars">
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                          </div>
+                        </div>
+                        <div class="reviewText"><b>“Clean, fast, and documented.”</b> They updated us, handled access, and closed out the work order right.</div>
+                      </div>
+
+                      <div class="review">
+                        <div class="reviewTop">
+                          <div>
+                            <div class="reviewName">Regional PM</div>
+                            <div class="reviewRole">Vendor management</div>
+                          </div>
+                          <div class="stars" title="5 stars">
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                            <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                          </div>
+                        </div>
+                        <div class="reviewText"><b>“No babysitting.”</b> They handled the scope, sent proof photos, and we had a clean close-out.</div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                </div>
+
+                <div class="finePrint" style="margin-top:10px;">
+                  Tip: Keep one folder with “Before/After”, invoices, and COI/W-9 for fast vendor approval.
+                </div>
+
               </div>
             </div>
           </div>
 
           <!-- Right: Actions -->
-          <div class="modalPanel">
+          <div class="modalPanel actionsPanel">
             <div class="modalPanelHead">
               <h4>Routes</h4>
               <div class="pill">Pick a lane</div>
