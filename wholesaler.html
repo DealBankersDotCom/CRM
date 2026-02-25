@@ -890,7 +890,114 @@ body{
     </div>
   </div>
 </div>
+/* ================== EDIT / DELETE (SAFE) ================== */
+let modalMode = "add"; // "add" | "edit"
+let editingLeadId = "";
 
+function canEditLead(lead){
+  if (!lead || !UID) return false;
+  if (isAdmin) return true;
+  if (lead.createdBy && lead.createdBy === UID) return true;
+  if (lead.partners && lead.partners[UID]) return true;
+  return false;
+}
+
+function contactsToText(contacts){
+  const arr = Array.isArray(contacts) ? contacts : [];
+  const lines = [];
+  arr.forEach(c=>{
+    const role = safeText(c.role || "POC");
+    const name = safeText(c.name || "");
+    const phones = Array.isArray(c.phones) ? c.phones : [];
+    if (!phones.length){
+      lines.push(`${role} | ${name} |`);
+    } else {
+      phones.forEach(p=>{
+        const label = safeText(p.label || p.key || "");
+        lines.push(`${role} | ${name} | ${label}`);
+      });
+    }
+  });
+  return lines.join("\n").trim();
+}
+
+function setEditButtonsForLead(lead){
+  const ok = canEditLead(lead);
+  $("btnEditLead").style.display = ok ? "inline-flex" : "none";
+  $("btnDeleteLead").style.display = ok ? "inline-flex" : "none";
+  $("permPill").style.display = ok ? "inline-flex" : "none";
+  $("permPill").textContent = ok ? "Edit Enabled" : "";
+}
+
+function openEditLeadModal(lead){
+  if (!lead) return;
+
+  modalMode = "edit";
+  editingLeadId = String(lead.id || "");
+
+  $("leadModalTitle").textContent = "✏️ Edit Lead";
+  $("leadModalSave").textContent = "Save Changes";
+
+  // Fill fields
+  $("lead_address").value = lead.address || "";
+  $("lead_owner").value = lead.owner || "";
+  $("lead_mailing").value = lead.mailing || "";
+  $("lead_status").value = lead.status || "New";
+  $("lead_tag").value = lead.tag || "";
+  $("lead_notes").value = lead.notes || "";
+  $("lead_partner_uid").value = ""; // don't overwrite partners on edit unless you want to add a new one
+
+  $("lead_contacts").value = contactsToText(lead.contacts || []);
+
+  openLeadModal();
+  $("lead_address").focus();
+}
+
+function resetModalToAdd(){
+  modalMode = "add";
+  editingLeadId = "";
+  $("leadModalTitle").textContent = "➕ Add Lead";
+  $("leadModalSave").textContent = "Save Lead";
+}
+
+// override close modal to reset mode cleanly
+const _closeLeadModal = closeLeadModal;
+closeLeadModal = function(){
+  _closeLeadModal();
+  resetModalToAdd();
+};
+
+// Wire buttons
+$("btnEditLead").addEventListener("click", ()=>{
+  if (!currentLead) return;
+  if (!canEditLead(currentLead)) return alert("No permission to edit this lead.");
+  openEditLeadModal(currentLead);
+});
+
+$("btnDeleteLead").addEventListener("click", async ()=>{
+  if (!currentLead) return;
+  if (!canEditLead(currentLead)) return alert("No permission to delete this lead.");
+
+  const addr = currentLead.address || "(no address)";
+  const ok = confirm(`Delete this lead?\n\n${addr}\n\nThis removes the lead from RTDB.\n(Optional) You can also wipe its call logs after.`);
+
+  if (!ok) return;
+
+  try{
+    // remove lead
+    await firebase.database().ref(`leads/sellers/${currentLeadId}`).remove();
+
+    // ask about logs
+    const wipeLogs = confirm("Also delete ALL call logs for this lead?");
+    if (wipeLogs){
+      await firebase.database().ref(`call_logs/${currentLeadId}`).remove();
+    }
+
+  }catch(e){
+    console.error("Delete failed:", e);
+    alert("Delete failed. Check permissions / rules.");
+  }
+});
 <!-- Firebase compat -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
