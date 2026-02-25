@@ -532,20 +532,26 @@ body{
 #leadModal{
   position:fixed; inset:0;
   display:none;
-  align-items:center;
+  align-items:flex-start;          /* FIX: start at top */
   justify-content:center;
   z-index: 9998;
-  padding: 18px;
+  padding: 14px;                   /* FIX: tighter padding */
 }
+
 .lm-card{
   width:min(720px, 96vw);
+  max-height: calc(100vh - 28px);  /* FIX: stay inside viewport */
   border-radius:18px;
   border:1px solid rgba(255,255,255,.16);
   background:#0b1825;
   box-shadow:0 28px 70px rgba(0,0,0,.65);
   overflow:hidden;
+  display:flex;                    /* FIX: enable sticky actions */
+  flex-direction:column;
 }
+
 .lm-head{
+  flex:0 0 auto;
   display:flex;
   align-items:center;
   justify-content:space-between;
@@ -558,7 +564,16 @@ body{
   font-weight:900;
   letter-spacing:.04em;
 }
-.lm-body{ padding: 12px; }
+
+/* Body scrolls, actions stick */
+.lm-body{
+  flex:1 1 auto;
+  overflow:auto;                   /* FIX: scroll inside modal */
+  -webkit-overflow-scrolling: touch;
+  padding: 12px;
+  padding-bottom: 84px;            /* FIX: room for sticky buttons */
+}
+
 .lm-grid{
   display:grid;
   grid-template-columns: 1fr 1fr;
@@ -567,13 +582,26 @@ body{
 @media(max-width:720px){
   .lm-grid{ grid-template-columns: 1fr; }
 }
+
 .lm-actions{
-  margin-top: 12px;
+  position: sticky;                /* FIX: buttons always visible */
+  bottom: 0;
+  z-index: 5;
   display:flex;
   justify-content:flex-end;
   gap:10px;
-  padding-top: 12px;
+  padding:12px;
   border-top:1px solid rgba(255,255,255,.10);
+  background: linear-gradient(180deg, rgba(11,24,37,.35), rgba(11,24,37,.95));
+  backdrop-filter: blur(8px);
+}
+
+/* Slightly larger tap targets on small screens */
+@media(max-width:720px){
+  .lm-actions .chip{
+    padding:10px 14px;
+    font-size:14px;
+  }
 }
 </style>
 </head>
@@ -894,8 +922,6 @@ function initialsFromUser(u){
 function safeText(s){ return String(s ?? "").trim(); }
 
 function buildMapsEmbed(address, mode){
-  // No API key needed (uses basic google maps embed URLs).
-  // Note: StreetView via "layer=c" doesn't always lock to exact house, but it's good enough for free mode.
   const q = encodeURIComponent(address || "");
   if (!q) return "";
   if (mode === "street"){
@@ -923,7 +949,6 @@ let activeLogRef = null;
 function normalizeLead(lead){
   const l = lead || {};
   const phones = Array.isArray(l.phones) ? l.phones : [];
-  // support older formats
   const normPhones = phones.map(p=>{
     if (typeof p === "string") return { label: p, key: fmtPhoneKey(p) };
     return { label: p.label || "", key: p.key || fmtPhoneKey(p.label || "") };
@@ -1032,24 +1057,21 @@ function selectLeadByIndex(idx){
   currentLead = sellerView[idx];
   currentLeadId = String(currentLead.id || "");
 
-  // re-render highlight
   renderQueue();
   updatePager();
 
   $("leadAddress").textContent = currentLead.address || "(no address)";
   $("leadOwner").textContent = currentLead.owner || "—";
 
-  // TPS link (optional): just opens search query
   const q = encodeURIComponent(`${currentLead.owner || ""} ${currentLead.address || ""}`.trim());
   $("tpsLink").href = `https://www.truepeoplesearch.com/results?name=${q}`;
   $("tpsLink").style.display = "inline";
 
-  // phones
   const sel = $("phoneSelect");
   sel.innerHTML = "";
   const phones = currentLead.phones || [];
   if (phones.length){
-    phones.forEach((p, i)=>{
+    phones.forEach((p)=>{
       const opt = document.createElement("option");
       opt.value = p.key || fmtPhoneKey(p.label);
       opt.textContent = p.label || p.key || "unknown";
@@ -1057,11 +1079,9 @@ function selectLeadByIndex(idx){
     });
     sel.disabled = false;
 
-    // select first by default
     sel.selectedIndex = 0;
     currentPhone = sel.value;
 
-    // click-to-call
     updateCallLinkFromSelectedPhone();
     attachLog(currentLeadId, currentPhone);
   } else {
@@ -1072,7 +1092,6 @@ function selectLeadByIndex(idx){
     clearCallLogUI();
   }
 
-  // map
   refreshMap("area");
 }
 
@@ -1113,10 +1132,13 @@ function refreshMap(mode){
 
 /* ================== CALL LOG ================== */
 function clearCallLogUI(){
-  $("callLog").innerHTML = `<div class="log-empty" id="logEmpty">
-    No call history for this number.<br><br>
-    Select a lead + number, then log a status or add a note.
-  </div>`;
+  $("panel-calllog").querySelector(".panel-body").innerHTML = `
+    <div class="log" id="callLog">
+      <div class="log-empty" id="logEmpty">
+        No call history for this number.<br><br>
+        Select a lead + number, then log a status or add a note.
+      </div>
+    </div>`;
   $("logCount").textContent = "0 entries";
 }
 function detachLog(){
@@ -1158,7 +1180,7 @@ function attachLog(leadId, phoneKey){
           <div>${tsToLocal(e.ts || 0)}</div>
           <div class="log-tag ${tag}">${tagLabel}</div>
         </div>
-        <div class="log-text">${(e.text || "").replace(/[<>&"]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[s]))}</div>
+        <div class="log-text">${String(e.text||"").replace(/[<>&"]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[s]))}</div>
       `;
       wrap.appendChild(div);
     });
@@ -1254,7 +1276,6 @@ leadModalSave.addEventListener("click", async ()=>{
     createdAt: firebase.database.ServerValue.TIMESTAMP
   };
 
-  // Share with another acq (rules-safe): add partners/{uid}=true
   if (partnerUid){
     payload.partners = {};
     payload.partners[partnerUid] = true;
@@ -1267,7 +1288,6 @@ leadModalSave.addEventListener("click", async ()=>{
     leadModalMsg.style.display = "inline-flex";
     leadModalMsg.textContent = "Saved ✓ Lead added.";
 
-    // reset for rapid entry
     $("lead_address").value = "";
     $("lead_owner").value = "";
     $("lead_mailing").value = "";
@@ -1278,10 +1298,10 @@ leadModalSave.addEventListener("click", async ()=>{
     $("lead_status").value = "New";
     $("lead_address").focus();
 
-    setTimeout(()=>closeLeadModal(), 350);
+    setTimeout(()=>closeLeadModal(), 250);
   }catch(e){
     console.error("Add lead failed:", e);
-    alert("Add lead failed. Most common cause: RTDB rules (approvedUsers/roles). Open DevTools Console to see 'permission_denied'.");
+    alert("Add lead failed. Most common cause: RTDB rules (approvedUsers/roles). Open DevTools Console to see permission_denied.");
   }finally{
     leadModalSave.disabled = false;
     leadModalSave.textContent = "Save Lead";
@@ -1312,7 +1332,6 @@ function subscribeLeads(){
     sellerList = Array.from(byId.values()).map(normalizeLead);
     sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
 
-    // default view = all
     sellerView = sellerList.slice();
     applySearch();
 
@@ -1322,26 +1341,26 @@ function subscribeLeads(){
 
   leadsRef.off();
 
-  leadsRef.on("child_added", (snap) => {
+  leadsRef.on("child_added", (snap)=>{
     const id = snap.key;
     const v = snap.val();
     const obj = (v && typeof v === "object") ? v : { value: v };
     byId.set(id, { id, ...obj });
     rebuild();
-  }, (err) => console.warn("leads child_added failed:", err));
+  }, (err)=>console.warn("leads child_added failed:", err));
 
-  leadsRef.on("child_changed", (snap) => {
+  leadsRef.on("child_changed", (snap)=>{
     const id = snap.key;
     const v = snap.val();
     const obj = (v && typeof v === "object") ? v : { value: v };
     byId.set(id, { id, ...obj });
     rebuild();
-  }, (err) => console.warn("leads child_changed failed:", err));
+  }, (err)=>console.warn("leads child_changed failed:", err));
 
-  leadsRef.on("child_removed", (snap) => {
+  leadsRef.on("child_removed", (snap)=>{
     byId.delete(snap.key);
     rebuild();
-  }, (err) => console.warn("leads child_removed failed:", err));
+  }, (err)=>console.warn("leads child_removed failed:", err));
 
   leadsRef.once("value").then((snap)=>{
     if (!snap.exists()){
@@ -1356,14 +1375,14 @@ function subscribeLeads(){
 }
 
 /* ================== AUTH / ROLE ================== */
-firebase.auth().onAuthStateChanged(async (u) => {
+firebase.auth().onAuthStateChanged(async (u)=>{
   if (!u) return location.href = 'index.html';
 
   UID = u.uid;
   ME = u;
   ME_INITIALS = initialsFromUser(u);
 
-  try { trackPresence(u); } catch(e){ /* ok */ }
+  try { trackPresence(u); } catch(e){}
 
   try{
     const roleSnap = await firebase.database().ref('roles/' + UID).once('value');
@@ -1405,7 +1424,7 @@ $("phoneSelect").addEventListener("change", ()=>{
 $("areaMapLink").onclick = ()=>refreshMap("area");
 $("streetViewLink").onclick = ()=>refreshMap("street");
 
-/* Quick status -> writes call log entry */
+/* Quick status */
 $("quickGrid").addEventListener("click", async (e)=>{
   const btn = e.target.closest("button[data-status]");
   if (!btn) return;
@@ -1416,8 +1435,6 @@ $("quickGrid").addEventListener("click", async (e)=>{
   const status = btn.getAttribute("data-status") || "";
   try{
     await writeCallLogEntry({leadId: currentLeadId, phoneKey: currentPhone, type:"status", status, text:""});
-    // also update lead status (optional)
-    // await firebase.database().ref(`leads/sellers/${currentLeadId}/status`).set(status);
   }catch(err){
     console.error("Status write failed:", err);
     alert("Status save failed. (rules) Check DevTools Console.");
@@ -1495,7 +1512,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showAcq();
 });
 
-/* Chat bubble open/close (keeps vibe even if app-auth handles actual chat) */
+/* Chat bubble open/close */
 (function chatPanelWiring(){
   const bubble = $("chatBubble");
   const panel = $("sidePanel");
