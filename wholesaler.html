@@ -1,1501 +1,1742 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>DealBankers • Wholesaler</title>
-<link rel="icon" type="image/jpeg" href="icon (1).jpg" />
-<link rel="preconnect" href="https://fonts.googleapis.com" />
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>DealBankers — Command Hub</title>
+  <link rel="icon" href="icon (1).jpg" />
 
-<style>
-:root{
-  --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
-  --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
-  --panel:rgba(255,255,255,.07);
-  --panel2:rgba(0,0,0,.18);
-  --good:#00d08a;--warn:#ffcf5a;--bad:#ff5c5c;
+  <style>
+    :root{
+      --bg0:#050712;
+      --bg1:#070b16;
+      --bg2:#0a1020;
+      --panel: rgba(255,255,255,.06);
+      --panel2: rgba(255,255,255,.04);
+      --line: rgba(255,255,255,.10);
+      --text:#eaf2ff;
+      --muted: rgba(255,255,255,.55);
+      --muted2: rgba(255,255,255,.40);
 
-  --r:16px;
-  --shadow: 0 18px 65px rgba(0,0,0,.55);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
-  color:var(--text);
-  background:
-    radial-gradient(circle at 20% 10%, rgba(43,116,255,.22), transparent 46%),
-    radial-gradient(circle at 90% 20%, rgba(139,92,246,.18), transparent 42%),
-    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg1));
-}
-a{color:inherit;text-decoration:none}
-button,input,select,textarea{font:inherit}
-.hidden{display:none!important}
+      --blue:#2b74ff;
+      --blue2:#6aa7ff;
+      --purple:#8b5cf6;
+      --teal:#22c55e;
+      --amber:#fbbf24;
+      --red:#ef4444;
 
-.wrap{max-width:1300px;margin:0 auto;padding:18px}
-.topbar{
-  display:flex;align-items:center;justify-content:space-between;gap:12px;
-  padding:12px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
-  box-shadow:var(--shadow);
-}
-.brand{display:flex;align-items:center;gap:10px}
-.brand img{width:34px;height:34px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,.5)}
-.brand .title{font-weight:900;letter-spacing:-.02em}
-.brand .sub{font-size:12px;color:rgba(255,255,255,.58);margin-top:2px}
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
+      --shadowSoft: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 22px;
+    }
 
-.nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
-.chip{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:10px 12px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.22);
-  color:rgba(255,255,255,.86);
-  cursor:pointer;
-  transition:transform .15s ease, filter .15s ease, background .15s ease;
-}
-.chip:hover{transform:translateY(-1px);filter:brightness(1.08);background:rgba(255,255,255,.06)}
-.chip.blue{background:rgba(43,116,255,.16);border-color:rgba(43,116,255,.25)}
-.chip.red{background:rgba(255,92,92,.12);border-color:rgba(255,92,92,.22)}
-.chip .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
-.chip .dot.good{background:var(--good)}
-.chip .dot.bad{background:var(--bad)}
+    *{box-sizing:border-box;margin:0;padding:0}
+    html,body{height:100%}
+    body{
+      font-family: Inter, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at 20% 20%, rgba(43,116,255,.18), transparent 55%),
+        radial-gradient(circle at 80% 30%, rgba(139,92,246,.14), transparent 55%),
+        linear-gradient(180deg, var(--bg0), var(--bg1) 35%, var(--bg2));
+      overflow-x:hidden;
+    }
 
-.icon-btn{
-  width:42px;height:42px;border-radius:14px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.9);
-  cursor:pointer;
-}
-.icon-btn:hover{filter:brightness(1.08);background:rgba(255,255,255,.08)}
+    .ambient{ position: fixed; inset: 0; pointer-events:none; z-index:0; overflow:hidden; }
+    .blob{ position:absolute; width: 420px; height: 420px; border-radius: 999px; filter: blur(48px); opacity:.35; }
+    .b1{ top: 12%; left: 8%; background: rgba(43,116,255,.35); }
+    .b2{ bottom: 18%; right: 10%; background: rgba(139,92,246,.30); }
+    .grid{
+      position:absolute; inset:0; opacity:.06;
+      background-image:
+        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size:56px 56px;
+      mix-blend-mode: overlay;
+    }
 
-.grid{
-  display:grid;grid-template-columns: 1.05fr .95fr;gap:14px;
-  margin-top:14px;
-}
-@media (max-width:1050px){
-  .grid{grid-template-columns:1fr}
-}
-.panel{
-  border-radius:18px;border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
-  box-shadow:var(--shadow);
-  overflow:hidden;
-}
-.panelHead{
-  padding:12px 12px 10px;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-.panelHead h3{
-  margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(255,255,255,.82);
-}
-.panelBody{padding:12px}
+    header{
+      position: sticky; top: 0; z-index: 50;
+      padding: 14px 18px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      background: linear-gradient(180deg, rgba(5,7,18,.78), rgba(5,7,18,.18));
+      backdrop-filter: blur(14px);
+    }
+    .hwrap{
+      max-width: 1240px; margin: 0 auto;
+      display:flex; align-items:center; justify-content:space-between; gap: 14px;
+    }
+    .brand{ display:flex; align-items:center; gap: 12px; min-width: 190px; }
+    .brand img{
+      width: 42px; height: 42px; border-radius: 12px;
+      box-shadow: 0 0 18px rgba(43,116,255,.35);
+      border: 1px solid rgba(255,255,255,.10);
+    }
+    .brandTitle{ font-weight: 800; letter-spacing: .02em; font-size: 16px; line-height: 1.1; }
+    .brandSub{ font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.1; }
 
-.row{display:flex;gap:10px;flex-wrap:wrap}
-.field{flex:1;min-width:150px}
-.label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px}
-.input, .select, .textarea{
-  width:100%;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.20);
-  color:rgba(255,255,255,.92);
-  padding:10px 11px;
-  outline:none;
-}
-.textarea{min-height:88px;resize:vertical}
-.input:focus,.select:focus,.textarea:focus{border-color:rgba(106,167,255,.55);box-shadow:0 0 0 4px rgba(43,116,255,.14)}
+    nav{ display:flex; gap: 10px; flex-wrap:wrap; justify-content:center; }
+    nav a{
+      text-decoration:none; color: rgba(255,255,255,.78);
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 8px 12px; border-radius: 12px;
+      font-weight: 700; font-size: 13px;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      white-space:nowrap;
+    }
+    nav a:hover{
+      background: rgba(43,116,255,.16);
+      border-color: rgba(43,116,255,.35);
+      filter: brightness(1.05);
+      transform: translateY(-1px);
+    }
 
-.pill{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:8px 10px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(0,0,0,.22);
-  color:rgba(255,255,255,.72);
-  font-size:12px;font-weight:800;white-space:nowrap;
-}
-.small{font-size:12px;color:rgba(255,255,255,.62);line-height:1.35}
+    .rightHead{
+      display:flex; align-items:center; gap: 10px; flex-wrap:wrap;
+      justify-content:flex-end; min-width: 220px;
+    }
+    .bell{
+      position: relative;
+      width: 42px; height: 42px; border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .bell:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .badge{
+      position:absolute; top: -6px; right: -6px;
+      width: 18px; height: 18px; border-radius: 999px;
+      background: var(--red); color: white;
+      font-size: 11px; font-weight: 800;
+      display:flex; align-items:center; justify-content:center;
+      border: 2px solid rgba(5,7,18,.95);
+    }
+    .status{
+      font-size: 12px; color: var(--muted);
+      max-width: 320px; text-align:right; line-height: 1.2;
+    }
+    .status a{ color: #6aa7ff; text-decoration: none; font-weight: 800; }
+    .status a:hover{ text-decoration: underline; }
 
-.list{display:flex;flex-direction:column;gap:10px}
-.card{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(0,0,0,.18);
-  padding:12px;
-  cursor:pointer;
-  transition:transform .15s ease, filter .15s ease, border-color .15s ease, background .15s ease;
-}
-.card:hover{transform:translateY(-1px);filter:brightness(1.06);border-color:rgba(43,116,255,.22);background:rgba(43,116,255,.08)}
-.card.active{border-color:rgba(106,167,255,.45);background:rgba(43,116,255,.12)}
-.cardTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
-.cardTitle{font-weight:900;font-size:13px}
-.badge{
-  font-size:11px;font-weight:900;
-  padding:6px 10px;border-radius:999px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.78);
-}
-.badge.good{background:rgba(0,208,138,.10);border-color:rgba(0,208,138,.20)}
-.badge.warn{background:rgba(255,207,90,.10);border-color:rgba(255,207,90,.18)}
-.badge.bad{background:rgba(255,92,92,.10);border-color:rgba(255,92,92,.20)}
+    .wrap{
+      position: relative; z-index: 2;
+      max-width: 1240px; margin: 18px auto 46px; padding: 0 16px;
+    }
 
-.cardMeta{margin-top:6px;font-size:12px;color:rgba(255,255,255,.62);line-height:1.35}
-.cardMeta b{color:rgba(255,255,255,.86)}
+    .topRow{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap: 14px; flex-wrap:wrap; margin: 14px 0 16px;
+    }
+    .welcome h1{
+      font-size: clamp(22px, 2.4vw, 34px);
+      font-weight: 900; letter-spacing: -.02em; line-height: 1.1;
+    }
+    .welcome h1 .grad{
+      background: linear-gradient(90deg, rgba(106,167,255,1), rgba(139,92,246,1));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .welcome p{ margin-top: 6px; color: var(--muted); font-size: 13px; }
 
-.cardActions{
-  display:flex;align-items:center;gap:8px;justify-content:flex-end;
-  margin-top:10px;
-}
-.miniBtn{
-  display:inline-flex;align-items:center;justify-content:center;gap:8px;
-  height:32px; padding:0 10px;
-  border-radius:12px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.9);
-  cursor:pointer;
-  font-size:12px;
-}
-.miniBtn:hover{filter:brightness(1.08);background:rgba(255,255,255,.08)}
-.miniBtn.blue{background:rgba(43,116,255,.16);border-color:rgba(43,116,255,.22)}
-.miniBtn.red{background:rgba(255,92,92,.12);border-color:rgba(255,92,92,.22)}
-.miniBtn:disabled{opacity:.45;cursor:not-allowed}
+    .gbtn{
+      display:inline-flex; align-items:center; gap: 10px;
+      padding: 12px 14px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      font-weight: 800; cursor: pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      box-shadow: 0 0 18px rgba(43,116,255,.18);
+      white-space:nowrap;
+    }
+    .gbtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.14); }
+    .gbtn img{ width: 18px; height: 18px; }
 
-.btn{
-  width:100%;
-  border-radius:16px;
-  padding:12px 12px;
-  border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.06);
-  color:rgba(255,255,255,.92);
-  cursor:pointer;
-  text-align:left;
-  transition:transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
-}
-.btn:hover{transform:translateY(-1px);filter:brightness(1.06);background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.24)}
-.btn.blue{background:rgba(43,116,255,.16);border-color:rgba(43,116,255,.25)}
-.btn.red{background:rgba(255,92,92,.12);border-color:rgba(255,92,92,.20)}
-.btn strong{display:block;font-weight:900;font-size:13px}
-.btn span{display:block;margin-top:4px;font-size:12px;color:rgba(255,255,255,.62);line-height:1.35}
-.btn:disabled{opacity:.45;cursor:not-allowed;transform:none!important;filter:none!important}
+    .stats{
+      display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px; margin: 14px 0 18px;
+    }
+    .stat{
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      min-height: 86px;
+    }
+    .stat .label{ color: rgba(255,255,255,.42); font-size: 12px; margin-top: 8px; }
+    .stat .value{ font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+    .stat .icon{ width: 26px; height: 26px; opacity: .95; }
+    .rowIcon{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
 
-.hr{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+    .gridMain{
+      display:grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 16px;
+      align-items:start;
+    }
 
-/* Right column: Map + Workstation */
-.stack{display:flex;flex-direction:column;gap:14px}
-.mapWrap{
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(0,0,0,.18);
-  overflow:hidden;
-  box-shadow:var(--shadow);
-}
-.mapHead{
-  padding:12px 12px 10px;
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  background:rgba(255,255,255,.03);
-}
-.mapHead h3{
-  margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(255,255,255,.82);
-}
-.mapBody{height:320px}
-@media (max-width:1050px){
-  .mapBody{height:280px}
-}
-.mapBody iframe{
-  width:100%;height:100%;border:0;
-  filter:saturate(1.05) contrast(1.02);
-}
-.mapHint{
-  padding:10px 12px;
-  border-top:1px solid rgba(255,255,255,.08);
-  display:flex;gap:10px;flex-wrap:wrap;justify-content:space-between;align-items:center;
-}
-.mapHint .small{margin:0}
+    .portals{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .pCard{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      position: relative;
+      box-shadow: var(--shadowSoft);
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+      min-height: 150px;
+    }
+    .pCard:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+    .pInner{ padding: 16px 16px 14px; position: relative; z-index: 2; }
+    .pTop{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+    .pTitle{ font-weight: 900; font-size: 18px; letter-spacing: -.01em; }
+    .pDesc{
+      margin-top: 8px;
+      color: rgba(255,255,255,.70);
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 520px;
+    }
+    .pStats{
+      display:flex; gap: 14px; flex-wrap:wrap;
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .ps{ display:flex; flex-direction:column; min-width: 90px; }
+    .ps .v{ font-weight: 900; font-size: 16px; }
+    .ps .l{ font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
 
-/* =========================
-   Wholesaler Lane Modal + God Mode (existing)
-   ========================= */
-.modalOverlay.dbw{
-  position: fixed; inset: 0; z-index: 9999;
-  display:none; align-items:center; justify-content:center;
-  padding: 18px;
-  background: rgba(0,0,0,.58);
-  backdrop-filter: blur(10px);
-}
-.modalOverlay.dbw.show{ display:flex; }
-.modalCard.dbw{
-  width: min(980px, 96vw);
-  border-radius: 22px;
-  border: 1px solid rgba(255,255,255,.12);
-  background:
-    radial-gradient(circle at 18% 18%, rgba(43,116,255,.22), transparent 55%),
-    radial-gradient(circle at 82% 28%, rgba(139,92,246,.18), transparent 55%),
-    rgba(15,20,35,.82);
-  box-shadow: 0 22px 80px rgba(0,0,0,.65);
-  overflow:hidden;
-}
-.dbwHead{
-  display:flex; align-items:center; justify-content:space-between; gap: 12px;
-  padding: 14px 16px;
-  border-bottom: 1px solid rgba(255,255,255,.10);
-  background: rgba(0,0,0,.20);
-}
-.dbwTitle{font-weight: 900; letter-spacing: -.01em; font-size: 16px; line-height: 1.1;}
-.dbwSub{ margin-top: 2px; font-size: 12px; color: rgba(255,255,255,.58); }
-.dbwClose{
-  width: 40px; height: 40px;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.85);
-  font-weight: 900;
-  cursor:pointer;
-}
-.dbwClose:hover{ filter: brightness(1.08); background: rgba(255,255,255,.08); }
+    .bgGlow{ position:absolute; inset:0; opacity: .95; z-index: 1; }
+    .bgNoise{
+      position:absolute; inset:0; z-index: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.12), transparent 55%),
+        radial-gradient(circle at 70% 50%, rgba(0,0,0,.18), transparent 60%);
+      opacity: .18; mix-blend-mode: overlay;
+    }
 
-.dbwBody{ padding: 16px; }
-.dbwGrid{display:grid;grid-template-columns: 1.05fr .95fr;gap: 14px;}
-@media (max-width: 980px){.dbwGrid{ grid-template-columns: 1fr; }}
+    .side{ display:flex; flex-direction:column; gap: 14px; }
+    .panel{
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      overflow:hidden;
+    }
+    .panelHead{
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    }
+    .panelHead h3{
+      font-size: 13px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+      font-weight: 800;
+      white-space:nowrap;
+    }
+    .panelBody{ padding: 12px 14px 14px; }
 
-.dbwPanel{border-radius: 18px;border: 1px solid rgba(255,255,255,.10);background: rgba(255,255,255,.04);overflow:hidden;}
-.dbwPanelHead{
-  padding: 12px 12px 10px;
-  border-bottom: 1px solid rgba(255,255,255,.08);
-  display:flex; align-items:center; justify-content:space-between; gap: 10px;
-}
-.dbwPanelHead h4{
-  font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
-  color: rgba(255,255,255,.86);
-  margin:0;
-}
-.dbwPanelBody{ padding: 12px; }
+    .presenceList{ display:flex; flex-direction:column; gap: 10px; }
+    .pItem{
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .pLeft{ display:flex; align-items:center; gap: 10px; min-width:0; }
+    .avatar{
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900; color: rgba(255,255,255,.88);
+      flex: 0 0 auto;
+    }
+    .pMeta{ min-width:0; }
+    .pName{
+      font-weight: 800; font-size: 13px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 160px;
+    }
+    .pSub{
+      font-size: 11px; color: rgba(255,255,255,.48);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 160px; margin-top: 2px;
+    }
+    .dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34,197,94,.25);
+      flex: 0 0 auto;
+    }
 
-.dbwField{ margin-top: 10px; }
-.dbwLabel{
-  font-size: 11px; letter-spacing:.14em; text-transform: uppercase;
-  color: rgba(255,255,255,.70);
-  margin-bottom: 6px;
-}
-.dbwRow{ display:flex; gap: 10px; flex-wrap:wrap; }
-.dbwSelect,.dbwInput,.dbwTextarea{
-  width: 100%;
-  border-radius: 14px;
-  border: 1px solid rgba(255,255,255,.14);
-  background: rgba(0,0,0,.20);
-  color: rgba(255,255,255,.92);
-  padding: 11px 12px;
-  outline: none;
-}
-.dbwTextarea{ min-height: 90px; resize: vertical; }
-.dbwSelect:focus,.dbwInput:focus,.dbwTextarea:focus{
-  border-color: rgba(106,167,255,.55);
-  box-shadow: 0 0 0 4px rgba(43,116,255,.14);
-}
+    .chatShell{
+      display:flex;
+      flex-direction:column;
+      height: clamp(360px, 52vh, 560px);
+      min-height: 0;
+    }
+    .chatMessages{ flex: 1; overflow-y:auto; min-height:0; padding-right: 4px; }
+    .msg{
+      margin-bottom: 10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .msg strong{ color: #6aa7ff; }
+    .msg small{ color: rgba(255,255,255,.45); font-size: 11px; margin-left: 6px; }
+    .chatInput{
+      display:flex; gap: 10px; margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .chatInput input{
+      flex:1;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: white;
+      outline:none;
+    }
+    .chatInput input:focus{
+      border-color: rgba(106,167,255,.55);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.14);
+    }
+    .chatInput button{
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,116,255,.55);
+      background: rgba(43,116,255,.20);
+      color: white;
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .chatInput button:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .chatInput button:active{ transform: translateY(0); }
 
-.dbwOptGrid{display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));gap: 10px;}
-@media (max-width: 980px){.dbwOptGrid{ grid-template-columns: 1fr; }}
-.dbwOpt{
-  border-radius: 16px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  padding: 12px;
-  cursor:pointer;
-  transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
-  text-align:left;
-  color: rgba(255,255,255,.92);
-}
-.dbwOpt:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.12); border-color: rgba(43,116,255,.25); }
-.dbwOpt.active{ background: rgba(43,116,255,.18); border-color: rgba(106,167,255,.45); }
-.dbwOpt strong{ display:block; font-weight: 900; font-size: 13px; }
-.dbwOpt span{ display:block; margin-top: 6px; color: rgba(255,255,255,.64); font-size: 12px; line-height: 1.35; }
-.dbwPill{
-  display:inline-flex; align-items:center; gap: 6px;
-  padding: 6px 10px;
-  border-radius: 999px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(0,0,0,.20);
-  color: rgba(255,255,255,.72);
-  font-size: 12px;
-  font-weight: 800;
-  white-space:nowrap;
-}
+    footer{
+      max-width: 1240px;
+      margin: 26px auto 40px;
+      padding: 0 16px;
+      color: rgba(255,255,255,.46);
+      font-size: 12px;
+      text-align:center;
+    }
+    footer a{ color: rgba(255,255,255,.62); }
 
-.dbwBtn{
-  width: 100%;
-  border-radius: 16px;
-  padding: 12px 12px;
-  border: 1px solid rgba(255,255,255,.12);
-  background: rgba(255,255,255,.06);
-  color: rgba(255,255,255,.92);
-  cursor:pointer;
-  text-align:left;
-  transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
-}
-.dbwBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.24); }
-.dbwBtn strong{ display:block; font-weight: 900; font-size: 13px; }
-.dbwBtn span{ display:block; margin-top: 4px; font-size: 12px; color: rgba(255,255,255,.62); line-height: 1.35; }
+    @media (max-width: 980px){
+      nav{ display:none; }
+      .stats{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gridMain{ grid-template-columns: 1fr; }
+      .portals{ grid-template-columns: 1fr; }
+      .status{ text-align:left; max-width:none; }
+      .rightHead{ min-width: unset; justify-content:flex-start; }
+    }
 
-.dbwMini{
-  font-size: 11px;
-  color: rgba(255,255,255,.50);
-  line-height: 1.35;
-  margin-top: 10px;
-}
-.dbwMini b{ color: rgba(255,255,255,.85); }
-</style>
+    /* =========================
+       Modal Base (shared)
+       ========================= */
+    .modalOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
+    }
+    .modalOverlay.show{ display:flex; }
+
+    .modalCard{
+      width: min(980px, 96vw);
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 22px 80px rgba(0,0,0,.65);
+      overflow: hidden;
+      background: rgba(15,20,35,.78);
+    }
+
+    .modalHead{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
+    }
+    .modalTitleWrap{ display:flex; align-items:center; gap: 10px; min-width: 0; }
+    .modalIcon{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:flex; align-items:center; justify-content:center;
+      flex: 0 0 auto;
+    }
+    .modalTitle{
+      font-weight: 900;
+      letter-spacing: -.01em;
+      font-size: 16px;
+      line-height: 1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .modalSub{
+      margin-top: 2px;
+      font-size: 12px;
+      color: rgba(255,255,255,.58);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .modalClose{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.85);
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+    }
+    .modalClose:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(255,255,255,.08); }
+
+    .modalBody{ padding: 16px; max-height: calc(92vh - 74px); overflow: hidden; }
+    .modalGrid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      align-items: stretch;
+      height: 100%;
+    }
+    @media (max-width: 980px){
+      .modalBody{ max-height: none; overflow: visible; }
+      .modalGrid{ grid-template-columns: 1fr; height: auto; }
+    }
+
+    .modalPanel{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      overflow: hidden;
+    }
+    .modalPanelHead{
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    }
+    .modalPanelHead h4{
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .modalPanelBody{ padding: 12px; overflow: hidden; }
+
+    /* Marquee */
+    .marqueeViewport{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+      overflow: hidden;
+      position: relative;
+    }
+    .marqueeTrack{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      padding: 10px;
+      will-change: transform;
+    }
+    .marqueeViewport:hover .marqueeTrack{ animation-play-state: paused; }
+
+    @media (min-width: 981px){
+      .marqueeViewport{ height: calc(92vh - 170px); min-height: 420px; }
+      .marqueeTrack{ animation: dbMarquee 34s linear infinite; }
+      @keyframes dbMarquee{ from{ transform: translateY(0); } to{ transform: translateY(-50%); } }
+    }
+    @media (max-width: 980px){
+      .marqueeViewport{ max-height: 520px; overflow: auto; }
+      .marqueeTrack{ animation: none !important; }
+    }
+    @media (prefers-reduced-motion: reduce){ .marqueeTrack{ animation: none !important; } }
+
+    .mixCard{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.07);
+      padding: 12px;
+    }
+    .mixHead{ display:flex; align-items:center; justify-content:space-between; gap: 10px; margin-bottom: 8px; }
+    .mixHead h5{ font-size: 13px; font-weight: 900; }
+    .mixTag{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.68);
+      font-size: 11px;
+      font-weight: 800;
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+    .mixText{ font-size: 12px; color: rgba(255,255,255,.70); line-height: 1.35; }
+
+    .photoRow{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .ph{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      overflow: hidden;
+      padding: 0;
+    }
+    .ph img{ width: 100%; height: 150px; object-fit: cover; display:block; }
+
+    .reviewTop{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; margin-top: 8px; }
+    .reviewName{ font-weight: 900; font-size: 12px; color: rgba(255,255,255,.92); }
+    .reviewRole{ font-size: 11px; color: rgba(255,255,255,.60); margin-top: 2px; }
+    .reviewText{ margin-top: 8px; font-size: 12px; color: rgba(255,255,255,.74); line-height: 1.35; }
+    .stars{ display:flex; gap: 4px; align-items:center; }
+    .star{ width: 14px; height: 14px; color: rgba(251,191,36,.95); filter: drop-shadow(0 0 8px rgba(251,191,36,.12)); }
+
+    .actionStack{ display:flex; flex-direction:column; gap: 10px; }
+
+    .cta{
+      width: 100%;
+      border-radius: 16px;
+      padding: 12px 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      cursor:pointer;
+      text-align:left;
+      transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .cta:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .cta strong{
+      display:block;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: -.01em;
+    }
+    .cta span{
+      display:block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      line-height: 1.35;
+    }
+    .ctaRow{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+    .ctaPill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.68);
+      font-size: 12px;
+      font-weight: 800;
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+
+    .finePrint{
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,.48);
+      line-height: 1.35;
+    }
+    .finePrint a{ color: rgba(106,167,255,.85); text-decoration:none; font-weight:900; }
+    .finePrint a:hover{ text-decoration: underline; }
+
+    /* =========================
+       Wholesaler Modal add-ons
+       ========================= */
+    .formBlock{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+    }
+    .fRow{ display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+    .fLabel{
+      font-size: 11px;
+      color: rgba(255,255,255,.62);
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+    .segRow{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    .segBtn{
+      border-radius: 999px;
+      padding: 9px 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.80);
+      font-weight: 900;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .segBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .segBtn.active{
+      border-color: rgba(43,116,255,.55);
+      background: rgba(43,116,255,.18);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.12);
+      color: rgba(255,255,255,.92);
+    }
+    .select{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.90);
+      outline:none;
+      font-weight: 800;
+    }
+    .select:focus{
+      border-color: rgba(106,167,255,.55);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.14);
+    }
+
+    .primaryBtn{
+      width: 100%;
+      border-radius: 16px;
+      padding: 12px 12px;
+      border: 1px solid rgba(43,116,255,.60);
+      background: rgba(43,116,255,.22);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+      font-weight: 1000;
+      letter-spacing: -.01em;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      margin-top: 10px;
+    }
+    .primaryBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.28); }
+    .primaryBtn:active{ transform: translateY(0); }
+    .primaryBtn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .tinyNote{
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,.52);
+      line-height: 1.35;
+    }
+    .tinyNote b{ color: rgba(255,255,255,.78); }
+    .miniWarn{
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(251,191,36,.22);
+      background: rgba(251,191,36,.08);
+      padding: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.35;
+    }
+  </style>
 </head>
 
 <body>
-<div class="wrap">
+  <div class="ambient">
+    <div class="blob b1"></div>
+    <div class="blob b2"></div>
+    <div class="grid"></div>
+  </div>
 
-  <div class="topbar">
-    <div class="brand">
-      <img src="icon (1).jpg" alt="DealBankers">
-      <div style="min-width:0">
-        <div class="title">DealBankers • Wholesaler</div>
-        <div class="sub" id="whoLine">Loading…</div>
+  <header>
+    <div class="hwrap">
+      <div class="brand">
+        <img src="icon (1).jpg" alt="DealBankers"/>
+        <div>
+          <div class="brandTitle">DealBankers</div>
+          <div class="brandSub">Real Estate Command Hub</div>
+        </div>
+      </div>
+
+      <nav>
+        <a href="index.html">Home</a>
+        <a href="profile.html">Tools</a>
+        <a href="#townhall">Townhall</a>
+        <a href="claims-exchange.html">ClaimChain</a>
+      </nav>
+
+      <div class="rightHead">
+        <button class="bell" id="bellBtn" title="Notifications (placeholder)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.75)">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="badge" id="notifBadge">3</span>
+        </button>
+
+        <div class="status" id="authStatus">Signed out</div>
+      </div>
+    </div>
+  </header>
+
+  <div class="wrap">
+    <div class="topRow">
+      <div class="welcome">
+        <h1>
+          Welcome back, <span class="grad" id="welcomeName">Deal Banker</span>
+        </h1>
+        <p>Your command center for all deal operations.</p>
+      </div>
+
+      <button id="googleBtn" class="gbtn">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google"/>
+        Sign in with Google
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(251,191,36,.95)">
+            <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+          </svg>
+          <div class="pill">LIVE</div>
+        </div>
+        <div class="value" id="statLeads">—</div>
+        <div class="label">Active Leads</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(34,197,94,.95)">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <div class="pill">OPS</div>
+        </div>
+        <div class="value" id="statJobs">—</div>
+        <div class="label">Open Jobs</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(106,167,255,.95)">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <div class="pill"><span id="onlinePill">0</span> active</div>
+        </div>
+        <div class="value" id="statOnline">0</div>
+        <div class="label">Online Now</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(139,92,246,.95)">
+            <path d="M12 20V10"></path>
+            <path d="M18 20V4"></path>
+            <path d="M6 20v-6"></path>
+          </svg>
+          <div class="pill">MONTH</div>
+        </div>
+        <div class="value" id="statMonth">$—</div>
+        <div class="label">This Month</div>
       </div>
     </div>
 
-    <div class="nav">
-      <button class="chip" id="btnDashboard" type="button"><span class="dot"></span>Dashboard</button>
-      <button class="chip blue" id="btnBlue" type="button"><span class="dot good"></span>Acq</button>
-      <button class="chip red" id="btnRed" type="button"><span class="dot bad"></span>Dispo</button>
-      <button class="icon-btn" id="btnSettings" type="button" title="Workspace / Lane">⚙️</button>
-      <button class="chip" id="btnGod" type="button" style="display:none;" title="Admin tools">👁 God Mode</button>
-      <button class="chip" id="btnLogout" type="button">Logout</button>
+    <div class="gridMain">
+      <div class="portals">
+        <!-- Wholesaler now opens modal (like contractor) -->
+        <div class="pCard" data-href="wholesaler.html" role="button" tabindex="0" aria-label="Wholesaler Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(30,64,175,.85), rgba(67,56,202,.75));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Wholesaler</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Manage seller leads, dispo buyers, call scripts, and contracts.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="whActive">—</div><div class="l">Active Leads</div></div>
+              <div class="ps"><div class="v" id="whNew">—</div><div class="l">New</div></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Contractor opens modal -->
+        <div class="pCard" data-href="contractor.html" role="button" tabindex="0" aria-label="Contractor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(249,115,22,.95), rgba(234,88,12,.85), rgba(185,28,28,.72));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Contractor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Job postings, project management, payroll, and subcontracting.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="ctOpen">—</div><div class="l">Open Jobs</div></div>
+              <div class="ps"><div class="v" id="ctProg">—</div><div class="l">In Progress</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="realtor.html" role="button" tabindex="0" aria-label="Realtor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(16,185,129,.95), rgba(5,150,105,.85), rgba(13,148,136,.75));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Realtor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Transaction coordination, client resources, learning modules.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="rtListings">—</div><div class="l">Listings</div></div>
+              <div class="ps"><div class="v" id="rtPending">—</div><div class="l">Pending</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="investor.html" role="button" tabindex="0" aria-label="Investor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(124,58,237,.85), rgba(219,39,119,.72));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Investor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Deal analysis, private money portal, JV structures, funding docs.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="ivDeals">—</div><div class="l">Deals</div></div>
+              <div class="ps"><div class="v" id="ivFunded">—</div><div class="l">Funded</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="side">
+        <div class="panel">
+          <div class="panelHead">
+            <h3>Online Now</h3>
+            <div class="pill" id="onlineMini">0 active</div>
+          </div>
+          <div class="panelBody">
+            <div class="presenceList" id="presenceList">
+              <div style="color:rgba(255,255,255,.45); font-size:12px;">No one online yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="townhall">
+          <div class="panelHead">
+            <h3>Townhall Chat</h3>
+            <div class="pill">Live</div>
+          </div>
+          <div class="panelBody">
+            <div class="chatShell">
+              <div id="messages" class="chatMessages"></div>
+              <div class="chatInput">
+                <input id="msgInput" placeholder="Sign in to chat..." disabled />
+                <button id="sendBtn" disabled>Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
-  <div class="grid">
-
-    <!-- LEFT: LEAD QUEUE -->
-    <div class="panel">
-      <div class="panelHead">
-        <h3>Seller Queue</h3>
-        <span class="pill" id="queuePill">—</span>
-      </div>
-      <div class="panelBody">
-
-        <div class="row">
-          <div class="field">
-            <div class="label">Search</div>
-            <input class="input" id="s_q" placeholder="address • owner • phone • tag • 'street' • 'web' • 'live'" />
-          </div>
-          <div class="field" style="flex:0;min-width:180px">
-            <div class="label">Filter</div>
-            <select class="select" id="s_status">
-              <option value="">All statuses</option>
-              <option>New</option>
-              <option>Contacted</option>
-              <option>Hot</option>
-              <option>Under Contract</option>
-              <option>Dead</option>
-            </select>
-          </div>
-        </div>
-
-        <div class="row" style="margin-top:10px">
-          <div class="field">
-            <button class="btn blue" id="addLeadBtn" type="button">
-              <strong>+ Add Seller Lead</strong>
-              <span>Enter a new seller lead into the kitchen</span>
-            </button>
-          </div>
-          <div class="field">
-            <button class="btn" id="refreshBtn" type="button">
-              <strong>Refresh</strong>
-              <span>Reload queue</span>
-            </button>
-          </div>
-        </div>
-
-        <div class="hr"></div>
-
-        <div class="list" id="leadList"></div>
-        <div class="small" id="leadListHint" style="margin-top:10px"></div>
-
-      </div>
+  <footer>
+    © <span id="year"></span> DealBankers.com • Built for Trust. Driven by Data
+    <div style="margin-top:10px;">
+      <a href="https://drive.google.com/drive/u/2/folders/1x4xbW0Vbb5FSP0292WC7qwMIyzsTzgop" target="_blank" rel="noreferrer">
+        📘 Family Advocacy Docs (Open Source)
+      </a>
     </div>
+  </footer>
 
-    <!-- RIGHT: STREET VIEW + WORKSTATION -->
-    <div class="stack">
-
-      <!-- MAP / STREET VIEW -->
-      <div class="mapWrap" id="mapPanel">
-        <div class="mapHead">
-          <h3>Street View / Map</h3>
-          <span class="pill" id="mapPill">No lead selected</span>
-        </div>
-        <div class="mapBody">
-          <iframe id="mapFrame" loading="lazy" referrerpolicy="no-referrer-when-downgrade"
-            src="about:blank"></iframe>
-        </div>
-        <div class="mapHint">
-          <div class="small" id="mapHintText">Pick a lead to load location preview.</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end">
-            <button class="miniBtn" id="btnOpenMaps" type="button" disabled>Open Maps</button>
-            <button class="miniBtn blue" id="btnCopyAddr" type="button" disabled>Copy Address</button>
+  <!-- =========================
+       WHOLESALER MODAL
+       ========================= -->
+  <div id="wholesalerModal" class="modalOverlay" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Wholesaler Hub"
+      style="
+        background:
+          radial-gradient(circle at 20% 15%, rgba(43,116,255,.22), transparent 55%),
+          radial-gradient(circle at 80% 30%, rgba(139,92,246,.16), transparent 55%),
+          rgba(15,20,35,.78);
+      ">
+      <div class="modalHead">
+        <div class="modalTitleWrap">
+          <div class="modalIcon" aria-hidden="true" style="box-shadow:0 0 18px rgba(43,116,255,.22);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.85)">
+              <path d="M20 7h-9"></path>
+              <path d="M14 17H5"></path>
+              <circle cx="17" cy="17" r="3"></circle>
+              <circle cx="7" cy="7" r="3"></circle>
+            </svg>
+          </div>
+          <div style="min-width:0">
+            <div class="modalTitle">Wholesaler Operations</div>
+            <div class="modalSub">Street Leads • Web Leads • Live Leads • Dispo & Capital</div>
           </div>
         </div>
+
+        <button id="wholesalerModalClose" class="modalClose" aria-label="Close">✕</button>
       </div>
 
-      <!-- WORKSTATION -->
-      <div class="panel" id="panel-console">
-        <div class="panelHead">
-          <h3>Workstation</h3>
-          <span class="pill" id="leadPill">No lead selected</span>
-        </div>
-        <div class="panelBody">
+      <div class="modalBody">
+        <div class="modalGrid">
 
-          <div class="row">
-            <div class="field">
-              <div class="label">Selected Lead</div>
-              <input class="input" id="leadTitle" readonly placeholder="Pick a lead from the queue…" />
+          <!-- Left: proof / narrative -->
+          <div class="modalPanel proofPanel" style="background: rgba(255,255,255,.06);">
+            <div class="modalPanelHead">
+              <h4>How it Works</h4>
+              <div class="pill">Pick a lane</div>
             </div>
-          </div>
 
-          <div class="row" style="margin-top:10px">
-            <div class="field">
-              <div class="label">Status</div>
-              <select class="select" id="leadStatus" disabled>
-                <option>New</option>
-                <option>Contacted</option>
-                <option>Hot</option>
-                <option>Under Contract</option>
-                <option>Dead</option>
-              </select>
-            </div>
-            <div class="field">
-              <div class="label">Tag</div>
-              <input class="input" id="leadTag" placeholder="probate • liens • sub2 • etc" disabled />
-            </div>
-          </div>
+            <div class="modalPanelBody">
+              <div class="marqueeViewport" aria-label="Wholesaler explainer feed">
+                <div class="marqueeTrack">
 
-          <div class="row" style="margin-top:10px">
-            <div class="field">
-              <div class="label">Owner</div>
-              <input class="input" id="leadOwner" placeholder="Owner name" disabled />
-            </div>
-            <div class="field">
-              <div class="label">Phone</div>
-              <input class="input" id="leadPhone" placeholder="(210) 555-5555" disabled />
-            </div>
-          </div>
+                  <!-- Track A -->
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Street Lead (Handshake)</h5>
+                      <div class="mixTag">JV / Partner</div>
+                    </div>
+                    <div class="mixText">
+                      You can bring <b>your own lead</b>, or partner with DealBankers on ours.
+                      We coordinate: calls, analysis, negotiation, contract, and dispo / liquidation / capital.
+                    </div>
+                  </div>
 
-          <div class="row" style="margin-top:10px">
-            <div class="field">
-              <div class="label">Address</div>
-              <input class="input" id="leadAddress" placeholder="123 Main St, San Antonio TX" disabled />
-            </div>
-          </div>
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Web Lead (Buy-in / Bid)</h5>
+                      <div class="mixTag">Competitive</div>
+                    </div>
+                    <div class="mixText">
+                      Leads can be listed with a buy-in and held in your account while you're the
+                      <b>highest bidder</b> (like propertyleads… but better).
+                    </div>
+                  </div>
 
-          <!-- QUICK ACTIONS (click-to-call restored) -->
-          <div class="row" style="margin-top:10px">
-            <div class="field">
-              <button class="btn blue" id="callBtn" type="button" disabled>
-                <strong>📞 Call (Click-to-Call)</strong>
-                <span>Uses tel: link (mobile / desktop w/ phone integration)</span>
-              </button>
-            </div>
-            <div class="field">
-              <button class="btn" id="copyPhoneBtn" type="button" disabled>
-                <strong>Copy Phone</strong>
-                <span>Copies phone to clipboard</span>
-              </button>
-            </div>
-          </div>
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Live Lead (Real-time)</h5>
+                      <div class="mixTag">Instant</div>
+                    </div>
+                    <div class="mixText">
+                      Priority leads in motion. Speed matters. Claim, call, coordinate, and move to close.
+                    </div>
+                  </div>
 
-          <div class="row" style="margin-top:10px">
-            <div class="field">
-              <div class="label">Notes</div>
-              <textarea class="textarea" id="leadNotes" placeholder="Seller motivation, condition, timeline, your call summary…" disabled></textarea>
-            </div>
-          </div>
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Dispo + Capital</h5>
+                      <div class="mixTag">Close Fast</div>
+                    </div>
+                    <div class="mixText">
+                      We can support liquidation to buyers, JV structures, and raising private capital when needed.
+                    </div>
+                  </div>
 
-          <div class="row" style="margin-top:10px">
-            <div class="field">
-              <button class="btn blue" id="saveLeadBtn" type="button" disabled>
-                <strong>Save Lead</strong>
-                <span>Updates kitchen record</span>
-              </button>
-            </div>
-            <div class="field">
-              <button class="btn red" id="deleteLeadBtn" type="button" disabled>
-                <strong>Delete Lead</strong>
-                <span>Removes from queue (careful)</span>
-              </button>
-            </div>
-          </div>
+                  <!-- Track B (duplicate) -->
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Street Lead (Handshake)</h5>
+                      <div class="mixTag">JV / Partner</div>
+                    </div>
+                    <div class="mixText">
+                      You can bring <b>your own lead</b>, or partner with DealBankers on ours.
+                      We coordinate: calls, analysis, negotiation, contract, and dispo / liquidation / capital.
+                    </div>
+                  </div>
 
-          <div class="hr"></div>
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Web Lead (Buy-in / Bid)</h5>
+                      <div class="mixTag">Competitive</div>
+                    </div>
+                    <div class="mixText">
+                      Leads can be listed with a buy-in and held in your account while you're the
+                      <b>highest bidder</b> (like propertyleads… but better).
+                    </div>
+                  </div>
 
-          <div class="panel" style="box-shadow:none;background:rgba(0,0,0,.10);border-color:rgba(255,255,255,.08)">
-            <div class="panelHead">
-              <h3>Call Log</h3>
-              <span class="pill" id="callPill">—</span>
-            </div>
-            <div class="panelBody">
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Live Lead (Real-time)</h5>
+                      <div class="mixTag">Instant</div>
+                    </div>
+                    <div class="mixText">
+                      Priority leads in motion. Speed matters. Claim, call, coordinate, and move to close.
+                    </div>
+                  </div>
 
-              <div class="row">
-                <div class="field">
-                  <div class="label">Call Note</div>
-                  <input class="input" id="callNote" placeholder="VM left • spoke to daughter • appointment set • etc" disabled />
-                </div>
-                <div class="field" style="flex:0;min-width:190px">
-                  <div class="label">Outcome</div>
-                  <select class="select" id="callOutcome" disabled>
-                    <option value="Attempt">Attempt</option>
-                    <option value="VM">VM</option>
-                    <option value="Spoke">Spoke</option>
-                    <option value="Appt">Appt</option>
-                    <option value="Nope">Nope</option>
-                  </select>
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Dispo + Capital</h5>
+                      <div class="mixTag">Close Fast</div>
+                    </div>
+                    <div class="mixText">
+                      We can support liquidation to buyers, JV structures, and raising private capital when needed.
+                    </div>
+                  </div>
+
                 </div>
               </div>
 
-              <div class="row" style="margin-top:10px">
-                <div class="field">
-                  <button class="btn" id="addCallBtn" type="button" disabled>
-                    <strong>+ Add Call Log</strong>
-                    <span>Saves to call_logs under this lead</span>
+              <div class="finePrint">
+                Desktop: auto-scroll (hover to pause). Mobile: swipe/scroll manually.
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: picker -->
+          <div class="modalPanel" style="background: rgba(0,0,0,.18);">
+            <div class="modalPanelHead">
+              <h4>Lead Setup</h4>
+              <div class="pill">Type + County</div>
+            </div>
+            <div class="modalPanelBody">
+
+              <div class="formBlock">
+                <div class="fLabel">Choose Lead Type</div>
+                <div class="segRow" role="group" aria-label="Lead type">
+                  <button class="segBtn active" data-leadtype="street" type="button">Street Lead</button>
+                  <button class="segBtn" data-leadtype="web" type="button">Web Lead</button>
+                  <button class="segBtn" data-leadtype="live" type="button">Live Lead</button>
+                </div>
+
+                <div class="fRow">
+                  <div>
+                    <div class="fLabel" style="margin-top:10px;">County</div>
+                    <select id="whCounty" class="select" aria-label="County select">
+                      <option value="">Select county…</option>
+                      <option value="Bexar">Bexar</option>
+                      <option value="Travis">Travis</option>
+                      <option value="Williamson">Williamson</option>
+                      <option value="Hays">Hays</option>
+                      <option value="Comal">Comal</option>
+                      <option value="Guadalupe">Guadalupe</option>
+                      <option value="Nueces">Nueces</option>
+                      <option value="Bell">Bell</option>
+                      <option value="Dallas">Dallas</option>
+                      <option value="Tarrant">Tarrant</option>
+                      <option value="Harris">Harris</option>
+                      <option value="Fort Bend">Fort Bend</option>
+                      <option value="Montgomery">Montgomery</option>
+                      <option value="Other">Other / Multi-county</option>
+                    </select>
+                  </div>
+
+                  <div id="streetModeBlock">
+                    <div class="fLabel" style="margin-top:10px;">Street Lead Mode</div>
+                    <div class="segRow" role="group" aria-label="Street mode">
+                      <button class="segBtn active" data-streetmode="partner" type="button">Partner on DB Lead</button>
+                      <button class="segBtn" data-streetmode="own" type="button">I’m Entering My Own Lead</button>
+                    </div>
+                    <div class="tinyNote">
+                      Street = handshake. If you partner on DB leads, you’ll typically be asked to review / sign a JV agreement before deeper access.
+                    </div>
+                  </div>
+
+                  <div id="webModeBlock" style="display:none;">
+                    <div class="miniWarn">
+                      <b>Web Leads:</b> buy-in / bidding lane. We’ll route you into the bidding board inside the Wholesaler portal.
+                    </div>
+                  </div>
+
+                  <div id="liveModeBlock" style="display:none;">
+                    <div class="miniWarn">
+                      <b>Live Leads:</b> fast lane. Claim → Call → Coordinate. We’ll route you into the live queue view.
+                    </div>
+                  </div>
+
+                  <button id="whContinue" class="primaryBtn" type="button" disabled>
+                    Continue to Wholesaler Portal →
                   </button>
+
+                  <div class="tinyNote">
+                    Tip: you can change lanes inside the portal. This just sets your default entry flow.
+                  </div>
+
                 </div>
               </div>
 
-              <div class="hr"></div>
-
-              <div class="list" id="callList"></div>
-
-            </div>
-          </div>
-
-        </div>
-      </div>
-
-    </div><!-- /stack -->
-
-  </div><!-- /grid -->
-
-</div><!-- /wrap -->
-
-<!-- =========================
-     Wholesaler Lane Modal
-     ========================= -->
-<div id="whLaneModal" class="modalOverlay dbw" aria-hidden="true">
-  <div class="modalCard dbw" role="dialog" aria-modal="true" aria-label="Wholesaler Lane Setup">
-    <div class="dbwHead">
-      <div style="min-width:0">
-        <div class="dbwTitle">Wholesaler Lane Setup</div>
-        <div class="dbwSub">Pick a lead type + county • Then choose your route</div>
-      </div>
-      <button id="whLaneClose" class="dbwClose" aria-label="Close">✕</button>
-    </div>
-
-    <div class="dbwBody">
-      <div class="dbwGrid">
-
-        <div class="dbwPanel">
-          <div class="dbwPanelHead">
-            <h4>Lead Type</h4>
-            <span class="dbwPill" id="whLanePill">Not set</span>
-          </div>
-          <div class="dbwPanelBody">
-
-            <div class="dbwOptGrid" id="whTypeGrid">
-              <button class="dbwOpt" type="button" data-type="street">
-                <strong>Street Lead</strong>
-                <span>Handshake lane: you bring a lead OR partner with DealBankers. We coordinate → analyze → transact → dispo / liquidate / raise capital.</span>
-              </button>
-
-              <button class="dbwOpt" type="button" data-type="web">
-                <strong>Web Lead</strong>
-                <span>Buy-in lane: bid for exclusive rights (like PropertyLeads, but cleaner + faster). Your credit stays until you’re the highest bidder.</span>
-              </button>
-
-              <button class="dbwOpt" type="button" data-type="live">
-                <strong>Live Lead</strong>
-                <span>Real-time inbound / warm transfers. Highest priority, fastest response.</span>
-              </button>
-            </div>
-
-            <div class="dbwField">
-              <div class="dbwLabel">County</div>
-              <select id="whCounty" class="dbwSelect">
-                <option value="">Select county…</option>
-                <option>Bexar</option><option>Travis</option><option>Guadalupe</option><option>Comal</option>
-                <option>Hays</option><option>Williamson</option><option>Nueces</option><option>Bell</option>
-                <option>Montgomery</option><option>Harris</option><option>Dallas</option><option>Tarrant</option>
-                <option>Other</option>
-              </select>
-            </div>
-
-            <div class="dbwField">
-              <div class="dbwLabel">Notes (optional)</div>
-              <textarea id="whLaneNotes" class="dbwTextarea" placeholder="Example: ‘I’m working probate leads in Bexar, need dispo buyers + JV funds.’"></textarea>
-            </div>
-
-            <div class="dbwMini">
-              This sets your <b>workspace filter</b> and routes your actions. You can change it anytime in ⚙️.
-            </div>
-          </div>
-        </div>
-
-        <div class="dbwPanel">
-          <div class="dbwPanelHead">
-            <h4>Routes</h4>
-            <span class="dbwPill">Pick a lane</span>
-          </div>
-          <div class="dbwPanelBody">
-
-            <button class="dbwBtn" id="whRoutePartner" type="button">
-              <strong>Partner with DealBankers (Street)</strong>
-              <span>Request/claim a lead from the DealBankers kitchen. We JV, coordinate, analyze, and close.</span>
-            </button>
-
-            <div style="height:10px"></div>
-
-            <button class="dbwBtn" id="whRouteEnter" type="button">
-              <strong>Enter My Lead (Street)</strong>
-              <span>Add a seller lead you already have. Track calls, notes, team activity, and dispo.</span>
-            </button>
-
-            <div style="height:10px"></div>
-
-            <button class="dbwBtn" id="whRouteBid" type="button">
-              <strong>Bid / Buy Web Lead (Web)</strong>
-              <span>Open the bidding flow. Your credit stays on account until you’re top bidder (stub for now).</span>
-            </button>
-
-            <div style="height:10px"></div>
-
-            <button class="dbwBtn" id="whRouteLive" type="button">
-              <strong>Live Lead Inbox (Live)</strong>
-              <span>Open warm transfers / inbound queue (stub for now).</span>
-            </button>
-
-            <div class="dbwMini">
-              Pro tip: If you’re <b>God Mode</b>, you can assign any lead to one or many reps from ⚙️ and view what’s in their workstation.
-            </div>
-          </div>
-        </div>
-
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- =========================
-     God Mode: Admin Console Modal
-     ========================= -->
-<div id="godModal" class="modalOverlay dbw" aria-hidden="true">
-  <div class="modalCard dbw" role="dialog" aria-modal="true" aria-label="God Mode Admin Console">
-    <div class="dbwHead">
-      <div style="min-width:0">
-        <div class="dbwTitle">God Mode • Admin Console</div>
-        <div class="dbwSub">Assign leads • Inspect workstations • Edit rep console fields</div>
-      </div>
-      <button id="godClose" class="dbwClose" aria-label="Close">✕</button>
-    </div>
-
-    <div class="dbwBody">
-      <div class="dbwGrid">
-
-        <div class="dbwPanel">
-          <div class="dbwPanelHead">
-            <h4>Assign Current Lead</h4>
-            <span class="dbwPill" id="godLeadPill">No lead</span>
-          </div>
-          <div class="dbwPanelBody">
-            <div class="dbwField">
-              <div class="dbwLabel">Target UID(s) • comma separated</div>
-              <input id="godUids" class="dbwInput" placeholder="uid1, uid2, uid3" />
-            </div>
-
-            <div class="dbwField">
-              <div class="dbwLabel">What to push</div>
-              <select id="godPushMode" class="dbwSelect">
-                <option value="workspace">Push to workstation (recommended)</option>
-                <option value="leadAssign">Set lead assignedUids field only</option>
-              </select>
-            </div>
-
-            <div class="dbwField">
-              <button class="dbwBtn" id="godAssignBtn" type="button">
-                <strong>Push / Assign Now</strong>
-                <span>Writes to workstations/{uid}/leads/{leadId} and logs assignment.</span>
-              </button>
-            </div>
-
-            <div class="dbwMini" id="godAssignStatus"></div>
-          </div>
-        </div>
-
-        <div class="dbwPanel">
-          <div class="dbwPanelHead">
-            <h4>Inspect Rep Workstation</h4>
-            <span class="dbwPill" id="godViewPill">UID</span>
-          </div>
-          <div class="dbwPanelBody">
-            <div class="dbwField">
-              <div class="dbwLabel">UID to inspect</div>
-              <input id="godViewUid" class="dbwInput" placeholder="Paste a UID (rep)" />
-            </div>
-
-            <div class="dbwField">
-              <button class="dbwBtn" id="godLoadWorkspace" type="button">
-                <strong>Load Workstation</strong>
-                <span>Lists leads and saved fields under workstations/{uid}/leads.</span>
-              </button>
-            </div>
-
-            <div class="dbwField">
-              <div class="dbwLabel">Workspace Leads</div>
-              <select id="godWsLeadSelect" class="dbwSelect">
-                <option value="">—</option>
-              </select>
-            </div>
-
-            <div class="dbwField">
-              <div class="dbwLabel">Edit Field (safe)</div>
-              <div class="dbwRow">
-                <input id="godFieldKey" class="dbwInput" placeholder="field path (e.g. stage, nextAction, notes)" style="flex:1; min-width: 180px" />
-                <input id="godFieldVal" class="dbwInput" placeholder="value" style="flex:1; min-width: 180px" />
+              <div class="finePrint">
+                Press <b>Esc</b> to close. Click outside the panel to close.
               </div>
             </div>
-
-            <div class="dbwField">
-              <button class="dbwBtn" id="godSaveField" type="button">
-                <strong>Save Field</strong>
-                <span>Updates workstations/{uid}/leads/{leadId}/{field}.</span>
-              </button>
-            </div>
-
-            <div class="dbwField">
-              <div class="dbwLabel">Raw Preview</div>
-              <textarea id="godPreview" class="dbwTextarea" readonly placeholder="Workspace JSON will appear here…"></textarea>
-            </div>
-
-            <div class="dbwMini" id="godPreviewStatus"></div>
           </div>
-        </div>
 
+        </div>
       </div>
     </div>
   </div>
-</div>
 
-<!-- Firebase (compat to match your current portal) -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <!-- =========================
+       CONTRACTOR MODAL (your existing)
+       ========================= -->
+  <div id="contractorModal" class="modalOverlay" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Contractor Hub"
+      style="
+        background:
+          radial-gradient(circle at 20% 15%, rgba(249,115,22,.20), transparent 55%),
+          radial-gradient(circle at 80% 30%, rgba(239,68,68,.14), transparent 55%),
+          rgba(15,20,35,.78);
+      ">
+      <div class="modalHead">
+        <div class="modalTitleWrap">
+          <div class="modalIcon" aria-hidden="true" style="box-shadow:0 0 18px rgba(249,115,22,.20);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.85)">
+              <path d="M14.7 6.3a4 4 0 0 0-5.7 5.7l-6.3 6.3a2 2 0 0 0 2.8 2.8l6.3-6.3a4 4 0 0 0 5.7-5.7l-3 3-2.8-2.8 3-3z"></path>
+            </svg>
+          </div>
+          <div style="min-width:0">
+            <div class="modalTitle">Contractor Operations</div>
+            <div class="modalSub">Dispatch • Make-Ready • Emergency • Proof of Work</div>
+          </div>
+        </div>
 
-<!-- Your existing config.js (must define window.firebaseConfig) -->
-<script src="config.js"></script>
+        <button id="contractorModalClose" class="modalClose" aria-label="Close">✕</button>
+      </div>
 
-<script>
-/* ================== INIT ================== */
-function $(id){ return document.getElementById(id); }
-function safeText(v){ return String(v ?? "").trim(); }
-function enc(v){ return encodeURIComponent(String(v ?? "")); }
+      <div class="modalBody">
+        <div class="modalGrid">
 
-(function initFirebase(){
-  try{
-    if (!firebase.apps || !firebase.apps.length) {
-      if (!window.firebaseConfig) {
-        console.error("Missing window.firebaseConfig. Check config.js path and load order.");
-        return;
-      }
-      firebase.initializeApp(window.firebaseConfig);
-      console.log("Firebase initialized");
+          <div class="modalPanel proofPanel" style="background: rgba(255,255,255,.06);">
+            <div class="modalPanelHead">
+              <h4>Proof & Performance</h4>
+              <div class="pill">Auto-scroll</div>
+            </div>
+
+            <div class="modalPanelBody">
+              <div class="marqueeViewport" aria-label="Auto-scrolling proof feed">
+                <div class="marqueeTrack">
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Make-Ready</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Turn-ready finish-out with clean documentation.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/3.jpg" alt="Before 1"></div>
+                      <div class="ph"><img src="images/contractorbanda/4.png" alt="After 1"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Property Ops • Austin</div>
+                        <div class="reviewRole">Turns + unit readiness</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Turned the unit in 48 hours.”</b> Photos, notes, and invoice were clean and easy for ownership.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Turn Cleanup</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Fast turnaround + proof-of-work photos.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/5.jpg" alt="Before 2"></div>
+                      <div class="ph"><img src="images/contractorbanda/6.png" alt="After 2"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Office Manager</div>
+                        <div class="reviewRole">Work orders + documentation</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Clean, fast, and documented.”</b> They updated us, handled access, and closed out the work order right.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Regional PM</div>
+                        <div class="reviewRole">Vendor management</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“No babysitting.”</b> They handled the scope, sent proof photos, and we had a clean close-out.</div>
+                  </div>
+
+                  <!-- duplicate set for loop -->
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Make-Ready</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Turn-ready finish-out with clean documentation.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/3.jpg" alt="Before 1 duplicate"></div>
+                      <div class="ph"><img src="images/contractorbanda/4.png" alt="After 1 duplicate"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Property Ops • Austin</div>
+                        <div class="reviewRole">Turns + unit readiness</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Turned the unit in 48 hours.”</b> Photos, notes, and invoice were clean and easy for ownership.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Turn Cleanup</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Fast turnaround + proof-of-work photos.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/5.jpg" alt="Before 2 duplicate"></div>
+                      <div class="ph"><img src="images/contractorbanda/6.png" alt="After 2 duplicate"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Office Manager</div>
+                        <div class="reviewRole">Work orders + documentation</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Clean, fast, and documented.”</b> They updated us, handled access, and closed out the work order right.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Regional PM</div>
+                        <div class="reviewRole">Vendor management</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“No babysitting.”</b> They handled the scope, sent proof photos, and we had a clean close-out.</div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="finePrint">
+                Desktop: auto-scroll (hover to pause). Mobile: swipe/scroll manually.
+              </div>
+            </div>
+          </div>
+
+          <div class="modalPanel" style="background: rgba(0,0,0,.18);">
+            <div class="modalPanelHead">
+              <h4>Routes</h4>
+              <div class="pill">Pick a lane</div>
+            </div>
+            <div class="modalPanelBody">
+              <div class="actionStack">
+                <button class="cta" id="routeRequestService" type="button" style="border-color:rgba(249,115,22,.22);">
+                  <div class="ctaRow">
+                    <strong>Request Service</strong>
+                    <div class="ctaPill">Intake Form</div>
+                  </div>
+                  <span>Property managers / owners submit scope, photos, access notes, urgency, and budget range.</span>
+                </button>
+
+                <button class="cta" id="routeContractorJoin" type="button" style="border-color:rgba(249,115,22,.22);">
+                  <div class="ctaRow">
+                    <strong>Contractor Portal</strong>
+                    <div class="ctaPill">Dashboard</div>
+                  </div>
+                  <span>View jobs, update status, upload proof-of-work, and log materials/time.</span>
+                </button>
+
+                <button class="cta" id="routeMicroLoan" type="button" style="border-color:rgba(249,115,22,.22);">
+                  <div class="ctaRow">
+                    <strong>Micro-Loan Program</strong>
+                    <div class="ctaPill">Coming</div>
+                  </div>
+                  <span>Working capital requests for verified contractors and recurring accounts.</span>
+                </button>
+              </div>
+
+              <div class="finePrint">
+                Press <b>Esc</b> to close. Click outside the panel to close.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="config.js"></script>
+
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
+      setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import {
+      getDatabase, ref, push, onChildAdded, serverTimestamp, set, onDisconnect,
+      onValue, get
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+    const app = initializeApp(window.firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const authStatus = document.getElementById("authStatus");
+    const googleBtn = document.getElementById("googleBtn");
+    const welcomeName = document.getElementById("welcomeName");
+
+    const statOnline = document.getElementById("statOnline");
+    const onlinePill = document.getElementById("onlinePill");
+    const onlineMini = document.getElementById("onlineMini");
+
+    const statLeads = document.getElementById("statLeads");
+    const statJobs  = document.getElementById("statJobs");
+    const statMonth = document.getElementById("statMonth");
+
+    const presenceList = document.getElementById("presenceList");
+
+    const msgList = document.getElementById("messages");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function esc(s){
+      return (''+(s||'')).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
     }
-  }catch(e){
-    console.error("Firebase init error:", e);
-  }
-})();
 
-const auth = firebase.auth();
-const db = firebase.database();
+    // =========================
+    // Modal Helpers
+    // =========================
+    function makeModal(modalId, closeId){
+      const modal = document.getElementById(modalId);
+      const closeBtn = document.getElementById(closeId);
 
-let UID = null;
-let isAdmin = false;
+      const open = ()=>{
+        if(!modal) return;
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden","false");
+        closeBtn?.focus();
+      };
+      const close = ()=>{
+        if(!modal) return;
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden","true");
+      };
 
-let leadsCache = {};
-let currentLeadId = null;
+      closeBtn?.addEventListener("click", close);
+      modal?.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
 
-// to avoid stacking multiple call log listeners
-let callRef = null;
+      return { modal, open, close, closeBtn };
+    }
 
-/* ================== HELPERS ================== */
-function fmtTS(ts){
-  if(!ts) return "";
-  try{ return new Date(ts).toLocaleString(); }catch(e){ return ""; }
-}
-function statusToBadge(status){
-  const s = (status||"New").toLowerCase();
-  if(s.includes("hot")) return ["Hot","warn"];
-  if(s.includes("contract")) return ["U/C","good"];
-  if(s.includes("dead")||s.includes("nope")) return ["Dead","bad"];
-  if(s.includes("contact")) return ["Contacted",""];
-  return ["New",""];
-}
-function leadTitle(lead){
-  const a = safeText(lead.address) || "Unknown Address";
-  const o = safeText(lead.owner) || "Unknown Owner";
-  return `${a} • ${o}`;
-}
-function phoneKeyFrom(phone){
-  return safeText(phone).replace(/[^\d+]/g,"") || "unknown";
-}
-function telHrefFrom(phone){
-  const raw = safeText(phone);
-  const digits = raw.replace(/[^\d+]/g,"");
-  if(!digits) return "";
-  return `tel:${digits}`;
-}
-async function copyToClipboard(text){
-  const t = String(text ?? "");
-  if(!t.trim()) return;
-  try{
-    await navigator.clipboard.writeText(t);
-    return true;
-  }catch(e){
-    // fallback
-    const ta = document.createElement("textarea");
-    ta.value = t;
-    ta.style.position="fixed";
-    ta.style.opacity="0";
-    document.body.appendChild(ta);
-    ta.select();
-    try{ document.execCommand("copy"); }catch(_){}
-    document.body.removeChild(ta);
-    return true;
-  }
-}
-function setWorkEnabled(on){
-  const ids = [
-    "leadStatus","leadTag","leadOwner","leadPhone","leadAddress","leadNotes",
-    "saveLeadBtn","deleteLeadBtn","callBtn","copyPhoneBtn",
-    "callNote","callOutcome","addCallBtn"
-  ];
-  ids.forEach(id=>{
-    const el = $(id);
-    if(!el) return;
-    el.disabled = !on;
-  });
-  $("btnOpenMaps").disabled = !on;
-  $("btnCopyAddr").disabled = !on;
-}
+    const contractorM = makeModal("contractorModal","contractorModalClose");
+    const wholesalerM = makeModal("wholesalerModal","wholesalerModalClose");
 
-/* ================== MAP / STREET VIEW ==================
-   - If you want true Google Street View embed, set window.GMAPS_EMBED_KEY in config.js and we’ll use the official embed API.
-   - Otherwise we use a clean Maps embed query (still looks good + fast, no key required).
-*/
-function buildMapSrc(address){
-  const a = safeText(address);
-  if(!a) return "about:blank";
+    document.addEventListener("keydown", (e)=>{
+      if(e.key !== "Escape") return;
+      if(contractorM.modal?.classList.contains("show")) contractorM.close();
+      if(wholesalerM.modal?.classList.contains("show")) wholesalerM.close();
+    });
 
-  // Optional: official Embed API (key required). Put this in config.js if you want it:
-  // window.GMAPS_EMBED_KEY = "YOUR_KEY";
-  if(window.GMAPS_EMBED_KEY){
-    // Street View (best-looking) — key required
-    // Note: "location" can take an address; Google resolves it.
-    return `https://www.google.com/maps/embed/v1/streetview?key=${enc(window.GMAPS_EMBED_KEY)}&location=${enc(a)}&fov=90&pitch=0`;
-  }
+    // =========================
+    // Contractor routes
+    // =========================
+    document.getElementById("routeRequestService")?.addEventListener("click", ()=> window.location.href = "request-service.html");
+    document.getElementById("routeContractorJoin")?.addEventListener("click", ()=> window.location.href = "contractor.html");
+    document.getElementById("routeMicroLoan")?.addEventListener("click", ()=> window.location.href = "micro-loan.html");
 
-  // No key fallback (fast + clean)
-  // "layer=c" is a hint for imagery; depending on region it may show street imagery tiles.
-  return `https://www.google.com/maps?q=${enc(a)}&output=embed&layer=c`;
-}
-function updateMapUI(lead){
-  const addr = safeText(lead?.address);
-  const frame = $("mapFrame");
-  const pill = $("mapPill");
-  const hint = $("mapHintText");
+    // =========================
+    // Wholesaler lane picker logic
+    // =========================
+    const whContinue = document.getElementById("whContinue");
+    const whCounty = document.getElementById("whCounty");
+    const streetModeBlock = document.getElementById("streetModeBlock");
+    const webModeBlock = document.getElementById("webModeBlock");
+    const liveModeBlock = document.getElementById("liveModeBlock");
 
-  if(!addr){
-    pill.textContent = "No lead selected";
-    hint.textContent = "Pick a lead to load location preview.";
-    frame.src = "about:blank";
-    return;
-  }
+    let whLeadType = "street";      // street | web | live
+    let whStreetMode = "partner";   // partner | own
 
-  pill.textContent = safeText(lead?.county) ? `${safeText(lead.county)} County` : "Location";
-  hint.textContent = addr;
-  frame.src = buildMapSrc(addr);
-}
+    function setSegActive(groupSelector, matchFn){
+      document.querySelectorAll(groupSelector).forEach(btn=>{
+        const ok = matchFn(btn);
+        btn.classList.toggle("active", ok);
+      });
+    }
 
-/* ================== LEADS ================== */
-function subscribeLeads(){
-  db.ref("leads/sellers").off();
-  db.ref("leads/sellers").on("value", (snap)=>{
-    leadsCache = snap.val() || {};
-    applySearch();
-  }, (err)=>console.error(err));
-}
+    function syncWhUI(){
+      // show/hide blocks based on lead type
+      streetModeBlock.style.display = (whLeadType === "street") ? "" : "none";
+      webModeBlock.style.display    = (whLeadType === "web") ? "" : "none";
+      liveModeBlock.style.display   = (whLeadType === "live") ? "" : "none";
 
-async function forceReloadLeads(){
-  const snap = await db.ref("leads/sellers").once("value");
-  leadsCache = snap.val() || {};
-  applySearch();
-}
+      const hasCounty = !!(whCounty.value || "").trim();
+      whContinue.disabled = !hasCounty;
+    }
 
-function applySearch(){
-  const q = safeText($("s_q").value).toLowerCase();
-  const st = safeText($("s_status").value).toLowerCase();
-
-  const all = Object.entries(leadsCache || {}).map(([id, lead])=>({id, ...lead}));
-  const filtered = all.filter(l=>{
-    const hay = `${l.address||""} ${l.owner||""} ${l.phone||""} ${l.tag||""} ${(l.leadType||"")}`.toLowerCase();
-    const okQ = !q || hay.includes(q);
-    const okS = !st || String(l.status||"New").toLowerCase() === st;
-    return okQ && okS;
-  }).sort((a,b)=>{
-    const ta = a.updatedAt || a.createdAt || 0;
-    const tb = b.updatedAt || b.createdAt || 0;
-    return tb - ta;
-  });
-
-  $("queuePill").textContent = `${filtered.length} lead(s)`;
-
-  const list = $("leadList");
-  list.innerHTML = "";
-  if(!filtered.length){
-    $("leadListHint").textContent = "No leads match your filters.";
-    return;
-  }
-  $("leadListHint").textContent = "Click a lead to load it into your workstation (or quick-call from the card).";
-
-  filtered.forEach(l=>{
-    const [lbl, cls] = statusToBadge(l.status);
-    const div = document.createElement("div");
-    div.className = "card" + (currentLeadId===l.id ? " active":"");
-
-    const phone = safeText(l.phone);
-    const tel = telHrefFrom(phone);
-
-    div.innerHTML = `
-      <div class="cardTop">
-        <div class="cardTitle">${safeText(l.address) || "Unknown Address"}</div>
-        <div class="badge ${cls}">${lbl}</div>
-      </div>
-      <div class="cardMeta">
-        <b>Owner:</b> ${safeText(l.owner)||"—"} &nbsp; <b>Phone:</b> ${phone||"—"}<br/>
-        <b>Tag:</b> ${safeText(l.tag)||"—"} &nbsp; <b>Updated:</b> ${fmtTS(l.updatedAt||l.createdAt)||"—"}
-      </div>
-      <div class="cardActions">
-        <button class="miniBtn" type="button" data-act="load">Edit</button>
-        <button class="miniBtn blue" type="button" data-act="call" ${tel ? "" : "disabled"}>📞 Call</button>
-        <button class="miniBtn" type="button" data-act="copy" ${phone ? "" : "disabled"}>Copy</button>
-      </div>
-    `;
-
-    // whole card loads
-    div.addEventListener("click", ()=>loadLead(l.id));
-
-    // buttons inside card (stop propagation so it doesn't double-trigger)
-    div.querySelectorAll("button[data-act]").forEach(btn=>{
-      btn.addEventListener("click", async (e)=>{
-        e.stopPropagation();
-        const act = btn.getAttribute("data-act");
-        if(act === "load") return loadLead(l.id);
-        if(act === "call"){
-          if(!tel) return;
-          // ensure lead loaded so map/workstation updates too (nice UX)
-          await loadLead(l.id);
-          window.location.href = tel;
-          return;
-        }
-        if(act === "copy"){
-          if(!phone) return;
-          await copyToClipboard(phone);
-          btn.textContent = "Copied ✓";
-          setTimeout(()=>btn.textContent="Copy", 900);
-          return;
-        }
+    // Lead type buttons
+    document.querySelectorAll('#wholesalerModal .segBtn[data-leadtype]').forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        whLeadType = btn.getAttribute("data-leadtype") || "street";
+        setSegActive('#wholesalerModal .segBtn[data-leadtype]', b => (b.getAttribute("data-leadtype") === whLeadType));
+        syncWhUI();
       });
     });
 
-    list.appendChild(div);
-  });
-}
+    // Street mode buttons
+    document.querySelectorAll('#wholesalerModal .segBtn[data-streetmode]').forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        whStreetMode = btn.getAttribute("data-streetmode") || "partner";
+        setSegActive('#wholesalerModal .segBtn[data-streetmode]', b => (b.getAttribute("data-streetmode") === whStreetMode));
+        syncWhUI();
+      });
+    });
 
-async function loadLead(id){
-  currentLeadId = id;
-  const lead = (leadsCache && leadsCache[id]) || null;
-  if(!lead){
-    $("leadPill").textContent = "Lead not found";
-    setWorkEnabled(false);
-    updateMapUI(null);
-    return;
-  }
+    whCounty.addEventListener("change", syncWhUI);
 
-  setWorkEnabled(true);
-
-  $("leadPill").textContent = `Lead: ${id}`;
-  $("leadTitle").value  = leadTitle(lead);
-  $("leadStatus").value = lead.status || "New";
-  $("leadTag").value    = lead.tag || "";
-  $("leadOwner").value  = lead.owner || "";
-  $("leadPhone").value  = lead.phone || "";
-  $("leadAddress").value= lead.address || "";
-  $("leadNotes").value  = lead.notes || "";
-
-  // map
-  updateMapUI(lead);
-
-  // click-to-call button
-  syncCallButton();
-
-  // calls
-  await loadCalls(id, lead.phone);
-
-  // keep admin pill fresh
-  try{ setGodLeadPill(); }catch(e){}
-  applySearch(); // refresh active highlight
-}
-
-function syncCallButton(){
-  const phone = safeText($("leadPhone").value);
-  const tel = telHrefFrom(phone);
-  $("callBtn").disabled = !currentLeadId || !tel;
-  $("copyPhoneBtn").disabled = !currentLeadId || !phone;
-}
-
-async function saveLead(){
-  if(!currentLeadId) return alert("Select a lead first.");
-  const ref = db.ref(`leads/sellers/${currentLeadId}`);
-
-  const patch = {
-    status: $("leadStatus").value,
-    tag: safeText($("leadTag").value),
-    owner: safeText($("leadOwner").value),
-    phone: safeText($("leadPhone").value),
-    address: safeText($("leadAddress").value),
-    notes: safeText($("leadNotes").value),
-    updatedAt: Date.now(),
-    updatedBy: UID
-  };
-
-  await ref.update(patch);
-
-  // reflect UI side-effects immediately
-  syncCallButton();
-  updateMapUI({ address: patch.address, county: leadsCache?.[currentLeadId]?.county || "" });
-
-  alert("Saved ✓");
-
-  // if phone changed, reload call logs under new phoneKey
-  await loadCalls(currentLeadId, patch.phone);
-}
-
-async function deleteLead(){
-  if(!currentLeadId) return alert("Select a lead first.");
-  if(!confirm("Delete this lead? This cannot be undone.")) return;
-  await db.ref(`leads/sellers/${currentLeadId}`).remove();
-  currentLeadId = null;
-
-  // detach call listener
-  try{ if(callRef){ callRef.off(); callRef = null; } }catch(e){}
-
-  $("leadPill").textContent = "No lead selected";
-  $("leadTitle").value="";
-  $("leadTag").value="";
-  $("leadOwner").value="";
-  $("leadPhone").value="";
-  $("leadAddress").value="";
-  $("leadNotes").value="";
-  $("callList").innerHTML="";
-  $("callPill").textContent="—";
-
-  updateMapUI(null);
-  setWorkEnabled(false);
-  applySearch();
-}
-
-/* ================== ADD LEAD (simple prompt flow) ================== */
-async function addLeadFlow(){
-  const address = prompt("Address (123 Main St, City, ST):") || "";
-  if(!safeText(address)) return;
-  const owner = prompt("Owner name:") || "";
-  const phone = prompt("Phone (optional):") || "";
-  const tag   = prompt("Tag (probate/liens/sub2/etc):") || "";
-
-  // pull lane type into record if set
-  let lane = null;
-  try{ lane = getLane(); }catch(e){ lane = null; }
-
-  const newRef = db.ref("leads/sellers").push();
-  const obj = {
-    address: safeText(address),
-    owner: safeText(owner),
-    phone: safeText(phone),
-    tag: safeText(tag),
-    status: "New",
-    notes: "",
-    leadType: lane?.type || "street",
-    county: lane?.county || "",
-    createdAt: Date.now(),
-    createdBy: UID,
-    updatedAt: Date.now(),
-    updatedBy: UID
-  };
-  await newRef.set(obj);
-  alert("Lead added ✓");
-}
-
-/* ================== CALL LOGS ================== */
-async function loadCalls(leadId, phone){
-  // detach old listener first (this was a big “wonky” cause of weird behavior)
-  try{
-    if(callRef){ callRef.off(); callRef = null; }
-  }catch(e){}
-
-  const key = phoneKeyFrom(phone || "");
-  $("callPill").textContent = key !== "unknown" ? `PhoneKey: ${key}` : "PhoneKey: unknown";
-
-  callRef = db.ref(`call_logs/${leadId}/${key}`);
-  callRef.on("value", (snap)=>{
-    const obj = snap.val() || {};
-    const items = Object.entries(obj).map(([id, v])=>({id, ...v}))
-      .sort((a,b)=>(b.ts||0)-(a.ts||0));
-
-    const list = $("callList");
-    list.innerHTML = "";
-    if(!items.length){
-      list.innerHTML = `<div class="small">No call logs yet.</div>`;
-      return;
+    function saveWhSelection(sel){
+      try{ sessionStorage.setItem("db_wholesaler_selection", JSON.stringify(sel)); }catch{}
     }
-    items.forEach(it=>{
-      const div = document.createElement("div");
-      div.className="card";
-      div.style.cursor="default";
-      div.innerHTML = `
-        <div class="cardTop">
-          <div class="cardTitle">${safeText(it.outcome)||"Attempt"}</div>
-          <div class="badge">${fmtTS(it.ts)||"—"}</div>
-        </div>
-        <div class="cardMeta">${safeText(it.note)||"—"}<br/><span class="small">by ${safeText(it.byEmail)||safeText(it.by)||"—"}</span></div>
-      `;
-      list.appendChild(div);
-    });
-  }, (err)=>console.error(err));
-}
 
-async function addCallLog(){
-  if(!currentLeadId) return alert("Select a lead first.");
-  const phone = safeText($("leadPhone").value);
-  const key = phoneKeyFrom(phone);
-  const note = safeText($("callNote").value);
-  const outcome = $("callOutcome").value;
+    whContinue?.addEventListener("click", ()=>{
+      const county = (whCounty.value || "").trim();
+      if(!county) return;
 
-  if(!note) return alert("Add a call note first.");
-
-  const ref = db.ref(`call_logs/${currentLeadId}/${key}`).push();
-  await ref.set({
-    note, outcome,
-    by: UID,
-    byEmail: auth.currentUser?.email || "",
-    ts: Date.now()
-  });
-
-  $("callNote").value="";
-}
-
-/* ================== WHOLESALER LANE + GOD MODE ================== */
-const LANE_KEY = "db_wh_lane_v1";
-
-function parseCSVUids(s){
-  return String(s||"")
-    .split(",")
-    .map(x=>x.trim())
-    .filter(Boolean);
-}
-
-function laneLabel(lane){
-  if(!lane) return "Not set";
-  const t = (lane.type||"").toLowerCase();
-  const c = (lane.county||"").trim();
-  const tn = t === "street" ? "Street" : t === "web" ? "Web" : t === "live" ? "Live" : (t||"Type");
-  return `${tn}${c ? " • " + c : ""}`;
-}
-
-function getLane(){ try{ return JSON.parse(localStorage.getItem(LANE_KEY) || "null"); }catch(e){ return null; } }
-function setLane(lane){ try{ localStorage.setItem(LANE_KEY, JSON.stringify(lane||null)); }catch(e){} }
-
-function showModal(el){ el?.classList.add("show"); el?.setAttribute("aria-hidden","false"); }
-function hideModal(el){ el?.classList.remove("show"); el?.setAttribute("aria-hidden","true"); }
-
-function wireDbwModal(modalId, closeId){
-  const modal = $(modalId);
-  const closeBtn = $(closeId);
-  const close = ()=>hideModal(modal);
-  closeBtn?.addEventListener("click", close);
-  modal?.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
-  document.addEventListener("keydown", (e)=>{
-    if(e.key === "Escape" && modal?.classList.contains("show")) close();
-  });
-  return { modal, open: ()=>showModal(modal), close };
-}
-const whLaneUI = wireDbwModal("whLaneModal","whLaneClose");
-const godUI    = wireDbwModal("godModal","godClose");
-
-function paintLaneUI(){
-  const lane = getLane();
-  const pill = $("whLanePill");
-  if(pill) pill.textContent = laneLabel(lane);
-
-  const typeBtns = document.querySelectorAll("#whTypeGrid .dbwOpt");
-  typeBtns.forEach(b=>{
-    const isOn = lane && (lane.type === b.getAttribute("data-type"));
-    b.classList.toggle("active", !!isOn);
-  });
-
-  if(lane?.county) $("whCounty").value = lane.county;
-  if(lane?.notes) $("whLaneNotes").value = lane.notes;
-}
-function openLaneModal(){ paintLaneUI(); whLaneUI.open(); }
-function saveLaneFromUI(){
-  const active = document.querySelector("#whTypeGrid .dbwOpt.active");
-  const type = active ? active.getAttribute("data-type") : "";
-  const county = safeText($("whCounty").value);
-  const notes = safeText($("whLaneNotes").value);
-  const lane = { type, county, notes, ts: Date.now() };
-  setLane(lane);
-  paintLaneUI();
-  return lane;
-}
-document.querySelectorAll("#whTypeGrid .dbwOpt").forEach(btn=>{
-  btn.addEventListener("click", ()=>{
-    document.querySelectorAll("#whTypeGrid .dbwOpt").forEach(b=>b.classList.remove("active"));
-    btn.classList.add("active");
-    $("whLanePill").textContent = laneLabel({ type: btn.getAttribute("data-type"), county: $("whCounty").value });
-  });
-});
-$("whCounty")?.addEventListener("change", ()=>saveLaneFromUI());
-$("whLaneNotes")?.addEventListener("blur", ()=>saveLaneFromUI());
-
-function showStub(msg){
-  alert(msg + "\n\n(Stub for now — we'll wire this into Firebase bidding + live inbox next.)");
-}
-$("whRoutePartner")?.addEventListener("click", ()=>{
-  const lane = saveLaneFromUI();
-  if(lane.type && lane.type !== "street") return showStub("Partner route is for Street Leads.");
-  try{ $("s_q").value = "street"; applySearch(); }catch(e){}
-  whLaneUI.close();
-});
-$("whRouteEnter")?.addEventListener("click", ()=>{
-  const lane = saveLaneFromUI();
-  if(lane.type && lane.type !== "street") return showStub("Enter lead is for Street Leads.");
-  try{ $("addLeadBtn")?.click(); }catch(e){}
-  whLaneUI.close();
-});
-$("whRouteBid")?.addEventListener("click", ()=>{ saveLaneFromUI(); showStub("Web Lead bidding flow"); });
-$("whRouteLive")?.addEventListener("click", ()=>{ saveLaneFromUI(); showStub("Live Lead inbox"); });
-
-/* God Mode */
-function setGodLeadPill(){
-  const pill = $("godLeadPill");
-  if(!pill) return;
-  pill.textContent = currentLeadId ? `Lead: ${currentLeadId}` : "No lead";
-}
-async function godAssign(){
-  if(!isAdmin) return alert("God Mode only.");
-  if(!currentLeadId) return alert("Select a lead first (left queue).");
-
-  const uids = parseCSVUids($("godUids").value);
-  if(!uids.length) return alert("Paste at least one UID.");
-
-  const mode = $("godPushMode").value;
-  $("godAssignStatus").textContent = "Working…";
-
-  const leadSnap = await db.ref(`leads/sellers/${currentLeadId}`).once("value");
-  const lead = leadSnap.val();
-  if(!lead){ $("godAssignStatus").textContent = "Lead not found."; return; }
-
-  const assigned = Array.from(new Set([...(lead.assignedUids||[]), ...uids]));
-  await db.ref(`leads/sellers/${currentLeadId}/assignedUids`).set(assigned);
-
-  const payload = {
-    leadId: currentLeadId,
-    assignedTo: assigned,
-    by: UID,
-    byEmail: (auth.currentUser?.email || ""),
-    ts: firebase.database.ServerValue.TIMESTAMP
-  };
-  await db.ref(`admin/assignments/${currentLeadId}`).push(payload);
-
-  if(mode === "workspace"){
-    const updates = {};
-    uids.forEach(tuid=>{
-      updates[`workstations/${tuid}/leads/${currentLeadId}`] = {
-        leadId: currentLeadId,
-        snapshot: lead,
-        stage: lead.status || "New",
-        nextAction: "",
-        notes: "",
-        assignedBy: UID,
-        assignedAt: firebase.database.ServerValue.TIMESTAMP
+      const sel = {
+        leadType: whLeadType,
+        county,
+        streetMode: whLeadType === "street" ? whStreetMode : "",
+        ts: Date.now()
       };
+      saveWhSelection(sel);
+
+      const qs = new URLSearchParams(sel).toString();
+      window.location.href = `wholesaler.html?${qs}`;
     });
-    await db.ref().update(updates);
-  }
 
-  $("godAssignStatus").textContent = `Assigned to ${uids.length} uid(s).`;
-}
-async function godLoadWorkspace(){
-  if(!isAdmin) return alert("God Mode only.");
-  const tuid = safeText($("godViewUid").value);
-  if(!tuid) return alert("Paste a UID to inspect.");
-  $("godPreviewStatus").textContent = "Loading…";
-  $("godWsLeadSelect").innerHTML = `<option value="">Loading…</option>`;
+    // =========================
+    // Cards: open modals or navigate
+    // =========================
+    function wirePortalCards(){
+      document.querySelectorAll(".pCard").forEach(card=>{
+        const href = card.getAttribute("data-href");
+        const go = ()=>{
+          if(href === "contractor.html"){
+            contractorM.open();
+            return;
+          }
+          if(href === "wholesaler.html"){
+            wholesalerM.open();
+            syncWhUI();
+            return;
+          }
+          if(href) window.location.href = href;
+        };
+        card.addEventListener("click", go);
+        card.addEventListener("keypress", (e)=>{ if(e.key==="Enter") go(); });
+      });
+    }
+    wirePortalCards();
 
-  const snap = await db.ref(`workstations/${tuid}/leads`).once("value");
-  const obj = snap.val() || {};
+    // --- Chat ---
+    function attachChat(){
+      const chatRef = ref(db,"townhall/messages");
+      onChildAdded(chatRef, snap=>{
+        const d=snap.val()||{};
+        const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        const div=document.createElement("div");
+        div.className="msg";
+        div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
+        msgList.appendChild(div);
+        msgList.scrollTop = msgList.scrollHeight;
+      });
+    }
+    attachChat();
 
-  const leadIds = Object.keys(obj).sort();
-  const sel = $("godWsLeadSelect");
-  sel.innerHTML = `<option value="">Select a lead…</option>` + leadIds.map(id=>`<option value="${id}">${id}</option>`).join("");
+    sendBtn.onclick = ()=>{
+      if(!auth.currentUser) return alert("Please sign in first.");
+      const text = msgInput.value.trim();
+      if(!text) return;
+      push(ref(db,"townhall/messages"), {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || auth.currentUser.email,
+        text,
+        ts: serverTimestamp()
+      });
+      msgInput.value = "";
+    };
+    msgInput.addEventListener("keypress", e => {
+      if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); }
+    });
 
-  $("godPreview").value = JSON.stringify(obj, null, 2);
-  $("godPreviewStatus").textContent = leadIds.length ? `Loaded ${leadIds.length} lead(s).` : "No workstation leads yet.";
-}
-async function godSaveField(){
-  if(!isAdmin) return alert("God Mode only.");
-  const tuid = safeText($("godViewUid").value);
-  const leadId = safeText($("godWsLeadSelect").value);
-  const key = safeText($("godFieldKey").value);
-  const val = safeText($("godFieldVal").value);
+    // --- Presence ---
+    async function setPresence(user) {
+      const roleSnap = await get(ref(db, `roles/${user.uid}`));
+      const userRole = roleSnap.exists() ? roleSnap.val() : "user";
 
-  if(!tuid) return alert("UID is required.");
-  if(!leadId) return alert("Select a workstation lead.");
-  if(!key) return alert("Field key required.");
+      const presRef = ref(db, `presence/global/${user.uid}`);
+      const connectedRef = ref(db, ".info/connected");
 
-  $("godPreviewStatus").textContent = "Saving…";
+      onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+          onDisconnect(presRef).set({
+            state: "offline",
+            lastOnline: serverTimestamp(),
+          });
+          set(presRef, {
+            state: "online",
+            name: user.displayName || user.email,
+            email: user.email,
+            role: userRole,
+            ts: serverTimestamp(),
+            page: "Overview"
+          });
+        }
+      });
+    }
 
-  const blocked = ["__proto__", "constructor", "prototype"];
-  if(blocked.some(b=>key.includes(b))) return alert("Invalid key.");
+    function initials(nameOrEmail){
+      const s = (nameOrEmail||"").trim();
+      if(!s) return "?";
+      const parts = s.split(/\s+/).filter(Boolean);
+      if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return (s[0]||"?").toUpperCase();
+    }
 
-  await db.ref(`workstations/${tuid}/leads/${leadId}/${key}`).set(val);
+    function renderPresence(list){
+      const online = list
+        .filter(u => u && u.state === "online")
+        .sort((a,b)=> (b.ts||0) - (a.ts||0));
 
-  const snap = await db.ref(`workstations/${tuid}/leads/${leadId}`).once("value");
-  $("godPreview").value = JSON.stringify(snap.val() || {}, null, 2);
-  $("godPreviewStatus").textContent = "Saved ✓";
-}
-$("godAssignBtn")?.addEventListener("click", ()=>godAssign().catch(e=>alert(e.message||e)));
-$("godLoadWorkspace")?.addEventListener("click", ()=>godLoadWorkspace().catch(e=>alert(e.message||e)));
-$("godSaveField")?.addEventListener("click", ()=>godSaveField().catch(e=>alert(e.message||e)));
-$("godWsLeadSelect")?.addEventListener("change", async ()=>{
-  if(!isAdmin) return;
-  const tuid = safeText($("godViewUid").value);
-  const leadId = safeText($("godWsLeadSelect").value);
-  if(!tuid || !leadId) return;
-  $("godPreviewStatus").textContent = "Loading lead…";
-  const snap = await db.ref(`workstations/${tuid}/leads/${leadId}`).once("value");
-  $("godPreview").value = JSON.stringify(snap.val() || {}, null, 2);
-  $("godPreviewStatus").textContent = "Loaded.";
-});
+      const n = online.length;
+      statOnline.textContent = String(n);
+      onlinePill.textContent = String(n);
+      onlineMini.textContent = `${n} active`;
 
-/* Auto-open Lane setup if not configured */
-setTimeout(()=>{
-  try{
-    const lane = getLane();
-    if(!lane || !lane.type || !lane.county){ openLaneModal(); }
-    else { paintLaneUI(); }
-  }catch(e){}
-}, 220);
+      presenceList.innerHTML = "";
+      if(!n){
+        presenceList.innerHTML = `<div style="color:rgba(255,255,255,.45); font-size:12px;">No one online yet.</div>`;
+        return;
+      }
 
-/* ================== EVENTS ================== */
-$("btnDashboard").onclick = ()=>location.href="command.html";
-$("btnBlue").onclick = ()=>{};   // already on acq
-$("btnRed").onclick = ()=>alert("Dispo view stub (next).");
+      online.slice(0, 10).forEach(u=>{
+        const div = document.createElement("div");
+        div.className = "pItem";
+        const nm = u.name || u.email || "User";
+        const role = u.role || "user";
+        const page = u.page || "";
+        div.innerHTML = `
+          <div class="pLeft">
+            <div class="avatar">${esc(initials(nm))}</div>
+            <div class="pMeta">
+              <div class="pName" title="${esc(nm)}">${esc(nm)}</div>
+              <div class="pSub" title="${esc(role + (page ? " • " + page : ""))}">${esc(role)}${page ? " • " + esc(page) : ""}</div>
+            </div>
+          </div>
+          <div class="dot" title="online"></div>
+        `;
+        presenceList.appendChild(div);
+      });
+    }
 
-$("btnSettings").onclick = () => openLaneModal();
-$("btnGod").onclick = () => { setGodLeadPill(); godUI.open(); };
+    function subscribePresence(){
+      onValue(ref(db, "presence/global"), (snap)=>{
+        const obj = snap.val() || {};
+        const list = Object.values(obj);
+        renderPresence(list);
+      });
+    }
+    subscribePresence();
 
-$("refreshBtn").onclick = ()=>forceReloadLeads().catch(e=>alert(e.message||e));
-$("s_q").addEventListener("input", applySearch);
-$("s_status").addEventListener("change", applySearch);
+    // --- Optional stats ---
+    async function tryLoadOptionalStats(){
+      const paths = {
+        leads: "stats/activeLeads",
+        jobs: "stats/openJobs",
+        month: "stats/monthVolume"
+      };
 
-$("addLeadBtn").onclick = ()=>addLeadFlow().catch(e=>alert(e.message||e));
-$("saveLeadBtn").onclick = ()=>saveLead().catch(e=>alert(e.message||e));
-$("deleteLeadBtn").onclick = ()=>deleteLead().catch(e=>alert(e.message||e));
-$("addCallBtn").onclick = ()=>addCallLog().catch(e=>alert(e.message||e));
+      try{
+        const a = await get(ref(db, paths.leads));
+        if(a.exists()) statLeads.textContent = String(a.val());
+      }catch{}
 
-$("leadPhone").addEventListener("input", ()=>syncCallButton());
-$("leadAddress").addEventListener("blur", ()=>{
-  if(!currentLeadId) return;
-  updateMapUI({ address: safeText($("leadAddress").value), county: leadsCache?.[currentLeadId]?.county || "" });
-});
+      try{
+        const b = await get(ref(db, paths.jobs));
+        if(b.exists()) statJobs.textContent = String(b.val());
+      }catch{}
 
-$("callBtn").onclick = ()=>{
-  const tel = telHrefFrom($("leadPhone").value);
-  if(!tel) return alert("No valid phone number on this lead.");
-  window.location.href = tel;
-};
-$("copyPhoneBtn").onclick = async ()=>{
-  const phone = safeText($("leadPhone").value);
-  if(!phone) return;
-  await copyToClipboard(phone);
-  alert("Phone copied ✓");
-};
+      try{
+        const c = await get(ref(db, paths.month));
+        if(c.exists()){
+          const v = c.val();
+          statMonth.textContent = typeof v === "number" ? `$${v.toLocaleString()}` : String(v);
+        }
+      }catch{}
+    }
+    tryLoadOptionalStats();
 
-$("btnOpenMaps").onclick = ()=>{
-  const addr = safeText($("leadAddress").value);
-  if(!addr) return;
-  window.open(`https://www.google.com/maps/search/?api=1&query=${enc(addr)}`,"_blank");
-};
-$("btnCopyAddr").onclick = async ()=>{
-  const addr = safeText($("leadAddress").value);
-  if(!addr) return;
-  await copyToClipboard(addr);
-  alert("Address copied ✓");
-};
+    // --- Auth ---
+    googleBtn.onclick = async () => {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithPopup(auth, provider);
+      window.location.href = "profile.html";
+    };
 
-$("btnLogout").onclick = async ()=>{
-  await auth.signOut();
-  location.href="index.html";
-};
+    onAuthStateChanged(auth, user => {
+      if(user){
+        const dn = user.displayName || user.email || "Deal Banker";
+        welcomeName.textContent = (dn.split(" ")[0] || dn);
 
-/* ================== AUTH + ROLE ================== */
-auth.onAuthStateChanged(async (user)=>{
-  if(!user){
-    location.href="index.html";
-    return;
-  }
+        authStatus.innerHTML =
+          `Signed in as ${esc(dn)} <a id="logout" href="#">Sign out</a>`;
 
-  UID = user.uid;
-  $("whoLine").textContent = `${user.email || "user"} • uid: ${UID}`;
+        msgInput.disabled = false;
+        sendBtn.disabled = false;
+        msgInput.placeholder = "Message Townhall...";
 
-  // default: disable workstation until lead selected
-  setWorkEnabled(false);
-  updateMapUI(null);
+        setPresence(user);
 
-  // Role check (expects roles/{uid} = "godmode" or "admin")
-  try{
-    const rs = await db.ref(`roles/${UID}`).once("value");
-    const role = (rs.val() || "").toString().toLowerCase();
-    isAdmin = (role === "godmode" || role === "admin" || role === "owner");
-    $("btnGod").style.display = isAdmin ? "inline-flex" : "none";
-  }catch(e){
-    console.warn("Role check failed:", e);
-    isAdmin = false;
-    $("btnGod").style.display = "none";
-  }
+        document.getElementById("logout").onclick = (e) => {
+          e.preventDefault();
+          signOut(auth);
+        };
+      } else {
+        welcomeName.textContent = "Deal Banker";
+        authStatus.textContent = "Signed out";
+        msgInput.disabled = true;
+        sendBtn.disabled = true;
+        msgInput.placeholder = "Sign in to chat...";
+      }
+    });
 
-  subscribeLeads();
-});
-</script>
+    document.getElementById("bellBtn").addEventListener("click", ()=>{
+      alert("Notifications panel is next. This badge is placeholder UI for now.");
+    });
+  </script>
 </body>
 </html>
