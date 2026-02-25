@@ -10,887 +10,735 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
 
 <style>
+/* =========================
+   Base Theme (from current code)
+   ========================= */
 :root{
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
   --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
 
   --panel:rgba(255,255,255,.07);
   --panel2:rgba(0,0,0,.18);
-  --good:#00ff6a;
-  --warn:#ffd24d;
-  --bad:#ff5555;
-  --hot:#ff2a2a;
-  --work:#ffb020;
-  --new:#2b74ff;
+  --good:#00d08a;--warn:#ffcf5a;--bad:#ff5c5c;
+
+  --r:16px;
+  --shadow: 0 18px 65px rgba(0,0,0,.55);
 }
-*{box-sizing:border-box;margin:0;padding:0}
+*{box-sizing:border-box}
+html,body{height:100%}
 body{
-  margin:0;font-family:Inter,system-ui,Arial;
-  color:var(--text);
-  background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
-  min-height:100vh;
-}
-
-/* HEADER (kept) */
-.header{
-  display:flex;justify-content:space-between;align-items:center;
-  padding:10px 16px;
-  border-bottom:1px solid rgba(255,255,255,.2);
-  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04));
-}
-.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
-.chip{
-  padding:6px 14px;border-radius:100px;
-  border:1px solid rgba(255,255,255,.22);
-  background:#0d1823;color:var(--text);
-  text-decoration:none;cursor:pointer;font-weight:600;
-  transition:background .2s,transform .2s;
-}
-.chip:hover{background:#14314d;transform:scale(1.03)}
-.chip.primary{background:#133e6a}
-.chip.danger{background:#6b1111}
-
-/* Settings Gear (kept) */
-.icon-btn{
-  background:rgba(255,255,255,0.12);
-  border:1px solid rgba(255,255,255,0.25);
-  border-radius:50%;
-  width:34px;height:34px;
-  font-size:18px;color:white;cursor:pointer;
-  display:flex;align-items:center;justify-content:center;
-}
-.icon-btn:hover{background:rgba(255,255,255,0.25)}
-.icon-btn.mini{width:28px;height:28px;font-size:14px}
-
-/* SHELL */
-.wrap{max-width:1280px;margin:0 auto;padding:16px}
-.card{
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.15);
-  border-radius:20px;
-  box-shadow:0 28px 70px rgba(0,0,0,.55);
-  overflow:hidden;
-}
-.top{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.2);
-}
-.seg{display:flex;border:1px solid rgba(255,255,255,.22);border-radius:999px;overflow:hidden}
-.seg button{
-  padding:8px 14px;border:0;background:#0e2332;
-  color:#cfe6ff;cursor:pointer
-}
-.seg button.active{
-  background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff
-}
-.status{font-size:12px;color:#9ab9d6}
-
-/* GRID */
-.body{
-  padding:14px;
-  display:grid;
-  grid-template-columns: 320px minmax(0,1fr) 360px;
-  gap:16px;
-}
-@media(max-width:1180px){
-  .body{grid-template-columns: 300px minmax(0,1fr)}
-  .col-right{display:none}
-}
-@media(max-width:960px){
-  .body{grid-template-columns: 1fr}
-  .col-right{display:block}
-}
-
-/* PANELS */
-.panel{
-  border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);
-  background:#0b1825;
-  overflow:hidden;
-}
-.panel-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 12px;
-  border-bottom:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-}
-.panel-title{
-  font-weight:800;
-  letter-spacing:.08em;
-  font-size:12px;
-  color:#cfe3ff;
-  display:flex;align-items:center;gap:10px;
-}
-.pill{
-  font-size:11px;
-  padding:3px 10px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(0,0,0,.18);
-  color:#9ab9d6;
-}
-.panel-body{padding:12px}
-
-/* Inputs */
-.input{
-  width:100%;
-  background:#0d1f2d;border:1px solid #254a63;
-  color:#fff;border-radius:12px;padding:9px 10px;
-}
-.row{display:flex;gap:10px;align-items:center}
-.row.wrap{flex-wrap:wrap}
-
-/* Lead Queue */
-.queue{display:flex;flex-direction:column;gap:10px}
-.queue-search{display:flex;gap:10px}
-.queue-list{
-  display:flex;flex-direction:column;
-  gap:10px;
-  max-height:64vh;
-  overflow:auto;
-  padding-right:4px;
-}
-.lead-item{
-  padding:12px;
-  border-radius:14px;
-  background:rgba(255,255,255,.05);
-  border:1px solid rgba(255,255,255,.10);
-  cursor:pointer;
-  transition:transform .08s ease, background .12s ease, border-color .12s ease;
-}
-.lead-item:hover{
-  transform:translateY(-1px);
-  background:rgba(255,255,255,.07);
-  border-color:rgba(43,116,255,.35);
-}
-.lead-item.selected{
-  background:rgba(43,116,255,.18);
-  border-color:rgba(43,116,255,.6);
-}
-.lead-item .addr{font-weight:800}
-.lead-item .meta{margin-top:6px;font-size:12px;color:#9ab9d6;display:flex;flex-direction:column;gap:2px}
-.badges{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}
-.badge{
-  font-size:11px;
-  padding:3px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  color:#cfe3ff;
-}
-.badge.new{border-color:rgba(43,116,255,.6); color:#cfe6ff}
-.badge.working{border-color:rgba(255,176,32,.65); color:#ffe3b3}
-.badge.hot{border-color:rgba(255,42,42,.65); color:#ffd0d0}
-.badge.dnc{border-color:rgba(255,85,85,.65); color:#ffd0d0}
-.badge.done{border-color:rgba(0,255,106,.45); color:#c9ffe2}
-
-/* Center Console Header */
-.lead-header{
-  display:flex;
-  align-items:flex-start;
-  justify-content:space-between;
-  gap:10px;
-}
-.lead-title{
-  display:flex;
-  flex-direction:column;
-  gap:6px;
-}
-.lead-title h2{
-  font-size:18px;
   margin:0;
+  font-family:Inter,system-ui,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at 20% 10%, rgba(43,116,255,.22), transparent 46%),
+    radial-gradient(circle at 90% 20%, rgba(139,92,246,.18), transparent 42%),
+    linear-gradient(180deg,var(--bg1),var(--bg2) 55%,var(--bg1));
 }
-.lead-sub{
-  display:flex;
-  gap:10px;
-  flex-wrap:wrap;
-  font-size:12px;
-  color:#9ab9d6;
-}
-.lead-sub a{
-  color:#cfe3ff;
-  text-decoration:none;
-  border-bottom:1px dashed rgba(207,227,255,.45);
-}
-.lead-sub a:hover{color:#fff;border-bottom-color:#fff}
+a{color:inherit;text-decoration:none}
+button,input,select,textarea{font:inherit}
+.hidden{display:none!important}
 
-/* Pager */
-.pager{
-  display:flex;
-  align-items:center;
-  gap:10px;
+.wrap{max-width:1300px;margin:0 auto;padding:18px}
+.topbar{
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:12px 14px;border-radius:18px;border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  box-shadow:var(--shadow);
 }
-.pager .nav-btn{
-  background:rgba(255,255,255,0.10);
-  border:1px solid rgba(255,255,255,0.20);
-  color:#cfe3ff;
-  border-radius:10px;
-  padding:6px 10px;
-  cursor:pointer;
-  font-weight:800;
-  line-height:1;
-}
-.pager .nav-btn:hover{background:rgba(255,255,255,0.18)}
-.pager .nav-count{font-size:12px;color:#9ab9d6;min-width:64px;text-align:center}
+.brand{display:flex;align-items:center;gap:10px}
+.brand img{width:34px;height:34px;border-radius:12px;object-fit:cover;box-shadow:0 10px 30px rgba(0,0,0,.5)}
+.brand .title{font-weight:900;letter-spacing:-.02em}
+.brand .sub{font-size:12px;color:rgba(255,255,255,.58);margin-top:2px}
 
-/* Active Number */
-.field{
-  margin-top:12px;
-  padding:12px;
-  border-radius:16px;
+.nav{display:flex;align-items:center;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+.chip{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:10px 12px;border-radius:999px;
   border:1px solid rgba(255,255,255,.12);
-  background:rgba(255,255,255,.03);
+  background:rgba(0,0,0,.22);
+  color:rgba(255,255,255,.86);
+  cursor:pointer;
+  transition:transform .15s ease, filter .15s ease, background .15s ease;
 }
-.field-label{
-  font-size:11px;
-  letter-spacing:.08em;
-  font-weight:800;
-  color:#9ab9d6;
-  margin-bottom:8px;
+.chip:hover{transform:translateY(-1px);filter:brightness(1.08);background:rgba(255,255,255,.06)}
+.chip.blue{background:rgba(43,116,255,.16);border-color:rgba(43,116,255,.25)}
+.chip.red{background:rgba(255,92,92,.12);border-color:rgba(255,92,92,.22)}
+.chip .dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.35)}
+.chip .dot.good{background:var(--good)}
+.chip .dot.bad{background:var(--bad)}
+
+.icon-btn{
+  width:42px;height:42px;border-radius:14px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.9);
+  cursor:pointer;
 }
-.select{
+.icon-btn:hover{filter:brightness(1.08);background:rgba(255,255,255,.08)}
+
+.grid{
+  display:grid;grid-template-columns: 1.05fr .95fr;gap:14px;
+  margin-top:14px;
+}
+@media (max-width:1050px){
+  .grid{grid-template-columns:1fr}
+}
+.panel{
+  border-radius:18px;border:1px solid rgba(255,255,255,.10);
+  background:rgba(255,255,255,.05);
+  box-shadow:var(--shadow);
+  overflow:hidden;
+}
+.panelHead{
+  padding:12px 12px 10px;
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+}
+.panelHead h3{
+  margin:0;font-size:12px;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(255,255,255,.82);
+}
+.panelBody{padding:12px}
+
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.field{flex:1;min-width:150px}
+.label{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:rgba(255,255,255,.65);margin-bottom:6px}
+.input, .select, .textarea{
   width:100%;
-  padding:10px 10px;
-  border-radius:12px;
-  border:1px solid #254a63;
-  background:#0d1f2d;
-  color:#fff;
+  border-radius:14px;
+  border:1px solid rgba(255,255,255,.14);
+  background:rgba(0,0,0,.20);
+  color:rgba(255,255,255,.92);
+  padding:10px 11px;
   outline:none;
 }
-.select:disabled{opacity:.55}
+.textarea{min-height:88px;resize:vertical}
+.input:focus,.select:focus,.textarea:focus{border-color:rgba(106,167,255,.55);box-shadow:0 0 0 4px rgba(43,116,255,.14)}
 
-/* Quick Status buttons */
-.quick-grid{
-  margin-top:10px;
-  display:grid;
-  grid-template-columns: repeat(4, minmax(0,1fr));
-  gap:10px;
+.pill{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:8px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(0,0,0,.22);
+  color:rgba(255,255,255,.72);
+  font-size:12px;font-weight:800;white-space:nowrap;
 }
-@media(max-width:1100px){ .quick-grid{grid-template-columns: repeat(3, minmax(0,1fr));} }
-@media(max-width:520px){ .quick-grid{grid-template-columns: repeat(2, minmax(0,1fr));} }
+.small{font-size:12px;color:rgba(255,255,255,.62);line-height:1.35}
 
-.qbtn{
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  gap:8px;
-  padding:10px 10px;
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.14);
-  background:rgba(0,0,0,.18);
-  color:#cfe3ff;
-  cursor:pointer;
-  font-weight:800;
-  font-size:12px;
+.list{
+  display:flex;flex-direction:column;gap:10px;
 }
-.qbtn:hover{background:rgba(255,255,255,.08);border-color:rgba(43,116,255,.35)}
-.qbtn.noanswer{color:#cfe3ff}
-.qbtn.vm{color:#d8c7ff}
-.qbtn.owner{color:#8dffcf}
-.qbtn.rel{color:#7fe5ff}
-.qbtn.wrong{color:#ffd24d}
-.qbtn.dnc{color:#ff7777}
-.qbtn.hot{color:#ffb3b3}
-.qbtn.follow{color:#8ad3ff}
-
-/* Notes composer */
-.note-row{display:flex;gap:10px;align-items:flex-start}
-.note-box{flex:1;min-height:96px;resize:vertical}
-.note-status{font-size:12px;color:#9ab9d6;opacity:.9}
-
-/* Location Intel */
-.map-head{
-  margin-top:12px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:10px;
-}
-.map-actions{
-  display:flex;
-  align-items:center;
-  gap:10px;
-  width:100%;
-}
-.map-link{
-  border:none;
-  background:transparent;
-  color:#cfe3ff;
-  cursor:pointer;
-  text-decoration:underline;
-  font-weight:800;
-  padding:0;
-}
-.map-link:hover{color:#ffffff}
-#streetViewLink{ margin-left:auto; }
-.map-hint{
-  font-size:12px;
-  color:#9ab9d6;
-  margin-left:10px;
-  white-space:nowrap;
-}
-.map-wrap{
-  margin-top:8px;
-  border-radius:12px;
-  overflow:hidden;
-  border:1px solid rgba(255,255,255,.2);
-  background:rgba(0,0,0,.18);
-}
-.map-wrap iframe{width:100%;height:280px;border:0}
-.map-warn{
-  margin-top:8px;
-  padding:10px;
-  border:1px solid rgba(255,255,255,.18);
-  border-radius:12px;
-  background:rgba(0,0,0,.18);
-  color:#cfe3ff;
-  font-size:13px;
-  display:none;
-}
-
-/* Call Log Terminal */
-.log{
-  max-height:74vh;
-  overflow:auto;
-  display:flex;
-  flex-direction:column;
-  gap:10px;
-  padding-right:4px;
-}
-.log-empty{
-  padding:26px 12px;
-  text-align:center;
-  color:#9ab9d6;
-  opacity:.85;
-}
-.log-item{
-  border-radius:14px;
-  border:1px solid rgba(255,255,255,.10);
-  background:rgba(255,255,255,.05);
-  padding:10px 10px;
-}
-.log-top{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  font-size:12px;color:#9ab9d6;
-}
-.log-tag{
-  font-size:11px;
-  padding:3px 8px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.16);
-  background:rgba(0,0,0,.18);
-  color:#cfe3ff;
-}
-.log-tag.note{border-color:rgba(43,116,255,.55)}
-.log-tag.status{border-color:rgba(255,176,32,.55)}
-.log-tag.dnc{border-color:rgba(255,85,85,.65)}
-.log-tag.hot{border-color:rgba(255,42,42,.65)}
-.log-text{
-  margin-top:8px;
-  white-space:pre-wrap;
-  word-break:break-word;
-  font-size:13px;
-  line-height:1.35;
-  color:#f1f7fb;
-}
-
-/* --- CHAT BUBBLE & PANEL (kept vibe) --- */
-#chatBubble{
-  position:fixed;bottom:24px;right:24px;width:60px;height:60px;
-  border-radius:50%;background:#133e6a;color:white;
-  border:2px solid var(--accent);
-  display:flex;align-items:center;justify-content:center;
-  cursor:pointer;box-shadow:0 0 20px rgba(43,116,255,0.8);
-  z-index:9999;transition:transform .2s, box-shadow 0.2s;
-  font-size: 30px;
-}
-#chatBubble:hover{transform:scale(1.1);box-shadow:0 0 30px rgba(43,116,255,1);}
-
-/* SIDEBAR PANEL */
-.sidebar-panel {
-  position: fixed; top: 0; right: -360px; width: 340px; height: 100vh;
-  background: rgba(11, 24, 37, 0.98); backdrop-filter: blur(12px);
-  border-left: 1px solid var(--accent);
-  box-shadow: -10px 0 40px rgba(0,0,0,0.8);
-  transition: right 0.3s ease-in-out;
-  z-index: 10000;
-  display: flex; flex-direction: column;
-}
-.sidebar-panel.open { right: 0; }
-
-.panel-header {
-  padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--line);
-  display: flex; justify-content: space-between; align-items: center;
-}
-.panel-title2 { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
-.close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
-
-/* Radar (Admin) */
-#radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
-.radar-user {
-  padding: 12px; margin-bottom: 8px; border-radius: 8px;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
-  cursor: pointer; display: flex; justify-content: space-between; align-items: center;
-}
-.radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
-.status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; }
-
-/* Chat Area */
-#chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
-#chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-.msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
-.msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
-.msg-them { align-self: flex-start; background: #1e2c3a; color: #ddd; border-bottom-left-radius: 2px; }
-
-.chat-input-row { padding: 15px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
-.chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; }
-.send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
-#backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
-
-/* ===== DISPO PANEL (new UI wrapper for iframe) ===== */
-#panel-dispo{
-  display:none;
-  height: 80vh;
-  grid-column: 1 / -1;
-}
-.dispo-shell{
-  height:100%;
+.card{
   border-radius:16px;
-  border:1px solid rgba(255,255,255,.14);
-  background:#0b1825;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(0,0,0,.18);
+  padding:12px;
+  cursor:pointer;
+  transition:transform .15s ease, filter .15s ease, border-color .15s ease, background .15s ease;
+}
+.card:hover{transform:translateY(-1px);filter:brightness(1.06);border-color:rgba(43,116,255,.22);background:rgba(43,116,255,.08)}
+.card.active{border-color:rgba(106,167,255,.45);background:rgba(43,116,255,.12)}
+.cardTop{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.cardTitle{font-weight:900;font-size:13px}
+.badge{
+  font-size:11px;font-weight:900;
+  padding:6px 10px;border-radius:999px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.78);
+}
+.badge.good{background:rgba(0,208,138,.10);border-color:rgba(0,208,138,.20)}
+.badge.warn{background:rgba(255,207,90,.10);border-color:rgba(255,207,90,.18)}
+.badge.bad{background:rgba(255,92,92,.10);border-color:rgba(255,92,92,.20)}
+
+.cardMeta{margin-top:6px;font-size:12px;color:rgba(255,255,255,.62);line-height:1.35}
+.cardMeta b{color:rgba(255,255,255,.86)}
+
+.btn{
+  width:100%;
+  border-radius:16px;
+  padding:12px 12px;
+  border:1px solid rgba(255,255,255,.12);
+  background:rgba(255,255,255,.06);
+  color:rgba(255,255,255,.92);
+  cursor:pointer;
+  text-align:left;
+  transition:transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+}
+.btn:hover{transform:translateY(-1px);filter:brightness(1.06);background:rgba(139,92,246,.12);border-color:rgba(139,92,246,.24)}
+.btn.blue{background:rgba(43,116,255,.16);border-color:rgba(43,116,255,.25)}
+.btn.red{background:rgba(255,92,92,.12);border-color:rgba(255,92,92,.20)}
+.btn strong{display:block;font-weight:900;font-size:13px}
+.btn span{display:block;margin-top:4px;font-size:12px;color:rgba(255,255,255,.62);line-height:1.35}
+
+.hr{height:1px;background:rgba(255,255,255,.08);margin:12px 0}
+
+/* =========================
+   Wholesaler Lane Modal + God Mode (add-on)
+   ========================= */
+.modalOverlay.dbw{
+  position: fixed; inset: 0; z-index: 9999;
+  display:none; align-items:center; justify-content:center;
+  padding: 18px;
+  background: rgba(0,0,0,.58);
+  backdrop-filter: blur(10px);
+}
+.modalOverlay.dbw.show{ display:flex; }
+.modalCard.dbw{
+  width: min(980px, 96vw);
+  border-radius: 22px;
+  border: 1px solid rgba(255,255,255,.12);
+  background:
+    radial-gradient(circle at 18% 18%, rgba(43,116,255,.22), transparent 55%),
+    radial-gradient(circle at 82% 28%, rgba(139,92,246,.18), transparent 55%),
+    rgba(15,20,35,.82);
+  box-shadow: 0 22px 80px rgba(0,0,0,.65);
   overflow:hidden;
-  box-shadow:0 18px 40px rgba(0,0,0,.55);
-  display:flex;
-  flex-direction:column;
 }
-.dispo-topbar{
-  height:56px;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  padding:0 14px;
-  border-bottom:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+.dbwHead{
+  display:flex; align-items:center; justify-content:space-between; gap: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(255,255,255,.10);
+  background: rgba(0,0,0,.20);
 }
-.dispo-topbar .left{
-  display:flex;
-  align-items:center;
-  gap:10px;
+.dbwTitle{
+  font-weight: 900; letter-spacing: -.01em; font-size: 16px; line-height: 1.1;
 }
-.dispo-badge{
-  font-weight:800;
-  letter-spacing:.08em;
-  font-size:12px;
-  color:#cfe3ff;
+.dbwSub{ margin-top: 2px; font-size: 12px; color: rgba(255,255,255,.58); }
+.dbwClose{
+  width: 40px; height: 40px;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.85);
+  font-weight: 900;
+  cursor:pointer;
 }
-.dispo-sub{
-  font-size:12px;
-  color:#9ab9d6;
+.dbwClose:hover{ filter: brightness(1.08); background: rgba(255,255,255,.08); }
+
+.dbwBody{ padding: 16px; }
+.dbwGrid{
+  display:grid;
+  grid-template-columns: 1.05fr .95fr;
+  gap: 14px;
 }
-.dispo-actions{
-  display:flex;
-  align-items:center;
-  gap:10px;
-}
-.dispo-actions a{
-  text-decoration:none;
-}
-.dispo-framewrap{
-  position:relative;
-  width:100%;
-  height:100%;
-  flex:1;
-  background:#0b1825;
-}
-#iframeDispo{
-  width:100%;
-  height:100%;
-  border:none;
-  display:block;
-  background:#0b1825;
-}
-.dispo-mask{
-  position:absolute;
-  top:0;
-  left:0;
-  right:0;
-  height:56px;
-  background:#0b1825;
-  border-bottom:1px solid rgba(255,255,255,.12);
-  z-index:5;
-  pointer-events:auto;
+@media (max-width: 980px){
+  .dbwGrid{ grid-template-columns: 1fr; }
 }
 
-/* ===== ADD LEAD MODAL ===== */
-#leadModalBackdrop{
-  position:fixed; inset:0;
-  background:rgba(0,0,0,.62);
-  backdrop-filter: blur(6px);
-  z-index: 9997;
-  display:none;
-}
-#leadModal{
-  position:fixed; inset:0;
-  display:none;
-  align-items:flex-start;
-  justify-content:center;
-  z-index: 9998;
-  padding: 14px;
-}
-.lm-card{
-  width:min(720px, 96vw);
-  max-height: calc(100vh - 28px);
-  border-radius:18px;
-  border:1px solid rgba(255,255,255,.16);
-  background:#0b1825;
-  box-shadow:0 28px 70px rgba(0,0,0,.65);
+.dbwPanel{
+  border-radius: 18px;
+  border: 1px solid rgba(255,255,255,.10);
+  background: rgba(255,255,255,.04);
   overflow:hidden;
-  display:flex;
-  flex-direction:column;
 }
-.lm-head{
-  flex:0 0 auto;
-  display:flex;
-  align-items:center;
-  justify-content:space-between;
-  gap:12px;
-  padding:12px 12px;
-  border-bottom:1px solid rgba(255,255,255,.12);
-  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+.dbwPanelHead{
+  padding: 12px 12px 10px;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+  display:flex; align-items:center; justify-content:space-between; gap: 10px;
 }
-.lm-title{
-  font-weight:900;
-  letter-spacing:.04em;
+.dbwPanelHead h4{
+  font-size: 12px; letter-spacing: .12em; text-transform: uppercase;
+  color: rgba(255,255,255,.86);
+  margin:0;
 }
-.lm-body{
-  flex:1 1 auto;
-  overflow:auto;
-  -webkit-overflow-scrolling: touch;
-  padding: 12px;
-  padding-bottom: 84px;
+.dbwPanelBody{ padding: 12px; }
+
+.dbwField{ margin-top: 10px; }
+.dbwLabel{
+  font-size: 11px; letter-spacing:.14em; text-transform: uppercase;
+  color: rgba(255,255,255,.70);
+  margin-bottom: 6px;
 }
-.lm-grid{
-  display:grid;
-  grid-template-columns: 1fr 1fr;
+.dbwRow{ display:flex; gap: 10px; flex-wrap:wrap; }
+.dbwSelect,.dbwInput,.dbwTextarea{
+  width: 100%;
+  border-radius: 14px;
+  border: 1px solid rgba(255,255,255,.14);
+  background: rgba(0,0,0,.20);
+  color: rgba(255,255,255,.92);
+  padding: 11px 12px;
+  outline: none;
+}
+.dbwTextarea{ min-height: 90px; resize: vertical; }
+.dbwSelect:focus,.dbwInput:focus,.dbwTextarea:focus{
+  border-color: rgba(106,167,255,.55);
+  box-shadow: 0 0 0 4px rgba(43,116,255,.14);
+}
+
+.dbwOptGrid{
+  display:grid; grid-template-columns: repeat(3, minmax(0, 1fr));
   gap: 10px;
 }
-@media(max-width:720px){
-  .lm-grid{ grid-template-columns: 1fr; }
+@media (max-width: 980px){
+  .dbwOptGrid{ grid-template-columns: 1fr; }
 }
-.lm-actions{
-  position: sticky;
-  bottom: 0;
-  z-index: 5;
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  padding:12px;
-  border-top:1px solid rgba(255,255,255,.10);
-  background: linear-gradient(180deg, rgba(11,24,37,.35), rgba(11,24,37,.95));
-  backdrop-filter: blur(8px);
+.dbwOpt{
+  border-radius: 16px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  padding: 12px;
+  cursor:pointer;
+  transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+  text-align:left;
+  color: rgba(255,255,255,.92);
 }
-@media(max-width:720px){
-  .lm-actions .chip{
-    padding:10px 14px;
-    font-size:14px;
-  }
+.dbwOpt:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.12); border-color: rgba(43,116,255,.25); }
+.dbwOpt.active{ background: rgba(43,116,255,.18); border-color: rgba(106,167,255,.45); }
+.dbwOpt strong{ display:block; font-weight: 900; font-size: 13px; }
+.dbwOpt span{ display:block; margin-top: 6px; color: rgba(255,255,255,.64); font-size: 12px; line-height: 1.35; }
+.dbwPill{
+  display:inline-flex; align-items:center; gap: 6px;
+  padding: 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(0,0,0,.20);
+  color: rgba(255,255,255,.72);
+  font-size: 12px;
+  font-weight: 800;
+  white-space:nowrap;
 }
+
+.dbwBtn{
+  width: 100%;
+  border-radius: 16px;
+  padding: 12px 12px;
+  border: 1px solid rgba(255,255,255,.12);
+  background: rgba(255,255,255,.06);
+  color: rgba(255,255,255,.92);
+  cursor:pointer;
+  text-align:left;
+  transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+}
+.dbwBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(139,92,246,.12); border-color: rgba(139,92,246,.24); }
+.dbwBtn strong{ display:block; font-weight: 900; font-size: 13px; }
+.dbwBtn span{ display:block; margin-top: 4px; font-size: 12px; color: rgba(255,255,255,.62); line-height: 1.35; }
+
+.dbwMini{
+  font-size: 11px;
+  color: rgba(255,255,255,.50);
+  line-height: 1.35;
+  margin-top: 10px;
+}
+.dbwMini b{ color: rgba(255,255,255,.85); }
 </style>
 </head>
 
-<body data-portal="wholesaler">
-
-<header class="header">
-  <div>DEALBANKERS • Wholesaler Portal</div>
-  <nav class="nav">
-    <a class="chip" href="profile.html">Dashboard</a>
-    <button class="chip" id="btnBlue" type="button">🌀 Blue</button>
-    <button class="chip danger" id="btnRed" type="button">🚨 Red</button>
-    <button class="icon-btn" id="btnSettings" type="button">⚙️</button>
-    <a class="chip" id="logoutBtn" href="javascript:void(0)">Log Out</a>
-  </nav>
-</header>
-
+<body>
 <div class="wrap">
-  <section class="card">
-    <div class="top">
-      <div>
-        <div id="crumb">Acquisition</div>
-        <div class="status" id="status">Loading…</div>
-      </div>
-      <div class="seg">
-        <button id="tabAcq" class="active" type="button">Acq</button>
-        <button id="tabDispo" type="button">Dispo</button>
+
+  <div class="topbar">
+    <div class="brand">
+      <img src="icon (1).jpg" alt="DealBankers">
+      <div style="min-width:0">
+        <div class="title">DealBankers • Wholesaler</div>
+        <div class="sub" id="whoLine">Loading…</div>
       </div>
     </div>
 
-    <div class="body">
-      <!-- ================= LEFT: LEAD QUEUE ================= -->
-      <div id="panel-acq" class="panel">
-        <div class="panel-head">
-          <div class="panel-title">
-            ● LEAD QUEUE
-            <span class="pill" id="leadCountPill">0 leads</span>
-          </div>
+    <div class="nav">
+      <button class="chip" id="btnDashboard" type="button"><span class="dot"></span>Dashboard</button>
+      <button class="chip blue" id="btnBlue" type="button"><span class="dot good"></span>Acq</button>
+      <button class="chip red" id="btnRed" type="button"><span class="dot bad"></span>Dispo</button>
+      <button class="icon-btn" id="btnSettings" type="button" title="Workspace / Lane">⚙️</button>
+      <button class="chip" id="btnGod" type="button" style="display:none;" title="Admin tools">👁 God Mode</button>
+      <button class="chip" id="btnLogout" type="button">Logout</button>
+    </div>
+  </div>
 
-          <div style="display:flex;gap:10px;align-items:center;">
-            <button id="btnAddLead" class="chip primary" type="button">➕ Add Lead</button>
-            <div class="pill" id="queueHint">System Online</div>
-          </div>
-        </div>
+  <div class="grid">
 
-        <div class="panel-body queue">
-          <div class="queue-search">
-            <input id="s_q" class="input" placeholder="Search address, name, phone…" />
-            <button class="chip" id="s_reload" type="button">Search</button>
-          </div>
-          <div class="queue-list" id="leadList"></div>
-        </div>
+    <!-- LEFT: LEAD QUEUE -->
+    <div class="panel">
+      <div class="panelHead">
+        <h3>Seller Queue</h3>
+        <span class="pill" id="queuePill">—</span>
       </div>
+      <div class="panelBody">
 
-      <!-- ================= CENTER: CONSOLE ================= -->
-      <div class="panel col-center" id="panel-console">
-        <div class="panel-head">
-          <div class="panel-title" style="display:flex;align-items:center;gap:10px;">
-            ⌁ CONSOLE
-            <span class="pill" id="permPill" style="display:none;">Edit Enabled</span>
+        <div class="row">
+          <div class="field">
+            <div class="label">Search</div>
+            <input class="input" id="s_q" placeholder="address • owner • phone • tag • 'street' • 'web' • 'live'" />
           </div>
-
-          <div style="display:flex;align-items:center;gap:10px;">
-            <button class="chip" id="btnEditLead" type="button" style="display:none;">✏️ Edit</button>
-            <button class="chip danger" id="btnDeleteLead" type="button" style="display:none;">🗑 Delete</button>
-
-            <div class="pager">
-              <button class="nav-btn" id="prevLead" type="button" title="Previous lead">◀</button>
-              <div class="nav-count" id="leadPager">0 / 0</div>
-              <button class="nav-btn" id="nextLead" type="button" title="Next lead">▶</button>
-            </div>
+          <div class="field" style="flex:0;min-width:180px">
+            <div class="label">Filter</div>
+            <select class="select" id="s_status">
+              <option value="">All statuses</option>
+              <option>New</option>
+              <option>Contacted</option>
+              <option>Hot</option>
+              <option>Under Contract</option>
+              <option>Dead</option>
+            </select>
           </div>
         </div>
 
-        <div class="panel-body">
-          <div class="lead-header">
-            <div class="lead-title">
-              <h2 id="leadAddress">No lead selected</h2>
-              <div class="lead-sub">
-                <span id="leadOwner">Select a lead from the queue.</span>
-                <a id="callLink" href="#" style="display:none;">Click to Call</a>
-                <a id="tpsLink" href="#" target="_blank" rel="noreferrer" style="display:none;">TruePeopleSearch</a>
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <button class="btn blue" id="addLeadBtn" type="button">
+              <strong>+ Add Seller Lead</strong>
+              <span>Enter a new seller lead into the kitchen</span>
+            </button>
+          </div>
+          <div class="field">
+            <button class="btn" id="refreshBtn" type="button">
+              <strong>Refresh</strong>
+              <span>Reload queue</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="list" id="leadList"></div>
+        <div class="small" id="leadListHint" style="margin-top:10px"></div>
+
+      </div>
+    </div>
+
+    <!-- RIGHT: CONSOLE -->
+    <div class="panel" id="panel-console">
+      <div class="panelHead">
+        <h3>Workstation</h3>
+        <span class="pill" id="leadPill">No lead selected</span>
+      </div>
+      <div class="panelBody">
+
+        <div class="row">
+          <div class="field">
+            <div class="label">Selected Lead</div>
+            <input class="input" id="leadTitle" readonly placeholder="Pick a lead from the queue…" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <div class="label">Status</div>
+            <select class="select" id="leadStatus">
+              <option>New</option>
+              <option>Contacted</option>
+              <option>Hot</option>
+              <option>Under Contract</option>
+              <option>Dead</option>
+            </select>
+          </div>
+          <div class="field">
+            <div class="label">Tag</div>
+            <input class="input" id="leadTag" placeholder="probate • liens • sub2 • etc" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <div class="label">Owner</div>
+            <input class="input" id="leadOwner" placeholder="Owner name" />
+          </div>
+          <div class="field">
+            <div class="label">Phone</div>
+            <input class="input" id="leadPhone" placeholder="(210) 555-5555" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <div class="label">Address</div>
+            <input class="input" id="leadAddress" placeholder="123 Main St, San Antonio TX" />
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <div class="label">Notes</div>
+            <textarea class="textarea" id="leadNotes" placeholder="Seller motivation, condition, timeline, your call summary…"></textarea>
+          </div>
+        </div>
+
+        <div class="row" style="margin-top:10px">
+          <div class="field">
+            <button class="btn blue" id="saveLeadBtn" type="button">
+              <strong>Save Lead</strong>
+              <span>Updates kitchen record</span>
+            </button>
+          </div>
+          <div class="field">
+            <button class="btn red" id="deleteLeadBtn" type="button">
+              <strong>Delete Lead</strong>
+              <span>Removes from queue (careful)</span>
+            </button>
+          </div>
+        </div>
+
+        <div class="hr"></div>
+
+        <div class="panel" style="box-shadow:none;background:rgba(0,0,0,.10);border-color:rgba(255,255,255,.08)">
+          <div class="panelHead">
+            <h3>Call Log</h3>
+            <span class="pill" id="callPill">—</span>
+          </div>
+          <div class="panelBody">
+
+            <div class="row">
+              <div class="field">
+                <div class="label">Call Note</div>
+                <input class="input" id="callNote" placeholder="VM left • spoke to daughter • appointment set • etc" />
+              </div>
+              <div class="field" style="flex:0;min-width:190px">
+                <div class="label">Outcome</div>
+                <select class="select" id="callOutcome">
+                  <option value="Attempt">Attempt</option>
+                  <option value="VM">VM</option>
+                  <option value="Spoke">Spoke</option>
+                  <option value="Appt">Appt</option>
+                  <option value="Nope">Nope</option>
+                </select>
               </div>
             </div>
-          </div>
 
-          <!-- Active Number -->
-          <div class="field">
-            <div class="field-label">ACTIVE NUMBER</div>
-            <select id="phoneSelect" class="select" disabled></select>
-          </div>
-
-          <!-- Quick Status -->
-          <div class="field">
-            <div class="field-label">QUICK STATUS</div>
-            <div class="quick-grid" id="quickGrid">
-              <button class="qbtn noanswer" type="button" data-status="No Answer">No Answer</button>
-              <button class="qbtn vm" type="button" data-status="Left VM">Left VM</button>
-              <button class="qbtn owner" type="button" data-status="Spoke to Owner">Spoke to Owner</button>
-              <button class="qbtn rel" type="button" data-status="Relative">Relative</button>
-
-              <button class="qbtn wrong" type="button" data-status="Wrong Party">Wrong Party</button>
-              <button class="qbtn dnc" type="button" data-status="Do Not Call">Do Not Call</button>
-              <button class="qbtn hot" type="button" data-status="Hot Lead">Hot Lead</button>
-              <button class="qbtn follow" type="button" data-status="Follow-Up">Follow-Up</button>
-            </div>
-          </div>
-
-          <!-- Notes -->
-          <div class="field">
-            <div class="field-label">ADD NOTE (SAVES TO TEAM CALL LOG FOR THIS NUMBER)</div>
-            <div class="note-row">
-              <textarea id="noteComposer" class="input note-box" placeholder="Type your note here…"></textarea>
-              <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
-                <button id="noteSaveBtn" class="icon-btn mini" type="button" title="Save note">✓</button>
-                <div id="noteStatus" class="note-status" style="display:none;">Saved ✓</div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Location Intel -->
-          <div class="field">
-            <div class="field-label">LOCATION INTEL</div>
-
-            <div class="map-head" id="mapHead" style="display:none;">
-              <div class="map-actions">
-                <button class="map-link" id="areaMapLink" type="button">Area Map</button>
-                <button class="map-link" id="streetViewLink" type="button">Street View</button>
-                <span class="map-hint" id="mapHint"></span>
+            <div class="row" style="margin-top:10px">
+              <div class="field">
+                <button class="btn" id="addCallBtn" type="button">
+                  <strong>+ Add Call Log</strong>
+                  <span>Saves to call_logs under this lead</span>
+                </button>
               </div>
             </div>
 
-            <div class="map-wrap" id="mapWrap" style="display:none;">
-              <iframe id="streetFrame" loading="lazy"></iframe>
-            </div>
+            <div class="hr"></div>
 
-            <div class="map-warn" id="mapWarn"></div>
+            <div class="list" id="callList"></div>
+
           </div>
         </div>
+
       </div>
-
-      <!-- ================= RIGHT: CALL LOG TERMINAL ================= -->
-      <div class="panel col-right" id="panel-calllog">
-        <div class="panel-head">
-          <div class="panel-title">⌁ CALL LOG TERMINAL</div>
-          <div class="pill" id="logCount">0 entries</div>
-        </div>
-        <div class="panel-body">
-          <div class="log" id="callLog">
-            <div class="log-empty" id="logEmpty">
-              No call history for this number.<br><br>
-              Select a lead + number, then log a status or add a note.
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ================= DISPO (UPDATED UI) ================= -->
-      <div id="panel-dispo">
-        <div class="dispo-shell">
-          <div class="dispo-topbar">
-            <div class="left">
-              <div class="dispo-badge">● DISPO</div>
-              <div class="dispo-sub">Live Deals / Inventory Board</div>
-              <span class="pill" id="dispoHintPill">System Online</span>
-            </div>
-            <div class="dispo-actions">
-              <a class="chip" href="dispo.html" target="_blank" rel="noreferrer">Open Fullscreen</a>
-              <button class="chip primary" id="dispoRefreshBtn" type="button">Refresh</button>
-            </div>
-          </div>
-
-          <div class="dispo-framewrap">
-            <iframe
-              id="iframeDispo"
-              src="dispo.html"
-              loading="lazy"
-              referrerpolicy="no-referrer"
-              style="border:none;">
-            </iframe>
-
-            <div class="dispo-mask" aria-hidden="true"></div>
-          </div>
-        </div>
-      </div>
-
-    </div>
-  </section>
-</div>
-
-<div id="chatBubble">💬</div>
-
-<div id="sidePanel" class="sidebar-panel">
-  <div class="panel-header">
-    <div style="display:flex; align-items:center;">
-      <span id="backToRadar">◀ Back</span>
-      <span id="panelTitle" class="panel-title2">Support Chat</span>
-    </div>
-    <button class="close-btn" id="closePanel" type="button">✕</button>
-  </div>
-
-  <div id="radarList">
-    <div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div>
-  </div>
-
-  <div id="chatArea">
-    <div id="chatMsgs"></div>
-    <div class="chat-input-row">
-      <input id="chatInput" class="chat-input" type="text" placeholder="Type a message...">
-      <button id="chatSend" class="send-btn" type="button">➤</button>
-    </div>
-  </div>
-</div>
-
-<!-- ===== ADD LEAD MODAL ===== -->
-<div id="leadModalBackdrop"></div>
-<div id="leadModal">
-  <div class="lm-card">
-    <div class="lm-head">
-      <div class="lm-title" id="leadModalTitle">➕ Add Lead</div>
-      <button class="icon-btn mini" id="leadModalClose" type="button">✕</button>
     </div>
 
-    <div class="lm-body">
-      <div class="lm-grid">
-        <div class="field" style="margin-top:0;">
-          <div class="field-label">ADDRESS *</div>
-          <input id="lead_address" class="input" placeholder="4824 County Road 36, Robstown, TX" />
-        </div>
+  </div><!-- /grid -->
 
-        <div class="field" style="margin-top:0;">
-          <div class="field-label">OWNER</div>
-          <input id="lead_owner" class="input" placeholder="John Doe" />
-        </div>
+</div><!-- /wrap -->
 
-        <div class="field" style="margin-top:0;">
-          <div class="field-label">MAILING</div>
-          <input id="lead_mailing" class="input" placeholder="Mailing address (optional)" />
-        </div>
+<!-- =========================
+     Wholesaler Lane Modal
+     ========================= -->
+<div id="whLaneModal" class="modalOverlay dbw" aria-hidden="true">
+  <div class="modalCard dbw" role="dialog" aria-modal="true" aria-label="Wholesaler Lane Setup">
+    <div class="dbwHead">
+      <div style="min-width:0">
+        <div class="dbwTitle">Wholesaler Lane Setup</div>
+        <div class="dbwSub">Pick a lead type + county • Then choose your route</div>
+      </div>
+      <button id="whLaneClose" class="dbwClose" aria-label="Close">✕</button>
+    </div>
 
-        <div class="field" style="margin-top:0;">
-          <div class="field-label">STATUS</div>
-          <select id="lead_status" class="select">
-            <option>New</option>
-            <option>Working</option>
-            <option>Hot</option>
-            <option>Do Not Call</option>
-            <option>Dead</option>
-          </select>
-        </div>
+    <div class="dbwBody">
+      <div class="dbwGrid">
 
-        <div class="field" style="grid-column:1/-1;margin-top:0;">
-          <div class="field-label">PHONES (ONE PER LINE)</div>
-          <textarea id="lead_phones" class="input note-box" placeholder="(210) 555-1234&#10;(210) 555-5678"></textarea>
-        </div>
+        <div class="dbwPanel">
+          <div class="dbwPanelHead">
+            <h4>Lead Type</h4>
+            <span class="dbwPill" id="whLanePill">Not set</span>
+          </div>
+          <div class="dbwPanelBody">
 
-        <div class="field" style="grid-column:1/-1;margin-top:0;">
-          <div class="field-label">SHARE WITH (PARTNER UID - OPTIONAL)</div>
-          <input id="lead_partner_uid" class="input" placeholder="Paste the other acq's Firebase UID here (optional)" />
-          <div style="margin-top:6px;font-size:12px;color:#9ab9d6;">
-            This keeps <b>createdBy</b> as you (rules-safe), but adds <b>partners/{uid}=true</b> so your other acq can work it.
+            <div class="dbwOptGrid" id="whTypeGrid">
+              <button class="dbwOpt" type="button" data-type="street">
+                <strong>Street Lead</strong>
+                <span>Handshake lane: you bring a lead OR partner with DealBankers. We coordinate → analyze → transact → dispo / liquidate / raise capital.</span>
+              </button>
+
+              <button class="dbwOpt" type="button" data-type="web">
+                <strong>Web Lead</strong>
+                <span>Buy-in lane: bid for exclusive rights (like PropertyLeads, but cleaner + faster). Your credit stays until you’re the highest bidder.</span>
+              </button>
+
+              <button class="dbwOpt" type="button" data-type="live">
+                <strong>Live Lead</strong>
+                <span>Real-time inbound / warm transfers. Highest priority, fastest response.</span>
+              </button>
+            </div>
+
+            <div class="dbwField">
+              <div class="dbwLabel">County</div>
+              <select id="whCounty" class="dbwSelect">
+                <option value="">Select county…</option>
+                <option>Bexar</option><option>Travis</option><option>Guadalupe</option><option>Comal</option>
+                <option>Hays</option><option>Williamson</option><option>Nueces</option><option>Bell</option>
+                <option>Montgomery</option><option>Harris</option><option>Dallas</option><option>Tarrant</option>
+                <option>Other</option>
+              </select>
+            </div>
+
+            <div class="dbwField">
+              <div class="dbwLabel">Notes (optional)</div>
+              <textarea id="whLaneNotes" class="dbwTextarea" placeholder="Example: ‘I’m working probate leads in Bexar, need dispo buyers + JV funds.’"></textarea>
+            </div>
+
+            <div class="dbwMini">
+              This sets your <b>workspace filter</b> and routes your actions. You can change it anytime in ⚙️.
+            </div>
           </div>
         </div>
 
-        <div class="field" style="grid-column:1/-1;margin-top:0;">
-          <div class="field-label">TAG (OPTIONAL)</div>
-          <input id="lead_tag" class="input" placeholder="probate / pre-foreclosure / high equity / etc" />
+        <div class="dbwPanel">
+          <div class="dbwPanelHead">
+            <h4>Routes</h4>
+            <span class="dbwPill">Pick a lane</span>
+          </div>
+          <div class="dbwPanelBody">
+
+            <button class="dbwBtn" id="whRoutePartner" type="button">
+              <strong>Partner with DealBankers (Street)</strong>
+              <span>Request/claim a lead from the DealBankers kitchen. We JV, coordinate, analyze, and close.</span>
+            </button>
+
+            <div style="height:10px"></div>
+
+            <button class="dbwBtn" id="whRouteEnter" type="button">
+              <strong>Enter My Lead (Street)</strong>
+              <span>Add a seller lead you already have. Track calls, notes, team activity, and dispo.</span>
+            </button>
+
+            <div style="height:10px"></div>
+
+            <button class="dbwBtn" id="whRouteBid" type="button">
+              <strong>Bid / Buy Web Lead (Web)</strong>
+              <span>Open the bidding flow. Your credit stays on account until you’re top bidder (stub for now).</span>
+            </button>
+
+            <div style="height:10px"></div>
+
+            <button class="dbwBtn" id="whRouteLive" type="button">
+              <strong>Live Lead Inbox (Live)</strong>
+              <span>Open warm transfers / inbound queue (stub for now).</span>
+            </button>
+
+            <div class="dbwMini">
+              Pro tip: If you’re <b>God Mode</b>, you can assign any lead to one or many reps from ⚙️ and view what’s in their workstation.
+            </div>
+          </div>
         </div>
 
-        <div class="field" style="grid-column:1/-1;margin-top:0;">
-          <div class="field-label">NOTES (OPTIONAL)</div>
-          <textarea id="lead_notes" class="input note-box" placeholder="Quick notes…"></textarea>
-        </div>
-      </div>
-
-      <div id="leadModalMsg" class="pill" style="display:none;margin-top:12px;"></div>
-
-      <div class="lm-actions">
-        <button class="chip" id="leadModalCancel" type="button">Cancel</button>
-        <button class="chip primary" id="leadModalSave" type="button">Save Lead</button>
       </div>
     </div>
   </div>
 </div>
 
-<!-- Firebase compat -->
+<!-- =========================
+     God Mode: Admin Console Modal
+     ========================= -->
+<div id="godModal" class="modalOverlay dbw" aria-hidden="true">
+  <div class="modalCard dbw" role="dialog" aria-modal="true" aria-label="God Mode Admin Console">
+    <div class="dbwHead">
+      <div style="min-width:0">
+        <div class="dbwTitle">God Mode • Admin Console</div>
+        <div class="dbwSub">Assign leads • Inspect workstations • Edit rep console fields</div>
+      </div>
+      <button id="godClose" class="dbwClose" aria-label="Close">✕</button>
+    </div>
+
+    <div class="dbwBody">
+      <div class="dbwGrid">
+
+        <div class="dbwPanel">
+          <div class="dbwPanelHead">
+            <h4>Assign Current Lead</h4>
+            <span class="dbwPill" id="godLeadPill">No lead</span>
+          </div>
+          <div class="dbwPanelBody">
+            <div class="dbwField">
+              <div class="dbwLabel">Target UID(s) • comma separated</div>
+              <input id="godUids" class="dbwInput" placeholder="uid1, uid2, uid3" />
+            </div>
+
+            <div class="dbwField">
+              <div class="dbwLabel">What to push</div>
+              <select id="godPushMode" class="dbwSelect">
+                <option value="workspace">Push to workstation (recommended)</option>
+                <option value="leadAssign">Set lead assignedUids field only</option>
+              </select>
+            </div>
+
+            <div class="dbwField">
+              <button class="dbwBtn" id="godAssignBtn" type="button">
+                <strong>Push / Assign Now</strong>
+                <span>Writes to workstations/{uid}/leads/{leadId} and logs assignment.</span>
+              </button>
+            </div>
+
+            <div class="dbwMini" id="godAssignStatus"></div>
+          </div>
+        </div>
+
+        <div class="dbwPanel">
+          <div class="dbwPanelHead">
+            <h4>Inspect Rep Workstation</h4>
+            <span class="dbwPill" id="godViewPill">UID</span>
+          </div>
+          <div class="dbwPanelBody">
+            <div class="dbwField">
+              <div class="dbwLabel">UID to inspect</div>
+              <input id="godViewUid" class="dbwInput" placeholder="Paste a UID (rep)" />
+            </div>
+
+            <div class="dbwField">
+              <button class="dbwBtn" id="godLoadWorkspace" type="button">
+                <strong>Load Workstation</strong>
+                <span>Lists leads and saved fields under workstations/{uid}/leads.</span>
+              </button>
+            </div>
+
+            <div class="dbwField">
+              <div class="dbwLabel">Workspace Leads</div>
+              <select id="godWsLeadSelect" class="dbwSelect">
+                <option value="">—</option>
+              </select>
+            </div>
+
+            <div class="dbwField">
+              <div class="dbwLabel">Edit Field (safe)</div>
+              <div class="dbwRow">
+                <input id="godFieldKey" class="dbwInput" placeholder="field path (e.g. stage, nextAction, notes)" style="flex:1; min-width: 180px" />
+                <input id="godFieldVal" class="dbwInput" placeholder="value" style="flex:1; min-width: 180px" />
+              </div>
+            </div>
+
+            <div class="dbwField">
+              <button class="dbwBtn" id="godSaveField" type="button">
+                <strong>Save Field</strong>
+                <span>Updates workstations/{uid}/leads/{leadId}/{field}.</span>
+              </button>
+            </div>
+
+            <div class="dbwField">
+              <div class="dbwLabel">Raw Preview</div>
+              <textarea id="godPreview" class="dbwTextarea" readonly placeholder="Workspace JSON will appear here…"></textarea>
+            </div>
+
+            <div class="dbwMini" id="godPreviewStatus"></div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Firebase (compat to match your current portal) -->
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<!-- Your existing order -->
+<!-- Your existing config.js (must define window.firebaseConfig) -->
 <script src="config.js"></script>
-<script src="app-auth.js"></script>
 
 <script>
-/* ================== FIREBASE INIT ================== */
-(function ensureFirebaseInit(){
+/* ================== INIT ================== */
+function $(id){ return document.getElementById(id); }
+function safeText(v){ return String(v ?? "").trim(); }
+
+(function initFirebase(){
   try{
     if (!firebase.apps || !firebase.apps.length) {
       if (!window.firebaseConfig) {
@@ -898,747 +746,522 @@ body{
         return;
       }
       firebase.initializeApp(window.firebaseConfig);
-      console.log("Firebase initialized.");
+      console.log("Firebase initialized");
     }
   }catch(e){
     console.error("Firebase init error:", e);
   }
 })();
 
-const $ = (id) => document.getElementById(id);
-
-function fmtPhoneKey(p){
-  return String(p || "").trim().replace(/[^\d+]/g,"") || "unknown";
-}
-function tsToLocal(ts){
-  try{ const d = new Date(ts); if (isNaN(d.getTime())) return ""; return d.toLocaleString(); }
-  catch(e){ return ""; }
-}
-function initialsFromUser(u){
-  const base = (u && (u.displayName || u.email)) ? (u.displayName || u.email) : "";
-  const parts = String(base).split(/[\s._-]+/).filter(Boolean);
-  const ini = parts.map(p => p[0]?.toUpperCase() || "").join("").slice(0,2);
-  return ini || "U";
-}
-function safeText(s){ return String(s ?? "").trim(); }
-
-function buildMapsEmbed(address, mode){
-  const q = encodeURIComponent(address || "");
-  if (!q) return "";
-  if (mode === "street"){
-    return `https://www.google.com/maps?q=${q}&output=embed&layer=c`;
-  }
-  return `https://www.google.com/maps?q=${q}&output=embed`;
-}
+const auth = firebase.auth();
+const db = firebase.database();
 
 let UID = null;
-let ME = null;
-let ME_INITIALS = "U";
-
 let isAdmin = false;
-let sellerList = [];
-let sellerView = [];
-let currentIndex = -1;
-let currentLead = null;
 
-let currentPhone = "";
-let currentLeadId = "";
-let leadsRef = null;
-let activeLogRef = null;
+let leadsCache = {};
+let currentLeadId = null;
 
-/* ================== BASIC UI RENDER ================== */
-function normalizeLead(lead){
-  const l = lead || {};
-  const phones = Array.isArray(l.phones) ? l.phones : [];
-  const normPhones = phones.map(p=>{
-    if (typeof p === "string") return { label: p, key: fmtPhoneKey(p) };
-    return { label: p.label || "", key: p.key || fmtPhoneKey(p.label || "") };
-  }).filter(p=>p.label || p.key);
-  return {
-    id: l.id,
-    address: l.address || "",
-    owner: l.owner || "",
-    mailing: l.mailing || "",
-    status: l.status || "New",
-    tag: l.tag || "",
-    notes: l.notes || "",
-    phones: normPhones,
-    createdBy: l.createdBy || "",
-    createdAt: l.createdAt || 0,
-    partners: l.partners || {}
-  };
+/* ================== HELPERS ================== */
+function fmtTS(ts){
+  if(!ts) return "";
+  try{
+    const d = new Date(ts);
+    return d.toLocaleString();
+  }catch(e){ return ""; }
+}
+
+function statusToBadge(status){
+  const s = (status||"New").toLowerCase();
+  if(s.includes("hot")) return ["Hot","warn"];
+  if(s.includes("contract")) return ["U/C","good"];
+  if(s.includes("dead")||s.includes("nope")) return ["Dead","bad"];
+  if(s.includes("contact")) return ["Contacted",""];
+  return ["New",""];
+}
+
+function leadTitle(lead){
+  const a = safeText(lead.address) || "Unknown Address";
+  const o = safeText(lead.owner) || "Unknown Owner";
+  return `${a} • ${o}`;
+}
+
+function phoneKeyFrom(phone){
+  return safeText(phone).replace(/[^\d+]/g,"") || "unknown";
+}
+
+/* ================== LEADS ================== */
+function subscribeLeads(){
+  db.ref("leads/sellers").off();
+  db.ref("leads/sellers").on("value", (snap)=>{
+    leadsCache = snap.val() || {};
+    applySearch();
+  }, (err)=>console.error(err));
 }
 
 function applySearch(){
   const q = safeText($("s_q").value).toLowerCase();
-  if (!q){
-    sellerView = sellerList.slice();
-  } else {
-    sellerView = sellerList.filter(l=>{
-      const hay = [
-        l.address, l.owner, l.mailing, l.tag, l.status,
-        (l.phones||[]).map(p=>p.label).join(" ")
-      ].join(" ").toLowerCase();
-      return hay.includes(q);
-    });
-  }
-  renderQueue();
-  if (!sellerView.length){
-    clearConsole();
-    updatePager();
-    return;
-  }
-  if (currentIndex < 0 || currentIndex >= sellerView.length){
-    selectLeadByIndex(0);
-  } else {
-    selectLeadByIndex(currentIndex);
-  }
-}
+  const st = safeText($("s_status").value).toLowerCase();
 
-function renderQueue(){
+  const all = Object.entries(leadsCache || {}).map(([id, lead])=>({id, ...lead}));
+  const filtered = all.filter(l=>{
+    const hay = `${l.address||""} ${l.owner||""} ${l.phone||""} ${l.tag||""} ${(l.leadType||"")}`.toLowerCase();
+    const okQ = !q || hay.includes(q);
+    const okS = !st || String(l.status||"New").toLowerCase() === st;
+    return okQ && okS;
+  }).sort((a,b)=>{
+    const ta = a.updatedAt || a.createdAt || 0;
+    const tb = b.updatedAt || b.createdAt || 0;
+    return tb - ta;
+  });
+
+  $("queuePill").textContent = `${filtered.length} lead(s)`;
+
   const list = $("leadList");
   list.innerHTML = "";
+  if(!filtered.length){
+    $("leadListHint").textContent = "No leads match your filters.";
+    return;
+  }
+  $("leadListHint").textContent = "Click a lead to load it into your workstation.";
 
-  $("leadCountPill").textContent = `${sellerView.length} leads`;
-
-  sellerView.forEach((lead, idx)=>{
+  filtered.forEach(l=>{
+    const [lbl, cls] = statusToBadge(l.status);
     const div = document.createElement("div");
-    div.className = "lead-item" + (idx === currentIndex ? " selected" : "");
+    div.className = "card" + (currentLeadId===l.id ? " active":"");
     div.innerHTML = `
-      <div class="addr">${lead.address ? lead.address : "(no address)"}</div>
-      <div class="meta">
-        <div>${lead.owner ? lead.owner : "—"}</div>
-        <div>${lead.status ? lead.status : "—"}${lead.tag ? " • " + lead.tag : ""}</div>
-        <div>${(lead.phones && lead.phones.length) ? lead.phones[0].label : "No phone yet"}</div>
+      <div class="cardTop">
+        <div class="cardTitle">${safeText(l.address) || "Unknown Address"}</div>
+        <div class="badge ${cls}">${lbl}</div>
       </div>
-      <div class="badges">
-        <span class="badge ${lead.status === "New" ? "new" : ""}">${lead.status || "New"}</span>
-        ${lead.tag ? `<span class="badge working">${lead.tag}</span>` : ``}
+      <div class="cardMeta">
+        <b>Owner:</b> ${safeText(l.owner)||"—"} &nbsp; <b>Phone:</b> ${safeText(l.phone)||"—"}<br/>
+        <b>Tag:</b> ${safeText(l.tag)||"—"} &nbsp; <b>Updated:</b> ${fmtTS(l.updatedAt||l.createdAt)||"—"}
       </div>
     `;
-    div.addEventListener("click", ()=>selectLeadByIndex(idx));
+    div.addEventListener("click", ()=>loadLead(l.id));
     list.appendChild(div);
   });
 }
 
-function updatePager(){
-  $("leadPager").textContent = sellerView.length ? `${currentIndex+1} / ${sellerView.length}` : `0 / 0`;
-}
-
-function clearConsole(){
-  currentLead = null;
-  currentLeadId = "";
-  currentPhone = "";
-
-  $("leadAddress").textContent = "No lead selected";
-  $("leadOwner").textContent = "Select a lead from the queue.";
-  $("tpsLink").style.display = "none";
-  $("callLink").style.display = "none";
-
-  const sel = $("phoneSelect");
-  sel.innerHTML = "";
-  sel.disabled = true;
-
-  $("mapHead").style.display = "none";
-  $("mapWrap").style.display = "none";
-  $("mapWarn").style.display = "none";
-  $("mapWarn").textContent = "";
-  $("streetFrame").src = "";
-
-  setEditButtonsForLead(null);
-
-  detachLog();
-  clearCallLogUI();
-}
-
-function selectLeadByIndex(idx){
-  if (!sellerView.length) return;
-  if (idx < 0) idx = 0;
-  if (idx >= sellerView.length) idx = sellerView.length-1;
-
-  currentIndex = idx;
-  currentLead = sellerView[idx];
-  currentLeadId = String(currentLead.id || "");
-
-  setEditButtonsForLead(currentLead);
-
-  renderQueue();
-  updatePager();
-
-  $("leadAddress").textContent = currentLead.address || "(no address)";
-  $("leadOwner").textContent = currentLead.owner || "—";
-
-  const q = encodeURIComponent(`${currentLead.owner || ""} ${currentLead.address || ""}`.trim());
-  $("tpsLink").href = `https://www.truepeoplesearch.com/results?name=${q}`;
-  $("tpsLink").style.display = "inline";
-
-  const sel = $("phoneSelect");
-  sel.innerHTML = "";
-  const phones = currentLead.phones || [];
-  if (phones.length){
-    phones.forEach((p)=>{
-      const opt = document.createElement("option");
-      opt.value = p.key || fmtPhoneKey(p.label);
-      opt.textContent = p.label || p.key || "unknown";
-      sel.appendChild(opt);
-    });
-    sel.disabled = false;
-
-    sel.selectedIndex = 0;
-    currentPhone = sel.value;
-
-    updateCallLinkFromSelectedPhone();
-    attachLog(currentLeadId, currentPhone);
-  } else {
-    sel.disabled = true;
-    currentPhone = "";
-    $("callLink").style.display = "none";
-    detachLog();
-    clearCallLogUI();
-  }
-
-  refreshMap("area");
-}
-
-function updateCallLinkFromSelectedPhone(){
-  const sel = $("phoneSelect");
-  if (sel.disabled || !sel.value){
-    $("callLink").style.display = "none";
-    return;
-  }
-  const chosen = sel.options[sel.selectedIndex]?.textContent || sel.value;
-  const tel = "tel:" + String(chosen).replace(/[^\d+]/g,"");
-  const a = $("callLink");
-  a.href = tel;
-  a.textContent = "Click to Call";
-  a.style.display = "inline";
-}
-
-/* ================== MAP ================== */
-let mapMode = "area";
-function refreshMap(mode){
-  mapMode = mode || "area";
-  const addr = currentLead && currentLead.address ? currentLead.address : "";
-  if (!addr){
-    $("mapHead").style.display = "none";
-    $("mapWrap").style.display = "none";
-    $("mapWarn").style.display = "block";
-    $("mapWarn").textContent = "No address on this lead.";
+async function loadLead(id){
+  currentLeadId = id;
+  const lead = (leadsCache && leadsCache[id]) || null;
+  if(!lead){
+    $("leadPill").textContent = "Lead not found";
     return;
   }
 
-  $("mapWarn").style.display = "none";
-  $("mapHead").style.display = "flex";
-  $("mapWrap").style.display = "block";
+  $("leadPill").textContent = `Lead: ${id}`;
+  $("leadTitle").value  = leadTitle(lead);
+  $("leadStatus").value = lead.status || "New";
+  $("leadTag").value    = lead.tag || "";
+  $("leadOwner").value  = lead.owner || "";
+  $("leadPhone").value  = lead.phone || "";
+  $("leadAddress").value= lead.address || "";
+  $("leadNotes").value  = lead.notes || "";
 
-  $("mapHint").textContent = (mapMode === "street") ? "Street-ish view (free mode)" : "Area map (free mode)";
-  $("streetFrame").src = buildMapsEmbed(addr, mapMode);
+  // calls
+  await loadCalls(id, lead.phone);
+
+  // keep admin pill fresh
+  try{ setGodLeadPill(); }catch(e){}
 }
 
-/* ================== CALL LOG ================== */
-function clearCallLogUI(){
-  const body = $("panel-calllog").querySelector(".panel-body");
-  body.innerHTML = `
-    <div class="log" id="callLog">
-      <div class="log-empty" id="logEmpty">
-        No call history for this number.<br><br>
-        Select a lead + number, then log a status or add a note.
-      </div>
-    </div>`;
-  $("logCount").textContent = "0 entries";
+async function saveLead(){
+  if(!currentLeadId) return alert("Select a lead first.");
+  const ref = db.ref(`leads/sellers/${currentLeadId}`);
+  const patch = {
+    status: $("leadStatus").value,
+    tag: safeText($("leadTag").value),
+    owner: safeText($("leadOwner").value),
+    phone: safeText($("leadPhone").value),
+    address: safeText($("leadAddress").value),
+    notes: safeText($("leadNotes").value),
+    updatedAt: Date.now(),
+    updatedBy: UID
+  };
+  await ref.update(patch);
+  alert("Saved ✓");
 }
-function detachLog(){
-  if (activeLogRef){
-    try{ activeLogRef.off(); }catch(e){}
-    activeLogRef = null;
-  }
+
+async function deleteLead(){
+  if(!currentLeadId) return alert("Select a lead first.");
+  if(!confirm("Delete this lead? This cannot be undone.")) return;
+  await db.ref(`leads/sellers/${currentLeadId}`).remove();
+  currentLeadId = null;
+
+  $("leadPill").textContent = "No lead selected";
+  $("leadTitle").value="";
+  $("leadTag").value="";
+  $("leadOwner").value="";
+  $("leadPhone").value="";
+  $("leadAddress").value="";
+  $("leadNotes").value="";
+  $("callList").innerHTML="";
+  $("callPill").textContent="—";
 }
-function attachLog(leadId, phoneKey){
-  detachLog();
-  if (!leadId || !phoneKey) return;
 
-  const path = `call_logs/${leadId}/${phoneKey}`;
-  activeLogRef = firebase.database().ref(path);
+/* ================== ADD LEAD (simple prompt flow) ================== */
+async function addLeadFlow(){
+  const address = prompt("Address (123 Main St, City, ST):") || "";
+  if(!safeText(address)) return;
+  const owner = prompt("Owner name:") || "";
+  const phone = prompt("Phone (optional):") || "";
+  const tag   = prompt("Tag (probate/liens/sub2/etc):") || "";
 
-  activeLogRef.on("value", (snap)=>{
-    const v = snap.val() || {};
-    const entries = Object.entries(v).map(([id, obj])=>({ id, ...(obj||{}) }))
-      .sort((a,b)=>Number(b.ts||0)-Number(a.ts||0));
+  // pull lane type into record if set
+  let lane = null;
+  try{ lane = getLane(); }catch(e){ lane = null; }
 
-    $("logCount").textContent = `${entries.length} entries`;
+  const newRef = db.ref("leads/sellers").push();
+  const obj = {
+    address: safeText(address),
+    owner: safeText(owner),
+    phone: safeText(phone),
+    tag: safeText(tag),
+    status: "New",
+    notes: "",
+    leadType: lane?.type || "street",
+    county: lane?.county || "",
+    createdAt: Date.now(),
+    createdBy: UID,
+    updatedAt: Date.now(),
+    updatedBy: UID
+  };
+  await newRef.set(obj);
+  alert("Lead added ✓");
+}
 
-    if (!entries.length){
-      clearCallLogUI();
+/* ================== CALL LOGS ================== */
+async function loadCalls(leadId, phone){
+  const key = phoneKeyFrom(phone || "");
+  $("callPill").textContent = key !== "unknown" ? `PhoneKey: ${key}` : "PhoneKey: unknown";
+
+  const ref = db.ref(`call_logs/${leadId}/${key}`);
+  ref.off();
+  ref.on("value", (snap)=>{
+    const obj = snap.val() || {};
+    const items = Object.entries(obj).map(([id, v])=>({id, ...v}))
+      .sort((a,b)=>(b.ts||0)-(a.ts||0));
+
+    const list = $("callList");
+    list.innerHTML = "";
+    if(!items.length){
+      list.innerHTML = `<div class="small">No call logs yet.</div>`;
       return;
     }
-
-    const wrap = document.createElement("div");
-    wrap.className = "log";
-    wrap.id = "callLog";
-
-    entries.forEach(e=>{
-      const tag = (e.type === "status") ? "status" : "note";
-      const tagLabel = e.type === "status" ? (e.status || "Status") : "Note";
+    items.forEach(it=>{
       const div = document.createElement("div");
-      div.className = "log-item";
+      div.className="card";
+      div.style.cursor="default";
       div.innerHTML = `
-        <div class="log-top">
-          <div>${tsToLocal(e.ts || 0)}</div>
-          <div class="log-tag ${tag}">${tagLabel}</div>
+        <div class="cardTop">
+          <div class="cardTitle">${safeText(it.outcome)||"Attempt"}</div>
+          <div class="badge">${fmtTS(it.ts)||"—"}</div>
         </div>
-        <div class="log-text">${String(e.text||"").replace(/[<>&"]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[s]))}</div>
+        <div class="cardMeta">${safeText(it.note)||"—"}<br/><span class="small">by ${safeText(it.byEmail)||safeText(it.by)||"—"}</span></div>
       `;
-      wrap.appendChild(div);
+      list.appendChild(div);
     });
-
-    const container = $("panel-calllog").querySelector(".panel-body");
-    container.innerHTML = "";
-    container.appendChild(wrap);
-  }, (err)=>{
-    console.warn("call log read failed:", err);
-    clearCallLogUI();
   });
 }
 
-async function writeCallLogEntry({leadId, phoneKey, type, status, text}){
-  if (!leadId || !phoneKey) return;
-  const base = firebase.database().ref(`call_logs/${leadId}/${phoneKey}`);
-  const ref = base.push();
+async function addCallLog(){
+  if(!currentLeadId) return alert("Select a lead first.");
+  const phone = safeText($("leadPhone").value);
+  const key = phoneKeyFrom(phone);
+  const note = safeText($("callNote").value);
+  const outcome = $("callOutcome").value;
+
+  const ref = db.ref(`call_logs/${currentLeadId}/${key}`).push();
+  await ref.set({
+    note, outcome,
+    by: UID,
+    byEmail: auth.currentUser?.email || "",
+    ts: Date.now()
+  });
+
+  $("callNote").value="";
+}
+
+/* ================== WHOLESALER LANE + GOD MODE (ADD-ON) ================== */
+const LANE_KEY = "db_wh_lane_v1";
+
+function parseCSVUids(s){
+  return String(s||"")
+    .split(",")
+    .map(x=>x.trim())
+    .filter(Boolean);
+}
+
+function laneLabel(lane){
+  if(!lane) return "Not set";
+  const t = (lane.type||"").toLowerCase();
+  const c = (lane.county||"").trim();
+  const tn = t === "street" ? "Street" : t === "web" ? "Web" : t === "live" ? "Live" : (t||"Type");
+  return `${tn}${c ? " • " + c : ""}`;
+}
+
+function getLane(){
+  try{ return JSON.parse(localStorage.getItem(LANE_KEY) || "null"); }catch(e){ return null; }
+}
+function setLane(lane){
+  try{ localStorage.setItem(LANE_KEY, JSON.stringify(lane||null)); }catch(e){}
+}
+
+function showModal(el){ el?.classList.add("show"); el?.setAttribute("aria-hidden","false"); }
+function hideModal(el){ el?.classList.remove("show"); el?.setAttribute("aria-hidden","true"); }
+
+function wireDbwModal(modalId, closeId){
+  const modal = $(modalId);
+  const closeBtn = $(closeId);
+  const close = ()=>hideModal(modal);
+  closeBtn?.addEventListener("click", close);
+  modal?.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
+  document.addEventListener("keydown", (e)=>{
+    if(e.key === "Escape" && modal?.classList.contains("show")) close();
+  });
+  return { modal, open: ()=>showModal(modal), close };
+}
+
+const whLaneUI = wireDbwModal("whLaneModal","whLaneClose");
+const godUI    = wireDbwModal("godModal","godClose");
+
+function paintLaneUI(){
+  const lane = getLane();
+  const pill = $("whLanePill");
+  if(pill) pill.textContent = laneLabel(lane);
+
+  const typeBtns = document.querySelectorAll("#whTypeGrid .dbwOpt");
+  typeBtns.forEach(b=>{
+    const isOn = lane && (lane.type === b.getAttribute("data-type"));
+    b.classList.toggle("active", !!isOn);
+  });
+
+  if(lane?.county) $("whCounty").value = lane.county;
+  if(lane?.notes) $("whLaneNotes").value = lane.notes;
+}
+
+function openLaneModal(){
+  paintLaneUI();
+  whLaneUI.open();
+}
+
+function saveLaneFromUI(){
+  const active = document.querySelector("#whTypeGrid .dbwOpt.active");
+  const type = active ? active.getAttribute("data-type") : "";
+  const county = safeText($("whCounty").value);
+  const notes = safeText($("whLaneNotes").value);
+
+  const lane = { type, county, notes, ts: Date.now() };
+  setLane(lane);
+  paintLaneUI();
+  return lane;
+}
+
+document.querySelectorAll("#whTypeGrid .dbwOpt").forEach(btn=>{
+  btn.addEventListener("click", ()=>{
+    document.querySelectorAll("#whTypeGrid .dbwOpt").forEach(b=>b.classList.remove("active"));
+    btn.classList.add("active");
+    $("whLanePill").textContent = laneLabel({ type: btn.getAttribute("data-type"), county: $("whCounty").value });
+  });
+});
+
+$("whCounty")?.addEventListener("change", ()=>saveLaneFromUI());
+$("whLaneNotes")?.addEventListener("blur", ()=>saveLaneFromUI());
+
+function showStub(msg){
+  alert(msg + "\n\n(Stub for now — we'll wire this into Firebase bidding + live inbox next.)");
+}
+
+/* Route buttons */
+$("whRoutePartner")?.addEventListener("click", ()=>{
+  const lane = saveLaneFromUI();
+  if(lane.type && lane.type !== "street") return showStub("Partner route is for Street Leads.");
+  try{ $("s_q").value = "street"; applySearch(); }catch(e){}
+  whLaneUI.close();
+});
+
+$("whRouteEnter")?.addEventListener("click", ()=>{
+  const lane = saveLaneFromUI();
+  if(lane.type && lane.type !== "street") return showStub("Enter lead is for Street Leads.");
+  try{ $("addLeadBtn")?.click(); }catch(e){}
+  whLaneUI.close();
+});
+
+$("whRouteBid")?.addEventListener("click", ()=>{
+  saveLaneFromUI();
+  showStub("Web Lead bidding flow");
+});
+
+$("whRouteLive")?.addEventListener("click", ()=>{
+  saveLaneFromUI();
+  showStub("Live Lead inbox");
+});
+
+/* God Mode helpers */
+function setGodLeadPill(){
+  const pill = $("godLeadPill");
+  if(!pill) return;
+  pill.textContent = currentLeadId ? `Lead: ${currentLeadId}` : "No lead";
+}
+
+async function godAssign(){
+  if(!isAdmin) return alert("God Mode only.");
+  if(!currentLeadId) return alert("Select a lead first (left queue).");
+
+  const uids = parseCSVUids($("godUids").value);
+  if(!uids.length) return alert("Paste at least one UID.");
+
+  const mode = $("godPushMode").value;
+  $("godAssignStatus").textContent = "Working…";
+
+  const leadSnap = await db.ref(`leads/sellers/${currentLeadId}`).once("value");
+  const lead = leadSnap.val();
+  if(!lead){ $("godAssignStatus").textContent = "Lead not found."; return; }
+
+  const assigned = Array.from(new Set([...(lead.assignedUids||[]), ...uids]));
+  await db.ref(`leads/sellers/${currentLeadId}/assignedUids`).set(assigned);
+
   const payload = {
-    type: type || "note",
-    status: status || "",
-    text: text || "",
-    by: UID || "",
+    leadId: currentLeadId,
+    assignedTo: assigned,
+    by: UID,
+    byEmail: (auth.currentUser?.email || ""),
     ts: firebase.database.ServerValue.TIMESTAMP
   };
-  await ref.set(payload);
-}
+  await db.ref(`admin/assignments/${currentLeadId}`).push(payload);
 
-/* ================== ADD LEAD MODAL ================== */
-const leadModal = $("leadModal");
-const btnAddLead = $("btnAddLead");
-const leadModalBackdrop = $("leadModalBackdrop");
-const leadModalClose = $("leadModalClose");
-const leadModalCancel = $("leadModalCancel");
-const leadModalSave = $("leadModalSave");
-const leadModalMsg = $("leadModalMsg");
-
-function openLeadModal(){
-  if(!UID){
-    alert("Not signed in yet.");
-    return;
+  if(mode === "workspace"){
+    const updates = {};
+    uids.forEach(tuid=>{
+      updates[`workstations/${tuid}/leads/${currentLeadId}`] = {
+        leadId: currentLeadId,
+        snapshot: lead,
+        stage: lead.status || "New",
+        nextAction: "",
+        notes: "",
+        assignedBy: UID,
+        assignedAt: firebase.database.ServerValue.TIMESTAMP
+      };
+    });
+    await db.ref().update(updates);
   }
-  leadModalBackdrop.style.display = "block";
-  leadModal.style.display = "flex";
 
-  leadModalMsg.style.display = "none";
-  leadModalMsg.textContent = "";
-
-  $("lead_status").value = $("lead_status").value || "New";
-  $("lead_address").focus();
-}
-function closeLeadModal(){
-  leadModalBackdrop.style.display = "none";
-  leadModal.style.display = "none";
-}
-function cleanPhones(text){
-  const lines = String(text || "").split(/\r?\n/).map(s=>s.trim()).filter(Boolean);
-  return lines.map(p => ({ label:p, key: fmtPhoneKey(p) }));
+  $("godAssignStatus").textContent = `Assigned to ${uids.length} uid(s).`;
 }
 
-btnAddLead.addEventListener("click", openLeadModal);
-leadModalBackdrop.addEventListener("click", closeLeadModal);
-leadModalClose.addEventListener("click", closeLeadModal);
-leadModalCancel.addEventListener("click", closeLeadModal);
+async function godLoadWorkspace(){
+  if(!isAdmin) return alert("God Mode only.");
+  const tuid = safeText($("godViewUid").value);
+  if(!tuid) return alert("Paste a UID to inspect.");
+  $("godPreviewStatus").textContent = "Loading…";
+  $("godWsLeadSelect").innerHTML = `<option value="">Loading…</option>`;
 
-document.addEventListener("keydown", (e)=>{
-  if(e.key === "Escape" && leadModal.style.display !== "none"){
-    closeLeadModal();
-  }
+  const snap = await db.ref(`workstations/${tuid}/leads`).once("value");
+  const obj = snap.val() || {};
+
+  const leadIds = Object.keys(obj).sort();
+  const sel = $("godWsLeadSelect");
+  sel.innerHTML = `<option value="">Select a lead…</option>` + leadIds.map(id=>`<option value="${id}">${id}</option>`).join("");
+
+  $("godPreview").value = JSON.stringify(obj, null, 2);
+  $("godPreviewStatus").textContent = leadIds.length ? `Loaded ${leadIds.length} lead(s).` : "No workstation leads yet.";
+}
+
+async function godSaveField(){
+  if(!isAdmin) return alert("God Mode only.");
+  const tuid = safeText($("godViewUid").value);
+  const leadId = safeText($("godWsLeadSelect").value);
+  const key = safeText($("godFieldKey").value);
+  const val = safeText($("godFieldVal").value);
+
+  if(!tuid) return alert("UID is required.");
+  if(!leadId) return alert("Select a workstation lead.");
+  if(!key) return alert("Field key required.");
+
+  $("godPreviewStatus").textContent = "Saving…";
+
+  const blocked = ["__proto__", "constructor", "prototype"];
+  if(blocked.some(b=>key.includes(b))) return alert("Invalid key.");
+
+  await db.ref(`workstations/${tuid}/leads/${leadId}/${key}`).set(val);
+
+  const snap = await db.ref(`workstations/${tuid}/leads/${leadId}`).once("value");
+  $("godPreview").value = JSON.stringify(snap.val() || {}, null, 2);
+  $("godPreviewStatus").textContent = "Saved ✓";
+}
+
+$("godAssignBtn")?.addEventListener("click", ()=>godAssign().catch(e=>alert(e.message||e)));
+$("godLoadWorkspace")?.addEventListener("click", ()=>godLoadWorkspace().catch(e=>alert(e.message||e)));
+$("godSaveField")?.addEventListener("click", ()=>godSaveField().catch(e=>alert(e.message||e)));
+
+$("godWsLeadSelect")?.addEventListener("change", async ()=>{
+  if(!isAdmin) return;
+  const tuid = safeText($("godViewUid").value);
+  const leadId = safeText($("godWsLeadSelect").value);
+  if(!tuid || !leadId) return;
+  $("godPreviewStatus").textContent = "Loading lead…";
+  const snap = await db.ref(`workstations/${tuid}/leads/${leadId}`).once("value");
+  $("godPreview").value = JSON.stringify(snap.val() || {}, null, 2);
+  $("godPreviewStatus").textContent = "Loaded.";
 });
 
-/* ================== EDIT / DELETE (SAFE) ================== */
-let modalMode = "add"; // "add" | "edit"
-let editingLeadId = "";
+// Auto-open Lane setup if not configured
+setTimeout(()=>{ try{ const lane = getLane(); if(!lane || !lane.type || !lane.county){ openLaneModal(); } else { paintLaneUI(); } }catch(e){} }, 220);
 
-function canEditLead(lead){
-  if (!lead || !UID) return false;
-  if (isAdmin) return true;
-  if (lead.createdBy && lead.createdBy === UID) return true;
-  if (lead.partners && lead.partners[UID]) return true;
-  return false;
-}
+/* ================== EVENTS ================== */
+$("btnDashboard").onclick = ()=>location.href="command.html";
+$("btnBlue").onclick = ()=>{};   // already on acq
+$("btnRed").onclick = ()=>alert("Dispo view stub (next).");
 
-function setEditButtonsForLead(lead){
-  const ok = canEditLead(lead);
-  $("btnEditLead").style.display = ok ? "inline-flex" : "none";
-  $("btnDeleteLead").style.display = ok ? "inline-flex" : "none";
-  $("permPill").style.display = ok ? "inline-flex" : "none";
-  $("permPill").textContent = ok ? "Edit Enabled" : "";
-}
+$("btnSettings").onclick = () => openLaneModal();
+$("btnGod").onclick = () => { setGodLeadPill(); godUI.open(); };
 
-function openEditLeadModal(lead){
-  if (!lead) return;
+$("refreshBtn").onclick = ()=>applySearch();
+$("s_q").addEventListener("input", applySearch);
+$("s_status").addEventListener("change", applySearch);
 
-  modalMode = "edit";
-  editingLeadId = String(lead.id || "");
+$("addLeadBtn").onclick = ()=>addLeadFlow().catch(e=>alert(e.message||e));
+$("saveLeadBtn").onclick = ()=>saveLead().catch(e=>alert(e.message||e));
+$("deleteLeadBtn").onclick = ()=>deleteLead().catch(e=>alert(e.message||e));
+$("addCallBtn").onclick = ()=>addCallLog().catch(e=>alert(e.message||e));
 
-  $("leadModalTitle").textContent = "✏️ Edit Lead";
-  $("leadModalSave").textContent = "Save Changes";
-
-  $("lead_address").value = lead.address || "";
-  $("lead_owner").value = lead.owner || "";
-  $("lead_mailing").value = lead.mailing || "";
-  $("lead_status").value = lead.status || "New";
-  $("lead_tag").value = lead.tag || "";
-  $("lead_notes").value = lead.notes || "";
-  $("lead_partner_uid").value = ""; // don't overwrite partners on edit
-
-  const ph = Array.isArray(lead.phones) ? lead.phones : [];
-  $("lead_phones").value = ph.map(p=>p.label || "").filter(Boolean).join("\n");
-
-  openLeadModal();
-  $("lead_address").focus();
-}
-
-function resetModalToAdd(){
-  modalMode = "add";
-  editingLeadId = "";
-  $("leadModalTitle").textContent = "➕ Add Lead";
-  $("leadModalSave").textContent = "Save Lead";
-}
-
-const _closeLeadModal = closeLeadModal;
-closeLeadModal = function(){
-  _closeLeadModal();
-  resetModalToAdd();
+$("btnLogout").onclick = async ()=>{
+  await auth.signOut();
+  location.href="index.html";
 };
 
-$("btnEditLead").addEventListener("click", ()=>{
-  if (!currentLead) return;
-  if (!canEditLead(currentLead)) return alert("No permission to edit this lead.");
-  openEditLeadModal(currentLead);
-});
-
-$("btnDeleteLead").addEventListener("click", async ()=>{
-  if (!currentLead) return;
-  if (!canEditLead(currentLead)) return alert("No permission to delete this lead.");
-
-  const addr = currentLead.address || "(no address)";
-  const ok = confirm(`Delete this lead?\n\n${addr}\n\nThis removes the lead from RTDB.\n(Optional) You can also wipe its call logs after.`);
-  if (!ok) return;
-
-  try{
-    await firebase.database().ref(`leads/sellers/${currentLeadId}`).remove();
-
-    const wipeLogs = confirm("Also delete ALL call logs for this lead?");
-    if (wipeLogs){
-      await firebase.database().ref(`call_logs/${currentLeadId}`).remove();
-    }
-  }catch(e){
-    console.error("Delete failed:", e);
-    alert("Delete failed. Check permissions / rules.");
-  }
-});
-
-/* ================== SAVE (ADD OR EDIT) ================== */
-leadModalSave.addEventListener("click", async ()=>{
-  const address = $("lead_address").value.trim();
-  if(!address){
-    alert("Address is required.");
-    $("lead_address").focus();
+/* ================== AUTH + ROLE ================== */
+auth.onAuthStateChanged(async (user)=>{
+  if(!user){
+    location.href="index.html";
     return;
   }
 
-  leadModalSave.disabled = true;
-  const originalLabel = leadModalSave.textContent;
-  leadModalSave.textContent = "Saving…";
+  UID = user.uid;
+  $("whoLine").textContent = `${user.email || "user"} • uid: ${UID}`;
 
-  const partnerUid = $("lead_partner_uid").value.trim();
-
-  const payload = {
-    address,
-    owner: $("lead_owner").value.trim(),
-    mailing: $("lead_mailing").value.trim(),
-    status: $("lead_status").value || "New",
-    tag: $("lead_tag").value.trim(),
-    notes: $("lead_notes").value.trim(),
-    phones: cleanPhones($("lead_phones").value),
-    createdBy: UID,
-    createdAt: firebase.database.ServerValue.TIMESTAMP
-  };
-
-  if (partnerUid){
-    payload.partners = {};
-    payload.partners[partnerUid] = true;
-  }
-
+  // Role check (expects roles/{uid} = "godmode" or "admin")
   try{
-    if (modalMode === "edit" && editingLeadId){
-      const existingSnap = await firebase.database().ref(`leads/sellers/${editingLeadId}`).once("value");
-      const existing = existingSnap.val() || {};
-      const update = {
-        ...existing,
-        address: payload.address,
-        owner: payload.owner,
-        mailing: payload.mailing,
-        status: payload.status,
-        tag: payload.tag,
-        notes: payload.notes,
-        phones: payload.phones
-      };
-
-      if (partnerUid){
-        update.partners = update.partners || {};
-        update.partners[partnerUid] = true;
-      }
-
-      await firebase.database().ref(`leads/sellers/${editingLeadId}`).set(update);
-
-      leadModalMsg.style.display = "inline-flex";
-      leadModalMsg.textContent = "Saved ✓ Changes applied.";
-      setTimeout(()=>closeLeadModal(), 250);
-    } else {
-      const ref = firebase.database().ref("leads/sellers").push();
-      await ref.set(payload);
-
-      leadModalMsg.style.display = "inline-flex";
-      leadModalMsg.textContent = "Saved ✓ Lead added.";
-
-      $("lead_address").value = "";
-      $("lead_owner").value = "";
-      $("lead_mailing").value = "";
-      $("lead_phones").value = "";
-      $("lead_tag").value = "";
-      $("lead_notes").value = "";
-      $("lead_partner_uid").value = "";
-      $("lead_status").value = "New";
-
-      setTimeout(()=>closeLeadModal(), 250);
-    }
-  }catch(e){
-    console.error("Save lead failed:", e);
-    alert("Save failed. Most common cause: RTDB rules / permission_denied.");
-  }finally{
-    leadModalSave.disabled = false;
-    leadModalSave.textContent = originalLabel;
-  }
-});
-
-/* ================== LEADS SUBSCRIBE ================== */
-const LEADS_PATH = "leads/sellers";
-
-function subscribeLeads(){
-  if (!UID) return;
-
-  if (leadsRef) { try{ leadsRef.off(); }catch(e){} leadsRef = null; }
-
-  sellerList = [];
-  sellerView = [];
-  currentIndex = -1;
-  clearConsole();
-
-  $("status").textContent = "Loading leads…";
-  $("leadCountPill").textContent = "0 leads";
-
-  leadsRef = firebase.database().ref(LEADS_PATH);
-
-  const byId = new Map();
-
-  function rebuild(){
-    sellerList = Array.from(byId.values()).map(normalizeLead);
-    sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
-
-    sellerView = sellerList.slice();
-    applySearch();
-
-    $("status").textContent = `Acq: ${sellerView.length} items`;
-    $("leadCountPill").textContent = `${sellerView.length} leads`;
-  }
-
-  leadsRef.off();
-
-  leadsRef.on("child_added", (snap)=>{
-    const id = snap.key;
-    const v = snap.val();
-    const obj = (v && typeof v === "object") ? v : { value: v };
-    byId.set(id, { id, ...obj });
-    rebuild();
-  }, (err)=>console.warn("leads child_added failed:", err));
-
-  leadsRef.on("child_changed", (snap)=>{
-    const id = snap.key;
-    const v = snap.val();
-    const obj = (v && typeof v === "object") ? v : { value: v };
-    byId.set(id, { id, ...obj });
-    rebuild();
-  }, (err)=>console.warn("leads child_changed failed:", err));
-
-  leadsRef.on("child_removed", (snap)=>{
-    byId.delete(snap.key);
-    rebuild();
-  }, (err)=>console.warn("leads child_removed failed:", err));
-
-  leadsRef.once("value").then((snap)=>{
-    if (!snap.exists()){
-      $("status").textContent = "No leads found in RTDB.";
-      $("leadCountPill").textContent = "0 leads";
-    }
-  }).catch((err)=>{
-    console.warn("Leads read failed:", err);
-    $("status").textContent = "Leads permission denied or path missing.";
-    $("leadCountPill").textContent = "0 leads";
-  });
-}
-
-/* ================== AUTH / ROLE ================== */
-firebase.auth().onAuthStateChanged(async (u)=>{
-  if (!u) return location.href = 'index.html';
-
-  UID = u.uid;
-  ME = u;
-  ME_INITIALS = initialsFromUser(u);
-
-  try { trackPresence(u); } catch(e){}
-
-  try{
-    const roleSnap = await firebase.database().ref('roles/' + UID).once('value');
-    const role = roleSnap.val();
-
-    if (role === 'admin' || role === 'god' || u.email === "dealbankers@gmail.com") {
-      isAdmin = true;
-      try { startRadar(); } catch(e) {}
-    } else {
-      isAdmin = false;
-      try {
-        const currentChatPath = 'direct_messages/' + UID;
-        setupChat(currentChatPath);
-      } catch(e) {}
+    const rs = await db.ref(`roles/${UID}`).once("value");
+    const role = (rs.val() || "").toString().toLowerCase();
+    isAdmin = (role === "godmode" || role === "admin" || role === "owner");
+    if(isAdmin){
+      $("btnGod").style.display = "inline-flex";
+      console.log("God Mode enabled");
+    }else{
+      $("btnGod").style.display = "none";
     }
   }catch(e){
     console.warn("Role check failed:", e);
+    isAdmin = false;
+    $("btnGod").style.display = "none";
   }
 
   subscribeLeads();
 });
-
-/* ================== EVENTS ================== */
-$("btnSettings").onclick = () => location.href = 'settings.html';
-$("logoutBtn").onclick = () => firebase.auth().signOut();
-
-$("s_reload").onclick = applySearch;
-$("s_q").addEventListener("keydown", (e)=>{ if(e.key === "Enter") applySearch(); });
-
-$("prevLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex(Math.max(0, currentIndex-1)); };
-$("nextLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex(Math.min(sellerView.length-1, currentIndex+1)); };
-
-$("phoneSelect").addEventListener("change", ()=>{
-  currentPhone = $("phoneSelect").value || "";
-  updateCallLinkFromSelectedPhone();
-  if (currentLeadId && currentPhone) attachLog(currentLeadId, currentPhone);
-});
-
-$("areaMapLink").onclick = ()=>refreshMap("area");
-$("streetViewLink").onclick = ()=>refreshMap("street");
-
-/* Quick status */
-$("quickGrid").addEventListener("click", async (e)=>{
-  const btn = e.target.closest("button[data-status]");
-  if (!btn) return;
-  if (!currentLeadId || !currentPhone){
-    alert("Select a lead + phone number first.");
-    return;
-  }
-  const status = btn.getAttribute("data-status") || "";
-  try{
-    await writeCallLogEntry({leadId: currentLeadId, phoneKey: currentPhone, type:"status", status, text:""});
-  }catch(err){
-    console.error("Status write failed:", err);
-    alert("Status save failed. (rules) Check DevTools Console.");
-  }
-});
-
-/* Notes save */
-$("noteSaveBtn").onclick = async ()=>{
-  if (!currentLeadId || !currentPhone){
-    alert("Select a lead + phone number first.");
-    return;
-  }
-  const text = $("noteComposer").value.trim();
-  if (!text){
-    $("noteComposer").focus();
-    return;
-  }
-  try{
-    await writeCallLogEntry({leadId: currentLeadId, phoneKey: currentPhone, type:"note", text});
-    $("noteComposer").value = "";
-    $("noteStatus").style.display = "block";
-    setTimeout(()=>$("noteStatus").style.display="none", 900);
-  }catch(err){
-    console.error("Note write failed:", err);
-    alert("Note save failed. (rules) Check DevTools Console.");
-  }
-};
-
-/* Dispo refresh */
-$("dispoRefreshBtn").onclick = () => {
-  const f = $("iframeDispo");
-  try{
-    const src = f.getAttribute("src") || "dispo.html";
-    f.setAttribute("src", src.split("?")[0] + "?t=" + Date.now());
-  }catch(e){}
-};
-
-/* Tabs */
-document.addEventListener('DOMContentLoaded', () => {
-  const tabAcq = $("tabAcq");
-  const tabDispo = $("tabDispo");
-  const panelDispo = $("panel-dispo");
-  const panelAcq = $("panel-acq");
-  const panelConsole = $("panel-console");
-  const panelCalllog = $("panel-calllog");
-  const crumb = $("crumb");
-
-  function showAcq(){
-    tabAcq.classList.add('active');
-    tabDispo.classList.remove('active');
-
-    panelAcq.style.display = 'block';
-    panelConsole.style.display = 'block';
-    panelCalllog.style.display = 'block';
-
-    panelDispo.style.display = 'none';
-    crumb.textContent = 'Acquisition';
-  }
-
-  function showDispo(){
-    tabDispo.classList.add('active');
-    tabAcq.classList.remove('active');
-
-    panelAcq.style.display = 'none';
-    panelConsole.style.display = 'none';
-    panelCalllog.style.display = 'none';
-
-    panelDispo.style.display = 'block';
-    crumb.textContent = 'Disposition';
-  }
-
-  tabAcq.onclick = showAcq;
-  tabDispo.onclick = showDispo;
-
-  showAcq();
-});
-
-/* Chat bubble open/close */
-(function chatPanelWiring(){
-  const bubble = $("chatBubble");
-  const panel = $("sidePanel");
-  const close = $("closePanel");
-  if (!bubble || !panel || !close) return;
-  bubble.onclick = ()=>panel.classList.add("open");
-  close.onclick = ()=>panel.classList.remove("open");
-})();
 </script>
-
 </body>
 </html>
