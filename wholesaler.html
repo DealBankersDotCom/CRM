@@ -926,9 +926,9 @@ function buildMapsEmbed(address, mode){
   const q = encodeURIComponent(address || "");
   if (!q) return "";
   if (mode === "street"){
-    return \`https://www.google.com/maps?q=\${q}&output=embed&layer=c\`;
+    return `https://www.google.com/maps?q=${q}&output=embed&layer=c`;
   }
-  return \`https://www.google.com/maps?q=\${q}&output=embed\`;
+  return `https://www.google.com/maps?q=${q}&output=embed`;
 }
 
 let UID = null;
@@ -999,30 +999,30 @@ function renderQueue(){
   const list = $("leadList");
   list.innerHTML = "";
 
-  $("leadCountPill").textContent = \`\${sellerView.length} leads\`;
+  $("leadCountPill").textContent = `${sellerView.length} leads`;
 
   sellerView.forEach((lead, idx)=>{
     const div = document.createElement("div");
     div.className = "lead-item" + (idx === currentIndex ? " selected" : "");
-    div.innerHTML = \`
-      <div class="addr">\${lead.address ? lead.address : "(no address)"}</div>
+    div.innerHTML = `
+      <div class="addr">${lead.address ? lead.address : "(no address)"}</div>
       <div class="meta">
-        <div>\${lead.owner ? lead.owner : "—"}</div>
-        <div>\${lead.status ? lead.status : "—"}\${lead.tag ? " • " + lead.tag : ""}</div>
-        <div>\${(lead.phones && lead.phones.length) ? lead.phones[0].label : "No phone yet"}</div>
+        <div>${lead.owner ? lead.owner : "—"}</div>
+        <div>${lead.status ? lead.status : "—"}${lead.tag ? " • " + lead.tag : ""}</div>
+        <div>${(lead.phones && lead.phones.length) ? lead.phones[0].label : "No phone yet"}</div>
       </div>
       <div class="badges">
-        <span class="badge \${lead.status === "New" ? "new" : ""}">\${lead.status || "New"}</span>
-        \${lead.tag ? \`<span class="badge working">\${lead.tag}</span>\` : ``}
+        <span class="badge ${lead.status === "New" ? "new" : ""}">${lead.status || "New"}</span>
+        ${lead.tag ? `<span class="badge working">${lead.tag}</span>` : ``}
       </div>
-    \`;
+    `;
     div.addEventListener("click", ()=>selectLeadByIndex(idx));
     list.appendChild(div);
   });
 }
 
 function updatePager(){
-  $("leadPager").textContent = sellerView.length ? \`\${currentIndex+1} / \${sellerView.length}\` : \`0 / 0\`;
+  $("leadPager").textContent = sellerView.length ? `${currentIndex+1} / ${sellerView.length}` : `0 / 0`;
 }
 
 function clearConsole(){
@@ -1068,8 +1068,8 @@ function selectLeadByIndex(idx){
   $("leadAddress").textContent = currentLead.address || "(no address)";
   $("leadOwner").textContent = currentLead.owner || "—";
 
-  const q = encodeURIComponent(\`\${currentLead.owner || ""} \${currentLead.address || ""}\`.trim());
-  $("tpsLink").href = \`https://www.truepeoplesearch.com/results?name=\${q}\`;
+  const q = encodeURIComponent(`${currentLead.owner || ""} ${currentLead.address || ""}`.trim());
+  $("tpsLink").href = `https://www.truepeoplesearch.com/results?name=${q}`;
   $("tpsLink").style.display = "inline";
 
   const sel = $("phoneSelect");
@@ -1138,13 +1138,13 @@ function refreshMap(mode){
 /* ================== CALL LOG ================== */
 function clearCallLogUI(){
   const body = $("panel-calllog").querySelector(".panel-body");
-  body.innerHTML = \`
+  body.innerHTML = `
     <div class="log" id="callLog">
       <div class="log-empty" id="logEmpty">
         No call history for this number.<br><br>
         Select a lead + number, then log a status or add a note.
       </div>
-    </div>\`;
+    </div>`;
   $("logCount").textContent = "0 entries";
 }
 function detachLog(){
@@ -1157,7 +1157,7 @@ function attachLog(leadId, phoneKey){
   detachLog();
   if (!leadId || !phoneKey) return;
 
-  const path = \`call_logs/\${leadId}/\${phoneKey}\`;
+  const path = `call_logs/${leadId}/${phoneKey}`;
   activeLogRef = firebase.database().ref(path);
 
   activeLogRef.on("value", (snap)=>{
@@ -1165,7 +1165,7 @@ function attachLog(leadId, phoneKey){
     const entries = Object.entries(v).map(([id, obj])=>({ id, ...(obj||{}) }))
       .sort((a,b)=>Number(b.ts||0)-Number(a.ts||0));
 
-    $("logCount").textContent = \`\${entries.length} entries\`;
+    $("logCount").textContent = `${entries.length} entries`;
 
     if (!entries.length){
       clearCallLogUI();
@@ -1181,13 +1181,13 @@ function attachLog(leadId, phoneKey){
       const tagLabel = e.type === "status" ? (e.status || "Status") : "Note";
       const div = document.createElement("div");
       div.className = "log-item";
-      div.innerHTML = \`
+      div.innerHTML = `
         <div class="log-top">
-          <div>\${tsToLocal(e.ts || 0)}</div>
-          <div class="log-tag \${tag}">\${tagLabel}</div>
+          <div>${tsToLocal(e.ts || 0)}</div>
+          <div class="log-tag ${tag}">${tagLabel}</div>
         </div>
-        <div class="log-text">\${String(e.text||"").replace(/[<>&"]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[s]))}</div>
-      \`;
+        <div class="log-text">${String(e.text||"").replace(/[<>&"]/g, s=>({"<":"&lt;",">":"&gt;","&":"&amp;",'"':"&quot;"}[s]))}</div>
+      `;
       wrap.appendChild(div);
     });
 
@@ -1202,7 +1202,7 @@ function attachLog(leadId, phoneKey){
 
 async function writeCallLogEntry({leadId, phoneKey, type, status, text}){
   if (!leadId || !phoneKey) return;
-  const base = firebase.database().ref(\`call_logs/\${leadId}/\${phoneKey}\`);
+  const base = firebase.database().ref(`call_logs/${leadId}/${phoneKey}`);
   const ref = base.push();
   const payload = {
     type: type || "note",
@@ -1294,7 +1294,6 @@ function openEditLeadModal(lead){
   $("lead_notes").value = lead.notes || "";
   $("lead_partner_uid").value = ""; // don't overwrite partners on edit
 
-  // Convert phone objects to lines
   const ph = Array.isArray(lead.phones) ? lead.phones : [];
   $("lead_phones").value = ph.map(p=>p.label || "").filter(Boolean).join("\n");
 
@@ -1376,7 +1375,6 @@ leadModalSave.addEventListener("click", async ()=>{
 
   try{
     if (modalMode === "edit" && editingLeadId){
-      // Preserve createdBy/createdAt if lead exists
       const existingSnap = await firebase.database().ref(`leads/sellers/${editingLeadId}`).once("value");
       const existing = existingSnap.val() || {};
       const update = {
@@ -1390,7 +1388,6 @@ leadModalSave.addEventListener("click", async ()=>{
         phones: payload.phones
       };
 
-      // Optional partner add-on (doesn't overwrite existing partners)
       if (partnerUid){
         update.partners = update.partners || {};
         update.partners[partnerUid] = true;
