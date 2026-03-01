@@ -1,4 +1,4 @@
-<!-- wholesaler.html (FULL DROP-IN • ASSIGNMENT + FIXED SAVE + MOBILE CLICK-TO-CALL + SUPPORT BLUE/RED + AUTO emailIndex/userDirectory) -->
+<!-- wholesaler.html (FULL DROP-IN • GOD SEES ALL • ASSIGN BY EMAIL/@USERNAME • LEGACY IMPORT • PRESENCE FIX) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -130,6 +130,7 @@ body{
 .badge.hot{border-color:rgba(255,42,42,.65); color:#ffd0d0}
 .badge.dnc{border-color:rgba(255,85,85,.65); color:#ffd0d0}
 .badge.done{border-color:rgba(0,255,106,.45); color:#c9ffe2}
+.badge.legacy{border-color:rgba(255,210,77,.65); color:#ffe3b3}
 
 /* Console head area */
 .lead-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
@@ -328,24 +329,6 @@ body{
   background:rgba(0,0,0,.22);color:#cfe3ff;font-size:12px;display:none;
 }
 .kbd{font-size:11px;opacity:.9;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:2px 6px;background:rgba(0,0,0,.22)}
-
-/* Admin assignment picker */
-.assignShell{border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(0,0,0,.16);padding:10px}
-.assignTop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
-.assignList{max-height:170px;overflow:auto;padding-right:6px;display:flex;flex-direction:column;gap:8px}
-.assignRow{
-  display:flex;align-items:center;justify-content:space-between;gap:10px;
-  padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);
-}
-.assignRow:hover{border-color:rgba(43,116,255,.35);background:rgba(255,255,255,.07)}
-.assignLeft{display:flex;gap:10px;align-items:center;min-width:0}
-.assignAvatar{
-  width:30px;height:30px;border-radius:999px;background:rgba(43,116,255,.18);
-  border:1px solid rgba(43,116,255,.45);display:flex;align-items:center;justify-content:center;font-weight:900
-}
-.assignName{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
-.assignEmail{font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
-.assignChk{transform:scale(1.15)}
 </style>
 </head>
 
@@ -381,7 +364,7 @@ body{
     </div>
 
     <div class="body">
-      <!-- LEFT: LEAD QUEUE -->
+      <!-- ================= LEFT: LEAD QUEUE ================= -->
       <div id="panel-acq" class="panel">
         <div class="panel-head">
           <div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div>
@@ -395,6 +378,7 @@ body{
 
           <div class="row wrap">
             <button class="chip primary" id="btnNewLead" type="button">＋ New Lead</button>
+            <button class="chip" id="btnImportLegacy" type="button" style="display:none;">⬇ Import Legacy → Master</button>
             <span class="pill" id="queueMeta">—</span>
           </div>
 
@@ -402,7 +386,7 @@ body{
         </div>
       </div>
 
-      <!-- CENTER: CONSOLE -->
+      <!-- ================= CENTER: CONSOLE ================= -->
       <div class="panel col-center" id="panel-console">
         <div class="panel-head">
           <div class="panel-title">⌁ Console</div>
@@ -496,7 +480,7 @@ body{
         </div>
       </div>
 
-      <!-- RIGHT: CALL LOG TERMINAL -->
+      <!-- ================= RIGHT: CALL LOG TERMINAL ================= -->
       <div class="panel col-right" id="panel-calllog">
         <div class="panel-head">
           <div class="panel-title">⌁ Team Call Log</div>
@@ -512,7 +496,7 @@ body{
         </div>
       </div>
 
-      <!-- DISPO -->
+      <!-- ================= DISPO ================= -->
       <div id="panel-dispo">
         <div class="dispo-shell">
           <div class="dispo-topbar">
@@ -618,31 +602,11 @@ body{
 
         <!-- Admin assignment -->
         <div style="grid-column:1/-1">
-          <div class="lbl">Assign To (Admin)</div>
-
-          <div class="assignShell">
-            <div class="assignTop">
-              <input id="assignSearch" class="input" placeholder="Search users (name/email)..." style="flex:1;min-width:220px" />
-              <button id="assignSelectMe" class="btn" type="button" title="Select yourself">Assign to Me</button>
-              <button id="assignClear" class="btn" type="button">Clear</button>
-              <span class="pill" id="assignHintPill">Admin only</span>
-            </div>
-
-            <div id="assignList" class="assignList">
-              <div class="log-empty" style="padding:18px 12px;">(Admin) Loading user directory…</div>
-            </div>
-
-            <div class="help">
-              This picker writes to <span class="kbd">leadsByUser/&lt;uid&gt;/sellers/&lt;leadId&gt;</span> for each selected user.<br>
-              It also writes master to <span class="kbd">leadsMaster/sellers/&lt;leadId&gt;</span> and stores <span class="kbd">assignedTo</span> in master.
-            </div>
-
-            <!-- kept for manual fallback -->
-            <div style="margin-top:10px">
-              <div class="lbl" style="margin-bottom:6px">Manual override (emails, comma-separated)</div>
-              <input id="m_assign" class="input" placeholder="micah@email.com, mitzi@email.com, ajay@email.com" />
-              <div class="help">If you type emails here, we resolve via <span class="kbd">emailIndex</span>. Picker is preferred.</div>
-            </div>
+          <div class="lbl">Assign To (emails or @usernames, comma-separated) <span class="pill" id="assignHintPill">Admin only</span></div>
+          <input id="m_assign" class="input" placeholder="aptbidsonline@gmail.com, @micah, @mitzi, ajay@email.com" />
+          <div class="help">
+            - Admin/God saves to <span class="kbd">leadsMaster/sellers</span> and pushes copies to <span class="kbd">leadsByUser/&lt;uid&gt;/sellers</span>.<br>
+            - Recipient resolution uses <span class="kbd">userDirectory</span> (email OR username), not UID input.
           </div>
         </div>
 
@@ -678,23 +642,10 @@ Neighbor | +1 210 555 9999"></textarea>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
 
-<!-- Your existing order -->
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 
 <script>
-/* =========================================================
-   DealBankers • Wholesaler Portal
-   FIXES INCLUDED:
-   ✅ Auto-upsert userDirectory/<uid> on login
-   ✅ Auto-ensure emailIndex/<safeEmailKey> = uid on login
-   ✅ Admin assignment via userDirectory picker (multi-assign)
-   ✅ Manual assignment by email still supported via emailIndex
-   ✅ leadsMaster locked to admin only (rules expect this)
-   ✅ leadsByUser feeds the queue (assigned leads)
-   ✅ Mobile click-to-call uses location.href for tel:/sms:
-   ========================================================= */
-
 (function ensureFirebaseInit(){
   try{
     if (!firebase.apps || !firebase.apps.length) {
@@ -713,30 +664,25 @@ const $ = (id) => document.getElementById(id);
 function esc(s){ return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c] || c)); }
 function fmtPhoneKey(p){ return String(p || "").trim().replace(/[^\d+]/g,"") || "unknown"; }
 function tsToLocal(ts){ try{ const d = new Date(ts); return isNaN(d.getTime()) ? "" : d.toLocaleString(); }catch(e){ return ""; } }
-function safeEmailKey(email){
-  return String(email||"").trim().toLowerCase().replace(/\./g, ",");
-}
 function initialsFromUser(u){
   const base = (u && (u.displayName || u.email)) ? (u.displayName || u.email) : "";
   const parts = String(base).split(/[\s._-]+/).filter(Boolean);
   const ini = parts.map(p => p[0]?.toUpperCase() || "").join("").slice(0,2);
   return ini || "U";
 }
-function isAdminRoleVal(v){
-  return (v === "admin" || v === "god");
+function usernameFromEmail(email){
+  const e = String(email||"").toLowerCase().trim();
+  const local = e.split("@")[0] || "";
+  return local.replace(/[^a-z0-9_]/g,"").slice(0,24) || "user";
 }
 
-const STREETVIEW_ON_LOAD = false;
-
-// DATA MODEL PATHS
 const LEADS_MASTER_PATH = "leadsMaster";      // leadsMaster/sellers/<leadId>
 const LEADS_BY_USER_PATH = "leadsByUser";     // leadsByUser/<uid>/sellers/<leadId>
-const USER_DIR_PATH = "userDirectory";        // userDirectory/<uid> {email,name,role}
-const EMAIL_INDEX_PATH = "emailIndex";        // emailIndex/<safeEmailKey> = uid
+const USER_DIR_PATH = "userDirectory";        // userDirectory/<uid>
+const LEGACY_LEADS_PATH = "leads";            // leads/sellers/<leadId>
 
-// Existing paths we keep
 const ROLES_PATH = "roles";
-const PRESENCE_PATH = "presence";
+const PRESENCE_PATH = "presence/global";      // ✅ MATCHES YOUR DB + FIXES PERMISSION_DENIED
 const DMS_PATH = "direct_messages";
 const TEAM_CALLLOG_PATH = "team_call_log";
 const SUPPORT_REQUESTS_PATH = "supportRequests";
@@ -750,9 +696,6 @@ let UID = null;
 let ME = null;
 let isAdmin = false;
 
-let currentChatPath = null;
-let activeChatRef = null;
-
 let sellerList = [];
 let sellerView = [];
 let currentIndex = -1;
@@ -763,9 +706,7 @@ let currentLeadId = "";
 let activeLogRef = null;
 
 let mapMode = "area";
-
-// dial line
-let dialLine = localStorage.getItem("db_dial_line") || "blue"; // blue|red
+let dialLine = localStorage.getItem("db_dial_line") || "blue";
 
 function setDialLine(line){
   dialLine = (line === "red") ? "red" : "blue";
@@ -784,7 +725,6 @@ function modalToast(msg, good){
   el.textContent = msg || "";
   el.style.borderColor = good ? "rgba(0,255,106,.35)" : "rgba(255,85,85,.45)";
 }
-
 function toast(msg){
   const el = $("noteStatus");
   el.textContent = msg;
@@ -802,19 +742,6 @@ function normalizePhones(lead){
       if (!p) return;
       if (typeof p === "string") out.push({label:"Phone", phone:p});
       else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});
-    });
-  }
-  if (Array.isArray(lead?.phoneNumbers)) {
-    lead.phoneNumbers.forEach(p=>{
-      if (!p) return;
-      if (typeof p === "string") out.push({label:"Phone", phone:p});
-      else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});
-    });
-  }
-  if (Array.isArray(lead?.pocs)) {
-    lead.pocs.forEach(p=>{
-      if (!p) return;
-      out.push({label:(p.name||p.label||"POC"), phone:(p.phone||p.number||"")});
     });
   }
   const singles = [
@@ -846,11 +773,12 @@ function leadStatus(lead){
   if (up.includes("new")) return "New";
   return s;
 }
-function badgeHTML(status){
+function badgeHTML(status, legacy){
   const s = (status||"New");
   const cls = (s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new";
   const label = (s==="DNC") ? "DNC" : s;
-  return `<span class="badge ${cls}">${esc(label)}</span>`;
+  const legacyTag = legacy ? `<span class="badge legacy">LEGACY</span>` : "";
+  return `<span class="badge ${cls}">${esc(label)}</span>${legacyTag}`;
 }
 function buildTPSLink(lead){
   const owner = (lead?.owner || lead?.Owner || lead?.name || "").toString().trim();
@@ -860,60 +788,64 @@ function buildTPSLink(lead){
   return "https://www.truepeoplesearch.com/results?name=" + q;
 }
 
-/* ---------------------------
-   AUTO-BOOTSTRAP DIRECTORY + EMAIL INDEX
-   This is the key fix: assignments won't work until emailIndex exists.
-   Rules below allow user to create their own emailIndex ONLY if it's missing.
---------------------------- */
-async function ensureUserDirectoryAndIndex(u, roleGuess){
-  if (!u) return;
-  const uid = u.uid;
-  const email = (u.email || "").toLowerCase().trim();
-  const name = (u.displayName || u.email || "User").trim();
-  const now = Date.now();
+/* --------- USER DIRECTORY CACHE (EMAIL/@USERNAME -> UID) ---------- */
+let userDirCache = { byEmail:{}, byUser:{}, byUid:{} };
 
-  // 1) upsert userDirectory/<uid> (users can write their own record per rules)
+async function loadUserDirectoryCache(){
   try{
-    const dirRef = firebase.database().ref(`${USER_DIR_PATH}/${uid}`);
-    await dirRef.update({
-      uid,
-      email,
-      name,
-      initials: initialsFromUser(u),
-      role: roleGuess || "user",
-      updatedAt: now
+    const snap = await firebase.database().ref(USER_DIR_PATH).once("value");
+    const v = snap.val() || {};
+    const byEmail = {};
+    const byUser = {};
+    const byUid = {};
+    Object.keys(v).forEach(uid=>{
+      const row = v[uid] || {};
+      const email = String(row.email||"").toLowerCase().trim();
+      const uname = String(row.username||row.userName||"").toLowerCase().trim();
+      if (email) byEmail[email] = uid;
+      if (uname) byUser[uname] = uid;
+      byUid[uid] = row;
     });
+    userDirCache = { byEmail, byUser, byUid };
   }catch(e){
-    console.warn("userDirectory upsert failed:", e?.message || e);
-  }
-
-  // 2) ensure emailIndex/<safeEmailKey(email)> = uid (create-if-missing)
-  // rules allow:
-  // - admin/god can write always
-  // - normal user can only write if data doesn't exist AND newData == auth.uid
-  try{
-    if (email){
-      const key = safeEmailKey(email);
-      const idxRef = firebase.database().ref(`${EMAIL_INDEX_PATH}/${key}`);
-      const snap = await idxRef.once("value");
-      if (!snap.exists()){
-        await idxRef.set(uid);
-      } else {
-        // if it exists but wrong, only admin can fix; normal user won't overwrite
-        const v = snap.val();
-        if (v !== uid){
-          console.warn("emailIndex exists but points elsewhere. Admin must fix:", email, v, "!= ", uid);
-        }
-      }
-    }
-  }catch(e){
-    console.warn("emailIndex ensure failed:", e?.message || e);
+    console.warn("loadUserDirectoryCache failed", e);
   }
 }
 
-/* ---------------------------
-   Queue rendering
---------------------------- */
+function parseAssigneeTokens(){
+  return ($("m_assign").value || "")
+    .split(",")
+    .map(x=>x.trim())
+    .filter(Boolean);
+}
+
+function resolveAssigneesToUids(tokens){
+  const uids = [];
+  const missing = [];
+  tokens.forEach(t=>{
+    const raw = String(t||"").trim();
+    if (!raw) return;
+
+    // @username
+    if (raw.startsWith("@")){
+      const uname = raw.slice(1).toLowerCase().trim();
+      const uid = userDirCache.byUser[uname];
+      if (uid) uids.push(uid); else missing.push(raw);
+      return;
+    }
+
+    // email
+    const email = raw.toLowerCase();
+    const uid = userDirCache.byEmail[email];
+    if (uid) uids.push(uid);
+    else missing.push(raw);
+  });
+
+  // de-dupe
+  return { uids: Array.from(new Set(uids)), missing };
+}
+
+/* --------------------------- Queue rendering --------------------------- */
 function applySearch(){
   const q = ($("s_q").value || "").toLowerCase().trim();
   if (!q){
@@ -927,9 +859,10 @@ function applySearch(){
       return (a.includes(q) || o.includes(q) || n.includes(q) || p.includes(q));
     });
   }
+  // hide archived from queue
   sellerView = sellerView.filter(l => !l.archived);
-  renderQueue();
 
+  renderQueue();
   if (sellerView.length){
     if (currentLeadId){
       const idx = sellerView.findIndex(x => leadIdFor(x) === currentLeadId);
@@ -976,7 +909,7 @@ function renderQueue(){
       <div class="addr">${esc(addr)}</div>
       ${meta}
       <div class="badges">
-        ${badgeHTML(st)}
+        ${badgeHTML(st, !!lead.__legacy)}
         <span class="badge">${esc(id || "no-id")}</span>
       </div>`;
     div.onclick = ()=>selectLeadByIndex(idx);
@@ -993,9 +926,7 @@ function updatePager(){
   $("leadPager").textContent = `${current} / ${total}`;
 }
 
-/* ---------------------------
-   Console rendering
---------------------------- */
+/* --------------------------- Console rendering --------------------------- */
 function setMapVisibility(on){
   $("mapHead").style.display = on ? "" : "none";
   $("mapWrap").style.display = on ? "" : "none";
@@ -1104,16 +1035,13 @@ $("phoneSelect").addEventListener("change", onPhoneChanged);
 $("prevLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex((currentIndex<=0)?0:currentIndex-1); };
 $("nextLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex((currentIndex>=sellerView.length-1)?sellerView.length-1:currentIndex+1); };
 
-/* ---------------------------
-   Click-to-call (mobile-safe)
---------------------------- */
+/* --------------------------- Click-to-call --------------------------- */
 function callHrefFor(phone){
   const raw = (phone || "").toString().trim();
   if (!raw) return "";
   const prefix = (dialLine === "red") ? CALL_PREFIX_RED : CALL_PREFIX_BLUE;
 
   if (prefix.startsWith("tel:") || prefix.startsWith("sms:")) return prefix + raw;
-
   const encoded = encodeURIComponent(raw.replace(/[^\d+]/g,""));
   return prefix + encoded;
 }
@@ -1148,9 +1076,7 @@ $("copyBtn").addEventListener("click", async ()=>{
   }
 });
 
-/* ---------------------------
-   TEAM CALL LOG (GLOBAL BY PHONE)
---------------------------- */
+/* --------------------------- TEAM CALL LOG --------------------------- */
 function callLogRefForPhoneKey(phoneKey){
   return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);
 }
@@ -1260,23 +1186,6 @@ async function pushLogEntry(phoneKey, entry){
 async function logStatus(status){
   const phoneKey = fmtPhoneKey(currentPhone);
   if (!currentPhone || phoneKey === "unknown") return;
-
-  // update local assigned lead status if possible (user's assigned copy)
-  try{
-    if (currentLeadId){
-      const next =
-        status.includes("Do Not Call") ? "DNC" :
-        status.includes("Hot") ? "Hot" :
-        status.includes("Spoke") ? "Working" :
-        status.includes("Follow-Up") ? "Working" :
-        "Working";
-      const cur = leadStatus(currentLead);
-      if (cur !== "Done"){
-        await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${currentLeadId}/status`).set(next);
-      }
-    }
-  }catch(e){}
-
   await pushLogEntry(phoneKey, { type:"status", status });
   toast("Logged ✓");
 }
@@ -1294,9 +1203,7 @@ $("noteSaveBtn").addEventListener("click", async ()=>{
   toast("Saved ✓");
 });
 
-/* ---------------------------
-   Maps (simple embed)
---------------------------- */
+/* --------------------------- Maps --------------------------- */
 function getMapsKey(){ return String((window.MAPS_EMBED_KEY || window.MAPS_JS_KEY || "")).trim(); }
 function buildMap(address){
   const key = getMapsKey();
@@ -1314,178 +1221,131 @@ function buildMap(address){
 $("areaMapLink").onclick = ()=>{ mapMode="area"; if (currentLead) buildMap(currentLead.address || currentLead.Address || ""); };
 $("streetViewLink").onclick = ()=>{ mapMode="street"; if (currentLead) buildMap(currentLead.address || currentLead.Address || ""); };
 
-/* ---------------------------
-   Leads subscription (ASSIGNED LEADS)
---------------------------- */
+/* --------------------------- Leads subscription --------------------------- */
 let leadsRef = null;
+let legacyRef = null;
 
-function subscribeAssignedLeads(){
-  if (!UID) return;
+function detachLeadRefs(){
+  if (leadsRef){ try{ leadsRef.off(); }catch(e){} leadsRef=null; }
+  if (legacyRef){ try{ legacyRef.off(); }catch(e){} legacyRef=null; }
+}
 
-  if (leadsRef) { try{ leadsRef.off(); }catch(e){} leadsRef = null; }
-
-  sellerList = [];
-  sellerView = [];
-  currentIndex = -1;
-  currentLead = null;
-  currentLeadId = "";
-
-  $("status").textContent = "Loading assigned leads…";
-  $("leadCountPill").textContent = "0 leads";
-
-  leadsRef = firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`);
-  const byId = new Map();
-
-  function rebuild(){
-    const keepId = currentLeadId || (currentLead ? leadIdFor(currentLead) : "");
-    sellerList = Array.from(byId.values());
-    sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
-    applySearch();
-
-    if (sellerView.length){
-      if (keepId){
-        const idx = sellerView.findIndex(x => leadIdFor(x) === keepId);
-        if (idx >= 0) { selectLeadByIndex(idx); return; }
-      }
-      if (currentIndex >= 0 && currentIndex < sellerView.length) selectLeadByIndex(currentIndex);
-      else selectLeadByIndex(0);
-    } else {
-      clearConsole();
-      updatePager();
+function setListFromMap(byId){
+  sellerList = Array.from(byId.values());
+  sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
+  applySearch();
+  if (sellerView.length){
+    if (currentLeadId){
+      const idx = sellerView.findIndex(x => leadIdFor(x) === currentLeadId);
+      if (idx >= 0) return selectLeadByIndex(idx);
     }
-
-    $("status").textContent = `Acq: ${sellerView.length} items`;
-    $("leadCountPill").textContent = `${sellerView.length} leads`;
+    selectLeadByIndex(Math.min(Math.max(currentIndex,0), sellerView.length-1));
+  } else {
+    clearConsole();
+    updatePager();
   }
+}
 
-  leadsRef.off();
+function subscribeUserAssignedLeads(){
+  detachLeadRefs();
+  $("status").textContent = "Loading assigned leads…";
+
+  const byId = new Map();
+  leadsRef = firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`);
 
   leadsRef.on("child_added", snap=>{
     const id = snap.key;
-    const v = snap.val();
-    const obj = (v && typeof v === "object") ? v : { value: v };
-    byId.set(id, { id, ...obj });
-    rebuild();
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v });
+    setListFromMap(byId);
+    $("status").textContent = `Acq (Assigned): ${byId.size} items`;
   });
   leadsRef.on("child_changed", snap=>{
     const id = snap.key;
-    const v = snap.val();
-    const obj = (v && typeof v === "object") ? v : { value: v };
-    byId.set(id, { id, ...obj });
-    rebuild();
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v });
+    setListFromMap(byId);
   });
   leadsRef.on("child_removed", snap=>{
     byId.delete(snap.key);
-    rebuild();
+    setListFromMap(byId);
   });
 
   leadsRef.once("value").then(snap=>{
     if (!snap.exists()){
-      sellerList = [];
-      sellerView = [];
-      renderQueue();
-      clearConsole();
-      updatePager();
+      sellerList=[]; sellerView=[];
+      renderQueue(); clearConsole(); updatePager();
       $("status").textContent = "No leads assigned yet.";
-      $("leadCountPill").textContent = "0 leads";
     }
   }).catch(err=>{
-    console.warn("Assigned leads read failed:", err);
-    sellerList = [];
-    sellerView = [];
-    renderQueue();
-    clearConsole();
-    updatePager();
+    console.warn("assigned leads read failed", err);
+    sellerList=[]; sellerView=[];
+    renderQueue(); clearConsole(); updatePager();
     $("status").textContent = "Leads permission denied or path missing.";
-    $("leadCountPill").textContent = "0 leads";
   });
+}
+
+function subscribeAdminAllLeads(){
+  detachLeadRefs();
+  $("status").textContent = "Loading ALL leads (Master + Legacy)…";
+
+  const byId = new Map();
+
+  // 1) Master
+  leadsRef = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
+  leadsRef.on("child_added", snap=>{
+    const id = snap.key;
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v, __legacy:false });
+    setListFromMap(byId);
+    $("status").textContent = `Acq (ALL): ${byId.size} items`;
+  });
+  leadsRef.on("child_changed", snap=>{
+    const id = snap.key;
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v, __legacy:false });
+    setListFromMap(byId);
+  });
+  leadsRef.on("child_removed", snap=>{
+    byId.delete(snap.key);
+    setListFromMap(byId);
+  });
+
+  // 2) Legacy (always also show, so you immediately see old leads)
+  legacyRef = firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`);
+  legacyRef.on("child_added", snap=>{
+    const id = snap.key;
+    if (byId.has(id)) return; // if migrated, master wins
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v, __legacy:true });
+    setListFromMap(byId);
+    $("status").textContent = `Acq (ALL): ${byId.size} items`;
+  });
+  legacyRef.on("child_changed", snap=>{
+    const id = snap.key;
+    if (byId.has(id) && byId.get(id).__legacy === false) return;
+    const v = snap.val() || {};
+    byId.set(id, { id, ...v, __legacy:true });
+    setListFromMap(byId);
+  });
+  legacyRef.on("child_removed", snap=>{
+    if (byId.has(snap.key) && byId.get(snap.key).__legacy){
+      byId.delete(snap.key);
+      setListFromMap(byId);
+    }
+  });
+
+  // show import button for admin
+  $("btnImportLegacy").style.display = "";
 }
 
 $("s_reload").onclick = applySearch;
 $("s_q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") applySearch(); });
 
-/* ---------------------------
-   CRM Modal: New/Edit/Delete + Admin assignment
---------------------------- */
+/* --------------------------- CRM Modal --------------------------- */
 const leadModal = $("leadModal");
-let modalMode = "new";  // new|edit
+let modalMode = "new";
 let modalLeadId = null;
-
-/* Admin directory cache + selection */
-let directoryCache = [];            // [{uid,email,name,initials,role}]
-let selectedAssignees = new Set();  // uids
-
-function setAssignControlsEnabled(on){
-  $("assignSearch").disabled = !on;
-  $("assignSelectMe").disabled = !on;
-  $("assignClear").disabled = !on;
-  $("m_assign").disabled = !on; // manual field
-}
-function renderAssigneePicker(){
-  const list = $("assignList");
-  if (!isAdmin){
-    list.innerHTML = `<div class="log-empty" style="padding:18px 12px;">(Not admin) Assignment disabled.</div>`;
-    setAssignControlsEnabled(false);
-    return;
-  }
-  setAssignControlsEnabled(true);
-
-  const q = ($("assignSearch").value || "").trim().toLowerCase();
-  const filtered = directoryCache.filter(u=>{
-    const t = `${u.name||""} ${u.email||""}`.toLowerCase();
-    return !q || t.includes(q);
-  });
-
-  if (!filtered.length){
-    list.innerHTML = `<div class="log-empty" style="padding:18px 12px;">No users match.</div>`;
-    return;
-  }
-
-  list.innerHTML = "";
-  filtered.forEach(u=>{
-    const row = document.createElement("div");
-    row.className = "assignRow";
-    row.innerHTML = `
-      <div class="assignLeft">
-        <div class="assignAvatar">${esc((u.initials||"U").slice(0,2))}</div>
-        <div style="min-width:0">
-          <div class="assignName">${esc(u.name || u.email || u.uid)}</div>
-          <div class="assignEmail">${esc(u.email || "")}</div>
-        </div>
-      </div>
-      <input class="assignChk" type="checkbox" ${selectedAssignees.has(u.uid) ? "checked":""} />
-    `;
-    const chk = row.querySelector("input.assignChk");
-    row.onclick = (e)=>{
-      if (e.target === chk) return;
-      chk.checked = !chk.checked;
-      chk.dispatchEvent(new Event("change"));
-    };
-    chk.onchange = ()=>{
-      if (chk.checked) selectedAssignees.add(u.uid);
-      else selectedAssignees.delete(u.uid);
-    };
-    list.appendChild(row);
-  });
-}
-async function loadDirectoryOnce(){
-  if (!isAdmin) return;
-  try{
-    const snap = await firebase.database().ref(USER_DIR_PATH).once("value");
-    const v = snap.val() || {};
-    directoryCache = Object.keys(v).map(uid=>({ uid, ...(v[uid]||{}) }));
-    directoryCache.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
-  }catch(e){
-    console.warn("userDirectory read failed:", e);
-    directoryCache = [];
-  } finally {
-    renderAssigneePicker();
-  }
-}
-
-$("assignSearch").addEventListener("input", ()=> renderAssigneePicker());
-$("assignClear").onclick = ()=>{ selectedAssignees.clear(); renderAssigneePicker(); };
-$("assignSelectMe").onclick = ()=>{ if (UID) selectedAssignees.add(UID); renderAssigneePicker(); };
 
 function openLeadModal(mode){
   modalMode = mode;
@@ -1496,19 +1356,10 @@ function openLeadModal(mode){
   $("leadModalTitle").textContent = isEdit ? "Lead Editor (Edit)" : "Lead Editor (New)";
   $("m_delete").style.display = (isAdmin && isEdit) ? "" : "none";
   $("assignHintPill").textContent = isAdmin ? "Admin mode" : "Not admin";
-
-  // reset selection each time
-  selectedAssignees.clear();
-  $("assignSearch").value = "";
-  $("m_assign").value = "";
-
-  // preselect "me" by default for admin (prevents “saved but I can’t see it”)
-  if (isAdmin && UID) selectedAssignees.add(UID);
+  $("m_assign").disabled = !isAdmin;
 
   leadModal.classList.add("show");
   leadModal.setAttribute("aria-hidden","false");
-
-  if (isAdmin) loadDirectoryOnce();
 
   if (isEdit && currentLead){
     modalLeadId = currentLeadId;
@@ -1522,6 +1373,8 @@ function openLeadModal(mode){
     const phones = normalizePhones(currentLead);
     $("m_phones").value = phones.map(p=>`${p.label} | ${p.phone}`).join("\n");
     $("m_notes").value = (currentLead.notes || currentLead.Notes || "");
+
+    $("m_assign").value = "";
   } else {
     modalLeadId = null;
     $("m_address").value = "";
@@ -1532,9 +1385,8 @@ function openLeadModal(mode){
     $("m_source").value = "";
     $("m_phones").value = "";
     $("m_notes").value = "";
+    $("m_assign").value = "";
   }
-
-  renderAssigneePicker();
 }
 
 function closeLeadModal(){
@@ -1572,47 +1424,16 @@ function parsePhonesFromModal(){
   return out;
 }
 
-async function resolveAssigneeEmailsToUids(emails){
-  const cleaned = emails
-    .map(e=>String(e||"").trim().toLowerCase())
-    .filter(Boolean);
-
-  const uids = [];
-  const missing = [];
-
-  for (const em of cleaned){
-    try{
-      const key = safeEmailKey(em);
-      const snap = await firebase.database().ref(`${EMAIL_INDEX_PATH}/${key}`).once("value");
-      const uid = snap.val();
-      if (uid) uids.push(uid);
-      else missing.push(em);
-    }catch(e){
-      missing.push(em);
-    }
-  }
-  return { uids: Array.from(new Set(uids)), missing };
-}
-
-function parseAssignEmails(){
-  return ($("m_assign").value || "")
-    .split(",")
-    .map(x=>x.trim())
-    .filter(Boolean);
-}
-
 async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
-  // master write (admin only by rules)
   const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`);
   await masterRef.update({
     ...payload,
     id: leadId,
     assignedTo: assigneeUids.reduce((acc, uid)=>{ acc[uid]=true; return acc; }, {}),
     updatedAt: Date.now(),
-    updatedBy: (ME?.email || ""),
+    updatedBy: (ME?.email || "")
   });
 
-  // copy to each user in one multi-location update
   const updates = {};
   assigneeUids.forEach(uid=>{
     updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`] = {
@@ -1644,40 +1465,24 @@ async function saveLeadFromModal(){
     return;
   }
 
-  const payload = {
-    address, owner, mailing, status, notes, phones, type, source,
-    updatedAt: Date.now(),
-    updatedBy: (ME?.email || ""),
-  };
+  const payload = { address, owner, mailing, status, notes, phones, type, source };
 
   $("m_save").disabled = true;
   modalToast("Saving…", true);
 
   try{
     if (isAdmin){
-      // Preferred: picker selection
-      let assigneeUids = Array.from(selectedAssignees);
+      await loadUserDirectoryCache(); // ensure freshest
 
-      // If picker empty, try manual emails
-      const manualEmails = parseAssignEmails();
-      const missing = [];
+      const tokens = parseAssigneeTokens();
+      // default: assign to self so you always see it + it always lands somewhere
+      const defaultEmail = (ME?.email || "").toLowerCase();
+      const chosen = tokens.length ? tokens : [defaultEmail];
 
-      if (!assigneeUids.length){
-        const chosenEmails = manualEmails.length ? manualEmails : [ (ME?.email || "") ].filter(Boolean);
-        const res = await resolveAssigneeEmailsToUids(chosenEmails);
-        assigneeUids = res.uids;
-        missing.push(...res.missing);
-      } else {
-        // if manual emails provided too, merge them in (optional)
-        if (manualEmails.length){
-          const res = await resolveAssigneeEmailsToUids(manualEmails);
-          assigneeUids = Array.from(new Set([...assigneeUids, ...res.uids]));
-          missing.push(...res.missing);
-        }
-      }
+      const { uids, missing } = resolveAssigneesToUids(chosen);
 
-      if (!assigneeUids.length){
-        modalToast("No assignees resolved. Ensure users have logged in at least once (auto creates emailIndex/userDirectory).", false);
+      if (!uids.length){
+        modalToast("No assignees resolved. Ensure recipients have logged in once (userDirectory).", false);
         $("m_save").disabled = false;
         return;
       }
@@ -1687,34 +1492,27 @@ async function saveLeadFromModal(){
         leadId = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).push().key;
       }
 
-      payload.createdAt = payload.createdAt || Date.now();
-      payload.createdBy = payload.createdBy || (ME?.email || "");
+      await upsertLeadMasterAndAssignments(leadId, {
+        ...payload,
+        createdAt: Date.now(),
+        createdBy: (ME?.email || "")
+      }, uids);
 
-      await upsertLeadMasterAndAssignments(leadId, payload, assigneeUids);
-
-      if (missing.length){
-        modalToast(`Saved ✓  (Missing emailIndex for: ${missing.join(", ")})`, true);
-      } else {
-        modalToast("Saved ✓", true);
-      }
-
+      modalToast(missing.length ? `Saved ✓ (Missing: ${missing.join(", ")})` : "Saved ✓", true);
       closeLeadModal();
       return;
     }
 
-    // Normal user: update ONLY if already assigned (rules enforce data.exists)
-    const leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : null;
-    if (!leadId){
-      modalToast("Users can't create new leads here. Ask admin to assign.", false);
-      return;
-    }
-    const ref = firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`);
-    await ref.update({
+    // normal user edit only their assigned copy
+    const leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`).push().key;
+    await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`).update({
       ...payload,
       id: leadId,
       archived: false,
       updatedAt: Date.now(),
       updatedBy: (ME?.email || ""),
+      createdAt: Date.now(),
+      createdBy: (ME?.email || "")
     });
 
     modalToast("Saved ✓", true);
@@ -1758,7 +1556,12 @@ $("m_delete").onclick = ()=> deleteLeadAdmin(modalLeadId);
 async function archiveLeadForMe(){
   if (!currentLeadId) return;
   try{
-    await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${currentLeadId}/archived`).set(true);
+    if (isAdmin){
+      // admin "archive for me" means: archive their own assigned copy (if they have one)
+      await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${currentLeadId}/archived`).set(true);
+    } else {
+      await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${currentLeadId}/archived`).set(true);
+    }
     toast("Archived ✓");
   }catch(e){
     toast("Archive failed");
@@ -1769,9 +1572,51 @@ $("btnNewLead").onclick = ()=> openLeadModal("new");
 $("btnEditLead").onclick = ()=>{ if(currentLead) openLeadModal("edit"); };
 $("btnArchiveLead").onclick = ()=>{ if(currentLeadId) archiveLeadForMe(); };
 
-/* ---------------------------
-   Dispo refresh + tabs
---------------------------- */
+/* --------- ADMIN: IMPORT LEGACY -> MASTER --------- */
+$("btnImportLegacy").onclick = async ()=>{
+  if (!isAdmin) return;
+  const ok = confirm("Import ALL legacy /leads/sellers into /leadsMaster/sellers?\nThis does NOT delete legacy; it copies forward.");
+  if (!ok) return;
+
+  modalToast("Importing legacy…", true);
+
+  try{
+    await loadUserDirectoryCache();
+    const legacySnap = await firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`).once("value");
+    const legacy = legacySnap.val() || {};
+    const updates = {};
+
+    Object.keys(legacy).forEach(leadId=>{
+      const v = legacy[leadId] || {};
+      updates[`${LEADS_MASTER_PATH}/sellers/${leadId}`] = {
+        ...v,
+        id: leadId,
+        __migratedFrom: "legacy",
+        updatedAt: Date.now(),
+        updatedBy: (ME?.email || ""),
+        assignedTo: { [UID]: true }
+      };
+      updates[`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`] = {
+        ...v,
+        id: leadId,
+        assignedBy: (ME?.email || ""),
+        assignedAt: Date.now(),
+        archived: false
+      };
+    });
+
+    if (Object.keys(updates).length){
+      await firebase.database().ref().update(updates);
+    }
+
+    alert("Legacy imported ✓");
+  }catch(e){
+    console.warn("legacy import failed", e);
+    alert("Legacy import failed. Check console + rules.");
+  }
+};
+
+/* --------------------------- Dispo + tabs --------------------------- */
 $("dispoRefreshBtn").onclick = () => {
   const f = $("iframeDispo");
   try{
@@ -1812,9 +1657,7 @@ document.addEventListener('DOMContentLoaded', () => {
   showAcq();
 });
 
-/* ---------------------------
-   Presence + Chat
---------------------------- */
+/* --------------------------- Presence + Chat --------------------------- */
 function trackPresence(u){
   if (!u) return;
   const presRef = firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
@@ -1839,11 +1682,14 @@ async function submitSupportRequest(severity, message){
     email: (ME?.email || ""),
     name: (ME?.displayName || ME?.email || "User"),
     portal: "wholesaler",
-    severity: severity,      // blue|red
+    severity: severity,
     message: message || "",
     ts: firebase.database.ServerValue.TIMESTAMP
   });
 }
+
+let currentChatPath = null;
+let activeChatRef = null;
 
 function startRadar(){
   $("radarList").style.display = "";
@@ -1927,15 +1773,12 @@ function setupChat(path, title, showBack){
   };
 }
 
-/* Side panel open/close */
 function openPanel(){ $("sidePanel").classList.add("open"); $("sidePanel").setAttribute("aria-hidden","false"); }
 function closePanel(){ $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }
 $("chatBubble").onclick = openPanel;
 $("closePanel").onclick = closePanel;
 
-/* ---------------------------
-   Auth boot
---------------------------- */
+/* --------------------------- Auth boot --------------------------- */
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
@@ -1959,37 +1802,41 @@ $("btnRedSupport").onclick = async ()=>{
   }
 };
 
+async function upsertMyUserDirectory(u){
+  if (!u) return;
+  const email = (u.email || "").toLowerCase();
+  const name = u.displayName || u.email || "User";
+  const username = usernameFromEmail(email);
+  const ref = firebase.database().ref(`${USER_DIR_PATH}/${u.uid}`);
+  await ref.update({
+    uid: u.uid,
+    email,
+    name,
+    username,
+    initials: initialsFromUser(u),
+    updatedAt: Date.now()
+  });
+}
+
 firebase.auth().onAuthStateChanged(async (u) => {
   if (!u) return location.href = 'index.html';
 
   UID = u.uid;
   ME = u;
 
-  // presence
-  try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
+  try{ await upsertMyUserDirectory(u); }catch(e){ console.warn("userDirectory upsert failed", e); }
+  try{ trackPresence(u); }catch(e){ console.warn("Presence failed:", e); }
 
-  // role check (self + admin override)
-  let roleVal = "user";
   try{
     const roleSnap = await firebase.database().ref(`${ROLES_PATH}/${UID}`).once('value');
-    roleVal = roleSnap.val() || "user";
+    const role = roleSnap.val();
+    isAdmin = (role === 'god' || role === 'admin' || (u.email || "").toLowerCase() === "dealbankers@gmail.com");
+    $("roleReadout").textContent = "ROLE: " + (isAdmin ? "ADMIN/GOD" : "USER");
   }catch(e){
-    roleVal = "user";
+    isAdmin = false;
+    $("roleReadout").textContent = "ROLE: USER";
   }
 
-  // hard override for your testing god account
-  const emailLower = (u.email || "").toLowerCase();
-  if (emailLower === "dealbankers@gmail.com") roleVal = "god";
-
-  isAdmin = isAdminRoleVal(roleVal);
-
-  $("roleReadout").textContent = "ROLE: " + (isAdmin ? "ADMIN/GOD" : "USER");
-
-  // ✅ THIS IS THE KEY FIX
-  // ensures both accounts create directory + emailIndex
-  try{ await ensureUserDirectoryAndIndex(u, roleVal); }catch(e){}
-
-  // chat
   try{
     if (isAdmin){
       $("radarList").style.display = "";
@@ -2000,15 +1847,20 @@ firebase.auth().onAuthStateChanged(async (u) => {
     }
   }catch(e){}
 
-  // subscribe assigned leads
-  try { subscribeAssignedLeads(); }
-  catch(e){
-    console.warn("subscribeAssignedLeads failed:", e);
+  // preload directory cache so assignment works immediately for admin
+  try{ await loadUserDirectoryCache(); }catch(e){}
+
+  // ✅ correct lead subscription
+  try{
+    if (isAdmin) subscribeAdminAllLeads();
+    else subscribeUserAssignedLeads();
+  }catch(e){
+    console.warn("lead subscribe failed", e);
     $("status").textContent = "Leads subscribe error (see console).";
   }
 });
 
-// small init
+// init
 $("callHint").style.display = "none";
 </script>
 
