@@ -329,6 +329,33 @@ body{
   background:rgba(0,0,0,.22);color:#cfe3ff;font-size:12px;display:none;
 }
 .kbd{font-size:11px;opacity:.9;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:2px 6px;background:rgba(0,0,0,.22)}
+
+/* --- Modal usability (mobile friendly) --- */
+.modalCard{max-height:92vh;display:flex;flex-direction:column}
+.modalBody{overflow:auto}
+.modalActions{position:sticky;bottom:0;background:rgba(11,19,27,.92);backdrop-filter:blur(8px);padding-bottom:calc(14px + env(safe-area-inset-bottom))}
+
+/* --- Assign list --- */
+.assignTools{display:flex;gap:10px;align-items:center}
+.assignBtns{display:flex;gap:8px}
+.assignList{border:1px solid var(--line);border-radius:16px;padding:10px;max-height:240px;overflow:auto;background:rgba(0,0,0,.18)}
+.assignRow{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-radius:12px}
+.assignRow:hover{background:rgba(255,255,255,.04)}
+.assignRow input{margin-top:3px}
+.assignMeta{display:flex;flex-direction:column;gap:2px}
+.assignName{font-weight:700}
+.assignEmail{color:var(--muted);font-size:12px}
+.assignTag{margin-left:auto;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+@media(max-width:720px){
+  .assignTools{flex-direction:column;align-items:stretch}
+  .assignBtns{justify-content:flex-end}
+  .assignList{max-height:320px}
+}
+
+/* --- Chat composer mobile typing --- */
+.chat-input{font-size:16px}
+.chatWrap{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
+
 </style>
 </head>
 
@@ -599,14 +626,22 @@ body{
           <div class="lbl">Source</div>
           <input id="m_source" class="input" placeholder="Facebook / Zillow / Cold-call / Referral / etc." />
         </div>
-
         <!-- Admin assignment -->
-        <div style="grid-column:1/-1">
-          <div class="lbl">Assign To (emails or @usernames, comma-separated) <span class="pill" id="assignHintPill">Admin only</span></div>
-          <input id="m_assign" class="input" placeholder="aptbidsonline@gmail.com, @micah, @mitzi, ajay@email.com" />
+        <div style="grid-column:1/-1" id="assignBlock">
+          <div class="lbl">Assign to users <span class="pill" id="assignHintPill">God/Admin</span></div>
+
+          <div class="assignTools">
+            <input id="assignFilter" class="input" placeholder="Filter users (name / email)..." />
+            <div class="assignBtns">
+              <button class="btn tiny" type="button" id="assignAllBtn">All</button>
+              <button class="btn tiny ghost" type="button" id="assignNoneBtn">None</button>
+            </div>
+          </div>
+
+          <div id="assignList" class="assignList"></div>
+
           <div class="help">
-            - Admin/God saves to <span class="kbd">leadsMaster/sellers</span> and pushes copies to <span class="kbd">leadsByUser/&lt;uid&gt;/sellers</span>.<br>
-            - Recipient resolution uses <span class="kbd">userDirectory</span> (email OR username), not UID input.
+            Select who should receive this lead. The lead is saved to <span class="kbd">leadsMaster</span> and copied into each checked user's <span class="kbd">leadsByUser</span> queue.
           </div>
         </div>
 
@@ -638,6 +673,52 @@ Neighbor | +1 210 555 9999"></textarea>
 </div>
 
 <!-- Firebase compat -->
+
+<!-- Support Request Modal (Blue/Red phone feature) -->
+<div class="modalOverlay" id="supportModal" style="display:none">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle" id="supportTitle">Support Request</div>
+        <div class="modalSub" id="supportSub">Send a request to God Mode.</div>
+      </div>
+      <button class="iconBtn" id="supportCloseBtn" title="Close">✕</button>
+    </div>
+
+    <div class="modalBody">
+      <div class="grid2">
+        <div>
+          <div class="lbl">Priority</div>
+          <select id="supportPriority" class="input">
+            <option value="blue">Blue (not urgent)</option>
+            <option value="red">Red (urgent)</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">Portal</div>
+          <input id="supportPortal" class="input" readonly />
+        </div>
+
+        <div style="grid-column:1/-1">
+          <div class="lbl">Category</div>
+          <select id="supportCategory" class="input"></select>
+        </div>
+
+        <div style="grid-column:1/-1">
+          <div class="lbl">Message</div>
+          <textarea id="supportMsg" class="input" style="min-height:120px;resize:vertical" placeholder="Tell God Mode what you need..."></textarea>
+          <div class="help">Tip: If it's about a lead, include the address or phone number.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modalActions">
+      <button class="btn ghost" type="button" id="supportCancelBtn">Cancel</button>
+      <button class="btn" type="button" id="supportSendBtn">Send Request</button>
+    </div>
+  </div>
+</div>
+
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -687,37 +768,7 @@ const DMS_PATH = "direct_messages";
 const TEAM_CALLLOG_PATH = "team_call_log";
 const SUPPORT_REQUESTS_PATH = "supportRequests";
 
-const LINE_BLUE_LABEL = (window.DB_LINE_BLUE_LABEL || "BLUE").toString();
-const LINE_RED_LABEL  = (window.DB_LINE_RED_LABEL  || "RED").toString();
-const CALL_PREFIX_BLUE = (window.DB_CALL_PREFIX_BLUE || "tel:").toString();
-const CALL_PREFIX_RED  = (window.DB_CALL_PREFIX_RED  || "tel:").toString();
-
-let UID = null;
-let ME = null;
-let isAdmin = false;
-
-let sellerList = [];
-let sellerView = [];
-let currentIndex = -1;
-let currentLead = null;
-let currentPhone = "";
-let currentPhoneLabel = "";
-let currentLeadId = "";
-let activeLogRef = null;
-
-let mapMode = "area";
-let dialLine = localStorage.getItem("db_dial_line") || "blue";
-
-function setDialLine(line){
-  dialLine = (line === "red") ? "red" : "blue";
-  localStorage.setItem("db_dial_line", dialLine);
-  $("dialBlue").classList.toggle("active", dialLine==="blue");
-  $("dialRed").classList.toggle("active", dialLine==="red");
-  $("dialReadout").textContent = (dialLine==="red") ? LINE_RED_LABEL : LINE_BLUE_LABEL;
-}
-$("dialBlue").onclick = ()=> setDialLine("blue");
-$("dialRed").onclick  = ()=> setDialLine("red");
-setDialLine(dialLine);
+const CALL_PREFIX = (window.DB_CALL_PREFIX || 'tel:').toString();
 
 function modalToast(msg, good){
   const el = $("modalToast");
@@ -812,27 +863,8 @@ async function loadUserDirectoryCache(){
   }
 }
 
-function parseAssigneeTokens(){
-  return ($("m_assign").value || "")
-    .split(",")
-    .map(x=>x.trim())
-    .filter(Boolean);
-}
-
-function resolveAssigneesToUids(tokens){
-  const uids = [];
-  const missing = [];
-  tokens.forEach(t=>{
-    const raw = String(t||"").trim();
-    if (!raw) return;
-
-    // @username
-    if (raw.startsWith("@")){
-      const uname = raw.slice(1).toLowerCase().trim();
-      const uid = userDirCache.byUser[uname];
-      if (uid) uids.push(uid); else missing.push(raw);
-      return;
-    }
+function parseAssigneeTokens(){ return []; }
+function resolveAssigneesToUids(tokens){ return {uids:[], missing:[]}; }
 
     // email
     const email = raw.toLowerCase();
@@ -1036,31 +1068,51 @@ $("prevLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex((currentI
 $("nextLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex((currentIndex>=sellerView.length-1)?sellerView.length-1:currentIndex+1); };
 
 /* --------------------------- Click-to-call --------------------------- */
-function callHrefFor(phone){
+function sanitizeTel(phone){
   const raw = (phone || "").toString().trim();
   if (!raw) return "";
-  const prefix = (dialLine === "red") ? CALL_PREFIX_RED : CALL_PREFIX_BLUE;
-
-  if (prefix.startsWith("tel:") || prefix.startsWith("sms:")) return prefix + raw;
-  const encoded = encodeURIComponent(raw.replace(/[^\d+]/g,""));
-  return prefix + encoded;
+  // Keep digits and plus; strip everything else
+  let digits = raw.replace(/[^\d+]/g,"");
+  // If it's 10 digits and no country code, assume US +1
+  const justNums = digits.replace(/\D/g,"");
+  if (!digits.startsWith("+") && justNums.length === 10) digits = "+1" + justNums;
+  // If it starts with 1 and is 11 digits, add +
+  if (!digits.startsWith("+") && justNums.length === 11 && justNums.startsWith("1")) digits = "+" + justNums;
+  return digits;
 }
 function isMobileish(){
   return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent || "");
 }
+function doTelDial(phone){
+  const tel = sanitizeTel(phone);
+  if (!tel) return;
+  const href = "tel:" + tel;
+  // iOS Safari is picky: create an <a> and click it.
+  const a = document.createElement("a");
+  a.href = href;
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
 $("callBtn").addEventListener("click", async ()=>{
   if (!currentPhone) return;
-  const href = callHrefFor(currentPhone);
-  if (!href) return;
+  const tel = sanitizeTel(currentPhone);
+  if (!tel) return;
 
-  await logStatus(`Call Attempt (${dialLine === "red" ? LINE_RED_LABEL : LINE_BLUE_LABEL})`);
+  await logStatus(`Call Attempt`, { phone: currentPhone });
 
-  if ((href.startsWith("tel:") || href.startsWith("sms:")) && isMobileish()){
-    window.location.href = href;
+  if (isMobileish()){
+    doTelDial(currentPhone);
   } else {
-    window.open(href, "_blank", "noopener,noreferrer");
+    try{
+      await navigator.clipboard.writeText(currentPhone);
+      toast("Copied number. (Tip: on desktop, paste into your dialer.)");
+    }catch(e){
+      toast("Copy failed. Highlight the number and copy manually.");
+    }
   }
-});
+}
 $("copyBtn").addEventListener("click", async ()=>{
   if (!currentPhone) return;
   try{
@@ -1110,9 +1162,7 @@ function attachCallLog(phoneKey){
     const sorted = items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
     sorted.forEach(it=>{
       const type = it.type || "note";
-      const line = (it.dialLine || it.line || "").toString().toLowerCase();
-      const lineTag = line === "red" ? `<span class="log-tag red">📱 ${esc(LINE_RED_LABEL)}</span>` :
-                      line === "blue" ? `<span class="log-tag blue">📱 ${esc(LINE_BLUE_LABEL)}</span>` : "";
+            const lineTag = "";
 
       let tag = `<span class="log-tag note">NOTE</span>`;
       if (type === "status") tag = `<span class="log-tag status">STATUS</span>`;
@@ -1175,7 +1225,6 @@ async function pushLogEntry(phoneKey, entry){
     uid: UID || "",
     by: (ME?.email || ""),
     byName: (ME?.displayName || ME?.email || "User"),
-    dialLine: dialLine,
     phone: currentPhone || "",
     phoneLabel: currentPhoneLabel || "",
     leadId: currentLeadId || "",
@@ -1346,6 +1395,74 @@ $("s_q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") applySearch(); }
 const leadModal = $("leadModal");
 let modalMode = "new";
 let modalLeadId = null;
+let modalAssignedSet = new Set();
+
+function getUserRowsForAssign(){
+  // userDirectoryCache is Map(uid -> {emailLower, displayName, role, ...})
+  const rows = [];
+  userDirectoryCache.forEach((u,uid)=>{
+    if(!u) return;
+    const role = (u.role||"").toString();
+    // don't show system/bot entries
+    if(role === "system") return;
+    const name = u.displayName || u.name || (u.email||u.emailLower||uid);
+    const email = u.email || u.emailLower || "";
+    rows.push({uid, name, email, role});
+  });
+  rows.sort((a,b)=> (a.role===b.role? (a.name||"").localeCompare(b.name||"", undefined, {sensitivity:"base"}) : (a.role||"").localeCompare(b.role||"")));
+  return rows;
+}
+
+function renderAssignList(){
+  const listEl = $("assignList");
+  const filterEl = $("assignFilter");
+  if(!listEl) return;
+
+  const q = (filterEl?.value || "").toLowerCase().trim();
+  const rows = getUserRowsForAssign().filter(r=>{
+    if(!q) return true;
+    return (r.name||"").toLowerCase().includes(q) || (r.email||"").toLowerCase().includes(q) || (r.uid||"").toLowerCase().includes(q);
+  });
+
+  if(rows.length === 0){
+    listEl.innerHTML = `<div class="help">No users found. (Make sure users have logged in at least once so they appear in userDirectory.)</div>`;
+    return;
+  }
+
+  listEl.innerHTML = rows.map(r=>{
+    const checked = modalAssignedSet.has(r.uid) ? "checked" : "";
+    const tag = (r.role||"user").toUpperCase();
+    return `
+      <label class="assignRow">
+        <input type="checkbox" data-uid="${escapeHtml(r.uid)}" ${checked} />
+        <div class="assignMeta">
+          <div class="assignName">${escapeHtml(r.name||"")}</div>
+          <div class="assignEmail">${escapeHtml(r.email||r.uid)}</div>
+        </div>
+        <div class="assignTag">${escapeHtml(tag)}</div>
+      </label>`;
+  }).join("");
+
+  // hook change
+  listEl.querySelectorAll("input[type=checkbox][data-uid]").forEach(cb=>{
+    cb.addEventListener("change", ()=>{
+      const uid = cb.getAttribute("data-uid");
+      if(cb.checked) modalAssignedSet.add(uid);
+      else modalAssignedSet.delete(uid);
+    });
+  });
+}
+
+$("assignFilter")?.addEventListener("input", ()=>renderAssignList());
+$("assignAllBtn")?.addEventListener("click", ()=>{
+  getUserRowsForAssign().forEach(r=>modalAssignedSet.add(r.uid));
+  renderAssignList();
+});
+$("assignNoneBtn")?.addEventListener("click", ()=>{
+  modalAssignedSet = new Set();
+  renderAssignList();
+});
+
 
 function openLeadModal(mode){
   modalMode = mode;
@@ -1355,8 +1472,19 @@ function openLeadModal(mode){
 
   $("leadModalTitle").textContent = isEdit ? "Lead Editor (Edit)" : "Lead Editor (New)";
   $("m_delete").style.display = (isAdmin && isEdit) ? "" : "none";
+
+  // Assignment UI (God/Admin only)
+  const assignBlock = $("assignBlock");
+  if (assignBlock) assignBlock.style.display = isAdmin ? "" : "none";
   $("assignHintPill").textContent = isAdmin ? "Admin mode" : "Not admin";
-  $("m_assign").disabled = !isAdmin;
+
+  // Track checked assignees in-memory while modal is open
+  modalAssignedSet = new Set();
+  if (isEdit && currentLead){
+    const at = currentLead.assignedTo || {};
+    Object.keys(at).forEach(uid=>{ if(at[uid]) modalAssignedSet.add(uid); });
+    (currentLead.assignedUids || []).forEach(uid=>modalAssignedSet.add(uid));
+  }
 
   leadModal.classList.add("show");
   leadModal.setAttribute("aria-hidden","false");
@@ -1371,10 +1499,9 @@ function openLeadModal(mode){
     $("m_source").value  = (currentLead.source || "");
 
     const phones = normalizePhones(currentLead);
-    $("m_phones").value = phones.map(p=>`${p.label} | ${p.phone}`).join("\n");
+    $("m_phones").value = phones.map(p=>`${p.label} | ${p.phone}`).join("
+");
     $("m_notes").value = (currentLead.notes || currentLead.Notes || "");
-
-    $("m_assign").value = "";
   } else {
     modalLeadId = null;
     $("m_address").value = "";
@@ -1385,7 +1512,13 @@ function openLeadModal(mode){
     $("m_source").value = "";
     $("m_phones").value = "";
     $("m_notes").value = "";
-    $("m_assign").value = "";
+  }
+
+  if (isAdmin){
+    renderAssignList();
+    setTimeout(()=>{ $("assignFilter")?.focus(); }, 50);
+  } else {
+    // Non-admin: lead will default-assign to self on save.
   }
 }
 
@@ -1424,26 +1557,43 @@ function parsePhonesFromModal(){
   return out;
 }
 
-async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
-  const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`);
+async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids, leadType){
+  const bucket = (leadType || payload.type || "seller").toString().toLowerCase().trim();
+  const plural = bucket.endsWith("s") ? bucket : bucket + "s";
+
+  const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/${plural}/${leadId}`);
   await masterRef.update({
     ...payload,
     id: leadId,
+    type: bucket,
     assignedTo: assigneeUids.reduce((acc, uid)=>{ acc[uid]=true; return acc; }, {}),
+    assignedUids: assigneeUids,
     updatedAt: Date.now(),
     updatedBy: (ME?.email || "")
   });
 
+  // Fan-out copies into each user's queue
   const updates = {};
   assigneeUids.forEach(uid=>{
-    updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`] = {
+    updates[`${LEADS_BY_USER_PATH}/${uid}/${plural}/${leadId}`] = {
       ...payload,
       id: leadId,
+      type: bucket,
       assignedBy: (ME?.email || ""),
       assignedAt: Date.now(),
       archived: false
     };
   });
+
+  // If editing, remove copies for users no longer assigned
+  if (modalMode === "edit" && currentLead){
+    const prev = Object.keys(currentLead.assignedTo || {}).filter(uid => (currentLead.assignedTo||{})[uid]);
+    prev.forEach(uid=>{
+      if (!assigneeUids.includes(uid)){
+        updates[`${LEADS_BY_USER_PATH}/${uid}/${plural}/${leadId}`] = null;
+      }
+    });
+  }
 
   if (Object.keys(updates).length){
     await firebase.database().ref().update(updates);
@@ -1455,7 +1605,7 @@ async function saveLeadFromModal(){
   const owner = ($("m_owner").value || "").trim();
   const mailing = ($("m_mailing").value || "").trim();
   const status = ($("m_status").value || "New").trim();
-  const type = ($("m_type").value || "seller").trim();
+  const type = ($("m_type").value || "seller").trim().toLowerCase();
   const source = ($("m_source").value || "").trim();
   const notes = ($("m_notes").value || "").trim();
   const phones = parsePhonesFromModal();
@@ -1472,47 +1622,39 @@ async function saveLeadFromModal(){
 
   try{
     if (isAdmin){
-      await loadUserDirectoryCache(); // ensure freshest
+      await loadUserDirectoryCache(); // ensure freshest list for assignment
 
-      const tokens = parseAssigneeTokens();
-      // default: assign to self so you always see it + it always lands somewhere
-      const defaultEmail = (ME?.email || "").toLowerCase();
-      const chosen = tokens.length ? tokens : [defaultEmail];
-
-      const { uids, missing } = resolveAssigneesToUids(chosen);
-
-      if (!uids.length){
-        modalToast("No assignees resolved. Ensure recipients have logged in once (userDirectory).", false);
-        $("m_save").disabled = false;
-        return;
-      }
-
+      // Use checkbox selection. If nothing checked, do NOT force self; allow unassigned.
+      const uids = Array.from(modalAssignedSet || []);
       let leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : null;
+      const plural = type.endsWith("s") ? type : type + "s";
       if (!leadId){
-        leadId = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).push().key;
+        leadId = firebase.database().ref(`${LEADS_MASTER_PATH}/${plural}`).push().key;
       }
 
       await upsertLeadMasterAndAssignments(leadId, {
         ...payload,
-        createdAt: Date.now(),
-        createdBy: (ME?.email || "")
-      }, uids);
+        createdAt: (modalMode === "edit" && currentLead?.createdAt) ? currentLead.createdAt : Date.now(),
+        createdBy: (modalMode === "edit" && currentLead?.createdBy) ? currentLead.createdBy : (ME?.email || "")
+      }, uids, type);
 
-      modalToast(missing.length ? `Saved ✓ (Missing: ${missing.join(", ")})` : "Saved ✓", true);
+      modalToast(uids.length ? "Saved ✓ (Assigned)" : "Saved ✓ (Unassigned)", true);
       closeLeadModal();
       return;
     }
 
-    // normal user edit only their assigned copy
-    const leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`).push().key;
-    await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`).update({
+    // Normal user: always save into own queue
+    const plural = type.endsWith("s") ? type : type + "s";
+    const leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/${plural}`).push().key;
+
+    await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/${plural}/${leadId}`).update({
       ...payload,
       id: leadId,
       archived: false,
       updatedAt: Date.now(),
       updatedBy: (ME?.email || ""),
-      createdAt: Date.now(),
-      createdBy: (ME?.email || "")
+      createdAt: (modalMode === "edit" && currentLead?.createdAt) ? currentLead.createdAt : Date.now(),
+      createdBy: (modalMode === "edit" && currentLead?.createdBy) ? currentLead.createdBy : (ME?.email || "")
     });
 
     modalToast("Saved ✓", true);
@@ -1674,19 +1816,83 @@ function trackPresence(u){
   presRef.onDisconnect().update({ online:false, ts: firebase.database.ServerValue.TIMESTAMP });
 }
 
-async function submitSupportRequest(severity, message){
+async function submitSupportRequest({priority, portal, category, message}){
   if (!UID) return;
   const ref = firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${UID}`).push();
   await ref.set({
     uid: UID,
     email: (ME?.email || ""),
     name: (ME?.displayName || ME?.email || "User"),
-    portal: "wholesaler",
-    severity: severity,
+    portal: portal || "wholesaler",
+    priority: priority || "blue",
+    category: category || "General",
     message: message || "",
-    ts: firebase.database.ServerValue.TIMESTAMP
+    ts: firebase.database.ServerValue.TIMESTAMP,
+    status: "open"
   });
 }
+
+function supportCategoriesForPortal(portal){
+  const p = (portal || "").toLowerCase();
+  if (p === "contractor"){
+    return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"];
+  }
+  // wholesaler default
+  return ["Hot lead / seller needs call","Need comp / ARV help","Need dispo / buyer help","System bug","Other"];
+}
+
+let supportModalOpen = false;
+function openSupportModal(priority){
+  const modal = $("supportModal");
+  if (!modal) return;
+  const portal = "wholesaler";
+  $("supportPortal").value = portal;
+  $("supportPriority").value = (priority === "red") ? "red" : "blue";
+  $("supportSub").textContent = (priority === "red")
+    ? "Red = urgent. Use for hot leads, fires, or anything that can’t wait."
+    : "Blue = not urgent. Use for questions, help, or general support.";
+
+  const cats = supportCategoriesForPortal(portal);
+  const catEl = $("supportCategory");
+  catEl.innerHTML = cats.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join("");
+  $("supportMsg").value = "";
+
+  modal.style.display = "flex";
+  supportModalOpen = true;
+
+  setTimeout(()=>{ $("supportMsg")?.focus(); }, 50);
+}
+
+function closeSupportModal(){
+  const modal = $("supportModal");
+  if (!modal) return;
+  modal.style.display = "none";
+  supportModalOpen = false;
+}
+
+$("supportCloseBtn")?.addEventListener("click", closeSupportModal);
+$("supportCancelBtn")?.addEventListener("click", closeSupportModal);
+$("supportSendBtn")?.addEventListener("click", async ()=>{
+  const portal = ($("supportPortal").value || "wholesaler").trim();
+  const priority = ($("supportPriority").value || "blue").trim();
+  const category = ($("supportCategory").value || "General").trim();
+  const message = ($("supportMsg").value || "").trim();
+
+  if (!message){
+    toast("Type a message first.");
+    return;
+  }
+
+  try{
+    await submitSupportRequest({priority, portal, category, message});
+    toast("Support request sent ✓");
+    closeSupportModal();
+  }catch(e){
+    console.warn("support request failed", e);
+    toast("Support request failed (rules).");
+  }
+});
+
 
 let currentChatPath = null;
 let activeChatRef = null;
@@ -1782,24 +1988,11 @@ $("closePanel").onclick = closePanel;
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
-$("btnBlueSupport").onclick = async ()=>{
-  setDialLine("blue");
-  openPanel();
-  try{ await submitSupportRequest("blue", "Blue support requested"); }catch(e){}
-  if (!isAdmin){
-    currentChatPath = `${DMS_PATH}/${UID}/messages`;
-    setupChat(currentChatPath, "Support Chat", false);
-  }
+$("btnBlueSupport").onclick = ()=>{
+  openSupportModal("blue");
 };
-$("btnRedSupport").onclick = async ()=>{
-  setDialLine("red");
-  openPanel();
-  const msg = prompt("Urgent (Red) Support: what’s happening? (short note)");
-  try{ await submitSupportRequest("red", msg || "Red support requested"); }catch(e){}
-  if (!isAdmin){
-    currentChatPath = `${DMS_PATH}/${UID}/messages`;
-    setupChat(currentChatPath, "Urgent Support Chat", false);
-  }
+$("btnRedSupport").onclick = ()=>{
+  openSupportModal("red");
 };
 
 async function upsertMyUserDirectory(u){
