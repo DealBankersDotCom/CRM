@@ -1,4 +1,4 @@
-<!-- wholesaler.html (FULL DROP-IN • ASSIGNMENT + FIXED SAVE + MOBILE CLICK-TO-CALL + SUPPORT BLUE/RED) -->
+<!-- wholesaler.html (FULL DROP-IN • ASSIGNMENT + FIXED SAVE + MOBILE CLICK-TO-CALL + SUPPORT BLUE/RED + AUTO emailIndex/userDirectory) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -328,6 +328,24 @@ body{
   background:rgba(0,0,0,.22);color:#cfe3ff;font-size:12px;display:none;
 }
 .kbd{font-size:11px;opacity:.9;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:2px 6px;background:rgba(0,0,0,.22)}
+
+/* Admin assignment picker */
+.assignShell{border:1px solid rgba(255,255,255,.14);border-radius:14px;background:rgba(0,0,0,.16);padding:10px}
+.assignTop{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-bottom:10px}
+.assignList{max-height:170px;overflow:auto;padding-right:6px;display:flex;flex-direction:column;gap:8px}
+.assignRow{
+  display:flex;align-items:center;justify-content:space-between;gap:10px;
+  padding:10px;border-radius:12px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.05);
+}
+.assignRow:hover{border-color:rgba(43,116,255,.35);background:rgba(255,255,255,.07)}
+.assignLeft{display:flex;gap:10px;align-items:center;min-width:0}
+.assignAvatar{
+  width:30px;height:30px;border-radius:999px;background:rgba(43,116,255,.18);
+  border:1px solid rgba(43,116,255,.45);display:flex;align-items:center;justify-content:center;font-weight:900
+}
+.assignName{font-weight:900;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
+.assignEmail{font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:360px}
+.assignChk{transform:scale(1.15)}
 </style>
 </head>
 
@@ -341,7 +359,6 @@ body{
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
 
-    <!-- On WHOLESALER: Blue/Red = Support requests (and also sets dial line) -->
     <button class="chip primary" id="btnBlueSupport" type="button" title="Blue Support (normal)">🌀 Blue Support</button>
     <button class="chip danger" id="btnRedSupport" type="button" title="Red Support (urgent)">🚨 Red Support</button>
 
@@ -364,7 +381,7 @@ body{
     </div>
 
     <div class="body">
-      <!-- ================= LEFT: LEAD QUEUE ================= -->
+      <!-- LEFT: LEAD QUEUE -->
       <div id="panel-acq" class="panel">
         <div class="panel-head">
           <div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div>
@@ -385,7 +402,7 @@ body{
         </div>
       </div>
 
-      <!-- ================= CENTER: CONSOLE ================= -->
+      <!-- CENTER: CONSOLE -->
       <div class="panel col-center" id="panel-console">
         <div class="panel-head">
           <div class="panel-title">⌁ Console</div>
@@ -479,7 +496,7 @@ body{
         </div>
       </div>
 
-      <!-- ================= RIGHT: CALL LOG TERMINAL ================= -->
+      <!-- RIGHT: CALL LOG TERMINAL -->
       <div class="panel col-right" id="panel-calllog">
         <div class="panel-head">
           <div class="panel-title">⌁ Team Call Log</div>
@@ -495,7 +512,7 @@ body{
         </div>
       </div>
 
-      <!-- ================= DISPO ================= -->
+      <!-- DISPO -->
       <div id="panel-dispo">
         <div class="dispo-shell">
           <div class="dispo-topbar">
@@ -601,11 +618,31 @@ body{
 
         <!-- Admin assignment -->
         <div style="grid-column:1/-1">
-          <div class="lbl">Assign To (emails, comma-separated) <span class="pill" id="assignHintPill">Admin only</span></div>
-          <input id="m_assign" class="input" placeholder="micah@email.com, mitzi@email.com, ajay@email.com" />
-          <div class="help">
-            - If you’re admin/god, saving will write to <span class="kbd">leadsMaster</span> and copy to each user’s <span class="kbd">leadsByUser/&lt;uid&gt;</span>.<br>
-            - If you’re a normal user, saving only updates your own assigned copy (no master writes).
+          <div class="lbl">Assign To (Admin)</div>
+
+          <div class="assignShell">
+            <div class="assignTop">
+              <input id="assignSearch" class="input" placeholder="Search users (name/email)..." style="flex:1;min-width:220px" />
+              <button id="assignSelectMe" class="btn" type="button" title="Select yourself">Assign to Me</button>
+              <button id="assignClear" class="btn" type="button">Clear</button>
+              <span class="pill" id="assignHintPill">Admin only</span>
+            </div>
+
+            <div id="assignList" class="assignList">
+              <div class="log-empty" style="padding:18px 12px;">(Admin) Loading user directory…</div>
+            </div>
+
+            <div class="help">
+              This picker writes to <span class="kbd">leadsByUser/&lt;uid&gt;/sellers/&lt;leadId&gt;</span> for each selected user.<br>
+              It also writes master to <span class="kbd">leadsMaster/sellers/&lt;leadId&gt;</span> and stores <span class="kbd">assignedTo</span> in master.
+            </div>
+
+            <!-- kept for manual fallback -->
+            <div style="margin-top:10px">
+              <div class="lbl" style="margin-bottom:6px">Manual override (emails, comma-separated)</div>
+              <input id="m_assign" class="input" placeholder="micah@email.com, mitzi@email.com, ajay@email.com" />
+              <div class="help">If you type emails here, we resolve via <span class="kbd">emailIndex</span>. Picker is preferred.</div>
+            </div>
           </div>
         </div>
 
@@ -648,13 +685,14 @@ Neighbor | +1 210 555 9999"></textarea>
 <script>
 /* =========================================================
    DealBankers • Wholesaler Portal
-   FIXES:
-   - Leads are now ASSIGNED per user (listable): leadsByUser/<uid>/sellers/<leadId>
-   - Admin/God maintains master list: leadsMaster/sellers/<leadId>
-   - Admin assigns by EMAIL using emailIndex/<safeEmailKey> => uid
-   - Save Lead shows visible feedback in modal
-   - Mobile click-to-call uses window.location.href for tel:/sms:
-   - Blue/Red buttons: support requests (and also sets dial line)
+   FIXES INCLUDED:
+   ✅ Auto-upsert userDirectory/<uid> on login
+   ✅ Auto-ensure emailIndex/<safeEmailKey> = uid on login
+   ✅ Admin assignment via userDirectory picker (multi-assign)
+   ✅ Manual assignment by email still supported via emailIndex
+   ✅ leadsMaster locked to admin only (rules expect this)
+   ✅ leadsByUser feeds the queue (assigned leads)
+   ✅ Mobile click-to-call uses location.href for tel:/sms:
    ========================================================= */
 
 (function ensureFirebaseInit(){
@@ -684,10 +722,13 @@ function initialsFromUser(u){
   const ini = parts.map(p => p[0]?.toUpperCase() || "").join("").slice(0,2);
   return ini || "U";
 }
+function isAdminRoleVal(v){
+  return (v === "admin" || v === "god");
+}
 
 const STREETVIEW_ON_LOAD = false;
 
-// NEW DATA MODEL PATHS
+// DATA MODEL PATHS
 const LEADS_MASTER_PATH = "leadsMaster";      // leadsMaster/sellers/<leadId>
 const LEADS_BY_USER_PATH = "leadsByUser";     // leadsByUser/<uid>/sellers/<leadId>
 const USER_DIR_PATH = "userDirectory";        // userDirectory/<uid> {email,name,role}
@@ -708,6 +749,7 @@ const CALL_PREFIX_RED  = (window.DB_CALL_PREFIX_RED  || "tel:").toString();
 let UID = null;
 let ME = null;
 let isAdmin = false;
+
 let currentChatPath = null;
 let activeChatRef = null;
 
@@ -722,7 +764,7 @@ let activeLogRef = null;
 
 let mapMode = "area";
 
-// Dial line affects click-to-call behavior & logging tag
+// dial line
 let dialLine = localStorage.getItem("db_dial_line") || "blue"; // blue|red
 
 function setDialLine(line){
@@ -819,6 +861,57 @@ function buildTPSLink(lead){
 }
 
 /* ---------------------------
+   AUTO-BOOTSTRAP DIRECTORY + EMAIL INDEX
+   This is the key fix: assignments won't work until emailIndex exists.
+   Rules below allow user to create their own emailIndex ONLY if it's missing.
+--------------------------- */
+async function ensureUserDirectoryAndIndex(u, roleGuess){
+  if (!u) return;
+  const uid = u.uid;
+  const email = (u.email || "").toLowerCase().trim();
+  const name = (u.displayName || u.email || "User").trim();
+  const now = Date.now();
+
+  // 1) upsert userDirectory/<uid> (users can write their own record per rules)
+  try{
+    const dirRef = firebase.database().ref(`${USER_DIR_PATH}/${uid}`);
+    await dirRef.update({
+      uid,
+      email,
+      name,
+      initials: initialsFromUser(u),
+      role: roleGuess || "user",
+      updatedAt: now
+    });
+  }catch(e){
+    console.warn("userDirectory upsert failed:", e?.message || e);
+  }
+
+  // 2) ensure emailIndex/<safeEmailKey(email)> = uid (create-if-missing)
+  // rules allow:
+  // - admin/god can write always
+  // - normal user can only write if data doesn't exist AND newData == auth.uid
+  try{
+    if (email){
+      const key = safeEmailKey(email);
+      const idxRef = firebase.database().ref(`${EMAIL_INDEX_PATH}/${key}`);
+      const snap = await idxRef.once("value");
+      if (!snap.exists()){
+        await idxRef.set(uid);
+      } else {
+        // if it exists but wrong, only admin can fix; normal user won't overwrite
+        const v = snap.val();
+        if (v !== uid){
+          console.warn("emailIndex exists but points elsewhere. Admin must fix:", email, v, "!= ", uid);
+        }
+      }
+    }
+  }catch(e){
+    console.warn("emailIndex ensure failed:", e?.message || e);
+  }
+}
+
+/* ---------------------------
    Queue rendering
 --------------------------- */
 function applySearch(){
@@ -834,10 +927,9 @@ function applySearch(){
       return (a.includes(q) || o.includes(q) || n.includes(q) || p.includes(q));
     });
   }
-  // hide archived from queue
   sellerView = sellerView.filter(l => !l.archived);
-
   renderQueue();
+
   if (sellerView.length){
     if (currentLeadId){
       const idx = sellerView.findIndex(x => leadIdFor(x) === currentLeadId);
@@ -1013,7 +1105,7 @@ $("prevLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex((currentI
 $("nextLead").onclick = ()=>{ if (sellerView.length) selectLeadByIndex((currentIndex>=sellerView.length-1)?sellerView.length-1:currentIndex+1); };
 
 /* ---------------------------
-   Click-to-call (FIXED FOR MOBILE)
+   Click-to-call (mobile-safe)
 --------------------------- */
 function callHrefFor(phone){
   const raw = (phone || "").toString().trim();
@@ -1035,7 +1127,6 @@ $("callBtn").addEventListener("click", async ()=>{
 
   await logStatus(`Call Attempt (${dialLine === "red" ? LINE_RED_LABEL : LINE_BLUE_LABEL})`);
 
-  // mobile tel:/sms: should use location.href
   if ((href.startsWith("tel:") || href.startsWith("sms:")) && isMobileish()){
     window.location.href = href;
   } else {
@@ -1170,7 +1261,7 @@ async function logStatus(status){
   const phoneKey = fmtPhoneKey(currentPhone);
   if (!currentPhone || phoneKey === "unknown") return;
 
-  // update local assigned lead status if possible
+  // update local assigned lead status if possible (user's assigned copy)
   try{
     if (currentLeadId){
       const next =
@@ -1314,11 +1405,87 @@ $("s_reload").onclick = applySearch;
 $("s_q").addEventListener("keydown", (e)=>{ if(e.key==="Enter") applySearch(); });
 
 /* ---------------------------
-   CRM Modal: New/Edit/Delete + Admin assignment by email
+   CRM Modal: New/Edit/Delete + Admin assignment
 --------------------------- */
 const leadModal = $("leadModal");
 let modalMode = "new";  // new|edit
 let modalLeadId = null;
+
+/* Admin directory cache + selection */
+let directoryCache = [];            // [{uid,email,name,initials,role}]
+let selectedAssignees = new Set();  // uids
+
+function setAssignControlsEnabled(on){
+  $("assignSearch").disabled = !on;
+  $("assignSelectMe").disabled = !on;
+  $("assignClear").disabled = !on;
+  $("m_assign").disabled = !on; // manual field
+}
+function renderAssigneePicker(){
+  const list = $("assignList");
+  if (!isAdmin){
+    list.innerHTML = `<div class="log-empty" style="padding:18px 12px;">(Not admin) Assignment disabled.</div>`;
+    setAssignControlsEnabled(false);
+    return;
+  }
+  setAssignControlsEnabled(true);
+
+  const q = ($("assignSearch").value || "").trim().toLowerCase();
+  const filtered = directoryCache.filter(u=>{
+    const t = `${u.name||""} ${u.email||""}`.toLowerCase();
+    return !q || t.includes(q);
+  });
+
+  if (!filtered.length){
+    list.innerHTML = `<div class="log-empty" style="padding:18px 12px;">No users match.</div>`;
+    return;
+  }
+
+  list.innerHTML = "";
+  filtered.forEach(u=>{
+    const row = document.createElement("div");
+    row.className = "assignRow";
+    row.innerHTML = `
+      <div class="assignLeft">
+        <div class="assignAvatar">${esc((u.initials||"U").slice(0,2))}</div>
+        <div style="min-width:0">
+          <div class="assignName">${esc(u.name || u.email || u.uid)}</div>
+          <div class="assignEmail">${esc(u.email || "")}</div>
+        </div>
+      </div>
+      <input class="assignChk" type="checkbox" ${selectedAssignees.has(u.uid) ? "checked":""} />
+    `;
+    const chk = row.querySelector("input.assignChk");
+    row.onclick = (e)=>{
+      if (e.target === chk) return;
+      chk.checked = !chk.checked;
+      chk.dispatchEvent(new Event("change"));
+    };
+    chk.onchange = ()=>{
+      if (chk.checked) selectedAssignees.add(u.uid);
+      else selectedAssignees.delete(u.uid);
+    };
+    list.appendChild(row);
+  });
+}
+async function loadDirectoryOnce(){
+  if (!isAdmin) return;
+  try{
+    const snap = await firebase.database().ref(USER_DIR_PATH).once("value");
+    const v = snap.val() || {};
+    directoryCache = Object.keys(v).map(uid=>({ uid, ...(v[uid]||{}) }));
+    directoryCache.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
+  }catch(e){
+    console.warn("userDirectory read failed:", e);
+    directoryCache = [];
+  } finally {
+    renderAssigneePicker();
+  }
+}
+
+$("assignSearch").addEventListener("input", ()=> renderAssigneePicker());
+$("assignClear").onclick = ()=>{ selectedAssignees.clear(); renderAssigneePicker(); };
+$("assignSelectMe").onclick = ()=>{ if (UID) selectedAssignees.add(UID); renderAssigneePicker(); };
 
 function openLeadModal(mode){
   modalMode = mode;
@@ -1329,10 +1496,19 @@ function openLeadModal(mode){
   $("leadModalTitle").textContent = isEdit ? "Lead Editor (Edit)" : "Lead Editor (New)";
   $("m_delete").style.display = (isAdmin && isEdit) ? "" : "none";
   $("assignHintPill").textContent = isAdmin ? "Admin mode" : "Not admin";
-  $("m_assign").disabled = !isAdmin;
+
+  // reset selection each time
+  selectedAssignees.clear();
+  $("assignSearch").value = "";
+  $("m_assign").value = "";
+
+  // preselect "me" by default for admin (prevents “saved but I can’t see it”)
+  if (isAdmin && UID) selectedAssignees.add(UID);
 
   leadModal.classList.add("show");
   leadModal.setAttribute("aria-hidden","false");
+
+  if (isAdmin) loadDirectoryOnce();
 
   if (isEdit && currentLead){
     modalLeadId = currentLeadId;
@@ -1346,9 +1522,6 @@ function openLeadModal(mode){
     const phones = normalizePhones(currentLead);
     $("m_phones").value = phones.map(p=>`${p.label} | ${p.phone}`).join("\n");
     $("m_notes").value = (currentLead.notes || currentLead.Notes || "");
-
-    // leave assignment blank (optional). Admin can re-assign if desired.
-    $("m_assign").value = "";
   } else {
     modalLeadId = null;
     $("m_address").value = "";
@@ -1359,8 +1532,9 @@ function openLeadModal(mode){
     $("m_source").value = "";
     $("m_phones").value = "";
     $("m_notes").value = "";
-    $("m_assign").value = "";
   }
+
+  renderAssigneePicker();
 }
 
 function closeLeadModal(){
@@ -1428,7 +1602,7 @@ function parseAssignEmails(){
 }
 
 async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
-  // master write
+  // master write (admin only by rules)
   const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`);
   await masterRef.update({
     ...payload,
@@ -1438,7 +1612,7 @@ async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
     updatedBy: (ME?.email || ""),
   });
 
-  // copy to each user
+  // copy to each user in one multi-location update
   const updates = {};
   assigneeUids.forEach(uid=>{
     updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`] = {
@@ -1480,16 +1654,30 @@ async function saveLeadFromModal(){
   modalToast("Saving…", true);
 
   try{
-    // If admin: write master + assign copies
     if (isAdmin){
-      const assignEmails = parseAssignEmails();
-      // if none provided, default assign to yourself so it shows up
-      const chosenEmails = assignEmails.length ? assignEmails : [ (ME?.email || "") ].filter(Boolean);
+      // Preferred: picker selection
+      let assigneeUids = Array.from(selectedAssignees);
 
-      const { uids, missing } = await resolveAssigneeEmailsToUids(chosenEmails);
+      // If picker empty, try manual emails
+      const manualEmails = parseAssignEmails();
+      const missing = [];
 
-      if (!uids.length){
-        modalToast("No assignees resolved. Add users to emailIndex/userDirectory first.", false);
+      if (!assigneeUids.length){
+        const chosenEmails = manualEmails.length ? manualEmails : [ (ME?.email || "") ].filter(Boolean);
+        const res = await resolveAssigneeEmailsToUids(chosenEmails);
+        assigneeUids = res.uids;
+        missing.push(...res.missing);
+      } else {
+        // if manual emails provided too, merge them in (optional)
+        if (manualEmails.length){
+          const res = await resolveAssigneeEmailsToUids(manualEmails);
+          assigneeUids = Array.from(new Set([...assigneeUids, ...res.uids]));
+          missing.push(...res.missing);
+        }
+      }
+
+      if (!assigneeUids.length){
+        modalToast("No assignees resolved. Ensure users have logged in at least once (auto creates emailIndex/userDirectory).", false);
         $("m_save").disabled = false;
         return;
       }
@@ -1502,10 +1690,10 @@ async function saveLeadFromModal(){
       payload.createdAt = payload.createdAt || Date.now();
       payload.createdBy = payload.createdBy || (ME?.email || "");
 
-      await upsertLeadMasterAndAssignments(leadId, payload, uids);
+      await upsertLeadMasterAndAssignments(leadId, payload, assigneeUids);
 
       if (missing.length){
-        modalToast(`Saved ✓  (But missing emailIndex for: ${missing.join(", ")})`, true);
+        modalToast(`Saved ✓  (Missing emailIndex for: ${missing.join(", ")})`, true);
       } else {
         modalToast("Saved ✓", true);
       }
@@ -1514,15 +1702,19 @@ async function saveLeadFromModal(){
       return;
     }
 
-    // Normal user: save only to their assigned copy
-    const leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`).push().key;
+    // Normal user: update ONLY if already assigned (rules enforce data.exists)
+    const leadId = (modalMode === "edit" && modalLeadId) ? modalLeadId : null;
+    if (!leadId){
+      modalToast("Users can't create new leads here. Ask admin to assign.", false);
+      return;
+    }
     const ref = firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`);
     await ref.update({
       ...payload,
       id: leadId,
       archived: false,
-      createdAt: Date.now(),
-      createdBy: (ME?.email || ""),
+      updatedAt: Date.now(),
+      updatedBy: (ME?.email || ""),
     });
 
     modalToast("Saved ✓", true);
@@ -1545,7 +1737,6 @@ async function deleteLeadAdmin(leadId){
   try{
     modalToast("Deleting…", true);
 
-    // get assignedTo list first
     const snap = await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}/assignedTo`).once("value");
     const assignedTo = snap.val() || {};
     const updates = {};
@@ -1640,7 +1831,6 @@ function trackPresence(u){
   presRef.onDisconnect().update({ online:false, ts: firebase.database.ServerValue.TIMESTAMP });
 }
 
-/* Support requests (Blue/Red) */
 async function submitSupportRequest(severity, message){
   if (!UID) return;
   const ref = firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${UID}`).push();
@@ -1749,12 +1939,10 @@ $("closePanel").onclick = closePanel;
 $("btnSettings").onclick = () => location.href = 'settings.html';
 $("logoutBtn").onclick = () => firebase.auth().signOut();
 
-// Support buttons: also set dial line
 $("btnBlueSupport").onclick = async ()=>{
   setDialLine("blue");
   openPanel();
   try{ await submitSupportRequest("blue", "Blue support requested"); }catch(e){}
-  // open personal support chat
   if (!isAdmin){
     currentChatPath = `${DMS_PATH}/${UID}/messages`;
     setupChat(currentChatPath, "Support Chat", false);
@@ -1777,20 +1965,31 @@ firebase.auth().onAuthStateChanged(async (u) => {
   UID = u.uid;
   ME = u;
 
+  // presence
   try { trackPresence(u); } catch(e){ console.warn("Presence failed:", e); }
 
-  // role check
+  // role check (self + admin override)
+  let roleVal = "user";
   try{
     const roleSnap = await firebase.database().ref(`${ROLES_PATH}/${UID}`).once('value');
-    const role = roleSnap.val();
-    isAdmin = (role === 'admin' || role === 'god' || (u.email || "").toLowerCase() === "dealbankers@gmail.com");
-    $("roleReadout").textContent = "ROLE: " + (isAdmin ? "ADMIN/GOD" : "USER");
+    roleVal = roleSnap.val() || "user";
   }catch(e){
-    isAdmin = false;
-    $("roleReadout").textContent = "ROLE: USER";
+    roleVal = "user";
   }
 
-  // chat: admin gets radar, users get support chat
+  // hard override for your testing god account
+  const emailLower = (u.email || "").toLowerCase();
+  if (emailLower === "dealbankers@gmail.com") roleVal = "god";
+
+  isAdmin = isAdminRoleVal(roleVal);
+
+  $("roleReadout").textContent = "ROLE: " + (isAdmin ? "ADMIN/GOD" : "USER");
+
+  // ✅ THIS IS THE KEY FIX
+  // ensures both accounts create directory + emailIndex
+  try{ await ensureUserDirectoryAndIndex(u, roleVal); }catch(e){}
+
+  // chat
   try{
     if (isAdmin){
       $("radarList").style.display = "";
