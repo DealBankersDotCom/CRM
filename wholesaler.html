@@ -1129,39 +1129,48 @@ function doTelDial(phone){
   a.click();
   a.remove();
 }
-$("callBtn").addEventListener("click", async ()=>{
+$("callBtn").addEventListener("click", async () => {
   if (!currentPhone) return;
   const tel = sanitizeTel(currentPhone);
   if (!tel) return;
 
   await logStatus("Call Attempt", { phone: currentPhone });
 
-  if (isMobileish()){
+  if (isMobileish()) {
     doTelDial(currentPhone);
-  } else {
-    try{
-      await navigator.clipboard.writeText(currentPhone);
-      toast("Copied number. (Tip: on desktop, paste into your dialer.)");
-    } catch(e){
-      toast("Copy failed. Highlight the number and copy manually.");
-    }
+    return;
+  }
+
+  try {
+    await navigator.clipboard.writeText(currentPhone);
+    toast("Copied number. (Tip: on desktop, paste into your dialer.)");
+  } catch (e) {
+    toast("Copy failed. Highlight the number and copy manually.");
   }
 });
 
-$("copyBtn").addEventListener("click", async ()=>{
+$("copyBtn").addEventListener("click", async () => {
   if (!currentPhone) return;
-  try{
+
+  try {
     await navigator.clipboard.writeText(currentPhone);
     toast("Copied ✓");
-  } catch(e){
+  } catch (e) {
     const ta = document.createElement("textarea");
     ta.value = currentPhone;
+    ta.style.position = "fixed";
+    ta.style.opacity = "0";
     document.body.appendChild(ta);
+    ta.focus();
     ta.select();
-    try{
+
+    try {
       document.execCommand("copy");
       toast("Copied ✓");
-    } catch{}
+    } catch (_) {
+      toast("Copy failed. Highlight the number and copy manually.");
+    }
+
     document.body.removeChild(ta);
   }
 });
