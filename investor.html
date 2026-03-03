@@ -1,0 +1,1067 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>DealBankers • Investor Portal</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com"/>
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet"/>
+
+  <style>
+    :root{
+      --bg1:#0b131b;--bg2:#142838;--line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;
+      --accent:#8a2bff; --good:#19c37d; --warn:#ffb020; --bad:#ff4d4d;
+      --panel:rgba(255,255,255,.06);
+      --panel2:rgba(0,0,0,.25);
+      --shadow:0 18px 50px rgba(0,0,0,.45);
+      --r:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:Inter,system-ui,Segoe UI,Arial; color:var(--text);
+      background: radial-gradient(1100px 600px at 20% 10%, #1a2f49 0%, transparent 60%),
+                  radial-gradient(900px 500px at 70% 15%, rgba(138,43,255,.22) 0%, transparent 55%),
+                  linear-gradient(180deg, var(--bg2), var(--bg1));
+      min-height:100vh;
+    }
+    .topbar{
+      display:flex; align-items:center; justify-content:space-between;
+      padding:14px 18px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      position:sticky; top:0; z-index:20;
+      backdrop-filter: blur(10px);
+    }
+    .brand{display:flex;gap:12px;align-items:center}
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      background:linear-gradient(135deg, rgba(138,43,255,.9), rgba(43,116,255,.6));
+      box-shadow:0 0 20px rgba(138,43,255,.35);
+    }
+    .titleWrap .h1{font-weight:900; letter-spacing:.08em}
+    .titleWrap .sub{font-size:12px; opacity:.75}
+    .right{display:flex; gap:10px; align-items:center}
+    .pill{
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      padding:8px 10px;
+      border-radius:999px;
+      font-weight:800;
+      cursor:pointer;
+    }
+    .pill.primary{border-color:rgba(138,43,255,.55); background:rgba(138,43,255,.18)}
+    .pill.danger{border-color:rgba(255,77,77,.55); background:rgba(255,77,77,.12)}
+    .pill:disabled{opacity:.6; cursor:not-allowed}
+
+    .wrap{padding:18px}
+    .grid{
+      display:grid;
+      grid-template-columns: 360px 1fr 340px;
+      gap:14px;
+      max-width:1400px;
+      margin:0 auto;
+      align-items:start;
+    }
+
+    .card{
+      border:1px solid rgba(255,255,255,.10);
+      background:var(--panel);
+      border-radius:var(--r);
+      box-shadow:var(--shadow);
+      overflow:hidden;
+    }
+    .cardHead{
+      padding:12px 14px;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+      display:flex; justify-content:space-between; align-items:center;
+    }
+    .cardHead .label{font-weight:900; letter-spacing:.08em; font-size:12px; opacity:.9}
+    .cardBody{padding:12px 14px}
+    .row{display:flex; gap:10px; align-items:center}
+    .grow{flex:1; min-width:0}
+
+    input, textarea, select{
+      width:100%;
+      padding:10px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:var(--panel2);
+      color:#fff;
+      outline:none;
+      font-size:15px;
+    }
+    textarea{min-height:110px; resize:vertical}
+    .btn{
+      padding:10px 12px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      cursor:pointer;
+      font-weight:900;
+    }
+    .btn.primary{border-color:rgba(138,43,255,.55); background:rgba(138,43,255,.18)}
+    .btn.good{border-color:rgba(25,195,125,.55); background:rgba(25,195,125,.12)}
+    .btn.bad{border-color:rgba(255,77,77,.55); background:rgba(255,77,77,.12)}
+    .btn:disabled{opacity:.6; cursor:not-allowed}
+
+    .list{
+      display:flex; flex-direction:column; gap:10px;
+      max-height: calc(100vh - 220px);
+      overflow:auto;
+      padding-right:4px;
+    }
+    .item{
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.20);
+      border-radius:14px;
+      padding:10px 10px;
+      cursor:pointer;
+    }
+    .item:hover{background:rgba(255,255,255,.06)}
+    .item .t{font-weight:900}
+    .item .m{font-size:12px; opacity:.78; margin-top:2px; display:flex; gap:8px; flex-wrap:wrap}
+    .chip{
+      font-size:11px;
+      padding:3px 8px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:rgba(255,255,255,.06);
+      opacity:.95;
+    }
+    .chip.p{border-color:rgba(138,43,255,.55); background:rgba(138,43,255,.14)}
+    .chip.g{border-color:rgba(25,195,125,.55); background:rgba(25,195,125,.12)}
+    .chip.w{border-color:rgba(255,176,32,.55); background:rgba(255,176,32,.10)}
+    .chip.r{border-color:rgba(255,77,77,.55); background:rgba(255,77,77,.10)}
+
+    .big{
+      font-size:18px;
+      font-weight:900;
+      margin:0 0 6px 0;
+    }
+    .muted{opacity:.78; font-size:12px}
+    .sectionTitle{
+      margin:12px 0 8px;
+      font-weight:900;
+      letter-spacing:.08em;
+      font-size:12px;
+      opacity:.85;
+    }
+
+    .two{
+      display:grid;
+      grid-template-columns: 1fr 1fr;
+      gap:10px;
+    }
+
+    .log{
+      max-height: 260px;
+      overflow:auto;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding-right:4px;
+    }
+    .logRow{
+      padding:10px 10px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(0,0,0,.18);
+    }
+    .logMeta{font-size:11px; opacity:.75; display:flex; gap:8px; flex-wrap:wrap}
+    .logNote{margin-top:6px; font-size:13px; line-height:1.35; white-space:pre-wrap; word-break:break-word}
+
+    .tabs{display:flex; gap:8px; flex-wrap:wrap}
+    .tab{
+      padding:7px 10px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.14);
+      background:rgba(255,255,255,.06);
+      cursor:pointer;
+      font-weight:900;
+      font-size:12px;
+    }
+    .tab.active{border-color:rgba(138,43,255,.55); background:rgba(138,43,255,.18)}
+
+    .footnote{font-size:11px; opacity:.7; margin-top:10px; line-height:1.35}
+
+    @media (max-width: 1100px){
+      .grid{grid-template-columns: 1fr}
+      .list{max-height: 320px}
+    }
+  </style>
+
+  <!-- Firebase (compat, like your other pages) -->
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.22.2/firebase-database-compat.js"></script>
+
+  <!-- Your config.js must set window.firebaseConfig -->
+  <script src="config.js"></script>
+</head>
+<body>
+
+  <header class="topbar">
+    <div class="brand">
+      <div class="logo"></div>
+      <div class="titleWrap">
+        <div class="h1">INVESTOR PORTAL</div>
+        <div class="sub" id="whoLine">Signed out • Public view disabled</div>
+      </div>
+    </div>
+    <div class="right">
+      <button class="pill primary" id="btnGoogle">Sign in with Google</button>
+      <button class="pill" id="btnRefresh" title="Reload queues">Refresh</button>
+      <button class="pill danger" id="btnLogout">Log out</button>
+    </div>
+  </header>
+
+  <main class="wrap">
+    <div class="grid">
+
+      <!-- LEFT: CONTACT QUEUE -->
+      <section class="card">
+        <div class="cardHead">
+          <div class="label">CONTACT QUEUE</div>
+          <div class="row" style="gap:8px">
+            <span class="chip p" id="queueCount">0</span>
+          </div>
+        </div>
+        <div class="cardBody">
+          <div class="row">
+            <input id="qSearch" class="grow" placeholder="Search name, phone, tag…"/>
+            <button class="btn" id="btnNew">+ New</button>
+          </div>
+
+          <div class="sectionTitle">Filters</div>
+          <div class="tabs" id="filters">
+            <div class="tab active" data-filter="all">All</div>
+            <div class="tab" data-filter="private_money">Private Money</div>
+            <div class="tab" data-filter="equity_partner">Equity Partner</div>
+            <div class="tab" data-filter="wholesale_buyer">Wholesale Buyer</div>
+            <div class="tab" data-filter="contractor_capital">Contractor Capital</div>
+            <div class="tab" data-filter="micro_loan">Micro-Loan</div>
+          </div>
+
+          <div class="sectionTitle">My assigned contacts</div>
+          <div class="list" id="queueList"></div>
+
+          <div class="footnote">
+            Queue is pulled from <b>contactsByUser/&lt;uid&gt;</b> and resolves details from <b>contactsMaster</b>.
+          </div>
+        </div>
+      </section>
+
+      <!-- CENTER: CONTACT DETAIL + CALL LOG -->
+      <section class="card">
+        <div class="cardHead">
+          <div class="label">CONTACT CONSOLE</div>
+          <div class="row" style="gap:8px">
+            <span class="chip" id="selIdChip">No selection</span>
+          </div>
+        </div>
+
+        <div class="cardBody">
+          <div id="noSel" class="muted">Select a contact from the queue, or click “New”.</div>
+
+          <div id="selPanel" style="display:none">
+            <div class="big" id="cName">—</div>
+            <div class="muted" id="cMeta">—</div>
+
+            <div class="sectionTitle">Phones</div>
+            <div class="row">
+              <select id="cPhoneSel" class="grow"></select>
+              <button class="btn primary" id="btnCall">CALL</button>
+              <button class="btn" id="btnCopy">Copy</button>
+            </div>
+            <div class="muted" style="margin-top:6px">
+              On mobile: dials. On desktop: copies to clipboard.
+            </div>
+
+            <div class="sectionTitle">Tags / Roles</div>
+            <div class="two">
+              <label><input type="checkbox" id="tPrivateMoney"/> Private Money</label>
+              <label><input type="checkbox" id="tEquity"/> Equity Partner</label>
+              <label><input type="checkbox" id="tWholesaleBuyer"/> Wholesale Buyer</label>
+              <label><input type="checkbox" id="tContractorCap"/> Contractor Capital</label>
+              <label><input type="checkbox" id="tMicroLoan"/> Micro-Loan</label>
+              <label><input type="checkbox" id="tDoNotCall"/> Do Not Call</label>
+            </div>
+
+            <div class="sectionTitle">Status</div>
+            <select id="cStatus">
+              <option value="new">New</option>
+              <option value="working">Working</option>
+              <option value="qualified">Qualified</option>
+              <option value="funded">Funded</option>
+              <option value="closed">Closed</option>
+              <option value="dead">Dead</option>
+            </select>
+
+            <div class="sectionTitle">Notes</div>
+            <textarea id="cNotes" placeholder="Private capital notes, buying criteria, risk appetite, terms, relationship notes…"></textarea>
+            <div class="row" style="margin-top:10px">
+              <button class="btn good" id="btnSave">Save</button>
+              <button class="btn bad" id="btnRemoveMe">Remove from my queue</button>
+            </div>
+
+            <div class="sectionTitle">Quick Call Outcomes</div>
+            <div class="row" style="flex-wrap:wrap">
+              <button class="btn" data-outcome="No Answer">No Answer</button>
+              <button class="btn" data-outcome="Left VM">Left VM</button>
+              <button class="btn good" data-outcome="Qualified">Qualified</button>
+              <button class="btn" data-outcome="Follow Up">Follow Up</button>
+              <button class="btn bad" data-outcome="Do Not Call">Do Not Call</button>
+            </div>
+
+            <div class="sectionTitle">Call Log</div>
+            <div class="log" id="callLog"></div>
+
+            <div class="sectionTitle">Add Call Note</div>
+            <textarea id="logNote" placeholder="Short note after each call…"></textarea>
+            <div class="row" style="margin-top:10px">
+              <button class="btn primary" id="btnLog">Log Note</button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT: ADMIN ASSIGN + SCRIPTS -->
+      <section class="card">
+        <div class="cardHead">
+          <div class="label">OPS</div>
+          <div class="row" style="gap:8px">
+            <span class="chip p" id="roleChip">ROLE: USER</span>
+          </div>
+        </div>
+        <div class="cardBody">
+
+          <div class="sectionTitle">Scripts (Private Capital)</div>
+          <select id="scriptSel">
+            <option value="pm1">Private Money — Warm Intro</option>
+            <option value="pm2">Private Money — Cold Call Buyers List</option>
+            <option value="eq1">Equity Partner — Flip JV</option>
+            <option value="mc1">Micro Loan — Contractor Funding</option>
+          </select>
+          <textarea id="scriptBox" readonly></textarea>
+
+          <div class="sectionTitle">Import / Assign (Admin/God)</div>
+          <div class="muted" style="margin-bottom:8px">
+            Paste one per line: <b>Name | Phone | Email | City | Tags</b><br/>
+            Example: <i>Sarah Davis | (407) 555-2345 | sarah@email.com | Orlando | private_money,wholesale_buyer</i>
+          </div>
+          <textarea id="importBox" placeholder="Paste list here…"></textarea>
+
+          <div class="sectionTitle">Assign imported contacts to users</div>
+          <input id="userFilter" placeholder="Filter users (name/email)…"/>
+
+          <div id="userList" style="margin-top:10px; display:flex; flex-direction:column; gap:10px; max-height:220px; overflow:auto; padding-right:4px;">
+            <div class="muted">Sign in to load users.</div>
+          </div>
+
+          <div class="row" style="margin-top:10px">
+            <button class="btn" id="btnAll">All</button>
+            <button class="btn" id="btnNone">None</button>
+            <button class="btn primary" id="btnImport">Import + Assign</button>
+          </div>
+
+          <div class="footnote">
+            Users are loaded from <b>users/&lt;uid&gt;</b>. If you don’t have that node yet, create it on signup (displayName/email/role).
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+<script>
+(() => {
+  // ====== Firebase init ======
+  if (!window.firebaseConfig) {
+    alert("Missing config.js (window.firebaseConfig).");
+    return;
+  }
+  if (!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+  const auth = firebase.auth();
+  const db = firebase.database();
+
+  // ====== DOM ======
+  const $ = (id) => document.getElementById(id);
+
+  const whoLine = $("whoLine");
+  const btnGoogle = $("btnGoogle");
+  const btnLogout = $("btnLogout");
+  const btnRefresh = $("btnRefresh");
+
+  const qSearch = $("qSearch");
+  const queueList = $("queueList");
+  const queueCount = $("queueCount");
+  const filters = $("filters");
+
+  const noSel = $("noSel");
+  const selPanel = $("selPanel");
+  const selIdChip = $("selIdChip");
+
+  const cName = $("cName");
+  const cMeta = $("cMeta");
+  const cPhoneSel = $("cPhoneSel");
+  const btnCall = $("btnCall");
+  const btnCopy = $("btnCopy");
+
+  const tPrivateMoney = $("tPrivateMoney");
+  const tEquity = $("tEquity");
+  const tWholesaleBuyer = $("tWholesaleBuyer");
+  const tContractorCap = $("tContractorCap");
+  const tMicroLoan = $("tMicroLoan");
+  const tDoNotCall = $("tDoNotCall");
+
+  const cStatus = $("cStatus");
+  const cNotes = $("cNotes");
+  const btnSave = $("btnSave");
+  const btnRemoveMe = $("btnRemoveMe");
+
+  const callLog = $("callLog");
+  const logNote = $("logNote");
+  const btnLog = $("btnLog");
+
+  const btnNew = $("btnNew");
+
+  const roleChip = $("roleChip");
+  const scriptSel = $("scriptSel");
+  const scriptBox = $("scriptBox");
+
+  const importBox = $("importBox");
+  const userFilter = $("userFilter");
+  const userList = $("userList");
+  const btnAll = $("btnAll");
+  const btnNone = $("btnNone");
+  const btnImport = $("btnImport");
+
+  // ====== Helpers ======
+  const esc = (s) => String(s ?? "").replace(/[&<>"']/g, c => ({
+    "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"
+  }[c] || c));
+
+  const normPhone = (raw) => {
+    const digits = String(raw || "").replace(/\D/g,"");
+    if (!digits) return "";
+    // Keep last 10 if has country code
+    return digits.length > 10 ? digits.slice(-10) : digits;
+  };
+
+  const fmtPhone = (digits10) => {
+    const d = String(digits10||"");
+    if (d.length !== 10) return d;
+    return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+  };
+
+  const makeContactId = (name, phone10, email) => {
+    // Deterministic-ish key so duplicates collide less. (We still push if missing.)
+    const base = `${(name||"").trim().toLowerCase()}|${phone10||""}|${(email||"").trim().toLowerCase()}`;
+    let h = 0; for (let i=0;i<base.length;i++){ h = ((h<<5)-h) + base.charCodeAt(i); h |= 0; }
+    return "c_" + Math.abs(h);
+  };
+
+  const nowLocal = () => new Date().toLocaleString();
+
+  // ====== Scripts ======
+  const SCRIPTS = {
+    pm1:
+`PRIVATE MONEY (Warm Intro)
+Hey <NAME>, it’s <YOU> with Deal Bankers. Quick question—
+Are you still interested in putting money to work on real estate deals if we bring the opportunity and the paperwork?
+
+• We structure deals with clear terms, collateral, and timeline.
+• You stay in control of your capital.
+• I’m calling because we’re building our investor bench.
+
+If yes:
+1) What returns do you like? (monthly % / points / split)
+2) Are you okay with 1st lien only, or do you consider 2nd lien / equity?
+3) Typical check size range?`,
+
+    pm2:
+`PRIVATE MONEY (Cold Call Buyers List)
+Hey <NAME>, this is <YOU> with Deal Bankers—quick one:
+We’re calling people already active in real estate to see who wants to get paid like the bank on short-term deals.
+
+We fund repairs / acquisitions on secured deals.
+If I send you 2-3 quick deal summaries a month, would you want to review them?
+
+If yes:
+• What’s your preferred deal type: flips, rentals, notes?
+• Minimum return / max timeline?
+• How fast can you fund once you like a deal?`,
+
+    eq1:
+`EQUITY PARTNER (Flip JV)
+Hey <NAME>, it’s <YOU> with Deal Bankers.
+We’re lining up equity partners for flips where our team finds the deal + runs construction.
+We structure a clean JV agreement: defined scope, budget controls, and profit split.
+
+Quick questions:
+• Are you looking for equity-style returns or lender-style returns?
+• Do you prefer being passive, or do you want approval rights on budget/scope?
+• What’s your target markets and check size?`,
+
+    mc1:
+`MICRO-LOAN / CONTRACTOR FUNDING
+Hey <NAME>, <YOU> here with Deal Bankers.
+We have contractors doing strong work who need short-term materials funding.
+These are small notes, fast payoff, often tied to signed work orders.
+
+Would you be open to reviewing micro-funding opportunities:
+• $500–$10,000
+• 2–8 weeks
+• repayment from job proceeds
+• documented with agreements and tracking?`
+  };
+
+  function renderScript(){
+    scriptBox.value = SCRIPTS[scriptSel.value] || "";
+  }
+  scriptSel.addEventListener("change", renderScript);
+  renderScript();
+
+  // ====== State ======
+  let ME = null;
+  let UID = "";
+  let ROLE = "user";
+
+  let myQueueIds = [];     // contactIds assigned to me
+  let masterCache = {};    // contactId -> contact data
+  let selectedId = "";
+
+  let activeFilter = "all";
+
+  // ====== Auth ======
+  btnGoogle.onclick = async () => {
+    const prov = new firebase.auth.GoogleAuthProvider();
+    await auth.signInWithPopup(prov);
+  };
+  btnLogout.onclick = () => auth.signOut();
+  btnRefresh.onclick = () => loadQueue();
+
+  auth.onAuthStateChanged(async (u) => {
+    ME = u || null;
+    UID = u ? u.uid : "";
+    whoLine.textContent = u
+      ? `Signed in: ${u.displayName || u.email || u.uid} • ${nowLocal()}`
+      : "Signed out • Sign in to use Investor CRM";
+
+    btnGoogle.style.display = u ? "none" : "inline-flex";
+    btnLogout.style.display = u ? "inline-flex" : "none";
+
+    if (!u){
+      ROLE = "user";
+      roleChip.textContent = "ROLE: USER";
+      userList.innerHTML = `<div class="muted">Sign in to load users.</div>`;
+      queueList.innerHTML = "";
+      queueCount.textContent = "0";
+      clearSelection();
+      return;
+    }
+
+    // Ensure user profile exists (simple)
+    const userRef = db.ref(`users/${UID}`);
+    const snap = await userRef.get();
+    if (!snap.exists()){
+      await userRef.set({
+        uid: UID,
+        email: u.email || "",
+        displayName: u.displayName || "",
+        role: "user",
+        createdAt: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+
+    // Load role
+    const snap2 = await userRef.get();
+    ROLE = (snap2.val() && snap2.val().role) ? snap2.val().role : "user";
+    roleChip.textContent = `ROLE: ${String(ROLE).toUpperCase()}`;
+
+    await loadUsers(); // for admin assignment
+    await loadQueue();
+  });
+
+  // ====== Queue loading ======
+  async function loadQueue(){
+    if (!UID) return;
+
+    const idsSnap = await db.ref(`contactsByUser/${UID}`).get();
+    const idsObj = idsSnap.val() || {};
+    myQueueIds = Object.keys(idsObj).filter(k => idsObj[k]);
+
+    // Pull master details (batch-ish)
+    masterCache = {};
+    const promises = myQueueIds.map(async (cid) => {
+      const s = await db.ref(`contactsMaster/${cid}`).get();
+      if (s.exists()) masterCache[cid] = s.val();
+    });
+    await Promise.all(promises);
+
+    renderQueue();
+  }
+
+  function hasTagOrRole(c, key){
+    const tags = c?.tags || {};
+    const roles = c?.roles || {};
+    return !!tags[key] || !!roles[key];
+  }
+
+  function matchesFilter(c){
+    if (activeFilter === "all") return true;
+    return hasTagOrRole(c, activeFilter);
+  }
+
+  function matchesSearch(c, term){
+    if (!term) return true;
+    const t = term.toLowerCase();
+    const name = (c?.name || "").toLowerCase();
+    const email = (c?.email || "").toLowerCase();
+    const city = (c?.city || "").toLowerCase();
+    const phones = (c?.phones || []).map(p => String(p.number||"")).join(" ");
+    const tagKeys = Object.keys(c?.tags || {}).join(" ");
+    const roleKeys = Object.keys(c?.roles || {}).join(" ");
+    return (name+email+city+phones+tagKeys+roleKeys).toLowerCase().includes(t);
+  }
+
+  function statusChip(status){
+    const s = String(status||"new");
+    if (s==="funded") return `<span class="chip g">Funded</span>`;
+    if (s==="qualified") return `<span class="chip g">Qualified</span>`;
+    if (s==="working") return `<span class="chip w">Working</span>`;
+    if (s==="dead") return `<span class="chip r">Dead</span>`;
+    if (s==="closed") return `<span class="chip">Closed</span>`;
+    return `<span class="chip p">New</span>`;
+  }
+
+  function tagChips(c){
+    const keys = ["private_money","equity_partner","wholesale_buyer","contractor_capital","micro_loan"];
+    const out = [];
+    keys.forEach(k => { if (hasTagOrRole(c,k)) out.push(`<span class="chip">${k.replace(/_/g," ")}</span>`); });
+    if (c?.doNotCall) out.push(`<span class="chip r">DNC</span>`);
+    return out.join("");
+  }
+
+  function renderQueue(){
+    const term = (qSearch.value || "").trim();
+    const ids = myQueueIds
+      .filter(cid => masterCache[cid])
+      .filter(cid => matchesFilter(masterCache[cid]))
+      .filter(cid => matchesSearch(masterCache[cid], term));
+
+    queueCount.textContent = String(ids.length);
+
+    if (!ids.length){
+      queueList.innerHTML = `<div class="muted">No contacts match.</div>`;
+      return;
+    }
+
+    queueList.innerHTML = ids.map(cid => {
+      const c = masterCache[cid];
+      const phone0 = c?.phones?.[0]?.number ? fmtPhone(c.phones[0].number) : "";
+      const meta = `${esc(c?.city || "")}${phone0 ? " • " + esc(phone0) : ""}`;
+      return `
+        <div class="item" data-id="${esc(cid)}">
+          <div class="t">${esc(c?.name || "Unnamed Contact")}</div>
+          <div class="m">
+            ${statusChip(c?.status)}
+            ${meta ? `<span>${meta}</span>` : ""}
+          </div>
+          <div class="m">${tagChips(c)}</div>
+        </div>
+      `;
+    }).join("");
+
+    queueList.querySelectorAll(".item").forEach(el => {
+      el.onclick = () => selectContact(el.getAttribute("data-id"));
+    });
+  }
+
+  qSearch.addEventListener("input", renderQueue);
+
+  // Filter tabs
+  filters.addEventListener("click", (e) => {
+    const tab = e.target.closest(".tab");
+    if (!tab) return;
+    filters.querySelectorAll(".tab").forEach(t => t.classList.remove("active"));
+    tab.classList.add("active");
+    activeFilter = tab.dataset.filter || "all";
+    renderQueue();
+  });
+
+  // ====== Selection ======
+  function clearSelection(){
+    selectedId = "";
+    selIdChip.textContent = "No selection";
+    noSel.style.display = "block";
+    selPanel.style.display = "none";
+    callLog.innerHTML = "";
+    logNote.value = "";
+  }
+
+  async function selectContact(cid){
+    selectedId = cid;
+    selIdChip.textContent = cid;
+
+    const snap = await db.ref(`contactsMaster/${cid}`).get();
+    if (!snap.exists()){
+      alert("Contact missing in master.");
+      return;
+    }
+    const c = snap.val();
+    masterCache[cid] = c;
+
+    noSel.style.display = "none";
+    selPanel.style.display = "block";
+
+    cName.textContent = c.name || "Unnamed Contact";
+    cMeta.textContent = [
+      c.email ? c.email : "",
+      c.city ? c.city : ""
+    ].filter(Boolean).join(" • ") || "—";
+
+    // Phones
+    cPhoneSel.innerHTML = "";
+    const phones = Array.isArray(c.phones) ? c.phones : [];
+    if (!phones.length){
+      const opt = document.createElement("option");
+      opt.value = "";
+      opt.textContent = "No phone";
+      cPhoneSel.appendChild(opt);
+    } else {
+      phones.forEach((p, idx) => {
+        const opt = document.createElement("option");
+        opt.value = p.number || "";
+        opt.textContent = `${p.label ? p.label + " — " : ""}${fmtPhone(p.number || "")}`;
+        cPhoneSel.appendChild(opt);
+      });
+    }
+
+    // Tags/Roles/Flags
+    tPrivateMoney.checked = hasTagOrRole(c, "private_money");
+    tEquity.checked = hasTagOrRole(c, "equity_partner");
+    tWholesaleBuyer.checked = hasTagOrRole(c, "wholesale_buyer");
+    tContractorCap.checked = hasTagOrRole(c, "contractor_capital");
+    tMicroLoan.checked = hasTagOrRole(c, "micro_loan");
+    tDoNotCall.checked = !!c.doNotCall;
+
+    cStatus.value = c.status || "new";
+    cNotes.value = c.notes || "";
+
+    await loadCallLog(cid);
+  }
+
+  // ====== Call actions ======
+  btnCopy.onclick = async () => {
+    const num = cPhoneSel.value || "";
+    if (!num) return;
+    try{
+      await navigator.clipboard.writeText(num);
+      btnCopy.textContent = "Copied";
+      setTimeout(()=>btnCopy.textContent="Copy", 900);
+    }catch(e){
+      alert("Clipboard blocked by browser.");
+    }
+  };
+
+  btnCall.onclick = async () => {
+    const num = cPhoneSel.value || "";
+    if (!num) return;
+
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    if (isMobile){
+      location.href = `tel:${num}`;
+    } else {
+      try{
+        await navigator.clipboard.writeText(num);
+        btnCall.textContent = "Copied #";
+        setTimeout(()=>btnCall.textContent="CALL", 900);
+      }catch(e){
+        // fallback
+        alert("Number: " + num);
+      }
+    }
+
+    // Optional: auto-log call attempt
+    await addCallLog("Call Attempt", "call", "");
+  };
+
+  // Quick outcome buttons
+  document.addEventListener("click", async (e) => {
+    const btn = e.target.closest("button[data-outcome]");
+    if (!btn || !selectedId) return;
+    const outcome = btn.getAttribute("data-outcome");
+    if (outcome === "Do Not Call"){
+      tDoNotCall.checked = true;
+      await saveContact(); // persist flag
+    }
+    await addCallLog(outcome, "call", "");
+    await loadCallLog(selectedId);
+  });
+
+  // ====== Save contact ======
+  async function saveContact(){
+    if (!UID || !selectedId) return;
+
+    const ref = db.ref(`contactsMaster/${selectedId}`);
+    const snap = await ref.get();
+    if (!snap.exists()) return;
+
+    const c = snap.val() || {};
+    const tags = Object.assign({}, c.tags || {});
+    // Normalize tags based on checkboxes
+    const setTag = (k, on) => { if (on) tags[k] = true; else delete tags[k]; };
+
+    setTag("private_money", tPrivateMoney.checked);
+    setTag("equity_partner", tEquity.checked);
+    setTag("wholesale_buyer", tWholesaleBuyer.checked);
+    setTag("contractor_capital", tContractorCap.checked);
+    setTag("micro_loan", tMicroLoan.checked);
+
+    const upd = {
+      tags,
+      doNotCall: !!tDoNotCall.checked,
+      status: cStatus.value || "new",
+      notes: cNotes.value || "",
+      updatedAt: firebase.database.ServerValue.TIMESTAMP,
+      updatedBy: UID
+    };
+
+    await ref.update(upd);
+    masterCache[selectedId] = Object.assign({}, c, upd);
+    renderQueue();
+  }
+
+  btnSave.onclick = async () => {
+    await saveContact();
+    btnSave.textContent = "Saved";
+    setTimeout(()=>btnSave.textContent="Save", 900);
+  };
+
+  btnRemoveMe.onclick = async () => {
+    if (!UID || !selectedId) return;
+    await db.ref(`contactsByUser/${UID}/${selectedId}`).remove();
+    clearSelection();
+    await loadQueue();
+  };
+
+  // ====== Call log ======
+  async function loadCallLog(cid){
+    const ref = db.ref(`callLogsByContact/${cid}`).limitToLast(40);
+    const snap = await ref.get();
+    const obj = snap.val() || {};
+
+    const rows = Object.keys(obj).map(k => obj[k]).sort((a,b)=>(a.ts||0)-(b.ts||0));
+    if (!rows.length){
+      callLog.innerHTML = `<div class="muted">No call log yet.</div>`;
+      return;
+    }
+    callLog.innerHTML = rows.map(r => `
+      <div class="logRow">
+        <div class="logMeta">
+          <span><b>${esc(r.outcome || "Note")}</b></span>
+          <span>${esc(new Date(r.ts || Date.now()).toLocaleString())}</span>
+          <span>${esc(r.by || "")}</span>
+        </div>
+        ${r.note ? `<div class="logNote">${esc(r.note)}</div>` : ""}
+      </div>
+    `).join("");
+    callLog.scrollTop = callLog.scrollHeight;
+  }
+
+  async function addCallLog(outcome, channel, note){
+    if (!UID || !selectedId) return;
+    const ref = db.ref(`callLogsByContact/${selectedId}`).push();
+    await ref.set({
+      ts: firebase.database.ServerValue.TIMESTAMP,
+      uid: UID,
+      by: (ME?.displayName || ME?.email || "Deal Banker"),
+      outcome: outcome || "Note",
+      channel: channel || "call",
+      note: note || ""
+    });
+  }
+
+  btnLog.onclick = async () => {
+    if (!selectedId) return;
+    const note = (logNote.value || "").trim();
+    if (!note) return;
+    await addCallLog("Note", "call", note);
+    logNote.value = "";
+    await loadCallLog(selectedId);
+  };
+
+  // ====== New contact ======
+  btnNew.onclick = async () => {
+    if (!UID) return alert("Sign in first.");
+    const name = prompt("Name? (required)") || "";
+    if (!name.trim()) return;
+
+    const phoneRaw = prompt("Phone? (optional)") || "";
+    const phone10 = normPhone(phoneRaw);
+    const email = prompt("Email? (optional)") || "";
+    const city = prompt("City? (optional)") || "";
+
+    const cid = makeContactId(name, phone10, email);
+    const ref = db.ref(`contactsMaster/${cid}`);
+    const snap = await ref.get();
+
+    if (!snap.exists()){
+      await ref.set({
+        contactId: cid,
+        name: name.trim(),
+        email: email.trim(),
+        city: city.trim(),
+        phones: phone10 ? [{ label: "Main", number: phone10 }] : [],
+        tags: { private_money: true }, // default for Investor Portal
+        status: "new",
+        notes: "",
+        createdAt: firebase.database.ServerValue.TIMESTAMP,
+        createdBy: UID
+      });
+    }
+
+    // Assign to me
+    await db.ref(`contactsByUser/${UID}/${cid}`).set(true);
+    await loadQueue();
+    await selectContact(cid);
+  };
+
+  // ====== Admin user list + import/assign ======
+  function isAdminRole(){
+    return String(ROLE||"").toLowerCase() === "god" ||
+           String(ROLE||"").toLowerCase() === "admin";
+  }
+
+  async function loadUsers(){
+    if (!UID) return;
+
+    const snap = await db.ref("users").get();
+    const users = snap.val() || {};
+    const arr = Object.keys(users).map(k => users[k]).filter(Boolean);
+
+    const canAssign = isAdminRole();
+
+    const render = () => {
+      const term = (userFilter.value || "").trim().toLowerCase();
+      const filtered = arr.filter(u => {
+        const s = `${u.displayName||""} ${u.email||""} ${u.role||""}`.toLowerCase();
+        return !term || s.includes(term);
+      });
+
+      if (!canAssign){
+        userList.innerHTML = `<div class="muted">Assignment is Admin/God only.</div>`;
+        return;
+      }
+
+      if (!filtered.length){
+        userList.innerHTML = `<div class="muted">No users found.</div>`;
+        return;
+      }
+
+      userList.innerHTML = filtered.map(u => `
+        <label class="item" style="cursor:default">
+          <div class="row" style="align-items:flex-start">
+            <input class="uChk" type="checkbox" data-uid="${esc(u.uid)}" style="margin-top:3px"/>
+            <div class="grow">
+              <div class="t">${esc(u.displayName || "User")}</div>
+              <div class="m">${esc(u.email || "")} • <span class="chip">${esc(u.role || "user")}</span></div>
+            </div>
+          </div>
+        </label>
+      `).join("");
+    };
+
+    userFilter.oninput = render;
+    render();
+
+    btnAll.onclick = () => userList.querySelectorAll(".uChk").forEach(c => c.checked = true);
+    btnNone.onclick = () => userList.querySelectorAll(".uChk").forEach(c => c.checked = false);
+
+    btnImport.onclick = async () => {
+      if (!canAssign) return alert("Admin/God only.");
+
+      const raw = (importBox.value || "").trim();
+      if (!raw) return alert("Paste contacts first.");
+
+      const targetUids = [...userList.querySelectorAll(".uChk")]
+        .filter(c => c.checked)
+        .map(c => c.getAttribute("data-uid"));
+
+      if (!targetUids.length) return alert("Select at least one user.");
+
+      const lines = raw.split("\n").map(l => l.trim()).filter(Boolean);
+
+      let created = 0, assigned = 0;
+
+      for (const line of lines){
+        // Name | Phone | Email | City | Tags
+        const parts = line.split("|").map(x => x.trim());
+        const name = parts[0] || "";
+        const phone10 = normPhone(parts[1] || "");
+        const email = (parts[2] || "").trim();
+        const city = (parts[3] || "").trim();
+        const tagsRaw = (parts[4] || "").trim();
+
+        if (!name) continue;
+
+        const tags = {};
+        const set = (k)=>{ if (k) tags[k] = true; };
+        // Default tag because this is investor portal import
+        set("private_money");
+        if (tagsRaw){
+          tagsRaw.split(",").map(t => t.trim().toLowerCase()).forEach(set);
+        }
+
+        const cid = makeContactId(name, phone10, email);
+        const ref = db.ref(`contactsMaster/${cid}`);
+        const snap = await ref.get();
+
+        if (!snap.exists()){
+          await ref.set({
+            contactId: cid,
+            name,
+            email,
+            city,
+            phones: phone10 ? [{ label:"Main", number: phone10 }] : [],
+            tags,
+            status: "new",
+            notes: "",
+            createdAt: firebase.database.ServerValue.TIMESTAMP,
+            createdBy: UID
+          });
+          created++;
+        } else {
+          // Merge tags & phones lightly
+          const existing = snap.val() || {};
+          const mergedTags = Object.assign({}, existing.tags || {}, tags);
+          const phones = Array.isArray(existing.phones) ? existing.phones.slice() : [];
+          if (phone10 && !phones.some(p => p.number === phone10)){
+            phones.push({label:"Main", number: phone10});
+          }
+          await ref.update({ tags: mergedTags, phones });
+        }
+
+        // Assign to selected users
+        for (const tuid of targetUids){
+          await db.ref(`contactsByUser/${tuid}/${cid}`).set(true);
+          assigned++;
+        }
+      }
+
+      alert(`Import complete.\nCreated: ${created}\nAssignments: ${assigned}`);
+      importBox.value = "";
+      await loadQueue();
+    };
+  }
+
+})();
+</script>
+
+</body>
+</html>
