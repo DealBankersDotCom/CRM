@@ -1134,7 +1134,7 @@ $("callBtn").addEventListener("click", async ()=>{
   const tel = sanitizeTel(currentPhone);
   if (!tel) return;
 
-  await logStatus(`Call Attempt`, { phone: currentPhone });
+  await logStatus("Call Attempt", { phone: currentPhone });
 
   if (isMobileish()){
     doTelDial(currentPhone);
@@ -1142,21 +1142,26 @@ $("callBtn").addEventListener("click", async ()=>{
     try{
       await navigator.clipboard.writeText(currentPhone);
       toast("Copied number. (Tip: on desktop, paste into your dialer.)");
-} catch(e){
-  toast("Copy failed. Highlight the number and copy manually.");
-}
+    } catch(e){
+      toast("Copy failed. Highlight the number and copy manually.");
+    }
+  }
 });
+
 $("copyBtn").addEventListener("click", async ()=>{
   if (!currentPhone) return;
   try{
     await navigator.clipboard.writeText(currentPhone);
     toast("Copied ✓");
-  }catch(e){
+  } catch(e){
     const ta = document.createElement("textarea");
     ta.value = currentPhone;
     document.body.appendChild(ta);
     ta.select();
-    try{ document.execCommand("copy"); toast("Copied ✓"); }catch{}
+    try{
+      document.execCommand("copy");
+      toast("Copied ✓");
+    } catch{}
     document.body.removeChild(ta);
   }
 });
