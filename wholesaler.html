@@ -863,17 +863,51 @@ async function loadUserDirectoryCache(){
   }
 }
 
-function parseAssigneeTokens(){ return []; }
-function resolveAssigneesToUids(tokens){ return {uids:[], missing:[]}; }
+function parseAssigneeTokens(input){
+  const s = String(input || "").trim();
+  if(!s) return [];
+  return s
+    .split(/[\n,;]+/g)          // split on commas/semicolons/newlines
+    .map(t => t.trim())
+    .filter(Boolean);
+}
+
+function resolveAssigneesToUids(tokens){
+  const uids = [];
+  const missing = [];
+
+  (tokens || []).forEach((raw0)=>{
+    const raw = String(raw0 || "").trim();
+    if(!raw) return;
+
+    // @username
+    if(raw.startsWith("@")){
+      const uname = raw.slice(1).toLowerCase().trim();
+      const uid = userDirCache.byUser[uname];
+      if(uid) uids.push(uid);
+      else missing.push(raw);
+      return;
+    }
+
+    // direct UID (if someone pastes it)
+    if(userDirCache.byUid[raw]){
+      uids.push(raw);
+      return;
+    }
 
     // email
-    const email = raw.toLowerCase();
-    const uid = userDirCache.byEmail[email];
-    if (uid) uids.push(uid);
-    else missing.push(raw);
- });
+    if(raw.includes("@")){
+      const email = raw.toLowerCase().trim();
+      const uid = userDirCache.byEmail[email];
+      if(uid) uids.push(uid);
+      else missing.push(raw);
+      return;
+    }
 
-  // de-dupe
+    // fallback
+    missing.push(raw);
+  });
+
   return { uids: Array.from(new Set(uids)), missing };
 }
 
