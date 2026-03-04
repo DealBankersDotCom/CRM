@@ -16,7 +16,6 @@
       --good:#2bd4a7;--warn:#ffb020;--bad:#ff4d4d;
     }
     *{box-sizing:border-box}
-    html,body{height:100%}
     body{
       margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
       color:var(--text);
@@ -40,6 +39,12 @@
       display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:.4px;
       min-width: 260px;
     }
+    .logo{
+      width:34px;height:34px;border-radius:10px;
+      border:1px solid rgba(255,255,255,.12);
+      box-shadow:0 10px 26px rgba(0,0,0,.35);
+      object-fit:cover;
+    }
     .pill{
       display:inline-flex; align-items:center; gap:8px;
       padding:8px 12px; border-radius:999px;
@@ -48,49 +53,41 @@
       font-weight:800;
       white-space:nowrap;
     }
-    .pill.ghost{ opacity:.9; }
     .actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-
     .btn{
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.06);
       color:var(--text);
       padding:10px 14px; border-radius:999px;
       font-weight:900; cursor:pointer;
-      transition: transform .06s ease, background .15s ease, border-color .15s ease, filter .15s ease;
+      transition: transform .06s ease, background .15s ease, border-color .15s ease;
+      display:inline-flex; align-items:center; gap:8px;
     }
     .btn:hover{ transform:translateY(-1px); background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.18); }
     .btn.primary{ background:rgba(43,116,255,.18); border-color:rgba(43,116,255,.35); }
+    .btn.blue{ background:rgba(43,116,255,.14); border-color:rgba(43,116,255,.35); }
+    .btn.red{ background:rgba(255,77,77,.12); border-color:rgba(255,77,77,.35); }
     .btn.dark{ background:rgba(0,0,0,.25); border-color:rgba(255,255,255,.12); }
     .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
 
-    /* phone icon buttons (internal support request to God) */
-    .phoneBtn{
-      display:inline-flex; align-items:center; gap:10px;
-      padding:10px 14px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,255,255,.06);
+    /* config banner */
+    .banner{
+      max-width:1500px;
+      margin:12px auto 0;
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,77,77,.28);
+      background:rgba(255,77,77,.10);
       color:var(--text);
-      cursor:pointer;
-      font-weight:1000;
-      user-select:none;
+      display:none;
+      box-shadow:0 16px 40px rgba(0,0,0,.35);
     }
-    .phoneBtn:hover{ transform:translateY(-1px); filter:brightness(1.05); }
-    .phoneBtn .ico{
-      font-size:16px; line-height:1;
-      width:18px; text-align:center;
-    }
-    .phoneBtn.blue{
-      border-color:rgba(43,116,255,.45);
-      background:rgba(43,116,255,.14);
-    }
-    .phoneBtn.red{
-      border-color:rgba(255,77,77,.45);
-      background:rgba(255,77,77,.14);
-    }
-    .phoneBtn small{
-      font-size:11px; color:var(--muted); font-weight:800; opacity:.95;
-      display:block; line-height:1.05;
+    .banner b{ color:#fff; }
+    .banner code{
+      padding:2px 6px; border-radius:10px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.25);
+      color:var(--text);
     }
 
     /* layout */
@@ -117,21 +114,8 @@
     }
     .panelBody{ padding:14px; }
     .tiny{ font-size:12px; color:var(--muted); opacity:.9; }
-    .toast{
-      display:none;
-      margin-top:10px;
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.25);
-      color:var(--text);
-      font-size:12px;
-    }
-    .toast.on{display:block}
 
-    .searchRow{
-      display:flex; gap:10px; margin-bottom:10px;
-    }
+    .searchRow{ display:flex; gap:10px; margin-bottom:10px; }
     input, select, textarea{
       width:100%;
       padding:12px 12px;
@@ -171,6 +155,7 @@
       border:1px solid rgba(255,255,255,.10);
       background:rgba(255,255,255,.04);
       font-weight:900; font-size:12px;
+      white-space:nowrap;
     }
 
     /* modal */
@@ -198,14 +183,12 @@
       font-weight:900;
       position:sticky; top:0;
       backdrop-filter: blur(10px);
+      z-index:2;
     }
     .modalBody{ padding:14px; }
     .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
     .grid1{ display:grid; grid-template-columns:1fr; gap:10px; }
-    .divider{
-      height:1px; background:rgba(255,255,255,.10);
-      margin:12px 0;
-    }
+    .divider{ height:1px; background:rgba(255,255,255,.10); margin:12px 0; }
 
     /* assign block */
     .assignWrap{
@@ -222,15 +205,80 @@
     .assignBtns{ display:flex; gap:8px; flex-wrap:wrap; }
     .userList{
       display:flex; flex-direction:column; gap:8px;
-      max-height:240px; overflow:auto;
+      max-height:220px; overflow:auto;
       padding-right:6px;
+    }
+
+    /* chat bubble */
+    .chatFab{
+      position:fixed;
+      right:18px;
+      bottom:18px;
+      width:58px;height:58px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.35);
+      box-shadow:0 22px 60px rgba(0,0,0,.55);
+      cursor:pointer;
+      display:flex;align-items:center;justify-content:center;
+      z-index:60;
+      backdrop-filter: blur(10px);
+    }
+    .chatFab:hover{ border-color:rgba(43,116,255,.35); }
+    .chatFab span{ font-size:22px; }
+
+    .chatPanel{
+      position:fixed;
+      right:18px;
+      bottom:88px;
+      width:min(380px, calc(100vw - 36px));
+      max-height:60vh;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.12);
+      background:rgba(0,0,0,.65);
+      box-shadow:0 25px 70px rgba(0,0,0,.55);
+      overflow:hidden;
+      display:none;
+      z-index:60;
+      backdrop-filter: blur(10px);
+    }
+    .chatHead{
+      padding:12px 12px;
+      display:flex;align-items:center;justify-content:space-between;
+      border-bottom:1px solid rgba(255,255,255,.10);
+      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+      font-weight:900;
+    }
+    .chatBody{
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      overflow:auto;
+      max-height: calc(60vh - 120px);
+    }
+    .msg{
+      max-width:85%;
+      padding:10px 12px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.06);
+      font-size:13px;
+      line-height:1.25;
+      white-space:pre-wrap;
+      word-break:break-word;
+    }
+    .msg.me{ margin-left:auto; border-color:rgba(43,116,255,.30); background:rgba(43,116,255,.12); }
+    .msg.meta{ max-width:100%; opacity:.85; font-size:12px; background:rgba(255,255,255,.03); }
+    .chatFoot{
+      padding:12px;
+      border-top:1px solid rgba(255,255,255,.10);
+      display:flex; gap:10px; align-items:center;
     }
 
     /* responsive */
     @media (max-width: 1180px){
       .grid{ grid-template-columns: 1fr; }
-      .brand{min-width:auto}
-      .actions{justify-content:flex-start}
     }
   </style>
 </head>
@@ -239,33 +287,28 @@
 
   <div class="topbar">
     <div class="brand">
-      <div class="pill ghost">DB</div>
+      <img class="logo" src="icon (1).jpg" alt="DealBankers" />
       <div>DEALBANKERS • Investor Portal</div>
-      <div id="rolePill" class="pill ghost" style="display:none"></div>
+      <div id="rolePill" class="pill" style="display:none"></div>
     </div>
 
     <div class="actions">
       <button class="btn dark" id="btnDashboard">Dashboard</button>
 
-      <!-- INTERNAL REQUEST TO GOD (old school phone icon) -->
-      <button class="phoneBtn blue" id="btnBlueSupport" title="Non-urgent request to God (internal)">
-        <span class="ico">☎</span>
-        <span>
-          Blue<br/><small>Request</small>
-        </span>
+      <!-- Old school phones: internal requests to God -->
+      <button class="btn blue" id="btnBlueSupport" title="Blue Phone: non-urgent request to God">
+        ☎ Blue Phone
       </button>
-
-      <button class="phoneBtn red" id="btnRedSupport" title="Urgent request to God (internal)">
-        <span class="ico">☎</span>
-        <span>
-          Red<br/><small>Urgent</small>
-        </span>
+      <button class="btn red" id="btnRedSupport" title="Red Phone: urgent request to God">
+        ☎ Red Phone
       </button>
 
       <button class="btn dark" id="btnSettings">⚙</button>
       <button class="btn dark" id="btnLogout">Log Out</button>
     </div>
   </div>
+
+  <div class="banner" id="configBanner"></div>
 
   <div class="wrap">
     <div class="grid">
@@ -365,7 +408,7 @@
         <!-- Assignments (God/Admin) -->
         <div id="assignBlock" class="assignWrap" style="display:none;">
           <div class="assignTop">
-            <div style="font-weight:900;">Assign to users <span class="tiny">(Admin/God)</span></div>
+            <div style="font-weight:900;">Assign to users <span class="tiny">(Admin mode)</span></div>
             <div class="assignBtns">
               <button class="btn" id="btnAssignAll">All</button>
               <button class="btn" id="btnAssignNone">None</button>
@@ -409,7 +452,29 @@
     </div>
   </div>
 
-  <!-- Firebase (Compat) -->
+  <!-- CHAT -->
+  <div class="chatFab" id="chatFab" title="Message God Mode">
+    <span>💬</span>
+  </div>
+
+  <div class="chatPanel" id="chatPanel">
+    <div class="chatHead">
+      <div>
+        Direct to God
+        <div class="tiny" id="chatMeta">dealbankers@gmail.com</div>
+      </div>
+      <button class="btn" id="chatCloseBtn" style="padding:8px 10px;">Close</button>
+    </div>
+    <div class="chatBody" id="chatBody">
+      <div class="msg meta">Sign in to chat.</div>
+    </div>
+    <div class="chatFoot">
+      <input id="chatInput" placeholder="Type a message…" />
+      <button class="btn primary" id="chatSendBtn">Send</button>
+    </div>
+  </div>
+
+  <!-- Firebase (Compat, same style as your wholesaler page) -->
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
@@ -419,7 +484,11 @@
      * CONFIG
      *************/
     const firebaseConfig = {
-      // TODO: paste your config
+      // ✅ IMPORTANT:
+      // databaseURL MUST look like:
+      //   https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com
+      // or
+      //   https://YOUR_PROJECT_ID.firebaseio.com
       apiKey: "YOUR_API_KEY",
       authDomain: "YOUR_AUTH_DOMAIN",
       databaseURL: "YOUR_DATABASE_URL",
@@ -428,30 +497,123 @@
     };
 
     const GOD_EMAIL = "dealbankers@gmail.com";
+    const PORTAL_NAME = "Investor";
 
     const PATHS = {
       USERS: "userDirectory",
       INVESTORS_MASTER: "investorsMaster",
       INVESTORS_BY_USER: "investorsByUser",
-
-      // (placeholder) internal requests (we’ll wire later)
-      REQUESTS: "supportRequests"
+      SUPPORT: "supportRequests",
+      DIRECT_TO_GOD: "directToGod"
     };
 
     /*************
-     * BOOT
+     * SAFE BOOT (don’t let bad config kill the whole UI)
      *************/
-    firebase.initializeApp(firebaseConfig);
-    const auth = firebase.auth();
-    const db = firebase.database();
-
     const $ = (id)=> document.getElementById(id);
+    let firebaseReady = false;
+    let auth = null, db = null;
 
+    function showConfigError(msg){
+      const b = $("configBanner");
+      b.style.display = "block";
+      b.innerHTML = msg;
+    }
+
+    function isValidDbUrl(url){
+      if(!url) return false;
+      const u = String(url).trim();
+      if(!u.startsWith("https://")) return false;
+      // must contain firebaseio.com OR firebaseio.com-like OR default-rtdb
+      return (u.includes(".firebaseio.com") || u.includes("default-rtdb.firebaseio.com"));
+    }
+
+    try{
+      const cfg = firebaseConfig || {};
+      const missing =
+        !cfg.apiKey || cfg.apiKey.includes("YOUR_") ||
+        !cfg.authDomain || cfg.authDomain.includes("YOUR_") ||
+        !cfg.projectId || cfg.projectId.includes("YOUR_") ||
+        !cfg.appId || cfg.appId.includes("YOUR_") ||
+        !cfg.databaseURL || String(cfg.databaseURL).includes("YOUR_") || !isValidDbUrl(cfg.databaseURL);
+
+      if(missing){
+        showConfigError(
+          `<b>Firebase not configured yet.</b> Your buttons + chat won’t load until you paste real Firebase values.
+           <br/>Fix: set <code>firebaseConfig.databaseURL</code> to something like
+           <code>https://YOUR_PROJECT_ID-default-rtdb.firebaseio.com</code> (Realtime Database URL).`
+        );
+      } else {
+        firebase.initializeApp(firebaseConfig);
+        auth = firebase.auth();
+        db = firebase.database();
+        firebaseReady = true;
+      }
+    }catch(err){
+      console.error(err);
+      showConfigError(
+        `<b>Firebase failed to start.</b> ${escapeHtml(err?.message||String(err))}
+         <br/>Most common cause: invalid <code>databaseURL</code>.`
+      );
+    }
+
+    /*************
+     * UI ALWAYS WORKS (even without firebase)
+     *************/
+    $("btnDashboard").onclick = ()=> window.location.href = "index.html";
+    $("btnLogout").onclick = async ()=> {
+      try{ if(firebaseReady && auth) await auth.signOut(); }catch(e){}
+      // fallback: bounce to homepage either way
+      window.location.href = "index.html";
+    };
+    $("btnSettings").onclick = ()=> alert("Settings coming next (profile + roles).");
+
+    // Chat panel toggle
+    $("chatFab").onclick = ()=> toggleChat(true);
+    $("chatCloseBtn").onclick = ()=> toggleChat(false);
+    function toggleChat(on){
+      $("chatPanel").style.display = on ? "block" : "none";
+    }
+
+    // Support phones -> create request to God
+    $("btnBlueSupport").onclick = ()=> openSupportPrompt("blue");
+    $("btnRedSupport").onclick  = ()=> openSupportPrompt("red");
+
+    async function openSupportPrompt(priority){
+      const label = priority === "red" ? "RED PHONE (urgent)" : "BLUE PHONE (non-urgent)";
+      const msg = prompt(`${label}\n\nWhat do you need from God Mode in the ${PORTAL_NAME} portal?`);
+      if(!msg) return;
+
+      if(!firebaseReady || !auth?.currentUser){
+        alert("Please sign in first so we can route the request to God Mode.");
+        return;
+      }
+
+      const u = auth.currentUser;
+      const payload = {
+        portal: PORTAL_NAME,
+        priority: priority,
+        message: String(msg).trim(),
+        fromUid: u.uid,
+        fromEmail: (u.email||"").toLowerCase(),
+        fromName: u.displayName || "",
+        createdAt: Date.now(),
+        status: "open"
+      };
+
+      const ref = db.ref(`${PATHS.SUPPORT}/${u.uid}`).push();
+      await ref.set(payload);
+      alert("Sent to God Mode ✅");
+    }
+
+    /*************
+     * APP STATE
+     *************/
     let UID = null;
     let ME = null;
     let isAdmin = false;
 
-    // userDirectory cache (uid -> {email,name,role})
+    // userDirectory cache
     let userDirCache = {};
     let usersCache = [];
     let assignChecks = {};
@@ -464,34 +626,47 @@
     let activeFilter = "all";
     let searchText = "";
 
+    // chat
+    let chatUnsub = null;
+
     /*************
-     * AUTH
+     * START APP (only if firebase ready)
      *************/
-    auth.onAuthStateChanged(async (user)=>{
-      if(!user){
-        UID = null; ME = null; isAdmin = false;
-        $("rolePill").style.display = "none";
-        return;
-      }
+    if(firebaseReady){
+      auth.onAuthStateChanged(async (user)=>{
+        if(!user){
+          UID = null; ME = null; isAdmin = false;
+          $("rolePill").style.display = "none";
+          renderList(); renderConsoleEmpty();
+          renderChatSignedOut();
+          return;
+        }
 
-      UID = user.uid;
-      ME = { uid:user.uid, email:(user.email||"").toLowerCase(), displayName:user.displayName||"" };
+        UID = user.uid;
+        ME = { uid:user.uid, email:(user.email||"").toLowerCase(), displayName:user.displayName||"" };
 
-      await upsertMeToUserDirectory();
+        await upsertMeToUserDirectory();
 
-      const roleSnap = await db.ref(`${PATHS.USERS}/${UID}/role`).get();
-      const role = (roleSnap.exists() ? roleSnap.val() : "user") || "user";
-      isAdmin = (ME.email === GOD_EMAIL) || (String(role).toLowerCase() === "admin") || (String(role).toLowerCase() === "god");
+        const roleSnap = await db.ref(`${PATHS.USERS}/${UID}/role`).get();
+        const role = (roleSnap.exists() ? roleSnap.val() : "user") || "user";
+        isAdmin = (ME.email === GOD_EMAIL) || (String(role).toLowerCase() === "admin") || (String(role).toLowerCase() === "god");
 
-      $("rolePill").style.display = "inline-flex";
-      $("rolePill").textContent = `ROLE: ${isAdmin ? "ADMIN/GOD" : "USER"}`;
+        $("rolePill").style.display = "inline-flex";
+        $("rolePill").textContent = `ROLE: ${isAdmin ? "ADMIN/GOD" : "USER"}`;
 
-      $("assignBlock").style.display = isAdmin ? "block" : "none";
+        $("assignBlock").style.display = isAdmin ? "block" : "none";
 
-      if(isAdmin) listenUsers();
-      listenInvestors();
-      bindUI();
-    });
+        bindUIOnce();
+
+        if(isAdmin) listenUsers();
+        listenInvestors();
+        startDirectChatToGod();
+      });
+    } else {
+      // Non-firebase mode: still show UI shells
+      renderList();
+      renderConsoleEmpty();
+    }
 
     async function upsertMeToUserDirectory(){
       if(!UID) return;
@@ -527,6 +702,7 @@
 
     function renderUserChecklist(){
       if(!isAdmin) return;
+
       const list = $("userList");
       if(!list) return;
 
@@ -617,10 +793,9 @@
       if(activeFilter==="all") return true;
       return String(it.status||"").toLowerCase() === activeFilter;
     }
-
     function passesSearch(it){
       if(!searchText) return true;
-      const hay = `${it.name||""} ${it.location||""} ${it.email||""} ${(it.tags||[]).join(" ")} ${(it.phones||[]).join(" ")} ${(it.notes||"")}`.toLowerCase();
+      const hay = `${it.name||""} ${it.location||""} ${it.email||""} ${(it.tags||[]).join(" ")} ${(it.phones||[]).join(" ")}`.toLowerCase();
       return hay.includes(searchText);
     }
 
@@ -634,7 +809,7 @@
       if(filtered.length===0){
         const div = document.createElement("div");
         div.className="tiny";
-        div.textContent = "No investors found.";
+        div.textContent = firebaseReady ? "No investors found." : "Firebase not configured — paste config to load investors.";
         list.appendChild(div);
         return;
       }
@@ -642,15 +817,12 @@
       filtered.forEach(it=>{
         const card = document.createElement("div");
         card.className = "card" + (it.id===selectedId ? " on" : "");
-        const adminAssignCount = isAdmin ? (it.assignedTo ? Object.keys(it.assignedTo).length : 0) : 0;
-
         card.innerHTML = `
           <div class="cardTitle">${escapeHtml(it.name||"—")}</div>
           <div class="cardSub">${escapeHtml(it.location||"")}</div>
           <div class="row" style="margin-top:8px;">
             <span class="kpi">${escapeHtml(it.status||"New")}</span>
             ${(it.tags||[]).slice(0,2).map(t=>`<span class="kpi">${escapeHtml(t)}</span>`).join("")}
-            ${isAdmin ? `<span class="kpi">Assigned: ${adminAssignCount}</span>` : ``}
           </div>
         `;
         card.addEventListener("click",()=> selectInvestor(it.id));
@@ -664,28 +836,15 @@
       renderConsole();
     }
 
-    function isMobile(){
-      return window.matchMedia && window.matchMedia("(pointer:coarse)").matches;
-    }
-
-    function showToast(msg){
-      // lightweight toast inside console
-      const el = document.getElementById("consoleToast");
-      if(!el) return;
-      el.textContent = msg;
-      el.classList.add("on");
-      clearTimeout(showToast._t);
-      showToast._t = setTimeout(()=> el.classList.remove("on"), 2200);
-    }
-
-    function normalizeDigits(s){
-      return String(s||"").replace(/[^\d+]/g,"");
+    function renderConsoleEmpty(){
+      $("console").innerHTML = `<div class="tiny">No investor selected.</div>`;
+      $("consoleMeta").textContent = "Select an investor…";
     }
 
     function renderConsole(){
       const el = $("console");
       if(!selected){
-        el.innerHTML = `<div class="tiny">No investor selected.</div>`;
+        renderConsoleEmpty();
         return;
       }
 
@@ -714,14 +873,13 @@
 
         <div class="tiny" style="margin-bottom:6px;">PHONES</div>
         <select id="activePhone">
-          ${phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("")}
+          ${phones.length ? phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("") : `<option value="">(none)</option>`}
         </select>
 
         <div class="row" style="margin-top:10px;">
-          <button class="btn primary" id="btnCall">CALL</button>
+          <button class="btn primary" id="btnCall">☎ CALL</button>
           <button class="btn" id="btnCopy">Copy</button>
         </div>
-        <div class="toast" id="consoleToast"></div>
 
         <div class="divider"></div>
 
@@ -735,7 +893,7 @@
           <div class="divider"></div>
           <div class="assignWrap">
             <div class="assignTop">
-              <div style="font-weight:900;">Assignments <span class="tiny">(Admin/God)</span></div>
+              <div style="font-weight:900;">Assignments <span class="tiny">(Admin)</span></div>
               <div class="assignBtns">
                 <button class="btn" id="btnAssignOpen">Edit Assignments</button>
               </div>
@@ -748,34 +906,16 @@
       `;
 
       $("btnEdit").onclick = ()=> openInvestorModal("edit", selected);
-      $("btnCopy").onclick = async ()=> {
+      $("btnCopy").onclick = ()=> {
         const v = $("activePhone").value || "";
-        const digits = normalizeDigits(v);
-        try{
-          await navigator.clipboard.writeText(digits);
-          showToast("Copied number ✅");
-        }catch(e){
-          showToast("Copy failed — try manually.");
-        }
+        navigator.clipboard.writeText(v.replace(/[^\d+]/g,""));
       };
-
-      $("btnCall").onclick = async ()=> {
+      $("btnCall").onclick = ()=> {
         const v = $("activePhone").value || "";
-        const digits = normalizeDigits(v);
-
-        // Mobile: tel:. Desktop: copy.
-        if(isMobile()){
-          window.location.href = `tel:${digits}`;
-        }else{
-          try{
-            await navigator.clipboard.writeText(digits);
-            showToast("Desktop: copied number ✅ (paste into your dialer)");
-          }catch(e){
-            showToast("Desktop: copy failed — select + copy manually.");
-          }
-        }
+        const digits = v.replace(/[^\d+]/g,"");
+        if(!digits) return;
+        window.location.href = `tel:${digits}`;
       };
-
       $("btnSaveNotes").onclick = ()=> saveNotes();
 
       if(isAdmin){
@@ -793,8 +933,6 @@
         const masterRef = db.ref(`${PATHS.INVESTORS_MASTER}/${selectedId}`);
         const snap = await masterRef.get();
         const payload = snap.exists() ? (snap.val()||{}) : {};
-        payload.notes = notes;
-        payload.updatedAt = now;
 
         const updates = {};
         updates[`${PATHS.INVESTORS_MASTER}/${selectedId}/notes`] = notes;
@@ -807,7 +945,7 @@
         });
 
         await db.ref().update(updates);
-      }else{
+      } else {
         await db.ref(`${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`).update({ notes, updatedAt: now });
       }
     }
@@ -834,17 +972,15 @@
         usersCache.forEach(u=> assignChecks[u.uid] = false);
 
         const assignedTo = item?.assignedTo || {};
-        Object.keys(assignedTo).forEach(uid=>{ assignChecks[uid] = true; });
+        Object.keys(assignedTo).forEach(uid=> assignChecks[uid] = true);
 
-        if(mode !== "edit" && UID){
-          assignChecks[UID] = true;
-        }
+        if(mode !== "edit" && UID) assignChecks[UID] = true;
 
         renderUserChecklist();
         if(jumpToAssign){
-          setTimeout(()=> $("assignBlock").scrollIntoView({behavior:"smooth", block:"start"}), 60);
+          setTimeout(()=> $("assignBlock").scrollIntoView({behavior:"smooth", block:"start"}), 50);
         }
-      }else{
+      } else {
         $("assignBlock").style.display = "none";
       }
 
@@ -852,7 +988,6 @@
     }
 
     function closeModal(){ $("modalBack").style.display = "none"; }
-
     function parsePhones(){
       const raw = ($("mPhones").value||"").trim();
       if(!raw) return [];
@@ -868,7 +1003,7 @@
       const updates = {};
       updates[`${PATHS.INVESTORS_MASTER}/${id}`] = payload;
 
-      // remove old copies from everyone (simple MVP)
+      // remove old copies (MVP)
       usersCache.forEach(u=>{
         updates[`${PATHS.INVESTORS_BY_USER}/${u.uid}/${id}`] = null;
       });
@@ -936,35 +1071,11 @@
     }
 
     /*************
-     * INTERNAL REQUEST BUTTONS (UX NOW, WIRE LATER)
-     *************/
-    async function sendInternalRequest(priority){
-      // UX-only right now. We’ll wire proper routing & rules later.
-      // For now, drop a record at supportRequests/<pushId>
-      if(!UID || !ME) return alert("Please sign in first.");
-      const payload = {
-        portal: "investor",
-        priority: priority, // "blue" | "red"
-        fromUid: UID,
-        fromEmail: ME.email || "",
-        createdAt: Date.now(),
-        status: "new",
-        subject: priority === "red" ? "URGENT request" : "Request",
-        body: ""
-      };
-      const key = db.ref(PATHS.REQUESTS).push().key;
-      await db.ref(`${PATHS.REQUESTS}/${key}`).set(payload);
-      alert(priority === "red"
-        ? "Red request sent to God (internal)."
-        : "Blue request sent to God (internal).");
-    }
-
-    /*************
      * UI WIRING
      *************/
-    function bindUI(){
-      if(bindUI.bound) return;
-      bindUI.bound = true;
+    function bindUIOnce(){
+      if(bindUIOnce.bound) return;
+      bindUIOnce.bound = true;
 
       document.querySelectorAll(".chip").forEach(ch=>{
         ch.addEventListener("click", ()=>{
@@ -986,11 +1097,13 @@
         }
       });
 
-      $("btnNewInvestor").onclick = ()=> openInvestorModal("new", null);
+      $("btnNewInvestor").onclick = ()=>{
+        if(!auth?.currentUser) return alert("Sign in first.");
+        openInvestorModal("new", null);
+      };
       $("btnCloseModal").onclick = closeModal;
       $("btnCancelModal").onclick = closeModal;
 
-      // assignment UX
       $("userFilter").addEventListener("input", renderUserChecklist);
       $("btnAssignAll").onclick = ()=>{
         usersCache.forEach(u=> assignChecks[u.uid]=true);
@@ -1001,15 +1114,76 @@
         renderUserChecklist();
       };
 
-      $("btnLogout").onclick = ()=> auth.signOut();
-      $("btnDashboard").onclick = ()=> window.location.href = "index.html";
-
-      // NEW internal request UX: old-school phone icons
-      $("btnBlueSupport").onclick = ()=> sendInternalRequest("blue");
-      $("btnRedSupport").onclick = ()=> sendInternalRequest("red");
-
-      $("btnSettings").onclick = ()=> alert("Settings — next: profile + roles.");
       $("btnImport").onclick = ()=> alert("Import List — next: CSV paste/import.");
+      $("chatSendBtn").onclick = sendChatToGod;
+      $("chatInput").addEventListener("keydown",(e)=>{ if(e.key==="Enter") sendChatToGod(); });
+    }
+
+    /*************
+     * DIRECT CHAT TO GOD (simple + reliable)
+     *************/
+    function renderChatSignedOut(){
+      $("chatBody").innerHTML = `<div class="msg meta">Sign in to chat with God Mode.</div>`;
+    }
+
+    function startDirectChatToGod(){
+      if(!UID) return renderChatSignedOut();
+
+      const threadRef = db.ref(`${PATHS.DIRECT_TO_GOD}/${UID}`);
+      // ensure meta exists so God can sort threads later
+      threadRef.child("meta").update({
+        portal: PORTAL_NAME,
+        fromUid: UID,
+        fromEmail: (ME?.email||"").toLowerCase(),
+        fromName: (ME?.displayName||""),
+        updatedAt: Date.now()
+      });
+
+      const msgRef = threadRef.child("messages").limitToLast(80);
+
+      msgRef.on("value",(snap)=>{
+        const v = snap.val() || {};
+        const msgs = Object.entries(v).map(([id,m])=>({id, ...m}))
+          .sort((a,b)=> (a.createdAt||0)-(b.createdAt||0));
+
+        const body = $("chatBody");
+        body.innerHTML = "";
+        if(msgs.length === 0){
+          body.innerHTML = `<div class="msg meta">You’re connected to God Mode. Send your first message.</div>`;
+        } else {
+          msgs.forEach(m=>{
+            const div = document.createElement("div");
+            div.className = "msg " + ((m.fromUid===UID) ? "me" : "them");
+            div.textContent = m.text || "";
+            body.appendChild(div);
+          });
+        }
+        // scroll to bottom
+        body.scrollTop = body.scrollHeight + 9999;
+      });
+    }
+
+    async function sendChatToGod(){
+      if(!firebaseReady || !auth?.currentUser){
+        alert("Sign in first to message God Mode.");
+        return;
+      }
+      const text = ($("chatInput").value||"").trim();
+      if(!text) return;
+
+      $("chatInput").value = "";
+
+      const thread = db.ref(`${PATHS.DIRECT_TO_GOD}/${UID}`);
+      const msg = {
+        text,
+        fromUid: UID,
+        fromEmail: (ME?.email||"").toLowerCase(),
+        createdAt: Date.now(),
+        portal: PORTAL_NAME
+      };
+
+      await thread.child("messages").push().set(msg);
+      await thread.child("meta").update({ updatedAt: Date.now(), lastText: text });
     }
 
     /*************
@@ -1021,8 +1195,6 @@
         .replaceAll('"',"&quot;").replaceAll("'","&#039;");
     }
     function escapeAttr(str){ return escapeHtml(str).replaceAll('"',"&quot;"); }
-
-    // NOTE: you already handle auth elsewhere; keep this page protected by your login flow.
   </script>
 </body>
 </html>
