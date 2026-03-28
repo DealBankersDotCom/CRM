@@ -221,8 +221,9 @@ function leadIdFor(lead){return String((lead&&(lead.id||lead.docnum))?(lead.id||
 function normalizePhones(lead){const out=[]; if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set(); return out.filter(p=>{const k=fmtPhoneKey(p.phone); if(!p.phone||k==="unknown"||seen.has(k)) return false; seen.add(k); return true;}).map(p=>({label:String(p.label||"Phone"), phone:String(p.phone)}));}
 function leadStatus(lead){const s=(lead?.status||lead?.leadStatus||lead?.state||"").toString().trim(); if(!s) return "New"; const up=s.toLowerCase(); if(up.includes("dnc")) return "DNC"; if(up.includes("hot")) return "Hot"; if(up.includes("work")) return "Working"; if(up.includes("done")||up.includes("closed")) return "Done"; return s;}
 function badgeHTML(status,legacy){const s=(status||"New"); const cls=(s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new"; return `<span class="badge ${cls}">${esc(s==="DNC"?"DNC":s)}</span>${legacy?'<span class="badge legacy">LEGACY</span>':''}`;}
+function isArchivedLead(lead){const v=lead?.archived; return v===true||String(v).toLowerCase()==="true"||v===1||String(v)==="1";}
 function buildTPSLink(lead){const owner=(lead?.owner||lead?.Owner||lead?.name||"").toString().trim(); const addr=(lead?.address||lead?.Address||"").toString().trim(); const q=encodeURIComponent([owner,addr].filter(Boolean).join(" ").trim()); return q?"https://www.truepeoplesearch.com/results?name="+q:"";}
-function applySearch(){const q=($("s_q").value||"").toLowerCase().trim(); sellerView=!q?sellerList.slice():sellerList.filter(l=>{const hay=[l.address||"",l.Address||"",l.owner||"",l.Owner||"",l.notes||"",l.Notes||"",normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); return hay.includes(q);}); sellerView=sellerView.filter(l=>!l.archived); renderQueue(); if(sellerView.length){if(currentLeadId){const idx=sellerView.findIndex(x=>leadIdFor(x)===currentLeadId); if(idx>=0) return selectLeadByIndex(idx);} selectLeadByIndex(Math.min(Math.max(currentIndex,0), sellerView.length-1));} else {clearConsole(); updatePager();}}
+function applySearch(){const q=($("s_q").value||"").toLowerCase().trim(); sellerView=!q?sellerList.slice():sellerList.filter(l=>{const hay=[l.address||"",l.Address||"",l.owner||"",l.Owner||"",l.notes||"",l.Notes||"",normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); return hay.includes(q);}); sellerView=sellerView.filter(l=>!isArchivedLead(l)); renderQueue(); if(sellerView.length){if(currentLeadId){const idx=sellerView.findIndex(x=>leadIdFor(x)===currentLeadId); if(idx>=0) return selectLeadByIndex(idx);} selectLeadByIndex(Math.min(Math.max(currentIndex,0), sellerView.length-1));} else {clearConsole(); updatePager();}}
 function renderQueue(){const el=$("leadList"); el.innerHTML=""; $("leadCountPill").textContent=`${sellerView.length} leads`; $("queueMeta").textContent=sellerView.length?`Showing ${sellerView.length}`:"Empty"; if(!sellerView.length){el.innerHTML=`<div class="log-empty" style="padding:22px 12px;">No leads match your search.</div>`; return;} sellerView.forEach((lead,idx)=>{const id=leadIdFor(lead), addr=(lead.address||lead.Address||"—").toString(), owner=(lead.owner||lead.Owner||lead.name||"—").toString(), st=leadStatus(lead), type=(lead.type||"seller").toString(), source=(lead.source||"").toString(); const phones=normalizePhones(lead), phoneLine=phones.slice(0,2).map(p=>`${esc(p.label)}: ${esc(p.phone)}`).join("<br>"); const div=document.createElement("div"); div.className="lead-item"+(idx===currentIndex?" selected":""); div.innerHTML=`<div class="addr">${esc(addr)}</div><div class="meta"><div>${esc(owner)}</div><div style="opacity:.9">${esc(type)}${source?" • "+esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style="opacity:.7">No phones yet</div>`}</div><div class="badges">${badgeHTML(st,!!lead.__legacy)}<span class="badge">${esc(id||"no-id")}</span></div>`; div.onclick=()=>selectLeadByIndex(idx); el.appendChild(div);});}
 function updatePager(){const total=sellerView.length||0, current=(currentIndex>=0&&total)?(currentIndex+1):0; $("leadPager").textContent=`${current} / ${total}`;}
 function setMapVisibility(on){$("mapHead").style.display=on?"":"none"; $("mapWrap").style.display=on?"":"none"; $("mapWarn").style.display="none";}
@@ -253,7 +254,91 @@ function detachLeadRefs(){
   }
 }
 function setListFromMap(byId){sellerList=Array.from(byId.values()); sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||""))); applySearch();}
-function subscribeAssociateAssignedLeads(){detachLeadRefs(); $("status").textContent="Loading assigned leads…"; const byId=new Map(); leadsRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`); leadsRef.on("child_added", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{})}); setListFromMap(byId); $("status").textContent=`Acq (Assigned): ${byId.size} items`;}); leadsRef.on("child_changed", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{})}); setListFromMap(byId);}); leadsRef.on("child_removed", snap=>{byId.delete(snap.key); setListFromMap(byId);});}
+function subscribeAssociateAssignedLeads(){
+  detachLeadRefs();
+  $("status").textContent="Loading assigned leads…";
+
+  const byId=new Map();
+  let queueLoaded=false, masterLoaded=false, flatLoaded=false;
+
+  const updateStatus=()=>{
+    if(byId.size){
+      $("status").textContent=`Acq (Assigned): ${byId.size} items`;
+      return;
+    }
+    if(queueLoaded&&masterLoaded&&flatLoaded){
+      sellerList=[];
+      sellerView=[];
+      renderQueue();
+      clearConsole();
+      updatePager();
+      $("status").textContent="No leads assigned yet.";
+    }
+  };
+
+  const mergeLead=(leadId, payload, source)=>{
+    const prior=byId.get(leadId)||{};
+    const next={...prior, ...payload, id:leadId};
+    if(source==="queue") next.__fromQueue=true;
+    if(source==="master") next.__fromMaster=true;
+    if(source==="flat") next.__fromFlat=true;
+    byId.set(leadId, next);
+    setListFromMap(byId);
+    updateStatus();
+  };
+
+  const removeLead=(leadId, source)=>{
+    const prior=byId.get(leadId);
+    if(!prior) return;
+    if(source==="queue") delete prior.__fromQueue;
+    if(source==="master") delete prior.__fromMaster;
+    if(source==="flat") delete prior.__fromFlat;
+    const stillHasSource=prior.__fromQueue||prior.__fromMaster||prior.__fromFlat;
+    if(stillHasSource){
+      byId.set(leadId, prior);
+    }else{
+      byId.delete(leadId);
+    }
+    setListFromMap(byId);
+    updateStatus();
+  };
+
+  leadsRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`);
+  leadsRef.on("child_added", snap=>mergeLead(snap.key, snap.val()||{}, "queue"));
+  leadsRef.on("child_changed", snap=>mergeLead(snap.key, snap.val()||{}, "queue"));
+  leadsRef.on("child_removed", snap=>removeLead(snap.key, "queue"));
+  leadsRef.once("value").then(()=>{queueLoaded=true; updateStatus();}).catch(()=>{queueLoaded=true; updateStatus();});
+
+  const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
+  branchLeadRefs.push(masterAssignedRef);
+  const handleMaster=(snap)=>{
+    const leadId=snap.key;
+    const val=snap.val()||{};
+    if(val?.assignedTo && val.assignedTo[UID]) mergeLead(leadId, val, "master");
+    else removeLead(leadId, "master");
+  };
+  masterAssignedRef.on("child_added", handleMaster, ()=>{});
+  masterAssignedRef.on("child_changed", handleMaster, ()=>{});
+  masterAssignedRef.on("child_removed", snap=>removeLead(snap.key, "master"));
+  masterAssignedRef.once("value").then(()=>{masterLoaded=true; updateStatus();}).catch(()=>{masterLoaded=true; updateStatus();});
+
+  const flatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}`);
+  branchLeadRefs.push(flatRef);
+  const handleFlat=(snap)=>{
+    const key=snap.key;
+    if(key==="sellers"||key==="buyers") return;
+    const val=snap.val()||{};
+    if(val && typeof val==="object" && !Array.isArray(val)){
+      const maybeLeadId=String(val.id||val.docnum||key||"");
+      const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones));
+      if(hasLeadShape && maybeLeadId) mergeLead(maybeLeadId, val, "flat");
+    }
+  };
+  flatRef.on("child_added", handleFlat, ()=>{});
+  flatRef.on("child_changed", handleFlat, ()=>{});
+  flatRef.on("child_removed", snap=>removeLead(snap.key, "flat"));
+  flatRef.once("value").then(()=>{flatLoaded=true; updateStatus();}).catch(()=>{flatLoaded=true; updateStatus();});
+}
 function subscribeBranchScopedLeads(){
   detachLeadRefs();
   $("status").textContent="Loading branch leads…";
@@ -403,14 +488,152 @@ async function saveLeadFromModal(){
 $("m_save").onclick=saveLeadFromModal;
 $("m_delete").onclick=async()=>{if(!isGod||!modalLeadId) return; if(!confirm("Delete this lead from master and all user queues?")) return; try{const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${modalLeadId}/assignedTo`).once("value"); const assignedTo=snap.val()||{}; const updates={[`${LEADS_MASTER_PATH}/sellers/${modalLeadId}`]:null}; Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${modalLeadId}`]=null); await firebase.database().ref().update(updates); closeLeadModal();}catch(e){console.warn("delete failed", e);}};
 $("btnArchiveLead").onclick=async()=>{if(!currentLeadId) return; try{await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${currentLeadId}/archived`).set(true); toast("Archived ✓");}catch(e){toast("Archive failed");}};
-async function renderTeamModalBody(){await loadUserDirectoryCache(); const byUid=userDirCache.byUid||{}; let html=""; if(isGod){html+=`<div class="lbl">Pending Associate Requests</div><div class="teamGrid">`; const pending=pendingRequestCache.filter(r=>String(r.status||"")==="pending"); if(!pending.length){html+=`<div class="help">No pending requests.</div>`;} else {pending.forEach(r=>{const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown", targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Requested by Branch Manager: ${esc(managerName)}</span><span style="font-size:11px;color:#9ab9d6">${esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="btn primary tiny" onclick="approveRequest('${esc(r.id)}')">Approve</button><button class="btn danger tiny" onclick="denyRequest('${esc(r.id)}')">Deny</button></div></div>`;});} html+=`</div>`; html+=`<div class="lbl" style="margin-top:24px;">All Users (Role Management)</div><div class="teamGrid">`; Object.values(byUid).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})).forEach(u=>{if(u.role==="system") return; const currentRole=roleLabel(u.role), managerName=u.managerUid&&String(u.managerStatus||"")==="approved"?(byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid):""; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)} • ${esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#00ff6a">Manager: ${esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;}); html+=`</div>`;} else if(isBranchManager){const myTeam=managedAssociatesFor(UID); html+=`<div class="lbl">My Approved Team (Associates)</div><div class="teamGrid">`; if(!myTeam.length){html+=`<div class="help">No approved associates on your team yet.</div>`;} else {myTeam.forEach(u=>{html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#00ff6a">Active Team Member</span><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)}</span></div></div>`;});} html+=`</div>`; html+=`<div class="lbl" style="margin-top:24px;">Request Associates By Email</div><div class="assignTools"><input id="teamSearch" class="input" placeholder="Search associate by email or name..." /></div><div id="teamSearchResults" class="teamGrid"></div>`;} $("teamModalBody").innerHTML=html; if(isBranchManager){const input=$("teamSearch"); const renderSearchResults=()=>{const q=(input.value||"").toLowerCase().trim(); const box=$("teamSearchResults"); const rows=Object.values(byUid).filter(u=>{if(u.uid===UID) return false; if(u.role!=="user") return false; const approvedElsewhere=u.managerUid&&String(u.managerUid)!==String(UID)&&String(u.managerStatus||"")==="approved"; if(approvedElsewhere) return false; const hay=`${u.name||""} ${u.email||""}`.toLowerCase(); return !q||hay.includes(q);}).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})); if(!rows.length){box.innerHTML=`<div class="help">No available associates found.</div>`; return;} box.innerHTML=rows.map(u=>{const myPending=pendingRequestCache.find(r=>String(r.requesterUid)===String(UID)&&String(r.targetUid)===String(u.uid)&&String(r.status)==="pending"); return `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)}</span>${myPending?'<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>':'<span style="font-size:11px;color:#9ab9d6">Available</span>'}</div><div class="teamActions">${myPending?'<button class="btn ghost tiny" disabled>Pending...</button>':`<button class="btn primary tiny" onclick="requestAssociate('${u.uid}')">Request</button>`}</div></div>`;}).join("");}; input.addEventListener("input", renderSearchResults); renderSearchResults();}}
-$("btnTeam").onclick=async()=>{$("teamModal").classList.add("show"); $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await renderTeamModalBody();}; $("teamModalClose").onclick=()=>$("teamModal").classList.remove("show");
-window.requestAssociate=async(targetUid)=>{const target=userDirCache.byUid[targetUid]; if(!target) return; const already=String(target.managerUid||"")===String(UID)&&String(target.managerStatus||"")==='pending'; if(already) return toast("Already pending"); await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({managerUid:UID, managerStatus:"pending"}); toast("Request sent to God Mode"); await renderTeamModalBody();};
-window.approveRequest=async(requestId)=>{const req=pendingRequestCache.find(r=>r.id===requestId); if(!req) return; await firebase.database().ref(`${USER_DIR_PATH}/${req.targetUid}`).update({managerUid:req.requesterUid, managerStatus:"approved"}); toast("Associate approved"); await renderTeamModalBody();};
-window.denyRequest=async(requestId)=>{const req=pendingRequestCache.find(r=>r.id===requestId); if(!req) return; await firebase.database().ref(`${USER_DIR_PATH}/${req.targetUid}`).update({managerUid:null, managerStatus:null}); toast("Request denied"); await renderTeamModalBody();};
-window.changeUserRole=async(targetUid,newRole)=>{const role=mapRole(newRole); await firebase.database().ref(`${ROLES_PATH}/${targetUid}`).set(role); await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({role, ...(role!=="user"?{managerUid:null, managerStatus:null}:{})}); toast("Role updated"); await renderTeamModalBody(); await loadUserDirectoryCache(); if(isGod) subscribeGodAllLeads();};
+async function renderTeamModalBody(){
+  await loadUserDirectoryCache();
+  const byUid=userDirCache.byUid||{};
+  let html="";
+
+  if(isGod){
+    html+=`<div class="lbl">Pending Associate Requests</div><div class="teamGrid">`;
+    const pending=pendingRequestCache.filter(r=>String(r.status||"")==="pending");
+    if(!pending.length){
+      html+=`<div class="help">No pending requests.</div>`;
+    }else{
+      pending.forEach(r=>{
+        const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown";
+        const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown";
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Requested by Branch Manager: ${esc(managerName)}</span><span style="font-size:11px;color:#9ab9d6">${esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="btn primary tiny" onclick="approveRequest('${esc(r.id)}')">Approve</button><button class="btn danger tiny" onclick="denyRequest('${esc(r.id)}')">Deny</button></div></div>`;
+      });
+    }
+    html+=`</div>`;
+
+    html+=`<div class="lbl" style="margin-top:24px;">All Users (Role Management)</div><div class="teamGrid">`;
+    Object.values(byUid)
+      .sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}))
+      .forEach(u=>{
+        if(u.role==="system") return;
+        const currentRole=roleLabel(u.role);
+        const managerName=u.managerUid&&String(u.managerStatus||"")==="approved"
+          ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid)
+          : "";
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)} • ${esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#00ff6a">Manager: ${esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
+      });
+    html+=`</div>`;
+  } else if(isBranchManager){
+    const myTeam=managedAssociatesFor(UID);
+    html+=`<div class="lbl">My Approved Team (Associates)</div><div class="teamGrid">`;
+    if(!myTeam.length){
+      html+=`<div class="help">No approved associates on your team yet.</div>`;
+    }else{
+      myTeam.forEach(u=>{
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#00ff6a">Active Team Member</span><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)}</span></div><div class="teamActions"><button class="btn danger tiny" onclick="removeAssociate('${u.uid}')">Remove</button></div></div>`;
+      });
+    }
+    html+=`</div>`;
+
+    const myPending=pendingRequestCache.filter(r=>String(r.requesterUid)===String(UID)&&String(r.status||"")==="pending");
+    html+=`<div class="lbl" style="margin-top:24px;">Pending Requests</div><div class="teamGrid">`;
+    if(!myPending.length){
+      html+=`<div class="help">No pending requests.</div>`;
+    }else{
+      myPending.forEach(r=>{
+        const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown";
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Awaiting God Mode approval</span><span style="font-size:11px;color:#9ab9d6">${esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="btn danger tiny" onclick="removeAssociate('${r.targetUid}')">Cancel</button></div></div>`;
+      });
+    }
+    html+=`</div>`;
+
+    html+=`<div class="lbl" style="margin-top:24px;">Request Associates By Email</div><div class="assignTools"><input id="teamSearch" class="input" placeholder="Search associate by email or name..." /></div><div id="teamSearchResults" class="teamGrid"></div>`;
+  }
+
+  $("teamModalBody").innerHTML=html;
+
+  if(isBranchManager){
+    const input=$("teamSearch");
+    const renderSearchResults=()=>{
+      const q=(input.value||"").toLowerCase().trim();
+      const box=$("teamSearchResults");
+      const rows=Object.values(byUid)
+        .filter(u=>{
+          if(u.uid===UID) return false;
+          if(u.role!=="user") return false;
+          const approvedElsewhere=u.managerUid&&String(u.managerUid)!==String(UID)&&String(u.managerStatus||"")==="approved";
+          if(approvedElsewhere) return false;
+          const hay=`${u.name||""} ${u.email||""}`.toLowerCase();
+          return !q||hay.includes(q);
+        })
+        .sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}));
+
+      if(!rows.length){
+        box.innerHTML=`<div class="help">No available associates found.</div>`;
+        return;
+      }
+
+      box.innerHTML=rows.map(u=>{
+        const myPending=pendingRequestCache.find(r=>String(r.requesterUid)===String(UID)&&String(r.targetUid)===String(u.uid)&&String(r.status)==="pending");
+        const mineApproved=String(u.managerUid||"")===String(UID)&&String(u.managerStatus||"")==="approved";
+        const statusLine=myPending
+          ? '<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>'
+          : (mineApproved
+            ? '<span style="font-size:11px;color:#00ff6a">Already on your team</span>'
+            : '<span style="font-size:11px;color:#9ab9d6">Available</span>');
+        const action=myPending
+          ? '<button class="btn ghost tiny" disabled>Pending...</button>'
+          : (mineApproved
+            ? `<button class="btn danger tiny" onclick="removeAssociate('${u.uid}')">Remove</button>`
+            : `<button class="btn primary tiny" onclick="requestAssociate('${u.uid}')">Request</button>`);
+        return `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)}</span>${statusLine}</div><div class="teamActions">${action}</div></div>`;
+      }).join("");
+    };
+    input.addEventListener("input", renderSearchResults);
+    renderSearchResults();
+  }
+}
+$("btnTeam").onclick=async()=>{$("teamModal").classList.add("show"); $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await renderTeamModalBody();};
+$("teamModalClose").onclick=()=>$("teamModal").classList.remove("show");
+window.requestAssociate=async(targetUid)=>{
+  const target=userDirCache.byUid[targetUid];
+  if(!target) return;
+  const already=String(target.managerUid||"")===String(UID)&&String(target.managerStatus||"")==='pending';
+  if(already) return toast("Already pending");
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({managerUid:UID, managerStatus:"pending"});
+  toast("Request sent to God Mode");
+  await renderTeamModalBody();
+};
+window.approveRequest=async(requestId)=>{
+  const req=pendingRequestCache.find(r=>r.id===requestId);
+  if(!req) return;
+  await firebase.database().ref(`${USER_DIR_PATH}/${req.targetUid}`).update({managerUid:req.requesterUid, managerStatus:"approved"});
+  toast("Associate approved");
+  await renderTeamModalBody();
+};
+window.denyRequest=async(requestId)=>{
+  const req=pendingRequestCache.find(r=>r.id===requestId);
+  if(!req) return;
+  await firebase.database().ref(`${USER_DIR_PATH}/${req.targetUid}`).update({managerUid:null, managerStatus:null});
+  toast("Request denied");
+  await renderTeamModalBody();
+};
+window.removeAssociate=async(targetUid)=>{
+  if(!targetUid) return;
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({managerUid:null, managerStatus:null});
+  await loadUserDirectoryCache();
+  if(isBranchManager) subscribeBranchScopedLeads();
+  if(isGod) subscribeGodAllLeads();
+  toast("Associate removed");
+  await renderTeamModalBody();
+};
+window.changeUserRole=async(targetUid,newRole)=>{
+  const role=mapRole(newRole);
+  await firebase.database().ref(`${ROLES_PATH}/${targetUid}`).set(role);
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({role, ...(role!=="user"?{managerUid:null, managerStatus:null}:{})});
+  toast("Role updated");
+  await renderTeamModalBody();
+  await loadUserDirectoryCache();
+  if(isGod) subscribeGodAllLeads();
+};
 function supportCategoriesForPortal(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"]; return ["Hot lead / seller needs call","Need comp / ARV help","Need dispo / buyer help","System bug","Other"];}
-async function submitSupportRequest({priority, portal, category, message}){if(!UID) return; await firebase.database().ref(SUPPORT_REQUESTS_PATH).push({uid:UID, email:ME?.email||"", name:ME?.displayName||ME?.email||"User", portal:portal||"wholesaler", priority:priority||"blue", category:category||"General", message:message||"", ts:Date.now(), status:"open"});}
+async function submitSupportRequest({priority, portal, category, message}){if(!UID) return; await firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${UID}`).push({uid:UID, email:ME?.email||"", name:ME?.displayName||ME?.email||"User", portal:portal||"wholesaler", priority:priority||"blue", category:category||"General", message:message||"", ts:Date.now(), status:"open"});}
 function openSupportModal(priority){$("supportPortal").value="wholesaler"; $("supportPriority").value=priority==="red"?"red":"blue"; $("supportSub").textContent=priority==="red"?"Red = urgent. Use for hot leads or anything that can’t wait.":"Blue = not urgent. Use for questions or general support."; const cats=supportCategoriesForPortal("wholesaler"); $("supportCategory").innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join(""); $("supportMsg").value=""; $("supportModal").style.display="flex";} function closeSupportModal(){$("supportModal").style.display="none";}
 $("btnBlueSupport").onclick=()=>openSupportModal("blue"); $("btnRedSupport").onclick=()=>openSupportModal("red"); $("supportCloseBtn").onclick=closeSupportModal; $("supportCancelBtn").onclick=closeSupportModal; $("supportSendBtn").onclick=async()=>{const message=($("supportMsg").value||"").trim(); if(!message) return toast("Type a message first."); try{await submitSupportRequest({priority:$("supportPriority").value, portal:$("supportPortal").value, category:$("supportCategory").value, message}); closeSupportModal(); toast("Support request sent ✓");}catch(e){console.warn("support request failed", e); toast("Support request failed");}};
 function trackPresence(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`); const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:initialsFromUser(u), portal:"wholesaler", online:true, ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
@@ -454,7 +677,102 @@ document.addEventListener("DOMContentLoaded", ()=>{const showAcq=()=>{$("tabAcq"
 $("btnSettings").onclick=()=>location.href="settings.html"; $("logoutBtn").onclick=()=>firebase.auth().signOut();
 async function upsertMyUserDirectory(u){const email=(u.email||"").toLowerCase(); await firebase.database().ref(`${USER_DIR_PATH}/${u.uid}`).update({uid:u.uid, email, name:u.displayName||u.email||"User", username:usernameFromEmail(email), initials:initialsFromUser(u), updatedAt:Date.now()});}
 $("btnImportLegacy").onclick=async()=>{if(!isGod) return; if(!confirm("Import all legacy /leads/sellers into /leadsMaster/sellers?")) return; try{const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`).once("value"); const legacy=legacySnap.val()||{}; const updates={}; Object.keys(legacy).forEach(leadId=>{const v=legacy[leadId]||{}; updates[`${LEADS_MASTER_PATH}/sellers/${leadId}`]={...v,id:leadId,__migratedFrom:"legacy",updatedAt:Date.now(),updatedBy:ME?.email||"",assignedTo:{[UID]:true},assignedUids:[UID]}; updates[`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`]={...v,id:leadId,assignedBy:ME?.email||"",assignedAt:Date.now(),archived:false};}); if(Object.keys(updates).length) await firebase.database().ref().update(updates); alert("Legacy imported ✓");}catch(e){console.warn("legacy import failed", e); alert("Legacy import failed. Check console + rules.");}};
-firebase.auth().onAuthStateChanged(async u=>{if(!u) return location.href="index.html"; UID=u.uid; ME=u; try{await upsertMyUserDirectory(u);}catch(e){console.warn("userDirectory upsert failed", e);} try{trackPresence(u);}catch(e){console.warn("Presence failed:", e);} try{await loadUserDirectoryCache(); const emailStr=(u.email||"").toLowerCase().trim(); const roleSnap=await firebase.database().ref(`${ROLES_PATH}/${UID}`).once("value"); let rawRole=roleSnap.val()||userDirCache.byUid?.[UID]?.role||"user"; ROLE=mapRole(rawRole); if(emailStr==="dealbankers@gmail.com"){ ROLE="god"; try{await firebase.database().ref(`${ROLES_PATH}/${UID}`).set("god");}catch(e){console.warn("Could not sync roles path to god", e);} try{await firebase.database().ref(`${USER_DIR_PATH}/${UID}`).update({role:"god"});}catch(e){console.warn("Could not sync userDirectory role to god", e);} } isGod=ROLE==="god"; isBranchManager=!isGod&&ROLE==="admin"; $("roleReadout").textContent="ROLE: "+roleLabel(ROLE); $("btnTeam").style.display=isAdminLike()?"":"none"; $("btnImportLegacy").style.display=isGod?"":"none";}catch(e){ROLE="user"; isGod=false; isBranchManager=false; $("roleReadout").textContent="ROLE: ASSOCIATE"; $("btnTeam").style.display="none"; $("btnImportLegacy").style.display="none";} try{if(isAdminLike()){ $("radarList").style.display=""; startRadar(); } else { setupChat(`${DMS_PATH}/${UID}/messages`, "Support Chat", false); }}catch(e){console.warn("chat boot failed", e);} try{await loadUserDirectoryCache(); if(isGod) subscribeGodAllLeads(); else if(isBranchManager) subscribeBranchScopedLeads(); else subscribeAssociateAssignedLeads();}catch(e){console.warn("lead subscribe failed", e); $("status").textContent="Leads subscribe error (see console).";}});
+async function healAssignedLeadCopiesFromMaster(){
+  if(!isGod) return;
+  try{
+    const [masterSnap, queueSnap]=await Promise.all([
+      firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once("value"),
+      firebase.database().ref(LEADS_BY_USER_PATH).once("value")
+    ]);
+    const master=masterSnap.val()||{};
+    const queues=queueSnap.val()||{};
+    const updates={};
+
+    Object.keys(master).forEach(leadId=>{
+      const lead=master[leadId]||{};
+      const assignedTo=lead.assignedTo||{};
+      Object.keys(assignedTo).forEach(uid=>{
+        if(!assignedTo[uid]) return;
+        const existing=((queues[uid]||{}).sellers||{})[leadId];
+        if(existing) return;
+        updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={
+          ...lead,
+          id:leadId,
+          assignedBy:lead.updatedBy||ME?.email||"",
+          assignedAt:lead.updatedAt||Date.now(),
+          archived:false
+        };
+      });
+    });
+
+    if(Object.keys(updates).length){
+      await firebase.database().ref().update(updates);
+    }
+  }catch(e){
+    console.warn("heal assigned lead copies failed", e);
+  }
+}
+firebase.auth().onAuthStateChanged(async u=>{
+  if(!u) return location.href="index.html";
+  UID=u.uid;
+  ME=u;
+
+  try{await upsertMyUserDirectory(u);}catch(e){console.warn("userDirectory upsert failed", e);}
+  try{trackPresence(u);}catch(e){console.warn("Presence failed:", e);}
+
+  try{
+    await loadUserDirectoryCache();
+    const emailStr=(u.email||"").toLowerCase().trim();
+    const roleSnap=await firebase.database().ref(`${ROLES_PATH}/${UID}`).once("value");
+    let rawRole=roleSnap.val()||userDirCache.byUid?.[UID]?.role||"user";
+    ROLE=mapRole(rawRole);
+
+    if(emailStr==="dealbankers@gmail.com"){
+      ROLE="god";
+      try{await firebase.database().ref(`${ROLES_PATH}/${UID}`).set("god");}catch(e){console.warn("Could not sync roles path to god", e);}
+      try{await firebase.database().ref(`${USER_DIR_PATH}/${UID}`).update({role:"god"});}catch(e){console.warn("Could not sync userDirectory role to god", e);}
+    }
+
+    isGod=ROLE==="god";
+    isBranchManager=!isGod&&ROLE==="admin";
+    $("roleReadout").textContent="ROLE: "+roleLabel(ROLE);
+    $("btnTeam").style.display=isAdminLike()?"":"none";
+    $("btnImportLegacy").style.display=isGod?"":"none";
+  }catch(e){
+    ROLE="user";
+    isGod=false;
+    isBranchManager=false;
+    $("roleReadout").textContent="ROLE: ASSOCIATE";
+    $("btnTeam").style.display="none";
+    $("btnImportLegacy").style.display="none";
+  }
+
+  try{
+    if(isAdminLike()){
+      $("radarList").style.display="";
+      startRadar();
+    }else{
+      setupChat(`${DMS_PATH}/${UID}/messages`, "Support Chat", false);
+    }
+  }catch(e){
+    console.warn("chat boot failed", e);
+  }
+
+  try{
+    await loadUserDirectoryCache();
+    if(isGod){
+      await healAssignedLeadCopiesFromMaster();
+      subscribeGodAllLeads();
+    }else if(isBranchManager){
+      subscribeBranchScopedLeads();
+    }else{
+      subscribeAssociateAssignedLeads();
+    }
+  }catch(e){
+    console.warn("lead subscribe failed", e);
+    $("status").textContent="Leads subscribe error (see console).";
+  }
+});
 $("callHint").style.display="none";
 </script>
 </body>
