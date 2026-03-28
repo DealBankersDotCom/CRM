@@ -1,4 +1,3 @@
-<!-- wholesaler.html (FULL DROP-IN • GOD SEES ALL • ASSIGN BY EMAIL/@USERNAME • LEGACY IMPORT • PRESENCE FIX) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -230,7 +229,8 @@ body{
 }
 #chatBubble:hover{transform:scale(1.08);box-shadow:0 0 30px rgba(43,116,255,1);}
 .sidebar-panel{
-  position: fixed; top: 0; right: -360px; width: 340px; height: 100vh;
+  position: fixed; top: 0; right: -360px;
+  width: 340px; height: 100vh;
   background: rgba(11, 24, 37, 0.98); backdrop-filter: blur(12px);
   border-left: 1px solid var(--accent);
   box-shadow: -10px 0 40px rgba(0,0,0,0.8);
@@ -239,7 +239,8 @@ body{
 }
 .sidebar-panel.open { right: 0; }
 .panel-header{
-  padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--line);
+  padding: 15px; background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--line);
   display: flex; justify-content: space-between; align-items: center;
 }
 .panel-title2 { color: #fff; font-size: 1.05rem; text-shadow: 0 0 10px var(--accent); font-weight:900; }
@@ -247,7 +248,8 @@ body{
 #radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
 .radar-user{
   padding: 12px; margin-bottom: 8px; border-radius: 10px;
-  background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
   cursor: pointer; display: flex; justify-content: space-between; align-items: center;
 }
 .radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
@@ -283,7 +285,7 @@ body{
 #iframeDispo{width:100%;height:100%;border:none;display:block;background:#0b1825}
 .dispo-mask{position:absolute;top:0;left:0;right:0;height:56px;background:#0b1825;border-bottom:1px solid rgba(255,255,255,.12);z-index:5;pointer-events:auto}
 
-/* ===== CRM MODAL ===== */
+/* ===== MODALS ===== */
 .modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;z-index:12000;background:rgba(0,0,0,.55);backdrop-filter:blur(10px)}
 .modal.show{display:flex}
 .modalCard{
@@ -317,7 +319,6 @@ body{
 }
 .kbd{font-size:11px;opacity:.9;border:1px solid rgba(255,255,255,.18);border-radius:8px;padding:2px 6px;background:rgba(0,0,0,.22)}
 
-/* --- Modal usability (mobile friendly) --- */
 .modalCard{max-height:92vh;display:flex;flex-direction:column}
 .modalBody{overflow:auto}
 .modalActions{position:sticky;bottom:0;background:rgba(11,19,27,.92);backdrop-filter:blur(8px);padding-bottom:calc(14px + env(safe-area-inset-bottom))}
@@ -333,17 +334,25 @@ body{
 .assignName{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
 .assignEmail{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}
 .assignTag{margin-left:auto;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+
+/* --- Team Management Elements --- */
+.teamGrid { display:grid; grid-template-columns: 1fr; gap:12px; margin-top: 10px; }
+.teamRow { display:flex; justify-content:space-between; align-items:center; padding:12px; background:rgba(0,0,0,.2); border:1px solid rgba(255,255,255,.1); border-radius:12px; }
+.teamMeta { display:flex; flex-direction:column; gap:4px; }
+.teamActions { display:flex; gap:8px; }
+
 @media(max-width:720px){
   .assignTools{flex-direction:column;align-items:stretch}
   .assignBtns{justify-content:flex-end}
   .assignList{max-height:320px}
+  .teamRow { flex-direction:column; align-items:flex-start; gap:10px; }
 }
 
 /* --- Chat composer mobile typing --- */
 .chat-input{font-size:16px}
 .chatWrap{padding-bottom:calc(10px + env(safe-area-inset-bottom))}
 
-/* ===== Support Modal (uses same modalCard look) ===== */
+/* ===== Support Modal ===== */
 .modalOverlay{
   position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;
   z-index:13000;background:rgba(0,0,0,.55);backdrop-filter:blur(10px)
@@ -370,6 +379,8 @@ body{
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
 
+    <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;">👥 Team</button>
+
     <button class="chip primary" id="btnBlueSupport" type="button" title="Blue Support (normal)">🌀 Blue Support</button>
     <button class="chip danger" id="btnRedSupport" type="button" title="Red Support (urgent)">🚨 Red Support</button>
 
@@ -392,7 +403,6 @@ body{
     </div>
 
     <div class="body">
-      <!-- ================= LEFT: LEAD QUEUE ================= -->
       <div id="panel-acq" class="panel">
         <div class="panel-head">
           <div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div>
@@ -414,7 +424,6 @@ body{
         </div>
       </div>
 
-      <!-- ================= CENTER: CONSOLE ================= -->
       <div class="panel col-center" id="panel-console">
         <div class="panel-head">
           <div class="panel-title">⌁ Console</div>
@@ -440,10 +449,8 @@ body{
             </div>
           </div>
 
-          <!-- Active Number + click-to-call (NO dial-line UX here) -->
           <div class="field">
             <div class="field-label">Active Number</div>
-
             <div class="callRow">
               <div style="flex:1;min-width:220px">
                 <select id="phoneSelect" class="select" disabled></select>
@@ -451,13 +458,11 @@ body{
               <button id="callBtn" class="callBtn" type="button" disabled title="Click-to-call">📞 CALL</button>
               <button id="copyBtn" class="copyBtn" type="button" disabled title="Copy number">Copy</button>
             </div>
-
             <div class="smallHint" id="callHint" style="margin-top:8px;display:none;">
-              On mobile: direct dial. On desktop: we copy the number to clipboard so you can paste into your dialer.
+              On mobile: direct dial.<br>On desktop: we copy the number to clipboard so you can paste into your dialer.
             </div>
           </div>
 
-          <!-- Quick Status -->
           <div class="field">
             <div class="field-label">Quick Status</div>
             <div class="quick-grid">
@@ -472,7 +477,6 @@ body{
             </div>
           </div>
 
-          <!-- Notes -->
           <div class="field">
             <div class="field-label">Add Note (Team Call Log for this number)</div>
             <div class="note-row">
@@ -484,7 +488,6 @@ body{
             </div>
           </div>
 
-          <!-- Location Intel -->
           <div class="field">
             <div class="field-label">Location Intel</div>
             <div class="map-head" id="mapHead" style="display:none;">
@@ -502,7 +505,6 @@ body{
         </div>
       </div>
 
-      <!-- ================= RIGHT: CALL LOG TERMINAL ================= -->
       <div class="panel col-right" id="panel-calllog">
         <div class="panel-head">
           <div class="panel-title">⌁ Team Call Log</div>
@@ -518,7 +520,6 @@ body{
         </div>
       </div>
 
-      <!-- ================= DISPO ================= -->
       <div id="panel-dispo">
         <div class="dispo-shell">
           <div class="dispo-topbar">
@@ -543,7 +544,6 @@ body{
   </section>
 </div>
 
-<!-- Chat bubble + side panel -->
 <div id="chatBubble" title="Chat">💬</div>
 
 <div id="sidePanel" class="sidebar-panel" aria-hidden="true">
@@ -568,7 +568,6 @@ body{
   </div>
 </div>
 
-<!-- CRM Modal -->
 <div id="leadModal" class="modal" aria-hidden="true">
   <div class="modalCard" role="dialog" aria-modal="true" aria-label="Lead Editor">
     <div class="modalHead">
@@ -622,9 +621,8 @@ body{
           <input id="m_source" class="input" placeholder="Facebook / Zillow / Cold-call / Referral / etc." />
         </div>
 
-        <!-- Admin assignment -->
         <div style="grid-column:1/-1" id="assignBlock">
-          <div class="lbl">Assign to users <span class="pill" id="assignHintPill">God/Admin</span></div>
+          <div class="lbl">Assign to users <span class="pill" id="assignHintPill">Role</span></div>
 
           <div class="assignTools">
             <input id="assignFilter" class="input" placeholder="Filter users (name / email)..." />
@@ -637,7 +635,7 @@ body{
           <div id="assignList" class="assignList"></div>
 
           <div class="help">
-            Select who should receive this lead. The lead is saved to <span class="kbd">leadsMaster/sellers</span> and copied into each checked user's <span class="kbd">leadsByUser/&lt;uid&gt;/sellers</span> queue.
+            Select who should receive this lead. The lead is saved to <span class="kbd">leadsMaster/sellers</span> and copied into each checked user's <span class="kbd">leadsByUser/uid/sellers</span> queue.
           </div>
         </div>
 
@@ -660,7 +658,7 @@ Neighbor | +1 210 555 9999"></textarea>
       <div id="modalToast" class="modalToast"></div>
 
       <div class="modalActions">
-        <button class="btn danger" id="m_delete" type="button" style="display:none;">Delete (Admin)</button>
+        <button class="btn danger" id="m_delete" type="button" style="display:none;">Delete</button>
         <button class="btn" id="m_cancel" type="button">Cancel</button>
         <button class="btn primary" id="m_save" type="button">Save Lead</button>
       </div>
@@ -668,7 +666,20 @@ Neighbor | +1 210 555 9999"></textarea>
   </div>
 </div>
 
-<!-- Support Request Modal (Blue/Red phone feature) -->
+<div id="teamModal" class="modal" aria-hidden="true">
+  <div class="modalCard" style="max-width:700px;" role="dialog" aria-modal="true" aria-label="Team Management">
+    <div class="modalHead">
+      <div>
+        <strong id="teamModalTitle">Team Management</strong>
+        <div class="status" style="margin-top:4px;">Manage Branch Managers and Associates</div>
+      </div>
+      <button class="btn" id="teamModalClose" type="button">Close</button>
+    </div>
+    <div class="modalBody" id="teamModalBody">
+      </div>
+  </div>
+</div>
+
 <div class="modalOverlay" id="supportModal">
   <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="supportTitle">
     <div class="modalHead">
@@ -688,6 +699,7 @@ Neighbor | +1 210 555 9999"></textarea>
             <option value="red">Red (urgent)</option>
           </select>
         </div>
+      
         <div>
           <div class="lbl">Portal</div>
           <input id="supportPortal" class="input" readonly />
@@ -729,7 +741,6 @@ Neighbor | +1 210 555 9999"></textarea>
         return;
       }
       firebase.initializeApp(window.firebaseConfig);
-      console.log("Firebase initialized.");
     }
   }catch(e){ console.error("Firebase init error:", e); }
 })();
@@ -737,7 +748,9 @@ Neighbor | +1 210 555 9999"></textarea>
 const $ = (id) => document.getElementById(id);
 let UID = "";
 let ME = null;
-let isAdmin = false;
+
+let isGod = false;
+let isBranchManager = false;
 
 let sellerList = [];
 let sellerView = [];
@@ -751,7 +764,7 @@ let currentPhoneLabel = "";
 let activeLogRef = null;
 let mapMode = "area";
 
-function esc(s){ return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c] || c)); }
+function esc(s){ return String(s ?? "").replace(/[&<>"']/g, (c)=>({ "&":"&","<":"<",">":">",'"':""","'":"'" }[c] || c)); }
 function fmtPhoneKey(p){ return String(p || "").trim().replace(/[^\d+]/g,"") || "unknown"; }
 function tsToLocal(ts){ try{ const d = new Date(ts); return isNaN(d.getTime()) ? "" : d.toLocaleString(); }catch(e){ return ""; } }
 function initialsFromUser(u){
@@ -766,11 +779,10 @@ function usernameFromEmail(email){
   return local.replace(/[^a-z0-9_]/g,"").slice(0,24) || "user";
 }
 
-/* ✅ FIXED LEAD PATHS: this portal reads/writes ONLY sellers bucket */
-const LEADS_MASTER_PATH = "leadsMaster";      // leadsMaster/sellers/<leadId>
-const LEADS_BY_USER_PATH = "leadsByUser";     // leadsByUser/<uid>/sellers/<leadId>
-const USER_DIR_PATH = "userDirectory";        // userDirectory/<uid>
-const LEGACY_LEADS_PATH = "leads";            // leads/sellers/<leadId>
+const LEADS_MASTER_PATH = "leadsMaster";      
+const LEADS_BY_USER_PATH = "leadsByUser";
+const USER_DIR_PATH = "userDirectory";        
+const LEGACY_LEADS_PATH = "leads";            
 
 const ROLES_PATH = "roles";
 const PRESENCE_PATH = "presence/global";
@@ -847,9 +859,8 @@ function buildTPSLink(lead){
   return "https://www.truepeoplesearch.com/results?name=" + q;
 }
 
-/* --------- USER DIRECTORY CACHE (EMAIL/@USERNAME -> UID) ---------- */
+/* --------- USER DIRECTORY CACHE ---------- */
 let userDirCache = { byEmail:{}, byUser:{}, byUid:{} };
-
 async function loadUserDirectoryCache(){
   try{
     const snap = await firebase.database().ref(USER_DIR_PATH).once("value");
@@ -942,7 +953,6 @@ function renderQueue(){
     div.onclick = ()=>selectLeadByIndex(idx);
     el.appendChild(div);
   });
-
   Array.from(el.children).forEach((node, idx)=>{
     node.classList.toggle("selected", idx === currentIndex);
   });
@@ -964,7 +974,6 @@ function clearConsole(){
   currentLead = null;
   currentLeadId = "";
   currentIndex = -1;
-
   $("leadAddress").textContent = "No lead selected";
   $("leadOwner").textContent = "Select a lead from the queue.";
   $("tpsLink").style.display = "none";
@@ -994,7 +1003,6 @@ function selectLeadByIndex(idx){
 
   idx = Math.max(0, Math.min(idx, sellerView.length - 1));
   currentIndex = idx;
-
   currentLead = sellerView[idx];
   currentLeadId = leadIdFor(currentLead);
 
@@ -1106,7 +1114,6 @@ $("callBtn").addEventListener("click", async () => {
     toast("Copy failed. Highlight the number and copy manually.");
   }
 });
-
 $("copyBtn").addEventListener("click", async () => {
   if (!currentPhone) return;
 
@@ -1159,7 +1166,6 @@ function attachCallLog(phoneKey){
 
   activeLogRef = callLogRefForPhoneKey(phoneKey);
   const items = [];
-
   function redraw(){
     const log = $("callLog");
     log.innerHTML = "";
@@ -1204,7 +1210,6 @@ function attachCallLog(phoneKey){
     console.warn("call log read failed", err);
     renderCallLogEmpty("Call log permission denied or path missing.");
   });
-
   activeLogRef.on("child_changed", snap=>{
     const v = snap.val() || {};
     v._key = snap.key;
@@ -1212,7 +1217,6 @@ function attachCallLog(phoneKey){
     if (i >= 0) items[i] = v; else items.push(v);
     redraw();
   });
-
   activeLogRef.on("child_removed", snap=>{
     const i = items.findIndex(x => x._key === snap.key);
     if (i >= 0) items.splice(i,1);
@@ -1265,8 +1269,7 @@ function buildMap(address){
   const q = encodeURIComponent(addr);
   const base = key
     ? `https://www.google.com/maps/embed/v1/${mapMode === "street" ? "streetview" : "place"}?key=${encodeURIComponent(key)}&q=${q}`
-    : `https://www.google.com/maps?q=${q}&output=embed`;
-
+    : `https://maps.google.com/maps?q=${q}&output=embed`;
   $("streetFrame").src = base;
   $("mapHint").textContent = key ? "Embed OK" : "No MAPS_EMBED_KEY set (fallback embed)";
 }
@@ -1304,7 +1307,6 @@ function subscribeUserAssignedLeads(){
 
   const byId = new Map();
   leadsRef = firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`);
-
   leadsRef.on("child_added", snap=>{
     const id = snap.key;
     const v = snap.val() || {};
@@ -1322,7 +1324,6 @@ function subscribeUserAssignedLeads(){
     byId.delete(snap.key);
     setListFromMap(byId);
   });
-
   leadsRef.once("value").then(snap=>{
     if (!snap.exists()){
       sellerList=[]; sellerView=[];
@@ -1342,7 +1343,6 @@ function subscribeAdminAllLeads(){
   $("status").textContent = "Loading ALL leads (Master + Legacy)…";
 
   const byId = new Map();
-
   // 1) Master
   leadsRef = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
   leadsRef.on("child_added", snap=>{
@@ -1386,8 +1386,6 @@ function subscribeAdminAllLeads(){
       setListFromMap(byId);
     }
   });
-
-  $("btnImportLegacy").style.display = "";
 }
 
 $("s_reload").onclick = applySearch;
@@ -1408,7 +1406,14 @@ function getUserRowsForAssign(){
     if(role === "system") return;
     const name = u.name || u.displayName || u.email || uid;
     const email = u.email || "";
-    rows.push({uid, name, email, role});
+
+    if (isGod) {
+      rows.push({uid, name, email, role});
+    } else if (isBranchManager) {
+      if (uid === UID || (u.managerUid === UID && u.managerStatus === 'approved')) {
+        rows.push({uid, name, email, role});
+      }
+    }
   });
   rows.sort((a,b)=> (a.role===b.role
     ? (a.name||"").localeCompare(b.name||"", undefined, {sensitivity:"base"})
@@ -1426,15 +1431,14 @@ function renderAssignList(){
     if(!q) return true;
     return (r.name||"").toLowerCase().includes(q) || (r.email||"").toLowerCase().includes(q) || (r.uid||"").toLowerCase().includes(q);
   });
-
   if(rows.length === 0){
-    listEl.innerHTML = `<div class="help">No users found. (Users appear after they log in at least once.)</div>`;
+    listEl.innerHTML = `<div class="help">No users found available for assignment.</div>`;
     return;
   }
 
   listEl.innerHTML = rows.map(r=>{
     const checked = modalAssignedSet.has(r.uid) ? "checked" : "";
-    const tag = (r.role||"user").toUpperCase();
+    const tag = (r.role === 'admin') ? 'MANAGER' : (r.role === 'god' ? 'GOD' : 'ASSOC');
     return `
       <label class="assignRow">
         <input type="checkbox" data-uid="${esc(r.uid)}" ${checked} />
@@ -1472,11 +1476,11 @@ function openLeadModal(mode){
   modalToast("", true);
 
   $("leadModalTitle").textContent = isEdit ? "Lead Editor (Edit)" : "Lead Editor (New)";
-  $("m_delete").style.display = (isAdmin && isEdit) ? "" : "none";
+  $("m_delete").style.display = ((isGod || isBranchManager) && isEdit) ? "" : "none";
 
   const assignBlock = $("assignBlock");
-  if (assignBlock) assignBlock.style.display = isAdmin ? "" : "none";
-  $("assignHintPill").textContent = isAdmin ? "Admin mode" : "Not admin";
+  if (assignBlock) assignBlock.style.display = (isGod || isBranchManager) ? "" : "none";
+  $("assignHintPill").textContent = isGod ? "God Mode (All)" : (isBranchManager ? "Branch Manager (Team)" : "Not admin");
 
   modalAssignedSet = new Set();
   if (isEdit && currentLead){
@@ -1487,7 +1491,6 @@ function openLeadModal(mode){
 
   leadModal.classList.add("show");
   leadModal.setAttribute("aria-hidden","false");
-
   if (isEdit && currentLead){
     modalLeadId = currentLeadId;
     $("m_address").value = (currentLead.address || currentLead.Address || "");
@@ -1496,7 +1499,6 @@ function openLeadModal(mode){
     $("m_status").value  = leadStatus(currentLead);
     $("m_type").value    = (currentLead.type || "seller");
     $("m_source").value  = (currentLead.source || "");
-
     const phones = normalizePhones(currentLead);
     $("m_phones").value = phones.map(p => `${p.label} | ${p.phone}`).join("\n");
     $("m_notes").value = (currentLead.notes || currentLead.Notes || "");
@@ -1512,7 +1514,7 @@ function openLeadModal(mode){
     $("m_notes").value = "";
   }
 
-  if (isAdmin){
+  if (isGod || isBranchManager){
     renderAssignList();
     setTimeout(()=>{ $("assignFilter")?.focus(); }, 50);
   }
@@ -1553,7 +1555,6 @@ function parsePhonesFromModal(){
   return out;
 }
 
-/* ✅ FIXED: always write to sellers bucket (modal type is just a label field) */
 async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
   const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`);
   await masterRef.update({
@@ -1564,7 +1565,6 @@ async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
     updatedAt: Date.now(),
     updatedBy: (ME?.email || "")
   });
-
   const updates = {};
   assigneeUids.forEach(uid=>{
     updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`] = {
@@ -1575,7 +1575,6 @@ async function upsertLeadMasterAndAssignments(leadId, payload, assigneeUids){
       archived: false
     };
   });
-
   if (modalMode === "edit" && currentLead){
     const prev = Object.keys(currentLead.assignedTo || {}).filter(uid => (currentLead.assignedTo||{})[uid]);
     prev.forEach(uid=>{
@@ -1595,7 +1594,7 @@ async function saveLeadFromModal(){
   const owner = ($("m_owner").value || "").trim();
   const mailing = ($("m_mailing").value || "").trim();
   const status = ($("m_status").value || "New").trim();
-  const type = ($("m_type").value || "seller").trim().toLowerCase(); // label only
+  const type = ($("m_type").value || "seller").trim().toLowerCase(); 
   const source = ($("m_source").value || "").trim();
   const notes = ($("m_notes").value || "").trim();
   const phones = parsePhonesFromModal();
@@ -1609,9 +1608,8 @@ async function saveLeadFromModal(){
 
   $("m_save").disabled = true;
   modalToast("Saving…", true);
-
   try{
-    if (isAdmin){
+    if (isGod || isBranchManager){
       await loadUserDirectoryCache();
 
       const uids = Array.from(modalAssignedSet || []);
@@ -1625,13 +1623,11 @@ async function saveLeadFromModal(){
         createdAt: (modalMode === "edit" && currentLead?.createdAt) ? currentLead.createdAt : Date.now(),
         createdBy: (modalMode === "edit" && currentLead?.createdBy) ? currentLead.createdBy : (ME?.email || "")
       }, uids);
-
       modalToast(uids.length ? "Saved ✓ (Assigned)" : "Saved ✓ (Unassigned)", true);
       closeLeadModal();
       return;
     }
 
-    // Normal user: always save into own sellers queue
     const leadId = (modalMode === "edit" && modalLeadId)
       ? modalLeadId
       : firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`).push().key;
@@ -1645,7 +1641,6 @@ async function saveLeadFromModal(){
       createdAt: (modalMode === "edit" && currentLead?.createdAt) ? currentLead.createdAt : Date.now(),
       createdBy: (modalMode === "edit" && currentLead?.createdBy) ? currentLead.createdBy : (ME?.email || "")
     });
-
     modalToast("Saved ✓", true);
     closeLeadModal();
   }catch(e){
@@ -1658,10 +1653,9 @@ async function saveLeadFromModal(){
 $("m_save").onclick = saveLeadFromModal;
 
 async function deleteLeadAdmin(leadId){
-  if (!leadId || !isAdmin) return;
-  const ok = confirm("ADMIN DELETE: Remove from master and ALL user assignments? This cannot be undone.");
+  if (!leadId || !(isGod || isBranchManager)) return;
+  const ok = confirm("DELETE LEAD: Remove from master and ALL user assignments? This cannot be undone.");
   if (!ok) return;
-
   try{
     modalToast("Deleting…", true);
 
@@ -1699,10 +1693,9 @@ $("btnArchiveLead").onclick = ()=>{ if(currentLeadId) archiveLeadForMe(); };
 
 /* --------- ADMIN: IMPORT LEGACY -> MASTER --------- */
 $("btnImportLegacy").onclick = async ()=>{
-  if (!isAdmin) return;
+  if (!isGod) return;
   const ok = confirm("Import ALL legacy /leads/sellers into /leadsMaster/sellers?\nThis does NOT delete legacy; it copies forward.");
   if (!ok) return;
-
   modalToast("Importing legacy…", true);
 
   try{
@@ -1730,7 +1723,6 @@ $("btnImportLegacy").onclick = async ()=>{
         archived: false
       };
     });
-
     if (Object.keys(updates).length){
       await firebase.database().ref().update(updates);
     }
@@ -1750,7 +1742,6 @@ $("dispoRefreshBtn").onclick = () => {
     f.setAttribute("src", src.split("?")[0] + "?t=" + Date.now());
   }catch(e){}
 };
-
 document.addEventListener('DOMContentLoaded', () => {
   const tabAcq = $("tabAcq");
   const tabDispo = $("tabDispo");
@@ -1923,13 +1914,11 @@ function setupChat(path, title, showBack){
   $("radarList").style.display = "none";
   $("panelTitle").textContent = title || "Chat";
   $("backToRadar").style.display = showBack ? "" : "none";
-
   const msgs = $("chatMsgs");
   msgs.innerHTML = "";
 
   if (activeChatRef){ try{ activeChatRef.off(); }catch(e){} activeChatRef = null; }
   activeChatRef = firebase.database().ref(path);
-
   activeChatRef.limitToLast(80).on("child_added", (snap)=>{
     const m = snap.val() || {};
     const mine = (m.uid && UID && m.uid === UID);
@@ -1939,7 +1928,6 @@ function setupChat(path, title, showBack){
     msgs.appendChild(div);
     msgs.scrollTop = msgs.scrollHeight;
   });
-
   $("chatSend").onclick = sendChat;
   $("chatInput").onkeydown = (e)=>{ if(e.key==="Enter") sendChat(); };
 
@@ -1965,6 +1953,145 @@ function openPanel(){ $("sidePanel").classList.add("open"); $("sidePanel").setAt
 function closePanel(){ $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }
 $("chatBubble").onclick = openPanel;
 $("closePanel").onclick = closePanel;
+
+/* --------------------------- Team Management (Role / Associate Linking) --------------------------- */
+$("btnTeam").onclick = async () => {
+  $("teamModal").classList.add("show");
+  $("teamModalBody").innerHTML = "<div class='help'>Loading directory...</div>";
+  await loadUserDirectoryCache(); 
+  renderTeamModalBody();
+};
+
+$("teamModalClose").onclick = () => { $("teamModal").classList.remove("show"); };
+
+function renderTeamModalBody() {
+  const byUid = userDirCache.byUid || {};
+  let html = "";
+
+  if (isGod) {
+    // God View: Pending Associate Approvals
+    html += `<div class="lbl">Pending Associate Requests</div><div class="teamGrid">`;
+    let pendingCount = 0;
+    Object.values(byUid).forEach(u => {
+      if (u.managerStatus === "pending" && u.managerUid) {
+        pendingCount++;
+        const managerName = byUid[u.managerUid]?.name || u.managerUid;
+        html += `
+          <div class="teamRow">
+            <div class="teamMeta">
+              <strong style="color:#cfe3ff">${esc(u.name)}</strong>
+              <span style="font-size:11px;color:var(--warn)">Requested by Branch Manager: ${esc(managerName)}</span>
+            </div>
+            <div class="teamActions">
+              <button class="btn primary tiny" onclick="approveAssoc('${u.uid}')">Approve</button>
+              <button class="btn danger tiny" onclick="rejectAssoc('${u.uid}')">Deny</button>
+            </div>
+          </div>`;
+      }
+    });
+    if (!pendingCount) html += `<div class="help">No pending requests.</div>`;
+    html += `</div>`;
+
+    // God View: Global User Management
+    html += `<div class="lbl" style="margin-top:24px;">All Users (Role Management)</div><div class="teamGrid">`;
+    Object.values(byUid).forEach(u => {
+      if (u.role === "system") return;
+      const currentRole = (u.role === "god" ? "God Mode" : (u.role === "admin" ? "Branch Manager" : "Associate"));
+      html += `
+        <div class="teamRow">
+          <div class="teamMeta">
+            <strong style="color:#cfe3ff">${esc(u.name)} (${esc(u.email)})</strong>
+            <span style="font-size:11px;color:#9ab9d6">Role: ${esc(currentRole)}</span>
+            ${u.managerUid && u.managerStatus === 'approved' ? `<span style="font-size:11px;color:#00ff6a">Manager: ${esc(byUid[u.managerUid]?.name || "Unknown")}</span>` : ''}
+          </div>
+          <div class="teamActions">
+            ${u.role !== 'god' ? `
+              <select class="select" style="padding:4px; font-size:12px; width:auto;" onchange="changeUserRole('${u.uid}', this.value)">
+                <option value="user" ${u.role !== 'admin' ? 'selected' : ''}>Associate</option>
+                <option value="admin" ${u.role === 'admin' ? 'selected' : ''}>Branch Manager</option>
+              </select>
+            ` : '<span class="pill">God</span>'}
+          </div>
+        </div>`;
+    });
+    html += `</div>`;
+
+  } else if (isBranchManager) {
+    // Admin View: Approved Team
+    html += `<div class="lbl">My Approved Team (Associates)</div><div class="teamGrid">`;
+    let teamCount = 0;
+    Object.values(byUid).forEach(u => {
+      if (u.managerUid === UID && u.managerStatus === "approved") {
+        teamCount++;
+        html += `
+          <div class="teamRow">
+            <div class="teamMeta">
+              <strong style="color:#cfe3ff">${esc(u.name)}</strong>
+              <span style="font-size:11px;color:#00ff6a">Active Team Member</span>
+            </div>
+          </div>`;
+      }
+    });
+    if (!teamCount) html += `<div class="help">No approved associates on your team yet.</div>`;
+    html += `</div>`;
+
+    // Admin View: Request new users
+    html += `<div class="lbl" style="margin-top:24px;">Request New Associates</div><div class="teamGrid">`;
+    let availCount = 0;
+    Object.values(byUid).forEach(u => {
+      if (u.role !== 'god' && u.role !== 'admin' && u.role !== 'system') {
+        if (!u.managerUid || (u.managerUid === UID && u.managerStatus === 'pending')) {
+           availCount++;
+           const isPendingMe = (u.managerUid === UID && u.managerStatus === 'pending');
+           html += `
+             <div class="teamRow">
+               <div class="teamMeta">
+                 <strong style="color:#cfe3ff">${esc(u.name)} (${esc(u.email)})</strong>
+                 ${isPendingMe ? `<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>` : `<span style="font-size:11px;color:#9ab9d6">Available</span>`}
+               </div>
+               <div class="teamActions">
+                 ${!isPendingMe ? `<button class="btn primary tiny" onclick="requestAssoc('${u.uid}')">Request</button>` : `<button class="btn ghost tiny" disabled>Pending...</button>`}
+               </div>
+             </div>`;
+        }
+      }
+    });
+    if (!availCount) html += `<div class="help">No available associates to request.</div>`;
+    html += `</div>`;
+  }
+
+  $("teamModalBody").innerHTML = html;
+}
+
+window.requestAssoc = async (targetUid) => {
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({ managerUid: UID, managerStatus: 'pending' });
+  toast("Request sent to God Mode");
+  await loadUserDirectoryCache();
+  renderTeamModalBody();
+};
+
+window.approveAssoc = async (targetUid) => {
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({ managerStatus: 'approved' });
+  toast("Associate Approved");
+  await loadUserDirectoryCache();
+  renderTeamModalBody();
+};
+
+window.rejectAssoc = async (targetUid) => {
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({ managerUid: null, managerStatus: null });
+  toast("Request Denied");
+  await loadUserDirectoryCache();
+  renderTeamModalBody();
+};
+
+window.changeUserRole = async (targetUid, newRole) => {
+  await firebase.database().ref(`${ROLES_PATH}/${targetUid}`).set(newRole);
+  await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}/role`).set(newRole);
+  toast("Role updated");
+  await loadUserDirectoryCache();
+  renderTeamModalBody();
+};
+
 
 /* --------------------------- Auth boot --------------------------- */
 $("btnSettings").onclick = () => location.href = 'settings.html';
@@ -2001,15 +2128,33 @@ firebase.auth().onAuthStateChanged(async (u) => {
   try{
     const roleSnap = await firebase.database().ref(`${ROLES_PATH}/${UID}`).once('value');
     const role = roleSnap.val();
-    isAdmin = (role === 'god' || role === 'admin' || (u.email || "").toLowerCase() === "dealbankers@gmail.com");
-    $("roleReadout").textContent = "ROLE: " + (isAdmin ? "ADMIN/GOD" : "USER");
+    const emailStr = (u.email || "").toLowerCase();
+
+    isGod = (role === 'god' || emailStr === "dealbankers@gmail.com");
+    isBranchManager = (!isGod && role === 'admin');
+
+    if (isGod) {
+      $("roleReadout").textContent = "ROLE: GOD MODE";
+      $("btnTeam").style.display = "";
+      $("btnImportLegacy").style.display = "";
+    } else if (isBranchManager) {
+      $("roleReadout").textContent = "ROLE: BRANCH MANAGER";
+      $("btnTeam").style.display = "";
+      $("btnImportLegacy").style.display = "none";
+    } else {
+      $("roleReadout").textContent = "ROLE: ASSOCIATE";
+      $("btnTeam").style.display = "none";
+      $("btnImportLegacy").style.display = "none";
+    }
+
   }catch(e){
-    isAdmin = false;
-    $("roleReadout").textContent = "ROLE: USER";
+    isGod = false;
+    isBranchManager = false;
+    $("roleReadout").textContent = "ROLE: ASSOCIATE";
   }
 
   try{
-    if (isAdmin){
+    if (isGod || isBranchManager){
       $("radarList").style.display = "";
       startRadar();
     } else {
@@ -2018,12 +2163,10 @@ firebase.auth().onAuthStateChanged(async (u) => {
     }
   }catch(e){}
 
-  // preload directory cache for admin assignment UI
   try{ await loadUserDirectoryCache(); }catch(e){}
 
-  // ✅ correct lead subscription
   try{
-    if (isAdmin) subscribeAdminAllLeads();
+    if (isGod || isBranchManager) subscribeAdminAllLeads();
     else subscribeUserAssignedLeads();
   }catch(e){
     console.warn("lead subscribe failed", e);
