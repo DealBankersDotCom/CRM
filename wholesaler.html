@@ -260,6 +260,11 @@ function subscribeBranchScopedLeads(){
   const byId=new Map();
   const sourceMap=new Map();
   const scope=[UID,...managedAssociatesFor(UID).map(u=>u.uid)];
+  if(!scope.length){
+    sellerList=[]; sellerView=[]; renderQueue(); clearConsole(); updatePager();
+    $("status").textContent="No branch scope found.";
+    return;
+  }
 
   function rebuildLead(leadId){
     const sources=sourceMap.get(leadId);
@@ -281,11 +286,13 @@ function subscribeBranchScopedLeads(){
     $("status").textContent=`Acq (Branch): ${byId.size} items`;
   }
 
+  let sawAny=false;
   scope.forEach(uid=>{
     const ref=firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/sellers`);
     branchLeadRefs.push(ref);
 
     ref.on("child_added", snap=>{
+      sawAny=true;
       const leadId=snap.key;
       const val=snap.val()||{};
       if(!sourceMap.has(leadId)) sourceMap.set(leadId,new Map());
@@ -308,6 +315,13 @@ function subscribeBranchScopedLeads(){
       }
       rebuildLead(leadId);
     });
+  });
+  Promise.all(scope.map(uid=>firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/sellers`).once("value").catch(()=>null))).then(snaps=>{
+    const any=(snaps||[]).some(s=>s&&s.exists&&s.exists());
+    if(!any){
+      sellerList=[]; sellerView=[]; renderQueue(); clearConsole(); updatePager();
+      $("status").textContent="No branch leads found in leadsByUser yet. Leads sitting only in leadsMaster will not appear for Branch Managers until assigned/copied into their user queues.";
+    }
   });
 }
 function subscribeGodAllLeads(){detachLeadRefs(); $("status").textContent="Loading ALL leads…"; const byId=new Map(); leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`); leadsRef.on("child_added", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId); $("status").textContent=`Acq (ALL): ${byId.size} items`;}); leadsRef.on("child_changed", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId);}); leadsRef.on("child_removed", snap=>{byId.delete(snap.key); setListFromMap(byId);}); legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`); legacyRef.on("child_added", snap=>{if(byId.has(snap.key)) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId);}); legacyRef.on("child_changed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy===false) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId);}); legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); setListFromMap(byId);}); $("btnImportLegacy").style.display="";}
