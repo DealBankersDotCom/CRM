@@ -214,8 +214,66 @@ function toast(msg){const el=$("noteStatus"); el.textContent=msg; el.style.displ
 function fmtPhoneKey(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} function tsToLocal(ts){try{const d=new Date(ts); return isNaN(d.getTime())?"":d.toLocaleString();}catch(e){return "";}} function initialsFromUser(u){const base=(u&&(u.displayName||u.email))?(u.displayName||u.email):""; const parts=String(base).split(/[\s._-]+/).filter(Boolean); return (parts.map(p=>p[0]?.toUpperCase()||"").join("").slice(0,2)||"U");} function usernameFromEmail(email){const e=String(email||"").toLowerCase().trim(); const local=e.split("@")[0]||""; return local.replace(/[^a-z0-9_]/g,"").slice(0,24)||"user";}
 function mapRole(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin"; return "user";} function roleLabel(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} function isAdminLike(){return isGod||isBranchManager;}
 let userDirCache={byUid:{},byEmail:{},byUser:{}}; let pendingRequestCache=[];
-async function loadUserDirectoryCache(){const [uSnap,rSnap]=await Promise.all([firebase.database().ref(USER_DIR_PATH).once("value"), firebase.database().ref(ROLES_PATH).once("value")]); const users=uSnap.val()||{}, roles=rSnap.val()||{}; const byUid={}, byEmail={}, byUser={}; const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); allUids.forEach(uid=>{const row=users[uid]||{}; const role=mapRole(roles[uid]||row.role||"user"); const email=String(row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;}); pendingRequestCache=Object.values(byUid).filter(u=>String(u.role||"")==='user'&&String(u.managerStatus||"")==='pending'&&String(u.managerUid||"").trim()).map(u=>({id:u.uid,targetUid:u.uid,targetEmail:u.email||"",requesterUid:u.managerUid,requesterEmail:byUid[u.managerUid]?.email||"",status:'pending'})); userDirCache={byUid,byEmail,byUser};}
+async function loadUserDirectoryCache(){
+  let users = {};
+  let roles = {};
+  try{
+    const uSnap = await firebase.database().ref(USER_DIR_PATH).once("value");
+    users = uSnap.val() || {};
+  }catch(e){
+    console.warn("userDirectory read failed", e);
+  }
+  try{
+    const rSnap = await firebase.database().ref(ROLES_PATH).once("value");
+    roles = rSnap.val() || {};
+  }catch(e){
+    console.warn("roles read failed", e);
+  }
+
+  const byUid = {};
+  const byEmail = {};
+  const byUser = {};
+  const allUids = Array.from(new Set([...Object.keys(users), ...Object.keys(roles)]));
+
+  allUids.forEach(uid=>{
+    const row = users[uid] || {};
+    const role = mapRole(roles[uid] || row.role || "user");
+    const email = String(row.email || "").toLowerCase().trim();
+    const username = String(row.username || row.userName || usernameFromEmail(email)).toLowerCase();
+    byUid[uid] = { ...row, uid, email, username, role };
+    if(email) byEmail[email] = uid;
+    if(username) byUser[username] = uid;
+  });
+
+  pendingRequestCache = Object.values(byUid)
+    .filter(u=>String(u.role || "") === "user" && String(u.managerStatus || "") === "pending" && String(u.managerUid || "").trim())
+    .map(u=>({
+      id: u.uid,
+      targetUid: u.uid,
+      targetEmail: u.email || "",
+      requesterUid: u.managerUid,
+      requesterEmail: byUid[u.managerUid]?.email || "",
+      status: "pending"
+    }));
+
+  userDirCache = { byUid, byEmail, byUser };
+  return userDirCache;
+}
+
 function managedAssociatesFor(uid){return Object.values(userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
+async function resolveMyRole(u){
+  const emailStr = String(u?.email || "").toLowerCase().trim();
+  if(emailStr === "dealbankers@gmail.com") return "god";
+  try{
+    const roleSnap = await firebase.database().ref(`${ROLES_PATH}/${UID}`).once("value");
+    const raw = roleSnap.val();
+    if(raw != null) return mapRole(raw);
+  }catch(e){
+    console.warn("direct role read failed", e);
+  }
+  return mapRole(userDirCache.byUid?.[UID]?.role || "user");
+}
+
 function getAssignableRows(){const rows=[]; Object.values(userDirCache.byUid||{}).forEach(u=>{if(u.role==="system") return; if(isGod){if(u.role==="god") return; rows.push(u); return;} if(isBranchManager){if(u.uid===UID){rows.push(u); return;} if(u.role==="user"&&String(u.managerUid||"")===String(UID)&&String(u.managerStatus||"")==="approved") rows.push(u);}}); rows.sort((a,b)=>((a.role||"")===(b.role||"")?String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}):String(a.role||"").localeCompare(String(b.role||"")))); return rows;}
 function leadIdFor(lead){return String((lead&&(lead.id||lead.docnum))?(lead.id||lead.docnum):"");}
 function normalizePhones(lead){const out=[]; if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set(); return out.filter(p=>{const k=fmtPhoneKey(p.phone); if(!p.phone||k==="unknown"||seen.has(k)) return false; seen.add(k); return true;}).map(p=>({label:String(p.label||"Phone"), phone:String(p.phone)}));}
@@ -345,6 +403,18 @@ function subscribeBranchScopedLeads(){
   const byId=new Map();
   const sourceMap=new Map();
   const scope=[UID,...managedAssociatesFor(UID).map(u=>u.uid)];
+  let loaded=0;
+  const total=scope.length;
+
+  function showEmptyIfDone(){
+    if(loaded < total || byId.size) return;
+    sellerList=[];
+    sellerView=[];
+    renderQueue();
+    clearConsole();
+    updatePager();
+    $("status").textContent="No branch leads yet.";
+  }
 
   function rebuildLead(leadId){
     const sources=sourceMap.get(leadId);
@@ -352,7 +422,11 @@ function subscribeBranchScopedLeads(){
       sourceMap.delete(leadId);
       byId.delete(leadId);
       setListFromMap(byId);
-      $("status").textContent=`Acq (Branch): ${byId.size} items`;
+      if(byId.size){
+        $("status").textContent=`Acq (Branch): ${byId.size} items`;
+      }else{
+        showEmptyIfDone();
+      }
       return;
     }
     const rows=Array.from(sources.entries()).map(([uid,val])=>({uid,...val}));
@@ -388,14 +462,51 @@ function subscribeBranchScopedLeads(){
 
     ref.on("child_removed", snap=>{
       const leadId=snap.key;
-      if(sourceMap.has(leadId)){
-        sourceMap.get(leadId).delete(uid);
-      }
+      if(sourceMap.has(leadId)) sourceMap.get(leadId).delete(uid);
       rebuildLead(leadId);
     });
+
+    ref.once("value").then(()=>{ loaded++; showEmptyIfDone(); }).catch(()=>{ loaded++; showEmptyIfDone(); });
   });
 }
-function subscribeGodAllLeads(){detachLeadRefs(); $("status").textContent="Loading ALL leads…"; const byId=new Map(); leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`); leadsRef.on("child_added", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId); $("status").textContent=`Acq (ALL): ${byId.size} items`;}); leadsRef.on("child_changed", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId);}); leadsRef.on("child_removed", snap=>{byId.delete(snap.key); setListFromMap(byId);}); legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`); legacyRef.on("child_added", snap=>{if(byId.has(snap.key)) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId);}); legacyRef.on("child_changed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy===false) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId);}); legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); setListFromMap(byId);}); $("btnImportLegacy").style.display="";}
+
+function subscribeGodAllLeads(){
+  detachLeadRefs();
+  $("status").textContent="Loading ALL leads…";
+  const byId=new Map();
+  let masterLoaded=false;
+  let legacyLoaded=false;
+
+  const showEmptyIfDone=()=>{
+    if(byId.size){
+      $("status").textContent=`Acq (ALL): ${byId.size} items`;
+      return;
+    }
+    if(masterLoaded && legacyLoaded){
+      sellerList=[];
+      sellerView=[];
+      renderQueue();
+      clearConsole();
+      updatePager();
+      $("status").textContent="No leads available.";
+    }
+  };
+
+  leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
+  leadsRef.on("child_added", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId); showEmptyIfDone();});
+  leadsRef.on("child_changed", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId); showEmptyIfDone();});
+  leadsRef.on("child_removed", snap=>{byId.delete(snap.key); setListFromMap(byId); showEmptyIfDone();});
+  leadsRef.once("value").then(()=>{ masterLoaded=true; showEmptyIfDone(); }).catch(()=>{ masterLoaded=true; showEmptyIfDone(); });
+
+  legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`);
+  legacyRef.on("child_added", snap=>{if(byId.has(snap.key)) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId); showEmptyIfDone();});
+  legacyRef.on("child_changed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy===false) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId); showEmptyIfDone();});
+  legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); setListFromMap(byId); showEmptyIfDone();});
+  legacyRef.once("value").then(()=>{ legacyLoaded=true; showEmptyIfDone(); }).catch(()=>{ legacyLoaded=true; showEmptyIfDone(); });
+
+  $("btnImportLegacy").style.display="";
+}
+
 const leadModal=$("leadModal"); let modalMode="new", modalLeadId=null, modalAssignedSet=new Set();
 function renderAssignList(){const listEl=$("assignList"), q=($("assignFilter").value||"").toLowerCase().trim(); const rows=getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);}); if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`; return;} listEl.innerHTML=rows.map(r=>{const checked=modalAssignedSet.has(r.uid)?"checked":""; const tag=r.role==="admin"?"MANAGER":"ASSOC"; return `<label class="assignRow"><input type="checkbox" data-uid="${esc(r.uid)}" ${checked}/><div class="assignMeta"><div class="assignName">${esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${esc(r.email||r.uid)}</div></div><div class="assignTag">${tag}</div></label>`;}).join(""); listEl.querySelectorAll("input[data-uid]").forEach(cb=>cb.addEventListener("change", ()=>{const uid=cb.getAttribute("data-uid"); if(cb.checked) modalAssignedSet.add(uid); else modalAssignedSet.delete(uid);}));}
 $("assignFilter").addEventListener("input", renderAssignList); $("assignAllBtn").addEventListener("click", ()=>{getAssignableRows().forEach(r=>modalAssignedSet.add(r.uid)); renderAssignList();}); $("assignNoneBtn").addEventListener("click", ()=>{modalAssignedSet=new Set(); renderAssignList();});
@@ -720,14 +831,12 @@ firebase.auth().onAuthStateChanged(async u=>{
   try{await upsertMyUserDirectory(u);}catch(e){console.warn("userDirectory upsert failed", e);}
   try{trackPresence(u);}catch(e){console.warn("Presence failed:", e);}
 
-  try{
-    await loadUserDirectoryCache();
-    const emailStr=(u.email||"").toLowerCase().trim();
-    const roleSnap=await firebase.database().ref(`${ROLES_PATH}/${UID}`).once("value");
-    let rawRole=roleSnap.val()||userDirCache.byUid?.[UID]?.role||"user";
-    ROLE=mapRole(rawRole);
+  try{await loadUserDirectoryCache();}catch(e){console.warn("initial directory cache failed", e);}
 
-    if(emailStr==="dealbankers@gmail.com"){
+  try{
+    ROLE=await resolveMyRole(u);
+
+    if(String(u.email||"").toLowerCase().trim()==="dealbankers@gmail.com"){
       ROLE="god";
       try{await firebase.database().ref(`${ROLES_PATH}/${UID}`).set("god");}catch(e){console.warn("Could not sync roles path to god", e);}
       try{await firebase.database().ref(`${USER_DIR_PATH}/${UID}`).update({role:"god"});}catch(e){console.warn("Could not sync userDirectory role to god", e);}
@@ -739,6 +848,7 @@ firebase.auth().onAuthStateChanged(async u=>{
     $("btnTeam").style.display=isAdminLike()?"":"none";
     $("btnImportLegacy").style.display=isGod?"":"none";
   }catch(e){
+    console.warn("role boot failed", e);
     ROLE="user";
     isGod=false;
     isBranchManager=false;
@@ -758,8 +868,9 @@ firebase.auth().onAuthStateChanged(async u=>{
     console.warn("chat boot failed", e);
   }
 
+  try{ await loadUserDirectoryCache(); }catch(e){ console.warn("directory refresh failed", e); }
+
   try{
-    await loadUserDirectoryCache();
     if(isGod){
       await healAssignedLeadCopiesFromMaster();
       subscribeGodAllLeads();
@@ -773,7 +884,7 @@ firebase.auth().onAuthStateChanged(async u=>{
     $("status").textContent="Leads subscribe error (see console).";
   }
 });
-$("callHint").style.display="none";
+$("callHint").style.display="none";$("callHint").style.display="none";
 </script>
 </body>
 </html>
