@@ -1,28 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1, viewport-fit=cover" />
-  <title>DealBankers • Capital Hub</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover"/>
+  <title>DealBankers — Command Hub</title>
+  <link rel="icon" href="icon (1).jpg" />
 
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&display=swap" rel="stylesheet" />
 
   <style>
     :root{
-      --bg0:#050712; --bg1:#070b16; --bg2:#0a1020;
-      --panel: rgba(15,20,35,.55);
+      --bg0:#050712;
+      --bg1:#070b16;
+      --bg2:#0a1020;
+      --panel: rgba(255,255,255,.06);
       --panel2: rgba(255,255,255,.04);
       --line: rgba(255,255,255,.10);
       --text:#eaf2ff;
       --muted: rgba(255,255,255,.55);
       --muted2: rgba(255,255,255,.40);
-      --blue:#2b74ff; --blue2:#6aa7ff; --purple:#8b5cf6;
-      --good:#2bd4a7; --warn:#fbbf24; --bad:#ef4444;
+
+      --blue:#2b74ff;
+      --blue2:#6aa7ff;
+      --purple:#8b5cf6;
+      --teal:#22c55e;
+      --amber:#fbbf24;
+      --red:#ef4444;
+
+      --shadow: 0 18px 55px rgba(0,0,0,.55);
       --shadowSoft: 0 10px 30px rgba(0,0,0,.35);
+      --radius: 18px;
+      --radius2: 22px;
     }
+
     *{box-sizing:border-box;margin:0;padding:0}
     html,body{height:100%}
     body{
@@ -35,148 +47,632 @@
       overflow-x:hidden;
     }
 
-    /* Ambient Background matching index.html */
     .ambient{ position: fixed; inset: 0; pointer-events:none; z-index:0; overflow:hidden; }
     .blob{ position:absolute; width: 420px; height: 420px; border-radius: 999px; filter: blur(48px); opacity:.35; }
-    .b1{ top: 12%; left: 8%; background: rgba(43,116,255,.25); }
-    .b2{ bottom: 18%; right: 10%; background: rgba(139,92,246,.20); }
-    .grid-bg{
-      position:absolute; inset:0; opacity:.04;
-      background-image: linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
-      background-size:56px 56px; mix-blend-mode: overlay;
+    .b1{ top: 12%; left: 8%; background: rgba(43,116,255,.35); }
+    .b2{ bottom: 18%; right: 10%; background: rgba(139,92,246,.30); }
+    .grid{
+      position:absolute; inset:0; opacity:.06;
+      background-image:
+        linear-gradient(rgba(255,255,255,.10) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255,255,255,.10) 1px, transparent 1px);
+      background-size:56px 56px;
+      mix-blend-mode: overlay;
     }
 
-    /* Header matching index.html */
     header{
-      position: sticky; top: 0; z-index: 50; padding: 14px 18px;
+      position: sticky; top: 0; z-index: 50;
+      padding: 14px 18px;
       border-bottom: 1px solid rgba(255,255,255,.08);
       background: linear-gradient(180deg, rgba(5,7,18,.78), rgba(5,7,18,.18));
       backdrop-filter: blur(14px);
     }
     .hwrap{
-      max-width: 1500px; margin: 0 auto;
+      max-width: 1240px; margin: 0 auto;
       display:flex; align-items:center; justify-content:space-between; gap: 14px;
     }
     .brand{ display:flex; align-items:center; gap: 12px; min-width: 190px; }
     .brand img{
       width: 42px; height: 42px; border-radius: 12px;
-      box-shadow: 0 0 18px rgba(168,85,247,.35);
+      box-shadow: 0 0 18px rgba(43,116,255,.35);
       border: 1px solid rgba(255,255,255,.10);
     }
     .brandTitle{ font-weight: 800; letter-spacing: .02em; font-size: 16px; line-height: 1.1; }
-    .brandSub{ font-size: 12px; color: var(--purple); font-weight:700; margin-top: 2px; line-height: 1.1; }
+    .brandSub{ font-size: 12px; color: var(--muted); margin-top: 2px; line-height: 1.1; }
 
     nav{ display:flex; gap: 10px; flex-wrap:wrap; justify-content:center; }
     nav a{
       text-decoration:none; color: rgba(255,255,255,.78);
-      background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.10);
-      padding: 8px 12px; border-radius: 12px; font-weight: 700; font-size: 13px;
-      transition: all .15s ease; white-space:nowrap;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      padding: 8px 12px; border-radius: 12px;
+      font-weight: 700; font-size: 13px;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      white-space:nowrap;
     }
-    nav a:hover, nav a.active{
-      background: rgba(168,85,247,.16); border-color: rgba(168,85,247,.35); color:#fff;
+    nav a:hover{
+      background: rgba(43,116,255,.16);
+      border-color: rgba(43,116,255,.35);
+      filter: brightness(1.05);
+      transform: translateY(-1px);
     }
 
-    .rightHead{ display:flex; align-items:center; gap: 10px; flex-wrap:wrap; justify-content:flex-end; }
-    .btn{
-      border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:var(--text);
-      padding:10px 14px; border-radius:12px; font-weight:800; font-size:13px; cursor:pointer;
-      transition: transform .06s ease, background .15s ease, border-color .15s ease;
-      display:inline-flex; align-items:center; gap:8px; white-space:nowrap;
+    .rightHead{
+      display:flex; align-items:center; gap: 10px; flex-wrap:wrap;
+      justify-content:flex-end; min-width: 220px;
     }
-    .btn:hover{ transform:translateY(-1px); background:rgba(255,255,255,.12); border-color:rgba(255,255,255,.25); }
-    .btn.primary{ background:rgba(43,116,255,.18); border-color:rgba(43,116,255,.35); }
-    
-    .status{ font-size: 12px; color: var(--muted); text-align:right; line-height: 1.2; }
-    .status a{ color: #6aa7ff; text-decoration: none; font-weight: 800; cursor:pointer; }
+    .bell{
+      position: relative;
+      width: 42px; height: 42px; border-radius: 14px;
+      background: rgba(255,255,255,.06);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .bell:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .badge{
+      position:absolute; top: -6px; right: -6px;
+      width: 18px; height: 18px; border-radius: 999px;
+      background: var(--red); color: white;
+      font-size: 11px; font-weight: 800;
+      display:flex; align-items:center; justify-content:center;
+      border: 2px solid rgba(5,7,18,.95);
+    }
+    .status{
+      font-size: 12px; color: var(--muted);
+      max-width: 320px; text-align:right; line-height: 1.2;
+    }
+    .status a{ color: #6aa7ff; text-decoration: none; font-weight: 800; }
+    .status a:hover{ text-decoration: underline; }
 
-    /* CRM Layout */
-    .wrap{ position: relative; z-index: 2; padding:16px; }
-    .grid{
-      display:grid; grid-template-columns: 360px 1fr 340px; gap:16px;
-      max-width: 1500px; margin:0 auto; align-items:start;
+    .wrap{
+      position: relative; z-index: 2;
+      max-width: 1240px; margin: 18px auto 46px; padding: 0 16px;
     }
+
+    .topRow{
+      display:flex; align-items:flex-start; justify-content:space-between;
+      gap: 14px; flex-wrap:wrap; margin: 14px 0 16px;
+    }
+    .welcome h1{
+      font-size: clamp(22px, 2.4vw, 34px);
+      font-weight: 900; letter-spacing: -.02em; line-height: 1.1;
+    }
+    .welcome h1 .grad{
+      background: linear-gradient(90deg, rgba(106,167,255,1), rgba(139,92,246,1));
+      -webkit-background-clip: text; background-clip: text; color: transparent;
+    }
+    .welcome p{ margin-top: 6px; color: var(--muted); font-size: 13px; }
+
+    .gbtn{
+      display:inline-flex; align-items:center; gap: 10px;
+      padding: 12px 14px; border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      font-weight: 800; cursor: pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      box-shadow: 0 0 18px rgba(43,116,255,.18);
+      white-space:nowrap;
+    }
+    .gbtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.14); }
+    .gbtn img{ width: 18px; height: 18px; }
+
+    .stats{
+      display:grid; grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 12px; margin: 14px 0 18px;
+    }
+    .stat{
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 16px;
+      padding: 14px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      min-height: 86px;
+    }
+    .stat .label{ color: rgba(255,255,255,.42); font-size: 12px; margin-top: 8px; }
+    .stat .value{ font-size: 22px; font-weight: 900; letter-spacing: -.02em; }
+    .stat .icon{ width: 26px; height: 26px; opacity: .95; }
+    .rowIcon{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+
+    .gridMain{
+      display:grid;
+      grid-template-columns: 3fr 1fr;
+      gap: 16px;
+      align-items:start;
+    }
+
+    .portals{
+      display:grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 14px;
+    }
+    .pCard{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      overflow:hidden;
+      position: relative;
+      box-shadow: var(--shadowSoft);
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+      min-height: 150px;
+    }
+    .pCard:hover{ transform: translateY(-2px); filter: brightness(1.04); }
+    .pInner{ padding: 16px 16px 14px; position: relative; z-index: 2; }
+    .pTop{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+    .pTitle{ font-weight: 900; font-size: 18px; letter-spacing: -.01em; }
+    .pDesc{
+      margin-top: 8px;
+      color: rgba(255,255,255,.70);
+      font-size: 13px;
+      line-height: 1.35;
+      max-width: 520px;
+    }
+    .pStats{
+      display:flex; gap: 14px; flex-wrap:wrap;
+      margin-top: 12px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.12);
+    }
+    .ps{ display:flex; flex-direction:column; min-width: 90px; }
+    .ps .v{ font-weight: 900; font-size: 16px; }
+    .ps .l{ font-size: 11px; color: rgba(255,255,255,.55); margin-top: 2px; }
+
+    .bgGlow{ position:absolute; inset:0; opacity: .95; z-index: 1; }
+    .bgNoise{
+      position:absolute; inset:0; z-index: 0;
+      background:
+        radial-gradient(circle at 20% 20%, rgba(255,255,255,.12), transparent 55%),
+        radial-gradient(circle at 70% 50%, rgba(0,0,0,.18), transparent 60%);
+      opacity: .18; mix-blend-mode: overlay;
+    }
+
+    .side{ display:flex; flex-direction:column; gap: 14px; }
     .panel{
-      background: var(--panel); border: 1px solid var(--line); border-radius: 18px;
-      backdrop-filter: blur(10px); box-shadow: var(--shadowSoft); overflow:hidden;
+      background: rgba(15,20,35,.55);
+      border: 1px solid rgba(255,255,255,.10);
+      border-radius: 18px;
+      backdrop-filter: blur(10px);
+      box-shadow: var(--shadowSoft);
+      overflow:hidden;
     }
     .panelHead{
-      display:flex; align-items:center; justify-content:space-between; padding:14px 16px;
-      border-bottom:1px solid var(--line); background:rgba(0,0,0,.2); font-weight:900; letter-spacing:.02em;
+      padding: 14px 14px 12px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
     }
-    .panelBody{ padding:16px; }
-    .tiny{ font-size:12px; color:var(--muted); opacity:.9; }
-    
-    .kpi{
-      padding:6px 10px; border-radius:8px; border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.3); font-weight:800; font-size:11px; text-transform:uppercase; letter-spacing:.05em;
+    .panelHead h3{
+      font-size: 13px;
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .pill{
+      padding: 7px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.70);
+      font-size: 12px;
+      font-weight: 800;
+      white-space:nowrap;
+    }
+    .panelBody{ padding: 12px 14px 14px; }
+
+    .presenceList{ display:flex; flex-direction:column; gap: 10px; }
+    .pItem{
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+      padding: 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
+    }
+    .pLeft{ display:flex; align-items:center; gap: 10px; min-width:0; }
+    .avatar{
+      width: 28px; height: 28px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.08);
+      border: 1px solid rgba(255,255,255,.10);
+      display:flex; align-items:center; justify-content:center;
+      font-weight: 900; color: rgba(255,255,255,.88);
+      flex: 0 0 auto;
+    }
+    .pMeta{ min-width:0; }
+    .pName{
+      font-weight: 800; font-size: 13px;
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 160px;
+    }
+    .pSub{
+      font-size: 11px; color: rgba(255,255,255,.48);
+      white-space:nowrap; overflow:hidden; text-overflow:ellipsis;
+      max-width: 160px; margin-top: 2px;
+    }
+    .dot{
+      width: 10px; height: 10px;
+      border-radius: 999px;
+      background: #22c55e;
+      box-shadow: 0 0 12px rgba(34,197,94,.25);
+      flex: 0 0 auto;
     }
 
-    /* Inputs & Filters */
-    input, select, textarea{
-      width:100%; padding:12px; border-radius:12px; border:1px solid var(--line);
-      background:rgba(0,0,0,.25); color:var(--text); outline:none; font-family:inherit;
+    .chatShell{
+      display:flex;
+      flex-direction:column;
+      height: clamp(360px, 52vh, 560px);
+      min-height: 0;
     }
-    input:focus, select:focus, textarea:focus{ border-color:var(--blue); }
-    .searchRow{ display:flex; gap:10px; margin-bottom:12px; }
-    
-    .filters{ display:flex; gap:8px; flex-wrap:wrap; margin-bottom:14px; }
-    .chip{
-      padding:8px 12px; border-radius:10px; border:1px solid var(--line);
-      background:rgba(255,255,255,.04); font-weight:800; font-size:12px; cursor:pointer; user-select:none;
+    .chatMessages{ flex: 1; overflow-y:auto; min-height:0; padding-right: 4px; }
+    .msg{
+      margin-bottom: 10px;
+      padding: 10px 10px;
+      border-radius: 14px;
+      background: rgba(255,255,255,.04);
+      border: 1px solid rgba(255,255,255,.08);
     }
-    .chip.on{ border-color:var(--purple); background:rgba(168,85,247,.16); color:#fff; }
+    .msg strong{ color: #6aa7ff; }
+    .msg small{ color: rgba(255,255,255,.45); font-size: 11px; margin-left: 6px; }
+    .chatInput{
+      display:flex; gap: 10px; margin-top: 10px; padding-top: 10px;
+      border-top: 1px solid rgba(255,255,255,.08);
+    }
+    .chatInput input{
+      flex:1;
+      padding: 11px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: white;
+      outline:none;
+    }
+    .chatInput input:focus{
+      border-color: rgba(106,167,255,.55);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.14);
+    }
+    .chatInput button{
+      padding: 11px 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(43,116,255,.55);
+      background: rgba(43,116,255,.20);
+      color: white;
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease;
+    }
+    .chatInput button:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .chatInput button:active{ transform: translateY(0); }
 
-    /* Investor List */
-    .list{ display:flex; flex-direction:column; gap:10px; max-height:600px; overflow-y:auto; padding-right:4px;}
-    .list::-webkit-scrollbar { width: 6px; }
-    .list::-webkit-scrollbar-thumb { background: rgba(255,255,255,.1); border-radius: 4px; }
-    
-    .card{
-      padding:14px; border-radius:14px; border:1px solid var(--line);
-      background:rgba(255,255,255,.03); cursor:pointer; transition:all .1s ease;
+    footer{
+      max-width: 1240px;
+      margin: 26px auto 40px;
+      padding: 0 16px;
+      color: rgba(255,255,255,.46);
+      font-size: 12px;
+      text-align:center;
     }
-    .card:hover{ border-color:rgba(255,255,255,.2); background:rgba(255,255,255,.06); }
-    .card.on{ border-color:var(--blue); background:rgba(43,116,255,.12); }
-    .cardTitle{ font-weight:900; font-size:15px; margin-bottom:2px;}
-    .cardSub{ font-size:12px; color:var(--good); font-weight:800; margin-bottom:8px;}
-    .row{ display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    footer a{ color: rgba(255,255,255,.62); }
 
-    .divider{ height:1px; background:var(--line); margin:16px 0; }
+    @media (max-width: 980px){
+      nav{ display:none; }
+      .stats{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+      .gridMain{ grid-template-columns: 1fr; }
+      .portals{ grid-template-columns: 1fr; }
+      .status{ text-align:left; max-width:none; }
+      .rightHead{ min-width: unset; justify-content:flex-start; }
+    }
 
-    /* Modal (Merged aesthetic) */
-    .modalBack{
-      position:fixed; inset:0; background:rgba(0,0,0,.65); backdrop-filter: blur(8px);
-      display:none; align-items:center; justify-content:center; padding:18px; z-index:999;
+    /* =========================
+       Modal Base (shared)
+       ========================= */
+    .modalOverlay{
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 18px;
+      background: rgba(0,0,0,.55);
+      backdrop-filter: blur(10px);
     }
-    .modal{
-      width:min(900px, 100%); max-height:90vh; overflow:auto; border-radius:22px;
-      border:1px solid var(--line); background:var(--bg1); box-shadow: 0 25px 70px rgba(0,0,0,.8);
+    .modalOverlay.show{ display:flex; }
+
+    .modalCard{
+      width: min(980px, 96vw);
+      border-radius: 22px;
+      border: 1px solid rgba(255,255,255,.12);
+      box-shadow: 0 22px 80px rgba(0,0,0,.65);
+      overflow: hidden;
+      background: rgba(15,20,35,.78);
     }
+
     .modalHead{
-      padding:16px 20px; display:flex; align-items:center; justify-content:space-between;
-      border-bottom:1px solid var(--line); background:rgba(0,0,0,.3); font-weight:900; font-size:16px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap: 12px;
+      padding: 14px 16px;
+      border-bottom: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.20);
     }
-    .modalBody{ padding:20px; }
-    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:16px; }
-    .fLabel{ font-size:11px; color:var(--muted); font-weight:800; letter-spacing:.05em; margin-bottom:6px; text-transform:uppercase;}
-
-    /* Sidebar Chat / Support */
-    .sidebarOverlay{ position:fixed; inset:0; background:rgba(0,0,0,.55); display:none; z-index:90; }
-    .sidebarPanel{
-      position:fixed; top:76px; right:14px; width:min(420px, calc(100% - 28px)); height: calc(100vh - 92px);
-      border-radius:18px; border:1px solid var(--line); background:var(--bg1); box-shadow:0 25px 70px rgba(0,0,0,.55);
-      display:none; flex-direction:column; z-index:95; overflow:hidden;
+    .modalTitleWrap{ display:flex; align-items:center; gap: 10px; min-width: 0; }
+    .modalIcon{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      display:flex; align-items:center; justify-content:center;
+      flex: 0 0 auto;
     }
-    .chatLog{ flex:1; overflow:auto; padding:16px; background:rgba(0,0,0,.2); }
-    .chatInputRow{ display:flex; gap:10px; padding:14px; border-top:1px solid var(--line); background:rgba(0,0,0,.4); }
+    .modalTitle{
+      font-weight: 900;
+      letter-spacing: -.01em;
+      font-size: 16px;
+      line-height: 1.1;
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .modalSub{
+      margin-top: 2px;
+      font-size: 12px;
+      color: rgba(255,255,255,.58);
+      white-space:nowrap;
+      overflow:hidden;
+      text-overflow:ellipsis;
+    }
+    .modalClose{
+      width: 40px; height: 40px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.85);
+      font-weight: 900;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+    }
+    .modalClose:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(255,255,255,.08); }
 
-    /* Offerings Panel specific */
-    .offeringTab{ flex:1; padding:10px; text-align:center; font-size:12px; border-radius:10px; background:rgba(0,0,0,.4); border:1px solid transparent; cursor:pointer; font-weight:800;}
-    .offeringTab.active{ border-color:var(--purple); background:rgba(168,85,247,.2); }
-    .iframePlaceholder{ height:400px; border-radius:12px; border:1px dashed var(--line); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; text-align:center; background:rgba(0,0,0,.2); margin-top:12px;}
+    .modalBody{ padding: 16px; max-height: calc(92vh - 74px); overflow: hidden; }
+    .modalGrid{
+      display:grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: 14px;
+      align-items: stretch;
+      height: 100%;
+    }
+    @media (max-width: 980px){
+      .modalBody{ max-height: none; overflow: visible; }
+      .modalGrid{ grid-template-columns: 1fr; height: auto; }
+    }
 
-    @media (max-width: 1180px){ .grid{ grid-template-columns: 1fr; } }
+    .modalPanel{
+      border-radius: 18px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.04);
+      overflow: hidden;
+    }
+    .modalPanelHead{
+      padding: 12px 12px 10px;
+      border-bottom: 1px solid rgba(255,255,255,.08);
+      display:flex; align-items:center; justify-content:space-between; gap: 10px;
+    }
+    .modalPanelHead h4{
+      font-size: 12px;
+      letter-spacing: .12em;
+      text-transform: uppercase;
+      color: rgba(255,255,255,.86);
+    }
+    .modalPanelBody{ padding: 12px; overflow: hidden; }
+
+    /* Marquee */
+    .marqueeViewport{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.10);
+      background: rgba(0,0,0,.12);
+      overflow: hidden;
+      position: relative;
+    }
+    .marqueeTrack{
+      display:flex;
+      flex-direction:column;
+      gap: 10px;
+      padding: 10px;
+      will-change: transform;
+    }
+    .marqueeViewport:hover .marqueeTrack{ animation-play-state: paused; }
+
+    @media (min-width: 981px){
+      .marqueeViewport{ height: calc(92vh - 170px); min-height: 420px; }
+      .marqueeTrack{ animation: dbMarquee 34s linear infinite; }
+      @keyframes dbMarquee{ from{ transform: translateY(0); } to{ transform: translateY(-50%); } }
+    }
+    @media (max-width: 980px){
+      .marqueeViewport{ max-height: 520px; overflow: auto; }
+      .marqueeTrack{ animation: none !important; }
+    }
+    @media (prefers-reduced-motion: reduce){ .marqueeTrack{ animation: none !important; } }
+
+    .mixCard{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.07);
+      padding: 12px;
+    }
+    .mixHead{ display:flex; align-items:center; justify-content:space-between; gap: 10px; margin-bottom: 8px; }
+    .mixHead h5{ font-size: 13px; font-weight: 900; }
+    .mixTag{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.68);
+      font-size: 11px;
+      font-weight: 800;
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+    .mixText{ font-size: 12px; color: rgba(255,255,255,.70); line-height: 1.35; }
+
+    .photoRow{ display:grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+    .ph{
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.14);
+      background: rgba(255,255,255,.05);
+      overflow: hidden;
+      padding: 0;
+    }
+    .ph img{ width: 100%; height: 150px; object-fit: cover; display:block; }
+
+    .reviewTop{ display:flex; align-items:flex-start; justify-content:space-between; gap: 10px; margin-top: 8px; }
+    .reviewName{ font-weight: 900; font-size: 12px; color: rgba(255,255,255,.92); }
+    .reviewRole{ font-size: 11px; color: rgba(255,255,255,.60); margin-top: 2px; }
+    .reviewText{ margin-top: 8px; font-size: 12px; color: rgba(255,255,255,.74); line-height: 1.35; }
+    .stars{ display:flex; gap: 4px; align-items:center; }
+    .star{ width: 14px; height: 14px; color: rgba(251,191,36,.95); filter: drop-shadow(0 0 8px rgba(251,191,36,.12)); }
+
+    .actionStack{ display:flex; flex-direction:column; gap: 10px; }
+
+    .cta{
+      width: 100%;
+      border-radius: 16px;
+      padding: 12px 12px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.90);
+      cursor:pointer;
+      text-align:left;
+      transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+    }
+    .cta:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .cta strong{
+      display:block;
+      font-size: 13px;
+      font-weight: 900;
+      letter-spacing: -.01em;
+    }
+    .cta span{
+      display:block;
+      margin-top: 4px;
+      font-size: 12px;
+      color: rgba(255,255,255,.62);
+      line-height: 1.35;
+    }
+    .ctaRow{ display:flex; align-items:center; justify-content:space-between; gap: 10px; }
+    .ctaPill{
+      padding: 6px 10px;
+      border-radius: 999px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.20);
+      color: rgba(255,255,255,.68);
+      font-size: 12px;
+      font-weight: 800;
+      white-space:nowrap;
+      flex: 0 0 auto;
+    }
+
+    .finePrint{
+      margin-top: 10px;
+      font-size: 11px;
+      color: rgba(255,255,255,.48);
+      line-height: 1.35;
+    }
+    .finePrint a{ color: rgba(106,167,255,.85); text-decoration:none; font-weight:900; }
+    .finePrint a:hover{ text-decoration: underline; }
+
+    /* =========================
+       Wholesaler Modal add-ons
+       ========================= */
+    .formBlock{
+      border-radius: 16px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.18);
+      padding: 12px;
+    }
+    .fRow{ display:grid; grid-template-columns: 1fr; gap: 10px; margin-top: 10px; }
+    .fLabel{
+      font-size: 11px;
+      color: rgba(255,255,255,.62);
+      letter-spacing: .10em;
+      text-transform: uppercase;
+      font-weight: 900;
+    }
+    .segRow{
+      display:flex;
+      gap: 8px;
+      flex-wrap:wrap;
+      margin-top: 8px;
+    }
+    .segBtn{
+      border-radius: 999px;
+      padding: 9px 10px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(255,255,255,.06);
+      color: rgba(255,255,255,.80);
+      font-weight: 900;
+      font-size: 12px;
+      cursor:pointer;
+      transition: transform .15s ease, filter .15s ease, background .15s ease, border-color .15s ease;
+      user-select:none;
+      white-space:nowrap;
+    }
+    .segBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); }
+    .segBtn.active{
+      border-color: rgba(43,116,255,.55);
+      background: rgba(43,116,255,.18);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.12);
+      color: rgba(255,255,255,.92);
+    }
+    .select{
+      width: 100%;
+      padding: 12px 12px;
+      border-radius: 14px;
+      border: 1px solid rgba(255,255,255,.12);
+      background: rgba(0,0,0,.22);
+      color: rgba(255,255,255,.90);
+      outline:none;
+      font-weight: 800;
+    }
+    .select:focus{
+      border-color: rgba(106,167,255,.55);
+      box-shadow: 0 0 0 4px rgba(43,116,255,.14);
+    }
+
+    .primaryBtn{
+      width: 100%;
+      border-radius: 16px;
+      padding: 12px 12px;
+      border: 1px solid rgba(43,116,255,.60);
+      background: rgba(43,116,255,.22);
+      color: rgba(255,255,255,.92);
+      cursor:pointer;
+      font-weight: 1000;
+      letter-spacing: -.01em;
+      transition: transform .15s ease, filter .15s ease, background .15s ease;
+      margin-top: 10px;
+    }
+    .primaryBtn:hover{ transform: translateY(-1px); filter: brightness(1.06); background: rgba(43,116,255,.28); }
+    .primaryBtn:active{ transform: translateY(0); }
+    .primaryBtn[disabled]{ opacity:.55; cursor:not-allowed; }
+
+    .tinyNote{
+      margin-top: 8px;
+      font-size: 11px;
+      color: rgba(255,255,255,.52);
+      line-height: 1.35;
+    }
+    .tinyNote b{ color: rgba(255,255,255,.78); }
+    .miniWarn{
+      margin-top: 10px;
+      border-radius: 14px;
+      border: 1px solid rgba(251,191,36,.22);
+      background: rgba(251,191,36,.08);
+      padding: 10px;
+      font-size: 12px;
+      color: rgba(255,255,255,.78);
+      line-height: 1.35;
+    }
   </style>
 </head>
 
@@ -184,7 +680,7 @@
   <div class="ambient">
     <div class="blob b1"></div>
     <div class="blob b2"></div>
-    <div class="grid-bg"></div>
+    <div class="grid"></div>
   </div>
 
   <header>
@@ -193,490 +689,1055 @@
         <img src="icon (1).jpg" alt="DealBankers"/>
         <div>
           <div class="brandTitle">DealBankers</div>
-          <div class="brandSub">Capital Hub</div>
+          <div class="brandSub">Real Estate Command Hub</div>
         </div>
       </div>
 
       <nav>
         <a href="index.html">Home</a>
         <a href="profile.html">Tools</a>
-        <a href="investor.html" class="active">Capital Hub</a>
+        <a href="#townhall">Townhall</a>
+        <a href="claims-exchange.html">ClaimChain</a>
       </nav>
 
       <div class="rightHead">
-        <button class="btn" id="btnSupport" style="background:rgba(255,255,255,.04); border-color:var(--line);">
-          💬 Messages
+        <button class="bell" id="bellBtn" title="Notifications (placeholder)">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.75)">
+            <path d="M18 8a6 6 0 0 0-12 0c0 7-3 7-3 7h18s-3 0-3-7"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+          <span class="badge" id="notifBadge">3</span>
         </button>
+
         <div class="status" id="authStatus">Signed out</div>
       </div>
     </div>
   </header>
 
   <div class="wrap">
-    <div class="grid">
-
-      <div class="panel">
-        <div class="panelHead">
-          <div>CAPITAL QUEUE</div>
-          <div class="kpi" id="kpiCount">0</div>
-        </div>
-        <div class="panelBody">
-          <div class="searchRow">
-            <input id="qSearch" placeholder="Search funds, cities, targets…" />
-            <button class="btn" id="btnSearch">Go</button>
-          </div>
-
-          <div class="filters">
-            <div class="chip on" data-filter="all">All</div>
-            <div class="chip" data-filter="506c">506(c) Pitch OK</div>
-            <div class="chip" data-filter="506b">506(b) Network</div>
-            <div class="chip" data-filter="lumpy">Lumpy Sent</div>
-          </div>
-
-          <div class="row" style="margin-bottom:14px; justify-content:space-between;">
-            <button class="btn primary" id="btnNewInvestor">+ New Dossier</button>
-            <div id="rolePill" class="kpi" style="display:none; background:rgba(255,255,255,.1);"></div>
-          </div>
-
-          <div class="list" id="list"></div>
-        </div>
+    <div class="topRow">
+      <div class="welcome">
+        <h1>
+          Welcome back, <span class="grad" id="welcomeName">Deal Banker</span>
+        </h1>
+        <p>Your command center for all deal operations.</p>
       </div>
 
-      <div class="panel">
-        <div class="panelHead">
-          <div>DOSSIER & COMMS</div>
-          <div class="tiny" id="consoleMeta">Awaiting target…</div>
+      <button id="googleBtn" class="gbtn">
+        <img src="https://developers.google.com/identity/images/g-logo.png" alt="Google"/>
+        Sign in with Google
+      </button>
+    </div>
+
+    <div class="stats">
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(251,191,36,.95)">
+            <path d="M13 2L3 14h7l-1 8 10-12h-7l1-8z"/>
+          </svg>
+          <div class="pill">LIVE</div>
         </div>
-        <div class="panelBody" id="console" style="min-height:600px;">
-          <div style="color:var(--muted); text-align:center; margin-top:100px; font-weight:800;">
-            Select a target from the queue to load dossier and dynamic calling scripts.
-          </div>
-        </div>
+        <div class="value" id="statLeads">—</div>
+        <div class="label">Active Leads</div>
       </div>
 
-      <div class="panel">
-        <div class="panelHead">
-          <div>ACTIVE OFFERINGS</div>
-          <div class="tiny">Pitch Deck Viewer</div>
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(34,197,94,.95)">
+            <polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline>
+          </svg>
+          <div class="pill">OPS</div>
         </div>
-        <div class="panelBody">
-          <div style="display:flex; gap:8px; margin-bottom:12px;">
-            <div class="offeringTab active">Coupland Dev ($5M)</div>
-            <div class="offeringTab">Tax Notes (12% Yield)</div>
-          </div>
-          
-          <div class="iframePlaceholder">
-            <div>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px; opacity:.5;">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <br/>Offerings Module Space<br/><span style="font-weight:400;">(iFrame renders here)</span>
+        <div class="value" id="statJobs">—</div>
+        <div class="label">Open Jobs</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(106,167,255,.95)">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <div class="pill"><span id="onlinePill">0</span> active</div>
+        </div>
+        <div class="value" id="statOnline">0</div>
+        <div class="label">Online Now</div>
+      </div>
+
+      <div class="stat">
+        <div class="rowIcon">
+          <svg class="icon" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+               stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(139,92,246,.95)">
+            <path d="M12 20V10"></path>
+            <path d="M18 20V4"></path>
+            <path d="M6 20v-6"></path>
+          </svg>
+          <div class="pill">MONTH</div>
+        </div>
+        <div class="value" id="statMonth">$—</div>
+        <div class="label">This Month</div>
+      </div>
+    </div>
+
+    <div class="gridMain">
+      <div class="portals">
+        <!-- Wholesaler now opens modal (like contractor) -->
+        <div class="pCard" data-href="wholesaler.html" role="button" tabindex="0" aria-label="Wholesaler Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(37,99,235,.95), rgba(30,64,175,.85), rgba(67,56,202,.75));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Wholesaler</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Manage seller leads, dispo buyers, call scripts, and contracts.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="whActive">—</div><div class="l">Active Leads</div></div>
+              <div class="ps"><div class="v" id="whNew">—</div><div class="l">New</div></div>
             </div>
           </div>
+        </div>
 
-          <div class="divider"></div>
-          <div class="tiny" style="line-height:1.4;">
-            <b>Instructions:</b> While on the phone, select the appropriate offering above to instantly load the deal metrics and pitch deck to reference during your call.
+        <!-- Contractor opens modal -->
+        <div class="pCard" data-href="contractor.html" role="button" tabindex="0" aria-label="Contractor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(249,115,22,.95), rgba(234,88,12,.85), rgba(185,28,28,.72));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Contractor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Job postings, project management, payroll, and subcontracting.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="ctOpen">—</div><div class="l">Open Jobs</div></div>
+              <div class="ps"><div class="v" id="ctProg">—</div><div class="l">In Progress</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="realtor.html" role="button" tabindex="0" aria-label="Realtor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(16,185,129,.95), rgba(5,150,105,.85), rgba(13,148,136,.75));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Realtor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Transaction coordination, client resources, learning modules.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="rtListings">—</div><div class="l">Listings</div></div>
+              <div class="ps"><div class="v" id="rtPending">—</div><div class="l">Pending</div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="pCard" data-href="investor.html" role="button" tabindex="0" aria-label="Investor Portal">
+          <div class="bgGlow" style="background: linear-gradient(135deg, rgba(168,85,247,.95), rgba(124,58,237,.85), rgba(219,39,119,.72));"></div>
+          <div class="bgNoise"></div>
+          <div class="pInner">
+            <div class="pTop">
+              <div class="pTitle">Investor</div>
+              <div class="pill">→</div>
+            </div>
+            <div class="pDesc">Deal analysis, private money portal, JV structures, funding docs.</div>
+            <div class="pStats">
+              <div class="ps"><div class="v" id="ivDeals">—</div><div class="l">Deals</div></div>
+              <div class="ps"><div class="v" id="ivFunded">—</div><div class="l">Funded</div></div>
+            </div>
           </div>
         </div>
       </div>
 
+      <div class="side">
+        <div class="panel">
+          <div class="panelHead">
+            <h3>Online Now</h3>
+            <div class="pill" id="onlineMini">0 active</div>
+          </div>
+          <div class="panelBody">
+            <div class="presenceList" id="presenceList">
+              <div style="color:rgba(255,255,255,.45); font-size:12px;">No one online yet.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="panel" id="townhall">
+          <div class="panelHead">
+            <h3>Townhall Chat</h3>
+            <div class="pill">Live</div>
+          </div>
+          <div class="panelBody">
+            <div class="chatShell">
+              <div id="messages" class="chatMessages"></div>
+              <div class="chatInput">
+                <input id="msgInput" placeholder="Sign in to chat..." disabled />
+                <button id="sendBtn" disabled>Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
     </div>
   </div>
 
-  <div class="modalBack" id="modalBack">
-    <div class="modal">
+  <footer>
+    © <span id="year"></span> DealBankers.com • Built for Trust. Driven by Data
+    <div style="margin-top:10px;">
+      <a href="https://drive.google.com/drive/u/2/folders/1x4xbW0Vbb5FSP0292WC7qwMIyzsTzgop" target="_blank" rel="noreferrer">
+        📘 Family Advocacy Docs (Open Source)
+      </a>
+    </div>
+  </footer>
+
+  <!-- =========================
+       WHOLESALER MODAL
+       ========================= -->
+  <div id="wholesalerModal" class="modalOverlay" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Wholesaler Hub"
+      style="
+        background:
+          radial-gradient(circle at 20% 15%, rgba(43,116,255,.22), transparent 55%),
+          radial-gradient(circle at 80% 30%, rgba(139,92,246,.16), transparent 55%),
+          rgba(15,20,35,.78);
+      ">
       <div class="modalHead">
-        <div id="modalTitle">Target Dossier</div>
-        <button class="btn" id="btnCloseModal">✕</button>
+        <div class="modalTitleWrap">
+          <div class="modalIcon" aria-hidden="true" style="box-shadow:0 0 18px rgba(43,116,255,.22);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.85)">
+              <path d="M20 7h-9"></path>
+              <path d="M14 17H5"></path>
+              <circle cx="17" cy="17" r="3"></circle>
+              <circle cx="7" cy="7" r="3"></circle>
+            </svg>
+          </div>
+          <div style="min-width:0">
+            <div class="modalTitle">Wholesaler Operations</div>
+            <div class="modalSub">Street Leads • Web Leads • Live Leads • Dispo & Capital</div>
+          </div>
+        </div>
+
+        <button id="wholesalerModalClose" class="modalClose" aria-label="Close">✕</button>
       </div>
 
       <div class="modalBody">
-        <div class="grid2">
-          <div>
-            <div class="fLabel">FUND / INVESTOR NAME</div>
-            <input id="mName" placeholder="e.g. CrowdOut Credit LLC" />
-          </div>
-          <div>
-            <div class="fLabel">TARGET AMOUNT</div>
-            <input id="mAmount" placeholder="e.g. $60,319,807" />
-          </div>
-          <div>
-            <div class="fLabel">EXEMPTION RULE</div>
-            <select id="mRule">
-              <option value="Unknown">Unknown</option>
-              <option value="506(b) - NO COLD PITCHING">506(b) - NO COLD PITCHING</option>
-              <option value="506(c) - COLD PITCHING OK">506(c) - COLD PITCHING OK</option>
-            </select>
-          </div>
-          <div>
-            <div class="fLabel">PIPELINE STATUS</div>
-            <select id="mStatus">
-              <option value="New Lead">New Lead</option>
-              <option value="Dialed - Left VM">Dialed - Left VM</option>
-              <option value="Buy Box Acquired">Buy Box Acquired</option>
-              <option value="Lumpy Mail Sent">Lumpy Mail Sent</option>
-              <option value="Legally Cleared">Legally Cleared (Pitch OK)</option>
-              <option value="Deal Pitched">Deal Pitched</option>
-              <option value="Soft Commit">Soft Commit</option>
-            </select>
-          </div>
-          <div>
-            <div class="fLabel">LOCATION</div>
-            <input id="mLocation" placeholder="City, State…" />
-          </div>
-          <div>
-            <div class="fLabel">EMAIL</div>
-            <input id="mEmail" placeholder="email@…" />
-          </div>
-        </div>
+        <div class="modalGrid">
 
-        <div class="divider"></div>
+          <!-- Left: proof / narrative -->
+          <div class="modalPanel proofPanel" style="background: rgba(255,255,255,.06);">
+            <div class="modalPanelHead">
+              <h4>How it Works</h4>
+              <div class="pill">Pick a lane</div>
+            </div>
 
-        <div style="display:grid; grid-template-columns:1fr; gap:16px;">
-          <div>
-            <div class="fLabel">PHONES (one per line: Label | Number)</div>
-            <textarea id="mPhones" placeholder="Office | 512-900-2646&#10;Mobile | ..."></textarea>
-          </div>
-          <div>
-            <div class="fLabel">TAGS (comma separated)</div>
-            <input id="mTags" placeholder="Debt Fund, Equity Partner, Bridge..." />
-          </div>
-          <div>
-            <div class="fLabel">BUY BOX & NOTES</div>
-            <textarea id="mNotes" placeholder="Log criteria, yield requirements, objections..."></textarea>
-          </div>
-        </div>
+            <div class="modalPanelBody">
+              <div class="marqueeViewport" aria-label="Wholesaler explainer feed">
+                <div class="marqueeTrack">
 
-        <div class="row" style="justify-content:flex-end; margin-top:20px;">
-          <button class="btn" id="btnCancelModal">Cancel</button>
-          <button class="btn primary" id="btnSaveModal" style="padding-left:24px; padding-right:24px;">Save Dossier</button>
+                  <!-- Track A -->
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Street Lead (Handshake)</h5>
+                      <div class="mixTag">JV / Partner</div>
+                    </div>
+                    <div class="mixText">
+                      You can bring <b>your own lead</b>, or partner with DealBankers on ours.
+                      We coordinate: calls, analysis, negotiation, contract, and dispo / liquidation / capital.
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Web Lead (Buy-in / Bid)</h5>
+                      <div class="mixTag">Competitive</div>
+                    </div>
+                    <div class="mixText">
+                      Leads can be listed with a buy-in and held in your account while you're the
+                      <b>highest bidder</b> (like propertyleads… but better).
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Live Lead (Real-time)</h5>
+                      <div class="mixTag">Instant</div>
+                    </div>
+                    <div class="mixText">
+                      Priority leads in motion. Speed matters. Claim, call, coordinate, and move to close.
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Dispo + Capital</h5>
+                      <div class="mixTag">Close Fast</div>
+                    </div>
+                    <div class="mixText">
+                      We can support liquidation to buyers, JV structures, and raising private capital when needed.
+                    </div>
+                  </div>
+
+                  <!-- Track B (duplicate) -->
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Street Lead (Handshake)</h5>
+                      <div class="mixTag">JV / Partner</div>
+                    </div>
+                    <div class="mixText">
+                      You can bring <b>your own lead</b>, or partner with DealBankers on ours.
+                      We coordinate: calls, analysis, negotiation, contract, and dispo / liquidation / capital.
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Web Lead (Buy-in / Bid)</h5>
+                      <div class="mixTag">Competitive</div>
+                    </div>
+                    <div class="mixText">
+                      Leads can be listed with a buy-in and held in your account while you're the
+                      <b>highest bidder</b> (like propertyleads… but better).
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Live Lead (Real-time)</h5>
+                      <div class="mixTag">Instant</div>
+                    </div>
+                    <div class="mixText">
+                      Priority leads in motion. Speed matters. Claim, call, coordinate, and move to close.
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Dispo + Capital</h5>
+                      <div class="mixTag">Close Fast</div>
+                    </div>
+                    <div class="mixText">
+                      We can support liquidation to buyers, JV structures, and raising private capital when needed.
+                    </div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="finePrint">
+                Desktop: auto-scroll (hover to pause). Mobile: swipe/scroll manually.
+              </div>
+            </div>
+          </div>
+
+          <!-- Right: picker -->
+          <div class="modalPanel" style="background: rgba(0,0,0,.18);">
+            <div class="modalPanelHead">
+              <h4>Lead Setup</h4>
+              <div class="pill">Type + County</div>
+            </div>
+            <div class="modalPanelBody">
+
+              <div class="formBlock">
+                <div class="fLabel">Choose Lead Type</div>
+                <div class="segRow" role="group" aria-label="Lead type">
+                  <button class="segBtn active" data-leadtype="street" type="button">Street Lead</button>
+                  <button class="segBtn" data-leadtype="web" type="button">Web Lead</button>
+                  <button class="segBtn" data-leadtype="live" type="button">Live Lead</button>
+                </div>
+
+                <div class="fRow">
+                  <div>
+                    <div class="fLabel" style="margin-top:10px;">County</div>
+                    <select id="whCounty" class="select" aria-label="County select">
+                      <option value="">Select county…</option>
+                      <option value="Bexar">Bexar</option>
+                      <option value="Travis">Travis</option>
+                      <option value="Williamson">Williamson</option>
+                      <option value="Hays">Hays</option>
+                      <option value="Comal">Comal</option>
+                      <option value="Guadalupe">Guadalupe</option>
+                      <option value="Nueces">Nueces</option>
+                      <option value="Bell">Bell</option>
+                      <option value="Dallas">Dallas</option>
+                      <option value="Tarrant">Tarrant</option>
+                      <option value="Harris">Harris</option>
+                      <option value="Fort Bend">Fort Bend</option>
+                      <option value="Montgomery">Montgomery</option>
+                      <option value="Other">Other / Multi-county</option>
+                    </select>
+                  </div>
+
+                  <div id="streetModeBlock">
+                    <div class="fLabel" style="margin-top:10px;">Street Lead Mode</div>
+                    <div class="segRow" role="group" aria-label="Street mode">
+                      <button class="segBtn active" data-streetmode="partner" type="button">Partner on DB Lead</button>
+                      <button class="segBtn" data-streetmode="own" type="button">I’m Entering My Own Lead</button>
+                    </div>
+                    <div class="tinyNote">
+                      Street = handshake. If you partner on DB leads, you’ll typically be asked to review / sign a JV agreement before deeper access.
+                    </div>
+                  </div>
+
+                  <div id="webModeBlock" style="display:none;">
+                    <div class="miniWarn">
+                      <b>Web Leads:</b> buy-in / bidding lane. We’ll route you into the bidding board inside the Wholesaler portal.
+                    </div>
+                  </div>
+
+                  <div id="liveModeBlock" style="display:none;">
+                    <div class="miniWarn">
+                      <b>Live Leads:</b> fast lane. Claim → Call → Coordinate. We’ll route you into the live queue view.
+                    </div>
+                  </div>
+
+                  <button id="whContinue" class="primaryBtn" type="button" disabled>
+                    Continue to Wholesaler Portal →
+                  </button>
+
+                  <div class="tinyNote">
+                    Tip: you can change lanes inside the portal. This just sets your default entry flow.
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="finePrint">
+                Press <b>Esc</b> to close. Click outside the panel to close.
+              </div>
+            </div>
+          </div>
+
         </div>
       </div>
     </div>
   </div>
 
-  <div class="sidebarOverlay" id="sideOverlay"></div>
-  <div class="sidebarPanel" id="sidePanel">
-    <div class="panelHead">
-      <div id="sideTitle">Comms</div>
-      <button class="btn" id="sideClose" style="padding:6px 10px;">✕</button>
-    </div>
-    <div class="chatLog" id="sideBody">
-      <div class="tiny">Loading…</div>
+  <!-- =========================
+       CONTRACTOR MODAL (your existing)
+       ========================= -->
+  <div id="contractorModal" class="modalOverlay" aria-hidden="true">
+    <div class="modalCard" role="dialog" aria-modal="true" aria-label="Contractor Hub"
+      style="
+        background:
+          radial-gradient(circle at 20% 15%, rgba(249,115,22,.20), transparent 55%),
+          radial-gradient(circle at 80% 30%, rgba(239,68,68,.14), transparent 55%),
+          rgba(15,20,35,.78);
+      ">
+      <div class="modalHead">
+        <div class="modalTitleWrap">
+          <div class="modalIcon" aria-hidden="true" style="box-shadow:0 0 18px rgba(249,115,22,.20);">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:rgba(255,255,255,.85)">
+              <path d="M14.7 6.3a4 4 0 0 0-5.7 5.7l-6.3 6.3a2 2 0 0 0 2.8 2.8l6.3-6.3a4 4 0 0 0 5.7-5.7l-3 3-2.8-2.8 3-3z"></path>
+            </svg>
+          </div>
+          <div style="min-width:0">
+            <div class="modalTitle">Contractor Operations</div>
+            <div class="modalSub">Dispatch • Make-Ready • Emergency • Proof of Work</div>
+          </div>
+        </div>
+
+        <button id="contractorModalClose" class="modalClose" aria-label="Close">✕</button>
+      </div>
+
+      <div class="modalBody">
+        <div class="modalGrid">
+
+          <div class="modalPanel proofPanel" style="background: rgba(255,255,255,.06);">
+            <div class="modalPanelHead">
+              <h4>Proof & Performance</h4>
+              <div class="pill">Auto-scroll</div>
+            </div>
+
+            <div class="modalPanelBody">
+              <div class="marqueeViewport" aria-label="Auto-scrolling proof feed">
+                <div class="marqueeTrack">
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Make-Ready</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Turn-ready finish-out with clean documentation.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/3.jpg" alt="Before 1"></div>
+                      <div class="ph"><img src="images/contractorbanda/4.png" alt="After 1"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Property Ops • Austin</div>
+                        <div class="reviewRole">Turns + unit readiness</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Turned the unit in 48 hours.”</b> Photos, notes, and invoice were clean and easy for ownership.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Turn Cleanup</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Fast turnaround + proof-of-work photos.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/5.jpg" alt="Before 2"></div>
+                      <div class="ph"><img src="images/contractorbanda/6.png" alt="After 2"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Office Manager</div>
+                        <div class="reviewRole">Work orders + documentation</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Clean, fast, and documented.”</b> They updated us, handled access, and closed out the work order right.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Regional PM</div>
+                        <div class="reviewRole">Vendor management</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“No babysitting.”</b> They handled the scope, sent proof photos, and we had a clean close-out.</div>
+                  </div>
+
+                  <!-- duplicate set for loop -->
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Make-Ready</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Turn-ready finish-out with clean documentation.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/3.jpg" alt="Before 1 duplicate"></div>
+                      <div class="ph"><img src="images/contractorbanda/4.png" alt="After 1 duplicate"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Property Ops • Austin</div>
+                        <div class="reviewRole">Turns + unit readiness</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Turned the unit in 48 hours.”</b> Photos, notes, and invoice were clean and easy for ownership.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Before / After — Turn Cleanup</h5>
+                      <div class="mixTag">Photos</div>
+                    </div>
+                    <div class="mixText">Fast turnaround + proof-of-work photos.</div>
+                    <div class="photoRow">
+                      <div class="ph"><img src="images/contractorbanda/5.jpg" alt="Before 2 duplicate"></div>
+                      <div class="ph"><img src="images/contractorbanda/6.png" alt="After 2 duplicate"></div>
+                    </div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Office Manager</div>
+                        <div class="reviewRole">Work orders + documentation</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“Clean, fast, and documented.”</b> They updated us, handled access, and closed out the work order right.</div>
+                  </div>
+
+                  <div class="mixCard">
+                    <div class="mixHead">
+                      <h5>Client Review</h5>
+                      <div class="mixTag">5.0</div>
+                    </div>
+                    <div class="reviewTop">
+                      <div>
+                        <div class="reviewName">Regional PM</div>
+                        <div class="reviewRole">Vendor management</div>
+                      </div>
+                      <div class="stars" aria-label="5 star rating">
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                        <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 17.3l-6.2 3.7 1.7-7.1L2 9.2l7.2-.6L12 2l2.8 6.6 7.2.6-5.5 4.7 1.7 7.1z"/></svg>
+                      </div>
+                    </div>
+                    <div class="reviewText"><b>“No babysitting.”</b> They handled the scope, sent proof photos, and we had a clean close-out.</div>
+                  </div>
+
+                </div>
+              </div>
+
+              <div class="finePrint">
+                Desktop: auto-scroll (hover to pause). Mobile: swipe/scroll manually.
+              </div>
+            </div>
+          </div>
+
+          <div class="modalPanel" style="background: rgba(0,0,0,.18);">
+            <div class="modalPanelHead">
+              <h4>Routes</h4>
+              <div class="pill">Pick a lane</div>
+            </div>
+            <div class="modalPanelBody">
+              <div class="actionStack">
+                <button class="cta" id="routeRequestService" type="button" style="border-color:rgba(249,115,22,.22);">
+                  <div class="ctaRow">
+                    <strong>Request Service</strong>
+                    <div class="ctaPill">Intake Form</div>
+                  </div>
+                  <span>Property managers / owners submit scope, photos, access notes, urgency, and budget range.</span>
+                </button>
+
+                <button class="cta" id="routeContractorJoin" type="button" style="border-color:rgba(249,115,22,.22);">
+                  <div class="ctaRow">
+                    <strong>Contractor Portal</strong>
+                    <div class="ctaPill">Dashboard</div>
+                  </div>
+                  <span>View jobs, update status, upload proof-of-work, and log materials/time.</span>
+                </button>
+
+                <button class="cta" id="routeMicroLoan" type="button" style="border-color:rgba(249,115,22,.22);">
+                  <div class="ctaRow">
+                    <strong>Micro-Loan Program</strong>
+                    <div class="ctaPill">Coming</div>
+                  </div>
+                  <span>Working capital requests for verified contractors and recurring accounts.</span>
+                </button>
+              </div>
+
+              <div class="finePrint">
+                Press <b>Esc</b> to close. Click outside the panel to close.
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
     </div>
   </div>
 
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
   <script src="config.js"></script>
 
-  <script>
-    /****************************
-     * SETTINGS
-     ****************************/
-    const GOD_EMAIL = "dealbankers@gmail.com";
-    const PATHS = {
-      USERS_DIR: "userDirectory", ROLES: "roles",
-      INVESTORS_MASTER: "investorsMaster", INVESTORS_BY_USER: "investorsByUser",
-      DMS: "dms", SUPPORT_REQUESTS: "supportRequests"
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
+    import {
+      getAuth, GoogleAuthProvider, signInWithPopup, onAuthStateChanged, signOut,
+      setPersistence, browserLocalPersistence
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
+    import {
+      getDatabase, ref, push, onChildAdded, serverTimestamp, set, onDisconnect,
+      onValue, get
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+
+    const app = initializeApp(window.firebaseConfig);
+    const auth = getAuth(app);
+    const db = getDatabase(app);
+    const provider = new GoogleAuthProvider();
+
+    document.getElementById("year").textContent = new Date().getFullYear();
+    const authStatus = document.getElementById("authStatus");
+    const googleBtn = document.getElementById("googleBtn");
+    const welcomeName = document.getElementById("welcomeName");
+
+    const statOnline = document.getElementById("statOnline");
+    const onlinePill = document.getElementById("onlinePill");
+    const onlineMini = document.getElementById("onlineMini");
+
+    const statLeads = document.getElementById("statLeads");
+    const statJobs  = document.getElementById("statJobs");
+    const statMonth = document.getElementById("statMonth");
+
+    const presenceList = document.getElementById("presenceList");
+
+    const msgList = document.getElementById("messages");
+    const msgInput = document.getElementById("msgInput");
+    const sendBtn = document.getElementById("sendBtn");
+
+    function esc(s){
+      return (''+(s||'')).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+    }
+
+    // =========================
+    // Modal Helpers
+    // =========================
+    function makeModal(modalId, closeId){
+      const modal = document.getElementById(modalId);
+      const closeBtn = document.getElementById(closeId);
+
+      const open = ()=>{
+        if(!modal) return;
+        modal.classList.add("show");
+        modal.setAttribute("aria-hidden","false");
+        closeBtn?.focus();
+      };
+      const close = ()=>{
+        if(!modal) return;
+        modal.classList.remove("show");
+        modal.setAttribute("aria-hidden","true");
+      };
+
+      closeBtn?.addEventListener("click", close);
+      modal?.addEventListener("click", (e)=>{ if(e.target === modal) close(); });
+
+      return { modal, open, close, closeBtn };
+    }
+
+    const contractorM = makeModal("contractorModal","contractorModalClose");
+    const wholesalerM = makeModal("wholesalerModal","wholesalerModalClose");
+
+    document.addEventListener("keydown", (e)=>{
+      if(e.key !== "Escape") return;
+      if(contractorM.modal?.classList.contains("show")) contractorM.close();
+      if(wholesalerM.modal?.classList.contains("show")) wholesalerM.close();
+    });
+
+    // =========================
+    // Contractor routes
+    // =========================
+    document.getElementById("routeRequestService")?.addEventListener("click", ()=> window.location.href = "request-service.html");
+    document.getElementById("routeContractorJoin")?.addEventListener("click", ()=> window.location.href = "contractor.html");
+    document.getElementById("routeMicroLoan")?.addEventListener("click", ()=> window.location.href = "micro-loan.html");
+
+    // =========================
+    // Wholesaler lane picker logic
+    // =========================
+    const whContinue = document.getElementById("whContinue");
+    const whCounty = document.getElementById("whCounty");
+    const streetModeBlock = document.getElementById("streetModeBlock");
+    const webModeBlock = document.getElementById("webModeBlock");
+    const liveModeBlock = document.getElementById("liveModeBlock");
+
+    let whLeadType = "street";      // street | web | live
+    let whStreetMode = "partner";   // partner | own
+
+    function setSegActive(groupSelector, matchFn){
+      document.querySelectorAll(groupSelector).forEach(btn=>{
+        const ok = matchFn(btn);
+        btn.classList.toggle("active", ok);
+      });
+    }
+
+    function syncWhUI(){
+      // show/hide blocks based on lead type
+      streetModeBlock.style.display = (whLeadType === "street") ? "" : "none";
+      webModeBlock.style.display    = (whLeadType === "web") ? "" : "none";
+      liveModeBlock.style.display   = (whLeadType === "live") ? "" : "none";
+
+      const hasCounty = !!(whCounty.value || "").trim();
+      whContinue.disabled = !hasCounty;
+    }
+
+    // Lead type buttons
+    document.querySelectorAll('#wholesalerModal .segBtn[data-leadtype]').forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        whLeadType = btn.getAttribute("data-leadtype") || "street";
+        setSegActive('#wholesalerModal .segBtn[data-leadtype]', b => (b.getAttribute("data-leadtype") === whLeadType));
+        syncWhUI();
+      });
+    });
+
+    // Street mode buttons
+    document.querySelectorAll('#wholesalerModal .segBtn[data-streetmode]').forEach(btn=>{
+      btn.addEventListener("click", ()=>{
+        whStreetMode = btn.getAttribute("data-streetmode") || "partner";
+        setSegActive('#wholesalerModal .segBtn[data-streetmode]', b => (b.getAttribute("data-streetmode") === whStreetMode));
+        syncWhUI();
+      });
+    });
+
+    whCounty.addEventListener("change", syncWhUI);
+
+    function saveWhSelection(sel){
+      try{ sessionStorage.setItem("db_wholesaler_selection", JSON.stringify(sel)); }catch{}
+    }
+
+    whContinue?.addEventListener("click", ()=>{
+      const county = (whCounty.value || "").trim();
+      if(!county) return;
+
+      const sel = {
+        leadType: whLeadType,
+        county,
+        streetMode: whLeadType === "street" ? whStreetMode : "",
+        ts: Date.now()
+      };
+      saveWhSelection(sel);
+
+      const qs = new URLSearchParams(sel).toString();
+      window.location.href = `wholesaler.html?${qs}`;
+    });
+
+    // =========================
+    // Cards: open modals or navigate
+    // =========================
+    function wirePortalCards(){
+      document.querySelectorAll(".pCard").forEach(card=>{
+        const href = card.getAttribute("data-href");
+        const go = ()=>{
+          if(href === "contractor.html"){
+            contractorM.open();
+            return;
+          }
+          if(href === "wholesaler.html"){
+            wholesalerM.open();
+            syncWhUI();
+            return;
+          }
+          if(href) window.location.href = href;
+        };
+        card.addEventListener("click", go);
+        card.addEventListener("keypress", (e)=>{ if(e.key==="Enter") go(); });
+      });
+    }
+    wirePortalCards();
+
+    // --- Chat ---
+    function attachChat(){
+      const chatRef = ref(db,"townhall/messages");
+      onChildAdded(chatRef, snap=>{
+        const d=snap.val()||{};
+        const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
+        const div=document.createElement("div");
+        div.className="msg";
+        div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
+        msgList.appendChild(div);
+        msgList.scrollTop = msgList.scrollHeight;
+      });
+    }
+    attachChat();
+
+    sendBtn.onclick = ()=>{
+      if(!auth.currentUser) return alert("Please sign in first.");
+      const text = msgInput.value.trim();
+      if(!text) return;
+      push(ref(db,"townhall/messages"), {
+        uid: auth.currentUser.uid,
+        name: auth.currentUser.displayName || auth.currentUser.email,
+        text,
+        ts: serverTimestamp()
+      });
+      msgInput.value = "";
+    };
+    msgInput.addEventListener("keypress", e => {
+      if(e.key === "Enter"){ e.preventDefault(); sendBtn.click(); }
+    });
+
+    // --- Presence ---
+    async function setPresence(user) {
+      const roleSnap = await get(ref(db, `roles/${user.uid}`));
+      const userRole = roleSnap.exists() ? roleSnap.val() : "user";
+
+      const presRef = ref(db, `presence/global/${user.uid}`);
+      const connectedRef = ref(db, ".info/connected");
+
+      onValue(connectedRef, (snap) => {
+        if (snap.val() === true) {
+          onDisconnect(presRef).set({
+            state: "offline",
+            lastOnline: serverTimestamp(),
+          });
+          set(presRef, {
+            state: "online",
+            name: user.displayName || user.email,
+            email: user.email,
+            role: userRole,
+            ts: serverTimestamp(),
+            page: "Overview"
+          });
+        }
+      });
+    }
+
+    function initials(nameOrEmail){
+      const s = (nameOrEmail||"").trim();
+      if(!s) return "?";
+      const parts = s.split(/\s+/).filter(Boolean);
+      if(parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+      return (s[0]||"?").toUpperCase();
+    }
+
+    function renderPresence(list){
+      const online = list
+        .filter(u => u && u.state === "online")
+        .sort((a,b)=> (b.ts||0) - (a.ts||0));
+
+      const n = online.length;
+      statOnline.textContent = String(n);
+      onlinePill.textContent = String(n);
+      onlineMini.textContent = `${n} active`;
+
+      presenceList.innerHTML = "";
+      if(!n){
+        presenceList.innerHTML = `<div style="color:rgba(255,255,255,.45); font-size:12px;">No one online yet.</div>`;
+        return;
+      }
+
+      online.slice(0, 10).forEach(u=>{
+        const div = document.createElement("div");
+        div.className = "pItem";
+        const nm = u.name || u.email || "User";
+        const role = u.role || "user";
+        const page = u.page || "";
+        div.innerHTML = `
+          <div class="pLeft">
+            <div class="avatar">${esc(initials(nm))}</div>
+            <div class="pMeta">
+              <div class="pName" title="${esc(nm)}">${esc(nm)}</div>
+              <div class="pSub" title="${esc(role + (page ? " • " + page : ""))}">${esc(role)}${page ? " • " + esc(page) : ""}</div>
+            </div>
+          </div>
+          <div class="dot" title="online"></div>
+        `;
+        presenceList.appendChild(div);
+      });
+    }
+
+    function subscribePresence(){
+      onValue(ref(db, "presence/global"), (snap)=>{
+        const obj = snap.val() || {};
+        const list = Object.values(obj);
+        renderPresence(list);
+      });
+    }
+    subscribePresence();
+
+    // --- Optional stats ---
+    async function tryLoadOptionalStats(){
+      const paths = {
+        leads: "stats/activeLeads",
+        jobs: "stats/openJobs",
+        month: "stats/monthVolume"
+      };
+
+      try{
+        const a = await get(ref(db, paths.leads));
+        if(a.exists()) statLeads.textContent = String(a.val());
+      }catch{}
+
+      try{
+        const b = await get(ref(db, paths.jobs));
+        if(b.exists()) statJobs.textContent = String(b.val());
+      }catch{}
+
+      try{
+        const c = await get(ref(db, paths.month));
+        if(c.exists()){
+          const v = c.val();
+          statMonth.textContent = typeof v === "number" ? `$${v.toLocaleString()}` : String(v);
+        }
+      }catch{}
+    }
+    tryLoadOptionalStats();
+
+    // --- Auth ---
+    googleBtn.onclick = async () => {
+      await setPersistence(auth, browserLocalPersistence);
+      await signInWithPopup(auth, provider);
+      window.location.href = "profile.html";
     };
 
-    const $ = (id)=>document.getElementById(id);
-    
-    function escapeHtml(str){
-      return String(str||"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
-    function escapeAttr(str){ return escapeHtml(str).replaceAll('"',"&quot;"); }
+    onAuthStateChanged(auth, user => {
+      if(user){
+        const dn = user.displayName || user.email || "Deal Banker";
+        welcomeName.textContent = (dn.split(" ")[0] || dn);
 
-    let toastTimer=null;
-    function toast(msg){
-      let el=$("toast");
-      if(!el){
-        el=document.createElement("div"); el.id="toast";
-        el.style.cssText="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(43,116,255,.9);color:#fff;font-weight:800;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s;";
-        document.body.appendChild(el);
-      }
-      el.textContent=msg; el.style.opacity="1";
-      clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.opacity="0", 2000);
-    }
+        authStatus.innerHTML =
+          `Signed in as ${esc(dn)} <a id="logout" href="#">Sign out</a>`;
 
-    /****************************
-     * FIREBASE INIT
-     ****************************/
-    let auth=null, db=null, UID=null, ME=null, isAdmin=false;
+        msgInput.disabled = false;
+        sendBtn.disabled = false;
+        msgInput.placeholder = "Message Townhall...";
 
-    (function boot(){
-      const cfg = window.firebaseConfig;
-      if(!cfg){ alert("Firebase config missing in config.js"); return; }
-      firebase.initializeApp(cfg); auth = firebase.auth(); db = firebase.database();
+        setPresence(user);
 
-      auth.onAuthStateChanged(async (user)=>{
-        if(!user){
-          $("authStatus").innerHTML = `Signed out`;
-          bindUI(); return;
-        }
-        UID = user.uid;
-        ME = { uid: user.uid, email: (user.email || "").toLowerCase(), displayName: user.displayName || "" };
-        $("authStatus").innerHTML = `Signed in as ${escapeHtml(ME.displayName || ME.email)} <a id="logoutBtn">[Sign Out]</a>`;
-        $("logoutBtn").onclick = ()=>auth.signOut();
-
-        try{
-          const rs = await db.ref(`${PATHS.ROLES}/${UID}`).get();
-          const role = rs.exists() ? String(rs.val()||"").toLowerCase() : "";
-          isAdmin = (ME.email === GOD_EMAIL) || (role === "god") || (role === "admin");
-        }catch(e){}
-
-        $("rolePill").style.display="block";
-        $("rolePill").textContent = isAdmin ? "GOD MODE" : "AGENT";
-
-        listenInvestors(); setupChat(); bindUI();
-      });
-    })();
-
-    /****************************
-     * INVESTORS & CRM LOGIC
-     ****************************/
-    let investors=[]; let selectedId=null; let selected=null;
-    let activeFilter="all"; let searchText="";
-
-    function listenInvestors(){
-      const path = isAdmin ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}`;
-      db.ref(path).on("value",(snap)=>{
-        const v = snap.val() || {};
-        investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
-        investors.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-        renderList();
-        if(selectedId){
-          selected = investors.find(x=>x.id===selectedId) || null;
-          renderConsole();
-        }
-      });
-    }
-
-    function passesFilter(it){
-      if(activeFilter==="all") return true;
-      if(activeFilter==="506c") return String(it.rule||"").includes("506(c)");
-      if(activeFilter==="506b") return String(it.rule||"").includes("506(b)");
-      if(activeFilter==="lumpy") return String(it.status||"").includes("Lumpy");
-      return true;
-    }
-    function passesSearch(it){
-      if(!searchText) return true;
-      const hay = `${it.name||""} ${it.location||""} ${it.amount||""} ${it.rule||""} ${(it.tags||[]).join(" ")}`.toLowerCase();
-      return hay.includes(searchText);
-    }
-
-    function renderList(){
-      const list=$("list"); list.innerHTML="";
-      const filtered = investors.filter(it=>passesFilter(it)&&passesSearch(it));
-      $("kpiCount").textContent = filtered.length;
-
-      if(!filtered.length){ list.innerHTML=`<div class="tiny">No leads found. Use the bookmarklet to scrape SEC data.</div>`; return; }
-
-      filtered.forEach(it=>{
-        const is506c = String(it.rule||"").includes("506(c)");
-        const ruleColor = is506c ? "var(--good)" : "var(--warn)";
-        const card=document.createElement("div");
-        card.className="card"+(it.id===selectedId?" on":"");
-        card.innerHTML=`
-          <div class="cardTitle">${escapeHtml(it.name||"Unnamed")}</div>
-          <div class="cardSub" style="color:${ruleColor}">${escapeHtml(it.amount||"Amount Unknown")}</div>
-          <div class="row">
-            <span class="kpi">${escapeHtml(it.status||"New Lead")}</span>
-            ${is506c ? `<span class="kpi" style="border-color:var(--good);color:var(--good)">PITCH OK</span>` : `<span class="kpi" style="border-color:var(--bad);color:var(--bad)">NO PITCH</span>`}
-          </div>
-        `;
-        card.addEventListener("click",()=>{ selectedId=it.id; selected=it; renderList(); renderConsole(); });
-        list.appendChild(card);
-      });
-    }
-
-    function renderConsole(){
-      const el=$("console");
-      if(!selected){ el.innerHTML = `<div class="tiny">No target selected.</div>`; return; }
-
-      const phones = selected.phones || [];
-      const tags = selected.tags || [];
-      const rule = selected.rule || "Unknown";
-      const amount = selected.amount || "Amount Not Logged";
-      
-      // Dynamic Scripting Engine
-      const is506b = rule.includes("506(b)");
-      const is506c = rule.includes("506(c)");
-      let ruleColor = "var(--muted)";
-      let scriptHTML = `<i>Select a valid SEC rule to generate call script.</i>`;
-      
-      if(is506b){
-        ruleColor = "var(--bad)";
-        scriptHTML = `
-          <div style="color:var(--bad); font-weight:900; margin-bottom:6px;">🚨 506(b) "BUY BOX" SCRIPT (DO NOT PITCH YET):</div>
-          <div style="font-size:14px; line-height:1.5; color:rgba(255,255,255,.8); font-style:italic;">
-            "Hey [Name], [Your Name] here. I’m a local operator in Texas. Saw your recent Form D. I'm absolutely not pitching today—just calling peer-to-peer to check your Q3/Q4 buy box for debt/equity so I know what kind of paper to send you later."
-          </div>`;
-      } else if(is506c){
-        ruleColor = "var(--good)";
-        scriptHTML = `
-          <div style="color:var(--good); font-weight:900; margin-bottom:6px;">✅ 506(c) "DIRECT STRIKE" SCRIPT:</div>
-          <div style="font-size:14px; line-height:1.5; color:rgba(255,255,255,.8); font-style:italic;">
-            "Hey [Name], [Your Name] here. Saw you're placing capital in Texas. I have a $5M ground-up in Coupland and a flow of 12% 1st-lien debt. Are you placing capital into either right now?"
-          </div>`;
-      }
-
-      $("consoleMeta").textContent = selected.email ? selected.email : "Dossier Loaded";
-
-      el.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:flex-start;">
-          <div>
-            <div style="font-size:22px;font-weight:900; letter-spacing:-.02em;">${escapeHtml(selected.name||"—")}</div>
-            <div class="tiny" style="margin-top:6px; font-size:14px;">Target: <strong style="color:var(--good);">${escapeHtml(amount)}</strong></div>
-          </div>
-          <div style="text-align:right;">
-            <div class="pill" style="border-color:${ruleColor}; color:${ruleColor}; font-size:11px; font-weight:900;">${escapeHtml(rule)}</div>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="row" style="justify-content:space-between;">
-          <div class="row">
-            <span class="kpi" style="background:var(--bg3); border-color:var(--blue)">${escapeHtml(selected.status||"New Lead")}</span>
-            ${tags.map(t=>`<span class="kpi">${escapeHtml(t)}</span>`).join("")}
-          </div>
-          <button class="btn" id="btnEdit">Edit Dossier</button>
-        </div>
-
-        <div class="divider"></div>
-
-        <div style="background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.08); padding:16px; border-radius:14px; margin-bottom:16px;">
-          ${scriptHTML}
-        </div>
-
-        <div class="row" style="margin-bottom:16px; align-items:flex-end;">
-          <div style="flex:1;">
-            <div class="fLabel">DIRECT DIAL</div>
-            <select id="activePhone" style="background:rgba(0,0,0,.4);">
-              ${phones.length ? phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("") : `<option value="">(no phone mapped)</option>`}
-            </select>
-          </div>
-          <button class="btn primary" id="btnCall" style="padding:12px 20px; font-size:15px; border-radius:12px;">📞 CALL</button>
-        </div>
-
-        <div class="fLabel">BUY BOX CRITERIA & CALL NOTES</div>
-        <textarea id="noteBox" placeholder="Log their buy box, objections, and next steps here..." style="min-height:160px;">${escapeHtml(selected.notes||"")}</textarea>
-        <div class="row" style="justify-content:flex-end; margin-top:12px;">
-          <button class="btn primary" id="btnSaveNotes">Save Log</button>
-        </div>
-      `;
-
-      $("btnEdit").onclick = ()=> openModal("edit", selected);
-      $("btnCall").onclick = ()=> {
-        const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
-        if(!digits) return toast("No valid phone number.");
-        if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ window.location.href = `tel:${digits}`; }
-        else{ navigator.clipboard.writeText(digits); toast(`Number copied to dialer: ${digits}`); }
-      };
-      $("btnSaveNotes").onclick = async ()=> {
-        if(!db) return;
-        const notes = $("noteBox").value.trim();
-        const path = isAdmin ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`;
-        await db.ref(path).update({ notes, updatedAt: Date.now() });
-        toast("Log saved.");
-      };
-    }
-
-    /****************************
-     * MODAL LOGIC
-     ****************************/
-    function openModal(mode, item){
-      $("modalBack").style.display="flex";
-      $("modalTitle").textContent = mode==="edit" ? "Update Dossier" : "New Target Dossier";
-
-      $("mName").value = item?.name || "";
-      $("mAmount").value = item?.amount || "";
-      $("mRule").value = item?.rule || "Unknown";
-      $("mLocation").value = item?.location || "";
-      $("mEmail").value = item?.email || "";
-      $("mStatus").value = item?.status || "New Lead";
-      $("mPhones").value = (item?.phones || []).join("\n");
-      $("mTags").value = (item?.tags || []).join(", ");
-      $("mNotes").value = item?.notes || "";
-
-      $("btnSaveModal").onclick = ()=> saveModal(mode, item?.id);
-    }
-    $("btnCloseModal").onclick = $("btnCancelModal").onclick = ()=> $("modalBack").style.display="none";
-
-    async function saveModal(mode, id){
-      if(!db || !UID) return;
-      const name = $("mName").value.trim();
-      if(!name) return alert("Fund/Investor Name required");
-
-      const payload = {
-        name,
-        amount: $("mAmount").value.trim(),
-        rule: $("mRule").value,
-        status: $("mStatus").value,
-        location: $("mLocation").value.trim(),
-        email: $("mEmail").value.trim(),
-        phones: $("mPhones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean),
-        tags: $("mTags").value.split(",").map(s=>s.trim()).filter(Boolean),
-        notes: $("mNotes").value.trim(),
-        updatedAt: Date.now()
-      };
-
-      const targetId = (mode==="edit" && id) ? id : db.ref().push().key;
-      payload.id = targetId;
-
-      const path = isAdmin ? `${PATHS.INVESTORS_MASTER}/${targetId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${targetId}`;
-      await db.ref(path).update(payload);
-      
-      $("modalBack").style.display="none";
-      toast("Dossier Secured.");
-    }
-
-    /****************************
-     * SUPPORT / CHAT (Minimalist)
-     ****************************/
-    function setupChat(){
-      $("btnSupport").onclick = ()=> { $("sideOverlay").style.display="block"; $("sidePanel").style.display="flex"; };
-      $("sideOverlay").onclick = $("sideClose").onclick = ()=> { $("sideOverlay").style.display="none"; $("sidePanel").style.display="none"; };
-      
-      // Simple UI placeholder for chat logic from previous version
-      $("sideBody").innerHTML = `
-        <div style="padding:16px; color:var(--muted); font-size:13px;">
-          Support chat connected. DM your admin or team here. <br/><br/>
-          <i>(Chat database binding requires config load).</i>
-        </div>
-      `;
-    }
-
-    /****************************
-     * UI WIRING
-     ****************************/
-    function bindUI(){
-      document.querySelectorAll(".chip").forEach(ch=>{
-        ch.onclick = ()=>{
-          document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
-          ch.classList.add("on"); activeFilter = ch.getAttribute("data-filter"); renderList();
+        document.getElementById("logout").onclick = (e) => {
+          e.preventDefault();
+          signOut(auth);
         };
-      });
+      } else {
+        welcomeName.textContent = "Deal Banker";
+        authStatus.textContent = "Signed out";
+        msgInput.disabled = true;
+        sendBtn.disabled = true;
+        msgInput.placeholder = "Sign in to chat...";
+      }
+    });
 
-      $("btnSearch").onclick = ()=>{ searchText = $("qSearch").value.toLowerCase().trim(); renderList(); };
-      $("qSearch").onkeydown = (e)=>{ if(e.key==="Enter") $("btnSearch").click(); };
-      $("btnNewInvestor").onclick = ()=> openModal("new", null);
-
-      // Offerings Tab UI
-      document.querySelectorAll(".offeringTab").forEach(tab=>{
-        tab.onclick = ()=>{
-          document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
-          tab.classList.add("active");
-          // Here you would trigger iframe SRC changes later.
-        }
-      })
-    }
+    document.getElementById("bellBtn").addEventListener("click", ()=>{
+      alert("Notifications panel is next. This badge is placeholder UI for now.");
+    });
   </script>
 </body>
 </html>
+
