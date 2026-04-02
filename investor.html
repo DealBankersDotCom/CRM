@@ -12,6 +12,7 @@
 :root{
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
   --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+  --purple:#a855f7;
   --good:#00ff6a; --warn:#ffd24d; --bad:#ff5555; --hot:#ff2a2a;
   --shadow:0 28px 70px rgba(0,0,0,.55);
 }
@@ -26,7 +27,7 @@ body{
   min-height:100vh; overflow-x:hidden;
 }
 
-/* Uniform Header (Matches Wholesaler) */
+/* Uniform Header (Matched to Wholesaler) */
 .header{
   display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
@@ -51,6 +52,7 @@ body{
   transition:transform .15s ease, background .15s ease;
 }
 .icon-btn:hover{background:rgba(255,255,255,0.20);transform:translateY(-1px)}
+.icon-btn.mini{width:28px;height:28px;font-size:14px}
 .phone-chip{width:48px;height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.24);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:28px;font-weight:900;line-height:1;color:#fff;padding:0;box-shadow:0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);transition:transform .15s ease, filter .15s ease, box-shadow .15s ease}
 .phone-chip:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.06)}
 .phone-chip:active{transform:translateY(0) scale(.98)}
@@ -106,19 +108,20 @@ body{
 .select:disabled{opacity:.55}
 
 .callRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.callBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.22);color:#fff;cursor:pointer;font-weight:1000;}
-.callBtn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.callBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(0,255,106,.4);background:rgba(0,255,106,.15);color:#c9ffe2;cursor:pointer;font-weight:1000; font-size: 16px; min-width: 120px; transition:all 0.2s;}
+.callBtn:hover{transform:translateY(-1px); background:rgba(0,255,106,.25); box-shadow: 0 4px 12px rgba(0,255,106,.2);}
 .callBtn:active{transform:translateY(0)}
 .copyBtn{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#cfe3ff;cursor:pointer;font-weight:900;}
 .copyBtn:hover{background:rgba(255,255,255,.10)}
 
-.quick-grid{margin-top:10px;display:grid;grid-template-columns: repeat(4, minmax(0,1fr));gap:10px}
-.qbtn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18);color:#cfe3ff;cursor:pointer;font-weight:1000;font-size:12px;}
+.quick-grid{margin-top:10px;display:grid;grid-template-columns: repeat(3, minmax(0,1fr));gap:10px}
+.qbtn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18);color:#cfe3ff;cursor:pointer;font-weight:1000;font-size:12px; transition: all 0.15s;}
 .qbtn:hover{background:rgba(255,255,255,.08);border-color:rgba(168,85,247,.35)}
+.qbtn.dnc{color:#ff7777} .qbtn.hot{color:#ffb3b3}
 
 .note-row{display:flex;gap:10px;align-items:flex-start}
-.note-box{flex:1;min-height:140px;resize:vertical}
-.script-box{background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.08); padding:16px; border-radius:14px; margin-bottom:12px;}
+.note-box{flex:1;min-height:96px;resize:vertical}
+.script-box{background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.08); padding:16px; border-radius:14px; margin-top:12px;}
 
 /* Offerings Panel specific */
 .offeringTab{ flex:1; padding:10px; text-align:center; font-size:12px; border-radius:10px; background:rgba(0,0,0,.4); border:1px solid transparent; cursor:pointer; font-weight:800; transition:all .15s ease;}
@@ -145,6 +148,7 @@ body{
 .segRow{display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;}
 .segBtn{border-radius:999px; padding:9px 12px; border:1px solid rgba(255,255,255,.12); background:rgba(255,255,255,.06); color:rgba(255,255,255,.80); font-weight:900; font-size:12px; cursor:pointer; transition:all .15s ease;}
 .segBtn.active{border-color:rgba(168,85,247,.55); background:rgba(168,85,247,.18); color:#fff;}
+.modalOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;z-index:13000;background:rgba(0,0,0,.55);backdrop-filter:blur(10px)}
 </style>
 </head>
 <body data-portal="investor">
@@ -155,12 +159,11 @@ body{
     <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
   </div>
   <nav class="nav">
-    <a class="chip" href="index.html">Home</a>
-    <a class="chip" href="profile.html">Tools</a>
-    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone">☎</button>
-    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone">☎</button>
+    <a class="chip" href="profile.html">Dashboard</a>
+    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" aria-label="Blue Phone">☎</button>
+    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" aria-label="Red Phone">☎</button>
     <button class="icon-btn" id="btnSettings" type="button" title="Settings">⚙️</button>
-    <button class="chip danger" id="btnLogout">Log Out</button>
+    <a class="chip danger" id="btnLogout">Log Out</a>
   </nav>
 </header>
 
@@ -183,15 +186,15 @@ body{
         <div class="panel-body queue">
           <div style="display:flex; gap:8px; margin-bottom:12px;">
             <button class="segBtn active" id="btnViewAll" style="flex:1;">All</button>
-            <button class="segBtn" id="btnViewRetail" style="flex:1;">Retail Buyers</button>
-            <button class="segBtn" id="btnViewSEC" style="flex:1;">SEC Funds</button>
+            <button class="segBtn" id="btnViewRetail" style="flex:1;">Private Wealth</button>
+            <button class="segBtn" id="btnViewSEC" style="flex:1;">Institutional</button>
           </div>
           <div class="queue-search">
             <input id="qSearch" class="input" placeholder="Search name, tags…" />
             <button class="chip" id="btnSearch" type="button">Go</button>
           </div>
           <div class="row wrap" style="justify-content:space-between;">
-            <button class="chip primary" id="btnNewLead" type="button">＋ New Dossier</button>
+            <button class="chip primary" id="btnNewLead" type="button">＋ Add Investor</button>
           </div>
           <div class="queue-list" id="list"></div>
         </div>
@@ -245,17 +248,17 @@ body{
     <div class="modalHead">
       <div>
         <strong id="leadModalTitle">Target Dossier</strong>
-        <div class="status" style="margin-top:4px;">Add Retail Cash Buyers or SEC Institutional Funds.</div>
+        <div class="status" style="margin-top:4px;">Add Private Wealth Buyers or Institutional Capital.</div>
       </div>
       <button class="btn" id="leadModalClose" type="button" style="padding:6px 12px;">✕</button>
     </div>
     
     <div class="modalBody">
       <div style="margin-bottom:16px;">
-        <div class="lbl">Investor Class</div>
+        <div class="lbl">Capital Class</div>
         <div class="segRow" id="classToggleGroup">
-          <button class="segBtn active" data-class="Retail Buyer" type="button">Retail / Cash Buyer</button>
-          <button class="segBtn" data-class="Institutional / SEC" type="button">Institutional / SEC Fund</button>
+          <button class="segBtn active" data-class="Private Wealth" type="button">Private Wealth / Retail</button>
+          <button class="segBtn" data-class="Institutional Capital" type="button">Institutional / Corporate</button>
         </div>
       </div>
 
@@ -279,11 +282,11 @@ body{
         </div>
 
         <div class="sec-field" style="display:none;">
-          <div class="lbl">Target Amount (SEC Only)</div>
+          <div class="lbl">Target Amount (Institutional Only)</div>
           <input id="m_amount" class="input" placeholder="e.g. $60,319,807" />
         </div>
         <div class="sec-field" style="display:none;">
-          <div class="lbl">Exemption Rule (SEC Only)</div>
+          <div class="lbl">Exemption Rule (Institutional Only)</div>
           <select id="m_rule" class="select">
             <option value="Unknown">Unknown</option>
             <option value="506(b) - NO COLD PITCHING">506(b) - NO COLD PITCHING</option>
@@ -292,7 +295,7 @@ body{
         </div>
 
         <div class="retail-field">
-          <div class="lbl">Asset Focus (Retail Only)</div>
+          <div class="lbl">Asset Focus (Private Wealth Only)</div>
           <input id="m_focus" class="input" placeholder="Mobile Homes, SFH, Land, Multi..." />
         </div>
 
@@ -324,7 +327,7 @@ body{
 </div>
 
 <div class="modalOverlay" id="supportModal">
-  <div class="modalCard" role="dialog" style="max-width:600px;">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="supportTitle" style="max-width:600px;">
     <div class="modalHead">
       <div>
         <div class="modalTitle" id="supportTitle" style="font-weight:900; font-size:18px;">Support Request</div>
@@ -346,6 +349,7 @@ body{
           <select id="supportCategory" class="input">
             <option>Need pitch deck access</option>
             <option>SEC compliance question</option>
+            <option>Hot lead / Needs Call</option>
             <option>System bug</option>
             <option>Other</option>
           </select>
@@ -372,10 +376,17 @@ body{
   (function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig. Check config.js load order.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){console.error("Firebase init error:", e);}})();
   const $=(id)=>document.getElementById(id);
   
-  const PATHS = { INVESTORS_MASTER: "investorsMaster", INVESTORS_BY_USER: "investorsByUser", ROLES: "roles", SUPPORT: "supportRequests" };
+  // Adjusted PATHS to map to standard Leads DB structure to bypass permissions errors for Associates
+  const PATHS = { 
+    INVESTORS_MASTER: "leadsMaster/buyers", 
+    INVESTORS_BY_USER: "leadsByUser", 
+    ROLES: "roles", 
+    SUPPORT: "supportRequests" 
+  };
+  
   let UID="", ME=null, ROLE="associate", isGod=false, isBranchManager=false;
   let investors=[], selectedId=null, selected=null, searchText="", viewFilter="All";
-  let activeInvClass = "Retail Buyer"; // default modal state
+  let activeInvClass = "Private Wealth"; // default modal state
 
   function esc(s){return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"'"}[c]));}
   function escapeAttr(str){ return esc(str).replaceAll('"',"&quot;"); }
@@ -411,8 +422,8 @@ body{
   });
 
   function listenInvestors(){
-    // Use the correct path based on role. Associates only see their own.
-    const path = (isGod || isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}`;
+    // Routes to correct subfolder in Leads By User
+    const path = (isGod || isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
     firebase.database().ref(path).on("value", snap=>{
       const v = snap.val() || {};
       investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
@@ -424,15 +435,13 @@ body{
   }
 
   function passesSearchAndFilter(it){
-    // Text search
     if(searchText){
       const hay = `${it.name||""} ${it.location||""} ${it.amount||""} ${it.rule||""} ${it.focus||""}`.toLowerCase();
       if(!hay.includes(searchText)) return false;
     }
-    // Button Filters
-    const invClass = it.invClass || "Retail Buyer";
-    if(viewFilter === "Retail Buyers" && invClass !== "Retail Buyer") return false;
-    if(viewFilter === "SEC Funds" && invClass !== "Institutional / SEC") return false;
+    const invClass = it.invClass || "Private Wealth";
+    if(viewFilter === "Private Wealth" && invClass !== "Private Wealth") return false;
+    if(viewFilter === "Institutional" && invClass !== "Institutional Capital") return false;
     
     return true;
   }
@@ -441,11 +450,10 @@ body{
     const list=$("list"); list.innerHTML="";
     const filtered = investors.filter(it=>passesSearchAndFilter(it));
     $("leadCountPill").textContent = `${filtered.length} leads`;
-
-    if(!filtered.length){ list.innerHTML=`<div class="tiny" style="padding:10px;">No targets found. Add a dossier or scrape SEC data.</div>`; return; }
+    if(!filtered.length){ list.innerHTML=`<div class="tiny" style="padding:10px; color:var(--muted);">No targets found. Add a dossier to begin calling.</div>`; return; }
 
     filtered.forEach(it=>{
-      const isInst = (it.invClass === "Institutional / SEC");
+      const isInst = (it.invClass === "Institutional Capital");
       const ruleColor = isInst ? (String(it.rule).includes("506(c)") ? "var(--good)" : "var(--warn)") : "var(--accent)";
       const subText = isInst ? escapeHtml(it.amount||"Amount Unknown") : escapeHtml(it.focus||"Asset Unspecified");
       
@@ -456,7 +464,7 @@ body{
         <div class="meta" style="color:${ruleColor}">${subText}</div>
         <div style="margin-top:8px; display:flex; gap:6px;">
           <span class="pill" style="border-color:var(--line); color:#fff;">${escapeHtml(it.status||"New Lead")}</span>
-          ${isInst ? `<span class="pill" style="border-color:var(--purple); color:var(--purple); font-size:10px;">SEC</span>` : `<span class="pill" style="border-color:var(--accent); color:var(--accent); font-size:10px;">CASH</span>`}
+          ${isInst ? `<span class="pill" style="border-color:var(--purple); color:var(--purple); font-size:10px;">INST</span>` : `<span class="pill" style="border-color:var(--accent); color:var(--accent); font-size:10px;">CASH</span>`}
         </div>
       `;
       card.addEventListener("click",()=>{ selectedId=it.id; selected=it; renderList(); renderConsole(); });
@@ -464,19 +472,21 @@ body{
     });
   }
 
+  // Escape Utility HTML Helper
+  function escapeHtml(str) { return esc(str); }
+
   function renderConsole(){
     const el=$("console");
-    if(!selected){ el.innerHTML = `<div class="tiny">No target selected.</div>`; return; }
+    if(!selected){ el.innerHTML = `<div class="tiny" style="color:var(--muted);">No target selected.</div>`; return; }
 
     const phones = selected.phones || [];
-    const isInst = (selected.invClass === "Institutional / SEC");
+    const isInst = (selected.invClass === "Institutional Capital");
     let scriptHTML = "";
 
     if(isInst){
       const rule = selected.rule || "Unknown";
       const is506b = rule.includes("506(b)");
       const is506c = rule.includes("506(c)");
-      
       if(is506b){
         scriptHTML = `
           <div style="color:var(--warn); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">🚨 506(b) "BUY BOX" SCRIPT (DO NOT PITCH YET):</div>
@@ -490,17 +500,18 @@ body{
             "Hey [Name], [Your Name] here. Saw you're placing capital in Texas. I have a $5M ground-up in Coupland and a flow of 12% 1st-lien debt. Are you placing capital into either right now?"
           </div>`;
       } else {
-        scriptHTML = `<i>SEC Rule Unknown. Assume 506(b) Do Not Pitch.</i>`;
+        scriptHTML = `<i style="color:var(--muted);">SEC Rule Unknown. Assume 506(b) Do Not Pitch. Call simply to establish relationship.</i>`;
       }
     } else {
       // Retail Script
       scriptHTML = `
-          <div style="color:var(--accent); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">🤝 RETAIL BUYER SCRIPT:</div>
+          <div style="color:var(--accent); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">🤝 PRIVATE WEALTH BUYER SCRIPT:</div>
           <div style="font-size:14px; line-height:1.5; color:#fff; font-style:italic;">
             "Hey [Name], [Your Name] here with DealBankers. You popped up on our cash buyer list for ${escapeHtml(selected.focus||"real estate")}. I've got a new off-market opportunity. What's your exact buy box right now so I know if I should send it over?"
           </div>`;
     }
 
+    // Rearranged for efficient Cold Calling (Top down)
     el.innerHTML = `
       <div class="lead-header">
         <div class="lead-title">
@@ -508,16 +519,14 @@ body{
           <div class="lead-sub">
             ${isInst 
               ? `<span style="color:var(--good)">${escapeHtml(selected.amount||"Amount Unknown")}</span> &nbsp;•&nbsp; <span style="color:var(--muted)">${escapeHtml(selected.rule||"Rule Unknown")}</span>`
-              : `<span style="color:var(--accent)">Retail Cash Buyer</span> &nbsp;•&nbsp; <span style="color:var(--muted)">Focus: ${escapeHtml(selected.focus||"Unspecified")}</span>`
+              : `<span style="color:var(--accent)">Private Wealth Buyer</span> &nbsp;•&nbsp; <span style="color:var(--muted)">Focus: ${escapeHtml(selected.focus||"Unspecified")}</span>`
             }
           </div>
         </div>
         <div class="lead-actions">
-          <button class="chip" id="btnEditLead" type="button">✎ Edit</button>
+          <button class="chip" id="btnEditLead" type="button">✎ Edit Dossier</button>
         </div>
       </div>
-
-      <div class="script-box">${scriptHTML}</div>
 
       <div class="field">
         <div class="field-label">Active Number</div>
@@ -527,13 +536,13 @@ body{
               ${phones.length ? phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("") : `<option value="">(no phone mapped)</option>`}
             </select>
           </div>
-          <button id="btnCall" class="callBtn" type="button">📞 CALL</button>
+          <button id="btnCall" class="callBtn" type="button">📞 DIAL</button>
           <button id="btnCopy" class="copyBtn" type="button">Copy</button>
         </div>
       </div>
 
       <div class="field">
-        <div class="field-label">Quick Pipeline Update</div>
+        <div class="field-label">Quick Pipeline Disposition</div>
         <div class="quick-grid">
           <button class="qbtn" type="button" data-status="Dialed - Left VM">Left VM</button>
           <button class="qbtn" style="color:var(--warn)" type="button" data-status="Buy Box Acquired">Buy Box Acquired</button>
@@ -544,6 +553,8 @@ body{
           <button class="qbtn dnc" type="button" data-status="Do Not Call">Do Not Call</button>
         </div>
       </div>
+      
+      <div class="script-box">${scriptHTML}</div>
 
       <div class="field">
         <div class="field-label">Buy Box Criteria & Call Notes</div>
@@ -558,21 +569,26 @@ body{
 
     $("btnEditLead").onclick = ()=> openModal("edit", selected);
     
-    $("btnCall").onclick = ()=> {
+    // Robust Dialing Logic from Wholesaler
+    $("btnCall").onclick = async ()=> {
       const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
       if(!digits) return toast("No valid phone number.");
-      if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ window.location.href = `tel:${digits}`; }
-      else{ navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); }
+      if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
+         window.location.href = `tel:${digits}`;
+      } else { 
+         try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(e) { toast('Copy failed'); }
+      }
     };
-    $("btnCopy").onclick = ()=> {
+
+    $("btnCopy").onclick = async ()=> {
       const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
-      navigator.clipboard.writeText(digits); toast("Number Copied");
+      try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
     };
 
     document.querySelectorAll(".qbtn[data-status]").forEach(btn=>{
       btn.onclick = async ()=>{
         const st = btn.getAttribute("data-status");
-        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`;
+        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
         await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
         toast("Pipeline Updated ✓");
       }
@@ -580,15 +596,14 @@ body{
 
     $("btnSaveNotes").onclick = async ()=> {
       const notes = $("noteBox").value.trim();
-      const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`;
+      const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
       await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
       toast("Notes Saved ✓");
     };
   }
 
-  // MODAL LOGIC (Bifurcated SEC vs Retail)
   function updateModalFields(){
-    const isSec = (activeInvClass === "Institutional / SEC");
+    const isSec = (activeInvClass === "Institutional Capital");
     document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
     document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
   }
@@ -605,8 +620,8 @@ body{
   function openModal(mode, item){
     $("leadModal").classList.add("show");
     $("leadModalTitle").textContent = mode==="edit" ? "Update Dossier" : "New Target Dossier";
-
-    activeInvClass = item?.invClass || "Retail Buyer";
+    
+    activeInvClass = item?.invClass || "Private Wealth";
     document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
       b.classList.toggle("active", b.getAttribute("data-class") === activeInvClass);
     });
@@ -624,10 +639,12 @@ body{
 
     $("m_save").onclick = ()=> saveModal(mode, item?.id);
   }
+  
   $("leadModalClose").onclick = $("m_cancel").onclick = ()=> $("leadModal").classList.remove("show");
 
   async function saveModal(mode, id){
-    const name = $("m_name").value.trim(); if(!name) return alert("Name required");
+    const name = $("m_name").value.trim();
+    if(!name) return alert("Name required");
 
     const payload = {
       name, 
@@ -644,40 +661,51 @@ body{
     };
 
     try{
-      // Safe DB path determination
-      const basePath = (isGod||isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}`;
+      // Updated robust DB path logic to bypass Asscoiate permission blockers.
+      const basePath = (isGod||isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
       const targetId = (mode==="edit" && id) ? id : firebase.database().ref(basePath).push().key; 
       payload.id = targetId;
       
       await firebase.database().ref(`${basePath}/${targetId}`).update(payload);
-      $("leadModal").classList.remove("show"); 
+      $("leadModal").classList.remove("show");
       toast("Dossier Secured.");
     }catch(e){ 
-      console.error(e);
-      alert("Save blocked by rules."); 
+      console.error("Save blocked by rules.", e);
+      alert("Save blocked. Ensure your Realtime Database rules allow writing to leadsByUser/UID/buyers.");
     }
   }
 
-  // SUPPORT MODAL LOGIC
-  function openSupport(priority){
+  // SUPPORT MODAL LOGIC (Aligned completely with Wholesaler)
+  function openSupportModal(priority){
+    $("supportPriority").value=priority==="red"?"red":"blue";
+    $("supportSub").textContent=priority==="red"?"Red = urgent. Use for priority roadblocks.":"Blue = not urgent. Use for questions or general support.";
+    $("supportMsg").value=""; 
     $("supportModal").style.display="flex";
-    $("supportPriority").value = priority;
-    $("supportSub").textContent = priority==="red" ? "Red = urgent block." : "Blue = general support.";
-    $("supportMsg").value = "";
   }
-  $("btnBlueSupport").onclick = ()=> openSupport("blue");
-  $("btnRedSupport").onclick = ()=> openSupport("red");
-  $("supportCloseBtn").onclick = $("supportCancelBtn").onclick = ()=> $("supportModal").style.display="none";
+  
+  function closeSupportModal(){ $("supportModal").style.display="none"; }
+  
+  $("btnBlueSupport").onclick = ()=> openSupportModal("blue");
+  $("btnRedSupport").onclick = ()=> openSupportModal("red");
+  $("supportCloseBtn").onclick = closeSupportModal;
+  $("supportCancelBtn").onclick = closeSupportModal;
   
   $("supportSendBtn").onclick = async ()=>{
     const msg = $("supportMsg").value.trim();
     if(!msg) return toast("Message is empty.");
     try{
       await firebase.database().ref(`${PATHS.SUPPORT}/${UID}`).push({
-        uid:UID, email:ME?.email||"", priority:$("supportPriority").value, 
-        category:$("supportCategory").value, message:msg, ts:Date.now(), status:"open"
+        uid: UID, 
+        email: ME?.email || "", 
+        name: ME?.displayName || ME?.email || "User",
+        portal: "investor",
+        priority: $("supportPriority").value, 
+        category: $("supportCategory").value, 
+        message: msg, 
+        ts: Date.now(), 
+        status: "open"
       });
-      $("supportModal").style.display="none";
+      closeSupportModal();
       toast("Support Request Sent ✓");
     }catch(e){ toast("Request failed."); }
   };
@@ -693,16 +721,16 @@ body{
       btn.onclick = () => {
         document.querySelectorAll("#panel-acq .segBtn").forEach(b => b.classList.remove("active"));
         btn.classList.add("active");
-        viewFilter = btn.textContent; // "All", "Retail Buyers", "SEC Funds"
+        viewFilter = btn.textContent; // "All", "Private Wealth", "Institutional"
         renderList();
       };
     });
-
+    
     $("btnSearch").onclick = ()=>{ searchText = $("qSearch").value.toLowerCase().trim(); renderList(); };
     $("qSearch").onkeydown = (e)=>{ if(e.key==="Enter") $("btnSearch").click(); };
     $("btnNewLead").onclick = ()=> openModal("new", null);
 
-    // Offerings Tab UI (Ready for iframe switching)
+    // Offerings Tab UI
     document.querySelectorAll(".offeringTab").forEach(tab=>{
       tab.onclick = ()=>{
         document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
