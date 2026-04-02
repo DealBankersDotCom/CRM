@@ -1,1406 +1,553 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>DealBankers • Investor</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>DealBankers • Capital Hub</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
+  --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+  --good:#00ff6a; --warn:#ffd24d; --bad:#ff5555; --hot:#ff2a2a;
+  --shadow:0 28px 70px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%}
+body{
+  margin:0;font-family:Inter,system-ui,Arial;color:var(--text);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(168,85,247,.18), transparent 55%),
+    radial-gradient(circle at 85% 25%, rgba(43,116,255,.12), transparent 55%),
+    linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+  min-height:100vh; overflow-x:hidden;
+}
 
-  <link rel="icon" type="image/jpeg" href="icon (1).jpg" />
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+/* Uniform Header (Matches Wholesaler) */
+.header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  position:sticky;top:0;z-index:50;backdrop-filter: blur(10px);
+}
+.header .leftTitle{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.04em}
+.header .leftTitle small{display:block;font-weight:600;opacity:.75;letter-spacing:.02em}
+.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{
+  padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.22);
+  background:#0d1823;color:var(--text);text-decoration:none;cursor:pointer;font-weight:800;
+  transition:background .2s,transform .2s,border-color .2s, box-shadow .2s;user-select:none;
+}
+.chip:hover{background:#14314d;transform:translateY(-1px)}
+.chip.primary{background:rgba(168,85,247,.25); border-color:rgba(168,85,247,.55);}
+.chip.danger{background:#6b1111;border-color:rgba(255,85,85,.55)}
+.icon-btn{
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
+  border-radius:50%;width:34px;height:34px;font-size:18px;color:white;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s ease, background .15s ease;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.20);transform:translateY(-1px)}
+.icon-btn.mini{width:28px;height:28px;font-size:14px}
+.phone-chip{width:48px;height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.24);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:28px;font-weight:900;line-height:1;color:#fff;padding:0;box-shadow:0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);transition:transform .15s ease, filter .15s ease, box-shadow .15s ease}
+.phone-chip:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.06)}
+.phone-chip:active{transform:translateY(0) scale(.98)}
+.blue-phone{background:linear-gradient(180deg,#2b74ff,#0a58ca);box-shadow:0 0 18px rgba(43,116,255,.42), 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16)}
+.red-phone{background:linear-gradient(180deg,#d92626,#8f1010);box-shadow:0 0 18px rgba(255,42,42,.36), 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16)}
 
-  <style>
-    :root{
-      --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
-      --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
-      --good:#2bd4a7;--warn:#ffb020;--bad:#ff4d4d;
-      --panel: rgba(0,0,0,.22);
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:Inter,system-ui,Segoe UI,Roboto,Arial;
-      color:var(--text);
-      background:
-        radial-gradient(900px 500px at 20% 10%, rgba(43,116,255,.20), transparent 55%),
-        radial-gradient(900px 500px at 80% 0%, rgba(139,92,246,.18), transparent 55%),
-        linear-gradient(160deg,var(--bg1),var(--bg2) 55%, var(--bg3));
-      min-height:100vh;
-    }
+/* Main Layout */
+.wrap{max-width:1400px;margin:0 auto;padding:16px}
+.card{
+  background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.14);
+  border-radius:20px;box-shadow:var(--shadow);overflow:hidden;
+}
+.top{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.18);
+  background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
+}
+.status{font-size:12px;color:#9ab9d6}
+.body{padding:14px;display:grid;grid-template-columns: 340px minmax(0,1fr) 340px;gap:16px;}
+@media(max-width:1180px){ .body{grid-template-columns: 300px minmax(0,1fr)} .col-right{display:none} }
+@media(max-width:960px){ .body{grid-template-columns: 1fr} .col-right{display:block} }
 
-    /* top bar */
-    .topbar{
-      height:64px; display:flex; align-items:center; justify-content:space-between;
-      padding:0 16px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-      position:sticky; top:0; z-index:20;
-      backdrop-filter: blur(10px);
-    }
-    .brand{
-      display:flex; align-items:center; gap:12px; font-weight:900; letter-spacing:.4px;
-      min-width: 260px;
-    }
-    .brand img{
-      width:32px; height:32px; border-radius:10px;
-      border:1px solid rgba(255,255,255,.12);
-      box-shadow:0 10px 30px rgba(0,0,0,.45);
-      object-fit:cover;
-    }
-    .brandTitle{display:flex; flex-direction:column; line-height:1.05;}
-    .brandTitle .t1{font-weight:900;}
-    .brandTitle .t2{font-size:12px; color:var(--muted); opacity:.9;}
+.panel{border-radius:16px;border:1px solid rgba(255,255,255,.14);background:#0b1825;overflow:hidden;}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
+.panel-title{font-weight:900;letter-spacing:.12em;font-size:12px;color:#cfe3ff;display:flex;align-items:center;gap:10px;text-transform:uppercase;}
+.pill{font-size:11px;padding:3px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.18);color:#9ab9d6;white-space:nowrap;}
+.panel-body{padding:12px}
 
-    .pill{
-      display:inline-flex; align-items:center; gap:8px;
-      padding:8px 12px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.04);
-      font-weight:800;
-    }
-    .actions{ display:flex; align-items:center; gap:10px; flex-wrap:wrap; justify-content:flex-end; }
-    .btn{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.06);
-      color:var(--text);
-      padding:10px 14px; border-radius:999px;
-      font-weight:900; cursor:pointer;
-      transition: transform .06s ease, background .15s ease, border-color .15s ease;
-      display:inline-flex; align-items:center; gap:10px;
-      white-space:nowrap;
-    }
-    .btn:hover{ transform:translateY(-1px); background:rgba(255,255,255,.09); border-color:rgba(255,255,255,.18); }
-    .btn:disabled{ opacity:.55; cursor:not-allowed; transform:none; }
+/* Queue & Inputs */
+.input{width:100%;background:#0d1f2d;border:1px solid #254a63;color:#fff;border-radius:12px;padding:9px 10px;outline:none;}
+.input:focus{border-color:rgba(168,85,247,.6);box-shadow:0 0 0 4px rgba(168,85,247,.12)}
+.row{display:flex;gap:10px;align-items:center}
+.row.wrap{flex-wrap:wrap}
 
-    .btn.primary{ background:rgba(43,116,255,.18); border-color:rgba(43,116,255,.35); }
-    .btn.blue{ background:rgba(43,116,255,.14); border-color:rgba(43,116,255,.35); }
-    .btn.red{ background:rgba(255,77,77,.12); border-color:rgba(255,77,77,.35); }
-    .btn.dark{ background:rgba(0,0,0,.25); border-color:rgba(255,255,255,.12); }
+.queue-search{display:flex;gap:10px; margin-bottom:10px;}
+.queue-list{display:flex;flex-direction:column;gap:10px;max-height:64vh;overflow:auto;padding-right:4px}
+.lead-item{padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);cursor:pointer;transition:transform .08s ease, background .12s ease, border-color .12s ease;}
+.lead-item:hover{transform:translateY(-1px);background:rgba(255,255,255,.07);border-color:rgba(168,85,247,.35)}
+.lead-item.selected{background:rgba(168,85,247,.18);border-color:rgba(168,85,247,.6)}
+.lead-item .addr{font-weight:900; font-size:15px; margin-bottom:4px;}
+.lead-item .meta{font-size:12px;color:var(--good); font-weight:800;}
 
-    .ico{ width:18px; height:18px; display:inline-block; }
-    .ico svg{ width:18px; height:18px; display:block; }
+/* Console & Scripts */
+.lead-header{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+.lead-title{display:flex;flex-direction:column;gap:4px;min-width:0}
+.lead-title h2{font-size:22px;margin:0;word-break:break-word; letter-spacing:-.02em;}
+.lead-sub{display:flex;gap:10px;flex-wrap:wrap;font-size:14px;color:var(--good);align-items:center; font-weight:800;}
+.lead-actions{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end}
 
-    /* layout */
-    .wrap{ padding:16px; }
-    .grid{
-      display:grid; grid-template-columns: 360px 1fr 360px;
-      gap:14px;
-      max-width: 1500px;
-      margin:0 auto;
-    }
-    .panel{
-      border:1px solid rgba(255,255,255,.10);
-      background:var(--panel);
-      border-radius:18px;
-      overflow:hidden;
-      box-shadow: 0 18px 50px rgba(0,0,0,.35);
-    }
-    .panelHead{
-      display:flex; align-items:center; justify-content:space-between;
-      padding:14px 14px;
-      border-bottom:1px solid rgba(255,255,255,.08);
-      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
-      font-weight:900;
-    }
-    .panelBody{ padding:14px; }
-    .tiny{ font-size:12px; color:var(--muted); opacity:.9; }
+.field{margin-top:12px;padding:12px;border-radius:16px;border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);}
+.field-label{font-size:11px;letter-spacing:.12em;font-weight:900;color:#9ab9d6;margin-bottom:8px;text-transform:uppercase;}
+.select{width:100%;padding:10px 10px;border-radius:12px;border:1px solid #254a63;background:#0d1f2d;color:#fff;outline:none;font-weight:800;}
+.select:disabled{opacity:.55}
 
-    .searchRow{ display:flex; gap:10px; margin-bottom:10px; }
-    input, select, textarea{
-      width:100%;
-      padding:12px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(0,0,0,.20);
-      color:var(--text);
-      outline:none;
-    }
-    textarea{ min-height:120px; resize:vertical; }
+.callRow{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.callBtn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(0,0,0,.22);color:#fff;cursor:pointer;font-weight:1000;}
+.callBtn:hover{transform:translateY(-1px);filter:brightness(1.05)}
+.callBtn:active{transform:translateY(0)}
+.copyBtn{padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.06);color:#cfe3ff;cursor:pointer;font-weight:900;}
+.copyBtn:hover{background:rgba(255,255,255,.10)}
 
-    .filters{ display:flex; gap:10px; flex-wrap:wrap; margin-bottom:12px; }
-    .chip{
-      padding:10px 12px;
-      border-radius:14px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.04);
-      font-weight:900;
-      cursor:pointer;
-      user-select:none;
-    }
-    .chip.on{ border-color:rgba(43,116,255,.45); background:rgba(43,116,255,.16); }
+.quick-grid{margin-top:10px;display:grid;grid-template-columns: repeat(4, minmax(0,1fr));gap:10px}
+.qbtn{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 10px;border-radius:14px;border:1px solid rgba(255,255,255,.14);background:rgba(0,0,0,.18);color:#cfe3ff;cursor:pointer;font-weight:1000;font-size:12px;}
+.qbtn:hover{background:rgba(255,255,255,.08);border-color:rgba(168,85,247,.35)}
 
-    .list{ display:flex; flex-direction:column; gap:10px; }
-    .card{
-      padding:12px;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.04);
-      cursor:pointer;
-    }
-    .card.on{ border-color:rgba(43,116,255,.55); background:rgba(43,116,255,.10); }
-    .cardTitle{ font-weight:900; }
-    .cardSub{ margin-top:4px; font-size:12px; color:var(--muted); }
-    .row{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .kpi{
-      padding:8px 10px; border-radius:999px;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.04);
-      font-weight:900; font-size:12px;
-    }
+.note-row{display:flex;gap:10px;align-items:flex-start}
+.note-box{flex:1;min-height:140px;resize:vertical}
+.script-box{background:rgba(0,0,0,.4); border:1px solid rgba(255,255,255,.08); padding:16px; border-radius:14px; margin-bottom:12px;}
 
-    .divider{ height:1px; background:rgba(255,255,255,.10); margin:12px 0; }
+/* Offerings Panel specific */
+.offeringTab{ flex:1; padding:10px; text-align:center; font-size:12px; border-radius:10px; background:rgba(0,0,0,.4); border:1px solid transparent; cursor:pointer; font-weight:800; transition:all .15s ease;}
+.offeringTab.active{ border-color:var(--purple); background:rgba(168,85,247,.18); color:#fff;}
+.iframePlaceholder{ height:400px; border-radius:12px; border:1px dashed var(--line); display:flex; align-items:center; justify-content:center; color:var(--muted); font-size:12px; text-align:center; background:rgba(0,0,0,.2); margin-top:12px;}
 
-    /* modal */
-    .modalBack{
-      position:fixed; inset:0;
-      background:rgba(0,0,0,.55);
-      display:none; align-items:center; justify-content:center;
-      padding:18px;
-      z-index:50;
-    }
-    .modal{
-      width:min(980px, 100%);
-      max-height:88vh;
-      overflow:auto;
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.70);
-      box-shadow: 0 25px 70px rgba(0,0,0,.55);
-    }
-    .modalHead{
-      padding:14px 14px;
-      display:flex; align-items:center; justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-      font-weight:900;
-      position:sticky; top:0;
-      backdrop-filter: blur(10px);
-      z-index:2;
-    }
-    .modalBody{ padding:14px; }
-    .grid2{ display:grid; grid-template-columns:1fr 1fr; gap:10px; }
-    .grid1{ display:grid; grid-template-columns:1fr; gap:10px; }
-
-    /* assign block */
-    .assignWrap{
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.03);
-      border-radius:16px;
-      padding:12px;
-    }
-    .assignTop{
-      display:flex; gap:10px; align-items:center; justify-content:space-between;
-      flex-wrap:wrap;
-      margin-bottom:10px;
-    }
-    .assignBtns{ display:flex; gap:8px; flex-wrap:wrap; }
-    .userList{
-      display:flex; flex-direction:column; gap:8px;
-      max-height:220px; overflow:auto;
-      padding-right:6px;
-    }
-
-    /* banner */
-    .banner{
-      max-width:1500px;
-      margin:12px auto 0;
-      border-radius:16px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(255,77,77,.08);
-      padding:12px 14px;
-      display:none;
-    }
-    .banner b{ color: #ffd1d1; }
-    .banner code{ color:#fff; opacity:.95; }
-
-    /* chat bubble + side panel (matches wholesaler style) */
-    #chatBubble{
-      position:fixed; right:22px; bottom:22px; width:56px; height:56px;
-      border-radius:999px; border:1px solid rgba(43,116,255,.35);
-      background:rgba(43,116,255,.16); display:flex; align-items:center; justify-content:center;
-      box-shadow:0 20px 50px rgba(0,0,0,.45);
-      cursor:pointer; z-index:80;
-    }
-    #chatBubble:hover{ background:rgba(43,116,255,.22); }
-    #chatBubble .dot{
-      position:absolute; top:8px; right:10px;
-      width:10px; height:10px; border-radius:999px;
-      background:var(--bad); box-shadow:0 0 0 3px rgba(255,77,77,.18);
-      display:none;
-    }
-
-    .sidebarOverlay{
-      position:fixed; inset:0; background:rgba(0,0,0,.55);
-      display:none; z-index:90;
-    }
-    .sidebarPanel{
-      position:fixed; top:76px; right:14px;
-      width:min(420px, calc(100% - 28px));
-      height: calc(100vh - 92px);
-      border-radius:18px;
-      border:1px solid rgba(255,255,255,.12);
-      background:rgba(0,0,0,.70);
-      box-shadow:0 25px 70px rgba(0,0,0,.55);
-      display:none; flex-direction:column;
-      z-index:95;
-      overflow:hidden;
-      backdrop-filter: blur(10px);
-    }
-    .sidebarHead{
-      padding:12px 12px;
-      display:flex; align-items:center; justify-content:space-between;
-      border-bottom:1px solid rgba(255,255,255,.10);
-      background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
-      font-weight:900;
-    }
-    .sidebarBody{
-      padding:12px; display:flex; flex-direction:column; gap:10px;
-      flex:1; overflow:auto;
-    }
-    .chatLog{
-      flex:1; overflow:auto;
-      border:1px solid rgba(255,255,255,.10);
-      background:rgba(255,255,255,.03);
-      border-radius:14px;
-      padding:10px;
-      min-height:240px;
-    }
-    .msgRow{ display:flex; margin:8px 0; }
-    .msg{ max-width:84%; padding:10px 12px; border-radius:14px; font-size:13px; line-height:1.25; border:1px solid rgba(255,255,255,.10); }
-    .msg.me{ margin-left:auto; background:rgba(43,116,255,.16); border-color:rgba(43,116,255,.30); }
-    .msg.them{ margin-right:auto; background:rgba(255,255,255,.04); }
-    .msgMeta{ font-size:11px; color:var(--muted); opacity:.85; margin-top:4px; }
-
-    .chatInputRow{ display:flex; gap:10px; align-items:center; }
-    .chatInputRow input{ flex:1; }
-    .chatSendBtn{ padding:12px 14px; border-radius:14px; }
-
-    /* responsive */
-    @media (max-width: 1180px){
-      .grid{ grid-template-columns: 1fr; }
-    }
-  </style>
+/* Modal Base */
+.modal{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;z-index:12000;background:rgba(0,0,0,.55);backdrop-filter:blur(10px)}.modal.show{display:flex}
+.modalCard{width:min(900px, 96vw);border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(11,24,37,.96);box-shadow:0 22px 80px rgba(0,0,0,.7);overflow:hidden;}
+.modalHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
+.modalHead strong{letter-spacing:.08em; font-size:16px; font-weight:900;}
+.modalBody{padding:20px; overflow:auto; max-height:80vh;}
+.formGrid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.lbl{font-size:11px;letter-spacing:.10em;text-transform:uppercase;color:#9ab9d6;font-weight:900;margin-bottom:6px}
+.ta{min-height:110px;resize:vertical}
+.modalActions{display:flex;gap:10px;justify-content:flex-end;flex-wrap:wrap;margin-top:20px}
+.btn{padding:10px 16px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-weight:900;}
+.btn:hover{background:rgba(255,255,255,.10)}
+.btn.primary{border-color:rgba(168,85,247,.55);background:rgba(168,85,247,.18)}
+</style>
 </head>
+<body data-portal="investor">
 
-<body>
-
-  <div class="topbar">
-    <div class="brand">
-      <img src="icon (1).jpg" alt="DealBankers" />
-      <div class="brandTitle">
-        <div class="t1">DEALBANKERS • Investor Portal</div>
-        <div class="t2">Private capital, JV partners, buyers list</div>
-      </div>
-      <div id="rolePill" class="pill" style="display:none;margin-left:10px;"></div>
-    </div>
-
-    <div class="actions">
-      <button class="btn dark" id="btnDashboard">Dashboard</button>
-
-      <button class="btn blue" id="btnBlueSupport" title="Non-urgent request to God">
-        <span class="ico" aria-hidden="true">
-          <!-- old school phone icon -->
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M9 5h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M9 19h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-          </svg>
-        </span>
-        Blue Phone
-      </button>
-
-      <button class="btn red" id="btnRedSupport" title="Urgent request to God">
-        <span class="ico" aria-hidden="true">
-          <svg viewBox="0 0 24 24" fill="none">
-            <path d="M7 2h10a2 2 0 0 1 2 2v16a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2Z" stroke="currentColor" stroke-width="1.8"/>
-            <path d="M12 7v6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
-            <path d="M12 16h.01" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
-          </svg>
-        </span>
-        Red Phone
-      </button>
-
-      <button class="btn dark" id="btnSettings">⚙</button>
-      <button class="btn dark" id="btnLogout">Log Out</button>
-    </div>
+<header class="header">
+  <div class="leftTitle">
+    <div>DEALBANKERS • Capital Hub</div>
+    <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
   </div>
+  <nav class="nav">
+    <a class="chip" href="profile.html">Dashboard</a>
+    <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;">👥 Team</button>
+    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" aria-label="Blue Phone">☎</button>
+    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" aria-label="Red Phone">☎</button>
+    <button class="icon-btn" id="btnSettings" type="button" title="Settings">⚙️</button>
+    <a class="chip" id="logoutBtn">Log Out</a>
+  </nav>
+</header>
 
-  <div class="banner" id="errBanner">
-    <div><b>Heads up:</b> <span id="errText"></span></div>
-    <div class="tiny" id="errHint" style="margin-top:6px;"></div>
-  </div>
-
-  <div class="wrap">
-    <div class="grid">
-
-      <!-- LEFT: INVESTOR QUEUE -->
-      <div class="panel">
-        <div class="panelHead">
-          <div>Investor Queue</div>
-          <div class="kpi" id="kpiCount">0</div>
+<div class="wrap">
+  <section class="card">
+    <div class="top">
+      <div>
+        <div id="crumb" style="font-weight:1000;letter-spacing:.08em;">Capital Acquisition</div>
+        <div class="status" id="status">Loading…</div>
+      </div>
+    </div>
+    
+    <div class="body">
+      
+      <div id="panel-acq" class="panel">
+        <div class="panel-head">
+          <div class="panel-title">● TARGET QUEUE</div>
+          <div class="pill" id="leadCountPill">0 leads</div>
         </div>
-        <div class="panelBody">
-          <div class="searchRow">
-            <input id="qSearch" placeholder="Search name, phone, city, tags…" />
-            <button class="btn" id="btnSearch">Search</button>
+        <div class="panel-body queue">
+          <div class="queue-search">
+            <input id="qSearch" class="input" placeholder="Search fund, rule, amount…" />
+            <button class="chip" id="btnSearch" type="button">Go</button>
           </div>
-
-          <div class="filters">
-            <div class="chip on" data-filter="all">All</div>
-            <div class="chip" data-filter="new">New</div>
-            <div class="chip" data-filter="qualified">Qualified</div>
-            <div class="chip" data-filter="active">Active</div>
+          <div class="row wrap" style="justify-content:space-between;">
+            <button class="chip primary" id="btnNewLead" type="button">＋ New Dossier</button>
           </div>
-
-          <div class="row" style="margin-bottom:10px;">
-            <button class="btn primary" id="btnNewInvestor">+ New Investor</button>
-            <button class="btn" id="btnImport">Import List</button>
-          </div>
-
-          <div class="tiny" style="margin-bottom:10px;">
-            Tip: tag investors like <b>Wholesale Buyer</b>, <b>Flip JV</b>, <b>Contractor Funding</b>, <b>Micro-loan</b>.
-          </div>
-
-          <div class="list" id="list"></div>
+          <div class="queue-list" id="list"></div>
         </div>
       </div>
-
-      <!-- CENTER: CONSOLE -->
-      <div class="panel">
-        <div class="panelHead">
-          <div>Console</div>
-          <div class="tiny" id="consoleMeta">Select an investor…</div>
+      
+      <div class="panel col-center" id="panel-console">
+        <div class="panel-head">
+          <div class="panel-title">⌁ COMMS & SCRIPTS</div>
         </div>
-        <div class="panelBody" id="console" style="min-height:520px;">
-          <div class="tiny">No investor selected.</div>
+        <div class="panel-body" id="console">
+          <div style="color:var(--muted); text-align:center; margin-top:100px; font-weight:800;">
+            Select a target from the queue to load the dossier and dynamic calling scripts.
+          </div>
         </div>
       </div>
-
-      <!-- RIGHT: ACTIVITY -->
-      <div class="panel">
-        <div class="panelHead">
-          <div>Activity</div>
-          <div class="tiny" id="activityMeta">Recent notes + events</div>
+      
+      <div class="panel col-right" id="panel-calllog">
+        <div class="panel-head">
+          <div class="panel-title">⌁ ACTIVE OFFERINGS</div>
         </div>
-        <div class="panelBody" id="activity" style="min-height:520px;">
-          <div class="tiny">—</div>
+        <div class="panel-body">
+          <div style="display:flex; gap:8px; margin-bottom:12px;">
+            <div class="offeringTab active">Coupland Dev ($5M)</div>
+            <div class="offeringTab">Tax Notes (12% Yield)</div>
+          </div>
+          
+          <div class="iframePlaceholder">
+            <div>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px; opacity:.5;">
+                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+                <circle cx="8.5" cy="8.5" r="1.5"></circle>
+                <polyline points="21 15 16 10 5 21"></polyline>
+              </svg>
+              <br/>Offerings Module Space<br/><span style="font-weight:400;">(iFrame renders here)</span>
+            </div>
+          </div>
+
+          <div style="height:1px; background:var(--line); margin:16px 0;"></div>
+          <div style="font-size:12px; color:var(--muted); line-height:1.4;">
+            <b>Instructions:</b> While on the phone, select the appropriate offering above to instantly load the deal metrics and pitch deck.
+          </div>
         </div>
       </div>
 
     </div>
-  </div>
+  </section>
+</div>
 
-  <!-- MODAL: NEW / EDIT INVESTOR -->
-  <div class="modalBack" id="modalBack">
-    <div class="modal">
-      <div class="modalHead">
-        <div id="modalTitle">New Investor</div>
-        <button class="btn" id="btnCloseModal">Close</button>
+<div id="leadModal" class="modal" aria-hidden="true">
+  <div class="modalCard" role="dialog" aria-modal="true" aria-label="Lead Editor">
+    <div class="modalHead">
+      <div>
+        <strong id="leadModalTitle">Target Dossier</strong>
+        <div class="status" style="margin-top:4px;">Paste SEC scraped data here.</div>
+      </div>
+      <button class="btn" id="leadModalClose" type="button" style="padding:6px 12px;">✕</button>
+    </div>
+    
+    <div class="modalBody">
+      <div class="formGrid">
+        <div>
+          <div class="lbl">Fund / Investor Name</div>
+          <input id="m_name" class="input" placeholder="e.g. CrowdOut Credit LLC" />
+        </div>
+        <div>
+          <div class="lbl">Target Amount</div>
+          <input id="m_amount" class="input" placeholder="e.g. $60,319,807" />
+        </div>
+        <div>
+          <div class="lbl">Exemption Rule</div>
+          <select id="m_rule" class="select">
+            <option value="Unknown">Unknown</option>
+            <option value="506(b) - NO COLD PITCHING">506(b) - NO COLD PITCHING</option>
+            <option value="506(c) - COLD PITCHING OK">506(c) - COLD PITCHING OK</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">Pipeline Status</div>
+          <select id="m_status" class="select">
+            <option value="New Lead">New Lead</option>
+            <option value="Dialed - Left VM">Dialed - Left VM</option>
+            <option value="Buy Box Acquired">Buy Box Acquired</option>
+            <option value="Lumpy Mail Sent">Lumpy Mail Sent</option>
+            <option value="Legally Cleared">Legally Cleared (Pitch OK)</option>
+            <option value="Deal Pitched">Deal Pitched</option>
+            <option value="Soft Commit">Soft Commit</option>
+            <option value="Do Not Call">Do Not Call</option>
+          </select>
+        </div>
+        <div>
+          <div class="lbl">Location / City</div>
+          <input id="m_location" class="input" placeholder="Austin, TX…" />
+        </div>
+        <div>
+          <div class="lbl">Email</div>
+          <input id="m_email" class="input" placeholder="email@…" />
+        </div>
+        
+        <div style="grid-column:1/-1">
+          <div class="lbl">Phones (one per line: Label | Number)</div>
+          <textarea id="m_phones" class="input ta" placeholder="Office | 512-900-2646&#10;Mobile | ..."></textarea>
+        </div>
+        <div style="grid-column:1/-1">
+          <div class="lbl">Tags (comma separated)</div>
+          <input id="m_tags" class="input" placeholder="Debt Fund, Equity Partner, Bridge..." />
+        </div>
+        <div style="grid-column:1/-1">
+          <div class="lbl">Buy Box & Call Notes</div>
+          <textarea id="m_notes" class="input ta" placeholder="Log criteria, yield requirements, objections..."></textarea>
+        </div>
+      </div>
+      
+      <div class="modalActions">
+        <button class="btn" id="m_cancel" type="button">Cancel</button>
+        <button class="btn primary" id="m_save" type="button">Save Dossier</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+
+<script>
+  (function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig. Check config.js load order.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){console.error("Firebase init error:", e);}})();
+  const $=(id)=>document.getElementById(id);
+  
+  const PATHS = { INVESTORS_MASTER: "investorsMaster", INVESTORS_BY_USER: "investorsByUser", ROLES: "roles" };
+  let UID="", ME=null, ROLE="associate", isGod=false, isBranchManager=false;
+  let investors=[], selectedId=null, selected=null, searchText="";
+
+  function esc(s){return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"'"}[c]));}
+  function escapeAttr(str){ return esc(str).replaceAll('"',"&quot;"); }
+  
+  let toastTimer=null;
+  function toast(msg){
+    let el=$("toastFloat");
+    if(!el){
+      el=document.createElement("div"); el.id="toastFloat";
+      el.style.cssText="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(43,116,255,.9);color:#fff;font-weight:800;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s;";
+      document.body.appendChild(el);
+    }
+    el.textContent=msg; el.style.opacity="1";
+    clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.opacity="0", 2000);
+  }
+
+  firebase.auth().onAuthStateChanged(async u=>{
+    if(!u) return location.href="index.html";
+    UID=u.uid; ME=u;
+    
+    try{
+      const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
+      const raw = rs.val();
+      ROLE = raw ? String(raw).toLowerCase() : "user";
+      if(String(u.email||"").toLowerCase()==="dealbankers@gmail.com") ROLE="god";
+    }catch(e){ ROLE="user"; }
+
+    isGod=ROLE==="god";
+    isBranchManager=!isGod&&ROLE==="admin";
+    $("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
+    
+    listenInvestors(); bindUI();
+  });
+
+  function listenInvestors(){
+    const path = (isGod || isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}`;
+    firebase.database().ref(path).on("value", snap=>{
+      const v = snap.val() || {};
+      investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
+      investors.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+      $("status").textContent = `Acq: ${investors.length} Targets`;
+      renderList();
+      if(selectedId){ selected = investors.find(x=>x.id===selectedId) || null; renderConsole(); }
+    });
+  }
+
+  function passesSearch(it){
+    if(!searchText) return true;
+    return `${it.name||""} ${it.location||""} ${it.amount||""} ${it.rule||""} ${(it.tags||[]).join(" ")}`.toLowerCase().includes(searchText);
+  }
+
+  function renderList(){
+    const list=$("list"); list.innerHTML="";
+    const filtered = investors.filter(it=>passesSearch(it));
+    $("leadCountPill").textContent = `${filtered.length} leads`;
+
+    if(!filtered.length){ list.innerHTML=`<div class="tiny" style="padding:10px;">No targets found. Use bookmarklet to scrape SEC.</div>`; return; }
+
+    filtered.forEach(it=>{
+      const is506c = String(it.rule||"").includes("506(c)");
+      const ruleColor = is506c ? "var(--good)" : "var(--warn)";
+      const card=document.createElement("div");
+      card.className="lead-item"+(it.id===selectedId?" selected":"");
+      card.innerHTML=`
+        <div class="addr">${escapeHtml(it.name||"Unnamed Fund")}</div>
+        <div class="meta" style="color:${ruleColor}">${escapeHtml(it.amount||"Amount Unknown")}</div>
+        <div style="margin-top:8px; display:flex; gap:6px;">
+          <span class="pill" style="border-color:var(--blue); color:#fff;">${escapeHtml(it.status||"New Lead")}</span>
+        </div>
+      `;
+      card.addEventListener("click",()=>{ selectedId=it.id; selected=it; renderList(); renderConsole(); });
+      list.appendChild(card);
+    });
+  }
+
+  function renderConsole(){
+    const el=$("console");
+    if(!selected){ el.innerHTML = `<div class="tiny">No target selected.</div>`; return; }
+
+    const phones = selected.phones || [];
+    const rule = selected.rule || "Unknown";
+    const amount = selected.amount || "Amount Not Logged";
+    
+    // Script Engine
+    const is506b = rule.includes("506(b)");
+    const is506c = rule.includes("506(c)");
+    let ruleColor = "var(--muted)";
+    let scriptHTML = `<i>Select a valid SEC rule to generate call script.</i>`;
+    
+    if(is506b){
+      ruleColor = "var(--warn)";
+      scriptHTML = `
+        <div style="color:var(--warn); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">🚨 506(b) "BUY BOX" SCRIPT (DO NOT PITCH YET):</div>
+        <div style="font-size:14px; line-height:1.5; color:#fff; font-style:italic;">
+          "Hey [Name], [Your Name] here. I’m a local operator in Texas. Saw your recent Form D. I'm absolutely not pitching today—just calling peer-to-peer to check your Q3/Q4 buy box for debt/equity so I know what kind of paper to send you later."
+        </div>`;
+    } else if(is506c){
+      ruleColor = "var(--good)";
+      scriptHTML = `
+        <div style="color:var(--good); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">✅ 506(c) "DIRECT STRIKE" SCRIPT:</div>
+        <div style="font-size:14px; line-height:1.5; color:#fff; font-style:italic;">
+          "Hey [Name], [Your Name] here. Saw you're placing capital in Texas. I have a $5M ground-up in Coupland and a flow of 12% 1st-lien debt. Are you placing capital into either right now?"
+        </div>`;
+    }
+
+    el.innerHTML = `
+      <div class="lead-header">
+        <div class="lead-title">
+          <h2 id="leadAddress">${escapeHtml(selected.name||"—")}</h2>
+          <div class="lead-sub" style="color:${ruleColor}">${escapeHtml(amount)} &nbsp;•&nbsp; <span style="color:var(--muted)">${escapeHtml(rule)}</span></div>
+        </div>
+        <div class="lead-actions">
+          <button class="chip" id="btnEditLead" type="button">✎ Edit</button>
+        </div>
       </div>
 
-      <div class="modalBody">
-        <div class="grid2">
-          <div>
-            <div class="tiny">NAME</div>
-            <input id="mName" placeholder="Investor name…" />
-          </div>
-          <div>
-            <div class="tiny">LOCATION</div>
-            <input id="mLocation" placeholder="City, State…" />
-          </div>
-          <div>
-            <div class="tiny">EMAIL</div>
-            <input id="mEmail" placeholder="email@…" />
-          </div>
-          <div>
-            <div class="tiny">STATUS</div>
-            <select id="mStatus">
-              <option>New</option>
-              <option>Qualified</option>
-              <option>Active</option>
-              <option>Do Not Call</option>
+      <div class="script-box">${scriptHTML}</div>
+
+      <div class="field">
+        <div class="field-label">Active Number</div>
+        <div class="callRow">
+          <div style="flex:1;min-width:220px">
+            <select id="activePhone" class="select">
+              ${phones.length ? phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("") : `<option value="">(no phone mapped)</option>`}
             </select>
           </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <!-- Assignments (God/Admin) -->
-        <div id="assignBlock" class="assignWrap" style="display:none;">
-          <div class="assignTop">
-            <div style="font-weight:900;">Assign to users <span class="tiny">(Admin mode)</span></div>
-            <div class="assignBtns">
-              <button class="btn" id="btnAssignAll">All</button>
-              <button class="btn" id="btnAssignNone">None</button>
-            </div>
-          </div>
-
-          <input id="userFilter" placeholder="Filter users (name / email)..." />
-
-          <div class="tiny" style="margin:8px 0 10px;">
-            Saved to <code>investorsMaster</code> and copied into each checked user under <code>investorsByUser/&lt;uid&gt;</code>.
-            <br/>Users appear here after they sign in once (so Firebase gives them a UID).
-          </div>
-
-          <div id="userList" class="userList"></div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="grid1">
-          <div>
-            <div class="tiny">PHONES (one per line: Label | Number)</div>
-            <textarea id="mPhones" placeholder="Owner | (210) 555-1234&#10;Assistant | (210) 555-9999"></textarea>
-          </div>
-
-          <div>
-            <div class="tiny">TAGS (comma separated)</div>
-            <input id="mTags" placeholder="Wholesale Buyer, Flip JV, Contractor Funding, Micro-loan…" />
-          </div>
-
-          <div>
-            <div class="tiny">NOTES</div>
-            <textarea id="mNotes" placeholder="Criteria, proof of funds, objections, scripts…"></textarea>
-          </div>
-        </div>
-
-        <div class="row" style="justify-content:flex-end; margin-top:12px;">
-          <button class="btn" id="btnCancelModal">Cancel</button>
-          <button class="btn primary" id="btnSaveModal">Save</button>
+          <button id="btnCall" class="callBtn" type="button">📞 CALL</button>
+          <button id="btnCopy" class="copyBtn" type="button">Copy</button>
         </div>
       </div>
-    </div>
-  </div>
 
-  <!-- CHAT: bubble + side panel -->
-  <div id="chatBubble" title="Messages">
-    <div class="dot" id="chatDot"></div>
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-      <path d="M4 5.5C4 4.12 5.12 3 6.5 3h11C18.88 3 20 4.12 20 5.5v7C20 13.88 18.88 15 17.5 15H9l-4.2 3.15c-.5.37-1.2 0-1.2-.63V5.5Z"
-        stroke="currentColor" stroke-width="1.8" />
-    </svg>
-  </div>
+      <div class="field">
+        <div class="field-label">Quick Pipeline Update</div>
+        <div class="quick-grid">
+          <button class="qbtn" type="button" data-status="Dialed - Left VM">Left VM</button>
+          <button class="qbtn" style="color:var(--warn)" type="button" data-status="Buy Box Acquired">Buy Box Acquired</button>
+          <button class="qbtn" style="color:var(--blue2)" type="button" data-status="Lumpy Mail Sent">Lumpy Sent</button>
+          <button class="qbtn" style="color:var(--good)" type="button" data-status="Legally Cleared">Legally Cleared</button>
+          <button class="qbtn" style="color:var(--good)" type="button" data-status="Deal Pitched">Deal Pitched</button>
+          <button class="qbtn" style="color:#fff; background:var(--good); border-color:var(--good);" type="button" data-status="Soft Commit">Soft Commit</button>
+          <button class="qbtn dnc" type="button" data-status="Do Not Call">Do Not Call</button>
+        </div>
+      </div>
 
-  <div class="sidebarOverlay" id="sideOverlay"></div>
-  <div class="sidebarPanel" id="sidePanel">
-    <div class="sidebarHead">
-      <div id="sideTitle">Messages</div>
-      <button class="btn" id="sideClose">Close</button>
-    </div>
-    <div class="sidebarBody" id="sideBody">
-      <div class="tiny">Loading…</div>
-    </div>
-  </div>
+      <div class="field">
+        <div class="field-label">Buy Box Criteria & Call Notes</div>
+        <div class="note-row">
+          <textarea id="noteBox" class="input note-box" placeholder="Log criteria, yield requirements, objections...">${escapeHtml(selected.notes||"")}</textarea>
+          <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
+            <button id="btnSaveNotes" class="icon-btn mini" type="button">✓</button>
+          </div>
+        </div>
+      </div>
+    `;
 
-  <!-- Firebase (Compat) -->
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-
-  <!-- Use your same config.js as wholesaler portal -->
-  <script src="config.js"></script>
-
-  <script>
-    /****************************
-     * SETTINGS (MATCH WHOLESALER)
-     ****************************/
-    const GOD_EMAIL = "dealbankers@gmail.com";
-
-    const PATHS = {
-      USERS_DIR: "userDirectory",
-      ROLES: "roles",
-      INVESTORS_MASTER: "investorsMaster",
-      INVESTORS_BY_USER: "investorsByUser",
-      DMS: "dms",
-      SUPPORT_REQUESTS: "supportRequests"
+    $("btnEditLead").onclick = ()=> openModal("edit", selected);
+    
+    $("btnCall").onclick = ()=> {
+      const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
+      if(!digits) return toast("No valid phone number.");
+      if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ window.location.href = `tel:${digits}`; }
+      else{ navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); }
+    };
+    $("btnCopy").onclick = ()=> {
+      const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
+      navigator.clipboard.writeText(digits); toast("Number Copied");
     };
 
-    const PORTAL_NAME = "Investor";
+    document.querySelectorAll(".qbtn[data-status]").forEach(btn=>{
+      btn.onclick = async ()=>{
+        const st = btn.getAttribute("data-status");
+        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`;
+        await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
+        toast("Pipeline Updated ✓");
+      }
+    });
 
-    const $ = (id)=>document.getElementById(id);
-    const showErr = (msg, hint="")=>{
-      const b=$("errBanner"); const t=$("errText"); const h=$("errHint");
-      t.textContent = msg || "Unknown error";
-      h.textContent = hint || "";
-      b.style.display = "block";
-      console.error(msg, hint);
+    $("btnSaveNotes").onclick = async ()=> {
+      const notes = $("noteBox").value.trim();
+      const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`;
+      await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
+      toast("Notes Saved ✓");
     };
-    const clearErr = ()=>{ $("errBanner").style.display="none"; $("errText").textContent=""; $("errHint").textContent=""; };
+  }
 
-    function isFirebaseConfigValid(cfg){
-      if(!cfg) return false;
-      const dbu = cfg.databaseURL || "";
-      // RTDB URLs are like https://<project>-default-rtdb.firebaseio.com
-      return typeof dbu === "string" && dbu.startsWith("https://") && dbu.includes("firebaseio.com");
-    }
+  // MODAL LOGIC
+  function openModal(mode, item){
+    $("leadModal").classList.add("show");
+    $("leadModalTitle").textContent = mode==="edit" ? "Update Dossier" : "New Target Dossier";
 
-    /****************************
-     * INIT FIREBASE (CONFIG.JS)
-     ****************************/
-    let auth=null, db=null;
-    let UID=null, ME=null;
-    let isAdmin=false;
-    let rolesCache=null;
+    $("m_name").value = item?.name || ""; $("m_amount").value = item?.amount || "";
+    $("m_rule").value = item?.rule || "Unknown"; $("m_location").value = item?.location || "";
+    $("m_email").value = item?.email || ""; $("m_status").value = item?.status || "New Lead";
+    $("m_phones").value = (item?.phones || []).join("\n"); $("m_tags").value = (item?.tags || []).join(", ");
+    $("m_notes").value = item?.notes || "";
 
-    (function boot(){
-      const cfg = window.firebaseConfig;
-      if(!isFirebaseConfigValid(cfg)){
-        showErr(
-          "Firebase not configured (or invalid databaseURL).",
-          "Fix: in config.js set firebaseConfig.databaseURL to your Realtime Database URL (https://<project>-default-rtdb.firebaseio.com)."
-        );
-        // still bind UI so the page isn't dead
-        bindUI();
-        return;
+    $("m_save").onclick = ()=> saveModal(mode, item?.id);
+  }
+  $("leadModalClose").onclick = $("m_cancel").onclick = ()=> $("leadModal").classList.remove("show");
+
+  async function saveModal(mode, id){
+    const name = $("m_name").value.trim(); if(!name) return alert("Fund/Investor Name required");
+
+    const payload = {
+      name, amount: $("m_amount").value.trim(), rule: $("m_rule").value, status: $("m_status").value,
+      location: $("m_location").value.trim(), email: $("m_email").value.trim(),
+      phones: $("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean),
+      tags: $("m_tags").value.split(",").map(s=>s.trim()).filter(Boolean),
+      notes: $("m_notes").value.trim(), updatedAt: Date.now()
+    };
+
+    try{
+      const targetId = (mode==="edit" && id) ? id : firebase.database().ref().push().key; payload.id = targetId;
+      const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${targetId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/${targetId}`;
+      await firebase.database().ref(path).update(payload);
+      $("leadModal").classList.remove("show"); toast("Dossier Secured.");
+    }catch(e){ alert("Save blocked by rules."); }
+  }
+
+  function bindUI(){
+    $("btnSearch").onclick = ()=>{ searchText = $("qSearch").value.toLowerCase().trim(); renderList(); };
+    $("qSearch").onkeydown = (e)=>{ if(e.key==="Enter") $("btnSearch").click(); };
+    $("btnNewLead").onclick = ()=> openModal("new", null);
+    $("btnLogout").onclick = ()=> firebase.auth().signOut();
+    $("btnSettings").onclick = ()=> alert("Settings panel loaded next.");
+
+    // Offerings Tab UI (Ready for iframe switching)
+    document.querySelectorAll(".offeringTab").forEach(tab=>{
+      tab.onclick = ()=>{
+        document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
       }
-
-      try{
-        firebase.initializeApp(cfg);
-        auth = firebase.auth();
-        db = firebase.database();
-        clearErr();
-      }catch(e){
-        showErr("Firebase init failed.", e.message || String(e));
-        bindUI();
-        return;
-      }
-
-      auth.onAuthStateChanged(async (user)=>{
-        if(!user){
-          UID=null; ME=null; isAdmin=false;
-          $("rolePill").style.display="none";
-          // keep page usable, but chat/listeners won't run
-          bindUI();
-          return;
-        }
-
-        UID = user.uid;
-        ME = {
-          uid: user.uid,
-          email: (user.email || "").toLowerCase(),
-          displayName: user.displayName || ""
-        };
-
-        // ensure they appear in userDirectory (for assignment checklist)
-        await upsertMeToUserDirectory();
-
-        // role check: prefer roles/<uid> (matches your rules), fallback to email
-        try{
-          const rs = await db.ref(`${PATHS.ROLES}/${UID}`).get();
-          rolesCache = rs.exists() ? String(rs.val()||"").toLowerCase() : "";
-        }catch(_){ rolesCache = ""; }
-
-        isAdmin = (ME.email === GOD_EMAIL) || (rolesCache === "god") || (rolesCache === "admin");
-
-        $("rolePill").style.display="inline-flex";
-        $("rolePill").textContent = `ROLE: ${isAdmin ? "ADMIN/GOD" : "USER"}`;
-
-        $("assignBlock").style.display = isAdmin ? "block" : "none";
-
-        if(isAdmin) listenUsers();
-        listenInvestors();
-        setupChat();         // matches wholesaler-style DM
-        bindUI();
-      });
-    })();
-
-    async function upsertMeToUserDirectory(){
-      if(!db || !UID) return;
-      const payload = {
-        email: ME.email || "",
-        displayName: ME.displayName || "",
-        role: (ME.email === GOD_EMAIL) ? "god" : "user",
-        updatedAt: Date.now()
-      };
-      try{
-        await db.ref(`${PATHS.USERS_DIR}/${UID}`).update(payload);
-      }catch(e){
-        // if rules block this, you’ll still be able to use your own queue, but assignment list might not populate
-        console.warn("userDirectory update blocked:", e.message);
-      }
-    }
-
-    /****************************
-     * USER DIRECTORY (ASSIGNMENT)
-     ****************************/
-    let userDirCache = {};
-    let usersCache = [];
-    let assignChecks = {};
-
-    function listenUsers(){
-      if(!db) return;
-      db.ref(PATHS.USERS_DIR).on("value",(snap)=>{
-        userDirCache = snap.val() || {};
-        usersCache = Object.entries(userDirCache).map(([uid,u])=>({
-          uid,
-          email:(u.email||"").toLowerCase(),
-          name:(u.displayName||u.name||"").trim(),
-          role:(u.role||"user")
-        })).sort((a,b)=>(a.name||a.email).localeCompare(b.name||b.email));
-
-        usersCache.forEach(u=>{
-          if(assignChecks[u.uid] === undefined) assignChecks[u.uid]=false;
-        });
-
-        renderUserChecklist();
-      });
-    }
-
-    function renderUserChecklist(){
-      if(!isAdmin) return;
-      const list = $("userList");
-      if(!list) return;
-
-      const q = ($("userFilter").value||"").toLowerCase().trim();
-      const show = usersCache.filter(u=>{
-        const hay = `${u.name} ${u.email} ${u.role}`.toLowerCase();
-        return !q || hay.includes(q);
-      });
-
-      list.innerHTML="";
-      if(show.length===0){
-        const div=document.createElement("div");
-        div.className="tiny";
-        div.textContent="No users yet. Users appear after they sign in once.";
-        list.appendChild(div);
-        return;
-      }
-
-      show.forEach(u=>{
-        const row=document.createElement("label");
-        row.style.display="flex";
-        row.style.alignItems="center";
-        row.style.gap="10px";
-        row.style.padding="10px";
-        row.style.border="1px solid rgba(255,255,255,.08)";
-        row.style.borderRadius="12px";
-        row.style.background="rgba(255,255,255,.03)";
-        row.style.cursor="pointer";
-
-        const cb=document.createElement("input");
-        cb.type="checkbox";
-        cb.checked=!!assignChecks[u.uid];
-        cb.addEventListener("change",()=>assignChecks[u.uid]=cb.checked);
-
-        const meta=document.createElement("div");
-        meta.style.flex="1";
-
-        const top=document.createElement("div");
-        top.style.display="flex";
-        top.style.justifyContent="space-between";
-        top.style.gap="10px";
-
-        const name=document.createElement("div");
-        name.style.fontWeight="900";
-        name.textContent=u.name || u.email || u.uid;
-
-        const badge=document.createElement("span");
-        badge.className="kpi";
-        badge.textContent=(u.role||"user").toUpperCase();
-
-        top.appendChild(name);
-        top.appendChild(badge);
-
-        const sub=document.createElement("div");
-        sub.className="tiny";
-        sub.textContent=u.email;
-
-        meta.appendChild(top);
-        meta.appendChild(sub);
-
-        row.appendChild(cb);
-        row.appendChild(meta);
-        list.appendChild(row);
-      });
-    }
-
-    /****************************
-     * INVESTORS
-     ****************************/
-    let investors=[];
-    let selectedId=null;
-    let selected=null;
-
-    let activeFilter="all";
-    let searchText="";
-
-    function listenInvestors(){
-      if(!db || !UID) return;
-
-      const path = isAdmin ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}`;
-
-      db.ref(path).on("value",(snap)=>{
-        const v = snap.val() || {};
-        investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
-        investors.sort((a,b)=>(b.updatedAt||b.createdAt||0)-(a.updatedAt||a.createdAt||0));
-        renderList();
-        if(selectedId){
-          const match = investors.find(x=>x.id===selectedId);
-          if(match) selectInvestor(match.id);
-        }
-      }, (err)=>{
-        showErr("Investors read blocked by rules.", err.message || String(err));
-      });
-    }
-
-    function passesFilter(it){
-      if(activeFilter==="all") return true;
-      return String(it.status||"").toLowerCase()===activeFilter;
-    }
-    function passesSearch(it){
-      if(!searchText) return true;
-      const hay = `${it.name||""} ${it.location||""} ${it.email||""} ${(it.tags||[]).join(" ")} ${(it.phones||[]).join(" ")}`.toLowerCase();
-      return hay.includes(searchText);
-    }
-
-    function renderList(){
-      const list=$("list");
-      list.innerHTML="";
-
-      const filtered = investors.filter(it=>passesFilter(it)&&passesSearch(it));
-      $("kpiCount").textContent = filtered.length;
-
-      if(filtered.length===0){
-        const div=document.createElement("div");
-        div.className="tiny";
-        div.textContent = db ? "No investors found." : "Sign in to load investors.";
-        list.appendChild(div);
-        return;
-      }
-
-      filtered.forEach(it=>{
-        const card=document.createElement("div");
-        card.className="card"+(it.id===selectedId?" on":"");
-        card.innerHTML=`
-          <div class="cardTitle">${escapeHtml(it.name||"—")}</div>
-          <div class="cardSub">${escapeHtml(it.location||"")}</div>
-          <div class="row" style="margin-top:8px;">
-            <span class="kpi">${escapeHtml(it.status||"New")}</span>
-            ${(it.tags||[]).slice(0,2).map(t=>`<span class="kpi">${escapeHtml(t)}</span>`).join("")}
-          </div>
-        `;
-        card.addEventListener("click",()=>selectInvestor(it.id));
-        list.appendChild(card);
-      });
-    }
-
-    function selectInvestor(id){
-      selectedId=id;
-      selected = investors.find(x=>x.id===id) || null;
-      renderConsole();
-    }
-
-    function renderConsole(){
-      const el=$("console");
-      if(!selected){
-        el.innerHTML = `<div class="tiny">No investor selected.</div>`;
-        return;
-      }
-
-      const phones = selected.phones || [];
-      const tags = selected.tags || [];
-
-      $("consoleMeta").textContent = selected.email ? selected.email : "—";
-
-      el.innerHTML = `
-        <div style="font-size:20px;font-weight:900;">${escapeHtml(selected.name||"—")}</div>
-        <div class="tiny" style="margin-top:4px;">${escapeHtml(selected.location||"")}</div>
-
-        <div class="divider"></div>
-
-        <div class="row" style="justify-content:space-between;">
-          <div class="row">
-            <span class="kpi">${escapeHtml(selected.status||"New")}</span>
-            ${tags.map(t=>`<span class="kpi">${escapeHtml(t)}</span>`).join("")}
-          </div>
-          <div class="row">
-            <button class="btn" id="btnEdit">Edit</button>
-          </div>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="tiny" style="margin-bottom:6px;">PHONES</div>
-        <select id="activePhone">
-          ${phones.length ? phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("") : `<option value="">(no phone)</option>`}
-        </select>
-
-        <div class="row" style="margin-top:10px;">
-          <button class="btn primary" id="btnCall">CALL</button>
-          <button class="btn" id="btnCopy">Copy</button>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="tiny" style="margin-bottom:6px;">NOTES</div>
-        <textarea id="noteBox" placeholder="Add notes...">${escapeHtml(selected.notes||"")}</textarea>
-        <div class="row" style="justify-content:flex-end; margin-top:10px;">
-          <button class="btn primary" id="btnSaveNotes">Save Notes</button>
-        </div>
-
-        ${isAdmin ? `
-          <div class="divider"></div>
-          <div class="assignWrap">
-            <div class="assignTop">
-              <div style="font-weight:900;">Assignments <span class="tiny">(Admin)</span></div>
-              <div class="assignBtns">
-                <button class="btn" id="btnAssignOpen">Edit Assignments</button>
-              </div>
-            </div>
-            <div class="tiny">
-              AssignedTo: ${(selected.assignedTo ? Object.keys(selected.assignedTo).length : 0)} user(s)
-            </div>
-          </div>
-        ` : ``}
-      `;
-
-      $("btnEdit").onclick = ()=> openInvestorModal("edit", selected);
-      $("btnCopy").onclick = ()=> {
-        const v = $("activePhone").value || "";
-        const digits = v.replace(/[^\d+]/g,"");
-        navigator.clipboard.writeText(digits);
-      };
-      $("btnCall").onclick = ()=> {
-        const v = $("activePhone").value || "";
-        const digits = v.replace(/[^\d+]/g,"");
-        if(!digits) return;
-        // Mobile: tel. Desktop: copy
-        const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-        if(isMobile){
-          window.location.href = `tel:${digits}`;
-        }else{
-          navigator.clipboard.writeText(digits);
-          toast(`Copied ${digits}`);
-        }
-      };
-      $("btnSaveNotes").onclick = ()=> saveNotes();
-
-      if(isAdmin){
-        const btnAssignOpen = $("btnAssignOpen");
-        if(btnAssignOpen) btnAssignOpen.onclick = ()=> openInvestorModal("edit", selected, true);
-      }
-    }
-
-    async function saveNotes(){
-      if(!db || !selectedId) return;
-      const notes = ($("noteBox").value||"").trim();
-      const now = Date.now();
-
-      try{
-        if(isAdmin){
-          const masterRef = db.ref(`${PATHS.INVESTORS_MASTER}/${selectedId}`);
-          const snap = await masterRef.get();
-          const payload = snap.exists() ? (snap.val()||{}) : {};
-
-          const updates = {};
-          updates[`${PATHS.INVESTORS_MASTER}/${selectedId}/notes`] = notes;
-          updates[`${PATHS.INVESTORS_MASTER}/${selectedId}/updatedAt`] = now;
-
-          const assigned = payload.assignedTo ? Object.keys(payload.assignedTo) : [];
-          assigned.forEach(uid=>{
-            updates[`${PATHS.INVESTORS_BY_USER}/${uid}/${selectedId}/notes`] = notes;
-            updates[`${PATHS.INVESTORS_BY_USER}/${uid}/${selectedId}/updatedAt`] = now;
-          });
-
-          await db.ref().update(updates);
-          toast("Notes saved.");
-        }else{
-          await db.ref(`${PATHS.INVESTORS_BY_USER}/${UID}/${selectedId}`).update({ notes, updatedAt: now });
-          toast("Notes saved.");
-        }
-      }catch(e){
-        showErr("Save Notes failed (rules).", e.message || String(e));
-        alert("Save Notes failed:\n" + (e.message || e));
-      }
-    }
-
-    /****************************
-     * MODAL
-     ****************************/
-    function openInvestorModal(mode, item, jumpToAssign=false){
-      $("modalBack").style.display="flex";
-      $("modalTitle").textContent = mode==="edit" ? "Edit Investor" : "New Investor";
-
-      $("mName").value = item?.name || "";
-      $("mLocation").value = item?.location || "";
-      $("mEmail").value = item?.email || "";
-      $("mStatus").value = item?.status || "New";
-      $("mPhones").value = (item?.phones || []).join("\n");
-      $("mTags").value = (item?.tags || []).join(", ");
-      $("mNotes").value = item?.notes || "";
-
-      if(isAdmin){
-        $("assignBlock").style.display="block";
-
-        assignChecks = {};
-        usersCache.forEach(u=>assignChecks[u.uid]=false);
-
-        const assignedTo = item?.assignedTo || {};
-        Object.keys(assignedTo).forEach(uid=>assignChecks[uid]=true);
-
-        if(mode!=="edit" && UID) assignChecks[UID]=true;
-
-        renderUserChecklist();
-
-        if(jumpToAssign){
-          setTimeout(()=> $("assignBlock").scrollIntoView({behavior:"smooth", block:"start"}), 50);
-        }
-      }else{
-        $("assignBlock").style.display="none";
-      }
-
-      $("btnSaveModal").onclick = ()=> saveInvestorFromModal(mode, item?.id || null);
-    }
-
-    function closeModal(){ $("modalBack").style.display="none"; }
-
-    function parsePhones(){
-      const raw = ($("mPhones").value||"").trim();
-      if(!raw) return [];
-      return raw.split(/\n+/).map(s=>s.trim()).filter(Boolean);
-    }
-    function parseTags(){
-      const raw = ($("mTags").value||"").trim();
-      if(!raw) return [];
-      return raw.split(",").map(s=>s.trim()).filter(Boolean);
-    }
-
-    async function upsertInvestorMasterAndAssignments(id, payload, uids){
-      const updates = {};
-      updates[`${PATHS.INVESTORS_MASTER}/${id}`] = payload;
-
-      // remove old copies from everyone (MVP simple)
-      usersCache.forEach(u=>{
-        updates[`${PATHS.INVESTORS_BY_USER}/${u.uid}/${id}`] = null;
-      });
-
-      // add to assigned
-      uids.forEach(uid=>{
-        updates[`${PATHS.INVESTORS_BY_USER}/${uid}/${id}`] = payload;
-      });
-
-      await db.ref().update(updates);
-    }
-
-    async function saveInvestorFromModal(mode, id){
-      if(!db || !UID) return;
-
-      const name = ($("mName").value||"").trim();
-      const location = ($("mLocation").value||"").trim();
-      const email = ($("mEmail").value||"").trim();
-      const status = ($("mStatus").value||"New").trim();
-      const phones = parsePhones();
-      const tags = parseTags();
-      const notes = ($("mNotes").value||"").trim();
-      const now = Date.now();
-
-      if(!name){ alert("Name required"); return; }
-
-      try{
-        if(isAdmin){
-          let uids = Object.entries(assignChecks).filter(([uid,on])=>!!on).map(([uid])=>uid);
-          if(uids.length===0 && UID) uids=[UID];
-
-          const assignedTo = {};
-          uids.forEach(uid=>assignedTo[uid]=true);
-
-          const investorId = (mode==="edit" && id) ? id : db.ref(PATHS.INVESTORS_MASTER).push().key;
-
-          const payload = {
-            id: investorId,
-            name, location, email, status, phones, tags, notes,
-            assignedTo,
-            updatedAt: now,
-            updatedBy: (ME?.email||""),
-            createdAt: (mode==="edit" ? (selected?.createdAt||now) : now),
-            createdBy: (mode==="edit" ? (selected?.createdBy||ME?.email||"") : (ME?.email||""))
-          };
-
-          await upsertInvestorMasterAndAssignments(investorId, payload, uids);
-          closeModal();
-          toast("Investor saved.");
-          return;
-        }
-
-        const investorId = (mode==="edit" && id) ? id : db.ref(`${PATHS.INVESTORS_BY_USER}/${UID}`).push().key;
-
-        await db.ref(`${PATHS.INVESTORS_BY_USER}/${UID}/${investorId}`).update({
-          id: investorId,
-          name, location, email, status, phones, tags, notes,
-          updatedAt: now,
-          updatedBy: (ME?.email||""),
-          createdAt: (mode==="edit" ? (selected?.createdAt||now) : now),
-          createdBy: (mode==="edit" ? (selected?.createdBy||ME?.email||"") : (ME?.email||""))
-        });
-
-        closeModal();
-        toast("Investor saved.");
-      }catch(e){
-        showErr("Save blocked by rules.", e.message || String(e));
-        alert("Save blocked by rules:\n" + (e.message || e) + "\n\n(We need to add investorsMaster + investorsByUser to your RTDB rules.)");
-      }
-    }
-
-    /****************************
-     * SUPPORT REQUESTS (BLUE/RED PHONE)
-     ****************************/
-    async function submitSupportRequest(priority){
-      if(!db || !UID) return alert("Sign in first.");
-
-      const label = priority === "red" ? "RED PHONE (urgent)" : "BLUE PHONE (non-urgent)";
-      const prompt = window.prompt(`${label}\n\nWhat do you need? (short + clear)`);
-      if(!prompt) return;
-
-      const now = Date.now();
-      const id = db.ref(PATHS.SUPPORT_REQUESTS).push().key;
-
-      const payload = {
-        id,
-        priority,                 // "blue" | "red"
-        portal: PORTAL_NAME,      // "Investor"
-        fromUid: UID,
-        fromEmail: ME?.email || "",
-        message: prompt,
-        context: {
-          selectedInvestorId: selectedId || null,
-          selectedInvestorName: selected?.name || null
-        },
-        status: "open",
-        createdAt: now
-      };
-
-      try{
-        await db.ref(`${PATHS.SUPPORT_REQUESTS}/${id}`).set(payload);
-        toast("Request sent.");
-      }catch(e){
-        showErr("Support request blocked by rules.", e.message || String(e));
-        alert("Support request blocked:\n" + (e.message || e));
-      }
-    }
-
-    /****************************
-     * CHAT (MATCHES WHOLESALER STYLE)
-     * - Non-admin: DM thread between user + GOD_EMAIL
-     * - Admin/God: shows simple inbox list and lets you open threads
-     ****************************/
-    function setupChat(){
-      if(!db || !auth || !UID) return;
-
-      // UI open/close
-      $("chatBubble").onclick = openSide;
-      $("sideOverlay").onclick = closeSide;
-      $("sideClose").onclick = closeSide;
-
-      // Determine god uid (by scanning userDirectory)
-      let godUid = null;
-      db.ref(PATHS.USERS_DIR).once("value").then(s=>{
-        const dir = s.val() || {};
-        for(const [uid,u] of Object.entries(dir)){
-          const em = String(u.email||"").toLowerCase();
-          if(em === GOD_EMAIL.toLowerCase()){
-            godUid = uid;
-            break;
-          }
-        }
-        if(!godUid){
-          // still usable, but DMs will fail until god signs in once
-          console.warn("God UID not found in userDirectory yet.");
-        }
-
-        if(isAdmin){
-          renderAdminInbox(); // list threads
-        }else{
-          renderUserThread();
-        }
-      });
-
-      function openSide(){
-        $("sideOverlay").style.display="block";
-        $("sidePanel").style.display="flex";
-        $("chatDot").style.display="none";
-      }
-      function closeSide(){
-        $("sideOverlay").style.display="none";
-        $("sidePanel").style.display="none";
-      }
-
-      function dmThreadId(a,b){
-        const x = String(a||"");
-        const y = String(b||"");
-        return [x,y].sort().join("_");
-      }
-
-      // USER: single thread DM with god
-      function renderUserThread(){
-        $("sideTitle").textContent = "Chat";
-        const body = $("sideBody");
-
-        if(!godUid){
-          body.innerHTML = `<div class="tiny">God account hasn’t signed in yet. Have <b>${GOD_EMAIL}</b> sign in once so it appears in userDirectory.</div>`;
-          return;
-        }
-
-        const tid = dmThreadId(UID, godUid);
-
-        body.innerHTML = `
-          <div class="tiny">Direct message thread</div>
-          <div class="chatLog" id="dmLog"></div>
-          <div class="chatInputRow">
-            <input id="dmInput" placeholder="Type a message…" />
-            <button class="btn primary chatSendBtn" id="dmSend">Send</button>
-          </div>
-        `;
-
-        const logEl = $("dmLog");
-        const inputEl = $("dmInput");
-        const sendEl = $("dmSend");
-
-        // listen messages
-        db.ref(`${PATHS.DMS}/${tid}/messages`).limitToLast(200).on("value",(snap)=>{
-          const msgs = snap.val() || {};
-          const arr = Object.values(msgs).sort((a,b)=>(a.ts||0)-(b.ts||0));
-          logEl.innerHTML = "";
-          arr.forEach(m=>{
-            const row = document.createElement("div");
-            row.className = "msgRow";
-            const mine = (m.fromUid === UID);
-            const bubble = document.createElement("div");
-            bubble.className = "msg " + (mine ? "me" : "them");
-            bubble.innerHTML = `
-              <div>${escapeHtml(m.text||"")}</div>
-              <div class="msgMeta">${escapeHtml((m.fromEmail||"") + " • " + new Date(m.ts||Date.now()).toLocaleString())}</div>
-            `;
-            row.appendChild(bubble);
-            logEl.appendChild(row);
-          });
-          logEl.scrollTop = logEl.scrollHeight;
-        });
-
-        // send (mobile friendly)
-        sendEl.onclick = sendMsg;
-        inputEl.addEventListener("keydown",(e)=>{
-          if(e.key==="Enter") sendMsg();
-        });
-
-        async function sendMsg(){
-          const text = (inputEl.value||"").trim();
-          if(!text) return;
-          inputEl.value = "";
-          const msgId = db.ref(`${PATHS.DMS}/${tid}/messages`).push().key;
-          const payload = {
-            id: msgId,
-            text,
-            ts: Date.now(),
-            fromUid: UID,
-            fromEmail: ME?.email || ""
-          };
-          try{
-            const updates = {};
-            updates[`${PATHS.DMS}/${tid}/participants/${UID}`] = true;
-            updates[`${PATHS.DMS}/${tid}/participants/${godUid}`] = true;
-            updates[`${PATHS.DMS}/${tid}/lastTs`] = payload.ts;
-            updates[`${PATHS.DMS}/${tid}/lastText`] = text.slice(0,120);
-            updates[`${PATHS.DMS}/${tid}/messages/${msgId}`] = payload;
-            await db.ref().update(updates);
-          }catch(e){
-            showErr("Chat send blocked by rules.", e.message || String(e));
-            alert("Chat send failed:\n" + (e.message || e));
-          }
-        }
-      }
-
-      // ADMIN: show thread list (very simple inbox)
-      function renderAdminInbox(){
-        $("sideTitle").textContent = "Inbox";
-        const body = $("sideBody");
-
-        body.innerHTML = `
-          <div class="tiny">Recent DM threads</div>
-          <div class="list" id="inboxList"></div>
-          <div class="tiny" style="opacity:.8">Tip: click a thread to open it.</div>
-        `;
-
-        const inboxEl = $("inboxList");
-
-        db.ref(PATHS.DMS).orderByChild("lastTs").limitToLast(50).on("value",(snap)=>{
-          const v = snap.val() || {};
-          const threads = Object.entries(v).map(([tid,t])=>({tid, ...t}))
-            .sort((a,b)=>(b.lastTs||0)-(a.lastTs||0));
-
-          inboxEl.innerHTML = "";
-          if(!threads.length){
-            inboxEl.innerHTML = `<div class="tiny">No messages yet.</div>`;
-            return;
-          }
-
-          threads.forEach(t=>{
-            const card = document.createElement("div");
-            card.className = "card";
-            card.innerHTML = `
-              <div class="cardTitle">${escapeHtml(t.tid)}</div>
-              <div class="cardSub">${escapeHtml(t.lastText||"")}</div>
-              <div class="tiny" style="margin-top:6px;">${t.lastTs ? new Date(t.lastTs).toLocaleString() : ""}</div>
-            `;
-            card.onclick = ()=> openAdminThread(t.tid);
-            inboxEl.appendChild(card);
-          });
-        });
-      }
-
-      function openAdminThread(tid){
-        const body = $("sideBody");
-        body.innerHTML = `
-          <div class="row" style="justify-content:space-between;">
-            <div style="font-weight:900;">Thread</div>
-            <button class="btn" id="backInbox">Back</button>
-          </div>
-          <div class="tiny">${escapeHtml(tid)}</div>
-          <div class="chatLog" id="dmLog"></div>
-          <div class="chatInputRow">
-            <input id="dmInput" placeholder="Type a message…" />
-            <button class="btn primary chatSendBtn" id="dmSend">Send</button>
-          </div>
-        `;
-        $("backInbox").onclick = ()=> renderAdminInbox();
-
-        const logEl = $("dmLog");
-        const inputEl = $("dmInput");
-        const sendEl = $("dmSend");
-
-        db.ref(`${PATHS.DMS}/${tid}/messages`).limitToLast(200).on("value",(snap)=>{
-          const msgs = snap.val() || {};
-          const arr = Object.values(msgs).sort((a,b)=>(a.ts||0)-(b.ts||0));
-          logEl.innerHTML = "";
-          arr.forEach(m=>{
-            const row = document.createElement("div");
-            row.className="msgRow";
-            const mine = (m.fromUid === UID);
-            const bubble=document.createElement("div");
-            bubble.className="msg "+(mine?"me":"them");
-            bubble.innerHTML=`
-              <div>${escapeHtml(m.text||"")}</div>
-              <div class="msgMeta">${escapeHtml((m.fromEmail||"") + " • " + new Date(m.ts||Date.now()).toLocaleString())}</div>
-            `;
-            row.appendChild(bubble);
-            logEl.appendChild(row);
-          });
-          logEl.scrollTop = logEl.scrollHeight;
-        });
-
-        sendEl.onclick = sendMsg;
-        inputEl.addEventListener("keydown",(e)=>{ if(e.key==="Enter") sendMsg(); });
-
-        async function sendMsg(){
-          const text=(inputEl.value||"").trim();
-          if(!text) return;
-          inputEl.value="";
-          const msgId = db.ref(`${PATHS.DMS}/${tid}/messages`).push().key;
-          const payload = { id: msgId, text, ts: Date.now(), fromUid: UID, fromEmail: ME?.email || "" };
-          try{
-            const updates = {};
-            updates[`${PATHS.DMS}/${tid}/lastTs`] = payload.ts;
-            updates[`${PATHS.DMS}/${tid}/lastText`] = text.slice(0,120);
-            updates[`${PATHS.DMS}/${tid}/messages/${msgId}`] = payload;
-            await db.ref().update(updates);
-          }catch(e){
-            showErr("Chat send blocked by rules.", e.message || String(e));
-            alert("Chat send failed:\n" + (e.message || e));
-          }
-        }
-      }
-    }
-
-    /****************************
-     * UI WIRING
-     ****************************/
-    function bindUI(){
-      if(bindUI.bound) return;
-      bindUI.bound=true;
-
-      document.querySelectorAll(".chip").forEach(ch=>{
-        ch.addEventListener("click",()=>{
-          document.querySelectorAll(".chip").forEach(x=>x.classList.remove("on"));
-          ch.classList.add("on");
-          activeFilter = ch.getAttribute("data-filter");
-          renderList();
-        });
-      });
-
-      $("btnSearch").onclick = ()=>{
-        searchText = ($("qSearch").value||"").toLowerCase().trim();
-        renderList();
-      };
-      $("qSearch").addEventListener("keydown",(e)=>{
-        if(e.key==="Enter"){
-          searchText = ($("qSearch").value||"").toLowerCase().trim();
-          renderList();
-        }
-      });
-
-      $("btnNewInvestor").onclick = ()=> openInvestorModal("new", null);
-      $("btnCloseModal").onclick = closeModal;
-      $("btnCancelModal").onclick = closeModal;
-
-      // assignment UX
-      $("userFilter").addEventListener("input", renderUserChecklist);
-      $("btnAssignAll").onclick = ()=>{
-        usersCache.forEach(u=>assignChecks[u.uid]=true);
-        renderUserChecklist();
-      };
-      $("btnAssignNone").onclick = ()=>{
-        usersCache.forEach(u=>assignChecks[u.uid]=false);
-        renderUserChecklist();
-      };
-
-      // top actions
-      $("btnLogout").onclick = ()=> auth ? auth.signOut() : (window.location.href="index.html");
-      $("btnDashboard").onclick = ()=> window.location.href = "index.html";
-      $("btnSettings").onclick = ()=> alert("Settings (next): profile + roles + tags.");
-
-      $("btnBlueSupport").onclick = ()=> submitSupportRequest("blue");
-      $("btnRedSupport").onclick = ()=> submitSupportRequest("red");
-
-      $("btnImport").onclick = ()=> alert("Import List — next: paste CSV / multi-line import.");
-    }
-
-    /****************************
-     * utils
-     ****************************/
-    function escapeHtml(str){
-      return String(str||"")
-        .replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;").replaceAll("'","&#039;");
-    }
-    function escapeAttr(str){ return escapeHtml(str).replaceAll('"',"&quot;"); }
-
-    // Tiny toast
-    let toastTimer=null;
-    function toast(msg){
-      let el=document.getElementById("toast");
-      if(!el){
-        el=document.createElement("div");
-        el.id="toast";
-        el.style.position="fixed";
-        el.style.left="50%";
-        el.style.bottom="18px";
-        el.style.transform="translateX(-50%)";
-        el.style.padding="10px 14px";
-        el.style.borderRadius="999px";
-        el.style.border="1px solid rgba(255,255,255,.14)";
-        el.style.background="rgba(0,0,0,.65)";
-        el.style.color="white";
-        el.style.fontWeight="900";
-        el.style.boxShadow="0 18px 50px rgba(0,0,0,.45)";
-        el.style.zIndex="200";
-        el.style.opacity="0";
-        el.style.transition="opacity .15s ease";
-        document.body.appendChild(el);
-      }
-      el.textContent=msg;
-      el.style.opacity="1";
-      clearTimeout(toastTimer);
-      toastTimer=setTimeout(()=>{ el.style.opacity="0"; }, 1400);
-    }
-  </script>
+    })
+  }
+</script>
 </body>
 </html>
