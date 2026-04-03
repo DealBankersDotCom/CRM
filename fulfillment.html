@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Fulfillment Board</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800&display=swap" rel="stylesheet" />
+<style>
+  :root { --bg1:#0b131b; --line:#254a63; --text:#f1f7fb; --accent:#2b74ff; }
+  * { box-sizing:border-box; margin:0; padding:0; }
+  body { font-family:Inter,system-ui,Arial; color:var(--text); background:var(--bg1); padding:16px; }
+  
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; }
+  .card {
+    background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.15);
+    border-radius: 14px; padding: 16px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .card h3 { margin: 0; font-size: 16px; }
+  .meta { font-size: 13px; color: #9ab9d6; }
+  
+  .actions { display: flex; gap: 8px; margin-top: auto; }
+  .btn {
+    flex: 1; padding: 8px; border-radius: 8px; border: none; cursor: pointer;
+    font-weight: 800; font-size: 12px; transition: transform 0.1s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-gc { background: #133e6a; color: white; border: 1px solid #2b74ff; }
+  .btn-sub { background: #6b1111; color: white; border: 1px solid #ff5555; }
+  .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+</style>
+</head>
+<body>
+
+  <div id="status" style="margin-bottom:16px; font-weight:600; color:#9ab9d6;">Loading available leads...</div>
+  <div class="grid" id="board"></div>
+
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+  <script src="config.js"></script>
+
+  <script>
+    firebase.initializeApp(window.firebaseConfig);
+    const board = document.getElementById("board");
+    const statusTxt = document.getElementById("status");
+    let UID = null;
+    let USER_EMAIL = null;
+
+    firebase.auth().onAuthStateChanged(u => {
+      if (!u) return;
+      UID = u.uid;
+      USER_EMAIL = u.email;
+      loadFulfillmentLeads();
+    });
+
+    function loadFulfillmentLeads() {
+      // Adjust this path if you are pulling from 'jobs' instead of 'leadsMaster'
+      firebase.database().ref('leadsMaster/sellers').on('value', snap => {
+        board.innerHTML = "";
+        const leads = snap.val() || {};
+        const ids = Object.keys(leads);
+        
+        if(ids.length === 0) {
+          statusTxt.textContent = "No leads available for fulfillment.";
+          return;
+        }
+
+        statusTxt.textContent = `${ids.length} leads available.`;
+
+        ids.forEach(id => {
+          const lead = leads[id];
+          const div = document.createElement("div");
+          div.className = "card";
+          
+          // Check if already claimed by this user
+          const myClaim = lead.fulfillmentClaims && lead.fulfillmentClaims[UID];
+          
+          div.innerHTML = `
+            <h3>${lead.address || 'Unknown Address'}</h3>
+            <div class="meta">
+              Owner: ${lead.owner || 'Unknown'}<br>
+              Status: ${lead.status || 'New'}
+            </div>
+            ${myClaim ? `<div style="color:#00ff6a; font-size:12px; font-weight:800;">✓ Claimed as ${myClaim.role}</div>` : ''}
+            <div class="actions">
+              <button class="btn btn-gc" onclick="claimLead('${id}', 'Prime GC')" ${myClaim ? 'disabled' : ''}>Claim Prime / GC</button>
+              <button class="btn btn-sub" onclick="claimLead('${id}', 'Subcontractor')" ${myClaim ? 'disabled' : ''}>Claim as Sub</button>
+            </div>
+          `;
+          board.appendChild(div);
+        });
+      });
+    }
+
+    window.claimLead = async (leadId, role) => {
+      if(!confirm(`Claim this lead as ${role}?`)) return;
+      try {
+        // Writing the claim to the lead object
+        await firebase.database().ref(`leadsMaster/sellers/${leadId}/fulfillmentClaims/${UID}`).set({
+          uid: UID,
+          email: USER_EMAIL,
+          role: role,
+          timestamp: firebase.database.ServerValue.TIMESTAMP
+        });
+        alert(`Successfully claimed as ${role}!`);
+      } catch(e) {
+        console.error(e);
+        alert("Failed to claim. Check your Firebase security rules.");
+      }
+    };
+  </script>
+</body>
+</html>
