@@ -373,21 +373,10 @@ body{
 <script src="config.js"></script>
 
 <script>
-  // ==========================================
-  // SAFE BINDING ENGINE (Bomb Defusal Sequence)
-  // ==========================================
+  // Safe Selection Utility
   const $ = (id) => document.getElementById(id);
-  
-  function safeAttach(id, eventType, handler) {
-    const element = $(id);
-    if (element) {
-      element.addEventListener(eventType, handler);
-    } else {
-      console.warn(`Wire clipped: Element '${id}' not found. Safely bypassing...`);
-    }
-  }
 
-  // Initialize Firebase First
+  // 1. Initialize Firebase
   (function ensureFirebaseInit(){
     try{
       if(!firebase.apps||!firebase.apps.length){
@@ -414,6 +403,7 @@ body{
   let investors=[], selectedId=null, selected=null, searchText="", viewFilter="All";
   let activeInvClass = "Private Wealth"; 
 
+  // Helpers
   function esc(s){return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"'"}[c]));}
   function escapeAttr(str){ return esc(str).replaceAll('"',"&quot;"); }
   function escapeHtml(str) { return esc(str); }
@@ -431,7 +421,162 @@ body{
   }
 
   // ==========================================
-  // MODAL LOGIC & HELPERS
+  // MASTER EVENT DELEGATION
+  // This replaces all safeBind and onclick attributes. It never fails due to load order.
+  // ==========================================
+  document.addEventListener("click", async (e) => {
+
+    // --- 1. Top Navigation ---
+    if(e.target.closest("#btnSettings")) {
+        location.href = "profile.html";
+        return;
+    }
+    if(e.target.closest("#logoutBtn")) {
+        if(typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+            firebase.auth().signOut().then(() => location.href="index.html");
+        } else {
+            location.href="index.html";
+        }
+        return;
+    }
+
+    // --- 2. Support Phones & Modal ---
+    if(e.target.closest("#btnBlueSupport")) {
+        openSupportModal("blue");
+        return;
+    }
+    if(e.target.closest("#btnRedSupport")) {
+        openSupportModal("red");
+        return;
+    }
+    if(e.target.closest("#supportCloseBtn") || e.target.closest("#supportCancelBtn")) {
+        if($("supportModal")) $("supportModal").style.display = "none";
+        return;
+    }
+    if(e.target.closest("#supportSendBtn")) {
+        const msg = $("supportMsg") ? $("supportMsg").value.trim() : "";
+        if(!msg) return toast("Message is empty.");
+        try{
+            await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
+                uid: UID || 'anonymous', 
+                email: ME?.email || "", 
+                name: ME?.displayName || ME?.email || "User",
+                portal: "investor",
+                priority: $("supportPriority") ? $("supportPriority").value : "blue", 
+                category: $("supportCategory") ? $("supportCategory").value : "Other", 
+                message: msg, 
+                ts: Date.now(), 
+                status: "open"
+            });
+            if($("supportModal")) $("supportModal").style.display = "none";
+            toast("Support Request Sent ✓");
+        }catch(err){ toast("Request failed."); console.error(err); }
+        return;
+    }
+
+    // --- 3. Queue Controls ---
+    if(e.target.closest("#btnNewLead")) {
+        openModal("new", null);
+        return;
+    }
+    if(e.target.closest("#btnSearch")) {
+        searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
+        renderList();
+        return;
+    }
+    const queueFilterBtn = e.target.closest("#queueFilters .segBtn");
+    if(queueFilterBtn) {
+        document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
+        queueFilterBtn.classList.add("active");
+        viewFilter = queueFilterBtn.getAttribute("data-filter"); 
+        renderList();
+        return;
+    }
+
+    // --- 4. Dossier Editor Modal ---
+    if(e.target.closest("#leadModalClose") || e.target.closest("#m_cancel")) {
+        if($("leadModal")) $("leadModal").classList.remove("show");
+        return;
+    }
+    if(e.target.closest("#m_save")) {
+        saveModal(selected ? 'edit' : 'new', selected?.id);
+        return;
+    }
+    const classToggleBtn = e.target.closest("#classToggleGroup .segBtn");
+    if(classToggleBtn) {
+        document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
+        classToggleBtn.classList.add("active");
+        activeInvClass = classToggleBtn.getAttribute("data-class");
+        
+        const isSec = (activeInvClass === "Institutional Capital");
+        document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
+        document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
+        return;
+    }
+
+    // --- 5. Console Interactions (Middle Column) ---
+    if(e.target.closest(".lead-item")) {
+        // Handled directly inside renderList for convenience since it requires index binding
+        return;
+    }
+    if(e.target.closest("#btnEditLead")) {
+        openModal("edit", selected);
+        return;
+    }
+    if(e.target.closest("#btnCall")) {
+        const v = $("activePhone") ? $("activePhone").value : ""; 
+        const digits = v.replace(/[^\d+]/g,"");
+        if(!digits) return toast("No valid phone number.");
+        if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
+           window.location.href = `tel:${digits}`;
+        } else { 
+           try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(err) { toast('Copy failed'); }
+        }
+        return;
+    }
+    if(e.target.closest("#btnCopy")) {
+        const v = $("activePhone") ? $("activePhone").value : ""; 
+        const digits = v.replace(/[^\d+]/g,"");
+        try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(err){ toast('Copy failed'); }
+        return;
+    }
+    if(e.target.closest("#btnSaveNotes")) {
+        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
+        const notes = $("noteBox") ? $("noteBox").value.trim() : "";
+        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
+        await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
+        toast("Notes Saved ✓");
+        return;
+    }
+    const qbtn = e.target.closest(".qbtn[data-status]");
+    if(qbtn) {
+        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
+        const st = qbtn.getAttribute("data-status");
+        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
+        await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
+        toast("Pipeline Updated ✓");
+        return;
+    }
+
+    // --- 6. Offerings Panel (Right Column) ---
+    const offTab = e.target.closest("#offeringsTabs .offeringTab");
+    if(offTab) {
+        document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
+        offTab.classList.add("active");
+        return;
+    }
+  });
+
+  // Handle Search Enter Key (Since it's not a click)
+  document.addEventListener("keydown", (e) => {
+      if(e.target.id === "qSearch" && e.key === "Enter") {
+          searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
+          renderList();
+      }
+  });
+
+  // ==========================================
+  // LOGIC HELPERS
   // ==========================================
 
   function openSupportModal(priority){
@@ -439,16 +584,6 @@ body{
     if($("supportSub")) $("supportSub").textContent = priority === "red" ? "Red = urgent. Use for priority roadblocks." : "Blue = not urgent. Use for questions or general support.";
     if($("supportMsg")) $("supportMsg").value = ""; 
     if($("supportModal")) $("supportModal").style.display = "flex";
-  }
-  
-  function closeSupportModal(){ 
-    if($("supportModal")) $("supportModal").style.display="none"; 
-  }
-
-  function updateModalFields(){
-    const isSec = (activeInvClass === "Institutional Capital");
-    document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
-    document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
   }
 
   function openModal(mode, item){
@@ -459,7 +594,10 @@ body{
     document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
       b.classList.toggle("active", b.getAttribute("data-class") === activeInvClass);
     });
-    updateModalFields();
+    
+    const isSec = (activeInvClass === "Institutional Capital");
+    document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
+    document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
 
     if($("m_name")) $("m_name").value = item?.name || ""; 
     if($("m_amount")) $("m_amount").value = item?.amount || "";
@@ -503,98 +641,6 @@ body{
       alert("Save blocked. Ensure your Realtime Database rules allow writing to leadsByUser/UID/buyers.");
     }
   }
-
-
-  // ==========================================
-  // LAUNCH BINDINGS ONCE DOM IS READY
-  // ==========================================
-  
-  function initializeUIBindings() {
-    
-    // Top Navigation
-    safeAttach("btnSettings", "click", () => { location.href="profile.html"; });
-    safeAttach("logoutBtn", "click", () => { 
-      if(typeof firebase !== 'undefined' && firebase.auth().currentUser) {
-        firebase.auth().signOut().then(()=>location.href="index.html"); 
-      } else {
-        location.href="index.html";
-      }
-    });
-
-    // Support Phones
-    safeAttach("btnBlueSupport", "click", () => openSupportModal("blue"));
-    safeAttach("btnRedSupport", "click", () => openSupportModal("red"));
-    safeAttach("supportCloseBtn", "click", closeSupportModal);
-    safeAttach("supportCancelBtn", "click", closeSupportModal);
-    
-    safeAttach("supportSendBtn", "click", async () => {
-      const msg = $("supportMsg") ? $("supportMsg").value.trim() : "";
-      if(!msg) return toast("Message is empty.");
-      try{
-        await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
-          uid: UID || 'anonymous', 
-          email: ME?.email || "", 
-          name: ME?.displayName || ME?.email || "User",
-          portal: "investor",
-          priority: $("supportPriority") ? $("supportPriority").value : "blue", 
-          category: $("supportCategory") ? $("supportCategory").value : "Other", 
-          message: msg, 
-          ts: Date.now(), 
-          status: "open"
-        });
-        closeSupportModal();
-        toast("Support Request Sent ✓");
-      }catch(e){ toast("Request failed."); console.error(e); }
-    });
-
-    // Add/Edit Lead Modal Actions
-    safeAttach("btnNewLead", "click", () => openModal("new", null));
-    safeAttach("leadModalClose", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
-    safeAttach("m_cancel", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
-    safeAttach("m_save", "click", () => saveModal(selected ? 'edit' : 'new', selected?.id));
-
-    // Search Logic
-    safeAttach("btnSearch", "click", () => { 
-      searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
-      renderList(); 
-    });
-    safeAttach("qSearch", "keydown", (e) => { 
-      if(e.key==="Enter" && $("btnSearch")) $("btnSearch").click(); 
-    });
-
-    // Segment Toggles (Using Event Delegation so we don't have to attach to individual classes over and over)
-    document.body.addEventListener("click", (e) => {
-      
-      // 1. Queue Filters
-      const qBtn = e.target.closest("#queueFilters .segBtn");
-      if (qBtn) {
-        document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
-        qBtn.classList.add("active");
-        viewFilter = qBtn.getAttribute("data-filter"); 
-        renderList();
-      }
-
-      // 2. Class Toggles in Modal
-      const classBtn = e.target.closest("#classToggleGroup .segBtn");
-      if (classBtn) {
-        document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
-        classBtn.classList.add("active");
-        activeInvClass = classBtn.getAttribute("data-class");
-        updateModalFields();
-      }
-
-      // 3. Offering Tabs
-      const offTab = e.target.closest("#offeringsTabs .offeringTab");
-      if (offTab) {
-        document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t => t.classList.remove("active"));
-        offTab.classList.add("active");
-      }
-    });
-
-  }
-
-  // Fire everything up when the HTML finishes loading
-  document.addEventListener('DOMContentLoaded', initializeUIBindings);
 
 
   // ==========================================
@@ -669,6 +715,13 @@ body{
       const ruleColor = isInst ? (String(it.rule).includes("506(c)") ? "var(--good)" : "var(--warn)") : "var(--accent)";
       const subText = isInst ? escapeHtml(it.amount||"Amount Unknown") : escapeHtml(it.focus||"Asset Unspecified");
       
+      let badgeHtml = "";
+      if(isInst) {
+        badgeHtml = `<span class="pill" style="border-color:var(--purple); color:var(--purple); font-size:10px;">INST</span>`;
+      } else {
+        badgeHtml = `<span class="pill" style="border-color:var(--accent); color:var(--accent); font-size:10px;">CASH</span>`;
+      }
+
       const card=document.createElement("div");
       card.className="lead-item"+(it.id===selectedId?" selected":"");
       card.innerHTML=`
@@ -676,7 +729,7 @@ body{
         <div class="meta" style="color:${ruleColor}">${subText}</div>
         <div style="margin-top:8px; display:flex; gap:6px;">
           <span class="pill" style="border-color:var(--line); color:#fff;">${escapeHtml(it.status||"New Lead")}</span>
-          ${isInst ? `<span class="pill" style="border-color:var(--purple); color:var(--purple); font-size:10px;">INST</span>` : `<span class="pill" style="border-color:var(--accent); color:var(--accent); font-size:10px;">CASH</span>`}
+          ${badgeHtml}
         </div>
       `;
       card.onclick=()=>{ selectedId=it.id; selected=it; renderList(); renderConsole(); };
@@ -722,15 +775,24 @@ body{
           </div>`;
     }
 
+    let phoneOpts = `<option value="">(no phone mapped)</option>`;
+    if(phones.length > 0) {
+      phoneOpts = phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("");
+    }
+
+    let subHeadHtml = "";
+    if(isInst) {
+      subHeadHtml = `<span style="color:var(--good)">${escapeHtml(selected.amount||"Amount Unknown")}</span> &nbsp;•&nbsp; <span style="color:var(--muted)">${escapeHtml(selected.rule||"Rule Unknown")}</span>`;
+    } else {
+      subHeadHtml = `<span style="color:var(--accent)">Private Wealth Buyer</span> &nbsp;•&nbsp; <span style="color:var(--muted)">Focus: ${escapeHtml(selected.focus||"Unspecified")}</span>`;
+    }
+
     el.innerHTML = `
       <div class="lead-header">
         <div class="lead-title">
           <h2 id="leadAddress">${escapeHtml(selected.name||"—")}</h2>
           <div class="lead-sub">
-            ${isInst 
-              ? `<span style="color:var(--good)">${escapeHtml(selected.amount||"Amount Unknown")}</span> &nbsp;•&nbsp; <span style="color:var(--muted)">${escapeHtml(selected.rule||"Rule Unknown")}</span>`
-              : `<span style="color:var(--accent)">Private Wealth Buyer</span> &nbsp;•&nbsp; <span style="color:var(--muted)">Focus: ${escapeHtml(selected.focus||"Unspecified")}</span>`
-            }
+            ${subHeadHtml}
           </div>
         </div>
         <div class="lead-actions">
@@ -743,7 +805,7 @@ body{
         <div class="callRow">
           <div style="flex:1;min-width:220px">
             <select id="activePhone" class="select">
-              ${phones.length ? phones.map(p=>`<option value="${escapeAttr(p)}">${escapeHtml(p)}</option>`).join("") : `<option value="">(no phone mapped)</option>`}
+              ${phoneOpts}
             </select>
           </div>
           <button id="btnCall" class="callBtn" type="button">📞 DIAL</button>
@@ -776,44 +838,6 @@ body{
         </div>
       </div>
     `;
-
-    // Because the console is dynamically generated, we MUST bind these right after they are created.
-    safeAttach("btnEditLead", "click", ()=> openModal("edit", selected));
-    
-    safeAttach("btnCall", "click", async ()=> {
-      const v = $("activePhone") ? $("activePhone").value : ""; 
-      const digits = v.replace(/[^\d+]/g,"");
-      if(!digits) return toast("No valid phone number.");
-      if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
-         window.location.href = `tel:${digits}`;
-      } else { 
-         try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(e) { toast('Copy failed'); }
-      }
-    });
-
-    safeAttach("btnCopy", "click", async ()=> {
-      const v = $("activePhone") ? $("activePhone").value : ""; 
-      const digits = v.replace(/[^\d+]/g,"");
-      try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
-    });
-
-    document.querySelectorAll(".qbtn[data-status]").forEach(btn=>{
-      btn.onclick = async ()=>{
-        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
-        const st = btn.getAttribute("data-status");
-        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-        await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
-        toast("Pipeline Updated ✓");
-      }
-    });
-
-    safeAttach("btnSaveNotes", "click", async ()=> {
-      if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
-      const notes = $("noteBox") ? $("noteBox").value.trim() : "";
-      const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-      await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
-      toast("Notes Saved ✓");
-    });
   }
 
 </script>
