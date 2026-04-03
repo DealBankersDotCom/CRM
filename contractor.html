@@ -62,6 +62,27 @@ body{
   100%{ box-shadow:0 0 0 0 rgba(45,124,255,0); }
 }
 
+/* WHOLESALER STYLE PHONE CHIPS [cite: 5, 6] */
+.phone-chip {
+  width: 48px; height: 48px; border-radius: 999px;
+  border: 1px solid rgba(255,255,255,0.24);
+  display: flex; align-items: center; justify-content: center;
+  cursor: pointer; font-size: 28px; font-weight: 900; line-height: 1;
+  color: #fff; padding: 0;
+  box-shadow: 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+  transition: transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+.phone-chip:hover { transform: translateY(-1px) scale(1.03); filter: brightness(1.06); }
+.phone-chip:active { transform: translateY(0) scale(.98); }
+.blue-phone {
+  background: linear-gradient(180deg,#2b74ff,#0a58ca);
+  box-shadow: 0 0 18px rgba(43,116,255,.42), 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+}
+.red-phone {
+  background: linear-gradient(180deg,#d92626,#8f1010);
+  box-shadow: 0 0 18px rgba(255,42,42,.36), 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+}
+
 /* MAIN LAYOUT */
 .wrap{max-width:1200px;margin:0 auto;padding:16px}
 .card{
@@ -265,8 +286,8 @@ body{
   <div>DEALBANKERS • Contractor</div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
-    <button class="chip" id="btnBlue" type="button">🌀 Blue</button>
-    <button class="chip danger" id="btnRed" type="button">🚨 Red</button>
+    <button class="phone-chip blue-phone" id="btnBlue" type="button" title="Blue Phone" aria-label="Blue Phone Support">☎</button>
+    <button class="phone-chip red-phone" id="btnRed" type="button" title="Red Phone" aria-label="Red Phone Support">☎</button>
     <button class="icon-btn" id="btnSettings" type="button" title="Settings">⚙️</button>
     <a class="chip" id="logoutBtn">Log Out</a>
   </nav>
@@ -377,19 +398,20 @@ body{
     <h3 id="rbTitle">Request</h3>
     <label class="small">Category</label>
     <select id="rbCategory">
-      <option>Acquisition</option>
-      <option>Sales</option>
-      <option>Contractor</option>
-      <option>Realtor</option>
-      <option>Website</option>
+      <option>Work order issue</option>
+      <option>Need pricing help</option>
+      <option>Need materials approval</option>
+      <option>Emergency / water</option>
+      <option>Website / System bug</option>
+      <option>Other</option>
     </select>
     <label class="small">Subject</label>
     <input id="rbSubject" placeholder="Short summary" />
     <label class="small">Details</label>
-    <textarea id="rbDetails" rows="4" placeholder="What do you need?"></textarea>
+    <textarea id="rbDetails" rows="4" placeholder="What do you need? If it's about a job, include the address."></textarea>
     <div class="actions">
       <button class="chip" id="rbCancel" type="button">Cancel</button>
-      <button class="chip primary" id="rbSubmit" type="button">Send</button>
+      <button class="chip primary" id="rbSubmit" type="button">Send Request</button>
     </div>
   </div>
 </div>
@@ -1039,28 +1061,39 @@ updatedAt: new Date().toISOString()
 });
 
 /* ==========================
-   BLUE/RED REQUESTS
+   BLUE/RED REQUESTS [cite: 154, 155, 156]
 ========================== */
 function showRBModal(urgent){
   rbUrgent = !!urgent;
   rbModal.style.display='flex';
-  rbTitle.textContent = urgent ? '🚨 Urgent Request' : '🌀 Blue Request';
+  rbTitle.textContent = urgent ? '🚨 Red Phone Support (Urgent)' : '🌀 Blue Phone Support (General)';
+  // Red = urgent per Wholesaler portal logic [cite: 155]
 }
 function hideRBModal(){ rbModal.style.display='none'; }
 
 rbSubmit.addEventListener('click', async ()=>{
-  await firebase.database().ref('requests').push({
-    portal:'contractor',
-    cat:rbCategory.value,
-    subject:rbSubject.value,
-    details:rbDetails.value,
-    urgent: rbUrgent,
-    uid:UID,
-    email: USER_EMAIL || null,
-    ts:firebase.database.ServerValue.TIMESTAMP
-  });
-  alert('Request Sent!');
-  hideRBModal();
+  const message = (rbDetails.value || "").trim();
+  if(!message) return alert("Type a message first.");
+
+  try {
+    await firebase.database().ref(`supportRequests/${UID}`).push({
+      uid: UID,
+      email: USER_EMAIL || "",
+      name: USER_EMAIL || "Contractor",
+      portal: "contractor",
+      priority: rbUrgent ? "red" : "blue",
+      category: rbCategory.value,
+      subject: rbSubject.value,
+      message: message,
+      ts: Date.now(),
+      status: "open"
+    });
+    alert('Support request sent ✓');
+    hideRBModal();
+  } catch (e) {
+    console.warn("support request failed", e);
+    alert("Support request failed");
+  }
 });
 
 /* ==========================
