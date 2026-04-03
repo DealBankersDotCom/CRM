@@ -62,7 +62,7 @@ body{
   100%{ box-shadow:0 0 0 0 rgba(45,124,255,0); }
 }
 
-/* WHOLESALER STYLE PHONE CHIPS [cite: 5, 6] */
+/* WHOLESALER STYLE PHONE CHIPS */
 .phone-chip {
   width: 48px; height: 48px; border-radius: 999px;
   border: 1px solid rgba(255,255,255,0.24);
@@ -517,12 +517,17 @@ body{
       <div class="seg">
         <button id="tabActive" class="active" type="button">Active</button>
         <button id="tabUpcoming" type="button">Upcoming</button>
+        <button id="tabFulfillment" type="button" style="display:none;">Fulfillment</button>
       </div>
     </div>
 
     <div class="body" id="jobContent">
       <div class="left-col" id="jobTable">Loading jobs...</div>
       <div class="right-col" id="detailPanel">Select a job to view details...</div>
+    </div>
+    
+    <div class="body" id="fulfillmentContent" style="display:none; padding:0;">
+      <iframe id="iframeFulfillment" src="fulfillment.html" style="width:100%; height:75vh; border:none; border-radius:14px; background:#0b1825;"></iframe>
     </div>
   </section>
 
@@ -550,7 +555,6 @@ body{
    DOM REFS (NO MAGIC GLOBALS)
 ========================== */
 const $ = (id)=>document.getElementById(id);
-
 const settingsModal = $("settingsModal");
 const saveSettings = $("saveSettings");
 const closeSettings = $("closeSettings");
@@ -573,17 +577,19 @@ const btnSettings = $("btnSettings");
 const btnBlue = $("btnBlue");
 const btnRed = $("btnRed");
 const logoutBtn = $("logoutBtn");
-
 const emptyState = $("emptyState");
 const setupServices = $("setupServices");
 
 const tabActive = $("tabActive");
 const tabUpcoming = $("tabUpcoming");
+const tabFulfillment = $("tabFulfillment"); // NEW Tab Reference
 const crumb = $("crumb");
 const status = $("status");
 
 const jobTable = $("jobTable");
 const detailPanel = $("detailPanel");
+const jobContent = $("jobContent");
+const fulfillmentContent = $("fulfillmentContent"); // NEW Tab body Reference
 
 const rbModal = $("rbModal");
 const rbTitle = $("rbTitle");
@@ -592,7 +598,6 @@ const rbSubject = $("rbSubject");
 const rbDetails = $("rbDetails");
 const rbCancel = $("rbCancel");
 const rbSubmit = $("rbSubmit");
-
 const adminStrip = $("adminStrip");
 const btnNewJob = $("btnNewJob");
 const btnEditJob = $("btnEditJob");
@@ -649,7 +654,8 @@ let acceptingJobs = true;
 
 let isGodMode = false;
 
-let jobsCache = {};           // jobId -> job object
+let jobsCache = {};
+// jobId -> job object
 let selectedJobId = null;
 let currentTab = 'active';
 
@@ -671,7 +677,8 @@ function setLocSwitch(on){
 
 function writeLocation(pos){
   const now = Date.now();
-  if(now - lastGeoWriteMs < 10000) return; // throttle
+  if(now - lastGeoWriteMs < 10000) return;
+  // throttle
   lastGeoWriteMs = now;
 
   const payload = {
@@ -681,7 +688,7 @@ function writeLocation(pos){
     ts: firebase.database.ServerValue.TIMESTAMP,
     portal: "contractor"
   };
-
+  
   firebase.database().ref(`contractorLocations/${UID}/current`).set(payload);
   firebase.database().ref(`contractorLocations/${UID}/history`).push(payload);
 }
@@ -758,7 +765,7 @@ function showOnboardingCallout(){
   const left = Math.min(window.innerWidth - callout.offsetWidth - 12, Math.max(12, r.left - 220));
   callout.style.top = `${top}px`;
   callout.style.left = `${left}px`;
-
+  
   setupGo.onclick = ()=>{
     setupOverlay.style.display='none';
     setupOverlay.setAttribute('aria-hidden','true');
@@ -797,6 +804,7 @@ async function resolveGodMode(user){
 function setAdminVisible(v){
   adminStrip.style.display = v ? 'block' : 'none';
   btnEditJob.disabled = !v || !selectedJobId;
+  if(tabFulfillment) tabFulfillment.style.display = v ? 'inline-block' : 'none';
 }
 
 /* ==========================
@@ -807,7 +815,7 @@ function openJobModal(mode){
   const isEdit = (mode === 'edit');
 
   jobModalTitle.textContent = isEdit ? 'Edit Job' : 'Create Job';
-
+  
   if(isEdit){
     const j = jobsCache[selectedJobId];
     if(!j){ alert('No job selected'); return; }
@@ -861,8 +869,18 @@ function setTab(tab){
   currentTab = tab;
   tabActive.classList.toggle('active', tab === 'active');
   tabUpcoming.classList.toggle('active', tab === 'upcoming');
-  crumb.textContent = tab === 'active' ? 'Active Jobs' : 'Upcoming Jobs';
-  renderJobs();
+  tabFulfillment.classList.toggle('active', tab === 'fulfillment');
+  
+  if(tab === 'fulfillment') {
+    crumb.textContent = 'Fulfillment Board';
+    jobContent.style.display = 'none';
+    fulfillmentContent.style.display = 'block';
+  } else {
+    crumb.textContent = tab === 'active' ? 'Active Jobs' : 'Upcoming Jobs';
+    fulfillmentContent.style.display = 'none';
+    jobContent.style.display = 'grid'; // Restore grid layout
+    renderJobs();
+  }
 }
 
 function jobMatchesTab(j){
@@ -881,7 +899,7 @@ function renderJobs(){
       const tb = jobsCache[b]?.createdAt || jobsCache[b]?.updatedAt || '';
       return (tb > ta ? 1 : -1);
     });
-
+    
   if(ids.length === 0){
     jobTable.innerHTML = `<div style="padding:14px;opacity:.9">No ${currentTab} jobs.</div>`;
     detailPanel.innerHTML = `Select a job to view details...`;
@@ -935,7 +953,6 @@ function renderJobDetail(id){
           email: USER_EMAIL || null,
           ts: firebase.database.ServerValue.TIMESTAMP
         });
-
         alert("✅ Job claimed. You're assigned.");
       } catch (e) {
         console.error(e);
@@ -954,6 +971,7 @@ function renderJobDetail(id){
       <div class="kv"><b>Budget:</b> ${esc(j.budget || '')}</div>
       <div class="hr"></div>
       <div class="kv"><b>Description:</b><br/>${esc(j.description || '').replace(/\n/g,'<br/>')}</div>
+     
       <div class="hr"></div>
 <div class="small">Updated: ${esc(j.updatedAt || '')}</div>
 <div class="hr"></div>
@@ -962,7 +980,6 @@ function renderJobDetail(id){
 </div>
 
   `;
-
   document.querySelectorAll('.row[data-jobid]').forEach(r=>{
     r.classList.toggle('active', r.dataset.jobid === id);
   });
@@ -973,7 +990,6 @@ function renderJobDetail(id){
 ========================== */
 function subscribeJobs(){
   status.textContent = 'Loading…';
-
   firebase.database().ref('jobs').on('value', snap=>{
     jobsCache = snap.val() || {};
     status.textContent = 'Loaded';
@@ -1061,13 +1077,13 @@ updatedAt: new Date().toISOString()
 });
 
 /* ==========================
-   BLUE/RED REQUESTS [cite: 154, 155, 156]
+   BLUE/RED REQUESTS
 ========================== */
 function showRBModal(urgent){
   rbUrgent = !!urgent;
   rbModal.style.display='flex';
   rbTitle.textContent = urgent ? '🚨 Red Phone Support (Urgent)' : '🌀 Blue Phone Support (General)';
-  // Red = urgent per Wholesaler portal logic [cite: 155]
+  // Red = urgent per Wholesaler portal logic
 }
 function hideRBModal(){ rbModal.style.display='none'; }
 
@@ -1086,6 +1102,7 @@ rbSubmit.addEventListener('click', async ()=>{
       subject: rbSubject.value,
       message: message,
       ts: Date.now(),
+     
       status: "open"
     });
     alert('Support request sent ✓');
@@ -1127,6 +1144,7 @@ setupServices.addEventListener('click', ()=> showSettingsModal());
 
 tabActive.addEventListener('click', ()=> setTab('active'));
 tabUpcoming.addEventListener('click', ()=> setTab('upcoming'));
+tabFulfillment.addEventListener('click', ()=> setTab('fulfillment')); // NEW EVENT
 
 btnRed.addEventListener('click', ()=> showRBModal(true));
 btnBlue.addEventListener('click', ()=> showRBModal(false));
@@ -1170,6 +1188,7 @@ jobSave.addEventListener('click', async ()=>{
     ...payload,
     createdAt: new Date().toISOString(),
     createdBy: USER_EMAIL || null,
+   
     postedBy: UID || null   // <— IMPORTANT for rules/auditing
   };
 
@@ -1224,6 +1243,7 @@ firebase.auth().onAuthStateChanged(async u => {
       state:'online',
       last_changed:firebase.database.ServerValue.TIMESTAMP,
       portal:document.body.dataset.portal,
+    
       email:u.email
     };
     firebase.database().ref('.info/connected').on('value',snap=>{
