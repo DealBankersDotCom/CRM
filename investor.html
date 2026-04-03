@@ -160,10 +160,10 @@ body{
   </div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
-    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" aria-label="Blue Phone">☎</button>
-    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" aria-label="Red Phone">☎</button>
-    <button class="icon-btn" id="btnSettings" type="button" title="Settings">⚙️</button>
-    <a class="chip" id="logoutBtn" style="cursor:pointer;">Log Out</a>
+    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" aria-label="Blue Phone" onclick="openSupportModal('blue')">☎</button>
+    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" aria-label="Red Phone" onclick="openSupportModal('red')">☎</button>
+    <button class="icon-btn" id="btnSettings" type="button" title="Settings" onclick="location.href='settings.html'">⚙️</button>
+    <a class="chip" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
@@ -185,16 +185,16 @@ body{
         </div>
         <div class="panel-body queue">
           <div style="display:flex; gap:8px; margin-bottom:12px;" id="queueFilters">
-            <button class="segBtn active" data-filter="All" type="button" style="flex:1;">All</button>
-            <button class="segBtn" data-filter="Private Wealth" type="button" style="flex:1;">Private Wealth</button>
-            <button class="segBtn" data-filter="Institutional Capital" type="button" style="flex:1;">Institutional</button>
+            <button class="segBtn active" data-filter="All" type="button" style="flex:1;" onclick="setQueueFilter('All', this)">All</button>
+            <button class="segBtn" data-filter="Private Wealth" type="button" style="flex:1;" onclick="setQueueFilter('Private Wealth', this)">Private Wealth</button>
+            <button class="segBtn" data-filter="Institutional Capital" type="button" style="flex:1;" onclick="setQueueFilter('Institutional Capital', this)">Institutional</button>
           </div>
           <div class="queue-search">
-            <input id="qSearch" class="input" placeholder="Search name, tags…" />
-            <button class="chip" id="btnSearch" type="button">Go</button>
+            <input id="qSearch" class="input" placeholder="Search name, tags…" onkeydown="if(event.key==='Enter') renderSearch();" />
+            <button class="chip" id="btnSearch" type="button" onclick="renderSearch()">Go</button>
           </div>
           <div class="row wrap" style="justify-content:space-between;">
-            <button class="chip primary" id="btnNewLead" type="button">＋ Add Investor</button>
+            <button class="chip primary" id="btnNewLead" type="button" onclick="openModal('new', null)">＋ Add Investor</button>
           </div>
           <div class="queue-list" id="list"></div>
         </div>
@@ -217,8 +217,8 @@ body{
         </div>
         <div class="panel-body">
           <div style="display:flex; gap:8px; margin-bottom:12px;" id="offeringsTabs">
-            <div class="offeringTab active">Coupland Dev ($5M)</div>
-            <div class="offeringTab">Tax Notes (12%)</div>
+            <div class="offeringTab active" onclick="setOfferingTab(this)">Coupland Dev ($5M)</div>
+            <div class="offeringTab" onclick="setOfferingTab(this)">Tax Notes (12%)</div>
           </div>
           
           <div class="iframePlaceholder">
@@ -250,15 +250,15 @@ body{
         <strong id="leadModalTitle">Target Dossier</strong>
         <div class="status" style="margin-top:4px;">Add Private Wealth Buyers or Institutional Capital.</div>
       </div>
-      <button class="btn" id="leadModalClose" type="button" style="padding:6px 12px;">✕</button>
+      <button class="btn" id="leadModalClose" type="button" style="padding:6px 12px;" onclick="closeLeadModal()">✕</button>
     </div>
     
     <div class="modalBody">
       <div style="margin-bottom:16px;">
         <div class="lbl">Capital Class</div>
         <div class="segRow" id="classToggleGroup">
-          <button class="segBtn active" data-class="Private Wealth" type="button">Private Wealth / Retail</button>
-          <button class="segBtn" data-class="Institutional Capital" type="button">Institutional / Corporate</button>
+          <button class="segBtn active" data-class="Private Wealth" type="button" onclick="setClassToggle('Private Wealth', this)">Private Wealth / Retail</button>
+          <button class="segBtn" data-class="Institutional Capital" type="button" onclick="setClassToggle('Institutional Capital', this)">Institutional / Corporate</button>
         </div>
       </div>
 
@@ -319,8 +319,8 @@ body{
       </div>
       
       <div class="modalActions">
-        <button class="btn ghost" id="m_cancel" type="button">Cancel</button>
-        <button class="btn primary" id="m_save" type="button">Save Dossier</button>
+        <button class="btn ghost" id="m_cancel" type="button" onclick="closeLeadModal()">Cancel</button>
+        <button class="btn primary" id="m_save" type="button" onclick="window.cmdSaveModal()">Save Dossier</button>
       </div>
     </div>
   </div>
@@ -333,7 +333,7 @@ body{
         <div class="modalTitle" id="supportTitle" style="font-weight:900; font-size:18px;">Support Request</div>
         <div class="modalSub" id="supportSub">Send a request to Leadership Team</div>
       </div>
-      <button class="iconBtn" id="supportCloseBtn" title="Close">✕</button>
+      <button class="iconBtn" id="supportCloseBtn" title="Close" onclick="closeSupportModal()">✕</button>
     </div>
     <div class="modalBody">
       <div class="formGrid">
@@ -361,8 +361,8 @@ body{
       </div>
     </div>
     <div class="modalActions">
-      <button class="btn ghost" type="button" id="supportCancelBtn">Cancel</button>
-      <button class="btn primary" type="button" id="supportSendBtn">Send Request</button>
+      <button class="btn ghost" type="button" id="supportCancelBtn" onclick="closeSupportModal()">Cancel</button>
+      <button class="btn primary" type="button" id="supportSendBtn" onclick="submitSupport()">Send Request</button>
     </div>
   </div>
 </div>
@@ -373,10 +373,7 @@ body{
 <script src="config.js"></script>
 
 <script>
-  // Safe Selection Utility
-  const $ = (id) => document.getElementById(id);
-
-  // 1. Initialize Firebase
+  // Initialize Firebase First
   (function ensureFirebaseInit(){
     try{
       if(!firebase.apps||!firebase.apps.length){
@@ -410,7 +407,7 @@ body{
   
   let toastTimer=null;
   function toast(msg){
-    let el=$("toastFloat");
+    let el=document.getElementById("toastFloat");
     if(!el){
       el=document.createElement("div"); el.id="toastFloat";
       el.style.cssText="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(168,85,247,.9);color:#fff;font-weight:800;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s;";
@@ -421,210 +418,110 @@ body{
   }
 
   // ==========================================
-  // MASTER EVENT DELEGATION
-  // This replaces all safeBind and onclick attributes. It never fails due to load order.
-  // ==========================================
-  document.addEventListener("click", async (e) => {
-
-    // --- 1. Top Navigation ---
-    if(e.target.closest("#btnSettings")) {
-        location.href = "profile.html";
-        return;
-    }
-    if(e.target.closest("#logoutBtn")) {
-        if(typeof firebase !== 'undefined' && firebase.auth().currentUser) {
-            firebase.auth().signOut().then(() => location.href="index.html");
-        } else {
-            location.href="index.html";
-        }
-        return;
-    }
-
-    // --- 2. Support Phones & Modal ---
-    if(e.target.closest("#btnBlueSupport")) {
-        openSupportModal("blue");
-        return;
-    }
-    if(e.target.closest("#btnRedSupport")) {
-        openSupportModal("red");
-        return;
-    }
-    if(e.target.closest("#supportCloseBtn") || e.target.closest("#supportCancelBtn")) {
-        if($("supportModal")) $("supportModal").style.display = "none";
-        return;
-    }
-    if(e.target.closest("#supportSendBtn")) {
-        const msg = $("supportMsg") ? $("supportMsg").value.trim() : "";
-        if(!msg) return toast("Message is empty.");
-        try{
-            await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
-                uid: UID || 'anonymous', 
-                email: ME?.email || "", 
-                name: ME?.displayName || ME?.email || "User",
-                portal: "investor",
-                priority: $("supportPriority") ? $("supportPriority").value : "blue", 
-                category: $("supportCategory") ? $("supportCategory").value : "Other", 
-                message: msg, 
-                ts: Date.now(), 
-                status: "open"
-            });
-            if($("supportModal")) $("supportModal").style.display = "none";
-            toast("Support Request Sent ✓");
-        }catch(err){ toast("Request failed."); console.error(err); }
-        return;
-    }
-
-    // --- 3. Queue Controls ---
-    if(e.target.closest("#btnNewLead")) {
-        openModal("new", null);
-        return;
-    }
-    if(e.target.closest("#btnSearch")) {
-        searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
-        renderList();
-        return;
-    }
-    const queueFilterBtn = e.target.closest("#queueFilters .segBtn");
-    if(queueFilterBtn) {
-        document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
-        queueFilterBtn.classList.add("active");
-        viewFilter = queueFilterBtn.getAttribute("data-filter"); 
-        renderList();
-        return;
-    }
-
-    // --- 4. Dossier Editor Modal ---
-    if(e.target.closest("#leadModalClose") || e.target.closest("#m_cancel")) {
-        if($("leadModal")) $("leadModal").classList.remove("show");
-        return;
-    }
-    if(e.target.closest("#m_save")) {
-        saveModal(selected ? 'edit' : 'new', selected?.id);
-        return;
-    }
-    const classToggleBtn = e.target.closest("#classToggleGroup .segBtn");
-    if(classToggleBtn) {
-        document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
-        classToggleBtn.classList.add("active");
-        activeInvClass = classToggleBtn.getAttribute("data-class");
-        
-        const isSec = (activeInvClass === "Institutional Capital");
-        document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
-        document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
-        return;
-    }
-
-    // --- 5. Console Interactions (Middle Column) ---
-    if(e.target.closest(".lead-item")) {
-        // Handled directly inside renderList for convenience since it requires index binding
-        return;
-    }
-    if(e.target.closest("#btnEditLead")) {
-        openModal("edit", selected);
-        return;
-    }
-    if(e.target.closest("#btnCall")) {
-        const v = $("activePhone") ? $("activePhone").value : ""; 
-        const digits = v.replace(/[^\d+]/g,"");
-        if(!digits) return toast("No valid phone number.");
-        if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
-           window.location.href = `tel:${digits}`;
-        } else { 
-           try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(err) { toast('Copy failed'); }
-        }
-        return;
-    }
-    if(e.target.closest("#btnCopy")) {
-        const v = $("activePhone") ? $("activePhone").value : ""; 
-        const digits = v.replace(/[^\d+]/g,"");
-        try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(err){ toast('Copy failed'); }
-        return;
-    }
-    if(e.target.closest("#btnSaveNotes")) {
-        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
-        const notes = $("noteBox") ? $("noteBox").value.trim() : "";
-        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-        await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
-        toast("Notes Saved ✓");
-        return;
-    }
-    const qbtn = e.target.closest(".qbtn[data-status]");
-    if(qbtn) {
-        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
-        const st = qbtn.getAttribute("data-status");
-        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-        await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
-        toast("Pipeline Updated ✓");
-        return;
-    }
-
-    // --- 6. Offerings Panel (Right Column) ---
-    const offTab = e.target.closest("#offeringsTabs .offeringTab");
-    if(offTab) {
-        document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
-        offTab.classList.add("active");
-        return;
-    }
-  });
-
-  // Handle Search Enter Key (Since it's not a click)
-  document.addEventListener("keydown", (e) => {
-      if(e.target.id === "qSearch" && e.key === "Enter") {
-          searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
-          renderList();
-      }
-  });
-
-  // ==========================================
-  // LOGIC HELPERS
+  // INLINE HTML HANDLERS (Globally Scoped)
   // ==========================================
 
-  function openSupportModal(priority){
-    if($("supportPriority")) $("supportPriority").value = priority === "red" ? "red" : "blue";
-    if($("supportSub")) $("supportSub").textContent = priority === "red" ? "Red = urgent. Use for priority roadblocks." : "Blue = not urgent. Use for questions or general support.";
-    if($("supportMsg")) $("supportMsg").value = ""; 
-    if($("supportModal")) $("supportModal").style.display = "flex";
+  window.openSupportModal = function(priority){
+    if(document.getElementById("supportPriority")) document.getElementById("supportPriority").value = priority === "red" ? "red" : "blue";
+    if(document.getElementById("supportSub")) document.getElementById("supportSub").textContent = priority === "red" ? "Red = urgent. Use for priority roadblocks." : "Blue = not urgent. Use for questions or general support.";
+    if(document.getElementById("supportMsg")) document.getElementById("supportMsg").value = ""; 
+    if(document.getElementById("supportModal")) document.getElementById("supportModal").style.display = "flex";
+  }
+  
+  window.closeSupportModal = function(){ 
+    if(document.getElementById("supportModal")) document.getElementById("supportModal").style.display="none"; 
   }
 
-  function openModal(mode, item){
-    if($("leadModal")) $("leadModal").classList.add("show");
-    if($("leadModalTitle")) $("leadModalTitle").textContent = mode === "edit" ? "Update Dossier" : "New Target Dossier";
+  window.submitSupport = async function() {
+    const msg = document.getElementById("supportMsg") ? document.getElementById("supportMsg").value.trim() : "";
+    if(!msg) return toast("Message is empty.");
+    try{
+      await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
+        uid: UID || 'anonymous', 
+        email: ME?.email || "", 
+        name: ME?.displayName || ME?.email || "User",
+        portal: "investor",
+        priority: document.getElementById("supportPriority") ? document.getElementById("supportPriority").value : "blue", 
+        category: document.getElementById("supportCategory") ? document.getElementById("supportCategory").value : "Other", 
+        message: msg, 
+        ts: Date.now(), 
+        status: "open"
+      });
+      window.closeSupportModal();
+      toast("Support Request Sent ✓");
+    }catch(e){ toast("Request failed."); console.error(e); }
+  }
+
+  window.renderSearch = function() {
+    searchText = document.getElementById("qSearch") ? document.getElementById("qSearch").value.toLowerCase().trim() : ""; 
+    renderList();
+  }
+
+  window.setQueueFilter = function(filter, el) {
+    document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+    viewFilter = filter;
+    renderList();
+  }
+
+  window.setClassToggle = function(cls, el) {
+    document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
+    el.classList.add("active");
+    activeInvClass = cls;
+    window.updateModalFields();
+  }
+
+  window.setOfferingTab = function(el) {
+    document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
+    el.classList.add("active");
+  }
+
+  window.updateModalFields = function(){
+    const isSec = (activeInvClass === "Institutional Capital");
+    document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
+    document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
+  }
+
+  window.openModal = function(mode, item){
+    if(document.getElementById("leadModal")) document.getElementById("leadModal").classList.add("show");
+    if(document.getElementById("leadModalTitle")) document.getElementById("leadModalTitle").textContent = mode === "edit" ? "Update Dossier" : "New Target Dossier";
     
     activeInvClass = item?.invClass || "Private Wealth";
     document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
       b.classList.toggle("active", b.getAttribute("data-class") === activeInvClass);
     });
-    
-    const isSec = (activeInvClass === "Institutional Capital");
-    document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
-    document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
+    window.updateModalFields();
 
-    if($("m_name")) $("m_name").value = item?.name || ""; 
-    if($("m_amount")) $("m_amount").value = item?.amount || "";
-    if($("m_rule")) $("m_rule").value = item?.rule || "Unknown"; 
-    if($("m_focus")) $("m_focus").value = item?.focus || "";
-    if($("m_location")) $("m_location").value = item?.location || "";
-    if($("m_email")) $("m_email").value = item?.email || ""; 
-    if($("m_status")) $("m_status").value = item?.status || "New Lead";
-    if($("m_phones")) $("m_phones").value = (item?.phones || []).join("\n"); 
-    if($("m_notes")) $("m_notes").value = item?.notes || "";
+    if(document.getElementById("m_name")) document.getElementById("m_name").value = item?.name || ""; 
+    if(document.getElementById("m_amount")) document.getElementById("m_amount").value = item?.amount || "";
+    if(document.getElementById("m_rule")) document.getElementById("m_rule").value = item?.rule || "Unknown"; 
+    if(document.getElementById("m_focus")) document.getElementById("m_focus").value = item?.focus || "";
+    if(document.getElementById("m_location")) document.getElementById("m_location").value = item?.location || "";
+    if(document.getElementById("m_email")) document.getElementById("m_email").value = item?.email || ""; 
+    if(document.getElementById("m_status")) document.getElementById("m_status").value = item?.status || "New Lead";
+    if(document.getElementById("m_phones")) document.getElementById("m_phones").value = (item?.phones || []).join("\n"); 
+    if(document.getElementById("m_notes")) document.getElementById("m_notes").value = item?.notes || "";
   }
 
-  async function saveModal(mode, id){
-    const name = $("m_name") ? $("m_name").value.trim() : "";
+  window.closeLeadModal = function() {
+    if(document.getElementById("leadModal")) document.getElementById("leadModal").classList.remove("show");
+  }
+
+  window.saveModal = async function(mode, id){
+    const name = document.getElementById("m_name") ? document.getElementById("m_name").value.trim() : "";
     if(!name) return alert("Name required");
 
     const payload = {
       name, 
       invClass: activeInvClass,
-      amount: $("m_amount") ? $("m_amount").value.trim() : "", 
-      rule: $("m_rule") ? $("m_rule").value : "Unknown", 
-      focus: $("m_focus") ? $("m_focus").value.trim() : "",
-      status: $("m_status") ? $("m_status").value : "New Lead",
-      location: $("m_location") ? $("m_location").value.trim() : "", 
-      email: $("m_email") ? $("m_email").value.trim() : "",
-      phones: $("m_phones") ? $("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean) : [],
-      notes: $("m_notes") ? $("m_notes").value.trim() : "", 
+      amount: document.getElementById("m_amount") ? document.getElementById("m_amount").value.trim() : "", 
+      rule: document.getElementById("m_rule") ? document.getElementById("m_rule").value : "Unknown", 
+      focus: document.getElementById("m_focus") ? document.getElementById("m_focus").value.trim() : "",
+      status: document.getElementById("m_status") ? document.getElementById("m_status").value : "New Lead",
+      location: document.getElementById("m_location") ? document.getElementById("m_location").value.trim() : "", 
+      email: document.getElementById("m_email") ? document.getElementById("m_email").value.trim() : "",
+      phones: document.getElementById("m_phones") ? document.getElementById("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean) : [],
+      notes: document.getElementById("m_notes") ? document.getElementById("m_notes").value.trim() : "", 
       updatedAt: Date.now()
     };
 
@@ -634,14 +531,13 @@ body{
       payload.id = targetId;
       
       await firebase.database().ref(`${basePath}/${targetId}`).update(payload);
-      if($("leadModal")) $("leadModal").classList.remove("show");
+      window.closeLeadModal();
       toast("Dossier Secured.");
     }catch(e){ 
       console.error("Save blocked by rules.", e);
       alert("Save blocked. Ensure your Realtime Database rules allow writing to leadsByUser/UID/buyers.");
     }
   }
-
 
   // ==========================================
   // FIREBASE DATA & RENDER ENGINE
@@ -664,7 +560,7 @@ body{
 
       isGod = ROLE==="god";
       isBranchManager = !isGod && ROLE==="admin";
-      if($("roleReadout")) $("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
+      if(document.getElementById("roleReadout")) document.getElementById("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
       
       listenInvestors(); 
     });
@@ -676,12 +572,12 @@ body{
       const v = snap.val() || {};
       investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
       investors.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-      if($("status")) $("status").textContent = `Acq: ${investors.length} Targets`;
+      if(document.getElementById("status")) document.getElementById("status").textContent = `Acq: ${investors.length} Targets`;
       renderList();
       if(selectedId){ selected = investors.find(x=>x.id===selectedId) || null; renderConsole(); }
     }, (error) => {
       console.error("Permission denied or database read error", error);
-      if($("status")) $("status").textContent = "Error: Cannot load targets.";
+      if(document.getElementById("status")) document.getElementById("status").textContent = "Error: Cannot load targets.";
     });
   }
 
@@ -698,12 +594,12 @@ body{
   }
 
   function renderList(){
-    const list=$("list"); 
+    const list=document.getElementById("list"); 
     if(!list) return;
     list.innerHTML="";
     
     const filtered = investors.filter(it=>passesSearchAndFilter(it));
-    if($("leadCountPill")) $("leadCountPill").textContent = `${filtered.length} leads`;
+    if(document.getElementById("leadCountPill")) document.getElementById("leadCountPill").textContent = `${filtered.length} leads`;
     
     if(!filtered.length){ 
       list.innerHTML=`<div class="tiny" style="padding:10px; color:var(--muted);">No targets found. Add a dossier to begin calling.</div>`; 
@@ -715,13 +611,6 @@ body{
       const ruleColor = isInst ? (String(it.rule).includes("506(c)") ? "var(--good)" : "var(--warn)") : "var(--accent)";
       const subText = isInst ? escapeHtml(it.amount||"Amount Unknown") : escapeHtml(it.focus||"Asset Unspecified");
       
-      let badgeHtml = "";
-      if(isInst) {
-        badgeHtml = `<span class="pill" style="border-color:var(--purple); color:var(--purple); font-size:10px;">INST</span>`;
-      } else {
-        badgeHtml = `<span class="pill" style="border-color:var(--accent); color:var(--accent); font-size:10px;">CASH</span>`;
-      }
-
       const card=document.createElement("div");
       card.className="lead-item"+(it.id===selectedId?" selected":"");
       card.innerHTML=`
@@ -729,7 +618,7 @@ body{
         <div class="meta" style="color:${ruleColor}">${subText}</div>
         <div style="margin-top:8px; display:flex; gap:6px;">
           <span class="pill" style="border-color:var(--line); color:#fff;">${escapeHtml(it.status||"New Lead")}</span>
-          ${badgeHtml}
+          ${isInst ? `<span class="pill" style="border-color:var(--purple); color:var(--purple); font-size:10px;">INST</span>` : `<span class="pill" style="border-color:var(--accent); color:var(--accent); font-size:10px;">CASH</span>`}
         </div>
       `;
       card.onclick=()=>{ selectedId=it.id; selected=it; renderList(); renderConsole(); };
@@ -737,8 +626,49 @@ body{
     });
   }
 
+  // Exposed global commands for dynamic buttons rendered in the console
+  window.cmdCall = async function() {
+    const v = document.getElementById("activePhone") ? document.getElementById("activePhone").value : ""; 
+    const digits = v.replace(/[^\d+]/g,"");
+    if(!digits) return toast("No valid phone number.");
+    if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
+        window.location.href = `tel:${digits}`;
+    } else { 
+        try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(e) { toast('Copy failed'); }
+    }
+  };
+
+  window.cmdCopy = async function() {
+    const v = document.getElementById("activePhone") ? document.getElementById("activePhone").value : ""; 
+    const digits = v.replace(/[^\d+]/g,"");
+    try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
+  };
+
+  window.cmdUpdatePipeline = async function(st) {
+    if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
+    const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
+    await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
+    toast("Pipeline Updated ✓");
+  };
+
+  window.cmdSaveNotes = async function() {
+    if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
+    const notes = document.getElementById("noteBox") ? document.getElementById("noteBox").value.trim() : "";
+    const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
+    await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
+    toast("Notes Saved ✓");
+  };
+
+  window.cmdEdit = function() {
+    if(selected) window.openModal('edit', selected);
+  };
+
+  window.cmdSaveModal = function() {
+    window.saveModal(selected ? 'edit' : 'new', selected?.id);
+  };
+
   function renderConsole(){
-    const el=$("console");
+    const el=document.getElementById("console");
     if(!el) return;
     
     if(!selected){ 
@@ -796,7 +726,7 @@ body{
           </div>
         </div>
         <div class="lead-actions">
-          <button class="chip" id="btnEditLead" type="button">✎ Edit Dossier</button>
+          <button class="chip" type="button" onclick="window.cmdEdit()">✎ Edit Dossier</button>
         </div>
       </div>
 
@@ -808,21 +738,21 @@ body{
               ${phoneOpts}
             </select>
           </div>
-          <button id="btnCall" class="callBtn" type="button">📞 DIAL</button>
-          <button id="btnCopy" class="copyBtn" type="button">Copy</button>
+          <button class="callBtn" type="button" onclick="window.cmdCall()">📞 DIAL</button>
+          <button class="copyBtn" type="button" onclick="window.cmdCopy()">Copy</button>
         </div>
       </div>
 
       <div class="field">
         <div class="field-label">Quick Pipeline Disposition</div>
         <div class="quick-grid">
-          <button class="qbtn" type="button" data-status="Dialed - Left VM">Left VM</button>
-          <button class="qbtn" style="color:var(--warn)" type="button" data-status="Buy Box Acquired">Buy Box Acquired</button>
-          <button class="qbtn" style="color:var(--accent)" type="button" data-status="Lumpy Mail Sent">Lumpy Sent</button>
-          <button class="qbtn" style="color:var(--good)" type="button" data-status="Legally Cleared">Legally Cleared</button>
-          <button class="qbtn" style="color:var(--good)" type="button" data-status="Deal Pitched">Deal Pitched</button>
-          <button class="qbtn" style="color:#fff; background:var(--good); border-color:var(--good);" type="button" data-status="Soft Commit">Soft Commit</button>
-          <button class="qbtn dnc" type="button" data-status="Do Not Call">Do Not Call</button>
+          <button class="qbtn" type="button" onclick="window.cmdUpdatePipeline('Dialed - Left VM')">Left VM</button>
+          <button class="qbtn" style="color:var(--warn)" type="button" onclick="window.cmdUpdatePipeline('Buy Box Acquired')">Buy Box Acquired</button>
+          <button class="qbtn" style="color:var(--accent)" type="button" onclick="window.cmdUpdatePipeline('Lumpy Mail Sent')">Lumpy Sent</button>
+          <button class="qbtn" style="color:var(--good)" type="button" onclick="window.cmdUpdatePipeline('Legally Cleared')">Legally Cleared</button>
+          <button class="qbtn" style="color:var(--good)" type="button" onclick="window.cmdUpdatePipeline('Deal Pitched')">Deal Pitched</button>
+          <button class="qbtn" style="color:#fff; background:var(--good); border-color:var(--good);" type="button" onclick="window.cmdUpdatePipeline('Soft Commit')">Soft Commit</button>
+          <button class="qbtn dnc" type="button" onclick="window.cmdUpdatePipeline('Do Not Call')">Do Not Call</button>
         </div>
       </div>
       
@@ -833,7 +763,7 @@ body{
         <div class="note-row">
           <textarea id="noteBox" class="input note-box" placeholder="Log criteria, yield requirements, objections...">${escapeHtml(selected.notes||"")}</textarea>
           <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
-            <button id="btnSaveNotes" class="icon-btn mini" type="button">✓</button>
+            <button class="icon-btn mini" type="button" onclick="window.cmdSaveNotes()">✓</button>
           </div>
         </div>
       </div>
