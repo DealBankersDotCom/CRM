@@ -27,7 +27,7 @@ body{
   min-height:100vh; overflow-x:hidden;
 }
 
-/* Uniform Header (Matched to Wholesaler) */
+/* Uniform Header */
 .header{
   display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
@@ -373,10 +373,29 @@ body{
 <script src="config.js"></script>
 
 <script>
-  (function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig. Check config.js load order.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){console.error("Firebase init error:", e);}})();
+  // DOM Helper & Safe Click Binder
   const $=(id)=>document.getElementById(id);
+  const safeClick = (id, handler) => {
+    const el = $(id);
+    if (el) el.addEventListener("click", handler);
+    else console.warn("UI Binder Warning: Missing element ->", id);
+  };
+
+  (function ensureFirebaseInit(){
+    try{
+      if(!firebase.apps||!firebase.apps.length){
+        if(!window.firebaseConfig){
+          console.error("Missing window.firebaseConfig. Check config.js load order.");
+          return;
+        }
+        firebase.initializeApp(window.firebaseConfig);
+      }
+    }catch(e){
+      console.error("Firebase init error:", e);
+    }
+  })();
   
-  // Adjusted PATHS to map to standard Leads DB structure to bypass permissions errors for Associates
+  // Database Paths
   const PATHS = { 
     INVESTORS_MASTER: "leadsMaster/buyers", 
     INVESTORS_BY_USER: "leadsByUser", 
@@ -386,10 +405,12 @@ body{
   
   let UID="", ME=null, ROLE="associate", isGod=false, isBranchManager=false;
   let investors=[], selectedId=null, selected=null, searchText="", viewFilter="All";
-  let activeInvClass = "Private Wealth"; // default modal state
+  let activeInvClass = "Private Wealth"; 
 
+  // Escape Utilities
   function esc(s){return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"'"}[c]));}
   function escapeAttr(str){ return esc(str).replaceAll('"',"&quot;"); }
+  function escapeHtml(str) { return esc(str); }
   
   let toastTimer=null;
   function toast(msg){
@@ -403,6 +424,163 @@ body{
     clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.opacity="0", 2000);
   }
 
+  // ==========================================
+  // 1. DECOUPLED UI BINDINGS (Run Immediately)
+  // ==========================================
+
+  // Modals & Navigation
+  safeClick("btnSettings", () => location.href="profile.html");
+  safeClick("btnNewLead", () => openModal("new", null));
+  safeClick("leadModalClose", () => $("leadModal").classList.remove("show"));
+  safeClick("m_cancel", () => $("leadModal").classList.remove("show"));
+
+  // Support Phones
+  safeClick("btnBlueSupport", () => openSupportModal("blue"));
+  safeClick("btnRedSupport", () => openSupportModal("red"));
+  safeClick("supportCloseBtn", closeSupportModal);
+  safeClick("supportCancelBtn", closeSupportModal);
+  safeClick("supportSendBtn", async () => {
+    const msg = $("supportMsg").value.trim();
+    if(!msg) return toast("Message is empty.");
+    try{
+      await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
+        uid: UID || 'anonymous', 
+        email: ME?.email || "", 
+        name: ME?.displayName || ME?.email || "User",
+        portal: "investor",
+        priority: $("supportPriority").value, 
+        category: $("supportCategory").value, 
+        message: msg, 
+        ts: Date.now(), 
+        status: "open"
+      });
+      closeSupportModal();
+      toast("Support Request Sent ✓");
+    }catch(e){ toast("Request failed."); console.error(e); }
+  });
+
+  // Search Logic
+  safeClick("btnSearch", () => { searchText = $("qSearch").value.toLowerCase().trim(); renderList(); });
+  const qSearchEl = $("qSearch");
+  if(qSearchEl) qSearchEl.addEventListener("keydown", (e) => { if(e.key==="Enter") $("btnSearch").click(); });
+
+  // View Segment Toggles
+  document.querySelectorAll("#panel-acq .segBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#panel-acq .segBtn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      viewFilter = btn.textContent; 
+      renderList();
+    });
+  });
+
+  // Dossier Modal Segment Toggles
+  document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
+      btn.classList.add("active");
+      activeInvClass = btn.getAttribute("data-class");
+      updateModalFields();
+    });
+  });
+
+  // Offerings Module Toggles
+  document.querySelectorAll(".offeringTab").forEach(tab=>{
+    tab.addEventListener("click", () => {
+      document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
+      tab.classList.add("active");
+    });
+  });
+
+  // Log Out (Requires Auth, but safely attached)
+  safeClick("btnLogout", () => {
+    if(firebase.auth().currentUser) {
+      firebase.auth().signOut().then(()=> location.href="index.html");
+    } else {
+      location.href="index.html";
+    }
+  });
+
+
+  // ==========================================
+  // 2. MODAL LOGIC & HELPERS
+  // ==========================================
+
+  function openSupportModal(priority){
+    $("supportPriority").value=priority==="red"?"red":"blue";
+    $("supportSub").textContent=priority==="red"?"Red = urgent. Use for priority roadblocks.":"Blue = not urgent. Use for questions or general support.";
+    $("supportMsg").value=""; 
+    $("supportModal").style.display="flex";
+  }
+  
+  function closeSupportModal(){ $("supportModal").style.display="none"; }
+
+  function updateModalFields(){
+    const isSec = (activeInvClass === "Institutional Capital");
+    document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
+    document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
+  }
+
+  function openModal(mode, item){
+    $("leadModal").classList.add("show");
+    $("leadModalTitle").textContent = mode==="edit" ? "Update Dossier" : "New Target Dossier";
+    
+    activeInvClass = item?.invClass || "Private Wealth";
+    document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
+      b.classList.toggle("active", b.getAttribute("data-class") === activeInvClass);
+    });
+    updateModalFields();
+
+    $("m_name").value = item?.name || ""; 
+    $("m_amount").value = item?.amount || "";
+    $("m_rule").value = item?.rule || "Unknown"; 
+    $("m_focus").value = item?.focus || "";
+    $("m_location").value = item?.location || "";
+    $("m_email").value = item?.email || ""; 
+    $("m_status").value = item?.status || "New Lead";
+    $("m_phones").value = (item?.phones || []).join("\n"); 
+    $("m_notes").value = item?.notes || "";
+
+    $("m_save").onclick = ()=> saveModal(mode, item?.id);
+  }
+
+  async function saveModal(mode, id){
+    const name = $("m_name").value.trim();
+    if(!name) return alert("Name required");
+
+    const payload = {
+      name, 
+      invClass: activeInvClass,
+      amount: $("m_amount").value.trim(), 
+      rule: $("m_rule").value, 
+      focus: $("m_focus").value.trim(),
+      status: $("m_status").value,
+      location: $("m_location").value.trim(), 
+      email: $("m_email").value.trim(),
+      phones: $("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean),
+      notes: $("m_notes").value.trim(), 
+      updatedAt: Date.now()
+    };
+
+    try{
+      const basePath = (isGod||isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
+      const targetId = (mode==="edit" && id) ? id : firebase.database().ref(basePath).push().key; 
+      payload.id = targetId;
+      
+      await firebase.database().ref(`${basePath}/${targetId}`).update(payload);
+      $("leadModal").classList.remove("show");
+      toast("Dossier Secured.");
+    }catch(e){ 
+      console.error("Save blocked by rules.", e);
+      alert("Save blocked. Ensure your Realtime Database rules allow writing to leadsByUser/UID/buyers.");
+    }
+  }
+
+
+  // ==========================================
+  // 3. FIREBASE DATA & RENDER ENGINE
+  // ==========================================
+
   firebase.auth().onAuthStateChanged(async u=>{
     if(!u) return location.href="index.html";
     UID=u.uid; ME=u;
@@ -412,17 +590,19 @@ body{
       const raw = rs.val();
       ROLE = raw ? String(raw).toLowerCase() : "user";
       if(String(u.email||"").toLowerCase()==="dealbankers@gmail.com") ROLE="god";
-    }catch(e){ ROLE="user"; }
+    }catch(e){ 
+      console.warn("Could not fetch explicit role. Defaulting to associate.", e);
+      ROLE="user"; 
+    }
 
-    isGod=ROLE==="god";
-    isBranchManager=!isGod&&ROLE==="admin";
+    isGod = ROLE==="god";
+    isBranchManager = !isGod && ROLE==="admin";
     $("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
     
-    listenInvestors(); bindUI();
+    listenInvestors(); 
   });
 
   function listenInvestors(){
-    // Routes to correct subfolder in Leads By User
     const path = (isGod || isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
     firebase.database().ref(path).on("value", snap=>{
       const v = snap.val() || {};
@@ -431,6 +611,9 @@ body{
       $("status").textContent = `Acq: ${investors.length} Targets`;
       renderList();
       if(selectedId){ selected = investors.find(x=>x.id===selectedId) || null; renderConsole(); }
+    }, (error) => {
+      console.error("Permission denied or database read error", error);
+      $("status").textContent = "Error: Cannot load targets.";
     });
   }
 
@@ -472,9 +655,6 @@ body{
     });
   }
 
-  // Escape Utility HTML Helper
-  function escapeHtml(str) { return esc(str); }
-
   function renderConsole(){
     const el=$("console");
     if(!selected){ el.innerHTML = `<div class="tiny" style="color:var(--muted);">No target selected.</div>`; return; }
@@ -503,7 +683,6 @@ body{
         scriptHTML = `<i style="color:var(--muted);">SEC Rule Unknown. Assume 506(b) Do Not Pitch. Call simply to establish relationship.</i>`;
       }
     } else {
-      // Retail Script
       scriptHTML = `
           <div style="color:var(--accent); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">🤝 PRIVATE WEALTH BUYER SCRIPT:</div>
           <div style="font-size:14px; line-height:1.5; color:#fff; font-style:italic;">
@@ -511,7 +690,6 @@ body{
           </div>`;
     }
 
-    // Rearranged for efficient Cold Calling (Top down)
     el.innerHTML = `
       <div class="lead-header">
         <div class="lead-title">
@@ -567,9 +745,9 @@ body{
       </div>
     `;
 
+    // Dynamic bindings after render
     $("btnEditLead").onclick = ()=> openModal("edit", selected);
     
-    // Robust Dialing Logic from Wholesaler
     $("btnCall").onclick = async ()=> {
       const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
       if(!digits) return toast("No valid phone number.");
@@ -600,143 +778,6 @@ body{
       await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
       toast("Notes Saved ✓");
     };
-  }
-
-  function updateModalFields(){
-    const isSec = (activeInvClass === "Institutional Capital");
-    document.querySelectorAll(".sec-field").forEach(el => el.style.display = isSec ? "block" : "none");
-    document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
-  }
-
-  document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeInvClass = btn.getAttribute("data-class");
-      updateModalFields();
-    }
-  });
-
-  function openModal(mode, item){
-    $("leadModal").classList.add("show");
-    $("leadModalTitle").textContent = mode==="edit" ? "Update Dossier" : "New Target Dossier";
-    
-    activeInvClass = item?.invClass || "Private Wealth";
-    document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
-      b.classList.toggle("active", b.getAttribute("data-class") === activeInvClass);
-    });
-    updateModalFields();
-
-    $("m_name").value = item?.name || ""; 
-    $("m_amount").value = item?.amount || "";
-    $("m_rule").value = item?.rule || "Unknown"; 
-    $("m_focus").value = item?.focus || "";
-    $("m_location").value = item?.location || "";
-    $("m_email").value = item?.email || ""; 
-    $("m_status").value = item?.status || "New Lead";
-    $("m_phones").value = (item?.phones || []).join("\n"); 
-    $("m_notes").value = item?.notes || "";
-
-    $("m_save").onclick = ()=> saveModal(mode, item?.id);
-  }
-  
-  $("leadModalClose").onclick = $("m_cancel").onclick = ()=> $("leadModal").classList.remove("show");
-
-  async function saveModal(mode, id){
-    const name = $("m_name").value.trim();
-    if(!name) return alert("Name required");
-
-    const payload = {
-      name, 
-      invClass: activeInvClass,
-      amount: $("m_amount").value.trim(), 
-      rule: $("m_rule").value, 
-      focus: $("m_focus").value.trim(),
-      status: $("m_status").value,
-      location: $("m_location").value.trim(), 
-      email: $("m_email").value.trim(),
-      phones: $("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean),
-      notes: $("m_notes").value.trim(), 
-      updatedAt: Date.now()
-    };
-
-    try{
-      // Updated robust DB path logic to bypass Asscoiate permission blockers.
-      const basePath = (isGod||isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
-      const targetId = (mode==="edit" && id) ? id : firebase.database().ref(basePath).push().key; 
-      payload.id = targetId;
-      
-      await firebase.database().ref(`${basePath}/${targetId}`).update(payload);
-      $("leadModal").classList.remove("show");
-      toast("Dossier Secured.");
-    }catch(e){ 
-      console.error("Save blocked by rules.", e);
-      alert("Save blocked. Ensure your Realtime Database rules allow writing to leadsByUser/UID/buyers.");
-    }
-  }
-
-  // SUPPORT MODAL LOGIC (Aligned completely with Wholesaler)
-  function openSupportModal(priority){
-    $("supportPriority").value=priority==="red"?"red":"blue";
-    $("supportSub").textContent=priority==="red"?"Red = urgent. Use for priority roadblocks.":"Blue = not urgent. Use for questions or general support.";
-    $("supportMsg").value=""; 
-    $("supportModal").style.display="flex";
-  }
-  
-  function closeSupportModal(){ $("supportModal").style.display="none"; }
-  
-  $("btnBlueSupport").onclick = ()=> openSupportModal("blue");
-  $("btnRedSupport").onclick = ()=> openSupportModal("red");
-  $("supportCloseBtn").onclick = closeSupportModal;
-  $("supportCancelBtn").onclick = closeSupportModal;
-  
-  $("supportSendBtn").onclick = async ()=>{
-    const msg = $("supportMsg").value.trim();
-    if(!msg) return toast("Message is empty.");
-    try{
-      await firebase.database().ref(`${PATHS.SUPPORT}/${UID}`).push({
-        uid: UID, 
-        email: ME?.email || "", 
-        name: ME?.displayName || ME?.email || "User",
-        portal: "investor",
-        priority: $("supportPriority").value, 
-        category: $("supportCategory").value, 
-        message: msg, 
-        ts: Date.now(), 
-        status: "open"
-      });
-      closeSupportModal();
-      toast("Support Request Sent ✓");
-    }catch(e){ toast("Request failed."); }
-  };
-
-  function bindUI(){
-    $("btnLogout").onclick = ()=> {
-      firebase.auth().signOut().then(()=> location.href="index.html");
-    };
-    $("btnSettings").onclick = ()=> location.href="profile.html";
-
-    // View Filters
-    document.querySelectorAll("#panel-acq .segBtn").forEach(btn => {
-      btn.onclick = () => {
-        document.querySelectorAll("#panel-acq .segBtn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        viewFilter = btn.textContent; // "All", "Private Wealth", "Institutional"
-        renderList();
-      };
-    });
-    
-    $("btnSearch").onclick = ()=>{ searchText = $("qSearch").value.toLowerCase().trim(); renderList(); };
-    $("qSearch").onkeydown = (e)=>{ if(e.key==="Enter") $("btnSearch").click(); };
-    $("btnNewLead").onclick = ()=> openModal("new", null);
-
-    // Offerings Tab UI
-    document.querySelectorAll(".offeringTab").forEach(tab=>{
-      tab.onclick = ()=>{
-        document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
-        tab.classList.add("active");
-      }
-    })
   }
 </script>
 </body>
