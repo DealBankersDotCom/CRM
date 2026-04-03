@@ -373,29 +373,11 @@ body{
 <script src="config.js"></script>
 
 <script>
-  // DOM Helper & Safe Click Binder
-  const $=(id)=>document.getElementById(id);
-  const safeClick = (id, handler) => {
-    const el = $(id);
-    if (el) el.addEventListener("click", handler);
-    else console.warn("UI Binder Warning: Missing element ->", id);
-  };
+  // ==========================================
+  // 1. UTILITIES & STATE
+  // ==========================================
+  const $ = (id) => document.getElementById(id);
 
-  (function ensureFirebaseInit(){
-    try{
-      if(!firebase.apps||!firebase.apps.length){
-        if(!window.firebaseConfig){
-          console.error("Missing window.firebaseConfig. Check config.js load order.");
-          return;
-        }
-        firebase.initializeApp(window.firebaseConfig);
-      }
-    }catch(e){
-      console.error("Firebase init error:", e);
-    }
-  })();
-  
-  // Database Paths
   const PATHS = { 
     INVESTORS_MASTER: "leadsMaster/buyers", 
     INVESTORS_BY_USER: "leadsByUser", 
@@ -407,7 +389,6 @@ body{
   let investors=[], selectedId=null, selected=null, searchText="", viewFilter="All";
   let activeInvClass = "Private Wealth"; 
 
-  // Escape Utilities
   function esc(s){return String(s ?? "").replace(/[&<>"']/g,c=>({"&":"&","<":"<",">":">","\"":""","'":"'"}[c]));}
   function escapeAttr(str){ return esc(str).replaceAll('"',"&quot;"); }
   function escapeHtml(str) { return esc(str); }
@@ -417,7 +398,7 @@ body{
     let el=$("toastFloat");
     if(!el){
       el=document.createElement("div"); el.id="toastFloat";
-      el.style.cssText="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(168,85,247,.9);color:#fff;font-weight:800;z-index:9999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s;";
+      el.style.cssText="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(168,85,247,.9);color:#fff;font-weight:800;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s;";
       document.body.appendChild(el);
     }
     el.textContent=msg; el.style.opacity="1";
@@ -425,95 +406,18 @@ body{
   }
 
   // ==========================================
-  // 1. DECOUPLED UI BINDINGS (Run Immediately)
+  // 2. MODAL & UI LOGIC
   // ==========================================
-
-  // Modals & Navigation
-  safeClick("btnSettings", () => location.href="profile.html");
-  safeClick("btnNewLead", () => openModal("new", null));
-  safeClick("leadModalClose", () => $("leadModal").classList.remove("show"));
-  safeClick("m_cancel", () => $("leadModal").classList.remove("show"));
-
-  // Support Phones
-  safeClick("btnBlueSupport", () => openSupportModal("blue"));
-  safeClick("btnRedSupport", () => openSupportModal("red"));
-  safeClick("supportCloseBtn", closeSupportModal);
-  safeClick("supportCancelBtn", closeSupportModal);
-  safeClick("supportSendBtn", async () => {
-    const msg = $("supportMsg").value.trim();
-    if(!msg) return toast("Message is empty.");
-    try{
-      await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
-        uid: UID || 'anonymous', 
-        email: ME?.email || "", 
-        name: ME?.displayName || ME?.email || "User",
-        portal: "investor",
-        priority: $("supportPriority").value, 
-        category: $("supportCategory").value, 
-        message: msg, 
-        ts: Date.now(), 
-        status: "open"
-      });
-      closeSupportModal();
-      toast("Support Request Sent ✓");
-    }catch(e){ toast("Request failed."); console.error(e); }
-  });
-
-  // Search Logic
-  safeClick("btnSearch", () => { searchText = $("qSearch").value.toLowerCase().trim(); renderList(); });
-  const qSearchEl = $("qSearch");
-  if(qSearchEl) qSearchEl.addEventListener("keydown", (e) => { if(e.key==="Enter") $("btnSearch").click(); });
-
-  // View Segment Toggles
-  document.querySelectorAll("#panel-acq .segBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#panel-acq .segBtn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      viewFilter = btn.textContent; 
-      renderList();
-    });
-  });
-
-  // Dossier Modal Segment Toggles
-  document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeInvClass = btn.getAttribute("data-class");
-      updateModalFields();
-    });
-  });
-
-  // Offerings Module Toggles
-  document.querySelectorAll(".offeringTab").forEach(tab=>{
-    tab.addEventListener("click", () => {
-      document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
-      tab.classList.add("active");
-    });
-  });
-
-  // Log Out (Requires Auth, but safely attached)
-  safeClick("btnLogout", () => {
-    if(firebase.auth().currentUser) {
-      firebase.auth().signOut().then(()=> location.href="index.html");
-    } else {
-      location.href="index.html";
-    }
-  });
-
-
-  // ==========================================
-  // 2. MODAL LOGIC & HELPERS
-  // ==========================================
-
   function openSupportModal(priority){
-    $("supportPriority").value=priority==="red"?"red":"blue";
-    $("supportSub").textContent=priority==="red"?"Red = urgent. Use for priority roadblocks.":"Blue = not urgent. Use for questions or general support.";
-    $("supportMsg").value=""; 
-    $("supportModal").style.display="flex";
+    if($("supportPriority")) $("supportPriority").value = priority === "red" ? "red" : "blue";
+    if($("supportSub")) $("supportSub").textContent = priority === "red" ? "Red = urgent. Use for priority roadblocks." : "Blue = not urgent. Use for questions or general support.";
+    if($("supportMsg")) $("supportMsg").value = ""; 
+    if($("supportModal")) $("supportModal").style.display = "flex";
   }
   
-  function closeSupportModal(){ $("supportModal").style.display="none"; }
+  function closeSupportModal(){ 
+    if($("supportModal")) $("supportModal").style.display="none"; 
+  }
 
   function updateModalFields(){
     const isSec = (activeInvClass === "Institutional Capital");
@@ -522,8 +426,8 @@ body{
   }
 
   function openModal(mode, item){
-    $("leadModal").classList.add("show");
-    $("leadModalTitle").textContent = mode==="edit" ? "Update Dossier" : "New Target Dossier";
+    if($("leadModal")) $("leadModal").classList.add("show");
+    if($("leadModalTitle")) $("leadModalTitle").textContent = mode === "edit" ? "Update Dossier" : "New Target Dossier";
     
     activeInvClass = item?.invClass || "Private Wealth";
     document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
@@ -531,20 +435,24 @@ body{
     });
     updateModalFields();
 
-    $("m_name").value = item?.name || ""; 
-    $("m_amount").value = item?.amount || "";
-    $("m_rule").value = item?.rule || "Unknown"; 
-    $("m_focus").value = item?.focus || "";
-    $("m_location").value = item?.location || "";
-    $("m_email").value = item?.email || ""; 
-    $("m_status").value = item?.status || "New Lead";
-    $("m_phones").value = (item?.phones || []).join("\n"); 
-    $("m_notes").value = item?.notes || "";
+    if($("m_name")) $("m_name").value = item?.name || ""; 
+    if($("m_amount")) $("m_amount").value = item?.amount || "";
+    if($("m_rule")) $("m_rule").value = item?.rule || "Unknown"; 
+    if($("m_focus")) $("m_focus").value = item?.focus || "";
+    if($("m_location")) $("m_location").value = item?.location || "";
+    if($("m_email")) $("m_email").value = item?.email || ""; 
+    if($("m_status")) $("m_status").value = item?.status || "New Lead";
+    if($("m_phones")) $("m_phones").value = (item?.phones || []).join("\n"); 
+    if($("m_notes")) $("m_notes").value = item?.notes || "";
 
-    $("m_save").onclick = ()=> saveModal(mode, item?.id);
+    if($("m_save")) $("m_save").onclick = ()=> saveModal(mode, item?.id);
   }
 
   async function saveModal(mode, id){
+    if (typeof firebase === 'undefined' || !UID) {
+      toast("System offline. Cannot save.");
+      return;
+    }
     const name = $("m_name").value.trim();
     if(!name) return alert("Name required");
 
@@ -568,53 +476,12 @@ body{
       payload.id = targetId;
       
       await firebase.database().ref(`${basePath}/${targetId}`).update(payload);
-      $("leadModal").classList.remove("show");
+      if($("leadModal")) $("leadModal").classList.remove("show");
       toast("Dossier Secured.");
     }catch(e){ 
       console.error("Save blocked by rules.", e);
       alert("Save blocked. Ensure your Realtime Database rules allow writing to leadsByUser/UID/buyers.");
     }
-  }
-
-
-  // ==========================================
-  // 3. FIREBASE DATA & RENDER ENGINE
-  // ==========================================
-
-  firebase.auth().onAuthStateChanged(async u=>{
-    if(!u) return location.href="index.html";
-    UID=u.uid; ME=u;
-    
-    try{
-      const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
-      const raw = rs.val();
-      ROLE = raw ? String(raw).toLowerCase() : "user";
-      if(String(u.email||"").toLowerCase()==="dealbankers@gmail.com") ROLE="god";
-    }catch(e){ 
-      console.warn("Could not fetch explicit role. Defaulting to associate.", e);
-      ROLE="user"; 
-    }
-
-    isGod = ROLE==="god";
-    isBranchManager = !isGod && ROLE==="admin";
-    $("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
-    
-    listenInvestors(); 
-  });
-
-  function listenInvestors(){
-    const path = (isGod || isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
-    firebase.database().ref(path).on("value", snap=>{
-      const v = snap.val() || {};
-      investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
-      investors.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-      $("status").textContent = `Acq: ${investors.length} Targets`;
-      renderList();
-      if(selectedId){ selected = investors.find(x=>x.id===selectedId) || null; renderConsole(); }
-    }, (error) => {
-      console.error("Permission denied or database read error", error);
-      $("status").textContent = "Error: Cannot load targets.";
-    });
   }
 
   function passesSearchAndFilter(it){
@@ -625,15 +492,21 @@ body{
     const invClass = it.invClass || "Private Wealth";
     if(viewFilter === "Private Wealth" && invClass !== "Private Wealth") return false;
     if(viewFilter === "Institutional" && invClass !== "Institutional Capital") return false;
-    
     return true;
   }
 
   function renderList(){
-    const list=$("list"); list.innerHTML="";
+    const list=$("list"); 
+    if(!list) return;
+    list.innerHTML="";
+    
     const filtered = investors.filter(it=>passesSearchAndFilter(it));
-    $("leadCountPill").textContent = `${filtered.length} leads`;
-    if(!filtered.length){ list.innerHTML=`<div class="tiny" style="padding:10px; color:var(--muted);">No targets found. Add a dossier to begin calling.</div>`; return; }
+    if($("leadCountPill")) $("leadCountPill").textContent = `${filtered.length} leads`;
+    
+    if(!filtered.length){ 
+      list.innerHTML=`<div class="tiny" style="padding:10px; color:var(--muted);">No targets found. Add a dossier to begin calling.</div>`; 
+      return; 
+    }
 
     filtered.forEach(it=>{
       const isInst = (it.invClass === "Institutional Capital");
@@ -657,7 +530,12 @@ body{
 
   function renderConsole(){
     const el=$("console");
-    if(!selected){ el.innerHTML = `<div class="tiny" style="color:var(--muted);">No target selected.</div>`; return; }
+    if(!el) return;
+    
+    if(!selected){ 
+      el.innerHTML = `<div class="tiny" style="color:var(--muted); text-align:center; margin-top:100px; font-weight:800;">No target selected.</div>`; 
+      return; 
+    }
 
     const phones = selected.phones || [];
     const isInst = (selected.invClass === "Institutional Capital");
@@ -665,15 +543,13 @@ body{
 
     if(isInst){
       const rule = selected.rule || "Unknown";
-      const is506b = rule.includes("506(b)");
-      const is506c = rule.includes("506(c)");
-      if(is506b){
+      if(rule.includes("506(b)")){
         scriptHTML = `
           <div style="color:var(--warn); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">🚨 506(b) "BUY BOX" SCRIPT (DO NOT PITCH YET):</div>
           <div style="font-size:14px; line-height:1.5; color:#fff; font-style:italic;">
             "Hey [Name], [Your Name] here. I’m a local operator in Texas. Saw your recent Form D. I'm absolutely not pitching today—just calling peer-to-peer to check your Q3/Q4 buy box for debt/equity so I know what kind of paper to send you later."
           </div>`;
-      } else if(is506c){
+      } else if(rule.includes("506(c)")){
         scriptHTML = `
           <div style="color:var(--good); font-weight:900; margin-bottom:6px; letter-spacing:.05em;">✅ 506(c) "DIRECT STRIKE" SCRIPT:</div>
           <div style="font-size:14px; line-height:1.5; color:#fff; font-style:italic;">
@@ -745,26 +621,33 @@ body{
       </div>
     `;
 
-    // Dynamic bindings after render
-    $("btnEditLead").onclick = ()=> openModal("edit", selected);
+    // Dynamic bindings after console render
+    if($("btnEditLead")) $("btnEditLead").onclick = ()=> openModal("edit", selected);
     
-    $("btnCall").onclick = async ()=> {
-      const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
-      if(!digits) return toast("No valid phone number.");
-      if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
-         window.location.href = `tel:${digits}`;
-      } else { 
-         try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(e) { toast('Copy failed'); }
-      }
-    };
+    if($("btnCall")) {
+      $("btnCall").onclick = async ()=> {
+        const v = $("activePhone") ? $("activePhone").value : ""; 
+        const digits = v.replace(/[^\d+]/g,"");
+        if(!digits) return toast("No valid phone number.");
+        if(/Android|iPhone|iPad/i.test(navigator.userAgent)){ 
+           window.location.href = `tel:${digits}`;
+        } else { 
+           try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(e) { toast('Copy failed'); }
+        }
+      };
+    }
 
-    $("btnCopy").onclick = async ()=> {
-      const v = $("activePhone").value || ""; const digits = v.replace(/[^\d+]/g,"");
-      try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
-    };
+    if($("btnCopy")) {
+      $("btnCopy").onclick = async ()=> {
+        const v = $("activePhone") ? $("activePhone").value : ""; 
+        const digits = v.replace(/[^\d+]/g,"");
+        try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
+      };
+    }
 
     document.querySelectorAll(".qbtn[data-status]").forEach(btn=>{
       btn.onclick = async ()=>{
+        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
         const st = btn.getAttribute("data-status");
         const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
         await firebase.database().ref(path).update({ status: st, updatedAt: Date.now() });
@@ -772,13 +655,164 @@ body{
       }
     });
 
-    $("btnSaveNotes").onclick = async ()=> {
-      const notes = $("noteBox").value.trim();
-      const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-      await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
-      toast("Notes Saved ✓");
-    };
+    if($("btnSaveNotes")) {
+      $("btnSaveNotes").onclick = async ()=> {
+        if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
+        const notes = $("noteBox") ? $("noteBox").value.trim() : "";
+        const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
+        await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
+        toast("Notes Saved ✓");
+      };
+    }
   }
+
+  function listenInvestors(){
+    if (typeof firebase === 'undefined' || !UID) return;
+    const path = (isGod || isBranchManager) ? PATHS.INVESTORS_MASTER : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers`;
+    firebase.database().ref(path).on("value", snap=>{
+      const v = snap.val() || {};
+      investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
+      investors.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
+      if($("status")) $("status").textContent = `Acq: ${investors.length} Targets`;
+      renderList();
+      if(selectedId){ selected = investors.find(x=>x.id===selectedId) || null; renderConsole(); }
+    }, (error) => {
+      console.error("DB Read Error", error);
+      if($("status")) $("status").textContent = "Read Error - Check Permissions";
+    });
+  }
+
+  // ==========================================
+  // 3. EXECUTION ENGINE (DOM Ready)
+  // ==========================================
+  window.addEventListener('DOMContentLoaded', () => {
+
+    // --- A. BIND ALL STATIC UI IMMEDIATELY ---
+    if($("btnSettings")) $("btnSettings").onclick = () => location.href="profile.html";
+    if($("btnNewLead")) $("btnNewLead").onclick = () => openModal("new", null);
+    if($("leadModalClose")) $("leadModalClose").onclick = () => $("leadModal").classList.remove("show");
+    if($("m_cancel")) $("m_cancel").onclick = () => $("leadModal").classList.remove("show");
+    
+    if($("btnBlueSupport")) $("btnBlueSupport").onclick = () => openSupportModal("blue");
+    if($("btnRedSupport")) $("btnRedSupport").onclick = () => openSupportModal("red");
+    if($("supportCloseBtn")) $("supportCloseBtn").onclick = closeSupportModal;
+    if($("supportCancelBtn")) $("supportCancelBtn").onclick = closeSupportModal;
+    
+    if($("supportSendBtn")) {
+      $("supportSendBtn").onclick = async () => {
+        if (typeof firebase === 'undefined' || !UID) { toast("System offline. Cannot send."); return; }
+        const msg = $("supportMsg") ? $("supportMsg").value.trim() : "";
+        if(!msg) return toast("Message is empty.");
+        try{
+          await firebase.database().ref(`${PATHS.SUPPORT}/${UID}`).push({
+            uid: UID, 
+            email: ME?.email || "", 
+            name: ME?.displayName || ME?.email || "User",
+            portal: "investor",
+            priority: $("supportPriority") ? $("supportPriority").value : "blue", 
+            category: $("supportCategory") ? $("supportCategory").value : "Other", 
+            message: msg, 
+            ts: Date.now(), 
+            status: "open"
+          });
+          closeSupportModal();
+          toast("Support Request Sent ✓");
+        }catch(e){ toast("Request failed."); console.error(e); }
+      };
+    }
+
+    if($("btnSearch")) $("btnSearch").onclick = () => { searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; renderList(); };
+    if($("qSearch")) $("qSearch").onkeydown = (e) => { if(e.key==="Enter" && $("btnSearch")) $("btnSearch").click(); };
+
+    document.querySelectorAll("#panel-acq .segBtn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll("#panel-acq .segBtn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        viewFilter = btn.textContent; 
+        renderList();
+      };
+    });
+
+    document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
+      btn.onclick = () => {
+        document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeInvClass = btn.getAttribute("data-class");
+        updateModalFields();
+      };
+    });
+
+    document.querySelectorAll(".offeringTab").forEach(tab=>{
+      tab.onclick = () => {
+        document.querySelectorAll(".offeringTab").forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
+      };
+    });
+
+    if($("btnLogout")) {
+      $("btnLogout").onclick = () => {
+        if(typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+          firebase.auth().signOut().then(()=> location.href="index.html");
+        } else {
+          location.href="index.html";
+        }
+      };
+    }
+
+    // --- B. FIREBASE HEALTH CHECK ---
+    if (typeof firebase === 'undefined') {
+      console.error("CRITICAL: Firebase SDK blocked or failed to load.");
+      if($("status")) $("status").textContent = "System Offline (SDK Error)";
+      if($("roleReadout")) $("roleReadout").textContent = "ROLE: OFFLINE";
+      return; 
+    }
+
+    // --- C. FIREBASE INITIALIZATION ---
+    try {
+      if(!firebase.apps.length) {
+        if(!window.firebaseConfig) {
+          console.error("window.firebaseConfig is missing.");
+          if($("status")) $("status").textContent = "Config Error";
+          return;
+        }
+        firebase.initializeApp(window.firebaseConfig);
+      }
+    } catch(e) {
+      console.error("Firebase init error:", e);
+      if($("status")) $("status").textContent = "Init Error";
+      return;
+    }
+
+    // --- D. FIREBASE AUTHENTICATION ---
+    try {
+      firebase.auth().onAuthStateChanged(async u => {
+        if(!u) {
+          location.href="index.html";
+          return;
+        }
+        UID = u.uid; 
+        ME = u;
+        
+        try {
+          const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
+          ROLE = rs.val() ? String(rs.val()).toLowerCase() : "user";
+          if(String(u.email||"").toLowerCase() === "dealbankers@gmail.com") ROLE = "god";
+        } catch(e) {
+          console.warn("Role fetch failed. Defaulting to Associate.", e);
+          ROLE = "user";
+        }
+
+        isGod = ROLE === "god";
+        isBranchManager = !isGod && ROLE === "admin";
+        if($("roleReadout")) $("roleReadout").textContent = "ROLE: " + (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
+
+        listenInvestors();
+      });
+    } catch(e) {
+      console.error("Auth listen error:", e);
+      if($("status")) $("status").textContent = "Auth Error";
+    }
+  });
 </script>
 </body>
 </html>
