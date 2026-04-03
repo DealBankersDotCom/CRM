@@ -163,7 +163,7 @@ body{
     <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" aria-label="Blue Phone">☎</button>
     <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" aria-label="Red Phone">☎</button>
     <button class="icon-btn" id="btnSettings" type="button" title="Settings">⚙️</button>
-    <a class="chip" id="logoutBtn">Log Out</a>
+    <a class="chip" id="logoutBtn" style="cursor:pointer;">Log Out</a>
   </nav>
 </header>
 
@@ -373,7 +373,13 @@ body{
 <script src="config.js"></script>
 
 <script>
+  // Safe Selection & Binding Utility
   const $ = (id) => document.getElementById(id);
+  const safeBind = (id, event, handler) => {
+    const el = $(id);
+    if (el) el.addEventListener(event, handler);
+    else console.warn(`Element #${id} not found. SafeBind skipped to prevent crash.`);
+  };
 
   // Initialize Firebase First
   (function ensureFirebaseInit(){
@@ -423,14 +429,14 @@ body{
   // ==========================================
 
   function openSupportModal(priority){
-    $("supportPriority").value = priority === "red" ? "red" : "blue";
-    $("supportSub").textContent = priority === "red" ? "Red = urgent. Use for priority roadblocks." : "Blue = not urgent. Use for questions or general support.";
-    $("supportMsg").value = ""; 
-    $("supportModal").style.display = "flex";
+    if($("supportPriority")) $("supportPriority").value = priority === "red" ? "red" : "blue";
+    if($("supportSub")) $("supportSub").textContent = priority === "red" ? "Red = urgent. Use for priority roadblocks." : "Blue = not urgent. Use for questions or general support.";
+    if($("supportMsg")) $("supportMsg").value = ""; 
+    if($("supportModal")) $("supportModal").style.display = "flex";
   }
   
   function closeSupportModal(){ 
-    $("supportModal").style.display="none"; 
+    if($("supportModal")) $("supportModal").style.display="none"; 
   }
 
   function updateModalFields(){
@@ -440,8 +446,8 @@ body{
   }
 
   function openModal(mode, item){
-    $("leadModal").classList.add("show");
-    $("leadModalTitle").textContent = mode === "edit" ? "Update Dossier" : "New Target Dossier";
+    if($("leadModal")) $("leadModal").classList.add("show");
+    if($("leadModalTitle")) $("leadModalTitle").textContent = mode === "edit" ? "Update Dossier" : "New Target Dossier";
     
     activeInvClass = item?.invClass || "Private Wealth";
     document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => {
@@ -449,34 +455,34 @@ body{
     });
     updateModalFields();
 
-    $("m_name").value = item?.name || ""; 
-    $("m_amount").value = item?.amount || "";
-    $("m_rule").value = item?.rule || "Unknown"; 
-    $("m_focus").value = item?.focus || "";
-    $("m_location").value = item?.location || "";
-    $("m_email").value = item?.email || ""; 
-    $("m_status").value = item?.status || "New Lead";
-    $("m_phones").value = (item?.phones || []).join("\n"); 
-    $("m_notes").value = item?.notes || "";
+    if($("m_name")) $("m_name").value = item?.name || ""; 
+    if($("m_amount")) $("m_amount").value = item?.amount || "";
+    if($("m_rule")) $("m_rule").value = item?.rule || "Unknown"; 
+    if($("m_focus")) $("m_focus").value = item?.focus || "";
+    if($("m_location")) $("m_location").value = item?.location || "";
+    if($("m_email")) $("m_email").value = item?.email || ""; 
+    if($("m_status")) $("m_status").value = item?.status || "New Lead";
+    if($("m_phones")) $("m_phones").value = (item?.phones || []).join("\n"); 
+    if($("m_notes")) $("m_notes").value = item?.notes || "";
 
-    $("m_save").onclick = ()=> saveModal(mode, item?.id);
+    if($("m_save")) $("m_save").onclick = ()=> saveModal(mode, item?.id);
   }
 
   async function saveModal(mode, id){
-    const name = $("m_name").value.trim();
+    const name = $("m_name") ? $("m_name").value.trim() : "";
     if(!name) return alert("Name required");
 
     const payload = {
       name, 
       invClass: activeInvClass,
-      amount: $("m_amount").value.trim(), 
-      rule: $("m_rule").value, 
-      focus: $("m_focus").value.trim(),
-      status: $("m_status").value,
-      location: $("m_location").value.trim(), 
-      email: $("m_email").value.trim(),
-      phones: $("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean),
-      notes: $("m_notes").value.trim(), 
+      amount: $("m_amount") ? $("m_amount").value.trim() : "", 
+      rule: $("m_rule") ? $("m_rule").value : "Unknown", 
+      focus: $("m_focus") ? $("m_focus").value.trim() : "",
+      status: $("m_status") ? $("m_status").value : "New Lead",
+      location: $("m_location") ? $("m_location").value.trim() : "", 
+      email: $("m_email") ? $("m_email").value.trim() : "",
+      phones: $("m_phones") ? $("m_phones").value.split(/\n+/).map(s=>s.trim()).filter(Boolean) : [],
+      notes: $("m_notes") ? $("m_notes").value.trim() : "", 
       updatedAt: Date.now()
     };
 
@@ -486,7 +492,7 @@ body{
       payload.id = targetId;
       
       await firebase.database().ref(`${basePath}/${targetId}`).update(payload);
-      $("leadModal").classList.remove("show");
+      if($("leadModal")) $("leadModal").classList.remove("show");
       toast("Dossier Secured.");
     }catch(e){ 
       console.error("Save blocked by rules.", e);
@@ -494,75 +500,92 @@ body{
     }
   }
 
-  // ==========================================
-  // DIRECT DOM BINDINGS (Executes Instantly)
-  // ==========================================
-  
-  // Navigation
-  $("btnSettings").onclick = () => location.href="settings.html";
-  $("logoutBtn").onclick = () => { if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href="index.html"); };
 
-  // Support Phones
-  $("btnBlueSupport").onclick = () => openSupportModal("blue");
-  $("btnRedSupport").onclick = () => openSupportModal("red");
-  $("supportCloseBtn").onclick = $("supportCancelBtn").onclick = closeSupportModal;
+  // ==========================================
+  // HARDENED DOM BINDINGS 
+  // Wait for the page to exist, then safely bind
+  // ==========================================
   
-  $("supportSendBtn").onclick = async () => {
-    const msg = $("supportMsg").value.trim();
-    if(!msg) return toast("Message is empty.");
-    try{
-      await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
-        uid: UID || 'anonymous', 
-        email: ME?.email || "", 
-        name: ME?.displayName || ME?.email || "User",
-        portal: "investor",
-        priority: $("supportPriority").value, 
-        category: $("supportCategory").value, 
-        message: msg, 
-        ts: Date.now(), 
-        status: "open"
+  document.addEventListener('DOMContentLoaded', () => {
+    
+    // Navigation
+    safeBind("btnSettings", "click", () => location.href="settings.html");
+    safeBind("logoutBtn", "click", () => { 
+      if(typeof firebase !== 'undefined' && firebase.auth().currentUser) {
+        firebase.auth().signOut().then(()=>location.href="index.html"); 
+      } else {
+        location.href="index.html";
+      }
+    });
+
+    // Support Phones
+    safeBind("btnBlueSupport", "click", () => openSupportModal("blue"));
+    safeBind("btnRedSupport", "click", () => openSupportModal("red"));
+    safeBind("supportCloseBtn", "click", closeSupportModal);
+    safeBind("supportCancelBtn", "click", closeSupportModal);
+    
+    safeBind("supportSendBtn", "click", async () => {
+      const msg = $("supportMsg") ? $("supportMsg").value.trim() : "";
+      if(!msg) return toast("Message is empty.");
+      try{
+        await firebase.database().ref(`${PATHS.SUPPORT}/${UID || 'anonymous'}`).push({
+          uid: UID || 'anonymous', 
+          email: ME?.email || "", 
+          name: ME?.displayName || ME?.email || "User",
+          portal: "investor",
+          priority: $("supportPriority") ? $("supportPriority").value : "blue", 
+          category: $("supportCategory") ? $("supportCategory").value : "Other", 
+          message: msg, 
+          ts: Date.now(), 
+          status: "open"
+        });
+        closeSupportModal();
+        toast("Support Request Sent ✓");
+      }catch(e){ toast("Request failed."); console.error(e); }
+    });
+
+    // Add Lead Modal
+    safeBind("btnNewLead", "click", () => openModal("new", null));
+    safeBind("leadModalClose", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
+    safeBind("m_cancel", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
+
+    // Search Logic
+    safeBind("btnSearch", "click", () => { 
+      searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
+      renderList(); 
+    });
+    safeBind("qSearch", "keydown", (e) => { 
+      if(e.key==="Enter" && $("btnSearch")) $("btnSearch").click(); 
+    });
+
+    // View Segment Toggles
+    document.querySelectorAll("#queueFilters .segBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        viewFilter = btn.getAttribute("data-filter"); 
+        renderList();
       });
-      closeSupportModal();
-      toast("Support Request Sent ✓");
-    }catch(e){ toast("Request failed."); console.error(e); }
-  };
+    });
 
-  // Add Lead Modal
-  $("btnNewLead").onclick = () => openModal("new", null);
-  $("leadModalClose").onclick = $("m_cancel").onclick = () => $("leadModal").classList.remove("show");
+    // Dossier Modal Segment Toggles
+    document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        activeInvClass = btn.getAttribute("data-class");
+        updateModalFields();
+      });
+    });
 
-  // Search Logic
-  $("btnSearch").onclick = () => { searchText = $("qSearch").value.toLowerCase().trim(); renderList(); };
-  $("qSearch").onkeydown = (e) => { if(e.key==="Enter") $("btnSearch").click(); };
-
-  // View Segment Toggles
-  document.querySelectorAll("#queueFilters .segBtn").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      viewFilter = btn.getAttribute("data-filter"); 
-      renderList();
-    };
+    // Offerings Module Toggles
+    document.querySelectorAll("#offeringsTabs .offeringTab").forEach(tab=>{
+      tab.addEventListener("click", () => {
+        document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
+        tab.classList.add("active");
+      });
+    });
   });
-
-  // Dossier Modal Segment Toggles
-  document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
-    btn.onclick = () => {
-      document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
-      btn.classList.add("active");
-      activeInvClass = btn.getAttribute("data-class");
-      updateModalFields();
-    };
-  });
-
-  // Offerings Module Toggles
-  document.querySelectorAll("#offeringsTabs .offeringTab").forEach(tab=>{
-    tab.onclick = () => {
-      document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
-      tab.classList.add("active");
-    };
-  });
-
 
   // ==========================================
   // FIREBASE DATA & RENDER ENGINE
@@ -585,7 +608,7 @@ body{
 
       isGod = ROLE==="god";
       isBranchManager = !isGod && ROLE==="admin";
-      $("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
+      if($("roleReadout")) $("roleReadout").textContent="ROLE: "+ (isGod?"GOD MODE":isBranchManager?"BRANCH MANAGER":"ASSOCIATE");
       
       listenInvestors(); 
     });
@@ -597,12 +620,12 @@ body{
       const v = snap.val() || {};
       investors = Object.entries(v).map(([id,it])=>({ id, ...it }));
       investors.sort((a,b)=>(b.updatedAt||0)-(a.updatedAt||0));
-      $("status").textContent = `Acq: ${investors.length} Targets`;
+      if($("status")) $("status").textContent = `Acq: ${investors.length} Targets`;
       renderList();
       if(selectedId){ selected = investors.find(x=>x.id===selectedId) || null; renderConsole(); }
     }, (error) => {
       console.error("Permission denied or database read error", error);
-      $("status").textContent = "Error: Cannot load targets.";
+      if($("status")) $("status").textContent = "Error: Cannot load targets.";
     });
   }
 
@@ -620,10 +643,11 @@ body{
 
   function renderList(){
     const list=$("list"); 
+    if(!list) return;
     list.innerHTML="";
     
     const filtered = investors.filter(it=>passesSearchAndFilter(it));
-    $("leadCountPill").textContent = `${filtered.length} leads`;
+    if($("leadCountPill")) $("leadCountPill").textContent = `${filtered.length} leads`;
     
     if(!filtered.length){ 
       list.innerHTML=`<div class="tiny" style="padding:10px; color:var(--muted);">No targets found. Add a dossier to begin calling.</div>`; 
@@ -652,6 +676,7 @@ body{
 
   function renderConsole(){
     const el=$("console");
+    if(!el) return;
     
     if(!selected){ 
       el.innerHTML = `<div class="tiny" style="color:var(--muted); text-align:center; margin-top:100px; font-weight:800;">No target selected.</div>`; 
@@ -742,10 +767,10 @@ body{
       </div>
     `;
 
-    // Dynamic bindings after console render
-    $("btnEditLead").onclick = ()=> openModal("edit", selected);
+    // Dynamic bindings after console render using SafeBind
+    safeBind("btnEditLead", "click", ()=> openModal("edit", selected));
     
-    $("btnCall").onclick = async ()=> {
+    safeBind("btnCall", "click", async ()=> {
       const v = $("activePhone") ? $("activePhone").value : ""; 
       const digits = v.replace(/[^\d+]/g,"");
       if(!digits) return toast("No valid phone number.");
@@ -754,13 +779,13 @@ body{
       } else { 
          try{ await navigator.clipboard.writeText(digits); toast(`Number copied to dialer`); } catch(e) { toast('Copy failed'); }
       }
-    };
+    });
 
-    $("btnCopy").onclick = async ()=> {
+    safeBind("btnCopy", "click", async ()=> {
       const v = $("activePhone") ? $("activePhone").value : ""; 
       const digits = v.replace(/[^\d+]/g,"");
       try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
-    };
+    });
 
     document.querySelectorAll(".qbtn[data-status]").forEach(btn=>{
       btn.onclick = async ()=>{
@@ -772,13 +797,13 @@ body{
       }
     });
 
-    $("btnSaveNotes").onclick = async ()=> {
+    safeBind("btnSaveNotes", "click", async ()=> {
       if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
       const notes = $("noteBox") ? $("noteBox").value.trim() : "";
       const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
       await firebase.database().ref(path).update({ notes, updatedAt: Date.now() });
       toast("Notes Saved ✓");
-    };
+    });
   }
 
 </script>
