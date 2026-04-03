@@ -373,13 +373,19 @@ body{
 <script src="config.js"></script>
 
 <script>
-  // Safe Selection & Binding Utility
+  // ==========================================
+  // SAFE BINDING ENGINE (Bomb Defusal Sequence)
+  // ==========================================
   const $ = (id) => document.getElementById(id);
-  const safeBind = (id, event, handler) => {
-    const el = $(id);
-    if (el) el.addEventListener(event, handler);
-    else console.warn(`Element #${id} not found. SafeBind skipped to prevent crash.`);
-  };
+  
+  function safeAttach(id, eventType, handler) {
+    const element = $(id);
+    if (element) {
+      element.addEventListener(eventType, handler);
+    } else {
+      console.warn(`Wire clipped: Element '${id}' not found. Safely bypassing...`);
+    }
+  }
 
   // Initialize Firebase First
   (function ensureFirebaseInit(){
@@ -464,8 +470,6 @@ body{
     if($("m_status")) $("m_status").value = item?.status || "New Lead";
     if($("m_phones")) $("m_phones").value = (item?.phones || []).join("\n"); 
     if($("m_notes")) $("m_notes").value = item?.notes || "";
-
-    if($("m_save")) $("m_save").onclick = ()=> saveModal(mode, item?.id);
   }
 
   async function saveModal(mode, id){
@@ -502,15 +506,14 @@ body{
 
 
   // ==========================================
-  // HARDENED DOM BINDINGS 
-  // Wait for the page to exist, then safely bind
+  // LAUNCH BINDINGS ONCE DOM IS READY
   // ==========================================
   
-  document.addEventListener('DOMContentLoaded', () => {
+  function initializeUIBindings() {
     
-    // Navigation
-    safeBind("btnSettings", "click", () => location.href="settings.html");
-    safeBind("logoutBtn", "click", () => { 
+    // Top Navigation
+    safeAttach("btnSettings", "click", () => { location.href="profile.html"; });
+    safeAttach("logoutBtn", "click", () => { 
       if(typeof firebase !== 'undefined' && firebase.auth().currentUser) {
         firebase.auth().signOut().then(()=>location.href="index.html"); 
       } else {
@@ -519,12 +522,12 @@ body{
     });
 
     // Support Phones
-    safeBind("btnBlueSupport", "click", () => openSupportModal("blue"));
-    safeBind("btnRedSupport", "click", () => openSupportModal("red"));
-    safeBind("supportCloseBtn", "click", closeSupportModal);
-    safeBind("supportCancelBtn", "click", closeSupportModal);
+    safeAttach("btnBlueSupport", "click", () => openSupportModal("blue"));
+    safeAttach("btnRedSupport", "click", () => openSupportModal("red"));
+    safeAttach("supportCloseBtn", "click", closeSupportModal);
+    safeAttach("supportCancelBtn", "click", closeSupportModal);
     
-    safeBind("supportSendBtn", "click", async () => {
+    safeAttach("supportSendBtn", "click", async () => {
       const msg = $("supportMsg") ? $("supportMsg").value.trim() : "";
       if(!msg) return toast("Message is empty.");
       try{
@@ -544,48 +547,55 @@ body{
       }catch(e){ toast("Request failed."); console.error(e); }
     });
 
-    // Add Lead Modal
-    safeBind("btnNewLead", "click", () => openModal("new", null));
-    safeBind("leadModalClose", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
-    safeBind("m_cancel", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
+    // Add/Edit Lead Modal Actions
+    safeAttach("btnNewLead", "click", () => openModal("new", null));
+    safeAttach("leadModalClose", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
+    safeAttach("m_cancel", "click", () => { if($("leadModal")) $("leadModal").classList.remove("show"); });
+    safeAttach("m_save", "click", () => saveModal(selected ? 'edit' : 'new', selected?.id));
 
     // Search Logic
-    safeBind("btnSearch", "click", () => { 
+    safeAttach("btnSearch", "click", () => { 
       searchText = $("qSearch") ? $("qSearch").value.toLowerCase().trim() : ""; 
       renderList(); 
     });
-    safeBind("qSearch", "keydown", (e) => { 
+    safeAttach("qSearch", "keydown", (e) => { 
       if(e.key==="Enter" && $("btnSearch")) $("btnSearch").click(); 
     });
 
-    // View Segment Toggles
-    document.querySelectorAll("#queueFilters .segBtn").forEach(btn => {
-      btn.addEventListener("click", () => {
+    // Segment Toggles (Using Event Delegation so we don't have to attach to individual classes over and over)
+    document.body.addEventListener("click", (e) => {
+      
+      // 1. Queue Filters
+      const qBtn = e.target.closest("#queueFilters .segBtn");
+      if (qBtn) {
         document.querySelectorAll("#queueFilters .segBtn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        viewFilter = btn.getAttribute("data-filter"); 
+        qBtn.classList.add("active");
+        viewFilter = qBtn.getAttribute("data-filter"); 
         renderList();
-      });
-    });
+      }
 
-    // Dossier Modal Segment Toggles
-    document.querySelectorAll("#classToggleGroup .segBtn").forEach(btn => {
-      btn.addEventListener("click", () => {
+      // 2. Class Toggles in Modal
+      const classBtn = e.target.closest("#classToggleGroup .segBtn");
+      if (classBtn) {
         document.querySelectorAll("#classToggleGroup .segBtn").forEach(b => b.classList.remove("active"));
-        btn.classList.add("active");
-        activeInvClass = btn.getAttribute("data-class");
+        classBtn.classList.add("active");
+        activeInvClass = classBtn.getAttribute("data-class");
         updateModalFields();
-      });
+      }
+
+      // 3. Offering Tabs
+      const offTab = e.target.closest("#offeringsTabs .offeringTab");
+      if (offTab) {
+        document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t => t.classList.remove("active"));
+        offTab.classList.add("active");
+      }
     });
 
-    // Offerings Module Toggles
-    document.querySelectorAll("#offeringsTabs .offeringTab").forEach(tab=>{
-      tab.addEventListener("click", () => {
-        document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
-        tab.classList.add("active");
-      });
-    });
-  });
+  }
+
+  // Fire everything up when the HTML finishes loading
+  document.addEventListener('DOMContentLoaded', initializeUIBindings);
+
 
   // ==========================================
   // FIREBASE DATA & RENDER ENGINE
@@ -767,10 +777,10 @@ body{
       </div>
     `;
 
-    // Dynamic bindings after console render using SafeBind
-    safeBind("btnEditLead", "click", ()=> openModal("edit", selected));
+    // Because the console is dynamically generated, we MUST bind these right after they are created.
+    safeAttach("btnEditLead", "click", ()=> openModal("edit", selected));
     
-    safeBind("btnCall", "click", async ()=> {
+    safeAttach("btnCall", "click", async ()=> {
       const v = $("activePhone") ? $("activePhone").value : ""; 
       const digits = v.replace(/[^\d+]/g,"");
       if(!digits) return toast("No valid phone number.");
@@ -781,7 +791,7 @@ body{
       }
     });
 
-    safeBind("btnCopy", "click", async ()=> {
+    safeAttach("btnCopy", "click", async ()=> {
       const v = $("activePhone") ? $("activePhone").value : ""; 
       const digits = v.replace(/[^\d+]/g,"");
       try{ await navigator.clipboard.writeText(digits); toast("Number Copied"); } catch(e){ toast('Copy failed'); }
@@ -797,7 +807,7 @@ body{
       }
     });
 
-    safeBind("btnSaveNotes", "click", async ()=> {
+    safeAttach("btnSaveNotes", "click", async ()=> {
       if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
       const notes = $("noteBox") ? $("noteBox").value.trim() : "";
       const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
