@@ -312,6 +312,14 @@ body{
   display:flex;gap:8px;flex-wrap:wrap;margin-top:6px
 }
 
+/* TRACKER & SIGNATURE UI */
+.tracker-steps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
+.tracker-btn { font-size: 11px; padding: 6px 10px; flex: 1; text-align: center; }
+.sig-container { background: #fff; border-radius: 8px; padding: 4px; margin-top: 8px; width: fit-content; }
+.photo-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
+.photo-grid img { height: 60px; width: 60px; border-radius: 6px; object-fit: cover; cursor: pointer; border: 1px solid rgba(255,255,255,.2); }
+.photo-grid img:hover { transform: scale(1.05); }
+
 /* MODALS */
 .modal-backdrop{
   position:fixed;inset:0;background:rgba(0,0,0,.72);
@@ -536,7 +544,7 @@ body{
 <div class="modal-backdrop" id="jobModal">
   <div class="modal" role="dialog" aria-label="Job Admin">
     <h3 id="jobModalTitle">Create Local Job</h3>
-    <p class="small">Admin only. Writes to <span style="opacity:.95">/jobs/&lt;jobId&gt;</span>.</p>
+    <p class="small">Branch Manager / Admin only. Writes to <span style="opacity:.95">/jobs/&lt;jobId&gt;</span>.</p>
 
     <div class="hr"></div>
 
@@ -1351,7 +1359,7 @@ rbSubmit.addEventListener('click', async ()=>{
 });
 
 /* ==========================
-   LOCAL JOBS
+   LOCAL JOBS (With Tracker & Photos)
 ========================== */
 function setTab(tab){
   currentTab = tab;
@@ -1388,8 +1396,14 @@ function renderJobs(){
   for(const id of ids){
     const j = jobsCache[id] || {};
     const active = (id === selectedJobId) ? 'active' : '';
-    // Handle legacy splitting or new single address field gracefully
     const loc = j.address || [j.city, j.zip].filter(Boolean).join(' ');
+    
+    // Check if claimed to show status
+    let execLabel = '';
+    if(j.claimedBy && Object.keys(j.claimedBy).length > 0) {
+       execLabel = `<span class="pill blue">${esc(j.executionStatus || 'Claimed')}</span>`;
+    }
+    
     const meta = [j.trade, loc, j.targetDate].filter(Boolean).join(' • ');
     html += `
       <div class="row-item ${active}" data-jobid="${esc(id)}">
@@ -1398,6 +1412,7 @@ function renderJobs(){
         <div class="meta-line">
           <span class="pill ${j.status==='upcoming' ? 'warn':'good'}">${esc((j.status || 'active').toUpperCase())}</span>
           ${j.budget ? `<span class="pill blue">${esc(j.budget)}</span>` : ''}
+          ${execLabel}
         </div>
       </div>
     `;
@@ -1409,6 +1424,7 @@ function renderJobs(){
   renderJobDetail(selectedJobId);
   if(isBranchManager) btnEditJob.disabled = !selectedJobId;
 }
+
 function renderJobDetail(id){
   const j = jobsCache[id];
   if(!j){
@@ -1416,12 +1432,85 @@ function renderJobDetail(id){
     return;
   }
 
-  // Graceful fallback if old jobs have city/zip separate
   let addressDisplay = j.address || '';
   if(!addressDisplay && (j.city || j.zip)) {
     addressDisplay = [j.city, j.zip].filter(Boolean).join(', ');
   }
 
+  // Tracking and Claims Logic
+  const hasClaim = j.claimedBy && Object.keys(j.claimedBy).length > 0;
+  const isClaimedByMe = j.claimedBy && j.claimedBy[UID];
+  const currentStep = j.executionStatus || 'Pending';
+
+  let actionHTML = '';
+
+  if (!hasClaim && acceptingJobs) {
+      actionHTML += `<button class="chip primary" id="claimJobBtn" type="button">📍 Claim This Job</button>`;
+  } else if (hasClaim && !isClaimedByMe && !isBranchManager) {
+      actionHTML += `<div class="pill warn">This job is claimed by another contractor.</div>`;
+  }
+
+  if (isClaimedByMe || isBranchManager) {
+      // 1. Execution Tracker
+      const steps = ['Dispatched', 'Arrived On-Site', 'Assessing', 'Retrieving Parts', 'Work In Progress', 'Completed'];
+      let stepsHTML = steps.map(s => {
+          const isActive = currentStep === s;
+          return `<button class="chip ${isActive ? 'primary' : 'ghost'} tracker-btn" data-step="${s}">${s}</button>`;
+      }).join('');
+
+      actionHTML += `
+          <div class="hr"></div>
+          <h4>Job Execution Tracker</h4>
+          <div class="small" style="margin-bottom:8px;">Update status to keep customers and vendors informed.</div>
+          <div class="tracker-steps">${stepsHTML}</div>
+      `;
+
+      // 2. Photos UI
+      let photosHTML = '';
+      if(j.photos) {
+          const pKeys = Object.keys(j.photos);
+          photosHTML = `<div class="photo-grid">` +
+              pKeys.map(k => `<a href="${j.photos[k].url}" target="_blank"><img src="${j.photos[k].url}" title="Uploaded by ${j.photos[k].uploadedBy}"></a>`).join('') +
+          `</div>`;
+      }
+
+      actionHTML += `
+          <div class="hr" style="margin-top:16px;"></div>
+          <h4>Job Photos</h4>
+          <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
+             <button class="chip ghost" id="uploadPhotoBtn" type="button">📷 Upload Photo</button>
+             <input type="file" id="photoInput" style="display:none" accept="image/*">
+             <div class="small" id="uploadStatus"></div>
+          </div>
+          ${photosHTML}
+      `;
+
+      // 3. Signature UI (Only if Completed)
+      if (currentStep === 'Completed') {
+          actionHTML += `<div class="hr"></div><h4>Customer Sign-Off</h4>`;
+          if(!j.signature) {
+              actionHTML += `
+                  <div class="sig-container">
+                      <canvas id="sigCanvas" width="300" height="150" style="border:1px solid #ccc; touch-action:none;"></canvas>
+                  </div>
+                  <div style="display:flex; gap:8px; margin-top:8px;">
+                      <button class="chip ghost" id="clearSigBtn" type="button">Clear</button>
+                      <button class="chip primary" id="saveSigBtn" type="button">Save Signature</button>
+                  </div>
+              `;
+          } else {
+              actionHTML += `
+                  <div style="margin-top:8px;">
+                      <div class="pill good">Signed by Customer</div>
+                      <img src="${j.signature.data}" style="background:#fff; height:100px; border-radius:6px; margin-top:8px; display:block; border:1px solid #ccc;">
+                      <div class="small">Signed on: ${new Date(j.signature.ts).toLocaleString()}</div>
+                  </div>
+              `;
+          }
+      }
+  }
+
+  // Add the base panel wrapping
   detailPanel.innerHTML = `
     <div class="panel">
       <h3>${esc(j.title || '(Untitled local job)')}</h3>
@@ -1432,13 +1521,12 @@ function renderJobDetail(id){
       <div class="kv"><b>Budget:</b> ${esc(j.budget || '')}</div>
       <div class="hr"></div>
       <div class="kv"><b>Description:</b><br>${esc(j.description || '').replace(/\n/g,'<br>')}</div>
-      <div class="hr"></div>
-      <div class="small">Updated: ${esc(j.updatedAt || '')}</div>
-      <div class="claim-buttons">
-        <button class="chip primary" id="claimJobBtn" type="button">📍 Claim This Job</button>
-        <button class="chip ghost" id="jobSupportBtn" type="button">Need Help</button>
+      
+      <div class="claim-buttons" style="margin-top:12px;">
+        ${actionHTML}
+        ${!hasClaim ? `<button class="chip ghost" id="jobSupportBtn" style="margin-left:auto;" type="button">Need Help</button>` : ''}
       </div>
-      <div class="small" style="margin-top:8px">Requires Live Location ON to claim.</div>
+      ${!hasClaim ? `<div class="small" style="margin-top:8px">Requires Live Location ON to claim.</div>` : ''}
     </div>
   `;
 
@@ -1446,6 +1534,7 @@ function renderJobDetail(id){
     r.classList.toggle('active', r.dataset.jobid === id);
   });
 
+  // Attach Event Listeners dynamically
   const claimBtn = document.getElementById("claimJobBtn");
   const supportBtn = document.getElementById("jobSupportBtn");
 
@@ -1462,7 +1551,8 @@ function renderJobDetail(id){
           email: USER_EMAIL || null,
           ts: firebase.database.ServerValue.TIMESTAMP
         });
-        alert("✅ Job claimed.");
+        await firebase.database().ref(`jobs/${id}/executionStatus`).set("Dispatched");
+        alert("✅ Job claimed. Tracker initialized.");
         updateClaimCount();
       }catch(e){
         console.error(e);
@@ -1479,7 +1569,110 @@ function renderJobDetail(id){
       showRBModal(false);
     };
   }
+
+  // Attach Tracker Logic
+  document.querySelectorAll('.tracker-btn').forEach(btn => {
+      btn.onclick = async () => {
+          const step = btn.getAttribute('data-step');
+          await firebase.database().ref(`jobs/${id}/executionStatus`).set(step);
+          await firebase.database().ref(`jobs/${id}/executionLog`).push({
+              step: step,
+              ts: Date.now(),
+              by: USER_EMAIL
+          });
+      };
+  });
+
+  // Attach Photo Upload Logic (Base64 Compressor)
+  const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
+  const photoInput = document.getElementById('photoInput');
+  const uploadStatus = document.getElementById('uploadStatus');
+
+  if(uploadPhotoBtn && photoInput) {
+      uploadPhotoBtn.onclick = () => photoInput.click();
+      photoInput.onchange = (e) => {
+          const file = e.target.files[0];
+          if(!file) return;
+          uploadStatus.textContent = "Compressing & Uploading...";
+          
+          const reader = new FileReader();
+          reader.onload = (re) => {
+              const img = new Image();
+              img.onload = () => {
+                  const canvas = document.createElement('canvas');
+                  const MAX_WIDTH = 1000;
+                  let scale = 1;
+                  if(img.width > MAX_WIDTH) scale = MAX_WIDTH / img.width;
+                  canvas.width = img.width * scale;
+                  canvas.height = img.height * scale;
+                  
+                  const ctx = canvas.getContext('2d');
+                  ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+                  
+                  // Compress to base64 JPEG
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
+
+                  firebase.database().ref(`jobs/${id}/photos`).push({
+                      url: dataUrl,
+                      uploadedBy: USER_EMAIL,
+                      ts: Date.now()
+                  }).then(() => {
+                      uploadStatus.textContent = "Upload complete!";
+                      setTimeout(() => uploadStatus.textContent = "", 2000);
+                  }).catch(err => {
+                      uploadStatus.textContent = "Error: " + err.message;
+                  });
+              };
+              img.src = re.target.result;
+          };
+          reader.readAsDataURL(file);
+      };
+  }
+
+  // Attach Signature Logic
+  const sigCanvas = document.getElementById('sigCanvas');
+  if(sigCanvas) {
+      const ctx = sigCanvas.getContext('2d');
+      ctx.strokeStyle = "#0b131b";
+      ctx.lineWidth = 3;
+      let drawing = false;
+
+      function getPos(e) {
+          const rect = sigCanvas.getBoundingClientRect();
+          let clientX = e.clientX;
+          let clientY = e.clientY;
+          if(e.touches && e.touches.length > 0) {
+              clientX = e.touches[0].clientX;
+              clientY = e.touches[0].clientY;
+          }
+          return { x: clientX - rect.left, y: clientY - rect.top };
+      }
+
+      const start = (e) => { e.preventDefault(); drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
+      const draw = (e) => { e.preventDefault(); if(!drawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
+      const stop = (e) => { e.preventDefault(); drawing = false; };
+
+      sigCanvas.addEventListener('mousedown', start);
+      sigCanvas.addEventListener('mousemove', draw);
+      sigCanvas.addEventListener('mouseup', stop);
+      sigCanvas.addEventListener('mouseout', stop);
+      sigCanvas.addEventListener('touchstart', start, {passive:false});
+      sigCanvas.addEventListener('touchmove', draw, {passive:false});
+      sigCanvas.addEventListener('touchend', stop);
+
+      document.getElementById('clearSigBtn').onclick = () => ctx.clearRect(0,0,sigCanvas.width,sigCanvas.height);
+      document.getElementById('saveSigBtn').onclick = async () => {
+          const dataUrl = sigCanvas.toDataURL('image/png');
+          await firebase.database().ref(`jobs/${id}/signature`).set({
+              data: dataUrl,
+              ts: Date.now(),
+              by: USER_EMAIL
+          });
+          alert("Customer signature saved successfully.");
+      };
+  }
 }
+
 function subscribeJobs(){
   status.textContent = 'Loading local jobs…';
   firebase.database().ref('jobs').on('value', snap=>{
@@ -1506,7 +1699,6 @@ function openJobModal(mode){
     jobTitle.value = j.title || '';
     jobStatus.value = j.status || 'active';
     jobTrade.value = j.trade || '';
-    // fallback for legacy edits
     jobAddress.value = j.address || [j.city, j.zip].filter(Boolean).join(' ') || '';
     jobDate.value = j.targetDate || '';
     jobBudget.value = j.budget || '';
