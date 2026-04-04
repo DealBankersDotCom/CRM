@@ -198,23 +198,24 @@ body{
   background:#133e6a;color:#fff;font-weight:800;cursor:pointer;
 }
 
-.admin-strip,.bm-strip{
-  display:none;
+.local-strip,.gc-strip{
   margin:0 0 14px;
   padding:12px 14px;
   border-radius:16px;
   border:1px solid rgba(255,255,255,.14);
   background:rgba(16,34,50,.62);
 }
-.admin-strip .row,.bm-strip .row{
+.gc-strip { display:none; } /* Hidden for default associates */
+
+.local-strip .row,.gc-strip .row{
   display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap
 }
-.admin-strip .btn,.bm-strip .btn{
+.local-strip .btn,.gc-strip .btn{
   padding:8px 12px;border-radius:999px;border:1px solid rgba(255,255,255,.22);
   background:#133e6a;color:#fff;font-weight:800;cursor:pointer;
 }
-.admin-strip .btn:hover,.bm-strip .btn:hover{background:#1b4e86}
-.admin-strip .btn[disabled]{opacity:.5;cursor:not-allowed}
+.local-strip .btn:hover,.gc-strip .btn:hover{background:#1b4e86}
+.local-strip .btn[disabled]{opacity:.5;cursor:not-allowed}
 
 .two-pane{
   display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px
@@ -266,30 +267,30 @@ body{
   cursor:pointer;font-weight:700;
 }
 
-/* FEDERAL COMMAND */
-.fed-shell{
+/* ENTERPRISE COMMAND */
+.ent-shell{
   display:none;
 }
-.fed-tools{
+.ent-tools{
   display:grid;
-  grid-template-columns:1.2fr .95fr .9fr .9fr auto;
+  grid-template-columns:1.2fr .95fr .9fr auto;
   gap:10px;
   margin-bottom:14px;
 }
-@media(max-width:1180px){ .fed-tools{grid-template-columns:1fr 1fr 1fr} }
-@media(max-width:760px){ .fed-tools{grid-template-columns:1fr} }
-.fed-tools input,.fed-tools select{
+@media(max-width:1180px){ .ent-tools{grid-template-columns:1fr 1fr 1fr} }
+@media(max-width:760px){ .ent-tools{grid-template-columns:1fr} }
+.ent-tools input,.ent-tools select{
   width:100%;padding:11px 12px;border:1px solid rgba(255,255,255,.14);
   background:#0d1f2d;color:#fff;border-radius:12px;
 }
-.fed-tools button{
+.ent-tools button{
   padding:10px 14px;border-radius:12px;border:1px solid rgba(255,255,255,.18);
   background:#133e6a;color:#fff;font-weight:800;cursor:pointer;
 }
-.fed-map-summary{
+.ent-map-summary{
   display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px
 }
-@media(max-width:900px){ .fed-map-summary{grid-template-columns:repeat(2,1fr)} }
+@media(max-width:900px){ .ent-map-summary{grid-template-columns:repeat(2,1fr)} }
 .map-box{
   border:1px solid rgba(255,255,255,.14);
   border-radius:16px;padding:12px;background:rgba(255,255,255,.04)
@@ -297,18 +298,18 @@ body{
 .map-box .big{font-size:22px;font-weight:800}
 .claim-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
 .claim-buttons .chip{padding:9px 12px}
-.fed-tagline{
+.ent-tagline{
   display:flex;gap:8px;align-items:center;flex-wrap:wrap;
   color:#cfe3ff;font-size:13px
 }
-.fed-lock{
+.ent-lock{
   display:inline-flex;align-items:center;gap:6px;
   padding:6px 10px;border-radius:999px;
   border:1px solid rgba(43,116,255,.40);
   background:rgba(43,116,255,.10);
   font-size:11px;font-weight:800;text-transform:uppercase;
 }
-.fed-mini{
+.ent-mini{
   display:flex;gap:8px;flex-wrap:wrap;margin-top:6px
 }
 
@@ -406,7 +407,7 @@ body{
 <header class="header">
   <div class="brand">
     <span class="dot"></span>
-    <span>DEALBANKERS • Contractor Command</span>
+    <span>DEALBANKERS • Command</span>
   </div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
@@ -420,7 +421,7 @@ body{
 <div id="setupOverlay" aria-hidden="true">
   <div id="setupCallout" role="dialog" aria-label="Complete setup">
     <div class="title">One quick step</div>
-    <div class="msg">Complete your contractor profile so DealBankers can route local jobs to you and unlock claim mode.</div>
+    <div class="msg">Complete your profile so DealBankers can route Service Orders to you and unlock claim mode.</div>
     <div class="actions">
       <button id="setupLater" class="ghost" type="button">Not now</button>
       <button id="setupGo" class="primary" type="button">Open Settings</button>
@@ -429,9 +430,9 @@ body{
 </div>
 
 <div class="modal-backdrop" id="settingsModal">
-  <div class="modal" role="dialog" aria-label="Contractor Settings">
-    <h3>Contractor Account Setup</h3>
-    <p class="small">This controls routing, visibility, and claim readiness.</p>
+  <div class="modal" role="dialog" aria-label="Account Settings">
+    <h3>Account Setup</h3>
+    <p class="small">This controls routing, visibility, and dispatch readiness.</p>
 
     <div class="hr"></div>
 
@@ -487,8 +488,8 @@ body{
       <div style="grid-column:1 / -1">
         <div class="toggle">
           <div>
-            <div style="font-weight:800">Accepting Local Jobs</div>
-            <div class="small">Turn this on to receive local DealBankers job offers.</div>
+            <div style="font-weight:800">Accepting Service Orders</div>
+            <div class="small">Turn this on to receive local Service Orders and Leads.</div>
           </div>
           <div class="switch" id="acceptSwitch" aria-label="Accepting Jobs Toggle">
             <div class="knob"></div>
@@ -499,8 +500,8 @@ body{
       <div style="grid-column:1 / -1">
         <div class="toggle">
           <div>
-            <div style="font-weight:800">Share Live Location (Opt-In)</div>
-            <div class="small">Required to claim jobs. Used for arrival verification and dispatch accuracy.</div>
+            <div style="font-weight:800">Live Location Tracking (Opt-In)</div>
+            <div class="small">Required to claim orders. Powers the Pizza Tracker for clients.</div>
           </div>
           <div class="switch" id="locSwitch" aria-label="Live Location Toggle">
             <div class="knob"></div>
@@ -522,18 +523,18 @@ body{
     <h3 id="rbTitle">Request</h3>
     <label class="small">Category</label>
     <select id="rbCategory">
-      <option>Work order issue</option>
+      <option>Service order issue</option>
       <option>Need pricing help</option>
       <option>Need materials approval</option>
       <option>Emergency / water</option>
       <option>Website / system bug</option>
-      <option>Federal lead support</option>
+      <option>Enterprise contract support</option>
       <option>Other</option>
     </select>
     <label class="small">Subject</label>
     <input id="rbSubject" placeholder="Short summary" />
     <label class="small">Details</label>
-    <textarea id="rbDetails" rows="4" placeholder="What do you need? If it is about a job, include the address or federal notice ID."></textarea>
+    <textarea id="rbDetails" rows="4" placeholder="What do you need? If it is about a job, include the address or Contract ID."></textarea>
     <div class="actions">
       <button class="chip" id="rbCancel" type="button">Cancel</button>
       <button class="chip primary" id="rbSubmit" type="button">Send Request</button>
@@ -542,9 +543,9 @@ body{
 </div>
 
 <div class="modal-backdrop" id="jobModal">
-  <div class="modal" role="dialog" aria-label="Job Admin">
-    <h3 id="jobModalTitle">Create Local Job</h3>
-    <p class="small">Branch Manager / Admin only. Writes to <span style="opacity:.95">/jobs/&lt;jobId&gt;</span>.</p>
+  <div class="modal" role="dialog" aria-label="Service Order Admin">
+    <h3 id="jobModalTitle">Create Service Order</h3>
+    <p class="small">Writes to <span style="opacity:.95">/jobs/&lt;jobId&gt;</span>.</p>
 
     <div class="hr"></div>
 
@@ -569,7 +570,7 @@ body{
       </div>
 
       <div style="grid-column:1 / -1">
-        <label class="small">Full Address</label>
+        <label class="small">Full Address / Location</label>
         <input id="jobAddress" placeholder="e.g., 123 Main St, San Antonio, TX 78210" />
       </div>
 
@@ -599,22 +600,22 @@ body{
   </div>
 </div>
 
-<div class="modal-backdrop" id="fedModal">
-  <div class="modal" role="dialog" aria-label="Federal Lead Admin">
-    <h3 id="fedModalTitle">Create Federal Lead</h3>
-    <p class="small">God mode only. Writes to <span style="opacity:.95">/samGovJobs/&lt;leadId&gt;</span>.</p>
+<div class="modal-backdrop" id="entModal">
+  <div class="modal" role="dialog" aria-label="Enterprise Contract Admin">
+    <h3 id="entModalTitle">Create Enterprise Contract</h3>
+    <p class="small">God mode only. Writes to <span style="opacity:.95">/enterpriseContracts/&lt;leadId&gt;</span>.</p>
 
     <div class="hr"></div>
 
     <div class="grid">
       <div style="grid-column:1 / -1">
-        <label class="small">Lead Title</label>
-        <input id="fedTitle" placeholder="Emergency Roof Repair - Building 95 and 111" />
+        <label class="small">Contract Title</label>
+        <input id="entTitle" placeholder="Emergency Roof Repair - Building 95 and 111" />
       </div>
 
       <div>
         <label class="small">Mode</label>
-        <select id="fedMode">
+        <select id="entMode">
           <option value="awarded">Awarded</option>
           <option value="solicitation">Solicitation</option>
           <option value="sources_sought">Sources Sought</option>
@@ -625,80 +626,80 @@ body{
 
       <div>
         <label class="small">Trade</label>
-        <input id="fedTrade" placeholder="Roofing / HVAC / Remodel" />
-      </div>
-
-      <div>
-        <label class="small">Notice / PIID</label>
-        <input id="fedNoticeId" placeholder="36C24726R0077" />
-      </div>
-
-      <div>
-        <label class="small">Agency</label>
-        <input id="fedAgency" placeholder="Veterans Affairs" />
-      </div>
-
-      <div>
-        <label class="small">Office</label>
-        <input id="fedOffice" placeholder="247-Network Contract Office 7" />
+        <input id="entTrade" placeholder="Roofing / HVAC / Remodel" />
       </div>
 
       <div style="grid-column:1 / -1">
-        <label class="small">Location / Base / City</label>
-        <input id="fedLocation" placeholder="e.g., Tyndall AFB, FL" />
+        <label class="small">Full Location</label>
+        <input id="entLocation" placeholder="e.g., Tyndall AFB, FL" />
+      </div>
+      
+      <div class="god-only-field">
+        <label class="small">Notice / PIID</label>
+        <input id="entNoticeId" placeholder="36C24726R0077" />
       </div>
 
-      <div>
-        <label class="small">Prime Contractor</label>
-        <input id="fedPrime" placeholder="Coleman Construction, Inc." />
+      <div class="god-only-field">
+        <label class="small">Agency</label>
+        <input id="entAgency" placeholder="Veterans Affairs" />
       </div>
 
-      <div>
+      <div class="god-only-field">
+        <label class="small">Office</label>
+        <input id="entOffice" placeholder="247-Network Contract Office 7" />
+      </div>
+
+      <div class="god-only-field">
+        <label class="small">GC / Prime</label>
+        <input id="entPrime" placeholder="Coleman Construction, Inc." />
+      </div>
+
+      <div class="god-only-field">
         <label class="small">Subcontractor</label>
-        <input id="fedSub" placeholder="Optional" />
+        <input id="entSub" placeholder="Optional" />
       </div>
 
       <div>
         <label class="small">Contract Value</label>
-        <input id="fedValue" placeholder="422858.34" />
+        <input id="entValue" placeholder="422858.34" />
       </div>
 
       <div>
-        <label class="small">Response / Due Date</label>
-        <input id="fedDue" placeholder="2026-04-18" />
+        <label class="small">Due Date</label>
+        <input id="entDue" placeholder="2026-04-18" />
       </div>
 
       <div style="grid-column:1 / -1">
-        <label class="small">Summary</label>
-        <textarea id="fedSummary" rows="4" placeholder="Paste a clean short summary of the opportunity or awarded scope."></textarea>
+        <label class="small">Summary / Scope</label>
+        <textarea id="entSummary" rows="4" placeholder="Paste a clean short summary of the scope."></textarea>
       </div>
 
-      <div style="grid-column:1 / -1">
+      <div class="god-only-field" style="grid-column:1 / -1">
         <label class="small">Contact Name</label>
-        <input id="fedContactName" placeholder="Contracting Officer / Estimator / PM" />
+        <input id="entContactName" placeholder="Contracting Officer / Estimator / PM" />
       </div>
 
-      <div>
+      <div class="god-only-field">
         <label class="small">Contact Phone</label>
-        <input id="fedContactPhone" placeholder="(555) 555-5555" />
+        <input id="entContactPhone" placeholder="(555) 555-5555" />
       </div>
 
-      <div>
+      <div class="god-only-field">
         <label class="small">Contact Email</label>
-        <input id="fedContactEmail" placeholder="name@company.com" />
+        <input id="entContactEmail" placeholder="name@company.com" />
       </div>
 
-      <div style="grid-column:1 / -1">
-        <label class="small">External Link</label>
-        <input id="fedLink" placeholder="https://sam.gov/..." />
+      <div class="god-only-field" style="grid-column:1 / -1">
+        <label class="small">Source Link</label>
+        <input id="entLink" placeholder="https://..." />
       </div>
     </div>
 
     <div class="actions" style="justify-content:space-between">
-      <button class="chip danger" id="fedDeleteBtn" type="button" style="display:none;">Delete</button>
+      <button class="chip danger" id="entDeleteBtn" type="button" style="display:none;">Delete</button>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="chip" id="fedCancel" type="button">Cancel</button>
-        <button class="chip primary" id="fedSave" type="button">Save</button>
+        <button class="chip" id="entCancel" type="button">Cancel</button>
+        <button class="chip primary" id="entSave" type="button">Save</button>
       </div>
     </div>
   </div>
@@ -709,30 +710,30 @@ body{
   <section class="hero">
     <div class="hero-inner">
       <div class="hero-card">
-        <span class="kicker">Command Hub • Field + Federal</span>
-        <div class="h1">Run local jobs clean. Route federal opportunity upward.</div>
+        <span class="kicker">Command Hub • Service + Enterprise</span>
+        <div class="h1">Manage Service Orders. Execute Enterprise Contracts.</div>
         <div class="sub">
-          Contractors stay focused on local execution. Branch managers get the federal command board, prime/sub opportunities, and assignment controls. Same portal. Smarter visibility.
+          Subs stay focused on execution with the live Service Order Tracker. General Contractors (GCs) get the Enterprise Command board, routing, and assignment controls. Same portal. Smarter visibility.
         </div>
 
         <div class="hero-actions">
           <button class="chip primary" id="heroOpenSettings" type="button">Finish Setup</button>
           <button class="chip ghost" id="heroOpenChat" type="button">Open Townhall</button>
-          <button class="chip ghost" id="heroOpenFed" type="button">Federal Command</button>
+          <button class="chip ghost" id="heroOpenEnt" type="button">Enterprise Command</button>
         </div>
 
         <div class="stat-grid">
           <div class="stat">
             <div class="n" id="statLocalActive">0</div>
-            <div class="l">Active Local Jobs</div>
+            <div class="l">Active Service Orders</div>
           </div>
           <div class="stat">
             <div class="n" id="statUpcoming">0</div>
-            <div class="l">Upcoming Jobs</div>
+            <div class="l">Upcoming Orders</div>
           </div>
           <div class="stat">
-            <div class="n" id="statFedCount">0</div>
-            <div class="l">Federal Leads Visible</div>
+            <div class="n" id="statEntCount">0</div>
+            <div class="l">Enterprise Contracts</div>
           </div>
           <div class="stat">
             <div class="n" id="statClaimed">0</div>
@@ -747,25 +748,25 @@ body{
             <h3>Readiness</h3>
             <div class="small">Portal posture and dispatch eligibility</div>
           </div>
-          <div class="fed-lock" id="roleBadge">CONTRACTOR VIEW</div>
+          <div class="ent-lock" id="roleBadge">SUB / ASSOCIATE VIEW</div>
         </div>
 
         <div class="hr"></div>
 
         <div class="kv"><b>User:</b> <span id="heroUserEmail">Loading…</span></div>
-        <div class="kv" style="margin-top:8px"><b>Local Claim Mode:</b> <span id="heroAccepting">—</span></div>
+        <div class="kv" style="margin-top:8px"><b>Claim Mode:</b> <span id="heroAccepting">—</span></div>
         <div class="kv" style="margin-top:8px"><b>Live Location:</b> <span id="heroLocation">—</span></div>
         <div class="kv" style="margin-top:8px"><b>Trades:</b> <span id="heroTrades">—</span></div>
         <div class="kv" style="margin-top:8px"><b>Service Areas:</b> <span id="heroServiceArea">—</span></div>
 
-        <div class="fed-mini">
-          <span class="pill blue"><span class="status-dot dot-good"></span> Local Ops</span>
-          <span class="pill blue" id="miniFedPill"><span class="status-dot dot-warn"></span> Federal Hidden</span>
+        <div class="ent-mini">
+          <span class="pill blue"><span class="status-dot dot-good"></span> Service Ops</span>
+          <span class="pill blue" id="miniEntPill"><span class="status-dot dot-warn"></span> Enterprise Hidden</span>
         </div>
 
         <div class="hr"></div>
         <div class="small">
-          Branch managers see a separate Federal Command stream. Contractors do not. This keeps field users clean and keeps fed opportunity protected.
+          GCs see a separate Enterprise Command stream. Subs do not. This keeps field users clean and keeps enterprise opportunity protected.
         </div>
       </div>
     </div>
@@ -777,7 +778,7 @@ body{
       <div class="card-top">
         <div class="title-row">
           <div>
-            <h2 id="crumb">Local Jobs</h2>
+            <h2 id="crumb">Service Orders</h2>
             <div class="small" id="status">Loading…</div>
           </div>
         </div>
@@ -791,34 +792,33 @@ body{
         <div class="banner" id="setupBanner">
           <div class="row">
             <div>
-              <b>Setup incomplete.</b> Add service areas, trades, and a contact method to start receiving local jobs.
+              <b>Setup incomplete.</b> Add service areas, trades, and a contact method to start receiving orders.
             </div>
             <button class="btn" id="bannerFix" type="button">Finish Setup</button>
           </div>
         </div>
 
-        <div class="admin-strip" id="adminStrip">
+        <div class="local-strip" id="localStrip">
           <div class="row">
             <div>
-              <b>Admin:</b> Create, edit, or delete local jobs.
-              <span class="small" style="margin-left:8px;opacity:.85">Branch Manager / Admin Access</span>
+              <b>Service Orders:</b> Post your own jobs or route leads.
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn" id="btnNewJob" type="button">+ New Local Job</button>
+              <button class="btn" id="btnNewJob" type="button">+ New Service Order</button>
               <button class="btn" id="btnEditJob" type="button" disabled>Edit Selected</button>
             </div>
           </div>
         </div>
 
         <div class="two-pane">
-          <div id="jobTable">Loading jobs...</div>
-          <div id="detailPanel">Select a local job to view details...</div>
+          <div id="jobTable">Loading orders...</div>
+          <div id="detailPanel">Select an order to view details...</div>
         </div>
 
         <div id="emptyState" class="empty-state" style="display:none;">
           <div class="empty-box">
-            <h2>🚀 No local jobs yet</h2>
-            <p>Start by finishing your profile and accepting local work.</p>
+            <h2>🚀 No orders yet</h2>
+            <p>Start by finishing your profile and accepting work.</p>
             <div class="empty-actions">
               <button id="setupServices" type="button">📍 Enter My Service Areas</button>
             </div>
@@ -827,56 +827,57 @@ body{
       </div>
     </section>
 
-    <section class="card fed-shell" id="fedShell">
+    <section class="card ent-shell" id="entShell">
       <div class="card-top">
         <div class="title-row">
           <div>
-            <h2>Federal Command</h2>
-            <div class="small">Branch managers only • SAM-awarded / solicitation intelligence</div>
+            <h2>Enterprise Command</h2>
+            <div class="small">GC / Branch managers only • Commercial intelligence</div>
           </div>
-          <div class="fed-lock">BRANCH MANAGER VIEW</div>
+          <div class="ent-lock">GC / BRANCH MANAGER VIEW</div>
         </div>
-        <div class="fed-tagline">
+        <div class="ent-tagline">
           <span class="status-dot dot-good"></span>
           <span>Prime the big blue ocean. Keep it away from field-level noise.</span>
         </div>
       </div>
 
       <div class="card-body">
-        <div class="bm-strip" id="bmStrip">
+        <div class="gc-strip" id="gcStrip">
           <div class="row">
             <div>
-              <b>God Mode Only:</b> Manual entry of Federal Opportunities.
+              <b>God Mode Only:</b> Manual entry or import of Enterprise Opportunities.
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
-              <button class="btn" id="btnNewFed" type="button">+ New Federal Lead</button>
-              <button class="btn" id="btnEditFed" type="button" disabled>Edit Selected</button>
+              <button class="btn ghost" id="btnImportEnt" type="button">⬇ Import Data</button>
+              <button class="btn" id="btnNewEnt" type="button">+ New Contract</button>
+              <button class="btn" id="btnEditEnt" type="button" disabled>Edit Selected</button>
             </div>
           </div>
         </div>
 
-        <div class="fed-map-summary">
+        <div class="ent-map-summary">
           <div class="map-box">
-            <div class="big" id="fedAwardedCount">0</div>
-            <div class="small">Awarded / Warm Leads</div>
+            <div class="big" id="entAwardedCount">0</div>
+            <div class="small">Awarded / Warm</div>
           </div>
           <div class="map-box">
-            <div class="big" id="fedSolicitationCount">0</div>
+            <div class="big" id="entSolicitationCount">0</div>
             <div class="small">Solicitations / Sources Sought</div>
           </div>
           <div class="map-box">
-            <div class="big" id="fedSubCount">0</div>
-            <div class="small">Prime/Sub Relationship Leads</div>
+            <div class="big" id="entSubCount">0</div>
+            <div class="small">GC/Sub Relationship Leads</div>
           </div>
           <div class="map-box">
-            <div class="big" id="fedValueCount">$0</div>
-            <div class="small">Visible Lead Value</div>
+            <div class="big" id="entValueCount">$0</div>
+            <div class="small">Visible Contract Value</div>
           </div>
         </div>
 
-        <div class="fed-tools">
-          <input id="fedSearch" placeholder="Search notice ID, prime, location, agency, trade…" />
-          <select id="fedModeFilter">
+        <div class="ent-tools">
+          <input id="entSearch" placeholder="Search ID, GC, location, trade…" />
+          <select id="entModeFilter">
             <option value="">All Modes</option>
             <option value="awarded">Awarded</option>
             <option value="solicitation">Solicitation</option>
@@ -884,19 +885,19 @@ body{
             <option value="presolicitation">Presolicitation</option>
             <option value="subcontract">Subcontract</option>
           </select>
-          <select id="fedTradeFilter">
+          <select id="entTradeFilter">
             <option value="">All Trades</option>
             <option value="roofing">Roofing</option>
             <option value="construction">Construction</option>
             <option value="hvac">HVAC</option>
             <option value="cleanup">Cleanup</option>
           </select>
-          <button id="fedClearFilters" type="button">Reset</button>
+          <button id="entClearFilters" type="button">Reset</button>
         </div>
 
         <div class="two-pane">
-          <div id="fedList">Loading federal leads...</div>
-          <div id="fedDetail">Select a federal lead to view details...</div>
+          <div id="entList">Loading enterprise contracts...</div>
+          <div id="entDetail">Select a contract to view details...</div>
         </div>
       </div>
     </section>
@@ -960,7 +961,7 @@ const rbDetails = $("rbDetails");
 const rbCancel = $("rbCancel");
 const rbSubmit = $("rbSubmit");
 
-const adminStrip = $("adminStrip");
+const localStrip = $("localStrip");
 const btnNewJob = $("btnNewJob");
 const btnEditJob = $("btnEditJob");
 
@@ -977,42 +978,44 @@ const jobDeleteBtn = $("jobDeleteBtn");
 const jobCancel = $("jobCancel");
 const jobSave = $("jobSave");
 
-const fedShell = $("fedShell");
-const bmStrip = $("bmStrip");
-const btnNewFed = $("btnNewFed");
-const btnEditFed = $("btnEditFed");
-const fedList = $("fedList");
-const fedDetail = $("fedDetail");
-const fedSearch = $("fedSearch");
-const fedModeFilter = $("fedModeFilter");
-const fedTradeFilter = $("fedTradeFilter");
-const fedClearFilters = $("fedClearFilters");
+const entShell = $("entShell");
+const gcStrip = $("gcStrip");
+const btnNewEnt = $("btnNewEnt");
+const btnEditEnt = $("btnEditEnt");
+const btnImportEnt = $("btnImportEnt");
+const entList = $("entList");
+const entDetail = $("entDetail");
+const entSearch = $("entSearch");
+const entModeFilter = $("entModeFilter");
+const entTradeFilter = $("entTradeFilter");
+const entClearFilters = $("entClearFilters");
 
-const fedModal = $("fedModal");
-const fedModalTitle = $("fedModalTitle");
-const fedDeleteBtn = $("fedDeleteBtn");
-const fedCancel = $("fedCancel");
-const fedSave = $("fedSave");
+const entModal = $("entModal");
+const entModalTitle = $("entModalTitle");
+const entDeleteBtn = $("entDeleteBtn");
+const entCancel = $("entCancel");
+const entSave = $("entSave");
 
-const fedTitle = $("fedTitle");
-const fedMode = $("fedMode");
-const fedTrade = $("fedTrade");
-const fedNoticeId = $("fedNoticeId");
-const fedAgency = $("fedAgency");
-const fedOffice = $("fedOffice");
-const fedLocation = $("fedLocation");
-const fedPrime = $("fedPrime");
-const fedSub = $("fedSub");
-const fedValue = $("fedValue");
-const fedDue = $("fedDue");
-const fedSummary = $("fedSummary");
-const fedContactName = $("fedContactName");
-const fedContactPhone = $("fedContactPhone");
-const fedContactEmail = $("fedContactEmail");
-const fedLink = $("fedLink");
+const entTitle = $("entTitle");
+const entMode = $("entMode");
+const entTrade = $("entTrade");
+const entLocation = $("entLocation");
+const entValue = $("entValue");
+const entDue = $("entDue");
+const entSummary = $("entSummary");
+
+// God Mode specific fields
+const entNoticeId = $("entNoticeId");
+const entAgency = $("entAgency");
+const entOffice = $("entOffice");
+const entPrime = $("entPrime");
+const entSub = $("entSub");
+const entContactName = $("entContactName");
+const entContactPhone = $("entContactPhone");
+const entContactEmail = $("entContactEmail");
+const entLink = $("entLink");
 
 const chatBubble = $("chatBubble");
-
 const setupOverlay = $("setupOverlay");
 const setupCallout = $("setupCallout");
 const setupGo = $("setupGo");
@@ -1020,17 +1023,17 @@ const setupLater = $("setupLater");
 
 const heroOpenSettings = $("heroOpenSettings");
 const heroOpenChat = $("heroOpenChat");
-const heroOpenFed = $("heroOpenFed");
+const heroOpenEnt = $("heroOpenEnt");
 
 const statLocalActive = $("statLocalActive");
 const statUpcoming = $("statUpcoming");
-const statFedCount = $("statFedCount");
+const statEntCount = $("statEntCount");
 const statClaimed = $("statClaimed");
 
-const fedAwardedCount = $("fedAwardedCount");
-const fedSolicitationCount = $("fedSolicitationCount");
-const fedSubCount = $("fedSubCount");
-const fedValueCount = $("fedValueCount");
+const entAwardedCount = $("entAwardedCount");
+const entSolicitationCount = $("entSolicitationCount");
+const entSubCount = $("entSubCount");
+const entValueCount = $("entValueCount");
 
 const heroUserEmail = $("heroUserEmail");
 const heroAccepting = $("heroAccepting");
@@ -1038,7 +1041,7 @@ const heroLocation = $("heroLocation");
 const heroTrades = $("heroTrades");
 const heroServiceArea = $("heroServiceArea");
 const roleBadge = $("roleBadge");
-const miniFedPill = $("miniFedPill");
+const miniEntPill = $("miniEntPill");
 
 /* ==========================
    FIREBASE INIT
@@ -1062,7 +1065,7 @@ const miniFedPill = $("miniFedPill");
 ========================== */
 let UID = null;
 let USER_EMAIL = null;
-let USER_ROLE = "contractor";
+let USER_ROLE = "associate"; // associate = sub, branch_manager = GC, god = god
 
 let isGodMode = false;
 let isBranchManager = false;
@@ -1078,8 +1081,8 @@ let jobsCache = {};
 let selectedJobId = null;
 let currentTab = "active";
 
-let fedJobsCache = {};
-let selectedFedId = null;
+let entJobsCache = {};
+let selectedEntId = null;
 
 const REQUIRED_HINT = "Please enter: Service Areas + Trades + a contact method (Phone or Email).";
 
@@ -1118,22 +1121,28 @@ function showSettingsModal(){ settingsModal.style.display='flex'; }
 function hideSettingsModal(){ settingsModal.style.display='none'; }
 function setBannerVisible(v){ setupBanner.style.display = v ? 'block' : 'none'; }
 
-function setAdminVisible(v){
-  adminStrip.style.display = v ? 'block' : 'none';
-  btnEditJob.disabled = !v || !selectedJobId;
+function setLocalUIVisible(v){
+  // Always true for all roles, they can all post jobs now.
+  localStrip.style.display = 'block'; 
 }
 
 function setBranchUIVisible(v){
-  fedShell.style.display = v ? 'block' : 'none';
-  // Note: bmStrip is strictly for God Mode now
-  bmStrip.style.display = isGodMode ? 'block' : 'none'; 
+  entShell.style.display = v ? 'block' : 'none';
+  // Note: gcStrip is strictly for God Mode now
+  gcStrip.style.display = isGodMode ? 'block' : 'none'; 
   
-  heroOpenFed.style.display = v ? 'inline-flex' : 'none';
-  statFedCount.parentElement.style.display = v ? 'block' : 'block';
-  roleBadge.textContent = v ? (isGodMode ? 'GOD / ADMIN VIEW' : 'BRANCH MANAGER VIEW') : 'CONTRACTOR VIEW';
-  miniFedPill.innerHTML = v
-    ? '<span class="status-dot dot-good"></span> Federal Visible'
-    : '<span class="status-dot dot-warn"></span> Federal Hidden';
+  heroOpenEnt.style.display = v ? 'inline-flex' : 'none';
+  statEntCount.parentElement.style.display = v ? 'block' : 'none';
+  
+  roleBadge.textContent = v ? (isGodMode ? 'GOD MODE / ADMIN VIEW' : 'GC / BRANCH MANAGER VIEW') : 'SUB / ASSOCIATE VIEW';
+  miniEntPill.innerHTML = v
+    ? '<span class="status-dot dot-good"></span> Enterprise Visible'
+    : '<span class="status-dot dot-warn"></span> Enterprise Hidden';
+    
+  // Hide God Mode fields in the modal if not God
+  document.querySelectorAll('.god-only-field').forEach(el => {
+      el.style.display = isGodMode ? 'block' : 'none';
+  });
 }
 
 function bindBackdropClose(backdropEl){
@@ -1142,7 +1151,7 @@ function bindBackdropClose(backdropEl){
 bindBackdropClose(settingsModal);
 bindBackdropClose(rbModal);
 bindBackdropClose(jobModal);
-bindBackdropClose(fedModal);
+bindBackdropClose(entModal);
 
 function showOnboardingCallout(){
   const gear = btnSettings;
@@ -1227,8 +1236,9 @@ function stopLocationShare(){
 
 /* ==========================
    ROLE RESOLUTION
-   - Branch Managers can do Local Jobs and see Federal
-   - God Mode can do all of above + Create/Edit Federal
+   - Subs/Associates can create Local Jobs (but only edit their own).
+   - Branch Managers (GC) can edit any Local Jobs, assign them, and see Enterprise.
+   - God Mode can do all of above + Create/Edit Enterprise.
 ========================== */
 async function resolveRole(user){
   try{
@@ -1236,17 +1246,17 @@ async function resolveRole(user){
       firebase.database().ref(`roles/${user.uid}`).once('value'),
       firebase.database().ref(`users/${user.uid}/role`).once('value')
     ]);
-    return (a.val() || b.val() || "contractor");
+    return (a.val() || b.val() || "associate");
   }catch(e){
-    return "contractor";
+    return "associate";
   }
 }
 function hydrateRoleFlags(role){
-  USER_ROLE = role || "contractor";
+  USER_ROLE = role || "associate";
   isGodMode = (USER_ROLE === "god");
   isBranchManager = (USER_ROLE === "god" || USER_ROLE === "admin" || USER_ROLE === "branch_manager");
   
-  setAdminVisible(isBranchManager);
+  setLocalUIVisible(true); // Always visible
   setBranchUIVisible(isBranchManager);
 }
 
@@ -1359,13 +1369,13 @@ rbSubmit.addEventListener('click', async ()=>{
 });
 
 /* ==========================
-   LOCAL JOBS (With Tracker & Photos)
+   SERVICE ORDERS (With Tracker, Photos, & GC Assignment)
 ========================== */
 function setTab(tab){
   currentTab = tab;
   tabActive.classList.toggle('active', tab === 'active');
   tabUpcoming.classList.toggle('active', tab === 'upcoming');
-  crumb.textContent = tab === 'active' ? 'Local Jobs' : 'Upcoming Local Jobs';
+  crumb.textContent = tab === 'active' ? 'Service Orders' : 'Upcoming Orders';
   renderJobs();
 }
 function jobMatchesTab(j){
@@ -1385,10 +1395,10 @@ function renderJobs(){
   statUpcoming.textContent = Object.values(jobsCache).filter(j => (j.status||'active') === 'upcoming').length;
 
   if(ids.length === 0){
-    jobTable.innerHTML = `<div class="list"><div class="row-item"><div class="t">No ${currentTab} local jobs.</div><div class="m">Check back or turn on Accepting Jobs.</div></div></div>`;
-    detailPanel.innerHTML = `Select a local job to view details...`;
+    jobTable.innerHTML = `<div class="list"><div class="row-item"><div class="t">No ${currentTab} orders.</div><div class="m">Check back or turn on Accepting Jobs.</div></div></div>`;
+    detailPanel.innerHTML = `Select an order to view details...`;
     selectedJobId = null;
-    if(isBranchManager) btnEditJob.disabled = true;
+    btnEditJob.disabled = true;
     return;
   }
 
@@ -1398,16 +1408,18 @@ function renderJobs(){
     const active = (id === selectedJobId) ? 'active' : '';
     const loc = j.address || [j.city, j.zip].filter(Boolean).join(' ');
     
-    // Check if claimed to show status
     let execLabel = '';
-    if(j.claimedBy && Object.keys(j.claimedBy).length > 0) {
-       execLabel = `<span class="pill blue">${esc(j.executionStatus || 'Claimed')}</span>`;
+    const isAssigned = j.assignedSubEmail && j.assignedSubEmail.length > 0;
+    const isClaimed = j.claimedBy && Object.keys(j.claimedBy).length > 0;
+
+    if(isClaimed || isAssigned) {
+       execLabel = `<span class="pill blue">${esc(j.executionStatus || 'Dispatched')}</span>`;
     }
     
     const meta = [j.trade, loc, j.targetDate].filter(Boolean).join(' • ');
     html += `
       <div class="row-item ${active}" data-jobid="${esc(id)}">
-        <div class="t">${esc(j.title || '(Untitled local job)')}</div>
+        <div class="t">${esc(j.title || '(Untitled order)')}</div>
         <div class="m">${esc(meta || '')}</div>
         <div class="meta-line">
           <span class="pill ${j.status==='upcoming' ? 'warn':'good'}">${esc((j.status || 'active').toUpperCase())}</span>
@@ -1422,13 +1434,17 @@ function renderJobs(){
 
   if(!selectedJobId) selectedJobId = ids[0];
   renderJobDetail(selectedJobId);
-  if(isBranchManager) btnEditJob.disabled = !selectedJobId;
+  
+  // Check ownership for edit disable
+  const j = jobsCache[selectedJobId];
+  const canEdit = isBranchManager || (j && j.postedBy === UID);
+  btnEditJob.disabled = !canEdit;
 }
 
 function renderJobDetail(id){
   const j = jobsCache[id];
   if(!j){
-    detailPanel.innerHTML = `Select a local job to view details...`;
+    detailPanel.innerHTML = `Select an order to view details...`;
     return;
   }
 
@@ -1440,17 +1456,28 @@ function renderJobDetail(id){
   // Tracking and Claims Logic
   const hasClaim = j.claimedBy && Object.keys(j.claimedBy).length > 0;
   const isClaimedByMe = j.claimedBy && j.claimedBy[UID];
+  const isAssignedToMe = j.assignedSubEmail && j.assignedSubEmail.toLowerCase() === USER_EMAIL;
+  
+  const canTrack = isClaimedByMe || isAssignedToMe || isBranchManager;
+  const isAvailable = !hasClaim && !j.assignedSubEmail;
+
   const currentStep = j.executionStatus || 'Pending';
 
   let actionHTML = '';
 
-  if (!hasClaim && acceptingJobs) {
-      actionHTML += `<button class="chip primary" id="claimJobBtn" type="button">📍 Claim This Job</button>`;
-  } else if (hasClaim && !isClaimedByMe && !isBranchManager) {
-      actionHTML += `<div class="pill warn">This job is claimed by another contractor.</div>`;
+  if (isAvailable && acceptingJobs) {
+      actionHTML += `<button class="chip primary" id="claimJobBtn" type="button">📍 Claim This Order</button>`;
+  } else if (!canTrack) {
+      actionHTML += `<div class="pill warn">This order is claimed/assigned to another sub.</div>`;
   }
 
-  if (isClaimedByMe || isBranchManager) {
+  // GC Assignment Button
+  if (isBranchManager) {
+      actionHTML += `<button class="chip ghost" id="assignSubBtn" type="button" style="margin-left:8px;">👥 Assign to Sub</button>`;
+  }
+
+  // Show Tracker if they have access
+  if (canTrack) {
       // 1. Execution Tracker
       const steps = ['Dispatched', 'Arrived On-Site', 'Assessing', 'Retrieving Parts', 'Work In Progress', 'Completed'];
       let stepsHTML = steps.map(s => {
@@ -1458,10 +1485,15 @@ function renderJobDetail(id){
           return `<button class="chip ${isActive ? 'primary' : 'ghost'} tracker-btn" data-step="${s}">${s}</button>`;
       }).join('');
 
+      let assignedBadge = j.assignedSubEmail ? `<span class="small" style="color:var(--good)">Assigned to: ${esc(j.assignedSubEmail)}</span>` : '';
+
       actionHTML += `
-          <div class="hr"></div>
-          <h4>Job Execution Tracker</h4>
-          <div class="small" style="margin-bottom:8px;">Update status to keep customers and vendors informed.</div>
+          <div class="hr" style="width:100%; margin-top:16px;"></div>
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
+             <h4>Order Execution Tracker</h4>
+             ${assignedBadge}
+          </div>
+          <div class="small" style="margin-bottom:8px;">Update status to keep GC and vendors informed.</div>
           <div class="tracker-steps">${stepsHTML}</div>
       `;
 
@@ -1475,8 +1507,8 @@ function renderJobDetail(id){
       }
 
       actionHTML += `
-          <div class="hr" style="margin-top:16px;"></div>
-          <h4>Job Photos</h4>
+          <div class="hr" style="width:100%; margin-top:16px;"></div>
+          <h4>Order Photos</h4>
           <div style="display:flex; gap:10px; align-items:center; margin-top:8px;">
              <button class="chip ghost" id="uploadPhotoBtn" type="button">📷 Upload Photo</button>
              <input type="file" id="photoInput" style="display:none" accept="image/*">
@@ -1487,7 +1519,7 @@ function renderJobDetail(id){
 
       // 3. Signature UI (Only if Completed)
       if (currentStep === 'Completed') {
-          actionHTML += `<div class="hr"></div><h4>Customer Sign-Off</h4>`;
+          actionHTML += `<div class="hr" style="width:100%;"></div><h4>Customer Sign-Off</h4>`;
           if(!j.signature) {
               actionHTML += `
                   <div class="sig-container">
@@ -1500,7 +1532,7 @@ function renderJobDetail(id){
               `;
           } else {
               actionHTML += `
-                  <div style="margin-top:8px;">
+                  <div style="margin-top:8px; width:100%;">
                       <div class="pill good">Signed by Customer</div>
                       <img src="${j.signature.data}" style="background:#fff; height:100px; border-radius:6px; margin-top:8px; display:block; border:1px solid #ccc;">
                       <div class="small">Signed on: ${new Date(j.signature.ts).toLocaleString()}</div>
@@ -1510,10 +1542,12 @@ function renderJobDetail(id){
       }
   }
 
-  // Add the base panel wrapping
   detailPanel.innerHTML = `
     <div class="panel">
-      <h3>${esc(j.title || '(Untitled local job)')}</h3>
+      <div style="display:flex; justify-content:space-between; align-items:start;">
+          <h3>${esc(j.title || '(Untitled order)')}</h3>
+          ${j.postedBy === UID ? '<span class="pill">My Post</span>' : ''}
+      </div>
       <div class="kv"><b>Status:</b> ${esc(j.status || 'active')}</div>
       <div class="kv"><b>Trade:</b> ${esc(j.trade || '')}</div>
       <div class="kv"><b>Location:</b> ${esc(addressDisplay)}</div>
@@ -1522,11 +1556,11 @@ function renderJobDetail(id){
       <div class="hr"></div>
       <div class="kv"><b>Description:</b><br>${esc(j.description || '').replace(/\n/g,'<br>')}</div>
       
-      <div class="claim-buttons" style="margin-top:12px;">
+      <div class="claim-buttons" style="margin-top:12px; width:100%;">
         ${actionHTML}
-        ${!hasClaim ? `<button class="chip ghost" id="jobSupportBtn" style="margin-left:auto;" type="button">Need Help</button>` : ''}
+        ${isAvailable ? `<button class="chip ghost" id="jobSupportBtn" style="margin-left:auto;" type="button">Need Help</button>` : ''}
       </div>
-      ${!hasClaim ? `<div class="small" style="margin-top:8px">Requires Live Location ON to claim.</div>` : ''}
+      ${isAvailable ? `<div class="small" style="margin-top:8px; width:100%;">Requires Live Location ON to claim.</div>` : ''}
     </div>
   `;
 
@@ -1537,11 +1571,12 @@ function renderJobDetail(id){
   // Attach Event Listeners dynamically
   const claimBtn = document.getElementById("claimJobBtn");
   const supportBtn = document.getElementById("jobSupportBtn");
+  const assignSubBtn = document.getElementById("assignSubBtn");
 
   if(claimBtn){
     claimBtn.onclick = async () => {
       if (!sharingLocation) {
-        alert("Turn on Live Location to claim this job.");
+        alert("Turn on Live Location to claim this order.");
         showSettingsModal();
         return;
       }
@@ -1552,20 +1587,36 @@ function renderJobDetail(id){
           ts: firebase.database.ServerValue.TIMESTAMP
         });
         await firebase.database().ref(`jobs/${id}/executionStatus`).set("Dispatched");
-        alert("✅ Job claimed. Tracker initialized.");
+        alert("✅ Order claimed. Tracker initialized.");
         updateClaimCount();
       }catch(e){
         console.error(e);
-        alert("Could not claim job.");
+        alert("Could not claim order.");
+      }
+    };
+  }
+
+  if(assignSubBtn){
+    assignSubBtn.onclick = async () => {
+      const subEmail = prompt("Enter the Associate's email address to assign this Service Order:");
+      if(subEmail && subEmail.trim()) {
+        try {
+          await firebase.database().ref(`jobs/${id}/assignedSubEmail`).set(subEmail.trim().toLowerCase());
+          await firebase.database().ref(`jobs/${id}/executionStatus`).set("Dispatched");
+          alert(`Order successfully assigned to ${subEmail}`);
+        } catch (e) {
+          console.error(e);
+          alert("Failed to assign order.");
+        }
       }
     };
   }
 
   if(supportBtn){
     supportBtn.onclick = ()=>{
-      rbCategory.value = "Work order issue";
+      rbCategory.value = "Service order issue";
       rbSubject.value = j.title || "";
-      rbDetails.value = `Need help on local job: ${j.title || ''}\nAddress: ${addressDisplay}`;
+      rbDetails.value = `Need help on service order: ${j.title || ''}\nAddress: ${addressDisplay}`;
       showRBModal(false);
     };
   }
@@ -1674,7 +1725,7 @@ function renderJobDetail(id){
 }
 
 function subscribeJobs(){
-  status.textContent = 'Loading local jobs…';
+  status.textContent = 'Loading service orders…';
   firebase.database().ref('jobs').on('value', snap=>{
     jobsCache = snap.val() || {};
     status.textContent = 'Loaded';
@@ -1686,16 +1737,16 @@ function subscribeJobs(){
 }
 
 /* ==========================
-   LOCAL JOB ADMIN (Branch Managers)
+   SERVICE ORDER ADMIN (All Users Can Create)
 ========================== */
 function openJobModal(mode){
   jobModal.style.display = 'flex';
   const isEdit = (mode === 'edit');
-  jobModalTitle.textContent = isEdit ? 'Edit Local Job' : 'Create Local Job';
+  jobModalTitle.textContent = isEdit ? 'Edit Service Order' : 'Create Service Order';
 
   if(isEdit){
     const j = jobsCache[selectedJobId];
-    if(!j){ alert('No job selected'); return; }
+    if(!j){ alert('No order selected'); return; }
     jobTitle.value = j.title || '';
     jobStatus.value = j.status || 'active';
     jobTrade.value = j.trade || '';
@@ -1733,24 +1784,24 @@ function jobPayload(){
 }
 
 /* ==========================
-   FEDERAL LEADS
+   ENTERPRISE CONTRACTS (GC / Branch Managers only)
 ========================== */
-function subscribeFedJobs(){
+function subscribeEntJobs(){
   if(!isBranchManager) return;
-  fedList.innerHTML = `<div class="list"><div class="row-item"><div class="t">Loading federal leads...</div></div></div>`;
+  entList.innerHTML = `<div class="list"><div class="row-item"><div class="t">Loading enterprise contracts...</div></div></div>`;
 
-  firebase.database().ref('samGovJobs').on('value', snap=>{
-    fedJobsCache = snap.val() || {};
-    renderFedJobs();
+  firebase.database().ref('enterpriseContracts').on('value', snap=>{
+    entJobsCache = snap.val() || {};
+    renderEntJobs();
   },()=>{
-    fedList.innerHTML = `<div class="list"><div class="row-item"><div class="t">Error loading federal leads.</div></div></div>`;
+    entList.innerHTML = `<div class="list"><div class="row-item"><div class="t">Error loading enterprise contracts.</div></div></div>`;
   });
 }
 
-function fedMatchesFilters(x){
-  const q = (fedSearch.value || '').trim().toLowerCase();
-  const mode = fedModeFilter.value;
-  const trade = fedTradeFilter.value;
+function entMatchesFilters(x){
+  const q = (entSearch.value || '').trim().toLowerCase();
+  const mode = entModeFilter.value;
+  const trade = entTradeFilter.value;
 
   if(mode && (x.mode || '') !== mode) return false;
   if(trade && !(String(x.trade || '').toLowerCase().includes(trade))) return false;
@@ -1762,44 +1813,43 @@ function fedMatchesFilters(x){
   ].join(' ').toLowerCase();
   return hay.includes(q);
 }
-function renderFedJobs(){
-  const values = Object.values(fedJobsCache);
-  const filtered = Object.entries(fedJobsCache)
-    .filter(([id,x]) => fedMatchesFilters(x))
+function renderEntJobs(){
+  const values = Object.values(entJobsCache);
+  const filtered = Object.entries(entJobsCache)
+    .filter(([id,x]) => entMatchesFilters(x))
     .sort((a,b)=>{
       const va = Number(a[1]?.value || 0);
       const vb = Number(b[1]?.value || 0);
       return vb - va;
     });
 
-  statFedCount.textContent = String(values.length);
+  statEntCount.textContent = String(values.length);
 
-  fedAwardedCount.textContent = String(values.filter(x => x.mode === 'awarded').length);
-  fedSolicitationCount.textContent = String(values.filter(x => ['solicitation','sources_sought','presolicitation'].includes(x.mode)).length);
-  fedSubCount.textContent = String(values.filter(x => x.mode === 'subcontract').length);
-  fedValueCount.textContent = fmtMoney(values.reduce((sum,x)=>sum + Number(x.value || 0),0));
+  entAwardedCount.textContent = String(values.filter(x => x.mode === 'awarded').length);
+  entSolicitationCount.textContent = String(values.filter(x => ['solicitation','sources_sought','presolicitation'].includes(x.mode)).length);
+  entSubCount.textContent = String(values.filter(x => x.mode === 'subcontract').length);
+  entValueCount.textContent = fmtMoney(values.reduce((sum,x)=>sum + Number(x.value || 0),0));
 
   if(filtered.length === 0){
-    fedList.innerHTML = `<div class="list"><div class="row-item"><div class="t">No matching federal leads.</div><div class="m">Change filters or wait for API ingestion.</div></div></div>`;
-    fedDetail.innerHTML = `Select a federal lead to view details...`;
-    selectedFedId = null;
-    btnEditFed.disabled = true;
+    entList.innerHTML = `<div class="list"><div class="row-item"><div class="t">No matching enterprise contracts.</div><div class="m">Change filters or wait for API ingestion.</div></div></div>`;
+    entDetail.innerHTML = `Select an enterprise contract to view details...`;
+    selectedEntId = null;
+    btnEditEnt.disabled = true;
     return;
   }
 
   let html = `<div class="list">`;
   for(const [id,x] of filtered){
-    const active = selectedFedId === id ? 'active' : '';
+    const active = selectedEntId === id ? 'active' : '';
     const modeLabel = (x.mode || '').replace(/_/g,' ').toUpperCase();
     const valueLabel = x.value ? fmtMoney(x.value) : '';
     
-    // Support legacy city/state or new location field
     const loc = x.location || [x.city, x.state].filter(Boolean).join(', ');
-    const mline = [x.agency, loc].filter(Boolean).join(' • ');
+    const mline = [x.agency, loc].filter(Boolean).join(' • '); // Agency is visible to GC
     
     html += `
-      <div class="row-item ${active}" data-fedid="${esc(id)}">
-        <div class="t">${esc(x.title || '(Untitled federal lead)')}</div>
+      <div class="row-item ${active}" data-entid="${esc(id)}">
+        <div class="t">${esc(x.title || '(Untitled contract)')}</div>
         <div class="m">${esc(mline)}</div>
         <div class="meta-line">
           <span class="pill ${x.mode === 'awarded' ? 'good' : x.mode === 'subcontract' ? 'blue' : 'warn'}">${esc(modeLabel || 'LEAD')}</span>
@@ -1810,160 +1860,173 @@ function renderFedJobs(){
     `;
   }
   html += `</div>`;
-  fedList.innerHTML = html;
+  entList.innerHTML = html;
 
-  if(!selectedFedId) selectedFedId = filtered[0][0];
-  renderFedDetail(selectedFedId);
-  if(isGodMode) btnEditFed.disabled = !selectedFedId;
+  if(!selectedEntId) selectedEntId = filtered[0][0];
+  renderEntDetail(selectedEntId);
+  if(isGodMode) btnEditEnt.disabled = !selectedEntId;
 }
-function renderFedDetail(id){
-  const x = fedJobsCache[id];
+function renderEntDetail(id){
+  const x = entJobsCache[id];
   if(!x){
-    fedDetail.innerHTML = `Select a federal lead to view details...`;
+    entDetail.innerHTML = `Select an enterprise contract to view details...`;
     return;
   }
 
   const modeLabel = (x.mode || '').replace(/_/g,' ').toUpperCase();
-  const external = x.link ? `<a class="chip ghost" href="${esc(x.link)}" target="_blank" rel="noopener">Open Source</a>` : '';
-  const subBlock = x.sub ? `<div class="kv"><b>Subcontractor:</b> ${esc(x.sub)}</div>` : '';
-  
-  // Support legacy city/state or new location field
   const locDisplay = x.location || [x.city, x.state].filter(Boolean).join(', ');
-
-  fedDetail.innerHTML = `
-    <div class="panel">
-      <h3>${esc(x.title || '(Untitled federal lead)')}</h3>
-      <div class="kv"><b>Mode:</b> ${esc(modeLabel)}</div>
+  
+  // Conditionally render God-mode elements
+  const godBlock = isGodMode ? `
+      <div class="hr"></div>
+      <div class="small" style="color:var(--warn)"><b>GOD MODE VISIBILITY ONLY:</b></div>
       <div class="kv"><b>Notice / PIID:</b> ${esc(x.noticeId || '')}</div>
       <div class="kv"><b>Agency:</b> ${esc(x.agency || '')}</div>
       <div class="kv"><b>Office:</b> ${esc(x.office || '')}</div>
-      <div class="kv"><b>Prime:</b> ${esc(x.prime || '')}</div>
+      <div class="kv"><b>GC/Prime:</b> ${esc(x.prime || '')}</div>
+      <div class="kv"><b>Contact:</b> ${esc(x.contactName || '')}</div>
+      <div class="kv"><b>Phone:</b> ${esc(x.contactPhone || '')}</div>
+      <div class="kv"><b>Email:</b> ${esc(x.contactEmail || '')}</div>
+      ${x.link ? `<div style="margin-top:6px;"><a class="chip ghost" href="${esc(x.link)}" target="_blank" rel="noopener">Open Source Link</a></div>` : ''}
+  ` : '';
+
+  const subBlock = x.sub && isGodMode ? `<div class="kv"><b>Subcontractor:</b> ${esc(x.sub)}</div>` : '';
+
+  entDetail.innerHTML = `
+    <div class="panel">
+      <h3>${esc(x.title || '(Untitled contract)')}</h3>
+      <div class="kv"><b>Mode:</b> ${esc(modeLabel)}</div>
       ${subBlock}
       <div class="kv"><b>Trade:</b> ${esc(x.trade || '')}</div>
       <div class="kv"><b>Location:</b> ${esc(locDisplay)}</div>
       <div class="kv"><b>Value:</b> ${esc(x.value ? fmtMoney(x.value) : '')}</div>
       <div class="kv"><b>Due / Response:</b> ${esc(x.dueDate || '')}</div>
       <div class="hr"></div>
-      <div class="kv"><b>Summary:</b><br>${esc(x.summary || '').replace(/\n/g,'<br>')}</div>
+      <div class="kv"><b>Scope / Summary:</b><br>${esc(x.summary || '').replace(/\n/g,'<br>')}</div>
+      ${godBlock}
       <div class="hr"></div>
-      <div class="kv"><b>Contact:</b> ${esc(x.contactName || '')}</div>
-      <div class="kv"><b>Phone:</b> ${esc(x.contactPhone || '')}</div>
-      <div class="kv"><b>Email:</b> ${esc(x.contactEmail || '')}</div>
-      <div class="hr"></div>
-      <div class="claim-buttons">
-        <button class="chip primary" id="fedAssignBtn" type="button">Route / Assign</button>
-        <button class="chip ghost" id="fedBlueBtn" type="button">Blue Phone</button>
-        <button class="chip ghost" id="fedRedBtn" type="button">Red Phone</button>
-        ${external}
+      <div class="claim-buttons" style="width:100%;">
+        <button class="chip primary" id="entAssignBtn" type="button">👥 Assign to Sub</button>
+        <button class="chip ghost" id="entBlueBtn" type="button">Blue Phone</button>
+        <button class="chip ghost" id="entRedBtn" type="button">Red Phone</button>
       </div>
-      <div class="small" style="margin-top:10px">Federal view is intentionally hidden from non-branch users.</div>
+      <div class="small" style="margin-top:10px; width:100%;">Enterprise contracts are hidden from standard Subs until assigned.</div>
     </div>
   `;
 
-  document.querySelectorAll('.row-item[data-fedid]').forEach(r=>{
-    r.classList.toggle('active', r.dataset.fedid === id);
+  document.querySelectorAll('.row-item[data-entid]').forEach(r=>{
+    r.classList.toggle('active', r.dataset.entid === id);
   });
 
-  const fedAssignBtn = document.getElementById("fedAssignBtn");
-  const fedBlueBtn = document.getElementById("fedBlueBtn");
-  const fedRedBtn = document.getElementById("fedRedBtn");
+  const entAssignBtn = document.getElementById("entAssignBtn");
+  const entBlueBtn = document.getElementById("entBlueBtn");
+  const entRedBtn = document.getElementById("entRedBtn");
 
-  if(fedAssignBtn){
-    fedAssignBtn.onclick = async ()=>{
-      await firebase.database().ref(`samGovJobs/${id}/lastTouched`).update({
-        by: USER_EMAIL || '',
-        ts: firebase.database.ServerValue.TIMESTAMP
-      });
-      alert("Marked for routing. Wire assignment flow in RTDB rules next.");
+  if(entAssignBtn){
+    entAssignBtn.onclick = async ()=>{
+      const subEmail = prompt("Enter the Associate's email address to assign this Enterprise Contract to them:");
+      if(subEmail && subEmail.trim()){
+          try {
+              await firebase.database().ref(`enterpriseContracts/${id}/assignedSubEmail`).set(subEmail.trim().toLowerCase());
+              await firebase.database().ref(`enterpriseContracts/${id}/lastTouched`).update({
+                  by: USER_EMAIL || '',
+                  ts: firebase.database.ServerValue.TIMESTAMP
+              });
+              alert(`Contract assigned to ${subEmail}. They will now see it as a Service Order.`);
+          } catch(e) {
+              console.error(e);
+              alert("Failed to assign contract.");
+          }
+      }
     };
   }
-  if(fedBlueBtn){
-    fedBlueBtn.onclick = ()=>{
-      rbCategory.value = "Federal lead support";
+  if(entBlueBtn){
+    entBlueBtn.onclick = ()=>{
+      rbCategory.value = "Enterprise contract support";
       rbSubject.value = x.title || '';
-      rbDetails.value = `Federal lead support requested.\nLead: ${x.title || ''}\nNotice/PIID: ${x.noticeId || ''}\nPrime: ${x.prime || ''}`;
+      rbDetails.value = `Enterprise contract support requested.\nContract: ${x.title || ''}`;
       showRBModal(false);
     };
   }
-  if(fedRedBtn){
-    fedRedBtn.onclick = ()=>{
-      rbCategory.value = "Federal lead support";
+  if(entRedBtn){
+    entRedBtn.onclick = ()=>{
+      rbCategory.value = "Enterprise contract support";
       rbSubject.value = x.title || '';
-      rbDetails.value = `URGENT federal lead support requested.\nLead: ${x.title || ''}\nNotice/PIID: ${x.noticeId || ''}\nPrime: ${x.prime || ''}`;
+      rbDetails.value = `URGENT enterprise contract support requested.\nContract: ${x.title || ''}`;
       showRBModal(true);
     };
   }
 }
 
 /* ==========================
-   FEDERAL LEAD ADMIN (GOD MODE)
+   ENTERPRISE ADMIN (GOD MODE)
 ========================== */
-function openFedModal(mode){
-  fedModal.style.display = 'flex';
+function openEntModal(mode){
+  entModal.style.display = 'flex';
   const isEdit = mode === 'edit';
-  fedModalTitle.textContent = isEdit ? 'Edit Federal Lead' : 'Create Federal Lead';
+  entModalTitle.textContent = isEdit ? 'Edit Enterprise Contract' : 'Create Enterprise Contract';
 
   if(isEdit){
-    const x = fedJobsCache[selectedFedId];
-    if(!x){ alert('No federal lead selected'); return; }
-    fedTitle.value = x.title || '';
-    fedMode.value = x.mode || 'awarded';
-    fedTrade.value = x.trade || '';
-    fedNoticeId.value = x.noticeId || '';
-    fedAgency.value = x.agency || '';
-    fedOffice.value = x.office || '';
-    fedPrime.value = x.prime || '';
-    fedSub.value = x.sub || '';
-    fedLocation.value = x.location || [x.city, x.state].filter(Boolean).join(', ') || '';
-    fedValue.value = x.value || '';
-    fedDue.value = x.dueDate || '';
-    fedSummary.value = x.summary || '';
-    fedContactName.value = x.contactName || '';
-    fedContactPhone.value = x.contactPhone || '';
-    fedContactEmail.value = x.contactEmail || '';
-    fedLink.value = x.link || '';
-    fedDeleteBtn.style.display = 'inline-flex';
+    const x = entJobsCache[selectedEntId];
+    if(!x){ alert('No contract selected'); return; }
+    entTitle.value = x.title || '';
+    entMode.value = x.mode || 'awarded';
+    entTrade.value = x.trade || '';
+    entNoticeId.value = x.noticeId || '';
+    entAgency.value = x.agency || '';
+    entOffice.value = x.office || '';
+    entPrime.value = x.prime || '';
+    entSub.value = x.sub || '';
+    entLocation.value = x.location || [x.city, x.state].filter(Boolean).join(', ') || '';
+    entValue.value = x.value || '';
+    entDue.value = x.dueDate || '';
+    entSummary.value = x.summary || '';
+    entContactName.value = x.contactName || '';
+    entContactPhone.value = x.contactPhone || '';
+    entContactEmail.value = x.contactEmail || '';
+    entLink.value = x.link || '';
+    entDeleteBtn.style.display = 'inline-flex';
   }else{
-    fedTitle.value = '';
-    fedMode.value = 'awarded';
-    fedTrade.value = '';
-    fedNoticeId.value = '';
-    fedAgency.value = '';
-    fedOffice.value = '';
-    fedPrime.value = '';
-    fedSub.value = '';
-    fedLocation.value = '';
-    fedValue.value = '';
-    fedDue.value = '';
-    fedSummary.value = '';
-    fedContactName.value = '';
-    fedContactPhone.value = '';
-    fedContactEmail.value = '';
-    fedLink.value = '';
-    fedDeleteBtn.style.display = 'none';
+    entTitle.value = '';
+    entMode.value = 'awarded';
+    entTrade.value = '';
+    entNoticeId.value = '';
+    entAgency.value = '';
+    entOffice.value = '';
+    entPrime.value = '';
+    entSub.value = '';
+    entLocation.value = '';
+    entValue.value = '';
+    entDue.value = '';
+    entSummary.value = '';
+    entContactName.value = '';
+    entContactPhone.value = '';
+    entContactEmail.value = '';
+    entLink.value = '';
+    entDeleteBtn.style.display = 'none';
   }
 
-  fedSave.dataset.mode = mode;
+  entSave.dataset.mode = mode;
 }
-function closeFedModal(){ fedModal.style.display='none'; }
-function fedPayload(){
+function closeEntModal(){ entModal.style.display='none'; }
+function entPayload(){
   return {
-    title: fedTitle.value.trim(),
-    mode: fedMode.value,
-    trade: fedTrade.value.trim(),
-    noticeId: fedNoticeId.value.trim(),
-    agency: fedAgency.value.trim(),
-    office: fedOffice.value.trim(),
-    prime: fedPrime.value.trim(),
-    sub: fedSub.value.trim(),
-    location: fedLocation.value.trim(),
-    value: Number(fedValue.value || 0),
-    dueDate: fedDue.value.trim(),
-    summary: fedSummary.value.trim(),
-    contactName: fedContactName.value.trim(),
-    contactPhone: normalizePhone(fedContactPhone.value),
-    contactEmail: fedContactEmail.value.trim(),
-    link: fedLink.value.trim(),
+    title: entTitle.value.trim(),
+    mode: entMode.value,
+    trade: entTrade.value.trim(),
+    noticeId: entNoticeId.value.trim(),
+    agency: entAgency.value.trim(),
+    office: entOffice.value.trim(),
+    prime: entPrime.value.trim(),
+    sub: entSub.value.trim(),
+    location: entLocation.value.trim(),
+    value: Number(entValue.value || 0),
+    dueDate: entDue.value.trim(),
+    summary: entSummary.value.trim(),
+    contactName: entContactName.value.trim(),
+    contactPhone: normalizePhone(entContactPhone.value),
+    contactEmail: entContactEmail.value.trim(),
+    link: entLink.value.trim(),
     updatedAt: new Date().toISOString(),
     updatedBy: USER_EMAIL || null
   };
@@ -2002,19 +2065,27 @@ btnRed.addEventListener('click', ()=> showRBModal(true));
 btnBlue.addEventListener('click', ()=> showRBModal(false));
 rbCancel.addEventListener('click', hideRBModal);
 
-// Local Job Events
-btnNewJob.addEventListener('click', ()=>{ if(!isBranchManager) return alert('Not authorized'); openJobModal('new'); });
-btnEditJob.addEventListener('click', ()=>{ if(!isBranchManager) return alert('Not authorized'); if(!selectedJobId) return alert('Select a job first'); openJobModal('edit'); });
+// Service Order Events
+btnNewJob.addEventListener('click', ()=>{ openJobModal('new'); }); // Unlocked for all
+
+btnEditJob.addEventListener('click', ()=>{ 
+  if(!selectedJobId) return alert('Select an order first'); 
+  const j = jobsCache[selectedJobId];
+  if(!isBranchManager && j && j.postedBy !== UID) {
+      return alert('You can only edit orders you posted.');
+  }
+  openJobModal('edit'); 
+});
+
 jobCancel.addEventListener('click', closeJobModal);
 
 jobSave.addEventListener('click', async ()=>{
-  if(!isBranchManager) return alert('Not authorized');
   const mode = jobSave.dataset.mode || 'new';
   const payload = jobPayload();
   if(!payload.title) return alert('Title is required');
 
   if(mode === 'edit'){
-    if(!selectedJobId) return alert('No job selected');
+    if(!selectedJobId) return alert('No order selected');
     await firebase.database().ref(`jobs/${selectedJobId}`).update(payload);
     closeJobModal();
     return;
@@ -2033,51 +2104,58 @@ jobSave.addEventListener('click', async ()=>{
 });
 
 jobDeleteBtn.addEventListener('click', async ()=>{
-  if(!isBranchManager) return alert('Not authorized');
   if(!selectedJobId) return;
-  if(!confirm('Delete this local job permanently?')) return;
+  const j = jobsCache[selectedJobId];
+  if(!isBranchManager && j && j.postedBy !== UID) {
+      return alert('You can only delete orders you posted.');
+  }
+  if(!confirm('Delete this service order permanently?')) return;
   await firebase.database().ref(`jobs/${selectedJobId}`).remove();
   selectedJobId = null;
   closeJobModal();
 });
 
-// Fed Lead Events (God Mode only)
-btnNewFed.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); openFedModal('new'); });
-btnEditFed.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); if(!selectedFedId) return alert('Select a federal lead first'); openFedModal('edit'); });
-fedCancel.addEventListener('click', closeFedModal);
+// Enterprise Contract Events (God Mode only)
+btnNewEnt.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); openEntModal('new'); });
+btnEditEnt.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); if(!selectedEntId) return alert('Select a contract first'); openEntModal('edit'); });
+btnImportEnt.addEventListener('click', ()=> {
+    if(!isGodMode) return alert('Not authorized');
+    alert("Enterprise Import module loading... (Pending Data Structuring)");
+});
+entCancel.addEventListener('click', closeEntModal);
 
-fedSave.addEventListener('click', async ()=>{
+entSave.addEventListener('click', async ()=>{
   if(!isGodMode) return alert('Not authorized');
-  const mode = fedSave.dataset.mode || 'new';
-  const payload = fedPayload();
-  if(!payload.title) return alert('Lead title is required');
+  const mode = entSave.dataset.mode || 'new';
+  const payload = entPayload();
+  if(!payload.title) return alert('Contract title is required');
 
   if(mode === 'edit'){
-    if(!selectedFedId) return alert('No federal lead selected');
-    await firebase.database().ref(`samGovJobs/${selectedFedId}`).update(payload);
-    closeFedModal();
+    if(!selectedEntId) return alert('No contract selected');
+    await firebase.database().ref(`enterpriseContracts/${selectedEntId}`).update(payload);
+    closeEntModal();
     return;
   }
 
-  const ref = firebase.database().ref('samGovJobs').push();
+  const ref = firebase.database().ref('enterpriseContracts').push();
   const leadId = ref.key;
-  await firebase.database().ref(`samGovJobs/${leadId}`).set({
+  await firebase.database().ref(`enterpriseContracts/${leadId}`).set({
     ...payload,
     createdAt: new Date().toISOString(),
     createdBy: USER_EMAIL || null,
     postedBy: UID || null
   });
-  selectedFedId = leadId;
-  closeFedModal();
+  selectedEntId = leadId;
+  closeEntModal();
 });
 
-fedDeleteBtn.addEventListener('click', async ()=>{
+entDeleteBtn.addEventListener('click', async ()=>{
   if(!isGodMode) return alert('Not authorized');
-  if(!selectedFedId) return;
-  if(!confirm('Delete this federal lead permanently?')) return;
-  await firebase.database().ref(`samGovJobs/${selectedFedId}`).remove();
-  selectedFedId = null;
-  closeFedModal();
+  if(!selectedEntId) return;
+  if(!confirm('Delete this contract permanently?')) return;
+  await firebase.database().ref(`enterpriseContracts/${selectedEntId}`).remove();
+  selectedEntId = null;
+  closeEntModal();
 });
 
 // Row clicks
@@ -2086,31 +2164,38 @@ document.addEventListener('click', (e)=>{
   if(localRow){
     selectedJobId = localRow.dataset.jobid;
     renderJobDetail(selectedJobId);
-    if(isBranchManager) btnEditJob.disabled = !selectedJobId;
+    
+    // Evaluate if they can edit this specific job
+    const j = jobsCache[selectedJobId];
+    const canEdit = isBranchManager || (j && j.postedBy === UID);
+    btnEditJob.disabled = !canEdit;
   }
-  const fedRow = e.target.closest && e.target.closest('.row-item[data-fedid]');
-  if(fedRow){
-    selectedFedId = fedRow.dataset.fedid;
-    renderFedDetail(selectedFedId);
-    if(isGodMode) btnEditFed.disabled = !selectedFedId;
+  const entRow = e.target.closest && e.target.closest('.row-item[data-entid]');
+  if(entRow){
+    selectedEntId = entRow.dataset.entid;
+    renderEntDetail(selectedEntId);
+    if(isGodMode) btnEditEnt.disabled = !selectedEntId;
   }
 });
 
-[fedSearch, fedModeFilter, fedTradeFilter].forEach(el=>{
-  el.addEventListener('input', renderFedJobs);
-  el.addEventListener('change', renderFedJobs);
+[entSearch, entModeFilter, entTradeFilter].forEach(el=>{
+  if(!el) return;
+  el.addEventListener('input', renderEntJobs);
+  el.addEventListener('change', renderEntJobs);
 });
-fedClearFilters.addEventListener('click', ()=>{
-  fedSearch.value = '';
-  fedModeFilter.value = '';
-  fedTradeFilter.value = '';
-  renderFedJobs();
-});
+if(entClearFilters){
+  entClearFilters.addEventListener('click', ()=>{
+    entSearch.value = '';
+    entModeFilter.value = '';
+    entTradeFilter.value = '';
+    renderEntJobs();
+  });
+}
 
 heroOpenChat.addEventListener('click', ()=> location.href = "townhall.html?from=contractor");
-heroOpenFed.addEventListener('click', ()=>{
+heroOpenEnt.addEventListener('click', ()=>{
   if(!isBranchManager) return;
-  fedShell.scrollIntoView({behavior:'smooth', block:'start'});
+  entShell.scrollIntoView({behavior:'smooth', block:'start'});
 });
 
 chatBubble.addEventListener('click', ()=> location.href = "townhall.html?from=contractor");
@@ -2131,7 +2216,7 @@ firebase.auth().onAuthStateChanged(async u => {
 
   await loadSettings();
   subscribeJobs();
-  subscribeFedJobs();
+  subscribeEntJobs();
 
   try{
     const userStatusRef = firebase.database().ref(`/presence/${UID}`);
