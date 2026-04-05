@@ -206,7 +206,7 @@ body{
   border:1px solid rgba(255,255,255,.14);
   background:rgba(16,34,50,.62);
 }
-.gc-strip { display:none; } /* Hidden for default associates */
+.gc-strip { display:none; }
 
 .local-strip .row,.gc-strip .row{
   display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap
@@ -635,7 +635,7 @@ body{
 <div class="modal-backdrop" id="entModal">
   <div class="modal" role="dialog" aria-label="Enterprise Contract Admin">
     <h3 id="entModalTitle">Create Enterprise Contract</h3>
-    <p class="small">God mode only. Writes to <span style="opacity:.95">/enterpriseContracts/&lt;leadId&gt;</span>.</p>
+    <p class="small">Leadership only. Writes to <span style="opacity:.95">/enterpriseContracts/&lt;leadId&gt;</span>.</p>
 
     <div class="hr"></div>
 
@@ -878,7 +878,7 @@ body{
         <div class="gc-strip" id="gcStrip">
           <div class="row">
             <div>
-              <b>God Mode Only:</b> Manual entry or import of Enterprise Opportunities.
+              <b>Leadership Only:</b> Manual entry or import of Enterprise Opportunities.
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn ghost" id="btnImportEnt" type="button">⬇ Import Data</button>
@@ -1006,7 +1006,6 @@ const jobDesc = $("jobDesc");
 const jobDeleteBtn = $("jobDeleteBtn");
 const jobCancel = $("jobCancel");
 const jobSave = $("jobSave");
-
 const entShell = $("entShell");
 const gcStrip = $("gcStrip");
 const btnNewEnt = $("btnNewEnt");
@@ -1052,7 +1051,6 @@ const setupLater = $("setupLater");
 const heroOpenSettings = $("heroOpenSettings");
 const heroOpenChat = $("heroOpenChat");
 const heroOpenEnt = $("heroOpenEnt");
-
 const statLocalActive = $("statLocalActive");
 const statUpcoming = $("statUpcoming");
 const statEntCount = $("statEntCount");
@@ -1069,12 +1067,10 @@ const heroTrades = $("heroTrades");
 const heroServiceArea = $("heroServiceArea");
 const roleBadge = $("roleBadge");
 const miniEntPill = $("miniEntPill");
-
 const btnTeam = $("btnTeam");
 const teamModal = $("teamModal");
 const teamModalBody = $("teamModalBody");
 const teamModalClose = $("teamModalClose");
-
 /* ==========================
    FIREBASE INIT & GLOBALS
 ========================== */
@@ -1086,13 +1082,11 @@ const teamModalClose = $("teamModalClose");
     }
   }catch(e){ console.error("Firebase init error:", e); }
 })();
-
 let UID = null;
 let USER_EMAIL = null;
 let USER_ROLE = "associate";
 let isGodMode = false;
 let isBranchManager = false;
-
 const USER_DIR_PATH="userDirectory";
 const ROLES_PATH="roles";
 const MANAGER_ASSOCIATES_PATH="managerAssociates";
@@ -1113,9 +1107,7 @@ let selectedJobId = null;
 let currentTab = "active";
 let entJobsCache = {};
 let selectedEntId = null;
-
 const REQUIRED_HINT = "Please enter: Service Areas + Trades + a contact method (Phone or Email).";
-
 const TRACKER_STATES = [
     { id: 'Not Left', icon: '🏠', label: 'Not Left' },
     { id: 'En Route', icon: '🚚', label: 'En Route' },
@@ -1126,7 +1118,6 @@ const TRACKER_STATES = [
     { id: 'Finishing', icon: '🔍', label: 'Finishing' },
     { id: 'Completed', icon: '✅', label: 'Done' }
 ];
-
 /* ==========================
    HELPERS & DIRECTORY SYNC (From Wholesaler Logic)
 ========================== */
@@ -1138,7 +1129,8 @@ function normalizePhone(p){
 }
 function fmtMoney(v){
   const n = Number(v || 0);
-  return isNaN(n) ? '$0' : n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
+  return isNaN(n) ?
+  '$0' : n.toLocaleString('en-US',{style:'currency',currency:'USD',maximumFractionDigits:0});
 }
 function needsSetup(s){
   if(!s) return true;
@@ -1155,24 +1147,27 @@ function setLocSwitch(on){
   if(!locSwitch || !locStatus) return;
   sharingLocation = !!on;
   locSwitch.classList.toggle('on', sharingLocation);
-  locStatus.textContent = sharingLocation ? 'Location sharing: ON' : 'Location sharing: OFF';
+  locStatus.textContent = sharingLocation ?
+  'Location sharing: ON' : 'Location sharing: OFF';
   heroLocation.textContent = sharingLocation ? 'ON' : 'OFF';
 }
 function showSettingsModal(){ settingsModal.style.display='flex'; }
-function hideSettingsModal(){ settingsModal.style.display='none'; }
+function hideSettingsModal(){ settingsModal.style.display='none';
+}
 function setBannerVisible(v){ setupBanner.style.display = v ? 'block' : 'none'; }
-function setLocalUIVisible(v){ localStrip.style.display = 'block'; }
+function setLocalUIVisible(v){ localStrip.style.display = 'block';
+}
 function setBranchUIVisible(v){
   entShell.style.display = v ? 'block' : 'none';
   gcStrip.style.display = isGodMode ? 'block' : 'none';
   heroOpenEnt.style.display = v ? 'inline-flex' : 'none';
   statEntCount.parentElement.style.display = v ? 'block' : 'none';
   
-  roleBadge.textContent = v ? (isGodMode ? 'GOD MODE / ADMIN VIEW' : 'GC / BRANCH MANAGER VIEW') : 'SUB / ASSOCIATE VIEW';
+  roleBadge.textContent = v ?
+  (isGodMode ? 'LEADERSHIP VIEW' : 'GC / BRANCH MANAGER VIEW') : 'SUB / ASSOCIATE VIEW';
   miniEntPill.innerHTML = v
     ? '<span class="status-dot dot-good"></span> Enterprise Visible'
     : '<span class="status-dot dot-warn"></span> Enterprise Hidden';
-    
   document.querySelectorAll('.god-only-field').forEach(el => {
       el.style.display = isGodMode ? 'block' : 'none';
   });
@@ -1184,7 +1179,6 @@ bindBackdropClose(settingsModal);
 bindBackdropClose(rbModal);
 bindBackdropClose(jobModal);
 bindBackdropClose(entModal);
-
 function showOnboardingCallout(){
   const gear = btnSettings;
   if(!gear) return;
@@ -1267,7 +1261,7 @@ function mapRole(raw){
 } 
 function roleLabel(role){
   const r=mapRole(role);
-  if(r==="god") return "GOD MODE"; 
+  if(r==="god") return "LEADERSHIP"; 
   if(r==="admin") return "BRANCH MANAGER"; 
   return "ASSOCIATE";
 }
@@ -1290,7 +1284,7 @@ function buildUserCache(rows){
 }
 
 async function loadGodDirectoryCache(){
-  let users={}, roles={}, managerAssociates={}; 
+  let users={}, roles={}, managerAssociates={};
   try{users=(await readExact(USER_DIR_PATH))||{};}catch(e){} 
   try{roles=(await readExact(ROLES_PATH))||{};}catch(e){} 
   try{managerAssociates=(await readExact(MANAGER_ASSOCIATES_PATH))||{};}catch(e){} 
@@ -1334,7 +1328,7 @@ async function loadBranchManagerDirectoryCache(){
     const row=await readExact(`${USER_DIR_PATH}/${targetUid}`); 
     return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};
   })); 
-  details.forEach(d=>rows.push(d)); 
+  details.forEach(d=>rows.push(d));
   const cache=buildUserCache(rows);
   Object.keys(teamMap).forEach(targetUid=>{
     const info=teamMap[targetUid]||{}; 
@@ -1343,7 +1337,7 @@ async function loadBranchManagerDirectoryCache(){
     cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); 
     if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); 
     if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;
-  }); 
+  });
   userDirCache=cache; 
   pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${UID}__${targetUid}`, requesterUid:UID, requesterEmail:cache.byUid[UID]?.email||String(USER_EMAIL||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
   return cache;
@@ -1351,7 +1345,7 @@ async function loadBranchManagerDirectoryCache(){
 
 async function loadUserDirectoryCache(){
   if(isGodMode) return loadGodDirectoryCache(); 
-  if(isBranchManager) return loadBranchManagerDirectoryCache(); 
+  if(isBranchManager) return loadBranchManagerDirectoryCache();
   return loadSelfDirectoryCache();
 }
 
@@ -1364,7 +1358,7 @@ async function resolveRole(user){
   try{
     const [a,b] = await Promise.all([
       firebase.database().ref(`roles/${user.uid}`).once('value'),
-      firebase.database().ref(`users/${user.uid}/role`).once('value')
+      firebase.database().ref(`${USER_DIR_PATH}/${user.uid}/role`).once('value')
     ]);
     return mapRole(a.val() || b.val() || "associate");
   }catch(e){
@@ -1411,7 +1405,7 @@ async function renderTeamModalBody(){
         const currentRole=roleLabel(u.role);
         const managerName=u.managerUid&&String(u.managerStatus||"")==="approved"
           ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : "";
-        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)} • ${esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#13b981">Manager: ${esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==UID?`<select class="chip" style="background:#0d1f2d; border-color:var(--line);" onchange="changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)} • ${esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#13b981">Manager: ${esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==UID?`<select class="chip" style="background:#0d1f2d; border-color:var(--line);" onchange="changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">Leadership</span>'}</div></div>`;
       });
     html+=`</div>`;
   } else if(isBranchManager){
@@ -1432,12 +1426,13 @@ async function renderTeamModalBody(){
       html+=`<div class="help">No pending requests.</div>`;
     }else{
       myPending.forEach(r=>{
-        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(r.targetEmail||"Associate")}</strong><span style="font-size:11px;color:var(--warn)">Awaiting God Approval</span></div><div class="teamActions"><button class="chip danger" onclick="removeAssociate('${r.targetUid}')">Cancel</button></div></div>`;
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(r.targetEmail||"Associate")}</strong><span style="font-size:11px;color:var(--warn)">Awaiting Leadership Approval</span></div><div class="teamActions"><button class="chip danger" onclick="removeAssociate('${r.targetUid}')">Cancel</button></div></div>`;
       });
     }
     html+=`</div>`;
 
-    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">Request Associates By Email</div><div style="display:flex; gap:10px; align-items:center;"><input id="teamSearch" style="width:100%;padding:10px;border-radius:12px;background:#0d1f2d;border:1px solid #254a63;color:#fff;" placeholder="Type exact associate email..." /><button class="chip primary" type="button" id="teamSearchBtn">Search</button></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
+    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">Request Associates By Email</div><div style="display:flex; gap:10px; align-items:center;"><input id="teamSearch" style="width:100%;padding:10px;border-radius:12px;background:#0d1f2d;border:1px solid #254a63;color:#fff;"
+      placeholder="Type exact associate email..." /><button class="chip primary" type="button" id="teamSearchBtn">Search</button></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
   }
 
   $("teamModalBody").innerHTML=html;
@@ -1452,7 +1447,8 @@ async function renderTeamModalBody(){
       try{
         const snap=await firebase.database().ref(`${EMAIL_INDEX_PATH}/${emailLookupKey(email)}`).once("value");
         const targetUid=snap.val();
-        if(!targetUid || String(targetUid)===String(UID)){ box.innerHTML=`<div class="help">No match found.</div>`; return; }
+        if(!targetUid || String(targetUid)===String(UID)){ box.innerHTML=`<div class="help">No match found.</div>`;
+          return; }
         
         const myPending=pendingRequestCache.find(r=>String(r.requesterUid)===String(UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
         const mineApproved=String(userDirCache.byUid[targetUid]?.managerUid||"")===String(UID)&&String(userDirCache.byUid[targetUid]?.managerStatus||"")==="approved";
@@ -1469,7 +1465,6 @@ async function renderTeamModalBody(){
 }
 btnTeam.onclick=async()=>{$("teamModal").style.display='flex'; $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await renderTeamModalBody();};
 teamModalClose.onclick=()=>{ $("teamModal").style.display='none'; };
-
 window.requestAssociate=async(targetUid,targetEmailEnc)=>{
   if(!targetUid) return;
   const targetEmail=decodeURIComponent(targetEmailEnc||"").toLowerCase();
@@ -1480,7 +1475,7 @@ window.requestAssociate=async(targetUid,targetEmailEnc)=>{
     updates[`${MANAGER_ASSOCIATES_PATH}/${UID}/${targetUid}`]={status:"pending", targetEmail:targetEmail||String(userDirCache.byUid[targetUid]?.email||"").toLowerCase(), requestedAt:Date.now()};
     await firebase.database().ref().update(updates);
     await loadUserDirectoryCache();
-    alert("Request sent to God Mode");
+    alert("Request sent to Leadership");
     await renderTeamModalBody();
   }catch(e){ alert("Request failed"); }
 };
@@ -1536,6 +1531,63 @@ window.changeUserRole=async(targetUid, newRole)=>{
 };
 
 /* ==========================
+   JOB COMMUNICATIONS (NEW)
+========================== */
+window.sendJobMsg = async (jobId, type) => {
+    const input = document.getElementById(`chatInput-${jobId}`);
+    if(!input) return;
+    const text = (input.value || '').trim();
+    if(!text) return alert("Please enter a message.");
+
+    const status = type === 'customer' ? (isGodMode ? 'approved' : 'pending') : 'approved';
+
+    const payload = {
+        text, type, status,
+        senderUid: UID, 
+        senderEmail: USER_EMAIL || '', 
+        ts: Date.now()
+    };
+
+    try {
+        await firebase.database().ref(`jobs/${jobId}/messages`).push(payload);
+        input.value = '';
+
+        await firebase.database().ref('adminNotifications').push({
+            msg: `New ${type} message on job ${jobId} from ${USER_EMAIL}. Requires approval: ${status === 'pending'}`,
+            ts: Date.now()
+        });
+
+        await firebase.database().ref('mail').push({
+            to: 'dealbankers@gmail.com',
+            message: {
+                subject: `New Job Communication [${type.toUpperCase()}]`,
+                text: `User: ${USER_EMAIL}\nJob ID: ${jobId}\nType: ${type}\nMessage: ${text}\nStatus: ${status}\n\nPlease login to Command to view or approve.`
+            }
+        });
+
+        if (status === 'pending') {
+            alert("Message sent to Leadership for approval.");
+        }
+    } catch(e) {
+        alert("Failed to send message: " + e.message);
+    }
+};
+
+window.approveJobMsg = async (jobId, msgId) => {
+    if(!isGodMode) return;
+    try {
+        await firebase.database().ref(`jobs/${jobId}/messages/${msgId}/status`).set('approved');
+    } catch(e) { alert("Failed to approve"); }
+};
+
+window.rejectJobMsg = async (jobId, msgId) => {
+    if(!isGodMode) return;
+    try {
+        await firebase.database().ref(`jobs/${jobId}/messages/${msgId}/status`).set('rejected');
+    } catch(e) { alert("Failed to reject"); }
+};
+
+/* ==========================
    SETTINGS
 ========================== */
 async function loadSettings() {
@@ -1555,7 +1607,6 @@ async function loadSettings() {
 
     const on = (typeof s.acceptingJobs === 'boolean') ? s.acceptingJobs : true;
     setSwitch(acceptSwitch, on);
-
     if(s.liveLocation){
       setLocSwitch(true);
       startLocationShare();
@@ -1618,9 +1669,11 @@ saveSettings.addEventListener('click', async () => {
 function showRBModal(urgent){
   rbUrgent = !!urgent;
   rbModal.style.display='flex';
-  rbTitle.textContent = urgent ? '🚨 Red Phone Support (Urgent)' : '🌀 Blue Phone Support (General)';
+  rbTitle.textContent = urgent ?
+  '🚨 Red Phone Support (Urgent)' : '🌀 Blue Phone Support (General)';
 }
-function hideRBModal(){ rbModal.style.display='none'; }
+function hideRBModal(){ rbModal.style.display='none';
+}
 
 rbSubmit.addEventListener('click', async ()=>{
   const message = (rbDetails.value || "").trim();
@@ -1644,7 +1697,7 @@ rbSubmit.addEventListener('click', async ()=>{
 });
 
 /* ==========================
-   SERVICE ORDERS (Tracker, Photos, GC Assignment)
+   SERVICE ORDERS (Tracker, Photos, GC Assignment, Chat)
 ========================== */
 function setTab(tab){
   currentTab = tab;
@@ -1655,7 +1708,8 @@ function setTab(tab){
 }
 function jobMatchesTab(j){
   const st = (j?.status || 'active');
-  return currentTab === 'active' ? st === 'active' : st === 'upcoming';
+  return currentTab === 'active' ?
+  st === 'active' : st === 'upcoming';
 }
 function renderJobs(){
   const ids = Object.keys(jobsCache)
@@ -1665,10 +1719,8 @@ function renderJobs(){
       const tb = jobsCache[b]?.createdAt || jobsCache[b]?.updatedAt || '';
       return (tb > ta ? 1 : -1);
     });
-
   statLocalActive.textContent = Object.values(jobsCache).filter(j => (j.status||'active') === 'active').length;
   statUpcoming.textContent = Object.values(jobsCache).filter(j => (j.status||'active') === 'upcoming').length;
-
   if(ids.length === 0){
     jobTable.innerHTML = `<div class="list"><div class="row-item"><div class="t">No ${currentTab} orders.</div><div class="m">Check back or turn on Accepting Jobs.</div></div></div>`;
     detailPanel.innerHTML = `Select an order to view details...`;
@@ -1685,7 +1737,6 @@ function renderJobs(){
     let execLabel = '';
     const isAssigned = j.assignedSubEmail && j.assignedSubEmail.length > 0;
     const isClaimed = j.claimedBy && Object.keys(j.claimedBy).length > 0;
-    
     if(isClaimed || isAssigned) {
        execLabel = `<span class="pill blue">${esc(j.executionStatus || 'Not Left')}</span>`;
     }
@@ -1697,7 +1748,8 @@ function renderJobs(){
         <div class="m">${esc(meta || '')}</div>
         <div class="meta-line">
           <span class="pill ${j.status==='upcoming' ? 'warn':'good'}">${esc((j.status || 'active').toUpperCase())}</span>
-          ${j.budget ? `<span class="pill blue">${esc(j.budget)}</span>` : ''}
+          ${j.budget ?
+          `<span class="pill blue">${esc(j.budget)}</span>` : ''}
           ${execLabel}
         </div>
       </div>
@@ -1761,9 +1813,9 @@ function renderJobDetail(id){
 
   // Show Tracker if they have access
   if (canTrack) {
-      const stepIndex = TRACKER_STATES.findIndex(s => s.id === currentStep) >= 0 ? TRACKER_STATES.findIndex(s => s.id === currentStep) : 0;
+      const stepIndex = TRACKER_STATES.findIndex(s => s.id === currentStep) >= 0 ?
+      TRACKER_STATES.findIndex(s => s.id === currentStep) : 0;
       const progressPercent = (stepIndex / (TRACKER_STATES.length - 1)) * 100;
-      
       let stepsHTML = TRACKER_STATES.map((s, idx) => {
           let stepClass = "";
           if (idx < stepIndex) stepClass = "completed";
@@ -1775,9 +1827,7 @@ function renderJobDetail(id){
             </div>
           `;
       }).join('');
-
       let assignedBadge = j.assignedSubEmail ? `<span class="small" style="color:var(--good)">Assigned to: ${esc(j.assignedSubEmail)}</span>` : '';
-      
       actionHTML += `
           <div class="hr" style="width:100%; margin-top:16px;"></div>
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
@@ -1794,7 +1844,7 @@ function renderJobDetail(id){
           </div>
       `;
 
-      // 2. Photos UI
+      // Photos UI
       let photosHTML = '';
       if(j.photos) {
           const pKeys = Object.keys(j.photos);
@@ -1810,10 +1860,11 @@ function renderJobDetail(id){
              <button class="chip ghost" id="uploadPhotoBtn" type="button">📷 Upload Photo</button>
              <input type="file" id="photoInput" style="display:none" accept="image/*">
              <div class="small" id="uploadStatus"></div>
-           </div>
+          </div>
           ${photosHTML}
       `;
-      // 3. Signature UI (Only if Completed)
+
+      // Signature UI
       if (currentStep === 'Completed') {
           actionHTML += `<div class="hr" style="width:100%;"></div><h4>Customer Sign-Off</h4>`;
           if(!j.signature) {
@@ -1836,6 +1887,69 @@ function renderJobDetail(id){
               `;
           }
       }
+
+      // JOB COMMUNICATIONS UI
+      let chatHTML = `
+        <div class="hr" style="width:100%; margin-top:16px;"></div>
+        <h4>Job Communications</h4>
+        <div id="jobChatBox" style="background:rgba(0,0,0,0.2); border-radius:12px; padding:12px; max-height:300px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; margin-top:8px;">
+      `;
+
+      const msgs = j.messages || {};
+      const msgIds = Object.keys(msgs).sort((a,b) => (msgs[a].ts || 0) - (msgs[b].ts || 0));
+
+      if (msgIds.length === 0) {
+          chatHTML += `<div class="small" style="text-align:center; opacity:0.7;">No messages yet.</div>`;
+      }
+
+      msgIds.forEach(msgId => {
+          const m = msgs[msgId];
+          const isInternal = m.type === 'internal';
+          const borderCol = isInternal ? 'var(--warn)' : 'var(--accent)';
+          const bgCol = isInternal ? 'rgba(245,158,11,0.05)' : 'rgba(43,116,255,0.05)';
+          const typeLabel = isInternal ? 'Internal (Leadership Only)' : 'Customer (Fulfillment Page)';
+          let statusLabel = '';
+
+          if (m.type === 'customer') {
+              if (m.status === 'pending') statusLabel = '<span class="pill warn" style="font-size:10px;">Pending Leadership Approval</span>';
+              if (m.status === 'approved') statusLabel = '<span class="pill good" style="font-size:10px;">Approved by Leadership</span>';
+              if (m.status === 'rejected') statusLabel = '<span class="pill danger" style="font-size:10px;">Rejected</span>';
+          }
+
+          let approveBtns = '';
+          if (isGodMode && m.type === 'customer' && m.status === 'pending') {
+              approveBtns = `
+              <div style="margin-top:8px; display:flex; gap:6px;">
+                  <button class="chip good" onclick="approveJobMsg('${id}', '${msgId}')" style="font-size:11px; padding:4px 8px; border-color:var(--good); color:var(--good); background:rgba(19,185,129,0.1);">Approve</button>
+                  <button class="chip danger" onclick="rejectJobMsg('${id}', '${msgId}')" style="font-size:11px; padding:4px 8px; border-color:var(--bad); color:var(--bad); background:rgba(239,68,68,0.1);">Reject</button>
+              </div>`;
+          }
+
+          chatHTML += `
+          <div style="border: 1px solid ${borderCol}; background: ${bgCol}; padding: 10px; border-radius: 8px;">
+              <div style="display:flex; justify-content:space-between; margin-bottom:4px; font-size:11px; opacity:0.8; flex-wrap:wrap; gap:4px;">
+                  <span><b>${esc(m.senderEmail)}</b> &bull; ${typeLabel}</span>
+                  <span>${new Date(m.ts).toLocaleString()}</span>
+              </div>
+              <div style="font-size:13px; line-height:1.4;">${esc(m.text).replace(/\n/g,'<br>')}</div>
+              <div style="margin-top:6px; display:flex; align-items:center; gap:8px;">
+                  ${statusLabel}
+                  ${approveBtns}
+              </div>
+          </div>`;
+      });
+
+      chatHTML += `</div>
+      <div style="margin-top:10px; display:flex; flex-direction:column; gap:8px; width:100%;">
+          <textarea id="chatInput-${id}" rows="3" placeholder="Type a message..." style="width:100%; border-radius:8px; padding:8px; background:#0d1f2d; color:#fff; border:1px solid rgba(255,255,255,0.2);"></textarea>
+          <div style="display:flex; gap:8px; flex-wrap:wrap;">
+              <button class="chip primary" onclick="sendJobMsg('${id}', 'customer')" type="button">Send to Customer (Fulfillment Page)</button>
+              <button class="chip ghost" onclick="sendJobMsg('${id}', 'internal')" type="button" style="border-color:var(--warn); color:var(--warn);">Send Internal (Leadership Only)</button>
+          </div>
+      </div>
+      `;
+
+      actionHTML += chatHTML;
   }
 
   detailPanel.innerHTML = `
@@ -1957,7 +2071,7 @@ function renderJobDetail(id){
                       uploadedBy: USER_EMAIL,
                       ts: Date.now()
                   }).then(() => {
-                     uploadStatus.textContent = "Upload complete!";
+                      uploadStatus.textContent = "Upload complete!";
                       setTimeout(() => uploadStatus.textContent = "", 2000);
                   }).catch(err => {
                       uploadStatus.textContent = "Error: " + err.message;
@@ -1987,8 +2101,10 @@ function renderJobDetail(id){
           return { x: clientX - rect.left, y: clientY - rect.top };
       }
 
-      const start = (e) => { e.preventDefault(); drawing = true; const pos = getPos(e); ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
-      const draw = (e) => { e.preventDefault(); if(!drawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke(); };
+      const start = (e) => { e.preventDefault(); drawing = true; const pos = getPos(e);
+      ctx.beginPath(); ctx.moveTo(pos.x, pos.y); };
+      const draw = (e) => { e.preventDefault(); if(!drawing) return; const pos = getPos(e); ctx.lineTo(pos.x, pos.y); ctx.stroke();
+      };
       const stop = (e) => { e.preventDefault(); drawing = false; };
 
       sigCanvas.addEventListener('mousedown', start);
@@ -2027,10 +2143,12 @@ function subscribeJobs(){
 function openJobModal(mode){
   jobModal.style.display = 'flex';
   const isEdit = (mode === 'edit');
-  jobModalTitle.textContent = isEdit ? 'Edit Service Order' : 'Create Service Order';
+  jobModalTitle.textContent = isEdit ?
+  'Edit Service Order' : 'Create Service Order';
   if(isEdit){
     const j = jobsCache[selectedJobId];
-    if(!j){ alert('No order selected'); return; }
+    if(!j){ alert('No order selected'); return;
+    }
     jobTitle.value = j.title || '';
     jobStatus.value = j.status || 'active';
     jobTrade.value = j.trade || '';
@@ -2051,7 +2169,8 @@ function openJobModal(mode){
   }
   jobSave.dataset.mode = mode;
 }
-function closeJobModal(){ jobModal.style.display='none'; }
+function closeJobModal(){ jobModal.style.display='none';
+}
 function jobPayload(){
   return {
     title: jobTitle.value.trim(),
@@ -2124,7 +2243,6 @@ function renderEntJobs(){
     const valueLabel = x.value ? fmtMoney(x.value) : '';
     const loc = x.location || [x.city, x.state].filter(Boolean).join(', ');
     const mline = [x.agency, loc].filter(Boolean).join(' • ');
-    
     html += `
       <div class="row-item ${active}" data-entid="${esc(id)}">
         <div class="t">${esc(x.title || '(Untitled contract)')}</div>
@@ -2156,7 +2274,7 @@ function renderEntDetail(id){
   const godBlock = isGodMode ?
   `
       <div class="hr"></div>
-      <div class="small" style="color:var(--warn)"><b>GOD MODE VISIBILITY ONLY:</b></div>
+      <div class="small" style="color:var(--warn)"><b>LEADERSHIP VISIBILITY ONLY:</b></div>
       <div class="kv"><b>Notice / PIID:</b> ${esc(x.noticeId || '')}</div>
       <div class="kv"><b>Agency:</b> ${esc(x.agency || '')}</div>
       <div class="kv"><b>Office:</b> ${esc(x.office || '')}</div>
@@ -2176,7 +2294,6 @@ function renderEntDetail(id){
          assignOptions += `<option value="${u.email}">${esc(u.name || u.email)}</option>`;
       }
   });
-
   entDetail.innerHTML = `
     <div class="panel">
       <h3>${esc(x.title || '(Untitled contract)')}</h3>
@@ -2350,7 +2467,6 @@ tabUpcoming.addEventListener('click', ()=> setTab('upcoming'));
 btnRed.addEventListener('click', ()=> showRBModal(true));
 btnBlue.addEventListener('click', ()=> showRBModal(false));
 rbCancel.addEventListener('click', hideRBModal);
-
 btnNewJob.addEventListener('click', ()=>{ openJobModal('new'); }); 
 
 btnEditJob.addEventListener('click', ()=>{ 
@@ -2397,7 +2513,6 @@ jobDeleteBtn.addEventListener('click', async ()=>{
   selectedJobId = null;
   closeJobModal();
 });
-
 btnNewEnt.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); openEntModal('new'); });
 btnEditEnt.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); if(!selectedEntId) return alert('Select a contract first'); openEntModal('edit'); });
 btnImportEnt.addEventListener('click', ()=> {
@@ -2429,6 +2544,7 @@ entSave.addEventListener('click', async ()=>{
   });
   selectedEntId = leadId;
   
+
   closeEntModal();
 });
 
@@ -2440,7 +2556,6 @@ entDeleteBtn.addEventListener('click', async ()=>{
   selectedEntId = null;
   closeEntModal();
 });
-
 document.addEventListener('click', (e)=>{
   const localRow = e.target.closest && e.target.closest('.row-item[data-jobid]');
   if(localRow){
@@ -2458,7 +2573,6 @@ document.addEventListener('click', (e)=>{
     if(isGodMode) btnEditEnt.disabled = !selectedEntId;
   }
 });
-
 [entSearch, entModeFilter, entTradeFilter].forEach(el=>{
   if(!el) return;
   el.addEventListener('input', renderEntJobs);
@@ -2508,7 +2622,8 @@ firebase.auth().onAuthStateChanged(async u => {
     const isOffline = {state:'offline',last_changed:firebase.database.ServerValue.TIMESTAMP};
     const isOnline = {
       state:'online',
-      last_changed:firebase.database.ServerValue.TIMESTAMP,
+  
+    last_changed:firebase.database.ServerValue.TIMESTAMP,
       portal:document.body.dataset.portal,
       email:u.email,
       role:USER_ROLE
