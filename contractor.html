@@ -64,6 +64,7 @@ body{
 .chip:hover{background:#13314c;transform:translateY(-1px)}
 .chip.primary{background:#133e6a}
 .chip.ghost{background:rgba(255,255,255,.06)}
+.chip.danger{background:#6b1111;border-color:rgba(255,85,85,.55)}
 .icon-btn{
   background: rgba(255,255,255,0.12);
   border:1px solid rgba(255,255,255,0.20);
@@ -296,7 +297,7 @@ body{
   border-radius:16px;padding:12px;background:rgba(255,255,255,.04)
 }
 .map-box .big{font-size:22px;font-weight:800}
-.claim-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.claim-buttons{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px; align-items: center;}
 .claim-buttons .chip{padding:9px 12px}
 .ent-tagline{
   display:flex;gap:8px;align-items:center;flex-wrap:wrap;
@@ -313,9 +314,18 @@ body{
   display:flex;gap:8px;flex-wrap:wrap;margin-top:6px
 }
 
-/* TRACKER & SIGNATURE UI */
-.tracker-steps { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 8px; }
-.tracker-btn { font-size: 11px; padding: 6px 10px; flex: 1; text-align: center; }
+/* TRACKER (Pizza Style) & SIGNATURE UI */
+.tracker-container { margin-top: 16px; padding: 12px; background: rgba(0,0,0,0.2); border-radius: 12px; border: 1px solid rgba(255,255,255,0.1); }
+.tracker-progress { display: flex; justify-content: space-between; position: relative; margin-bottom: 20px; }
+.tracker-progress::before { content: ''; position: absolute; top: 15px; left: 0; width: 100%; height: 4px; background: rgba(255,255,255,0.1); z-index: 1; border-radius: 2px;}
+.tracker-progress-bar { position: absolute; top: 15px; left: 0; height: 4px; background: var(--accent); z-index: 2; border-radius: 2px; transition: width 0.3s ease;}
+.tracker-step { position: relative; z-index: 3; display: flex; flex-direction: column; align-items: center; width: 40px; }
+.tracker-icon { width: 34px; height: 34px; border-radius: 50%; background: #0d1f2d; border: 2px solid rgba(255,255,255,0.2); display: flex; align-items: center; justify-content: center; font-size: 16px; transition: all 0.3s ease; cursor: pointer; }
+.tracker-step.active .tracker-icon { border-color: var(--accent); background: var(--accent); box-shadow: 0 0 10px var(--accent); }
+.tracker-step.completed .tracker-icon { border-color: var(--good); background: var(--good); color: white;}
+.tracker-label { font-size: 10px; text-align: center; margin-top: 6px; color: var(--muted); line-height: 1.1; white-space: nowrap; position: absolute; top: 38px;}
+.tracker-step.active .tracker-label { color: #fff; font-weight: 800; }
+
 .sig-container { background: #fff; border-radius: 8px; padding: 4px; margin-top: 8px; width: fit-content; }
 .photo-grid { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 10px; }
 .photo-grid img { height: 60px; width: 60px; border-radius: 6px; object-fit: cover; cursor: pointer; border: 1px solid rgba(255,255,255,.2); }
@@ -399,6 +409,13 @@ body{
   z-index:999;transition:transform .15s
 }
 #chatBubble:hover{transform:scale(1.08)}
+
+/* TEAM STYLES */
+.teamGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
+.teamRow{display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:12px;gap:12px}
+.teamMeta{display:flex;flex-direction:column;gap:4px;min-width:0}
+.teamActions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.help{font-size:12px;color:#9ab9d6;margin-top:10px;line-height:1.35}
 </style>
 </head>
 
@@ -411,6 +428,7 @@ body{
   </div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
+    <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;">👥 Team</button>
     <button class="phone-chip blue-phone" id="btnBlue" type="button" title="Blue Phone" aria-label="Blue Phone Support">☎</button>
     <button class="phone-chip red-phone" id="btnRed" type="button" title="Red Phone" aria-label="Red Phone Support">☎</button>
     <button class="icon-btn" id="btnSettings" type="button" title="Settings">⚙️</button>
@@ -488,8 +506,8 @@ body{
       <div style="grid-column:1 / -1">
         <div class="toggle">
           <div>
-            <div style="font-weight:800">Accepting Service Orders</div>
-            <div class="small">Turn this on to receive local Service Orders and Leads.</div>
+            <div style="font-weight:800">Accepting Service Orders (Lead Gen / Net Spend)</div>
+            <div class="small">Turn this on to receive local Service Orders and Leads (Craigslist, Facebook, Networking bids).</div>
           </div>
           <div class="switch" id="acceptSwitch" aria-label="Accepting Jobs Toggle">
             <div class="knob"></div>
@@ -500,8 +518,8 @@ body{
       <div style="grid-column:1 / -1">
         <div class="toggle">
           <div>
-            <div style="font-weight:800">Live Location Tracking (Opt-In)</div>
-            <div class="small">Required to claim orders. Powers the Execution Tracker.</div>
+            <div style="font-weight:800">Live Location Dispatch (Uber Mode)</div>
+            <div class="small">Required to claim orders. Powers the Fulfillment Execution Tracker.</div>
           </div>
           <div class="switch" id="locSwitch" aria-label="Live Location Toggle">
             <div class="knob"></div>
@@ -515,6 +533,20 @@ body{
       <button class="chip" id="closeSettings" type="button">Cancel</button>
       <button class="chip primary" id="saveSettings" type="button">Save</button>
     </div>
+  </div>
+</div>
+
+<div class="modal-backdrop" id="teamModal" aria-hidden="true">
+  <div class="modal" role="dialog" aria-modal="true" aria-label="Team Management">
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <div>
+            <strong id="teamModalTitle" style="font-size:18px;">Team Management</strong>
+            <div class="status" style="margin-top:4px; font-size:12px; color:var(--muted)">Manage Branch Managers and Associates</div>
+        </div>
+        <button class="chip" id="teamModalClose" type="button">Close</button>
+    </div>
+    <div class="hr"></div>
+    <div id="teamModalBody"></div>
   </div>
 </div>
 
@@ -711,9 +743,9 @@ body{
     <div class="hero-inner">
       <div class="hero-card">
         <span class="kicker">Command Hub • Service + Enterprise</span>
-        <div class="h1">Manage Service Orders. Execute Enterprise Contracts.</div>
+        <div class="h1">Manage Service Orders. Execute Contracts.</div>
         <div class="sub">
-          Subs stay focused on execution with the live Service Order Tracker. General Contractors (GCs) get the Enterprise Command board, routing, and assignment controls. Same portal. Smarter visibility.
+          Subs stay focused on execution with the live Fulfillment Tracker. General Contractors (GCs) get the Enterprise Command board, routing, and assignment controls.
         </div>
 
         <div class="hero-actions">
@@ -754,8 +786,8 @@ body{
         <div class="hr"></div>
 
         <div class="kv"><b>User:</b> <span id="heroUserEmail">Loading…</span></div>
-        <div class="kv" style="margin-top:8px"><b>Claim Mode:</b> <span id="heroAccepting">—</span></div>
-        <div class="kv" style="margin-top:8px"><b>Live Location:</b> <span id="heroLocation">—</span></div>
+        <div class="kv" style="margin-top:8px"><b>Lead Gen Mode:</b> <span id="heroAccepting">—</span></div>
+        <div class="kv" style="margin-top:8px"><b>Uber Dispatch (Location):</b> <span id="heroLocation">—</span></div>
         <div class="kv" style="margin-top:8px"><b>Trades:</b> <span id="heroTrades">—</span></div>
         <div class="kv" style="margin-top:8px"><b>Service Areas:</b> <span id="heroServiceArea">—</span></div>
 
@@ -778,7 +810,7 @@ body{
       <div class="card-top">
         <div class="title-row">
           <div>
-            <h2 id="crumb">Service Orders</h2>
+            <h2 id="crumb">Service Orders & Leads</h2>
             <div class="small" id="status">Loading…</div>
           </div>
         </div>
@@ -801,7 +833,7 @@ body{
         <div class="local-strip" id="localStrip">
           <div class="row">
             <div>
-              <b>Service Orders:</b> Post your own jobs or route leads.
+              <b>Local Orders:</b> Post your own jobs or route leads.
             </div>
             <div style="display:flex;gap:8px;flex-wrap:wrap">
               <button class="btn" id="btnNewJob" type="button">+ New Service Order</button>
@@ -820,7 +852,7 @@ body{
             <h2>🚀 No orders yet</h2>
             <p>Start by finishing your profile and accepting work.</p>
             <div class="empty-actions">
-              <button id="setupServices" type="button">📍 Enter My Service Areas</button>
+               <button id="setupServices" type="button">📍 Enter My Service Areas</button>
             </div>
           </div>
         </div>
@@ -918,7 +950,6 @@ body{
    DOM
 ========================== */
 const $ = (id)=>document.getElementById(id);
-
 const settingsModal = $("settingsModal");
 const saveSettings = $("saveSettings");
 const closeSettings = $("closeSettings");
@@ -942,7 +973,6 @@ const btnSettings = $("btnSettings");
 const btnBlue = $("btnBlue");
 const btnRed = $("btnRed");
 const logoutBtn = $("logoutBtn");
-
 const tabActive = $("tabActive");
 const tabUpcoming = $("tabUpcoming");
 const crumb = $("crumb");
@@ -960,7 +990,6 @@ const rbSubject = $("rbSubject");
 const rbDetails = $("rbDetails");
 const rbCancel = $("rbCancel");
 const rbSubmit = $("rbSubmit");
-
 const localStrip = $("localStrip");
 const btnNewJob = $("btnNewJob");
 const btnEditJob = $("btnEditJob");
@@ -1004,7 +1033,6 @@ const entValue = $("entValue");
 const entDue = $("entDue");
 const entSummary = $("entSummary");
 
-// God Mode specific fields
 const entNoticeId = $("entNoticeId");
 const entAgency = $("entAgency");
 const entOffice = $("entOffice");
@@ -1029,7 +1057,6 @@ const statLocalActive = $("statLocalActive");
 const statUpcoming = $("statUpcoming");
 const statEntCount = $("statEntCount");
 const statClaimed = $("statClaimed");
-
 const entAwardedCount = $("entAwardedCount");
 const entSolicitationCount = $("entSolicitationCount");
 const entSubCount = $("entSubCount");
@@ -1043,32 +1070,36 @@ const heroServiceArea = $("heroServiceArea");
 const roleBadge = $("roleBadge");
 const miniEntPill = $("miniEntPill");
 
+const btnTeam = $("btnTeam");
+const teamModal = $("teamModal");
+const teamModalBody = $("teamModalBody");
+const teamModalClose = $("teamModalClose");
+
 /* ==========================
-   FIREBASE INIT
+   FIREBASE INIT & GLOBALS
 ========================== */
 (function ensureFirebaseInit(){
   try{
     if(!firebase.apps || !firebase.apps.length){
-      if(!window.firebaseConfig){
-        console.error("Missing window.firebaseConfig");
-        return;
-      }
+      if(!window.firebaseConfig) return;
       firebase.initializeApp(window.firebaseConfig);
     }
-  }catch(e){
-    console.error("Firebase init error:", e);
-  }
+  }catch(e){ console.error("Firebase init error:", e); }
 })();
 
-/* ==========================
-   STATE
-========================== */
 let UID = null;
 let USER_EMAIL = null;
-let USER_ROLE = "associate"; // associate = sub, branch_manager = GC, god = god
-
+let USER_ROLE = "associate";
 let isGodMode = false;
 let isBranchManager = false;
+
+const USER_DIR_PATH="userDirectory";
+const ROLES_PATH="roles";
+const MANAGER_ASSOCIATES_PATH="managerAssociates";
+const EMAIL_INDEX_PATH="emailIndex";
+
+let userDirCache={byUid:{},byEmail:{},byUser:{}}; 
+let pendingRequestCache=[];
 
 let lastSettings = null;
 let rbUrgent = false;
@@ -1080,14 +1111,24 @@ let lastGeoWriteMs = 0;
 let jobsCache = {};
 let selectedJobId = null;
 let currentTab = "active";
-
 let entJobsCache = {};
 let selectedEntId = null;
 
 const REQUIRED_HINT = "Please enter: Service Areas + Trades + a contact method (Phone or Email).";
 
+const TRACKER_STATES = [
+    { id: 'Not Left', icon: '🏠', label: 'Not Left' },
+    { id: 'En Route', icon: '🚚', label: 'En Route' },
+    { id: 'Arrived', icon: '📍', label: 'Arrived' },
+    { id: 'Supply Run', icon: '🛒', label: 'Supplies' },
+    { id: 'Awaiting Approval', icon: '⏳', label: 'Approval' },
+    { id: 'Working', icon: '🔨', label: 'Working' },
+    { id: 'Finishing', icon: '🔍', label: 'Finishing' },
+    { id: 'Completed', icon: '✅', label: 'Done' }
+];
+
 /* ==========================
-   HELPERS
+   HELPERS & DIRECTORY SYNC (From Wholesaler Logic)
 ========================== */
 function esc(s){return(''+(s||'')).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));}
 function normalizePhone(p){
@@ -1120,17 +1161,10 @@ function setLocSwitch(on){
 function showSettingsModal(){ settingsModal.style.display='flex'; }
 function hideSettingsModal(){ settingsModal.style.display='none'; }
 function setBannerVisible(v){ setupBanner.style.display = v ? 'block' : 'none'; }
-
-function setLocalUIVisible(v){
-  // Always true for all roles, they can all post jobs now.
-  localStrip.style.display = 'block'; 
-}
-
+function setLocalUIVisible(v){ localStrip.style.display = 'block'; }
 function setBranchUIVisible(v){
   entShell.style.display = v ? 'block' : 'none';
-  // Note: gcStrip is strictly for God Mode now
-  gcStrip.style.display = isGodMode ? 'block' : 'none'; 
-  
+  gcStrip.style.display = isGodMode ? 'block' : 'none';
   heroOpenEnt.style.display = v ? 'inline-flex' : 'none';
   statEntCount.parentElement.style.display = v ? 'block' : 'none';
   
@@ -1139,12 +1173,10 @@ function setBranchUIVisible(v){
     ? '<span class="status-dot dot-good"></span> Enterprise Visible'
     : '<span class="status-dot dot-warn"></span> Enterprise Hidden';
     
-  // Hide God Mode fields in the modal if not God
   document.querySelectorAll('.god-only-field').forEach(el => {
       el.style.display = isGodMode ? 'block' : 'none';
   });
 }
-
 function bindBackdropClose(backdropEl){
   backdropEl.addEventListener('click', (e)=>{ if(e.target === backdropEl){ backdropEl.style.display='none'; } });
 }
@@ -1156,11 +1188,9 @@ bindBackdropClose(entModal);
 function showOnboardingCallout(){
   const gear = btnSettings;
   if(!gear) return;
-
   setupOverlay.style.display = 'block';
   setupOverlay.setAttribute('aria-hidden','false');
   gear.classList.add('pulse');
-
   const r = gear.getBoundingClientRect();
   const top = Math.max(12, r.bottom + 10);
   const left = Math.min(window.innerWidth - 332, Math.max(12, r.left - 220));
@@ -1187,22 +1217,11 @@ function showOnboardingCallout(){
   },{once:true});
 }
 
-/* ==========================
-   LOCATION SHARE
-========================== */
 function writeLocation(pos){
   const now = Date.now();
   if(now - lastGeoWriteMs < 10000) return;
   lastGeoWriteMs = now;
-
-  const payload = {
-    lat: pos.coords.latitude,
-    lng: pos.coords.longitude,
-    accuracy: pos.coords.accuracy,
-    ts: firebase.database.ServerValue.TIMESTAMP,
-    portal: "contractor"
-  };
-
+  const payload = { lat: pos.coords.latitude, lng: pos.coords.longitude, accuracy: pos.coords.accuracy, ts: firebase.database.ServerValue.TIMESTAMP, portal: "contractor" };
   firebase.database().ref(`contractorLocations/${UID}/current`).set(payload);
   firebase.database().ref(`contractorLocations/${UID}/history`).push(payload);
 }
@@ -1234,31 +1253,287 @@ function stopLocationShare(){
   setLocSwitch(false);
 }
 
-/* ==========================
-   ROLE RESOLUTION
-   - Subs/Associates can create Local Jobs (but only edit their own).
-   - Branch Managers (GC) can edit any Local Jobs, assign them, and see Enterprise.
-   - God Mode can do all of above + Create/Edit Enterprise.
-========================== */
+// DIRECTORY FUNCTIONS
+function usernameFromEmail(email){
+  const e=String(email||"").toLowerCase().trim(); 
+  return e.split("@")[0].replace(/[^a-z0-9_]/g,"").slice(0,24)||"user";
+}
+function emailLookupKey(email){return String(email||"").trim().toLowerCase().replace(/\./g,",");}
+function mapRole(raw){
+  const r=String(raw||"").trim().toLowerCase(); 
+  if(r==="god") return "god"; 
+  if(r==="admin"||r==="branchmanager"||r==="branch_manager") return "admin"; 
+  return "user";
+} 
+function roleLabel(role){
+  const r=mapRole(role);
+  if(r==="god") return "GOD MODE"; 
+  if(r==="admin") return "BRANCH MANAGER"; 
+  return "ASSOCIATE";
+}
+async function readExact(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
+
+function buildUserCache(rows){
+  const byUid={}, byEmail={}, byUser={};
+  rows.forEach(item=>{
+    const uid=String(item?.uid||"").trim(); 
+    if(!uid) return; 
+    const row=item?.row||{}; 
+    const role=mapRole(item?.role||row.role||"user"); 
+    const email=String(item?.email||row.email||"").toLowerCase().trim(); 
+    const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); 
+    byUid[uid]={...row, uid, email, username, role}; 
+    if(email) byEmail[email]=uid; 
+    if(username) byUser[username]=uid;
+  });
+  return {byUid,byEmail,byUser};
+}
+
+async function loadGodDirectoryCache(){
+  let users={}, roles={}, managerAssociates={}; 
+  try{users=(await readExact(USER_DIR_PATH))||{};}catch(e){} 
+  try{roles=(await readExact(ROLES_PATH))||{};}catch(e){} 
+  try{managerAssociates=(await readExact(MANAGER_ASSOCIATES_PATH))||{};}catch(e){} 
+  const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); 
+  const cache=buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); 
+  const pending=[];
+  Object.keys(managerAssociates||{}).forEach(managerUid=>{
+    const team=managerAssociates[managerUid]||{}; 
+    Object.keys(team).forEach(targetUid=>{
+      const info=team[targetUid]||{}; 
+      const status=String(info.status||"").trim(); 
+      if(!status) return; 
+      pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});
+    });
+  });
+  if(!pending.length){
+    Object.values(cache.byUid).forEach(u=>{
+      if(String(u.role||"")!=="user") return; 
+      if(String(u.managerStatus||"")!=="pending") return; 
+      if(!String(u.managerUid||"").trim()) return; 
+      pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});
+    });
+  } 
+  userDirCache=cache; pendingRequestCache=pending;
+  return cache;
+}
+
+async function loadSelfDirectoryCache(){
+  const [row, roleRaw]=await Promise.all([readExact(`${USER_DIR_PATH}/${UID}`), readExact(`${ROLES_PATH}/${UID}`)]); 
+  const cache=buildUserCache([{uid:UID,row:row||{},role:roleRaw||row?.role||"user"}]); 
+  userDirCache=cache; pendingRequestCache=[];
+  return cache;
+}
+
+async function loadBranchManagerDirectoryCache(){
+  const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([readExact(`${USER_DIR_PATH}/${UID}`), readExact(`${ROLES_PATH}/${UID}`), readExact(`${MANAGER_ASSOCIATES_PATH}/${UID}`)]); 
+  const rows=[{uid:UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; 
+  const teamMap=teamMapRaw||{}; 
+  const targetUids=Object.keys(teamMap);
+  const details=await Promise.all(targetUids.map(async targetUid=>{
+    const row=await readExact(`${USER_DIR_PATH}/${targetUid}`); 
+    return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};
+  })); 
+  details.forEach(d=>rows.push(d)); 
+  const cache=buildUserCache(rows);
+  Object.keys(teamMap).forEach(targetUid=>{
+    const info=teamMap[targetUid]||{}; 
+    if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; 
+    cache.byUid[targetUid].managerUid=UID; 
+    cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); 
+    if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); 
+    if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;
+  }); 
+  userDirCache=cache; 
+  pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${UID}__${targetUid}`, requesterUid:UID, requesterEmail:cache.byUid[UID]?.email||String(USER_EMAIL||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
+  return cache;
+}
+
+async function loadUserDirectoryCache(){
+  if(isGodMode) return loadGodDirectoryCache(); 
+  if(isBranchManager) return loadBranchManagerDirectoryCache(); 
+  return loadSelfDirectoryCache();
+}
+
+function managedAssociatesFor(uid){
+  return Object.values(userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");
+}
+
 async function resolveRole(user){
+  if(String(user.email||"").toLowerCase() === 'dealbankers@gmail.com') return "god";
   try{
     const [a,b] = await Promise.all([
       firebase.database().ref(`roles/${user.uid}`).once('value'),
       firebase.database().ref(`users/${user.uid}/role`).once('value')
     ]);
-    return (a.val() || b.val() || "associate");
+    return mapRole(a.val() || b.val() || "associate");
   }catch(e){
-    return "associate";
+    return "user";
   }
 }
 function hydrateRoleFlags(role){
-  USER_ROLE = role || "associate";
+  USER_ROLE = mapRole(role);
   isGodMode = (USER_ROLE === "god");
-  isBranchManager = (USER_ROLE === "god" || USER_ROLE === "admin" || USER_ROLE === "branch_manager");
+  isBranchManager = (USER_ROLE === "god" || USER_ROLE === "admin");
   
-  setLocalUIVisible(true); // Always visible
+  setLocalUIVisible(true);
   setBranchUIVisible(isBranchManager);
+  btnTeam.style.display = (isGodMode || isBranchManager) ? "inline-flex" : "none";
 }
+
+/* ==========================
+   TEAM MANAGEMENT MODAL
+========================== */
+async function renderTeamModalBody(){
+  await loadUserDirectoryCache();
+  const byUid=userDirCache.byUid||{};
+  let html="";
+
+  if(isGodMode){
+    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">Pending Associate Requests</div><div class="teamGrid">`;
+    const pending=pendingRequestCache.filter(r=>String(r.status||"")==="pending");
+    if(!pending.length){
+      html+=`<div class="help">No pending requests.</div>`;
+    }else{
+      pending.forEach(r=>{
+        const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown";
+        const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown";
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Requested by BM: ${esc(managerName)}</span><span style="font-size:11px;color:#9ab9d6">${esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="chip primary" onclick="approveRequest('${esc(r.id)}')">Approve</button><button class="chip danger" onclick="denyRequest('${esc(r.id)}')">Deny</button></div></div>`;
+      });
+    }
+    html+=`</div>`;
+
+    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">All Users</div><div class="teamGrid">`;
+    Object.values(byUid)
+      .sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}))
+      .forEach(u=>{
+        if(u.role==="system") return;
+        const currentRole=roleLabel(u.role);
+        const managerName=u.managerUid&&String(u.managerStatus||"")==="approved"
+          ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : "";
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)} • ${esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#13b981">Manager: ${esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==UID?`<select class="chip" style="background:#0d1f2d; border-color:var(--line);" onchange="changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
+      });
+    html+=`</div>`;
+  } else if(isBranchManager){
+    const myTeam=managedAssociatesFor(UID);
+    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">My Approved Team</div><div class="teamGrid">`;
+    if(!myTeam.length){
+      html+=`<div class="help">No approved associates on your team yet.</div>`;
+    }else{
+      myTeam.forEach(u=>{
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#13b981">Active Team Member</span><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)}</span></div><div class="teamActions"><button class="chip danger" onclick="removeAssociate('${u.uid}')">Remove</button></div></div>`;
+      });
+    }
+    html+=`</div>`;
+
+    const myPending=pendingRequestCache.filter(r=>String(r.requesterUid)===String(UID)&&String(r.status||"")==="pending");
+    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">Pending Requests</div><div class="teamGrid">`;
+    if(!myPending.length){
+      html+=`<div class="help">No pending requests.</div>`;
+    }else{
+      myPending.forEach(r=>{
+        html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(r.targetEmail||"Associate")}</strong><span style="font-size:11px;color:var(--warn)">Awaiting God Approval</span></div><div class="teamActions"><button class="chip danger" onclick="removeAssociate('${r.targetUid}')">Cancel</button></div></div>`;
+      });
+    }
+    html+=`</div>`;
+
+    html+=`<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">Request Associates By Email</div><div style="display:flex; gap:10px; align-items:center;"><input id="teamSearch" style="width:100%;padding:10px;border-radius:12px;background:#0d1f2d;border:1px solid #254a63;color:#fff;" placeholder="Type exact associate email..." /><button class="chip primary" type="button" id="teamSearchBtn">Search</button></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
+  }
+
+  $("teamModalBody").innerHTML=html;
+
+  if(isBranchManager){
+    const input=$("teamSearch");
+    const box=$("teamSearchResults");
+    const runSearch=async()=>{
+      const email=String(input.value||"").trim().toLowerCase();
+      if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; }
+      box.innerHTML=`<div class="help">Searching...</div>`;
+      try{
+        const snap=await firebase.database().ref(`${EMAIL_INDEX_PATH}/${emailLookupKey(email)}`).once("value");
+        const targetUid=snap.val();
+        if(!targetUid || String(targetUid)===String(UID)){ box.innerHTML=`<div class="help">No match found.</div>`; return; }
+        
+        const myPending=pendingRequestCache.find(r=>String(r.requesterUid)===String(UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
+        const mineApproved=String(userDirCache.byUid[targetUid]?.managerUid||"")===String(UID)&&String(userDirCache.byUid[targetUid]?.managerStatus||"")==="approved";
+        const statusLine=myPending ? '<span style="font-size:11px;color:var(--warn)">Request Pending</span>' : (mineApproved ? '<span style="font-size:11px;color:#13b981">Already on your team</span>' : '<span style="font-size:11px;color:#9ab9d6">Match found</span>');
+        const action=myPending ? '<button class="chip ghost" disabled>Pending...</button>' : (mineApproved ? `<button class="chip danger" onclick="removeAssociate('${targetUid}')">Remove</button>` : `<button class="chip primary" onclick="requestAssociate('${targetUid}','${encodeURIComponent(email)}')">Request</button>`);
+        box.innerHTML=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(email)}</strong>${statusLine}</div><div class="teamActions">${action}</div></div>`;
+      }catch(e){
+        box.innerHTML=`<div class="help">Search unavailable right now.</div>`;
+      }
+    };
+    $("teamSearchBtn").onclick=runSearch;
+    input.addEventListener("keydown", e=>{if(e.key==="Enter"){e.preventDefault(); runSearch();}});
+  }
+}
+btnTeam.onclick=async()=>{$("teamModal").style.display='flex'; $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await renderTeamModalBody();};
+teamModalClose.onclick=()=>{ $("teamModal").style.display='none'; };
+
+window.requestAssociate=async(targetUid,targetEmailEnc)=>{
+  if(!targetUid) return;
+  const targetEmail=decodeURIComponent(targetEmailEnc||"").toLowerCase();
+  try{
+    const updates={};
+    updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=UID;
+    updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]="pending";
+    updates[`${MANAGER_ASSOCIATES_PATH}/${UID}/${targetUid}`]={status:"pending", targetEmail:targetEmail||String(userDirCache.byUid[targetUid]?.email||"").toLowerCase(), requestedAt:Date.now()};
+    await firebase.database().ref().update(updates);
+    await loadUserDirectoryCache();
+    alert("Request sent to God Mode");
+    await renderTeamModalBody();
+  }catch(e){ alert("Request failed"); }
+};
+window.approveRequest=async(requestId)=>{
+  const req=pendingRequestCache.find(r=>r.id===requestId);
+  if(!req) return;
+  try{
+    const updates={};
+    updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=req.requesterUid;
+    updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]="approved";
+    updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]={status:"approved", targetEmail:String(req.targetEmail||userDirCache.byUid[req.targetUid]?.email||"").toLowerCase(), requestedAt:Date.now(), approvedAt:Date.now()};
+    await firebase.database().ref().update(updates);
+    await loadUserDirectoryCache();
+    await renderTeamModalBody();
+  }catch(e){ alert("Approve failed"); }
+};
+window.denyRequest=async(requestId)=>{
+  const req=pendingRequestCache.find(r=>r.id===requestId);
+  if(!req) return;
+  try{
+    const updates={};
+    updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null;
+    updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null;
+    updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null;
+    await firebase.database().ref().update(updates);
+    await loadUserDirectoryCache();
+    await renderTeamModalBody();
+  }catch(e){ alert("Deny failed"); }
+};
+window.removeAssociate=async(targetUid)=>{
+  if(!targetUid) return;
+  try{
+    const managerUid=String(userDirCache.byUid[targetUid]?.managerUid||UID);
+    const updates={};
+    updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null;
+    updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null;
+    updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null;
+    await firebase.database().ref().update(updates);
+    await loadUserDirectoryCache();
+    await renderTeamModalBody();
+  }catch(e){ alert("Remove failed"); }
+};
+window.changeUserRole=async(targetUid, newRole)=>{
+    if(!isGodMode) return;
+    try {
+        await firebase.database().ref(`${ROLES_PATH}/${targetUid}`).set(newRole);
+        await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({role: newRole});
+        await loadUserDirectoryCache();
+        await renderTeamModalBody();
+    } catch(e) {
+        alert("Role update failed.");
+    }
+};
 
 /* ==========================
    SETTINGS
@@ -1369,7 +1644,7 @@ rbSubmit.addEventListener('click', async ()=>{
 });
 
 /* ==========================
-   SERVICE ORDERS (With Tracker, Photos, & GC Assignment)
+   SERVICE ORDERS (Tracker, Photos, GC Assignment)
 ========================== */
 function setTab(tab){
   currentTab = tab;
@@ -1407,13 +1682,12 @@ function renderJobs(){
     const j = jobsCache[id] || {};
     const active = (id === selectedJobId) ? 'active' : '';
     const loc = j.address || [j.city, j.zip].filter(Boolean).join(' ');
-    
     let execLabel = '';
     const isAssigned = j.assignedSubEmail && j.assignedSubEmail.length > 0;
     const isClaimed = j.claimedBy && Object.keys(j.claimedBy).length > 0;
-
+    
     if(isClaimed || isAssigned) {
-       execLabel = `<span class="pill blue">${esc(j.executionStatus || 'Dispatched')}</span>`;
+       execLabel = `<span class="pill blue">${esc(j.executionStatus || 'Not Left')}</span>`;
     }
     
     const meta = [j.trade, loc, j.targetDate].filter(Boolean).join(' • ');
@@ -1434,8 +1708,6 @@ function renderJobs(){
 
   if(!selectedJobId) selectedJobId = ids[0];
   renderJobDetail(selectedJobId);
-  
-  // Check ownership for edit disable
   const j = jobsCache[selectedJobId];
   const canEdit = isBranchManager || (j && j.postedBy === UID);
   btnEditJob.disabled = !canEdit;
@@ -1453,7 +1725,6 @@ function renderJobDetail(id){
     addressDisplay = [j.city, j.zip].filter(Boolean).join(', ');
   }
 
-  // Tracking and Claims Logic
   const hasClaim = j.claimedBy && Object.keys(j.claimedBy).length > 0;
   const isClaimedByMe = j.claimedBy && j.claimedBy[UID];
   const isAssignedToMe = j.assignedSubEmail && j.assignedSubEmail.toLowerCase() === USER_EMAIL;
@@ -1461,10 +1732,9 @@ function renderJobDetail(id){
   const canTrack = isClaimedByMe || isAssignedToMe || isBranchManager;
   const isAvailable = !hasClaim && !j.assignedSubEmail;
 
-  const currentStep = j.executionStatus || 'Pending';
+  const currentStep = j.executionStatus || 'Not Left';
 
   let actionHTML = '';
-
   if (isAvailable && acceptingJobs) {
       actionHTML += `<button class="chip primary" id="claimJobBtn" type="button">📍 Claim This Order</button>`;
   } else if (!canTrack) {
@@ -1472,29 +1742,56 @@ function renderJobDetail(id){
   }
 
   // GC Assignment Button
-  if (isBranchManager) {
-      actionHTML += `<button class="chip ghost" id="assignSubBtn" type="button" style="margin-left:8px;">👥 Assign to Sub</button>`;
+  if (isBranchManager || isGodMode) {
+      let assignOptions = `<option value="">-- Select Associate --</option>`;
+      const uidsToMap = isGodMode ? Object.keys(userDirCache.byUid) : managedAssociatesFor(UID).map(u=>u.uid);
+      uidsToMap.forEach(uid => {
+          const u = userDirCache.byUid[uid];
+          if(u && u.role === 'user' && u.email) {
+             assignOptions += `<option value="${u.email}">${esc(u.name || u.email)}</option>`;
+          }
+      });
+      actionHTML += `
+        <div style="display:flex; align-items:center; gap:8px; margin-left:8px;">
+          <select id="subAssignSelect" class="chip ghost" style="padding:8px 12px; height:auto; background:#0d1f2d; border:1px solid rgba(255,255,255,.2); color:#fff; cursor:pointer;">${assignOptions}</select>
+          <button class="chip ghost" id="assignSubBtn" type="button">👥 Assign to Sub</button>
+        </div>
+      `;
   }
 
   // Show Tracker if they have access
   if (canTrack) {
-      // 1. Execution Tracker
-      const steps = ['Dispatched', 'Arrived On-Site', 'Assessing', 'Retrieving Parts', 'Work In Progress', 'Completed'];
-      let stepsHTML = steps.map(s => {
-          const isActive = currentStep === s;
-          return `<button class="chip ${isActive ? 'primary' : 'ghost'} tracker-btn" data-step="${s}">${s}</button>`;
+      const stepIndex = TRACKER_STATES.findIndex(s => s.id === currentStep) >= 0 ? TRACKER_STATES.findIndex(s => s.id === currentStep) : 0;
+      const progressPercent = (stepIndex / (TRACKER_STATES.length - 1)) * 100;
+      
+      let stepsHTML = TRACKER_STATES.map((s, idx) => {
+          let stepClass = "";
+          if (idx < stepIndex) stepClass = "completed";
+          else if (idx === stepIndex) stepClass = "active";
+          return `
+            <div class="tracker-step ${stepClass}">
+                <div class="tracker-icon tracker-btn" data-step="${s.id}" title="${s.label}">${s.icon}</div>
+                <div class="tracker-label">${s.label}</div>
+            </div>
+          `;
       }).join('');
 
       let assignedBadge = j.assignedSubEmail ? `<span class="small" style="color:var(--good)">Assigned to: ${esc(j.assignedSubEmail)}</span>` : '';
-
+      
       actionHTML += `
           <div class="hr" style="width:100%; margin-top:16px;"></div>
           <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-             <h4>Order Execution Tracker</h4>
+             <h4>Order Fulfillment Tracker</h4>
              ${assignedBadge}
           </div>
-          <div class="small" style="margin-bottom:8px;">Update status to keep GC and vendors informed.</div>
-          <div class="tracker-steps">${stepsHTML}</div>
+          <div class="small" style="margin-bottom:8px;">Click an icon to update your status.</div>
+          
+          <div class="tracker-container">
+              <div class="tracker-progress">
+                  <div class="tracker-progress-bar" style="width: ${progressPercent}%;"></div>
+                  ${stepsHTML}
+              </div>
+          </div>
       `;
 
       // 2. Photos UI
@@ -1513,10 +1810,9 @@ function renderJobDetail(id){
              <button class="chip ghost" id="uploadPhotoBtn" type="button">📷 Upload Photo</button>
              <input type="file" id="photoInput" style="display:none" accept="image/*">
              <div class="small" id="uploadStatus"></div>
-          </div>
+           </div>
           ${photosHTML}
       `;
-
       // 3. Signature UI (Only if Completed)
       if (currentStep === 'Completed') {
           actionHTML += `<div class="hr" style="width:100%;"></div><h4>Customer Sign-Off</h4>`;
@@ -1560,23 +1856,22 @@ function renderJobDetail(id){
         ${actionHTML}
         ${isAvailable ? `<button class="chip ghost" id="jobSupportBtn" style="margin-left:auto;" type="button">Need Help</button>` : ''}
       </div>
-      ${isAvailable ? `<div class="small" style="margin-top:8px; width:100%;">Requires Live Location ON to claim.</div>` : ''}
+      ${isAvailable ? `<div class="small" style="margin-top:8px; width:100%;">Requires Live Location (Uber Mode) ON to claim.</div>` : ''}
     </div>
   `;
-
   document.querySelectorAll('.row-item[data-jobid]').forEach(r=>{
     r.classList.toggle('active', r.dataset.jobid === id);
   });
 
-  // Attach Event Listeners dynamically
   const claimBtn = document.getElementById("claimJobBtn");
   const supportBtn = document.getElementById("jobSupportBtn");
   const assignSubBtn = document.getElementById("assignSubBtn");
+  const subAssignSelect = document.getElementById("subAssignSelect");
 
   if(claimBtn){
     claimBtn.onclick = async () => {
       if (!sharingLocation) {
-        alert("Turn on Live Location to claim this order.");
+        alert("Turn on Live Location Dispatch (Uber Mode) to claim this order.");
         showSettingsModal();
         return;
       }
@@ -1586,28 +1881,28 @@ function renderJobDetail(id){
           email: USER_EMAIL || null,
           ts: firebase.database.ServerValue.TIMESTAMP
         });
-        await firebase.database().ref(`jobs/${id}/executionStatus`).set("Dispatched");
+        await firebase.database().ref(`jobs/${id}/executionStatus`).set("Not Left");
         alert("✅ Order claimed. Tracker initialized.");
         updateClaimCount();
       }catch(e){
-        console.error(e);
         alert("Could not claim order.");
       }
     };
   }
 
-  if(assignSubBtn){
+  if(assignSubBtn && subAssignSelect){
     assignSubBtn.onclick = async () => {
-      const subEmail = prompt("Enter the Associate's email address to assign this Service Order:");
+      const subEmail = subAssignSelect.value;
       if(subEmail && subEmail.trim()) {
         try {
           await firebase.database().ref(`jobs/${id}/assignedSubEmail`).set(subEmail.trim().toLowerCase());
-          await firebase.database().ref(`jobs/${id}/executionStatus`).set("Dispatched");
+          await firebase.database().ref(`jobs/${id}/executionStatus`).set("Not Left");
           alert(`Order successfully assigned to ${subEmail}`);
         } catch (e) {
-          console.error(e);
           alert("Failed to assign order.");
         }
+      } else {
+        alert("Please select an associate first.");
       }
     };
   }
@@ -1621,7 +1916,6 @@ function renderJobDetail(id){
     };
   }
 
-  // Attach Tracker Logic
   document.querySelectorAll('.tracker-btn').forEach(btn => {
       btn.onclick = async () => {
           const step = btn.getAttribute('data-step');
@@ -1634,11 +1928,9 @@ function renderJobDetail(id){
       };
   });
 
-  // Attach Photo Upload Logic (Base64 Compressor)
   const uploadPhotoBtn = document.getElementById('uploadPhotoBtn');
   const photoInput = document.getElementById('photoInput');
   const uploadStatus = document.getElementById('uploadStatus');
-
   if(uploadPhotoBtn && photoInput) {
       uploadPhotoBtn.onclick = () => photoInput.click();
       photoInput.onchange = (e) => {
@@ -1659,16 +1951,13 @@ function renderJobDetail(id){
                   
                   const ctx = canvas.getContext('2d');
                   ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-                  
-                  // Compress to base64 JPEG
-                  const dataUrl = canvas.toDataURL('image/jpeg', 0.6); 
-
+                  const dataUrl = canvas.toDataURL('image/jpeg', 0.6);
                   firebase.database().ref(`jobs/${id}/photos`).push({
                       url: dataUrl,
                       uploadedBy: USER_EMAIL,
                       ts: Date.now()
                   }).then(() => {
-                      uploadStatus.textContent = "Upload complete!";
+                     uploadStatus.textContent = "Upload complete!";
                       setTimeout(() => uploadStatus.textContent = "", 2000);
                   }).catch(err => {
                       uploadStatus.textContent = "Error: " + err.message;
@@ -1680,7 +1969,6 @@ function renderJobDetail(id){
       };
   }
 
-  // Attach Signature Logic
   const sigCanvas = document.getElementById('sigCanvas');
   if(sigCanvas) {
       const ctx = sigCanvas.getContext('2d');
@@ -1736,14 +2024,10 @@ function subscribeJobs(){
   });
 }
 
-/* ==========================
-   SERVICE ORDER ADMIN (All Users Can Create)
-========================== */
 function openJobModal(mode){
   jobModal.style.display = 'flex';
   const isEdit = (mode === 'edit');
   jobModalTitle.textContent = isEdit ? 'Edit Service Order' : 'Create Service Order';
-
   if(isEdit){
     const j = jobsCache[selectedJobId];
     if(!j){ alert('No order selected'); return; }
@@ -1765,7 +2049,6 @@ function openJobModal(mode){
     jobDesc.value = '';
     jobDeleteBtn.style.display = 'none';
   }
-
   jobSave.dataset.mode = mode;
 }
 function closeJobModal(){ jobModal.style.display='none'; }
@@ -1802,10 +2085,8 @@ function entMatchesFilters(x){
   const q = (entSearch.value || '').trim().toLowerCase();
   const mode = entModeFilter.value;
   const trade = entTradeFilter.value;
-
   if(mode && (x.mode || '') !== mode) return false;
   if(trade && !(String(x.trade || '').toLowerCase().includes(trade))) return false;
-
   if(!q) return true;
   const hay = [
     x.title, x.noticeId, x.agency, x.office, x.prime, x.sub,
@@ -1822,14 +2103,12 @@ function renderEntJobs(){
       const vb = Number(b[1]?.value || 0);
       return vb - va;
     });
-
   statEntCount.textContent = String(values.length);
 
   entAwardedCount.textContent = String(values.filter(x => x.mode === 'awarded').length);
   entSolicitationCount.textContent = String(values.filter(x => ['solicitation','sources_sought','presolicitation'].includes(x.mode)).length);
   entSubCount.textContent = String(values.filter(x => x.mode === 'subcontract').length);
   entValueCount.textContent = fmtMoney(values.reduce((sum,x)=>sum + Number(x.value || 0),0));
-
   if(filtered.length === 0){
     entList.innerHTML = `<div class="list"><div class="row-item"><div class="t">No matching enterprise contracts.</div><div class="m">Change filters or wait for API ingestion.</div></div></div>`;
     entDetail.innerHTML = `Select an enterprise contract to view details...`;
@@ -1843,9 +2122,8 @@ function renderEntJobs(){
     const active = selectedEntId === id ? 'active' : '';
     const modeLabel = (x.mode || '').replace(/_/g,' ').toUpperCase();
     const valueLabel = x.value ? fmtMoney(x.value) : '';
-    
     const loc = x.location || [x.city, x.state].filter(Boolean).join(', ');
-    const mline = [x.agency, loc].filter(Boolean).join(' • '); // Agency is visible to GC
+    const mline = [x.agency, loc].filter(Boolean).join(' • ');
     
     html += `
       <div class="row-item ${active}" data-entid="${esc(id)}">
@@ -1875,9 +2153,8 @@ function renderEntDetail(id){
 
   const modeLabel = (x.mode || '').replace(/_/g,' ').toUpperCase();
   const locDisplay = x.location || [x.city, x.state].filter(Boolean).join(', ');
-  
-  // Conditionally render God-mode elements
-  const godBlock = isGodMode ? `
+  const godBlock = isGodMode ?
+  `
       <div class="hr"></div>
       <div class="small" style="color:var(--warn)"><b>GOD MODE VISIBILITY ONLY:</b></div>
       <div class="kv"><b>Notice / PIID:</b> ${esc(x.noticeId || '')}</div>
@@ -1889,8 +2166,16 @@ function renderEntDetail(id){
       <div class="kv"><b>Email:</b> ${esc(x.contactEmail || '')}</div>
       ${x.link ? `<div style="margin-top:6px;"><a class="chip ghost" href="${esc(x.link)}" target="_blank" rel="noopener">Open Source Link</a></div>` : ''}
   ` : '';
-
   const subBlock = x.sub && isGodMode ? `<div class="kv"><b>Subcontractor:</b> ${esc(x.sub)}</div>` : '';
+  
+  let assignOptions = `<option value="">-- Select Associate --</option>`;
+  const uidsToMap = isGodMode ? Object.keys(userDirCache.byUid) : managedAssociatesFor(UID).map(u=>u.uid);
+  uidsToMap.forEach(uid => {
+      const u = userDirCache.byUid[uid];
+      if(u && u.role === 'user' && u.email) {
+         assignOptions += `<option value="${u.email}">${esc(u.name || u.email)}</option>`;
+      }
+  });
 
   entDetail.innerHTML = `
     <div class="panel">
@@ -1906,8 +2191,11 @@ function renderEntDetail(id){
       ${godBlock}
       <div class="hr"></div>
       <div class="claim-buttons" style="width:100%;">
-        <button class="chip primary" id="entAssignBtn" type="button">👥 Assign to Sub</button>
-        <button class="chip ghost" id="entBlueBtn" type="button">Blue Phone</button>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <select id="entAssignSelect" class="chip ghost" style="padding:8px 12px; height:auto; background:#0d1f2d; border:1px solid rgba(255,255,255,.2); color:#fff; cursor:pointer;">${assignOptions}</select>
+          <button class="chip primary" id="entAssignBtn" type="button">👥 Assign to Sub</button>
+        </div>
+        <button class="chip ghost" id="entBlueBtn" type="button" style="margin-left:auto;">Blue Phone</button>
         <button class="chip ghost" id="entRedBtn" type="button">Red Phone</button>
       </div>
       <div class="small" style="margin-top:10px; width:100%;">Enterprise contracts are hidden from standard Subs until assigned.</div>
@@ -1919,12 +2207,13 @@ function renderEntDetail(id){
   });
 
   const entAssignBtn = document.getElementById("entAssignBtn");
+  const entAssignSelect = document.getElementById("entAssignSelect");
   const entBlueBtn = document.getElementById("entBlueBtn");
   const entRedBtn = document.getElementById("entRedBtn");
 
-  if(entAssignBtn){
+  if(entAssignBtn && entAssignSelect){
     entAssignBtn.onclick = async ()=>{
-      const subEmail = prompt("Enter the Associate's email address to assign this Enterprise Contract to them:");
+      const subEmail = entAssignSelect.value;
       if(subEmail && subEmail.trim()){
           try {
               await firebase.database().ref(`enterpriseContracts/${id}/assignedSubEmail`).set(subEmail.trim().toLowerCase());
@@ -1934,9 +2223,10 @@ function renderEntDetail(id){
               });
               alert(`Contract assigned to ${subEmail}. They will now see it as a Service Order.`);
           } catch(e) {
-              console.error(e);
               alert("Failed to assign contract.");
           }
+      } else {
+          alert("Please select an associate first.");
       }
     };
   }
@@ -1958,9 +2248,6 @@ function renderEntDetail(id){
   }
 }
 
-/* ==========================
-   ENTERPRISE ADMIN (GOD MODE)
-========================== */
 function openEntModal(mode){
   entModal.style.display = 'flex';
   const isEdit = mode === 'edit';
@@ -2005,7 +2292,6 @@ function openEntModal(mode){
     entLink.value = '';
     entDeleteBtn.style.display = 'none';
   }
-
   entSave.dataset.mode = mode;
 }
 function closeEntModal(){ entModal.style.display='none'; }
@@ -2065,8 +2351,7 @@ btnRed.addEventListener('click', ()=> showRBModal(true));
 btnBlue.addEventListener('click', ()=> showRBModal(false));
 rbCancel.addEventListener('click', hideRBModal);
 
-// Service Order Events
-btnNewJob.addEventListener('click', ()=>{ openJobModal('new'); }); // Unlocked for all
+btnNewJob.addEventListener('click', ()=>{ openJobModal('new'); }); 
 
 btnEditJob.addEventListener('click', ()=>{ 
   if(!selectedJobId) return alert('Select an order first'); 
@@ -2076,7 +2361,6 @@ btnEditJob.addEventListener('click', ()=>{
   }
   openJobModal('edit'); 
 });
-
 jobCancel.addEventListener('click', closeJobModal);
 
 jobSave.addEventListener('click', async ()=>{
@@ -2102,7 +2386,6 @@ jobSave.addEventListener('click', async ()=>{
   selectedJobId = jobId;
   closeJobModal();
 });
-
 jobDeleteBtn.addEventListener('click', async ()=>{
   if(!selectedJobId) return;
   const j = jobsCache[selectedJobId];
@@ -2115,7 +2398,6 @@ jobDeleteBtn.addEventListener('click', async ()=>{
   closeJobModal();
 });
 
-// Enterprise Contract Events (God Mode only)
 btnNewEnt.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); openEntModal('new'); });
 btnEditEnt.addEventListener('click', ()=>{ if(!isGodMode) return alert('Not authorized'); if(!selectedEntId) return alert('Select a contract first'); openEntModal('edit'); });
 btnImportEnt.addEventListener('click', ()=> {
@@ -2146,6 +2428,7 @@ entSave.addEventListener('click', async ()=>{
     postedBy: UID || null
   });
   selectedEntId = leadId;
+  
   closeEntModal();
 });
 
@@ -2158,14 +2441,12 @@ entDeleteBtn.addEventListener('click', async ()=>{
   closeEntModal();
 });
 
-// Row clicks
 document.addEventListener('click', (e)=>{
   const localRow = e.target.closest && e.target.closest('.row-item[data-jobid]');
   if(localRow){
     selectedJobId = localRow.dataset.jobid;
     renderJobDetail(selectedJobId);
     
-    // Evaluate if they can edit this specific job
     const j = jobsCache[selectedJobId];
     const canEdit = isBranchManager || (j && j.postedBy === UID);
     btnEditJob.disabled = !canEdit;
@@ -2211,15 +2492,12 @@ firebase.auth().onAuthStateChanged(async u => {
   USER_EMAIL = (u.email || '').toLowerCase();
   heroUserEmail.textContent = USER_EMAIL || '—';
 
-  // HARDCODED GOD MODE SAFETY NET
-  let role = "associate";
-  if (USER_EMAIL === 'dealbankers@gmail.com') {
-      role = "god";
-  } else {
-      role = await resolveRole(u);
-  }
-  
+  let role = await resolveRole(u);
   hydrateRoleFlags(role);
+
+  try {
+      await loadUserDirectoryCache();
+  } catch(e) { console.warn("Failed loading directory cache", e); }
 
   await loadSettings();
   subscribeJobs();
