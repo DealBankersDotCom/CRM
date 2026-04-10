@@ -261,11 +261,65 @@ function badgeHTML(status,legacy){const s=(status||"New"); const cls=(s==="New")
 function isArchivedLead(lead){const v=lead?.archived; return v===true||String(v).toLowerCase()==="true"||v===1||String(v)==="1";}
 function buildTPSLink(lead){const owner=(lead?.owner||lead?.Owner||lead?.name||"").toString().trim(); const addr=(lead?.address||lead?.Address||"").toString().trim(); const q=encodeURIComponent([owner,addr].filter(Boolean).join(" ").trim()); return q?"https://www.truepeoplesearch.com/results?name="+q:"";}
 function applySearch(){const q=($("s_q").value||"").toLowerCase().trim(); sellerView=!q?sellerList.slice():sellerList.filter(l=>{const hay=[l.address||"",l.Address||"",l.owner||"",l.Owner||"",l.notes||"",l.Notes||"",normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); return hay.includes(q);}); sellerView=sellerView.filter(l=>!isArchivedLead(l)); renderQueue(); if(sellerView.length){if(currentLeadId){const idx=sellerView.findIndex(x=>leadIdFor(x)===currentLeadId); if(idx>=0) return selectLeadByIndex(idx);} selectLeadByIndex(Math.min(Math.max(currentIndex,0), sellerView.length-1));} else {clearConsole(); updatePager();}}
-function renderQueue(){const el=$("leadList"); el.innerHTML=""; $("leadCountPill").textContent=`${sellerView.length} leads`; $("queueMeta").textContent=sellerView.length?`Showing ${sellerView.length}`:"Empty"; if(!sellerView.length){el.innerHTML=`<div class="log-empty" style="padding:22px 12px;">No leads match your search.</div>`; return;} sellerView.forEach((lead,idx)=>{const id=leadIdFor(lead), addr=(lead.address||lead.Address||"—").toString(), owner=(lead.owner||lead.Owner||lead.name||"—").toString(), st=leadStatus(lead), type=(lead.type||"seller").toString(), source=(lead.source||"").toString(); const phones=normalizePhones(lead), phoneLine=phones.slice(0,2).map(p=>`${esc(p.label)}: ${esc(p.phone)}`).join("<br>"); const div=document.createElement("div"); div.className="lead-item"+(idx===currentIndex?" selected":""); div.innerHTML=`<div class="addr">${esc(addr)}</div><div class="meta"><div>${esc(owner)}</div><div style="opacity:.9">${esc(type)}${source?" • "+esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style="opacity:.7">No phones yet</div>`}</div><div class="badges">${badgeHTML(st,!!lead.__legacy)}<span class="badge">${esc(id||"no-id")}</span></div>`; div.onclick=()=>selectLeadByIndex(idx); el.appendChild(div);});}
+
+/* EVENT DELEGATION REFACTOR FOR QUEUE LIST */
+function renderQueue(){
+  const el=$("leadList"); 
+  $("leadCountPill").textContent=`${sellerView.length} leads`; 
+  $("queueMeta").textContent=sellerView.length?`Showing ${sellerView.length}`:"Empty"; 
+  if(!sellerView.length){
+    el.innerHTML=`<div class="log-empty" style="padding:22px 12px;">No leads match your search.</div>`; 
+    return;
+  } 
+  let html = "";
+  sellerView.forEach((lead,idx)=>{
+    const id=leadIdFor(lead), addr=(lead.address||lead.Address||"—").toString(), owner=(lead.owner||lead.Owner||lead.name||"—").toString(), st=leadStatus(lead), type=(lead.type||"seller").toString(), source=(lead.source||"").toString(); 
+    const phones=normalizePhones(lead), phoneLine=phones.slice(0,2).map(p=>`${esc(p.label)}: ${esc(p.phone)}`).join("<br>"); 
+    html += `<div class="lead-item${idx===currentIndex?" selected":""}" data-idx="${idx}">
+      <div class="addr">${esc(addr)}</div>
+      <div class="meta"><div>${esc(owner)}</div><div style="opacity:.9">${esc(type)}${source?" • "+esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style="opacity:.7">No phones yet</div>`}</div>
+      <div class="badges">${badgeHTML(st,!!lead.__legacy)}<span class="badge">${esc(id||"no-id")}</span></div>
+    </div>`;
+  });
+  el.innerHTML = html;
+}
+
 function updatePager(){const total=sellerView.length||0, current=(currentIndex>=0&&total)?(currentIndex+1):0; $("leadPager").textContent=`${current} / ${total}`;}
 function setMapVisibility(on){$("mapHead").style.display=on?"":"none"; $("mapWrap").style.display=on?"":"none"; $("mapWarn").style.display="none";}
-function clearConsole(){currentLead=null; currentLeadId=""; currentIndex=-1; $("leadAddress").textContent="No lead selected"; $("leadOwner").textContent="Select a lead from the queue."; $("tpsLink").style.display="none"; $("phoneSelect").innerHTML=""; $("phoneSelect").disabled=true; $("callBtn").disabled=true; $("copyBtn").disabled=true; $("noteSaveBtn").disabled=true; $("btnEditLead").disabled=true; $("btnArchiveLead").disabled=true; currentPhone=""; currentPhoneLabel=""; $("noteComposer").value=""; setMapVisibility(false); detachCallLog(); renderCallLogEmpty(); $("callHint").style.display="none"; $("leadNotesField").style.display="none"; $("leadNotesText").textContent="";}
-function selectLeadByIndex(idx){if(!sellerView.length) return; idx=Math.max(0, Math.min(idx, sellerView.length-1)); currentIndex=idx; currentLead=sellerView[idx]; currentLeadId=leadIdFor(currentLead); updatePager(); renderQueue(); const addr=(currentLead.address||currentLead.Address||"—").toString(), owner=(currentLead.owner||currentLead.Owner||currentLead.name||"—").toString(); $("leadAddress").textContent=addr; $("leadOwner").textContent=owner; 
+
+function clearConsole(){
+  currentLead=null; currentLeadId=""; currentIndex=-1; 
+  $("leadAddress").textContent="No lead selected"; 
+  $("leadOwner").textContent="Select a lead from the queue."; 
+  $("tpsLink").style.display="none"; 
+  $("phoneSelect").innerHTML=""; 
+  $("phoneSelect").disabled=true; 
+  $("callBtn").disabled=true; 
+  $("copyBtn").disabled=true; 
+  $("noteSaveBtn").disabled=true; 
+  $("btnEditLead").disabled=true; 
+  $("btnArchiveLead").disabled=true; 
+  currentPhone=""; 
+  currentPhoneLabel=""; 
+  $("noteComposer").value=""; 
+  setMapVisibility(false); 
+  detachCallLog(); 
+  renderCallLogEmpty(); 
+  $("callHint").style.display="none";
+  $("leadNotesField").style.display="none";
+  $("leadNotesText").textContent="";
+}
+
+function selectLeadByIndex(idx){
+  if(!sellerView.length) return; 
+  idx=Math.max(0, Math.min(idx, sellerView.length-1)); 
+  currentIndex=idx; 
+  currentLead=sellerView[idx]; 
+  currentLeadId=leadIdFor(currentLead); 
+  updatePager(); 
+  renderQueue(); 
+  const addr=(currentLead.address||currentLead.Address||"—").toString(), owner=(currentLead.owner||currentLead.Owner||currentLead.name||"—").toString(); 
+  $("leadAddress").textContent=addr; $("leadOwner").textContent=owner; 
 
   const notes = (currentLead.notes || currentLead.Notes || "").toString().trim();
   if(notes) {
@@ -275,7 +329,23 @@ function selectLeadByIndex(idx){if(!sellerView.length) return; idx=Math.max(0, M
       $("leadNotesField").style.display="none";
   }
 
-const link=buildTPSLink(currentLead); if(link){$("tpsLink").href=link; $("tpsLink").style.display="";} else $("tpsLink").style.display="none"; $("btnEditLead").disabled=false; $("btnArchiveLead").disabled=false; const sel=$("phoneSelect"), phones=normalizePhones(currentLead); sel.innerHTML=""; if(!phones.length){sel.disabled=true; $("callBtn").disabled=true; $("copyBtn").disabled=true; $("noteSaveBtn").disabled=true; detachCallLog(); renderCallLogEmpty("No phones on this lead yet."); $("callHint").style.display="none";} else {sel.disabled=false; phones.forEach(p=>{const opt=document.createElement("option"); opt.value=p.phone; opt.textContent=`${p.label} — ${p.phone}`; sel.appendChild(opt);}); sel.selectedIndex=0; currentPhone=phones[0].phone; currentPhoneLabel=phones[0].label; $("callBtn").disabled=false; $("copyBtn").disabled=false; $("noteSaveBtn").disabled=false; $("callHint").style.display=""; onPhoneChanged();} if(addr.trim()){setMapVisibility(true); buildMap(addr);} else setMapVisibility(false);} 
+  const link=buildTPSLink(currentLead); 
+  if(link){$("tpsLink").href=link; $("tpsLink").style.display="";} else $("tpsLink").style.display="none"; 
+  $("btnEditLead").disabled=false; $("btnArchiveLead").disabled=false; 
+  const sel=$("phoneSelect"), phones=normalizePhones(currentLead); 
+  sel.innerHTML=""; 
+  if(!phones.length){
+    sel.disabled=true; $("callBtn").disabled=true; $("copyBtn").disabled=true; $("noteSaveBtn").disabled=true; 
+    detachCallLog(); renderCallLogEmpty("No phones on this lead yet."); $("callHint").style.display="none";
+  } else {
+    sel.disabled=false; 
+    phones.forEach(p=>{const opt=document.createElement("option"); opt.value=p.phone; opt.textContent=`${p.label} — ${p.phone}`; sel.appendChild(opt);}); 
+    sel.selectedIndex=0; currentPhone=phones[0].phone; currentPhoneLabel=phones[0].label; 
+    $("callBtn").disabled=false; $("copyBtn").disabled=false; $("noteSaveBtn").disabled=false; $("callHint").style.display=""; onPhoneChanged();
+  } 
+  if(addr.trim()){setMapVisibility(true); buildMap(addr);} else setMapVisibility(false);
+} 
+
 function onPhoneChanged(){const sel=$("phoneSelect"); currentPhone=sel.value||""; currentPhoneLabel=(sel.options[sel.selectedIndex]?.textContent||"").split("—")[0].trim()||"Phone"; $("noteComposer").value=""; attachCallLog(fmtPhoneKey(currentPhone));}
 $("phoneSelect").addEventListener("change", onPhoneChanged); $("prevLead").onclick=()=>{if(sellerView.length) selectLeadByIndex((currentIndex<=0)?0:currentIndex-1);}; $("nextLead").onclick=()=>{if(sellerView.length) selectLeadByIndex((currentIndex>=sellerView.length-1)?sellerView.length-1:currentIndex+1);}; $("s_reload").onclick=applySearch; $("s_q").addEventListener("keydown", e=>{if(e.key==="Enter") applySearch();});
 function sanitizeTel(phone){const raw=(phone||"").toString().trim(); if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
@@ -286,7 +356,31 @@ $("copyBtn").addEventListener("click", async()=>{if(!currentPhone) return; try{a
 function renderCallLogEmpty(msg){$("callLog").innerHTML=`<div class="log-empty">${esc(msg||"No call history for this number.")}</div>`; $("logCount").textContent="0 entries";}
 function detachCallLog(){if(activeLogRef){try{activeLogRef.off();}catch(e){} activeLogRef=null;}}
 function callLogRefForPhoneKey(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
-function attachCallLog(phoneKey){detachCallLog(); if(!phoneKey||phoneKey==="unknown") return renderCallLogEmpty("Select a valid number to view log."); const items=[]; activeLogRef=callLogRefForPhoneKey(phoneKey); const redraw=()=>{const log=$("callLog"); log.innerHTML=""; if(!items.length) return renderCallLogEmpty(); const sorted=items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)); sorted.forEach(it=>{const kindClass=it.type==="note"?"note":((it.status||"").toLowerCase().includes("dnc")?"dnc":((it.status||"").toLowerCase().includes("hot")?"hot":"status")); const label=it.type==="note"?"NOTE":"STATUS"; const div=document.createElement("div"); div.className="log-item"; div.innerHTML=`<div class="log-top"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="log-tag ${kindClass}">${label}</span><span class="pill" style="padding:2px 8px">${esc(it.phoneLabel||it.phone||"")}</span></div><div>${esc(it.byName||it.by||"—")} • ${esc(tsToLocal(it.ts))}</div></div><div class="log-text">${esc(it.type==="status"?(it.status||""):(it.text||""))}</div>`; log.appendChild(div);}); $("logCount").textContent=`${sorted.length} entr${sorted.length===1?"y":"ies"}`;}; activeLogRef.limitToLast(120).on("child_added", snap=>{const v=snap.val()||{}; v._key=snap.key; items.push(v); redraw();}, ()=>renderCallLogEmpty("Call log unavailable.")); activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();}); activeLogRef.on("child_removed", snap=>{const i=items.findIndex(x=>x._key===snap.key); if(i>=0) items.splice(i,1); redraw();});}
+
+/* EVENT DELEGATION / BATCH RENDER REFACTOR FOR CALL LOG */
+function attachCallLog(phoneKey){
+  detachCallLog(); 
+  if(!phoneKey||phoneKey==="unknown") return renderCallLogEmpty("Select a valid number to view log."); 
+  const items=[]; 
+  activeLogRef=callLogRefForPhoneKey(phoneKey); 
+  const redraw=()=>{
+    const log=$("callLog"); 
+    if(!items.length){ renderCallLogEmpty(); return; }
+    const sorted=items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)); 
+    let html = "";
+    sorted.forEach(it=>{
+      const kindClass=it.type==="note"?"note":((it.status||"").toLowerCase().includes("dnc")?"dnc":((it.status||"").toLowerCase().includes("hot")?"hot":"status")); 
+      const label=it.type==="note"?"NOTE":"STATUS"; 
+      html += `<div class="log-item"><div class="log-top"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="log-tag ${kindClass}">${label}</span><span class="pill" style="padding:2px 8px">${esc(it.phoneLabel||it.phone||"")}</span></div><div>${esc(it.byName||it.by||"—")} • ${esc(tsToLocal(it.ts))}</div></div><div class="log-text">${esc(it.type==="status"?(it.status||""):(it.text||""))}</div></div>`;
+    }); 
+    log.innerHTML = html;
+    $("logCount").textContent=`${sorted.length} entr${sorted.length===1?"y":"ies"}`;
+  }; 
+  activeLogRef.limitToLast(120).on("child_added", snap=>{const v=snap.val()||{}; v._key=snap.key; items.push(v); redraw();}, ()=>renderCallLogEmpty("Call log unavailable.")); 
+  activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();}); 
+  activeLogRef.on("child_removed", snap=>{const i=items.findIndex(x=>x._key===snap.key); if(i>=0) items.splice(i,1); redraw();});
+}
+
 async function pushLogEntry(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return; await callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:UID||"", by:ME?.email||"", byName:ME?.displayName||ME?.email||"User", phone:currentPhone||"", phoneLabel:currentPhoneLabel||"", leadId:currentLeadId||"", leadAddress:currentLead?.address||currentLead?.Address||""});}
 async function logStatus(status){const phoneKey=fmtPhoneKey(currentPhone); if(!currentPhone||phoneKey==="unknown") return; await pushLogEntry(phoneKey, {type:"status", status}); toast("Logged ✓");}
 document.querySelectorAll(".qbtn[data-status]").forEach(btn=>btn.addEventListener("click", ()=>logStatus(btn.getAttribute("data-status")||"Status"))); $("noteSaveBtn").addEventListener("click", async()=>{const text=($("noteComposer").value||"").trim(); const phoneKey=fmtPhoneKey(currentPhone); if(!text||!currentPhone||phoneKey==="unknown") return; await pushLogEntry(phoneKey, {type:"note", text}); $("noteComposer").value=""; toast("Saved ✓");});
@@ -496,7 +590,18 @@ function subscribeGodAllLeads(){
 }
 
 const leadModal=$("leadModal"); let modalMode="new", modalLeadId=null, modalAssignedSet=new Set();
-function renderAssignList(){const listEl=$("assignList"), q=($("assignFilter").value||"").toLowerCase().trim(); const rows=getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);}); if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`; return;} listEl.innerHTML=rows.map(r=>{const checked=modalAssignedSet.has(r.uid)?"checked":""; const tag=r.role==="admin"?"MANAGER":"ASSOC"; return `<label class="assignRow"><input type="checkbox" data-uid="${esc(r.uid)}" ${checked}/><div class="assignMeta"><div class="assignName">${esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${esc(r.email||r.uid)}</div></div><div class="assignTag">${tag}</div></label>`;}).join(""); listEl.querySelectorAll("input[data-uid]").forEach(cb=>cb.addEventListener("change", ()=>{const uid=cb.getAttribute("data-uid"); if(cb.checked) modalAssignedSet.add(uid); else modalAssignedSet.delete(uid);}));}
+
+/* EVENT DELEGATION REFACTOR FOR ASSIGN LIST */
+function renderAssignList(){
+  const listEl=$("assignList"), q=($("assignFilter").value||"").toLowerCase().trim(); 
+  const rows=getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);}); 
+  if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`; return;} 
+  listEl.innerHTML=rows.map(r=>{
+    const checked=modalAssignedSet.has(r.uid)?"checked":""; 
+    const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
+    return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${esc(r.uid)}" ${checked}/><div class="assignMeta"><div class="assignName">${esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${esc(r.email||r.uid)}</div></div><div class="assignTag">${tag}</div></label>`;
+  }).join(""); 
+}
 $("assignFilter").addEventListener("input", renderAssignList); $("assignAllBtn").addEventListener("click", ()=>{getAssignableRows().forEach(r=>modalAssignedSet.add(r.uid)); renderAssignList();}); $("assignNoneBtn").addEventListener("click", ()=>{modalAssignedSet=new Set(); renderAssignList();});
 function openLeadModal(mode){modalMode=mode; const isEdit=mode==="edit"; modalToast("", true); $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)"; $("m_delete").style.display=(isGod&&isEdit)?"":"none"; $("assignBlock").style.display=isAdminLike()?"":"none"; $("assignHintPill").textContent=roleLabel(ROLE); modalAssignedSet=new Set(); if(isEdit&&currentLead){modalLeadId=currentLeadId; $("m_address").value=currentLead.address||currentLead.Address||""; $("m_owner").value=currentLead.owner||currentLead.Owner||currentLead.name||""; $("m_mailing").value=currentLead.mailing||currentLead.Mailing||currentLead.mailingAddress||""; $("m_status").value=leadStatus(currentLead); $("m_type").value=currentLead.type||"seller"; $("m_source").value=currentLead.source||""; $("m_phones").value=normalizePhones(currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); $("m_notes").value=currentLead.notes||currentLead.Notes||""; Object.keys(currentLead.assignedTo||{}).forEach(uid=>{if(currentLead.assignedTo[uid]) modalAssignedSet.add(uid);}); (currentLead.assignedUids||[]).forEach(uid=>modalAssignedSet.add(String(uid)));} else {modalLeadId=null; $("m_address").value=""; $("m_owner").value=""; $("m_mailing").value=""; $("m_status").value="New"; $("m_type").value="seller"; $("m_source").value=""; $("m_phones").value=""; $("m_notes").value=""; if(isBranchManager) modalAssignedSet.add(UID);} if(isAdminLike()) renderAssignList(); leadModal.classList.add("show"); leadModal.setAttribute("aria-hidden","false");}
 function closeLeadModal(){leadModal.classList.remove("show"); leadModal.setAttribute("aria-hidden","true");}
@@ -757,6 +862,8 @@ async function submitSupportRequest({priority, portal, category, message}){if(!U
 function openSupportModal(priority){$("supportPortal").value="wholesaler"; $("supportPriority").value=priority==="red"?"red":"blue"; $("supportSub").textContent=priority==="red"?"Red = urgent. Use for hot leads or anything that can’t wait.":"Blue = not urgent. Use for questions or general support."; const cats=supportCategoriesForPortal("wholesaler"); $("supportCategory").innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join(""); $("supportMsg").value=""; $("supportModal").style.display="flex";} function closeSupportModal(){$("supportModal").style.display="none";}
 $("btnBlueSupport").onclick=()=>openSupportModal("blue"); $("btnRedSupport").onclick=()=>openSupportModal("red"); $("supportCloseBtn").onclick=closeSupportModal; $("supportCancelBtn").onclick=closeSupportModal; $("supportSendBtn").onclick=async()=>{const message=($("supportMsg").value||"").trim(); if(!message) return toast("Type a message first."); try{await submitSupportRequest({priority:$("supportPriority").value, portal:$("supportPortal").value, category:$("supportCategory").value, message}); closeSupportModal(); toast("Support request sent ✓");}catch(e){console.warn("support request failed", e); toast("Support request failed");}};
 function trackPresence(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`); const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:initialsFromUser(u), portal:"wholesaler", online:true, ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
+
+/* EVENT DELEGATION REFACTOR FOR RADAR LIST */
 function startRadar(){
   $("radarList").style.display="";
   $("chatArea").style.display="none";
@@ -771,21 +878,17 @@ function startRadar(){
       list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`;
       return;
     }
-    list.innerHTML="";
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+    let html = "";
     users.forEach(u=>{
-      const div=document.createElement("div");
-      div.className="radar-user";
-      div.innerHTML=`<div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">${esc(u.portal||"")}</div></div></div><div class="pill">DM</div>`;
-div.onclick=()=>{
-        const peer=String(u.uid||"");
-        const threadId = [UID, peer].sort().join('_');
-        setupChat(`${DMS_PATH}/${threadId}/messages`, `DM: ${u.name||u.email||"User"}`, true);
-      };
-      list.appendChild(div);
+      html += `<div class="radar-user" data-uid="${esc(u.uid)}" data-name="${esc(u.name||u.email||"User")}">
+        <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">${esc(u.portal||"")}</div></div></div><div class="pill">DM</div>
+      </div>`;
     });
+    list.innerHTML = html;
   });
 }
+
 function setupChat(path,title,showBack){$("chatArea").style.display="flex";
 $("radarList").style.display="none"; $("panelTitle").textContent=title||"Chat"; $("backToRadar").style.display=showBack?"":"none"; $("chatMsgs").innerHTML=""; if(activeChatRef){try{activeChatRef.off();}catch(e){} activeChatRef=null;} activeChatRef=firebase.database().ref(path); activeChatRef.limitToLast(80).on("child_added", snap=>{const m=snap.val()||{}; const mine=String(m.uid||m.byUid||"")===String(UID); const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them"); div.textContent=m.text||""; $("chatMsgs").appendChild(div); $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight;});
 const sendChat=async()=>{const text=($("chatInput").value||"").trim(); if(!text) return; $("chatInput").value=""; await activeChatRef.push().set({text, uid:UID||"", by:ME?.displayName||ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP});}; $("chatSend").onclick=sendChat; $("chatInput").onkeydown=e=>{if(e.key==="Enter") sendChat();}; $("chatInput").onfocus=()=>{setTimeout(()=>{window.scrollTo(0,0);$("chatMsgs").scrollTop=$("chatMsgs").scrollHeight;},300);}; $("backToRadar").onclick=()=>{startRadar(); $("sidePanel").classList.add("open");};}
@@ -919,6 +1022,40 @@ firebase.auth().onAuthStateChanged(async u=>{
   }
 });
 $("callHint").style.display="none";
+
+
+/* --- GLOBAL MASTER EVENT LISTENERS (DELEGATION) --- */
+
+// 1. Queue Lead Clicks
+$("leadList").addEventListener("click", (e) => {
+  const item = e.target.closest(".lead-item");
+  if(item) {
+    const idx = parseInt(item.getAttribute("data-idx"), 10);
+    if(!isNaN(idx)) selectLeadByIndex(idx);
+  }
+});
+
+// 2. Assign List Checkboxes
+$("assignList").addEventListener("change", (e) => {
+  if(e.target.classList.contains("assign-cb")){
+    const uid = e.target.getAttribute("data-uid");
+    if(e.target.checked) modalAssignedSet.add(uid);
+    else modalAssignedSet.delete(uid);
+  }
+});
+
+// 3. Radar User Clicks
+$("radarList").addEventListener("click", (e) => {
+  const userEl = e.target.closest(".radar-user");
+  if(userEl) {
+    const peer = userEl.getAttribute("data-uid");
+    const name = userEl.getAttribute("data-name");
+    if(peer) {
+      const threadId = [UID, peer].sort().join('_');
+      setupChat(`${DMS_PATH}/${threadId}/messages`, `DM: ${name}`, true);
+    }
+  }
+});
 </script>
 </body>
 </html>
