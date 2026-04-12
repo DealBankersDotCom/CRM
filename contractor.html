@@ -93,15 +93,18 @@ body{
 
 .detail-header{padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:rgba(8,18,28,0.95);z-index:10;display:flex;justify-content:space-between;align-items:center;}
 .detail-header h3{margin:0;font-size:20px;color:#fff;}
-#backToMap{display:inline-flex;align-items:center;gap:6px;cursor:pointer;color:var(--accent);font-weight:800;font-size:14px;padding:6px 12px;border-radius:8px;background:rgba(43,116,255,.1);border:1px solid rgba(43,116,255,.3);transition:all 0.15s;}
-#backToMap:hover{background:rgba(43,116,255,.2);color:#fff;}
 
 .job-body{padding:24px;max-width:800px;margin:0 auto;display:flex;flex-direction:column;gap:16px;}
 .kv{font-size:14px;line-height:1.5;color:var(--muted);background:rgba(255,255,255,.03);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.05);}
 .kv b{color:#fff;font-weight:800;display:block;font-size:11px;text-transform:uppercase;letter-spacing:0.05em;margin-bottom:4px;opacity:0.8;}
 .hr{height:1px;background:rgba(255,255,255,.1);margin:8px 0}
 
+.field-box{padding:14px;border-radius:16px;border:1px solid rgba(255,255,255,.14);background:rgba(255,255,255,.04);overflow:hidden;}
+.field-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:10px}
+.field-title{font-size:11px;letter-spacing:.12em;font-weight:900;color:#9ab9d6;text-transform:uppercase;}
+
 .claim-bar{background:linear-gradient(135deg,#0d1823,#102131);padding:20px;border-radius:16px;border:1px solid rgba(43,116,255,.4);box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px;}
+.claim-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .claim-bar h4{margin:0;color:#fff;font-weight:900;font-size:18px;}
 .claim-bar p{margin:0;font-size:13px;color:var(--muted)}
 
@@ -120,6 +123,9 @@ body{
 .chat-them{align-self:flex-start;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.1);color:var(--text);border-bottom-left-radius:2px;}
 .msg-internal{border-color:var(--warn);background:rgba(245,158,11,.1);color:#fff;}
 .msg-internal::before{content:"[Internal Note]";display:block;color:var(--warn);font-size:10px;margin-bottom:4px;font-weight:800;text-transform:uppercase;}
+.chat-input-row{display:flex;gap:8px;margin-top:10px;}
+.textarea-mini{flex:1;background:#0d1f2d;border:1px solid #254a63;color:#fff;border-radius:10px;padding:8px 10px;font-size:12px;resize:none;height:36px;}
+.textarea-mini:focus{border-color:rgba(43,116,255,.6);box-shadow:0 0 0 4px rgba(43,116,255,.12)}
 
 .tracker-container{padding:20px;background:rgba(0,0,0,0.2);border-radius:16px;border:1px solid rgba(255,255,255,0.1);margin-top:10px;}
 .tracker-progress{display:flex;justify-content:space-between;position:relative;margin-bottom:10px;}
@@ -135,12 +141,19 @@ body{
 
 .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.8);display:none;align-items:center;justify-content:center;z-index:10000;padding:20px;backdrop-filter:blur(5px);}
 .modal{background:#0f1b27;border:1px solid #254a63;border-radius:20px;padding:24px;max-width:700px;width:100%;box-shadow:var(--shadow);max-height:90vh;overflow-y:auto;}
+.modal.show{display:flex; flex-direction:column;}
 .modal .grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
 @media(max-width:600px){.modal .grid{grid-template-columns:1fr;}}
 .modal label.small{font-size:11px;letter-spacing:0.08em;font-weight:800;color:var(--muted);text-transform:uppercase;margin-bottom:6px;display:block;}
 .modal input, .modal select, .modal textarea{width:100%;padding:12px;border:1px solid #254a63;background:#0d1f2d;color:#fff;border-radius:10px;font-size:14px;outline:none;}
 .modal input:focus, .modal textarea:focus{border-color:var(--accent);}
 .modalActions{display:flex;gap:10px;justify-content:flex-end;margin-top:24px;padding-top:16px;border-top:1px solid rgba(255,255,255,.1);}
+
+.toggle-switch{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:10px 12px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(13,31,45,.6);}
+.switch-input{width:46px;height:26px;border-radius:999px;background:rgba(255,255,255,.18);position:relative;cursor:pointer;border:1px solid rgba(255,255,255,.18);display:inline-block;}
+.switch-input.on{background:var(--accent);border-color:rgba(43,116,255,.55)}
+.switch-input::after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:1px;left:1px;transition:transform .15s ease}
+.switch-input.on::after{transform:translateX(20px)}
 
 @media(max-width:768px){
   .wrap{flex-direction:column;height:calc(100vh - 120px);}
@@ -155,53 +168,56 @@ body{
 <body data-portal="contractor">
 
 <header class="header">
-  <div class="brand"><span class="dot"></span><span>DEALBANKERS • Command</span></div>
-  <nav>
-    <a class="chip primary" href="profile.html">Dashboard</a>
-    <button class="chip ghost" id="btnSettingsModal" type="button" title="Settings">⚙️ Settings</button>
-    <a class="chip danger" id="logoutBtn">Log Out</a>
+  <div class="brand">
+    <div>DEALBANKERS • Contractor Hub</div>
+  </div>
+  <nav class="nav">
+    <a class="chip" href="profile.html">Dashboard</a>
+    <button class="chip primary" id="btnTeam" type="button" style="display:none;" onclick="window.openTeamModal()">👥 Team</button>
+    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" aria-label="Blue Phone" onclick="window.openSupportModal('blue')">☎</button>
+    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" aria-label="Red Phone" onclick="window.openSupportModal('red')">☎</button>
+    <button class="icon-btn" id="btnSettings" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
+    <a class="chip" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
 <div class="posture-bar">
     <div class="posture-item"><span id="roleIndicator">ASSOCIATE VIEW</span></div>
-    <div class="posture-item"><strong>Lead Gen:</strong> <span id="leadsToggleReadout">—</span></div>
-    <div class="posture-item"><strong>Uber Dispatch:</strong> <span id="locationToggleReadout">—</span></div>
-    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">God Mode Active</span></div>
+    <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
+    <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
+    <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
+    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Uber Comms Active</span></div>
 </div>
 
 <div class="wrap">
-    <aside class="side-panel">
+    <aside class="side-panel" id="jobListContainer">
         <div class="panel-head">
             <div class="panel-title">● Service Ops <span class="pill" id="jobCount">0 jobs</span></div>
             <div class="seg">
-                <button id="tabActive" class="active" type="button">Active</button>
-                <button id="tabUpcoming" type="button">Upcoming</button>
+                <button id="tabActive" class="active" type="button" onclick="window.setTab('active')">Active</button>
+                <button id="tabUpcoming" type="button" onclick="window.setTab('upcoming')">Upcoming</button>
             </div>
         </div>
         <div class="tool-bar">
-            <div style="flex:1"><input id="jobSearch" class="input-mini" placeholder="Search Title, Trade, City..." /></div>
-            <button class="chip primary" id="btnNewJob" type="button">+ Post</button>
+            <div style="flex:1"><input id="jobSearch" class="input-mini" placeholder="Search Title, Trade, ZIP..." oninput="window.subscribeJobs()" /></div>
+            <button class="chip tiny" id="btnNewJob" type="button" onclick="window.openJobModal('new')">+ Post</button>
         </div>
-        <div class="list-panel" id="leadList">
-            </div>
+        <div class="list-panel" id="leadList">Loading leads...</div>
     </aside>
 
     <section class="content-panel">
         <div id="mapViewContainer">
-            <div id="mapView">Map Loading...</div>
+            <div id="mapView">Job Map Loading (needs API key)...</div>
         </div>
-        
         <div id="jobDetailContainer">
             <div class="detail-header">
-                <button id="backToMap">← Back to Map & List</button>
-                <div style="display:flex;gap:10px;align-items:center;">
-                    <button class="chip ghost" id="btnGodModeEdit" style="display:none;">✎ Edit Post</button>
-                    <span class="pill" id="jobDetailStatus">—</span>
+                <button class="chip ghost" onclick="window.hideDetails()">← Back to Map</button>
+                <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ God Edit</button>
+                    <span class="pill good" id="jobDetailStatus">—</span>
                 </div>
             </div>
-            <div class="job-body" id="jobDetailBody">
-                </div>
+            <div class="job-body" id="jobDetailBody">Select a job from the list or map to view details.</div>
         </div>
     </section>
 </div>
@@ -210,6 +226,7 @@ body{
     <div class="modal" role="dialog">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h3 id="jobModalTitle" style="margin:0;font-size:22px;color:#fff;">Post Job</h3>
+            <button class="chip ghost" onclick="window.closeJobModal()">✕</button>
         </div>
         <div class="grid">
             <div style="grid-column:1/-1">
@@ -217,7 +234,7 @@ body{
                 <input id="jobTitle" placeholder="e.g., Drywall repair 2 bedrooms" />
             </div>
             <div>
-                <label class="small">Trade / Category</label>
+                <label class="small">Trade</label>
                 <input id="jobTrade" placeholder="Drywall, Plumbing, etc." />
             </div>
             <div>
@@ -268,9 +285,9 @@ body{
         </div>
 
         <div class="modalActions">
-            <button class="chip danger" id="btnGodDeleteJob" style="display:none;margin-right:auto;">Delete Post</button>
-            <button class="chip ghost" id="btnJobModalClose">Cancel</button>
-            <button class="chip primary" id="btnJobSave">Save Job</button>
+            <button class="chip danger" id="btnGodDeleteJob" style="display:none;margin-right:auto;" onclick="window.deleteJob()">Delete Post</button>
+            <button class="chip ghost" onclick="window.closeJobModal()">Cancel</button>
+            <button class="chip primary" id="btnJobSave" onclick="window.saveJob()">Save Job</button>
         </div>
     </div>
 </div>
@@ -279,20 +296,46 @@ body{
     <div class="modal" role="dialog" style="max-width:500px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
             <h3 style="margin:0;color:#fff;">Command Settings</h3>
-            <button class="chip ghost" id="btnConfigModalClose">Close</button>
+            <button class="chip ghost" onclick="window.closeConfigModal()">Close</button>
         </div>
         <div style="display:flex;flex-direction:column;gap:16px;">
             <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
                 <label class="small" style="color:#fff;">Lead Gen Mode</label>
                 <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Receive open market service orders in your area.</div>
-                <button class="chip" id="leadsToggle" style="width:100%;">Enable Lead Gen</button>
+                <div class="toggle-switch" onclick="window.toggleLeads()">
+                    <span>Accepting Leads</span><div class="switch-input" id="leadsToggle"></div>
+                </div>
             </div>
             
             <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
                 <label class="small" style="color:#fff;">Uber Dispatch (Location Sharing)</label>
                 <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Required to claim jobs. Broadcasts location for assignment.</div>
-                <button class="chip" id="locationToggle" style="width:100%;">Enable Uber Dispatch</button>
+                <div class="toggle-switch" onclick="window.toggleLocation()">
+                    <span>Uber Mode</span><div class="switch-input" id="locationToggle"></div>
+                </div>
             </div>
+            <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
+                <label class="small" style="color:#fff;">Lead Gen ZIPs (Separate with commas)</label>
+                <input id="leadsZips" placeholder="e.g., 78210, 78212" onblur="window.saveZips()" />
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="modal-backdrop" id="supportModal">
+    <div class="modal" role="dialog" style="max-width:480px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="margin:0;color:#fff;">Support Request</h3>
+            <button class="chip ghost" onclick="window.closeSupportModal()">✕</button>
+        </div>
+        <div class="job-body" style="padding:0">
+            <label class="small">Priority</label>
+            <input id="supportPriority" class="input-mini" readonly style="opacity:0.6"/>
+            <label class="small">Message</label>
+            <textarea id="supportMsg" rows="4" placeholder="Request details..."></textarea>
+        </div>
+        <div class="modalActions">
+            <button class="chip primary" onclick="window.sendSupport()">Send Request</button>
         </div>
     </div>
 </div>
@@ -304,20 +347,18 @@ body{
 <script src="app-auth.js"></script>
 
 <script>
-// Safely escape strings for HTML insertion
-function esc(s) {
-    return String(s || "").replace(/[&<>"']/g, function(m) {
-        return {
-            '&': '&amp;',
-            '<': '&lt;',
-            '>': '&gt;',
-            '"': '&quot;',
-            "'": '&#39;'
-        }[m];
-    });
-}
+// 1. Safe HTML escaper (FIXED Syntax)
+window.esc = function(s) {
+    if (!s) return "";
+    return String(s)
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#39;");
+};
 
-// Initialize Google Maps API
+// 2. Map Key Injection
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
     const mapScript = document.createElement('script');
@@ -330,7 +371,7 @@ if(google_key) {
 
 const $ = (id) => document.getElementById(id); 
 
-function formatLocalPhones(raw){ 
+window.formatLocalPhones = function(raw){ 
     if(!raw) return []; 
     return String(raw).split("\n").map(l => { 
         const [a, b] = l.includes("|") ? l.split("|") : ["POC", l]; 
@@ -339,14 +380,14 @@ function formatLocalPhones(raw){
         if(!number) return null; 
         return { label, number }; 
     }).filter(Boolean); 
-}
+};
 
-function sanitizeTel(p){ 
+window.sanitizeTel = function(p){ 
     let d = String(p||"").replace(/[^\d+]/g, ''); 
     if (d.startsWith("1") && d.length === 11) d = "+" + d; 
     else if (d.length === 10) d = "+1" + d; 
     return d; 
-}
+};
 
 (function ensureFirebaseInit(){
     try{
@@ -356,9 +397,19 @@ function sanitizeTel(p){
     }catch(e){console.error("Firebase init error", e);}
 })();
 
-let UID="", USER_ROLE="user", isGod=false, map, markers=[]; 
-let jobsCache={}, jobsView=[], currentTab="active", activeLeadGen=false, activeLocation=false, watchId=null;
-let currentJobId = null;
+// Globals
+window.UID = "";
+window.USER_ROLE = "user";
+window.isGod = false;
+window.map = null;
+window.markers = [];
+window.jobsCache = {};
+window.jobsView = [];
+window.currentTab = "active";
+window.activeLeadGen = false;
+window.activeLocation = false;
+window.watchId = null;
+window.currentJobId = null;
 
 const TRACKER_STATES = [ 
     {id:'Not Left',icon:'🏠'}, 
@@ -368,16 +419,16 @@ const TRACKER_STATES = [
     {id:'Completed',icon:'✅'} 
 ];
 
-function fuzzyCityDisplay(j){ return `Fuzzy Address: (${esc(j.city||j.zip || 'Unknown')}) • Revealed after claim`; }
+window.fuzzyCityDisplay = function(j){ return `Fuzzy Address: (${window.esc(j.city||j.zip || 'Unknown')}) • Revealed after claim`; };
 
-function normalizeJobAddress(j){ 
+window.normalizeJobAddress = function(j){ 
     if(!j) return "—"; 
-    const isClaimed = j.claimedBy && j.claimedBy[UID]; 
-    if(isGod || isClaimed) return esc(j.addressExact || j.address || `${j.city||''}, ${j.zip||''}`); 
-    return fuzzyCityDisplay(j); 
-}
+    const isClaimed = j.claimedBy && j.claimedBy[window.UID]; 
+    if(window.isGod || isClaimed) return window.esc(j.addressExact || j.address || `${j.city||''}, ${j.zip||''}`); 
+    return window.fuzzyCityDisplay(j); 
+};
 
-function geocodeAddress(addr){ 
+window.geocodeAddress = function(addr){ 
     return new Promise((resolve, reject)=>{ 
         if(!window.google || !window.google.maps || !window.google.maps.Geocoder){ reject("Google Geocoder not loaded"); return;} 
         new google.maps.Geocoder().geocode({'address': addr}, (results, status)=>{ 
@@ -385,35 +436,35 @@ function geocodeAddress(addr){
             else { reject("Geocoding failed: " + status); } 
         }); 
     }); 
-}
+};
 
-function initMap(){ 
+window.initMap = function(){ 
     if(!window.google || !window.google.maps) return; 
     const lat = window.userLocation?.lat || 29.4241; 
     const lng = window.userLocation?.lng || -98.4936; 
-    map = new google.maps.Map($('mapView'), { 
+    window.map = new google.maps.Map($('mapView'), { 
         center: {lat, lng}, 
         zoom: 11, 
         styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}],
         disableDefaultUI: true,
         zoomControl: true
     }); 
-    google.maps.event.trigger(map, "resize"); 
-}
+    google.maps.event.trigger(window.map, "resize"); 
+};
 
-function clearMarkers(){ markers.forEach(m=>m.setMap(null)); markers=[]; }
+window.clearMarkers = function(){ window.markers.forEach(m=>m.setMap(null)); window.markers=[]; };
 
-function renderMarkers(){ 
-    if(!map) return; 
-    clearMarkers(); 
+window.renderMarkers = function(){ 
+    if(!window.map) return; 
+    window.clearMarkers(); 
     const bounds = new google.maps.LatLngBounds(); 
     let hasValidPins = false;
 
-    jobsView.forEach(j => { 
-        const isClaimed = j.claimedBy && j.claimedBy[UID]; 
+    window.jobsView.forEach(j => { 
+        const isClaimed = j.claimedBy && j.claimedBy[window.UID]; 
         let position; 
         
-        if(isGod || isClaimed){ 
+        if(window.isGod || isClaimed){ 
             if(j.exactLatLng) position = j.exactLatLng; 
             else if(j.fuzzyLatLng) position = j.fuzzyLatLng; 
             else return; 
@@ -425,44 +476,45 @@ function renderMarkers(){
         hasValidPins = true;
         const marker = new google.maps.Marker({ 
             position, 
-            map, 
-            title: esc(j.trade), 
+            map: window.map, 
+            title: window.esc(j.trade), 
             animation: google.maps.Animation.DROP 
         }); 
         
-        marker.addListener('click', ()=>renderJobDetail(j.id)); 
-        markers.push(marker); 
+        marker.addListener('click', ()=>window.renderJobDetail(j.id)); 
+        window.markers.push(marker); 
         bounds.extend(position); 
     }); 
     
     if(hasValidPins) {
-        if(markers.length > 1) map.fitBounds(bounds); 
-        else if(markers.length === 1) {
-            map.setCenter(markers[0].getPosition());
-            map.setZoom(14);
+        if(window.markers.length > 1) window.map.fitBounds(bounds); 
+        else if(window.markers.length === 1) {
+            window.map.setCenter(window.markers[0].getPosition());
+            window.map.setZoom(14);
         }
     }
-}
+};
 
-// BATCH RENDERING REFACTOR
-function renderJobsList(){ 
+// 3. Global Window Bindings & Batch Rendering
+window.renderJobsList = function(){ 
     const el = $('leadList'); 
-    if(jobsView.length === 0) {
+    if(!el) return;
+    if(window.jobsView.length === 0) {
         el.innerHTML = `<div class="empty-state">No jobs found.</div>`;
         $('jobCount').textContent=`0 jobs`; 
         return;
     }
 
     let html = "";
-    jobsView.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0)).forEach(j => { 
-        const isSelected = currentJobId === j.id ? 'selected' : '';
-        const isClaimed = j.claimedBy && j.claimedBy[UID]; 
-        const tracker = (isGod || isClaimed) ? `<span class="pill blue">${esc(j.executionStatus||'Not Left')}</span>` : ''; 
+    window.jobsView.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0)).forEach(j => { 
+        const isSelected = window.currentJobId === j.id ? 'selected' : '';
+        const isClaimed = j.claimedBy && j.claimedBy[window.UID]; 
+        const tracker = (window.isGod || isClaimed) ? `<span class="pill blue">${window.esc(j.executionStatus||'Not Left')}</span>` : ''; 
         
         html += `
-        <div class="lead-item ${isSelected}" data-jobid="${esc(j.id)}">
-            <div class="addr">${esc(j.trade)} — ${esc(j.city||j.zip||'')}</div> 
-            <div class="meta"><b>${esc(j.title)}</b> • ${esc(j.budget||'$—')}</div> 
+        <div class="lead-item ${isSelected}" onclick="window.renderJobDetail('${window.esc(j.id)}')">
+            <div class="addr">${window.esc(j.trade)} — ${window.esc(j.city||j.zip||'')}</div> 
+            <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> 
             <div class="badges">
                 ${isClaimed ? '<span class="pill good">Claimed By Me ✓</span>' : ''}
                 ${tracker}
@@ -470,36 +522,36 @@ function renderJobsList(){
         </div>`; 
     }); 
     el.innerHTML = html;
-    $('jobCount').textContent=`${jobsView.length} jobs`; 
-}
+    $('jobCount').textContent=`${window.jobsView.length} jobs`; 
+};
 
-function renderJobDetail(id){ 
-    const j = jobsCache[id]; 
-    if(!j){ hideDetails(); return; } 
+window.renderJobDetail = function(id){ 
+    const j = window.jobsCache[id]; 
+    if(!j){ window.hideDetails(); return; } 
     
-    currentJobId = id; 
-    renderJobsList(); // Refresh list to highlight selection
+    window.currentJobId = id; 
+    window.renderJobsList(); 
     
     $('mapViewContainer').style.display="none"; 
     $('jobDetailContainer').style.display="block"; 
     
-    $('jobDetailTitle').textContent = esc(j.trade || 'Job Detail'); 
-    $('jobDetailStatus').textContent = esc(j.status); 
+    $('jobDetailTitle').textContent = window.esc(j.trade || 'Job Detail'); 
+    $('jobDetailStatus').textContent = window.esc(j.status); 
     
     let comHtml = ""; 
-    if(isGod){ 
-        const vendorPhones = formatLocalPhones(j.vendorPhones); 
+    if(window.isGod){ 
+        const vendorPhones = window.formatLocalPhones(j.vendorPhones); 
         let vpHtml = ""; 
         vendorPhones.forEach(vp => { 
-            const sms = sanitizeTel(vp.number); 
+            const sms = window.sanitizeTel(vp.number); 
             vpHtml += `
             <div class="comms-row">
                 <div class="comms-meta">
-                    <div class="comms-name">${esc(vp.label)}</div>
-                    <div class="comms-label">${esc(vp.number)}</div>
+                    <div class="comms-name">${window.esc(vp.label)}</div>
+                    <div class="comms-label">${window.esc(vp.number)}</div>
                 </div>
                 <div class="comms-actions">
-                    <a href="tel:${sanitizeTel(vp.number)}" class="chip primary tiny">📞 Call</a>
+                    <a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny">📞 Call</a>
                     <a href="sms:${sms}" class="chip tiny">💬 Text</a>
                 </div>
             </div>`; 
@@ -508,13 +560,13 @@ function renderJobDetail(id){
         let techHtml = ""; 
         if(j.claimedBy){ 
             const techUid = Object.keys(j.claimedBy)[0]; 
-            techHtml = `<div class="kv"><b>Assigned Tech UID:</b> ${esc(techUid)}</div>`;
+            techHtml = `<div class="kv"><b>Assigned Tech UID:</b> ${window.esc(techUid)}</div>`;
         } 
         
         comHtml = `
         <div class="comms-panel-god">
             <div class="god-header-row"><h4>🔒 God Uber Control</h4></div>
-            <div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div>
+            <div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div>
             <div class="hr"></div>
             <h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4>
             <div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div>
@@ -523,16 +575,16 @@ function renderJobDetail(id){
     } 
     
     let claimHtml = ""; 
-    const isClaimed = j.claimedBy && j.claimedBy[UID]; 
+    const isClaimed = j.claimedBy && j.claimedBy[window.UID]; 
     const hasClaim = j.claimedBy && Object.keys(j.claimedBy).length > 0; 
     
     if(!hasClaim){ 
-        if(activeLocation && activeLeadGen){ 
+        if(window.activeLocation && window.activeLeadGen){ 
             claimHtml = `
             <div class="claim-bar">
                 <div style="display:flex;justify-content:space-between;align-items:center;">
                     <h4>Claim This Order</h4>
-                    <button class="chip primary" id="btnClaimJob">📍 Claim Job</button>
+                    <button class="chip primary" onclick="window.claimJob('${id}')">📍 Claim Job</button>
                 </div>
                 <p>Exact address will be revealed immediately upon claim.</p>
             </div>`; 
@@ -547,7 +599,7 @@ function renderJobDetail(id){
         TRACKER_STATES.forEach((s, idx) => {
             const statusClass = idx < stepIdx ? 'completed' : (idx === stepIdx ? 'active' : '');
             stepsHtml += `
-            <div class="tracker-step ${statusClass}" data-step="${s.id}">
+            <div class="tracker-step ${statusClass}" onclick="window.updateExecutionStatus('${id}', '${s.id}')">
                 <div class="tracker-icon">${s.icon}</div>
                 <div class="tracker-label">${s.id}</div>
             </div>`;
@@ -568,42 +620,41 @@ function renderJobDetail(id){
     } 
     
     let commsLogHtml = ""; 
-    if(isGod || isClaimed){ 
+    if(window.isGod || isClaimed){ 
         commsLogHtml = `
         <div class="hr"></div>
         <div class="kv" style="background:transparent;padding:0;border:none;"><b>Job Comms (Internal Chat)</b></div>
         <div id="jobCommsLog" class="chat-log">Loading comms...</div>
         <div class="chat-input-row">
             <textarea class="textarea-mini" id="techChatInput" placeholder="Type message..."></textarea>
-            <button class="chip primary" id="btnSendTechMsg">Send</button>
-            ${isGod ? `<button class="chip" id="btnSendInternalMsg" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}
+            <button class="chip primary" onclick="window.sendJobMsg('${id}', 'tech')">Send</button>
+            ${window.isGod ? `<button class="chip" onclick="window.sendJobMsg('${id}', 'internal')" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}
         </div>`; 
     } 
     
     $('jobDetailBody').innerHTML = `
-        <div class="kv"><b>Trade:</b> ${esc(j.trade)}</div> 
-        <div class="kv"><b>Status:</b> ${esc(j.status)}</div> 
-        <div class="kv"><b>Address:</b> ${normalizeJobAddress(j)}</div> 
-        <div class="kv"><b>Date:</b> ${esc(j.date||'')}</div> 
-        <div class="kv"><b>Budget:</b> ${esc(j.budget||'')}</div> 
+        <div class="kv"><b>Trade:</b> ${window.esc(j.trade)}</div> 
+        <div class="kv"><b>Status:</b> ${window.esc(j.status)}</div> 
+        <div class="kv"><b>Address:</b> ${window.normalizeJobAddress(j)}</div> 
+        <div class="kv"><b>Date:</b> ${window.esc(j.date||'')}</div> 
+        <div class="kv"><b>Budget:</b> ${window.esc(j.budget||'')}</div> 
         <div class="hr"></div> 
-        <div class="kv"><b>Description / Scope:</b><br/>${esc(j.desc||'').replace(/\n/g,'<br/>')}</div> 
+        <div class="kv"><b>Description / Scope:</b><br/>${window.esc(j.desc||'').replace(/\n/g,'<br/>')}</div> 
         ${claimHtml} 
         ${comHtml} 
         ${commsLogHtml}
     `; 
     
-    if(isGod || isClaimed) loadJobCommFeed(id); 
+    if(window.isGod || isClaimed) window.loadJobCommFeed(id); 
     
-    if(isGod){ 
+    if(window.isGod){ 
         $('btnGodModeEdit').style.display="inline-flex"; 
     } else {
         $('btnGodModeEdit').style.display="none"; 
     }
-}
+};
 
-// BATCH RENDERING REFACTOR
-async function loadJobCommFeed(id){ 
+window.loadJobCommFeed = async function(id){ 
     const list = $('jobCommsLog'); 
     if(!list) return;
     
@@ -617,132 +668,60 @@ async function loadJobCommFeed(id){
     
     let html = "";
     Object.values(msgs).sort((a,b)=> a.ts - b.ts).forEach(m => { 
-        const mine = m.uid === UID; 
+        const mine = m.uid === window.UID; 
         const internal = m.type === 'internal'; 
         html += `
         <div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> 
-            <div style="font-size:11px;opacity:0.7;margin-bottom:4px;"><b>${esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</div>
-            <div>${esc(m.text)}</div>
+            <div style="font-size:11px;opacity:0.7;margin-bottom:4px;"><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</div>
+            <div>${window.esc(m.text)}</div>
         </div>`; 
     }); 
     list.innerHTML = html;
     list.scrollTop = list.scrollHeight;
-}
+};
 
-function hideDetails(){ 
-    currentJobId=null; 
-    renderJobsList(); 
+window.hideDetails = function(){ 
+    window.currentJobId=null; 
+    window.renderJobsList(); 
     $('jobDetailContainer').style.display="none"; 
     $('mapViewContainer').style.display="block"; 
     $('jobDetailTitle').textContent="Job Detail"; 
-}
-$("backToMap").onclick=hideDetails;
+};
 
-function subscribeJobs(){ 
+window.subscribeJobs = function(){ 
     $('leadList').innerHTML = "<div style='padding:20px;color:var(--muted);text-align:center;'>Loading...</div>"; 
     firebase.database().ref('jobs').on('value', snap => { 
-        jobsCache = snap.val() || {}; 
-        jobsView = []; 
-        Object.keys(jobsCache).forEach(id => { 
-            const j = {...jobsCache[id], id}; 
-            if((j.status||'active') === currentTab) jobsView.push(j); 
+        window.jobsCache = snap.val() || {}; 
+        window.jobsView = []; 
+        Object.keys(window.jobsCache).forEach(id => { 
+            const j = {...window.jobsCache[id], id}; 
+            if((j.status||'active') === window.currentTab) window.jobsView.push(j); 
         }); 
         
         const searchQ = ($('jobSearch').value||"").toLowerCase();
         if(searchQ) {
-            jobsView = jobsView.filter(j => {
+            window.jobsView = window.jobsView.filter(j => {
                 const hay = `${j.title||''} ${j.trade||''} ${j.city||''} ${j.zip||''}`.toLowerCase();
                 return hay.includes(searchQ);
             });
         }
 
-        renderJobsList(); 
-        renderMarkers(); 
-        if(currentJobId && jobsCache[currentJobId]) renderJobDetail(currentJobId); 
+        window.renderJobsList(); 
+        window.renderMarkers(); 
+        if(window.currentJobId && window.jobsCache[window.currentJobId]) window.renderJobDetail(window.currentJobId); 
     }); 
-}
+};
 
-/* --- MASTER EVENT DELEGATION FOR ALL DYNAMIC CLICKS --- */
-document.addEventListener('click', async (e) => {
-    
-    // 1. List Item Click
-    const leadItem = e.target.closest('.lead-item');
-    if(leadItem && leadItem.closest('#leadList')) {
-        const jid = leadItem.getAttribute('data-jobid');
-        if(jid) renderJobDetail(jid);
-    }
-
-    // 2. Claim Job Button
-    if(e.target.id === 'btnClaimJob' && currentJobId) {
-        if(!confirm("Claim this job? Exact address will be revealed.")) return; 
-        e.target.disabled=true; 
-        e.target.textContent = "Claiming...";
-        try{ 
-            await firebase.database().ref(`jobs/${currentJobId}/claimedBy/${UID}`).set({uid:UID, email:ME.email, ts:firebase.database.ServerValue.TIMESTAMP}); 
-            await firebase.database().ref(`jobs/${currentJobId}/executionStatus`).set("Not Left"); 
-            // The Firebase listener will auto-refresh the UI
-        }catch(err){
-            alert("Claim failed."); 
-            e.target.disabled=false;
-            e.target.textContent = "📍 Claim Job";
-        }
-    }
-
-    // 3. Send Message (Tech/Public)
-    if(e.target.id === 'btnSendTechMsg' && currentJobId) {
-        const input = $('techChatInput');
-        const text = (input.value||"").trim(); 
-        if(!text) return; 
-        e.target.disabled = true; 
-        try{ 
-            await firebase.database().ref(`jobs/${currentJobId}/messages`).push({ text, type:'tech', uid:UID, byName:window.userDirectoryCache?.byUid?.[UID]?.name || ME.email, ts: Date.now() }); 
-            input.value = ""; 
-            loadJobCommFeed(currentJobId); 
-        }catch(err){} 
-        e.target.disabled = false; 
-    }
-
-    // 4. Send Message (Internal/God Mode)
-    if(e.target.id === 'btnSendInternalMsg' && currentJobId && isGod) {
-        const input = $('techChatInput');
-        const text = (input.value||"").trim(); 
-        if(!text) return; 
-        e.target.disabled = true; 
-        try{ 
-            await firebase.database().ref(`jobs/${currentJobId}/messages`).push({ text, type:'internal', uid:UID, byName:window.userDirectoryCache?.byUid?.[UID]?.name || ME.email, ts: Date.now() }); 
-            input.value = ""; 
-            loadJobCommFeed(currentJobId); 
-        }catch(err){} 
-        e.target.disabled = false; 
-    }
-
-    // 5. Pizza Tracker Status Tap
-    const trackerStep = e.target.closest('.tracker-step');
-    if(trackerStep && currentJobId) {
-        const stepId = trackerStep.getAttribute('data-step');
-        if(stepId) {
-            try { await firebase.database().ref(`jobs/${currentJobId}/executionStatus`).set(stepId); } catch(err){}
-        }
-    }
-
-    // 6. God Mode Edit Button
-    if(e.target.id === 'btnGodModeEdit' && currentJobId) {
-        openJobModal('edit', currentJobId);
-    }
-});
-
-$('jobSearch').addEventListener('input', () => { subscribeJobs(); });
-
-function openJobModal(mode, id=null){ 
+window.openJobModal = function(mode, id=null){ 
     $('jobModal').classList.add('show'); 
     $('btnGodDeleteJob').style.display="none"; 
-    modalLeadId = id; 
+    window.modalLeadId = id; 
     const isEdit = mode === 'edit'; 
     $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job"; 
-    $('godPostFields').style.display = isGod ? "block" : "none"; 
+    $('godPostFields').style.display = window.isGod ? "block" : "none"; 
     
     if(isEdit && id){ 
-        const j = jobsCache[id]; 
+        const j = window.jobsCache[id]; 
         $('jobTitle').value = j.title||""; 
         $('jobTrade').value = j.trade||""; 
         $('jobCity').value = j.city||""; 
@@ -752,7 +731,7 @@ function openJobModal(mode, id=null){
         $('jobStatus').value = j.status||"active"; 
         $('jobDesc').value = j.desc||""; 
         $('jobLicensedReq').checked = !!j.licensedRequired; 
-        if(isGod){ 
+        if(window.isGod){ 
             $('jobAddressExact').value = j.addressExact||""; 
             $('vendorPhones').value = j.vendorPhones||""; 
             $('godNotes').value = j.godNotes||""; 
@@ -762,19 +741,17 @@ function openJobModal(mode, id=null){
         $('jobTitle').value=""; $('jobTrade').value=""; $('jobCity').value=""; $('jobZip').value=""; 
         $('jobDate').value=""; $('jobBudget').value=""; $('jobStatus').value="active"; $('jobDesc').value=""; 
         $('jobLicensedReq').checked=false; 
-        if(isGod){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value=""; } 
+        if(window.isGod){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value=""; } 
     }
-}
+};
 
-function closeJobModal(){ $('jobModal').classList.remove('show'); }
-$("btnNewJob").onclick = () => openJobModal('new');
-$("btnJobModalClose").onclick = closeJobModal;
+window.closeJobModal = function(){ $('jobModal').classList.remove('show'); };
 
-$("btnJobSave").onclick = async () => {
+window.saveJob = async function() {
     const trade = ($('jobTrade').value||"").trim();
     if(!trade) return alert("Trade is required.");
     
-    const isEdit = modalLeadId !== null;
+    const isEdit = window.modalLeadId !== null;
     const payload = {
         title: ($('jobTitle').value||"").trim(),
         trade: trade,
@@ -791,14 +768,14 @@ $("btnJobSave").onclick = async () => {
     $('btnJobSave').disabled = true;
     $('btnJobSave').textContent = "Saving...";
 
-    if(isGod){
+    if(window.isGod){
         const addr = ($('jobAddressExact').value||"").trim();
         payload.addressExact = addr;
         payload.vendorPhones = ($('vendorPhones').value||"").trim();
         payload.godNotes = ($('godNotes').value||"").trim();
         if(addr){
             try{ 
-                const latLng = await geocodeAddress(addr); 
+                const latLng = await window.geocodeAddress(addr); 
                 payload.exactLatLng = {lat:latLng.lat(), lng:latLng.lng()}; 
             }catch(e){ console.warn(e); }
         }
@@ -807,87 +784,161 @@ $("btnJobSave").onclick = async () => {
     const fuzzyAddr = `${payload.city||''}, ${payload.zip||''}`;
     if(fuzzyAddr.trim().length > 3){
         try{ 
-            const fLatLng = await geocodeAddress(fuzzyAddr); 
+            const fLatLng = await window.geocodeAddress(fuzzyAddr); 
             payload.fuzzyLatLng = {lat:fLatLng.lat(), lng:fLatLng.lng()}; 
         }catch(e){ console.warn(e); }
     }
 
-    const ref = isEdit ? firebase.database().ref(`jobs/${modalLeadId}`) : firebase.database().ref('jobs').push();
-    if(!isEdit) payload.postedBy = UID;
+    const ref = isEdit ? firebase.database().ref(`jobs/${window.modalLeadId}`) : firebase.database().ref('jobs').push();
+    if(!isEdit) payload.postedBy = window.UID;
     
     try{ 
         await ref.update(payload); 
-        closeJobModal(); 
+        window.closeJobModal(); 
     }catch(e){ alert("Failed to save."); }
     
     $('btnJobSave').disabled = false;
     $('btnJobSave').textContent = "Save Job";
 };
 
-$("btnGodDeleteJob").onclick = async () => {
-    if(!isGod || !modalLeadId) return;
+window.deleteJob = async function() {
+    if(!window.isGod || !window.modalLeadId) return;
     if(!confirm("Delete this job permanently?")) return;
-    try{ await firebase.database().ref(`jobs/${modalLeadId}`).remove(); closeJobModal(); hideDetails(); }catch(e){}
+    try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
-async function subscribeSelfDir(){ 
-    if(!UID) return; 
-    firebase.database().ref(`userDirectory/${UID}`).on('value', snap=>{ 
+window.claimJob = async function(id) {
+    if(!confirm("Claim this job? Exact address will be revealed.")) return; 
+    try{ 
+        await firebase.database().ref(`jobs/${id}/claimedBy/${window.UID}`).set({uid:window.UID, email:window.ME.email, ts:firebase.database.ServerValue.TIMESTAMP}); 
+        await firebase.database().ref(`jobs/${id}/executionStatus`).set("Not Left"); 
+    }catch(err){
+        alert("Claim failed."); 
+    }
+};
+
+window.sendJobMsg = async function(id, type) {
+    const input = $('techChatInput');
+    const text = (input.value||"").trim(); 
+    if(!text) return; 
+    try{ 
+        await firebase.database().ref(`jobs/${id}/messages`).push({ text, type, uid:window.UID, byName:window.ME.email, ts: Date.now() }); 
+        input.value = ""; 
+        window.loadJobCommFeed(id); 
+    }catch(err){} 
+};
+
+window.updateExecutionStatus = async function(id, stepId) {
+    try { await firebase.database().ref(`jobs/${id}/executionStatus`).set(stepId); } catch(err){}
+};
+
+window.subscribeSelfDir = async function(){ 
+    if(!window.UID) return; 
+    firebase.database().ref(`userDirectory/${window.UID}`).on('value', snap=>{ 
         const d = snap.val() || {}; 
         $('leadsZips').value = d.serviceZips || ""; 
         $('tradesStatus').textContent= `Trades: ${d.trades||'—'}`; 
         
-        activeLeadGen = !!d.activeLeadGen;
-        activeLocation = !!d.liveDispatch;
+        window.activeLeadGen = !!d.activeLeadGen;
+        window.activeLocation = !!d.liveDispatch;
         
-        $('leadsToggle').classList.toggle('on', activeLeadGen);
-        $('leadsToggleReadout').textContent = activeLeadGen ? "ON" : "OFF";
+        $('leadsToggle').classList.toggle('on', window.activeLeadGen);
+        $('leadsToggleReadout').textContent = window.activeLeadGen ? "ON" : "OFF";
         
-        $('locationToggle').classList.toggle('on', activeLocation);
-        $('locationToggleReadout').textContent = activeLocation ? "ON" : "OFF";
+        $('locationToggle').classList.toggle('on', window.activeLocation);
+        $('locationToggleReadout').textContent = window.activeLocation ? "ON" : "OFF";
         
-        if(activeLocation) startUberMode(); else stopUberMode();
+        if(window.activeLocation) window.startUberMode(); else window.stopUberMode();
     }); 
-}
+};
 
-$("btnSettingsModal").onclick=()=>$('configModal').classList.add('show'); 
-$("btnConfigModalClose").onclick=()=>$('configModal').classList.remove('show');
+window.openConfigModal = function() { $('configModal').classList.add('show'); };
+window.closeConfigModal = function() { $('configModal').classList.remove('show'); };
+window.openTeamModal = function() { $('teamModal').classList.add('show'); };
+window.closeTeamModal = function() { $('teamModal').classList.remove('show'); };
 
-function setSwitch(el, readout, on, key){ 
+window.openSupportModal = function(priority) { 
+    $('supportPriority').value = priority;
+    $('supportModal').classList.add('show'); 
+};
+window.closeSupportModal = function() { $('supportModal').classList.remove('show'); };
+
+window.sendSupport = async function() {
+    const msg = $('supportMsg').value.trim();
+    if(!msg) return;
+    try {
+        await firebase.database().ref(`supportRequests/${window.UID}`).push({
+            uid: window.UID,
+            priority: $('supportPriority').value,
+            category: $('supportCategory').value || 'General',
+            message: msg,
+            portal: 'contractor',
+            ts: Date.now()
+        });
+        $('supportMsg').value = "";
+        window.closeSupportModal();
+        alert("Support request sent.");
+    } catch(e) {}
+};
+
+window.setSwitch = function(el, readout, on, key){ 
     el.classList.toggle('on',on); 
     readout.textContent = on?"ON":"OFF"; 
-    if(UID) firebase.database().ref(`userDirectory/${UID}/${key}`).set(on);
-}
+    if(window.UID) firebase.database().ref(`userDirectory/${window.UID}/${key}`).set(on);
+};
 
-function startUberMode(){
+window.startUberMode = function(){
     if(!navigator.geolocation){alert("GPS not supported by your browser."); return;}
-    if(watchId) return;
-    watchId = navigator.geolocation.watchPosition(
-        pos => { firebase.database().ref(`contractorLocations/${UID}`).update({lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now()}); },
+    if(window.watchId) return;
+    window.watchId = navigator.geolocation.watchPosition(
+        pos => { firebase.database().ref(`contractorLocations/${window.UID}`).update({lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now()}); },
         err => { console.warn("GPS Error", err); }
     );
-}
-function stopUberMode(){ if(watchId) navigator.geolocation.clearWatch(watchId); watchId=null; }
+};
 
-$('leadsToggle').onclick=()=>{ activeLeadGen=!activeLeadGen; setSwitch($('leadsToggle'), $('leadsToggleReadout'), activeLeadGen, 'activeLeadGen'); renderJobsList(); }
-$('locationToggle').onclick=()=>{ activeLocation=!activeLocation; setSwitch($('locationToggle'), $('locationToggleReadout'), activeLocation, 'liveDispatch'); if(activeLocation) startUberMode(); else stopUberMode(); }
-$('leadsZips').onblur=async()=>{ const zip = $('leadsZips').value; try{ await firebase.database().ref(`userDirectory/${UID}/serviceZips`).set(zip); }catch(e){} }
+window.stopUberMode = function(){ if(window.watchId) navigator.geolocation.clearWatch(window.watchId); window.watchId=null; };
 
-$('tabActive').onclick = () => { currentTab='active'; $('tabActive').classList.add('active'); $('tabUpcoming').classList.remove('active'); subscribeJobs(); };
-$('tabUpcoming').onclick = () => { currentTab='upcoming'; $('tabUpcoming').classList.add('active'); $('tabActive').classList.remove('active'); subscribeJobs(); };
+window.toggleLeads = function(){ window.activeLeadGen=!window.activeLeadGen; window.setSwitch($('leadsToggle'), $('leadsToggleReadout'), window.activeLeadGen, 'activeLeadGen'); window.renderJobsList(); };
+window.toggleLocation = function(){ window.activeLocation=!window.activeLocation; window.setSwitch($('locationToggle'), $('locationToggleReadout'), window.activeLocation, 'liveDispatch'); if(window.activeLocation) window.startUberMode(); else window.stopUberMode(); };
+window.saveZips = async function(){ const zip = $('leadsZips').value; try{ await firebase.database().ref(`userDirectory/${window.UID}/serviceZips`).set(zip); }catch(e){} };
+
+window.setTab = function(tab){ 
+    window.currentTab=tab; 
+    $('tabActive').classList.toggle('active', tab==='active'); 
+    $('tabUpcoming').classList.toggle('active', tab==='upcoming'); 
+    window.subscribeJobs(); 
+};
+
+// 4. Resolve Role Fix using Directory Cache
+window.resolveRole = async function(u){ 
+    if(String(u.email||"").toLowerCase() === 'dealbankers@gmail.com') return "god"; 
+    try{ 
+        const [a,b] = await Promise.all([
+            firebase.database().ref(`roles/${u.uid}`).once('value'), 
+            firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
+        ]); 
+        return a.val() || b.val() || "user"; 
+    }catch(e){return "user";}
+};
+
+window.hydrateRoleFlags = function(role){ 
+    window.USER_ROLE=role; 
+    window.isGod=(role==="god" || role==="admin"); 
+    $('roleIndicator').textContent=window.isGod?"LEADERSHIP VIEW":"ASSOCIATE VIEW"; 
+    $('godCommsHint').style.display=window.isGod?"flex":"none"; 
+};
 
 const ME_AUTH = firebase.auth();
 ME_AUTH.onAuthStateChanged(async u => {
   if(!u) return location.href="index.html";
-  UID=u.uid;
+  window.UID=u.uid;
   window.ME = u;
-  const role = await resolveRole(u);
-  hydrateRoleFlags(role);
-  subscribeJobs();
-  subscribeSelfDir();
+  const role = await window.resolveRole(u);
+  window.hydrateRoleFlags(role);
+  window.subscribeJobs();
+  window.subscribeSelfDir();
 });
 
-$("logoutBtn").onclick=()=>firebase.auth().signOut();
 </script>
 </body>
 </html>
