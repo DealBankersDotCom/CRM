@@ -105,6 +105,7 @@ body{
 .hr{height:1px;background:rgba(255,255,255,.1);margin:8px 0}
 
 .claim-bar{background:linear-gradient(135deg,#0d1823,#102131);padding:20px;border-radius:16px;border:1px solid rgba(43,116,255,.4);box-shadow:0 10px 30px rgba(0,0,0,.3);display:flex;flex-direction:column;gap:12px;}
+.claim-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
 .claim-bar h4{margin:0;color:#fff;font-weight:900;font-size:18px;}
 .claim-bar p{margin:0;font-size:13px;color:var(--muted)}
 
@@ -204,7 +205,7 @@ body{
                 </div>
             </div>
             <div class="tool-bar">
-                <div style="flex:1"><input id="jobSearch" class="input-mini" placeholder="Search Title, Trade, ZIP..." /></div>
+                <div style="flex:1"><input id="jobSearch" class="input-mini" placeholder="Search Title, Trade, ZIP..." oninput="window.subscribeJobs()" /></div>
                 <button class="chip tiny primary" type="button" onclick="window.openJobModal('new')">+ Post</button>
             </div>
             <div class="list-panel" id="leadList">Loading leads...</div>
@@ -214,7 +215,7 @@ body{
             <div class="detail-header">
                 <button id="backToList">← Back to List</button>
                 <div style="display:flex;gap:6px;align-items:center;">
-                    <button class="chip tiny" id="btnGodModeEdit" style="display:none;">✎ Edit</button>
+                    <button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ God Edit</button>
                     <span class="pill good" id="jobDetailStatus">—</span>
                 </div>
             </div>
@@ -350,9 +351,21 @@ body{
         </div>
         <div class="job-body" style="padding:0">
             <label class="small">Priority</label>
-            <input id="supportPriority" class="input-mini" readonly style="opacity:0.6"/>
+            <input id="supportPriority" class="input-mini" readonly style="margin-bottom:10px;"/>
+            
+            <label class="small">Category</label>
+            <select id="supportCategory" class="input-mini" style="margin-bottom:10px; width:100%;">
+                <option>Service order issue</option>
+                <option>Need pricing help</option>
+                <option>Need materials approval</option>
+                <option>Emergency / water</option>
+                <option>Website / system bug</option>
+                <option>Enterprise contract support</option>
+                <option>Other</option>
+            </select>
+
             <label class="small">Message</label>
-            <textarea id="supportMsg" rows="4" placeholder="Request details..."></textarea>
+            <textarea id="supportMsg" rows="4" placeholder="What do you need? If it's about a job, include the address or Contract ID." style="width:100%; border-radius:10px; padding:10px; background:#0d1f2d; color:#fff; border:1px solid #254a63;"></textarea>
         </div>
         <div class="modalActions">
             <button class="chip primary" onclick="window.sendSupport()">Send Request</button>
@@ -598,20 +611,22 @@ window.renderJobDetail = function(id){
     
     $('jobDetailStatus').textContent = window.esc(j.status); 
     
-    // Pan Map
+    // 4. Map Panning (Adjusted Zoom for exact vs fuzzy)
     if(window.map) {
         const isClaimed = j.claimedBy && j.claimedBy[window.UID]; 
-        let position = (window.isGod || isClaimed) ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
+        const isExact = window.isGod || isClaimed;
+        let position = isExact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
         
+        const applyPanAndZoom = (pos, exact) => {
+            window.map.panTo(pos);
+            window.map.setZoom(exact ? 17 : 12); // 12 for fuzzy zip area, 17 for exact street
+        };
+
         if(position) {
-            window.map.panTo(position);
-            window.map.setZoom(16);
+            applyPanAndZoom(position, isExact);
         } else {
             window.ensureLatLng(j).then(pos => {
-                if(pos) {
-                    window.map.panTo(pos);
-                    window.map.setZoom(16);
-                }
+                if(pos) applyPanAndZoom(pos, isExact);
             });
         }
     }
@@ -643,7 +658,7 @@ window.renderJobDetail = function(id){
         
         comHtml = `
         <div class="comms-panel-god">
-            <div class="god-header-row"><h4>🔒 Vendor Notes</h4></div>
+            <div class="god-header-row"><h4>🔒 God Uber Control</h4></div>
             <div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div>
             <div class="hr"></div>
             <h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4>
@@ -667,7 +682,7 @@ window.renderJobDetail = function(id){
                 <p>Exact address will be revealed immediately upon claim.</p>
             </div>`; 
         } else { 
-            claimHtml = `<div class="kv" style="border-color:var(--bad);background:rgba(239,68,68,0.1);"><b style="color:var(--bad);">CLAIM LOCKED:</b> Turn on Dispatch Mode & Location sharing in settings by tapping the great icon above to claim jobs.</div>`; 
+            claimHtml = `<div class="kv" style="border-color:var(--bad);background:rgba(239,68,68,0.1);"><b style="color:var(--bad);">CLAIM LOCKED:</b> Turn on Lead Gen & Uber Dispatch in Settings to claim jobs.</div>`; 
         } 
     } else if(isClaimed){ 
         const stepIdx = TRACKER_STATES.findIndex(s=>s.id === j.executionStatus); 
@@ -872,7 +887,8 @@ document.addEventListener('click', async (e) => {
     }
 });
 
-// Modals
+$('jobSearch').addEventListener('input', () => { window.subscribeJobs(); });
+
 window.openJobModal = function(mode, id=null){ 
     $('jobModal').classList.add('show'); 
     $('btnGodDeleteJob').style.display="none"; 
@@ -1012,8 +1028,11 @@ window.subscribeSelfDir = async function(){
 window.openConfigModal = function() { $('configModal').classList.add('show'); };
 window.closeConfigModal = function() { $('configModal').classList.remove('show'); };
 
+// SUPPORT MODAL FIX
 window.openSupportModal = function(priority) { 
-    $('supportPriority').value = priority;
+    $('supportPriority').value = priority.toUpperCase();
+    $('supportPriority').style.color = priority === 'red' ? '#ff4444' : '#2b74ff';
+    $('supportPriority').style.fontWeight = '900';
     $('supportModal').classList.add('show'); 
 };
 window.closeSupportModal = function() { $('supportModal').classList.remove('show'); };
@@ -1024,11 +1043,14 @@ window.sendSupport = async function() {
     try {
         await firebase.database().ref(`supportRequests/${window.UID}`).push({
             uid: window.UID,
-            priority: $('supportPriority').value,
-            category: 'General',
+            email: window.ME?.email || "",
+            name: window.ME?.email || "Contractor",
+            priority: $('supportPriority').value.toLowerCase(),
+            category: $('supportCategory').value || 'General',
             message: msg,
             portal: 'contractor',
-            ts: Date.now()
+            ts: Date.now(),
+            status: "open"
         });
         $('supportMsg').value = "";
         window.closeSupportModal();
