@@ -173,8 +173,9 @@ body{
 <body data-portal="contractor">
 
 <header class="header">
-  <div class="brand">
-    <div>DEALBANKERS • Contractor Hub</div>
+  <div class="leftTitle">
+    <div>DEALBANKERS • Contractor Command</div>
+    <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
   </div>
   <nav class="nav">
     <a class="chip ghost" href="profile.html">Dashboard</a>
@@ -182,7 +183,7 @@ body{
     <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
     <button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
     <button class="icon-btn" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
-    <a class="chip danger" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
+    <a class="chip danger" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
@@ -191,7 +192,6 @@ body{
     <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
     <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
     <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
-    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">God Mode Active</span></div>
 </div>
 
 <div class="wrap">
@@ -397,7 +397,7 @@ window.esc = function(s) {
 
 const $ = (id) => document.getElementById(id); 
 
-// 2. Map Key Injection
+// 2. Map Key Injection & Interactive Map
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
     const mapScript = document.createElement('script');
@@ -464,7 +464,7 @@ const TRACKER_STATES = [
     {id:'Completed',icon:'✅'} 
 ];
 
-window.fuzzyCityDisplay = function(j){ return `Fuzzy Area: (${window.esc(j.city||j.zip || 'Unknown')}) • Exact address revealed upon approval`; };
+window.fuzzyCityDisplay = function(j){ return `Area: (${window.esc(j.city||j.zip || 'Unknown')}) • Exact address revealed upon approval`; };
 
 window.canSeeExact = function(j) {
     if(!j) return false;
@@ -531,15 +531,15 @@ window.initMap = function(){
         center: {lat, lng}, 
         zoom: 11, 
         styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}],
-        disableDefaultUI: true,
-        zoomControl: false,
+        disableDefaultUI: true, 
+        zoomControl: true, 
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        gestureHandling: 'none',
-        clickableIcons: false
+        gestureHandling: 'auto', 
+        clickableIcons: false 
     }); 
     google.maps.event.trigger(window.map, "resize"); 
 };
@@ -564,8 +564,10 @@ window.renderMarkers = function(){
             map: window.map, 
             title: window.esc(j.trade), 
             animation: google.maps.Animation.DROP,
-            clickable: false
+            clickable: true 
         }); 
+        
+        marker.addListener('click', ()=>window.renderJobDetail(j.id));
         
         window.markers.push(marker); 
         bounds.extend(position); 
@@ -584,9 +586,27 @@ window.renderMarkers = function(){
 window.renderJobsList = function(){ 
     const el = $('leadList'); 
     if(!el) return;
+    
+    // Request Badge Counting Logic for God Mode / Branch Managers
+    let pendingRequestCount = 0;
+    if(window.isGod || window.isBranchManager) {
+        window.jobsView.forEach(j => {
+            if(j.postedBy === window.UID || window.isGod) {
+                if(j.requests && Object.keys(j.requests).length > 0 && !j.assignedSubUid && !j.assignedSubEmail) {
+                    pendingRequestCount++;
+                }
+            }
+        });
+    }
+    
+    if(pendingRequestCount > 0) {
+        $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill warn" style="margin-left:4px;">${pendingRequestCount} Pending Approvals</span>`;
+    } else {
+        $('jobCount').textContent=`${window.jobsView.length} jobs`; 
+    }
+
     if(window.jobsView.length === 0) {
         el.innerHTML = `<div class="empty-state">No jobs found.</div>`;
-        $('jobCount').textContent=`0 jobs`; 
         return;
     }
 
@@ -598,7 +618,13 @@ window.renderJobsList = function(){
         const showTrackerBadge = (window.isGod || j.postedBy === window.UID || amIAssigned) && isAssigned;
         
         const tracker = showTrackerBadge ? `<span class="pill blue">${window.esc(j.executionStatus||'Not Left')}</span>` : ''; 
-        const badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
+        
+        let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
+        
+        // Indicate to poster that requests are waiting
+        if (!isAssigned && (j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0) {
+            badgeText = '<span class="pill warn">Pending Requests</span>';
+        }
         
         html += `
         <div class="lead-item ${isSelected}" data-jobid="${window.esc(j.id)}">
@@ -611,7 +637,6 @@ window.renderJobsList = function(){
         </div>`; 
     }); 
     el.innerHTML = html;
-    $('jobCount').textContent=`${window.jobsView.length} jobs`; 
 };
 
 window.renderJobDetail = function(id){ 
@@ -635,7 +660,7 @@ window.renderJobDetail = function(id){
     // Pan Map
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        let zoomLvl = exact ? 17 : 12; // Zoom 12 for fuzzy, 17 for exact street view
+        let zoomLvl = exact ? 17 : 13; // Zoom 13 for fuzzy, 17 for exact street view
         
         const applyPanAndZoom = (pos, exactZoom) => {
             window.map.panTo(pos);
