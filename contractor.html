@@ -217,10 +217,11 @@ body{
 </header>
 
 <div class="posture-bar">
+    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">ASSOCIATE VIEW</span></div>
     <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
     <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
     <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
-    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Leadership Active</span></div>
+    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">God Mode Active</span></div>
 </div>
 
 <div class="wrap">
@@ -445,7 +446,7 @@ window.esc = function(s) {
 
 const $ = (id) => document.getElementById(id); 
 
-// 2. Map Key Injection
+// 2. Map Key Injection & Interactive Map Fix
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
     const mapScript = document.createElement('script');
@@ -513,7 +514,7 @@ const TRACKER_STATES = [
     {id:'Completed',icon:'✅'} 
 ];
 
-window.fuzzyCityDisplay = function(j){ return `Location restricted • Exact address revealed upon approval`; };
+window.fuzzyCityDisplay = function(j){ return `Area: ${window.esc(j.city||j.zip || 'Unknown')} • Exact address revealed upon approval`; };
 
 window.canSeeExact = function(j) {
     if(!j) return false;
@@ -574,20 +575,20 @@ window.ensureLatLng = async function(j) {
 
 window.initMap = function(){ 
     if(!window.google || !window.google.maps) return; 
-    const lat = window.userLocation?.lat || 29.4241; 
-    const lng = window.userLocation?.lng || -98.4936; 
+    const lat = window.userLocation?.lat || 39.8283; 
+    const lng = window.userLocation?.lng || -98.5795; 
     window.map = new google.maps.Map($('mapView'), { 
         center: {lat, lng}, 
-        zoom: 11, 
+        zoom: 4, 
         styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}],
         disableDefaultUI: true, 
-        zoomControl: false, 
+        zoomControl: true, 
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        gestureHandling: 'none', 
+        gestureHandling: 'auto', 
         clickableIcons: false 
     }); 
     google.maps.event.trigger(window.map, "resize"); 
@@ -834,7 +835,7 @@ window.renderJobDetail = function(id){
             const reqs = j.requests || {};
             const reqKeys = Object.keys(reqs);
             if (reqKeys.length > 0) {
-                actionHTML += `<div class="claim-bar"><h4>Pending Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
+                actionHTML += `<div class="claim-bar"><h4>Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
                 reqKeys.forEach(ruid => {
                     const r = reqs[ruid];
                     actionHTML += `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1); margin-bottom:8px;">
@@ -1546,19 +1547,23 @@ window.hydrateRoleFlags = function(role){
     window.isBranchManager = (role === "god" || role === "admin"); 
     
     const roleEl = $('roleReadout');
-    if(roleEl) {
-        if (window.isGod) roleEl.textContent = "ROLE: LEADERSHIP";
-        else if (window.isBranchManager) roleEl.textContent = "ROLE: BRANCH MANAGER";
-        else roleEl.textContent = "ROLE: ASSOCIATE";
-    }
+    const roleInd = $('roleIndicator');
     
-    const btnTeam = $('btnTeam');
-    if (btnTeam) {
-        if (window.isGod || window.isBranchManager) {
-            btnTeam.style.display = "inline-flex";
-        } else {
-            btnTeam.style.display = "none";
-        }
+    if (window.isGod) {
+        if(roleEl) roleEl.textContent = "ROLE: GOD MODE";
+        if(roleInd) roleInd.textContent = "GOD MODE";
+        $('godCommsHint').style.display = "flex";
+        $('btnTeam').style.display = "inline-flex";
+    } else if (window.isBranchManager) {
+        if(roleEl) roleEl.textContent = "ROLE: LEADERSHIP";
+        if(roleInd) roleInd.textContent = "LEADERSHIP VIEW";
+        $('godCommsHint').style.display = "none";
+        $('btnTeam').style.display = "inline-flex";
+    } else {
+        if(roleEl) roleEl.textContent = "ROLE: ASSOCIATE";
+        if(roleInd) roleInd.textContent = "ASSOCIATE VIEW";
+        $('godCommsHint').style.display = "none";
+        $('btnTeam').style.display = "none";
     }
 };
 
