@@ -212,7 +212,7 @@ body{
     <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
     <button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
     <button class="icon-btn" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
-    <a class="chip ghost" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
+    <a class="chip" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
@@ -445,7 +445,7 @@ window.esc = function(s) {
 
 const $ = (id) => document.getElementById(id); 
 
-// 2. Map Key Injection
+// 2. Map Key Injection & Locked Map Logic
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
     const mapScript = document.createElement('script');
@@ -580,15 +580,15 @@ window.initMap = function(){
         center: {lat, lng}, 
         zoom: 11, 
         styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}],
-        disableDefaultUI: true, 
-        zoomControl: false, 
+        disableDefaultUI: true,
+        zoomControl: false,
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        gestureHandling: 'none', 
-        clickableIcons: false 
+        gestureHandling: 'none',
+        clickableIcons: false
     }); 
     google.maps.event.trigger(window.map, "resize"); 
 };
@@ -613,10 +613,8 @@ window.renderMarkers = function(){
             map: window.map, 
             title: window.esc(j.trade), 
             animation: google.maps.Animation.DROP,
-            clickable: true 
+            clickable: false
         }); 
-        
-        marker.addListener('click', ()=>window.renderJobDetail(j.id));
         
         window.markers.push(marker); 
         bounds.extend(position); 
@@ -669,9 +667,9 @@ window.renderJobsList = function(){
         
         let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
         
-        let reqBadge = "";
+        // Indicate to poster that requests are waiting
         if (!isAssigned && (j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0) {
-            reqBadge = `<span class="pill hot" style="animation: pulse 2s infinite;">🚨 ${Object.keys(j.requests).length} Request(s)</span>`;
+            badgeText = '<span class="pill hot" style="animation: pulse 2s infinite;">🚨 Pending Requests</span>';
         }
         
         html += `
@@ -680,7 +678,6 @@ window.renderJobsList = function(){
             <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> 
             <div class="badges">
                 ${badgeText}
-                ${reqBadge}
                 ${tracker}
             </div>
         </div>`; 
@@ -695,6 +692,7 @@ window.renderJobDetail = function(id){
     window.currentJobId = id; 
     window.renderJobsList(); 
     
+    // Switch Side Panel view
     $('listContainer').style.display="none"; 
     $('detailContainer').style.display="flex"; 
     
@@ -705,9 +703,10 @@ window.renderJobDetail = function(id){
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
     const isGatekeeper = window.isGod || j.postedBy === window.UID;
 
+    // Pan Map
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        let zoomLvl = exact ? 17 : 12; 
+        let zoomLvl = exact ? 17 : 13; // Zoom 13 for fuzzy, 17 for exact street view
         
         const applyPanAndZoom = (pos, exactZoom) => {
             window.map.panTo(pos);
@@ -742,6 +741,12 @@ window.renderJobDetail = function(id){
             </div>`; 
         }); 
         
+        let techHtml = ""; 
+        if(j.claimedBy){ 
+            const techUid = Object.keys(j.claimedBy)[0]; 
+            techHtml = `<div class="kv" style="border:none;padding:0;"><b>Assigned Tech UID:</b> ${window.esc(techUid)}</div>`;
+        } 
+        
         comHtml = `
         <div class="comms-panel-god">
             <div class="god-header-row"><h4>🔒 Leadership Only Fields</h4></div>
@@ -749,11 +754,13 @@ window.renderJobDetail = function(id){
             <div class="hr"></div>
             <h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4>
             <div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div>
+            ${techHtml ? `<div class="hr"></div>${techHtml}` : ''}
         </div>`; 
     } 
     
     let actionHTML = ""; 
 
+    // Gatekeeper Direct Assignment Bypass
     if (window.isBranchManager || window.isGod) {
         let assignOptions = `<option value="">-- Select Associate --</option>`;
         const uidsToMap = window.isGod ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
@@ -962,6 +969,15 @@ document.addEventListener('click', async (e) => {
                 email: window.ME.email, 
                 ts: firebase.database.ServerValue.TIMESTAMP
             }); 
+            
+            // Notification Email
+            await firebase.database().ref('mail').push({
+                to: 'dealbankers@gmail.com',
+                message: {
+                    subject: `New Job Request from ${window.ME.email}`,
+                    text: `Contractor ${window.ME.email} has requested Job ID: ${window.currentJobId}.\n\nLog into Command to approve.`
+                }
+            });
         }catch(err){
             alert("Request failed."); 
             reqBtn.disabled = false;
@@ -1155,14 +1171,12 @@ window.deleteJob = async function() {
     try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
-// Settings & Toggles
 window.setSwitch = async function(el, readout, on, key){ 
     el.classList.toggle('on',on); 
     readout.textContent = on ? "ON" : "OFF"; 
     if(window.UID) {
         try {
             await firebase.database().ref(`users/${window.UID}/contractorSettings/${key}`).set(on);
-            // Optional sync back to userDirectory if allowable by rules
             firebase.database().ref(`userDirectory/${window.UID}/${key}`).set(on).catch(e=>{});
         } catch(e) {
             console.warn("Toggle save rejected by Rules", e);
@@ -1486,15 +1500,20 @@ window.hydrateRoleFlags = function(role){
     window.isGod = (role === "god"); 
     window.isBranchManager = (role === "god" || role === "admin"); 
     
-    if (window.isGod) {
-        $('roleIndicator').textContent = "LEADERSHIP VIEW";
-        $('btnTeam').style.display = "inline-flex";
-    } else if (window.isBranchManager) {
-        $('roleIndicator').textContent = "BRANCH MANAGER VIEW";
-        $('btnTeam').style.display = "inline-flex";
-    } else {
-        $('roleIndicator').textContent = "ASSOCIATE VIEW";
-        $('btnTeam').style.display = "none";
+    const roleEl = $('roleReadout');
+    if(roleEl) {
+        if (window.isGod) roleEl.textContent = "ROLE: LEADERSHIP";
+        else if (window.isBranchManager) roleEl.textContent = "ROLE: BRANCH MANAGER";
+        else roleEl.textContent = "ROLE: ASSOCIATE";
+    }
+    
+    const btnTeam = $('btnTeam');
+    if (btnTeam) {
+        if (window.isGod || window.isBranchManager) {
+            btnTeam.style.display = "inline-flex";
+        } else {
+            btnTeam.style.display = "none";
+        }
     }
 };
 
