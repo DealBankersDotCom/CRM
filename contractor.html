@@ -68,7 +68,7 @@ body{
 .content-panel{flex:1;position:relative;height:100%;overflow:hidden;}
 
 #listContainer{display:flex;flex-direction:column;height:100%;}
-#detailContainer{display:none;flex-direction:column;height:100%;background:var(--bg1);overflow-y:auto;}
+#detailContainer{display:none;flex-direction:column;height:100%;background:var(--bg1);overflow-y:auto;scroll-behavior:smooth;}
 
 .panel-head{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.03);display:flex;align-items:center;justify-content:space-between;}
 .panel-title{font-weight:900;letter-spacing:.04em;color:#cfe3ff;display:flex;align-items:center;gap:8px;text-transform:uppercase;font-size:13px;}
@@ -212,7 +212,7 @@ body{
     <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
     <button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
     <button class="icon-btn" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
-    <a class="chip" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
+    <a class="chip ghost" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
@@ -445,7 +445,7 @@ window.esc = function(s) {
 
 const $ = (id) => document.getElementById(id); 
 
-// 2. Map Key Injection & Locked Map Logic
+// 2. Map Key Injection
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
     const mapScript = document.createElement('script');
@@ -513,7 +513,7 @@ const TRACKER_STATES = [
     {id:'Completed',icon:'✅'} 
 ];
 
-window.fuzzyCityDisplay = function(j){ return `Area: ${window.esc(j.city||j.zip || 'Unknown')} • Exact address revealed upon approval`; };
+window.fuzzyCityDisplay = function(j){ return `Location restricted • Exact address revealed upon approval`; };
 
 window.canSeeExact = function(j) {
     if(!j) return false;
@@ -580,15 +580,15 @@ window.initMap = function(){
         center: {lat, lng}, 
         zoom: 11, 
         styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}],
-        disableDefaultUI: true,
-        zoomControl: false,
+        disableDefaultUI: true, 
+        zoomControl: false, 
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        gestureHandling: 'none',
-        clickableIcons: false
+        gestureHandling: 'none', 
+        clickableIcons: false 
     }); 
     google.maps.event.trigger(window.map, "resize"); 
 };
@@ -613,8 +613,12 @@ window.renderMarkers = function(){
             map: window.map, 
             title: window.esc(j.trade), 
             animation: google.maps.Animation.DROP,
-            clickable: false
+            clickable: true 
         }); 
+        
+        google.maps.event.addListener(marker, 'click', () => {
+            window.renderJobDetail(j.id);
+        });
         
         window.markers.push(marker); 
         bounds.extend(position); 
@@ -646,7 +650,7 @@ window.renderJobsList = function(){
     }
     
     if(pendingRequestCount > 0) {
-        $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill hot" style="margin-left:4px; animation: pulse 2s infinite;">🚨 ${pendingRequestCount} Pending Request(s)</span>`;
+        $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill hot" style="margin-left:4px; animation: pulse 2s infinite;">🚨 ${pendingRequestCount} Request(s)</span>`;
     } else {
         $('jobCount').textContent=`${window.jobsView.length} jobs`; 
     }
@@ -668,8 +672,9 @@ window.renderJobsList = function(){
         let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
         
         // Indicate to poster that requests are waiting
+        let reqBadge = "";
         if (!isAssigned && (j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0) {
-            badgeText = '<span class="pill hot" style="animation: pulse 2s infinite;">🚨 Pending Requests</span>';
+            badgeText = '<span class="pill hot" style="animation: pulse 2s infinite;">🚨 Request(s)</span>';
         }
         
         html += `
@@ -678,6 +683,7 @@ window.renderJobsList = function(){
             <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> 
             <div class="badges">
                 ${badgeText}
+                ${reqBadge}
                 ${tracker}
             </div>
         </div>`; 
@@ -692,9 +698,10 @@ window.renderJobDetail = function(id){
     window.currentJobId = id; 
     window.renderJobsList(); 
     
-    // Switch Side Panel view
+    // Switch Side Panel view and ensure it scrolls to the top
     $('listContainer').style.display="none"; 
     $('detailContainer').style.display="flex"; 
+    $('detailContainer').scrollTop = 0; 
     
     $('jobDetailStatus').textContent = window.esc(j.status); 
     
@@ -706,7 +713,7 @@ window.renderJobDetail = function(id){
     // Pan Map
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        let zoomLvl = exact ? 17 : 13; // Zoom 13 for fuzzy, 17 for exact street view
+        let zoomLvl = exact ? 17 : 12; // Zoom 12 for fuzzy, 17 for exact street view
         
         const applyPanAndZoom = (pos, exactZoom) => {
             window.map.panTo(pos);
@@ -830,9 +837,12 @@ window.renderJobDetail = function(id){
                 actionHTML += `<div class="claim-bar"><h4>Pending Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
                 reqKeys.forEach(ruid => {
                     const r = reqs[ruid];
-                    actionHTML += `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);">
+                    actionHTML += `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1); margin-bottom:8px;">
                         <span style="color:#fff;font-size:14px;font-weight:600;">${window.esc(r.email)}</span>
-                        <button class="chip good btnApproveRequest" style="border:none;" data-uid="${window.esc(ruid)}" data-email="${window.esc(r.email)}">Approve</button>
+                        <div style="display:flex; gap:6px;">
+                            <button class="chip good btnApproveRequest" style="border:none; padding:6px 12px;" data-uid="${window.esc(ruid)}" data-email="${window.esc(r.email)}">Approve</button>
+                            <button class="chip danger btnDenyRequest" style="border:none; padding:6px 12px;" data-uid="${window.esc(ruid)}" data-email="${window.esc(r.email)}">Deny</button>
+                        </div>
                     </div>`;
                 });
                 actionHTML += `</div></div>`;
@@ -842,7 +852,7 @@ window.renderJobDetail = function(id){
         } else {
             if(window.activeLocation && window.activeLeadGen){ 
                 if (j.requests && j.requests[window.UID]) {
-                    actionHTML += `<div class="claim-bar" style="border-color:var(--warn);background:linear-gradient(135deg,#1f1406,#2b1d0a);"><h4 style="color:var(--warn);">✋ Request Pending</h4><p>Waiting for the job poster to approve your request.</p></div>`;
+                    actionHTML += `<div class="claim-bar" style="border-color:var(--warn);background:linear-gradient(135deg,#1f1406,#2b1d0a);"><h4 style="color:var(--warn);">✋ Request Submitted</h4><p>Waiting for the job poster to approve your request.</p></div>`;
                 } else {
                     actionHTML += `
                     <div class="claim-bar">
@@ -985,7 +995,7 @@ document.addEventListener('click', async (e) => {
         }
     }
 
-    // 4. Approve Request (Gatekeeper)
+    // 4a. Approve Request (Gatekeeper)
     const approveBtn = e.target.closest('.btnApproveRequest');
     if(approveBtn && window.currentJobId) {
         const targetUid = approveBtn.getAttribute('data-uid');
@@ -1004,6 +1014,37 @@ document.addEventListener('click', async (e) => {
                 alert("Approval failed.");
                 approveBtn.disabled = false;
                 approveBtn.textContent = "Approve";
+            }
+        }
+    }
+
+    // 4b. Deny Request (Gatekeeper)
+    const denyBtn = e.target.closest('.btnDenyRequest');
+    if(denyBtn && window.currentJobId) {
+        const targetUid = denyBtn.getAttribute('data-uid');
+        const targetEmail = denyBtn.getAttribute('data-email');
+        const reason = prompt(`Deny request from ${targetEmail}?\n\nEnter reason (this will be sent to the user):`);
+        
+        if(reason !== null) {
+            denyBtn.disabled = true;
+            denyBtn.textContent = "Denying...";
+            try {
+                await firebase.database().ref(`jobs/${window.currentJobId}/requests/${targetUid}`).remove();
+                
+                const threadId = "support_" + targetUid; 
+                await firebase.database().ref(`direct_messages/${threadId}/messages`).push({
+                    text: `Your request for job "${window.jobsCache[window.currentJobId]?.title}" was denied.\n\nReason: ${reason}`,
+                    uid: window.UID,
+                    byName: "Leadership",
+                    ts: Date.now()
+                });
+
+                alert("Request denied and message sent to user.");
+                window.renderJobDetail(window.currentJobId);
+            } catch(err) {
+                alert("Deny action failed.");
+                denyBtn.disabled = false;
+                denyBtn.textContent = "Deny";
             }
         }
     }
@@ -1171,12 +1212,14 @@ window.deleteJob = async function() {
     try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
+// Settings & Toggles
 window.setSwitch = async function(el, readout, on, key){ 
     el.classList.toggle('on',on); 
     readout.textContent = on ? "ON" : "OFF"; 
     if(window.UID) {
         try {
             await firebase.database().ref(`users/${window.UID}/contractorSettings/${key}`).set(on);
+            // Optional sync back to userDirectory if allowable by rules
             firebase.database().ref(`userDirectory/${window.UID}/${key}`).set(on).catch(e=>{});
         } catch(e) {
             console.warn("Toggle save rejected by Rules", e);
@@ -1190,6 +1233,7 @@ window.setSwitch = async function(el, readout, on, key){
 
 window.subscribeSelfDir = async function(){ 
     if(!window.UID) return; 
+    // Listen to contractorSettings for toggles to ensure UI sticks
     firebase.database().ref(`users/${window.UID}/contractorSettings`).on('value', snap=>{ 
         const d = snap.val() || {}; 
         
@@ -1204,6 +1248,7 @@ window.subscribeSelfDir = async function(){
         
         if(window.activeLocation) window.startUberMode(); else window.stopUberMode();
     }); 
+    // Get trades from userDirectory
     firebase.database().ref(`userDirectory/${window.UID}`).on('value', snap=>{ 
         const d = snap.val() || {};
         $('leadsZips').value = d.serviceZips || ""; 
