@@ -60,6 +60,7 @@ body{
 .posture-item strong{color:#fff}
 .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .dot-good{background:var(--good);box-shadow:0 0 10px rgba(19,185,129,.55)}
+.dot-bad{background:var(--bad);box-shadow:0 0 10px rgba(239,68,68,.55)}
 
 /* SIDE-BY-SIDE MAP & LIST */
 .wrap{width:100%;height:calc(100vh - 90px);display:flex;position:relative;}
@@ -75,6 +76,7 @@ body{
 .pill.blue{border-color:rgba(43,116,255,.40);background:rgba(43,116,255,.10);color:#cfe6ff;}
 .pill.good{border-color:rgba(19,185,129,.40);background:rgba(19,185,129,.10);color:#c9ffe2;}
 .pill.warn{border-color:rgba(245,158,11,.40);background:rgba(245,158,11,.10);color:#ffe3b3;}
+.pill.hot{border-color:var(--hot);background:rgba(255,68,68,.15);color:#ffd0d0;}
 
 .seg{display:flex;border:1px solid rgba(255,255,255,.20);border-radius:999px;overflow:hidden;background:rgba(255,255,255,.04)}
 .seg button{padding:6px 14px;border:0;background:transparent;color:#cfe6ff;cursor:pointer;font-weight:700;font-size:12px;}
@@ -160,6 +162,33 @@ body{
 .switch-input::after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:1px;left:1px;transition:transform .15s ease}
 .switch-input.on::after{transform:translateX(20px)}
 
+/* GLOBAL CHAT BUBBLE & SIDEBAR */
+#chatBubble{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#133e6a;color:white;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 20px rgba(43,116,255,0.8);z-index:9999;transition:transform .2s, box-shadow 0.2s;font-size:30px;}
+#chatBubble:hover{transform:scale(1.08);box-shadow:0 0 30px rgba(43,116,255,1);}
+.sidebar-panel{position:fixed; top:0; right:-100%; width:min(340px, 100vw); height:100dvh; background:rgba(11,24,37,.98); backdrop-filter:blur(12px); border-left:1px solid var(--accent); box-shadow:-10px 0 40px rgba(0,0,0,.8); transition:right .3s ease-in-out; z-index:10000; display:flex; flex-direction:column;}
+.sidebar-panel.open { right: 0; }
+.panel-header{padding:15px; background:rgba(0,0,0,.3); border-bottom:1px solid var(--line); display:flex; justify-content:space-between; align-items:center;}
+.panel-title2 { color:#fff; font-size:1.05rem; text-shadow:0 0 10px var(--accent); font-weight:900; }
+.close-btn { background:none; border:none; color:#ff5555; font-size:1.2rem; cursor:pointer; font-weight:900; }
+#radarList { flex:1; overflow-y:auto; padding:10px; display:none; }
+.radar-user{padding:12px; margin-bottom:8px; border-radius:10px; background:rgba(255,255,255,.05); border:1px solid rgba(255,255,255,.1); cursor:pointer; display:flex; justify-content:space-between; align-items:center;}
+.radar-user:hover { background:rgba(43,116,255,.2); border-color:var(--accent); }
+#chatArea { flex:1; display:none; flex-direction:column; background:rgba(0,0,0,.2); min-height:0; }
+#chatMsgs { flex:1; overflow-y:auto; padding:15px; display:flex; flex-direction:column; gap:10px; }
+.msg-bubble { padding:8px 12px; border-radius:12px; max-width:85%; font-size:.9rem; word-wrap:break-word; }
+.msg-me { align-self:flex-end; background:var(--accent); color:white; border-bottom-right-radius:2px; }
+.msg-them { align-self:flex-start; background:#1e2c3a; color:#ddd; border-bottom-left-radius:2px; }
+.chat-input-row-global { padding:15px; padding-bottom:calc(15px + env(safe-area-inset-bottom)); border-top:1px solid var(--line); display:flex; gap:10px; flex-shrink:0; background:rgba(11,24,37,1); }
+.chat-input { flex:1; padding:10px; border-radius:10px; border:1px solid #333; background:#080f16; color:white; }
+.send-btn { padding:0 15px; background:var(--accent); color:white; border:none; border-radius:10px; cursor:pointer; font-weight:900; }
+#backToRadar { font-size:.8rem; color:var(--muted); cursor:pointer; margin-right:10px; display:none; font-weight:900; }
+
+@keyframes pulse {
+    0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0.7); }
+    70% { transform: scale(1.05); box-shadow: 0 0 0 10px rgba(255, 68, 68, 0); }
+    100% { transform: scale(1); box-shadow: 0 0 0 0 rgba(255, 68, 68, 0); }
+}
+
 @media(max-width:768px){
   .wrap{flex-direction:column;height:calc(100vh - 120px);}
   .side-panel{width:100%;height:45vh;border-right:none;border-bottom:1px solid rgba(255,255,255,.1);}
@@ -183,15 +212,15 @@ body{
     <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
     <button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
     <button class="icon-btn" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
-    <a class="chip danger" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
+    <a class="chip ghost" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
 <div class="posture-bar">
-    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">ASSOCIATE VIEW</span></div>
     <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
     <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
     <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
+    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Leadership Active</span></div>
 </div>
 
 <div class="wrap">
@@ -215,7 +244,7 @@ body{
             <div class="detail-header">
                 <button id="backToList">← Back to List</button>
                 <div style="display:flex;gap:6px;align-items:center;">
-                    <button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ God Edit</button>
+                    <button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ Edit</button>
                     <span class="pill good" id="jobDetailStatus">—</span>
                 </div>
             </div>
@@ -228,6 +257,25 @@ body{
             <div id="mapView">Job Map Loading (needs API key)...</div>
         </div>
     </section>
+</div>
+
+<div id="chatBubble" title="Chat">💬</div>
+<div id="sidePanel" class="sidebar-panel" aria-hidden="true">
+    <div class="panel-header">
+        <div style="display:flex; align-items:center;">
+            <span id="backToRadar">◀ Back</span>
+            <span id="panelTitle" class="panel-title2">Leadership Chat</span>
+        </div>
+        <button class="close-btn" id="closePanel" title="Close">✕</button>
+    </div>
+    <div id="radarList"><div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div></div>
+    <div id="chatArea">
+        <div id="chatMsgs"></div>
+        <div class="chat-input-row-global">
+            <input id="chatInput" class="chat-input" type="text" placeholder="Type a message..." />
+            <button id="chatSend" class="send-btn" type="button">➤</button>
+        </div>
+    </div>
 </div>
 
 <div class="modal-backdrop" id="jobModal">
@@ -350,12 +398,12 @@ body{
 <div class="modal-backdrop" id="supportModal">
     <div class="modal" role="dialog" style="max-width:480px">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;color:#fff;font-size:22px;">Support Request</h3>
+            <h3 id="supportTitle" style="margin:0;color:#fff;font-size:22px;">Support Request</h3>
             <button class="chip ghost" onclick="window.closeSupportModal()">✕</button>
         </div>
+        <div id="supportHint" class="small" style="margin-bottom:15px; color:var(--muted);"></div>
         <div class="job-body" style="padding:0">
-            <label class="small">Priority</label>
-            <input id="supportPriority" class="input-mini" readonly style="margin-bottom:10px;"/>
+            <input type="hidden" id="supportPriority" />
             
             <label class="small">Category</label>
             <select id="supportCategory" class="input-mini" style="margin-bottom:10px; width:100%;">
@@ -397,7 +445,7 @@ window.esc = function(s) {
 
 const $ = (id) => document.getElementById(id); 
 
-// 2. Map Key Injection & Interactive Map
+// 2. Map Key Injection
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
     const mapScript = document.createElement('script');
@@ -448,6 +496,7 @@ window.activeLeadGen = false;
 window.activeLocation = false;
 window.watchId = null;
 window.currentJobId = null;
+window.activeChatRef = null;
 
 const USER_DIR_PATH="userDirectory";
 const ROLES_PATH="roles";
@@ -464,7 +513,7 @@ const TRACKER_STATES = [
     {id:'Completed',icon:'✅'} 
 ];
 
-window.fuzzyCityDisplay = function(j){ return `Area: (${window.esc(j.city||j.zip || 'Unknown')}) • Exact address revealed upon approval`; };
+window.fuzzyCityDisplay = function(j){ return `Area: ${window.esc(j.city||j.zip || 'Unknown')} • Exact address revealed upon approval`; };
 
 window.canSeeExact = function(j) {
     if(!j) return false;
@@ -532,13 +581,13 @@ window.initMap = function(){
         zoom: 11, 
         styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}],
         disableDefaultUI: true, 
-        zoomControl: true, 
+        zoomControl: false, 
         mapTypeControl: false,
         scaleControl: false,
         streetViewControl: false,
         rotateControl: false,
         fullscreenControl: false,
-        gestureHandling: 'auto', 
+        gestureHandling: 'none', 
         clickableIcons: false 
     }); 
     google.maps.event.trigger(window.map, "resize"); 
@@ -587,7 +636,6 @@ window.renderJobsList = function(){
     const el = $('leadList'); 
     if(!el) return;
     
-    // Request Badge Counting Logic for God Mode / Branch Managers
     let pendingRequestCount = 0;
     if(window.isGod || window.isBranchManager) {
         window.jobsView.forEach(j => {
@@ -600,7 +648,7 @@ window.renderJobsList = function(){
     }
     
     if(pendingRequestCount > 0) {
-        $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill warn" style="margin-left:4px;">${pendingRequestCount} Pending Approvals</span>`;
+        $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill hot" style="margin-left:4px; animation: pulse 2s infinite;">🚨 ${pendingRequestCount} Pending Request(s)</span>`;
     } else {
         $('jobCount').textContent=`${window.jobsView.length} jobs`; 
     }
@@ -621,9 +669,9 @@ window.renderJobsList = function(){
         
         let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
         
-        // Indicate to poster that requests are waiting
+        let reqBadge = "";
         if (!isAssigned && (j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0) {
-            badgeText = '<span class="pill warn">Pending Requests</span>';
+            reqBadge = `<span class="pill hot" style="animation: pulse 2s infinite;">🚨 ${Object.keys(j.requests).length} Request(s)</span>`;
         }
         
         html += `
@@ -632,6 +680,7 @@ window.renderJobsList = function(){
             <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> 
             <div class="badges">
                 ${badgeText}
+                ${reqBadge}
                 ${tracker}
             </div>
         </div>`; 
@@ -646,7 +695,6 @@ window.renderJobDetail = function(id){
     window.currentJobId = id; 
     window.renderJobsList(); 
     
-    // Switch Side Panel view
     $('listContainer').style.display="none"; 
     $('detailContainer').style.display="flex"; 
     
@@ -657,10 +705,9 @@ window.renderJobDetail = function(id){
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
     const isGatekeeper = window.isGod || j.postedBy === window.UID;
 
-    // Pan Map
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        let zoomLvl = exact ? 17 : 13; // Zoom 13 for fuzzy, 17 for exact street view
+        let zoomLvl = exact ? 17 : 12; 
         
         const applyPanAndZoom = (pos, exactZoom) => {
             window.map.panTo(pos);
@@ -697,7 +744,7 @@ window.renderJobDetail = function(id){
         
         comHtml = `
         <div class="comms-panel-god">
-            <div class="god-header-row"><h4>🔒 Vendor Notes</h4></div>
+            <div class="god-header-row"><h4>🔒 Leadership Only Fields</h4></div>
             <div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div>
             <div class="hr"></div>
             <h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4>
@@ -707,7 +754,6 @@ window.renderJobDetail = function(id){
     
     let actionHTML = ""; 
 
-    // Gatekeeper Direct Assignment Bypass
     if (window.isBranchManager || window.isGod) {
         let assignOptions = `<option value="">-- Select Associate --</option>`;
         const uidsToMap = window.isGod ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
@@ -1109,7 +1155,7 @@ window.deleteJob = async function() {
     try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
-// Toggle Fix: Save to contractorSettings so Rules don't reject it
+// Settings & Toggles
 window.setSwitch = async function(el, readout, on, key){ 
     el.classList.toggle('on',on); 
     readout.textContent = on ? "ON" : "OFF"; 
@@ -1130,7 +1176,6 @@ window.setSwitch = async function(el, readout, on, key){
 
 window.subscribeSelfDir = async function(){ 
     if(!window.UID) return; 
-    // Listen to contractorSettings for toggles to ensure UI sticks
     firebase.database().ref(`users/${window.UID}/contractorSettings`).on('value', snap=>{ 
         const d = snap.val() || {}; 
         
@@ -1145,7 +1190,6 @@ window.subscribeSelfDir = async function(){
         
         if(window.activeLocation) window.startUberMode(); else window.stopUberMode();
     }); 
-    // Get trades from userDirectory
     firebase.database().ref(`userDirectory/${window.UID}`).on('value', snap=>{ 
         const d = snap.val() || {};
         $('leadsZips').value = d.serviceZips || ""; 
@@ -1156,10 +1200,16 @@ window.subscribeSelfDir = async function(){
 window.openConfigModal = function() { $('configModal').classList.add('show'); };
 window.closeConfigModal = function() { $('configModal').classList.remove('show'); };
 
+// SUPPORT MODALS (Red/Blue Phones)
 window.openSupportModal = function(priority) { 
     $('supportPriority').value = priority.toUpperCase();
-    $('supportPriority').style.color = priority === 'red' ? '#ff4444' : '#2b74ff';
-    $('supportPriority').style.fontWeight = '900';
+    if(priority === 'red') {
+        $('supportTitle').innerHTML = '🚨 URGENT: Red Phone';
+        $('supportHint').textContent = 'Use this ONLY for emergencies requiring immediate Leadership response.';
+    } else {
+        $('supportTitle').innerHTML = '🌀 GENERAL: Blue Phone';
+        $('supportHint').textContent = 'Use this for standard updates, questions, or non-urgent notes to Leadership.';
+    }
     $('supportModal').classList.add('show'); 
 };
 window.closeSupportModal = function() { $('supportModal').classList.remove('show'); };
@@ -1179,9 +1229,19 @@ window.sendSupport = async function() {
             ts: Date.now(),
             status: "open"
         });
+        
+        // Push notification email for Leadership
+        await firebase.database().ref('mail').push({
+            to: 'dealbankers@gmail.com',
+            message: {
+                subject: `[${$('supportPriority').value}] Support Request from ${window.ME?.email}`,
+                text: `Priority: ${$('supportPriority').value}\nCategory: ${$('supportCategory').value}\nMessage: ${msg}`
+            }
+        });
+
         $('supportMsg').value = "";
         window.closeSupportModal();
-        alert("Support request sent.");
+        alert("Support request sent to Leadership.");
     } catch(e) {}
 };
 
@@ -1428,18 +1488,106 @@ window.hydrateRoleFlags = function(role){
     
     if (window.isGod) {
         $('roleIndicator').textContent = "LEADERSHIP VIEW";
-        $('godCommsHint').style.display = "flex";
         $('btnTeam').style.display = "inline-flex";
     } else if (window.isBranchManager) {
         $('roleIndicator').textContent = "BRANCH MANAGER VIEW";
-        $('godCommsHint').style.display = "none";
         $('btnTeam').style.display = "inline-flex";
     } else {
         $('roleIndicator').textContent = "ASSOCIATE VIEW";
-        $('godCommsHint').style.display = "none";
         $('btnTeam').style.display = "none";
     }
 };
+
+/* --- GLOBAL CHAT & RADAR LOGIC --- */
+window.activeChatRef = null;
+window.trackPresence = function(u){
+    if(!u) return; 
+    const presRef=firebase.database().ref(`presence/global/${u.uid}`); 
+    const payload={uid:u.uid, email:u.email||"", name:u.email||"User", portal:"contractor", online:true, ts:firebase.database.ServerValue.TIMESTAMP}; 
+    presRef.set(payload); 
+    presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});
+};
+
+window.startRadar = function(){
+    $("radarList").style.display="";
+    $("chatArea").style.display="none";
+    $("panelTitle").textContent="Leadership Radar";
+    $("backToRadar").style.display="none";
+    const list=$("radarList");
+
+    firebase.database().ref('presence/global').on("value", snap=>{
+        const v=snap.val()||{};
+        let users=Object.values(v).filter(x=>x&&String(x.uid||"")!==String(window.UID));
+        if(!users.length){
+            list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users available.</div>`;
+            return;
+        }
+        list.innerHTML="";
+        users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+        users.forEach(u=>{
+            const div=document.createElement("div");
+            div.className="radar-user";
+            div.innerHTML=`<div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot ${u.online?'dot-good':'dot-bad'}"></div><div style="min-width:0"><div style="font-weight:900">${window.esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">${window.esc(u.portal||"")}</div></div></div><div class="pill">DM</div>`;
+            div.onclick=()=>{
+                const peer=String(u.uid||"");
+                const threadId = "support_" + peer; 
+                window.setupChat(`direct_messages/${threadId}/messages`, `DM: ${u.name||u.email}`, true);
+            };
+            list.appendChild(div);
+        });
+    });
+};
+
+window.setupChat = function(path, title, showBack){
+    $("chatArea").style.display="flex";
+    $("radarList").style.display="none"; 
+    $("panelTitle").textContent=title||"Chat"; 
+    $("backToRadar").style.display=showBack?"":"none"; 
+    $("chatMsgs").innerHTML=""; 
+    if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){}} 
+    window.activeChatRef=firebase.database().ref(path);
+    
+    window.activeChatRef.limitToLast(80).on("child_added", snap=>{
+        const m=snap.val()||{}; 
+        const mine=String(m.uid||m.byUid||"")===String(window.UID); 
+        const div=document.createElement("div"); 
+        div.className="msg-bubble "+(mine?"msg-me":"msg-them"); 
+        div.textContent=m.text||""; 
+        $("chatMsgs").appendChild(div); 
+        $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight;
+    });
+};
+
+window.sendGlobalChat = async function(){
+    const text=($("chatInput").value||"").trim(); 
+    if(!text || !window.activeChatRef) return; 
+    $("chatInput").value="";
+    await window.activeChatRef.push().set({text, uid:window.UID||"", by:window.ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP});
+    
+    if(!window.isGod) {
+        await firebase.database().ref('mail').push({
+            to: 'dealbankers@gmail.com',
+            message: {
+                subject: `New Chat Message from ${window.ME?.email}`,
+                text: `User: ${window.ME?.email}\nMessage: ${text}\n\nLog into Command to reply.`
+            }
+        });
+    }
+};
+
+$('chatBubble').addEventListener('click', () => {
+    $('sidePanel').classList.add('open');
+    if(window.isGod) {
+        window.startRadar();
+    } else {
+        window.setupChat(`direct_messages/support_${window.UID}/messages`, "Leadership Support", false);
+    }
+});
+
+$('closePanel').addEventListener('click', () => $('sidePanel').classList.remove('open'));
+$('backToRadar').addEventListener('click', () => window.startRadar());
+$('chatSend').addEventListener('click', () => window.sendGlobalChat());
+$('chatInput').addEventListener('keydown', (e) => { if(e.key === 'Enter') window.sendGlobalChat(); });
 
 const ME_AUTH = firebase.auth();
 ME_AUTH.onAuthStateChanged(async u => {
@@ -1450,6 +1598,7 @@ ME_AUTH.onAuthStateChanged(async u => {
   window.hydrateRoleFlags(role);
   window.subscribeJobs();
   window.subscribeSelfDir();
+  window.trackPresence(u);
 });
 
 </script>
