@@ -40,6 +40,7 @@ body{
 }
 .chip:hover{background:#13314c;transform:translateY(-1px)}
 .chip.primary{background:#133e6a}
+.chip.good{background:#0e6b4d;border-color:rgba(19,185,129,.55)}
 .chip.ghost{background:rgba(255,255,255,.06)}
 .chip.danger{background:#6b1111;border-color:rgba(255,85,85,.55)}
 .icon-btn{
@@ -94,7 +95,7 @@ body{
 .lead-item .meta{font-size:13px;color:var(--muted);display:flex;flex-direction:column;gap:3px}
 .badges{margin-top:10px;display:flex;gap:6px;flex-wrap:wrap}
 
-#mapViewContainer{position:absolute;inset:0;width:100%;height:100%;}
+#mapViewContainer{position:absolute;inset:0;width:100%;height:100%; overflow:hidden;}
 #mapView{width:100%;height:100%;display:block;background:var(--bg2);}
 
 .detail-header{padding:16px 24px;border-bottom:1px solid rgba(255,255,255,.1);position:sticky;top:0;background:rgba(8,18,28,0.95);z-index:10;display:flex;justify-content:space-between;align-items:center;}
@@ -139,6 +140,43 @@ body{
 .tracker-step.completed .tracker-icon{border-color:var(--good);background:var(--good);color:white;}
 .tracker-label{font-size:11px;text-align:center;margin-top:8px;color:var(--muted);font-weight:600;}
 .tracker-step.active .tracker-label{color:#fff;font-weight:800;}
+
+/* VENDOR OPS (GOD MODE ONLY) */
+.vendor-fab {
+    position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%);
+    background: linear-gradient(135deg, #13b981, #0e6b4d);
+    color: white; border: 1px solid rgba(255,255,255,.3); border-radius: 999px;
+    padding: 12px 28px; font-size: 15px; font-weight: 900;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5); cursor: pointer; z-index: 100;
+    display: none; align-items: center; gap: 8px; transition: transform 0.2s, box-shadow 0.2s;
+}
+.vendor-fab:hover { transform: translateX(-50%) scale(1.05); box-shadow: 0 15px 40px rgba(0,0,0,0.6); }
+.vendor-fab:active { transform: translateX(-50%) scale(0.95); }
+
+.vendor-drawer {
+    position: fixed; top: 0; left: -100%; width: min(380px, 100vw); height: 100dvh;
+    background: rgba(8,17,26,0.98); backdrop-filter: blur(12px);
+    border-right: 1px solid var(--good); box-shadow: 10px 0 40px rgba(0,0,0,0.8);
+    transition: left 0.3s cubic-bezier(0.4, 0, 0.2, 1); z-index: 10000;
+    display: flex; flex-direction: column;
+}
+.vendor-drawer.open { left: 0; }
+
+.vendor-card {
+    background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.1);
+    border-radius: 12px; padding: 12px; display: flex; flex-direction: column; gap: 8px;
+    transition: border-color 0.2s;
+}
+.vendor-card:focus-within { border-color: var(--good); }
+.vendor-card strong { color: #fff; font-size: 14px; }
+.vendor-note {
+    background: rgba(0,0,0,0.4); border: 1px dashed rgba(255,255,255,0.2);
+    color: #fff; border-radius: 6px; padding: 8px; font-size: 12px;
+    min-height: 60px; resize: vertical; width: 100%; font-family: inherit;
+    transition: border-color 0.2s;
+}
+.vendor-note:focus { border-color: var(--accent); outline: none; }
+
 
 /* TEAM UI */
 .teamGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}
@@ -256,8 +294,46 @@ body{
     <section class="content-panel" id="mapContainer">
         <div id="mapViewContainer">
             <div id="mapView">Job Map Loading (needs API key)...</div>
+            
+            <button id="vendorFab" class="vendor-fab" onclick="window.toggleVendorDrawer()">
+                ⚡ Vendor Ops
+            </button>
         </div>
     </section>
+</div>
+
+<div id="vendorDrawer" class="vendor-drawer">
+    <div class="panel-header" style="border-bottom-color:var(--good);">
+        <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.2rem;">⚡</span>
+            <span class="panel-title2" style="text-shadow:0 0 10px var(--good);">Vendor Sourcing</span>
+        </div>
+        <button class="close-btn" style="color:var(--muted);" onclick="window.toggleVendorDrawer()">✕</button>
+    </div>
+    <div style="flex:1; overflow-y:auto; padding:16px; display:flex; flex-direction:column; gap:16px;">
+        
+        <div>
+            <label class="small" style="color:var(--good);">Live Call Script</label>
+            <textarea id="vendorScript" style="width:100%; height:140px; background:rgba(0,0,0,.3); color:#fff; border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:10px; font-size:13px; resize:vertical; line-height:1.5;"></textarea>
+        </div>
+
+        <div style="background:rgba(255,255,255,.05); padding:12px; border-radius:12px; border:1px solid rgba(255,255,255,.08);">
+            <label class="small" style="color:#fff;">Save New Lead</label>
+            <input id="newVenName" placeholder="Company Name" class="input-mini" style="margin-bottom:8px; background:#08111a;" />
+            <div style="display:flex; gap:8px; margin-bottom:8px;">
+                <input id="newVenPhone" placeholder="Phone" class="input-mini" style="background:#08111a;" />
+                <input id="newVenEmail" placeholder="Email" class="input-mini" style="background:#08111a;" />
+            </div>
+            <button id="btnSaveVendor" class="chip good" style="width:100%; display:block; text-align:center;" onclick="window.addDrawerVendor()">+ Save Vendor</button>
+        </div>
+
+        <div>
+            <label class="small" style="color:#fff;">Saved Partners For This Deal</label>
+            <div id="vendorList" style="display:flex; flex-direction:column; gap:10px; margin-top:8px;">
+                </div>
+        </div>
+
+    </div>
 </div>
 
 <div id="chatBubble" title="Chat">💬</div>
@@ -421,7 +497,7 @@ body{
             <textarea id="supportMsg" rows="4" placeholder="What do you need? If it's about a job, include the address or Contract ID." style="width:100%; border-radius:10px; padding:10px; background:#0d1f2d; color:#fff; border:1px solid #254a63;"></textarea>
         </div>
         <div class="modalActions">
-            <button class="chip primary" onclick="window.sendSupport()">Send Request</button>
+            <button id="supportSubmitBtn" class="chip primary" onclick="window.sendSupport()">Send Request</button>
         </div>
     </div>
 </div>
@@ -498,6 +574,7 @@ window.activeLocation = false;
 window.watchId = null;
 window.currentJobId = null;
 window.activeChatRef = null;
+window.activeVendorRef = null;
 
 const USER_DIR_PATH="userDirectory";
 const ROLES_PATH="roles";
@@ -672,7 +749,6 @@ window.renderJobsList = function(){
         
         let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
         
-        // Indicate to poster that requests are waiting
         let reqBadge = "";
         if (!isAssigned && (j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0) {
             badgeText = '<span class="pill hot" style="animation: pulse 2s infinite;">🚨 Request(s)</span>';
@@ -699,7 +775,6 @@ window.renderJobDetail = function(id){
     window.currentJobId = id; 
     window.renderJobsList(); 
     
-    // Switch Side Panel view and ensure it scrolls to the top
     $('listContainer').style.display="none"; 
     $('detailContainer').style.display="flex"; 
     $('detailContainer').scrollTop = 0; 
@@ -711,10 +786,18 @@ window.renderJobDetail = function(id){
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
     const isGatekeeper = window.isGod || j.postedBy === window.UID;
 
-    // Pan Map
+    // Toggle Vendor FAB for God Mode ONLY
+    if(window.isGod) {
+        $('vendorFab').style.display = 'flex';
+        window.loadVendorDrawer(id);
+    } else {
+        $('vendorFab').style.display = 'none';
+        $('vendorDrawer').classList.remove('open');
+    }
+
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        let zoomLvl = exact ? 17 : 12; // Zoom 12 for fuzzy, 17 for exact street view
+        let zoomLvl = exact ? 17 : 12; 
         
         const applyPanAndZoom = (pos, exactZoom) => {
             window.map.panTo(pos);
@@ -768,7 +851,6 @@ window.renderJobDetail = function(id){
     
     let actionHTML = ""; 
 
-    // Gatekeeper Direct Assignment Bypass
     if (window.isBranchManager || window.isGod) {
         let assignOptions = `<option value="">-- Select Associate --</option>`;
         const uidsToMap = window.isGod ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
@@ -835,7 +917,7 @@ window.renderJobDetail = function(id){
             const reqs = j.requests || {};
             const reqKeys = Object.keys(reqs);
             if (reqKeys.length > 0) {
-                actionHTML += `<div class="claim-bar"><h4>Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
+                actionHTML += `<div class="claim-bar"><h4>Pending Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
                 reqKeys.forEach(ruid => {
                     const r = reqs[ruid];
                     actionHTML += `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1); margin-bottom:8px;">
@@ -848,7 +930,7 @@ window.renderJobDetail = function(id){
                 });
                 actionHTML += `</div></div>`;
             } else {
-                actionHTML += `<div class="claim-bar"><h4>No requests yet.</h4><p>Waiting for contractors to raise their hand.</p></div>`;
+                actionHTML += `<div class="claim-bar"><h4>No active sub requests.</h4><p>Waiting for associate responses.</p></div>`;
             }
         } else {
             if(window.activeLocation && window.activeLeadGen){ 
@@ -924,6 +1006,12 @@ window.hideDetails = function(){
     window.renderJobsList(); 
     $('detailContainer').style.display="none"; 
     $('listContainer').style.display="flex"; 
+    
+    // Hide FAB & Drawer
+    $('vendorFab').style.display = 'none';
+    $('vendorDrawer').classList.remove('open');
+    if(window.activeVendorRef) { window.activeVendorRef.off(); window.activeVendorRef = null; }
+
     if(window.map && window.markers.length > 0) {
         const bounds = new google.maps.LatLngBounds();
         window.markers.forEach(m => bounds.extend(m.getPosition()));
@@ -954,6 +1042,95 @@ window.subscribeJobs = function(){
         if(window.currentJobId && window.jobsCache[window.currentJobId]) window.renderJobDetail(window.currentJobId); 
     }); 
 };
+
+/* --- GOD MODE VENDOR SOURCING DRAWER FUNCTIONS --- */
+window.toggleVendorDrawer = function() {
+    $('vendorDrawer').classList.toggle('open');
+};
+
+window.loadVendorDrawer = function(id) {
+    if(!window.isGod) return;
+    const j = window.jobsCache[id];
+    if(!j) return;
+    
+    // Auto-generate script
+    $('vendorScript').value = `Hi, my name is Bill Wilburn with DealBankers. We are a prime contractor finalizing our bid for a multi-year commercial ${j.trade || 'service'} contract over in ${j.city || 'your area'}, and we are looking for a reliable local partner to handle the physical execution.\n\nThe scope is for ${j.title || 'commercial services'}.\n\nAre you guys currently taking on new commercial partners, and if so, who is the best person to speak with about getting some flat-rate pricing to plug into our bid?`;
+    
+    // Subscribe to leads for this specific job
+    if(window.activeVendorRef) window.activeVendorRef.off();
+    window.activeVendorRef = firebase.database().ref(`jobs/${id}/sourcingLeads`);
+    
+    window.activeVendorRef.on('value', snap => {
+        const leads = snap.val() || {};
+        const list = $('vendorList');
+        
+        if(Object.keys(leads).length === 0) {
+            list.innerHTML = '<div style="font-size:12px;color:var(--muted);text-align:center;padding:10px;">No vendors added yet. Add one above.</div>';
+            return;
+        }
+        
+        let html = '';
+        Object.keys(leads).forEach(leadId => {
+            const l = leads[leadId];
+            html += `
+            <div class="vendor-card">
+                <div style="display:flex; justify-content:space-between; align-items:center;">
+                    <strong>${window.esc(l.name)}</strong>
+                    <button onclick="window.deleteDrawerVendor('${id}', '${leadId}')" class="chip danger tiny" style="padding:2px 8px; font-size:10px;">✕</button>
+                </div>
+                <div style="display:flex; gap:6px; flex-wrap:wrap; margin-top:2px;">
+                    <a href="tel:${window.sanitizeTel(l.phone)}" class="chip good tiny" style="text-decoration:none;">📞 ${window.esc(l.phone)}</a>
+                    ${l.email ? `<a href="mailto:${window.esc(l.email)}" class="chip ghost tiny" style="text-decoration:none;">✉️ Email</a>` : ''}
+                </div>
+                <textarea class="vendor-note" placeholder="Type notes... (auto-saves)" onblur="window.saveVendorNote('${id}', '${leadId}', this.value)">${window.esc(l.notes||'')}</textarea>
+            </div>`;
+        });
+        list.innerHTML = html;
+    });
+};
+
+window.addDrawerVendor = async function() {
+    if(!window.currentJobId) return;
+    const name = $('newVenName').value.trim();
+    const phone = $('newVenPhone').value.trim();
+    const email = $('newVenEmail').value.trim();
+    
+    if(!name || !phone) {
+        alert("Please enter at least a Name and Phone Number.");
+        return;
+    }
+    
+    const btn = $('btnSaveVendor');
+    btn.textContent = "Saving...";
+    
+    try {
+        await firebase.database().ref(`jobs/${window.currentJobId}/sourcingLeads`).push({
+            name, phone, email, notes: "", addedBy: window.UID, ts: Date.now()
+        });
+        $('newVenName').value = '';
+        $('newVenPhone').value = '';
+        $('newVenEmail').value = '';
+    } catch(e) {
+        console.error(e);
+        alert("Failed to save lead.");
+    }
+    btn.textContent = "+ Save Vendor";
+};
+
+window.deleteDrawerVendor = async function(jobId, leadId) {
+    if(confirm("Remove this vendor lead permanently?")) {
+        try { await firebase.database().ref(`jobs/${jobId}/sourcingLeads/${leadId}`).remove(); } catch(e){}
+    }
+};
+
+window.saveVendorNote = async function(jobId, leadId, text) {
+    try {
+        await firebase.database().ref(`jobs/${jobId}/sourcingLeads/${leadId}/notes`).set(text);
+    } catch(e) {
+        console.warn("Failed to save note", e);
+    }
+};
+
 
 /* --- MASTER EVENT DELEGATION BLOCK --- */
 document.addEventListener('click', async (e) => {
@@ -1275,8 +1452,19 @@ window.openSupportModal = function(priority) {
 window.closeSupportModal = function() { $('supportModal').classList.remove('show'); };
 
 window.sendSupport = async function() {
+    const btn = document.getElementById('supportSubmitBtn');
     const msg = $('supportMsg').value.trim();
-    if(!msg) return;
+    
+    if(!msg) {
+        alert("Please enter a message.");
+        return;
+    }
+    
+    if(btn) {
+        btn.disabled = true;
+        btn.textContent = "Sending...";
+    }
+    
     try {
         await firebase.database().ref(`supportRequests/${window.UID}`).push({
             uid: window.UID,
@@ -1291,18 +1479,26 @@ window.sendSupport = async function() {
         });
         
         // Push notification email for Leadership
-        await firebase.database().ref('mail').push({
+        firebase.database().ref('mail').push({
             to: 'dealbankers@gmail.com',
             message: {
                 subject: `[${$('supportPriority').value}] Support Request from ${window.ME?.email}`,
                 text: `Priority: ${$('supportPriority').value}\nCategory: ${$('supportCategory').value}\nMessage: ${msg}`
             }
-        });
+        }).catch(e => console.warn('Mail extension write blocked by rules: ', e));
 
         $('supportMsg').value = "";
         window.closeSupportModal();
         alert("Support request sent to Leadership.");
-    } catch(e) {}
+    } catch(e) {
+        console.error("Support request error:", e);
+        alert("Failed to send request. Check your permissions or connection.");
+    } finally {
+        if(btn) {
+            btn.disabled = false;
+            btn.textContent = "Send Request";
+        }
+    }
 };
 
 window.startUberMode = function(){
@@ -1551,7 +1747,7 @@ window.hydrateRoleFlags = function(role){
     
     if (window.isGod) {
         if(roleEl) roleEl.textContent = "ROLE: GOD MODE";
-        if(roleInd) roleInd.textContent = "GOD MODE";
+        if(roleInd) roleInd.textContent = "GOD MODE ACTIVE";
         $('godCommsHint').style.display = "flex";
         $('btnTeam').style.display = "inline-flex";
     } else if (window.isBranchManager) {
