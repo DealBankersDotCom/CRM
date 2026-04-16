@@ -61,6 +61,7 @@ body{
 .status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
 .dot-good{background:var(--good);box-shadow:0 0 10px rgba(19,185,129,.55)}
 
+/* SIDE-BY-SIDE MAP & LIST */
 .wrap{width:100%;height:calc(100vh - 90px);display:flex;position:relative;}
 .side-panel{width:420px;border-right:1px solid rgba(255,255,255,.1);display:flex;flex-direction:column;height:100%;background:var(--bg1);flex-shrink:0;z-index:10;position:relative;}
 .content-panel{flex:1;position:relative;height:100%;overflow:hidden;}
@@ -583,20 +584,24 @@ window.renderJobDetail = function(id){
     const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
     const isGatekeeper = window.isGod || j.postedBy === window.UID;
+    
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
         let zoomLvl = exact ? 17 : 13;
         if(position) { window.map.panTo(position); window.map.setZoom(zoomLvl); }
     }
+    
     let comHtml = "";
-    if(window.isGod || window.isBranchManager){ 
+    // PERMISSION CHECK: Only God or the direct Gatekeeper who claimed/posted can see secret script data
+    if(window.isGod || (window.isBranchManager && (j.postedBy === window.UID || amIAssigned))){ 
         const vendorPhones = window.formatLocalPhones(j.vendorPhones); 
         let vpHtml = "";
         vendorPhones.forEach(vp => { 
             vpHtml += `<div class="comms-row"><div class="comms-meta"><div class="comms-name">${window.esc(vp.label)}</div><div class="comms-label">${window.esc(vp.number)}</div></div><div class="comms-actions"><a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny">📞 Call</a><a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny">💬 Text</a></div></div>`; 
         });
-        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
+        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
     } 
+    
     let actionHTML = "";
     if (window.isBranchManager || window.isGod) {
         let assignOptions = `<option value="">-- Select Associate --</option>`;
@@ -607,6 +612,7 @@ window.renderJobDetail = function(id){
         });
         actionHTML += `<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;margin-bottom:16px;"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-weight:800;">Direct Assignment Bypass</div><div style="display:flex; align-items:center; gap:8px;"><select id="subAssignSelect" class="chip ghost" style="padding:8px 12px; height:auto; background:#0d1f2d; border:1px solid rgba(255,255,255,.2); color:#fff; cursor:pointer; flex:1;">${assignOptions}</select><button class="chip ghost" id="assignSubBtn" type="button">👥 Force Assign</button></div></div>`;
     }
+    
     if (isAssigned) {
         if (amIAssigned || isGatekeeper) {
             const isEnterprise = j.jobType === 'enterprise';
@@ -711,7 +717,6 @@ document.addEventListener('click', async (e) => {
     const trackerStep = e.target.closest('.tracker-step');
     if(trackerStep && window.currentJobId) { const stepId = trackerStep.getAttribute('data-step'); if(stepId) { try { await firebase.database().ref(`jobs/${window.currentJobId}/executionStatus`).set(stepId); } catch(err){} } }
     if(e.target.closest('#btnGodModeEdit') && window.currentJobId) window.openJobModal('edit', window.currentJobId);
-    if(e.target.closest('#backToList')) window.hideDetails();
 });
 
 window.openJobModal = function(mode, id=null){ 
