@@ -192,6 +192,7 @@ body{
     <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
     <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
     <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
+    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Uber Comms Active</span></div>
 </div>
 
 <div class="wrap">
@@ -604,9 +605,9 @@ window.renderJobsList = function(){
     }
     
     if(pendingRequestCount > 0) {
-        $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill warn" style="margin-left:4px;">${pendingRequestCount} Pending Approvals</span>`;
+        if($('jobCount')) $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill warn" style="margin-left:4px;">${pendingRequestCount} Pending Approvals</span>`;
     } else {
-        $('jobCount').textContent=`${window.jobsView.length} jobs`;
+        if($('jobCount')) $('jobCount').textContent=`${window.jobsView.length} jobs`;
     }
 
     if(window.jobsView.length === 0) {
@@ -651,10 +652,10 @@ window.renderJobDetail = function(id){
     window.renderJobsList();
     
     // Switch Side Panel view
-    $('listContainer').style.display="none"; 
-    $('detailContainer').style.display="flex"; 
+    if($('listContainer')) $('listContainer').style.display="none"; 
+    if($('detailContainer')) $('detailContainer').style.display="flex"; 
     
-    $('jobDetailStatus').textContent = window.esc(j.status); 
+    if($('jobDetailStatus')) $('jobDetailStatus').textContent = window.esc(j.status); 
     
     const exact = window.canSeeExact(j);
     const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
@@ -814,7 +815,7 @@ window.renderJobDetail = function(id){
         }
     }
     
-    $('jobDetailBody').innerHTML = `
+    if($('jobDetailBody')) $('jobDetailBody').innerHTML = `
         <div style="margin-bottom:16px;">
             <h2 style="margin:0;color:#fff;font-size:22px;">${window.esc(j.title || '(Untitled)')}</h2>
         </div>
@@ -831,10 +832,12 @@ window.renderJobDetail = function(id){
     
     if(isAssigned && (amIAssigned || isGatekeeper)) window.loadJobCommFeed(id); 
     
-    if(window.isGod || j.postedBy === window.UID){ 
-        $('btnGodModeEdit').style.display="inline-flex";
-    } else {
-        $('btnGodModeEdit').style.display="none"; 
+    if($('btnGodModeEdit')) {
+        if(window.isGod || j.postedBy === window.UID){ 
+            $('btnGodModeEdit').style.display="inline-flex";
+        } else {
+            $('btnGodModeEdit').style.display="none"; 
+        }
     }
 };
 
@@ -867,8 +870,8 @@ window.loadJobCommFeed = async function(id){
 window.hideDetails = function(){ 
     window.currentJobId=null; 
     window.renderJobsList(); 
-    $('detailContainer').style.display="none"; 
-    $('listContainer').style.display="flex";
+    if($('detailContainer')) $('detailContainer').style.display="none"; 
+    if($('listContainer')) $('listContainer').style.display="flex";
     if(window.map && window.markers.length > 0) {
         const bounds = new google.maps.LatLngBounds();
         window.markers.forEach(m => bounds.extend(m.getPosition()));
@@ -877,7 +880,7 @@ window.hideDetails = function(){
 };
 
 window.subscribeJobs = function(){ 
-    if(!window.jobsView.length) $('leadList').innerHTML = "<div class='empty-state'>Loading...</div>";
+    if(!window.jobsView.length && $('leadList')) $('leadList').innerHTML = "<div class='empty-state'>Loading...</div>";
     firebase.database().ref('jobs').on('value', snap => { 
         window.jobsCache = snap.val() || {}; 
         window.jobsView = []; 
@@ -886,7 +889,7 @@ window.subscribeJobs = function(){
             if((j.status||'active') === window.currentTab) window.jobsView.push(j); 
         }); 
         
-        const searchQ = ($('jobSearch').value||"").toLowerCase();
+        const searchQ = ($('jobSearch')?.value||"").toLowerCase();
         if(searchQ) {
             window.jobsView = window.jobsView.filter(j => {
                 const hay = `${j.title||''} ${j.trade||''} ${j.city||''} ${j.zip||''}`.toLowerCase();
@@ -1019,76 +1022,87 @@ document.addEventListener('click', async (e) => {
     }
 });
 
-$('jobSearch').addEventListener('input', () => { window.subscribeJobs(); });
+if($('jobSearch')) $('jobSearch').addEventListener('input', () => { window.subscribeJobs(); });
 
 window.openJobModal = function(mode, id=null){ 
-    $('jobModal').classList.add('show'); 
-    $('btnGodDeleteJob').style.display="none"; 
+    if($('jobModal')) $('jobModal').classList.add('show'); 
+    if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="none"; 
     window.modalLeadId = id; 
     const isEdit = mode === 'edit';
-    $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job"; 
-    $('godPostFields').style.display = window.isGod ? "block" : "none";
+    if($('jobModalTitle')) $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job"; 
+    if($('godPostFields')) $('godPostFields').style.display = window.isGod ? "block" : "none";
     
     if(isEdit && id){ 
         const j = window.jobsCache[id]; 
-        $('jobTitle').value = j.title||"";
-        $('jobTrade').value = j.trade||""; 
-        $('jobCity').value = j.city||""; 
-        $('jobZip').value = j.zip||""; 
-        $('jobDate').value = j.date||""; 
-        $('jobBudget').value = j.budget||""; 
-        $('jobStatus').value = j.status||"active";
-        $('jobType').value = j.jobType||"service";
-        $('jobDesc').value = j.desc||""; 
+        if($('jobTitle')) $('jobTitle').value = j.title||"";
+        if($('jobTrade')) $('jobTrade').value = j.trade||""; 
+        if($('jobCity')) $('jobCity').value = j.city||""; 
+        if($('jobZip')) $('jobZip').value = j.zip||""; 
+        if($('jobDate')) $('jobDate').value = j.date||""; 
+        if($('jobBudget')) $('jobBudget').value = j.budget||""; 
+        if($('jobStatus')) $('jobStatus').value = j.status||"active";
+        if($('jobType')) $('jobType').value = j.jobType||"service";
+        if($('jobDesc')) $('jobDesc').value = j.desc||""; 
         const licReq = $('jobLicensedReq');
         if(licReq) licReq.checked = !!j.licensedRequired;
         if(window.isGod){ 
-            $('jobAddressExact').value = j.addressExact||""; 
-            $('vendorPhones').value = j.vendorPhones||"";
-            $('godNotes').value = j.godNotes||""; 
-            $('btnGodDeleteJob').style.display="flex"; 
+            if($('jobAddressExact')) $('jobAddressExact').value = j.addressExact||""; 
+            if($('vendorPhones')) $('vendorPhones').value = j.vendorPhones||"";
+            if($('godNotes')) $('godNotes').value = j.godNotes||""; 
+            if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="flex"; 
         } 
     } else { 
-        $('jobTitle').value="";
-        $('jobTrade').value=""; $('jobCity').value=""; $('jobZip').value=""; 
-        $('jobDate').value=""; $('jobBudget').value=""; $('jobStatus').value="active"; $('jobType').value="service"; $('jobDesc').value=""; 
+        if($('jobTitle')) $('jobTitle').value="";
+        if($('jobTrade')) $('jobTrade').value=""; 
+        if($('jobCity')) $('jobCity').value=""; 
+        if($('jobZip')) $('jobZip').value=""; 
+        if($('jobDate')) $('jobDate').value=""; 
+        if($('jobBudget')) $('jobBudget').value=""; 
+        if($('jobStatus')) $('jobStatus').value="active"; 
+        if($('jobType')) $('jobType').value="service"; 
+        if($('jobDesc')) $('jobDesc').value=""; 
         const licReq = $('jobLicensedReq');
         if(licReq) licReq.checked=false; 
-        if(window.isGod){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value="";
+        if(window.isGod){ 
+            if($('jobAddressExact')) $('jobAddressExact').value=""; 
+            if($('vendorPhones')) $('vendorPhones').value=""; 
+            if($('godNotes')) $('godNotes').value="";
         } 
     }
 };
 
-window.closeJobModal = function(){ $('jobModal').classList.remove('show'); };
+window.closeJobModal = function(){ if($('jobModal')) $('jobModal').classList.remove('show'); };
 
 window.saveJob = async function() {
-    const trade = ($('jobTrade').value||"").trim();
+    const trade = ($('jobTrade')?.value||"").trim();
     if(!trade) return alert("Trade is required.");
     
     const isEdit = window.modalLeadId !== null;
     const payload = {
-        title: ($('jobTitle').value||"").trim(),
+        title: ($('jobTitle')?.value||"").trim(),
         trade: trade,
-        city: ($('jobCity').value||"").trim(),
-        zip: ($('jobZip').value||"").trim(),
-        date: ($('jobDate').value||"").trim(),
-        budget: ($('jobBudget').value||"").trim(),
-        status: $('jobStatus').value,
-        jobType: $('jobType').value,
-        desc: ($('jobDesc').value||"").trim(),
+        city: ($('jobCity')?.value||"").trim(),
+        zip: ($('jobZip')?.value||"").trim(),
+        date: ($('jobDate')?.value||"").trim(),
+        budget: ($('jobBudget')?.value||"").trim(),
+        status: $('jobStatus')?.value || "active",
+        jobType: $('jobType')?.value || "service",
+        desc: ($('jobDesc')?.value||"").trim(),
         licensedRequired: $('jobLicensedReq') ? $('jobLicensedReq').checked : false,
         updatedAt: firebase.database.ServerValue.TIMESTAMP
     };
     
-    $('btnJobSave').disabled = true;
-    $('btnJobSave').textContent = "Saving...";
+    if($('btnJobSave')) {
+        $('btnJobSave').disabled = true;
+        $('btnJobSave').textContent = "Saving...";
+    }
 
     try {
         if(window.isGod){
-            const addr = ($('jobAddressExact').value||"").trim();
+            const addr = ($('jobAddressExact')?.value||"").trim();
             payload.addressExact = addr;
-            payload.vendorPhones = ($('vendorPhones').value||"").trim();
-            payload.godNotes = ($('godNotes').value||"").trim();
+            payload.vendorPhones = ($('vendorPhones')?.value||"").trim();
+            payload.godNotes = ($('godNotes')?.value||"").trim();
             if(addr){
                 try{ 
                     const latLng = await window.geocodeAddress(addr);
@@ -1113,8 +1127,10 @@ window.saveJob = async function() {
     } catch(e) { 
         alert("Failed to save."); 
     } finally {
-        $('btnJobSave').disabled = false;
-        $('btnJobSave').textContent = "Save Job";
+        if($('btnJobSave')) {
+            $('btnJobSave').disabled = false;
+            $('btnJobSave').textContent = "Save Job";
+        }
     }
 };
 
@@ -1125,19 +1141,16 @@ window.deleteJob = async function() {
     window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
-// Toggle Fix: Save to contractorSettings so Rules don't reject it
 window.setSwitch = async function(el, readout, on, key){ 
-    el.classList.toggle('on',on);
-    readout.textContent = on ? "ON" : "OFF"; 
+    if(el) el.classList.toggle('on',on);
+    if(readout) readout.textContent = on ? "ON" : "OFF"; 
     if(window.UID) {
         try {
             await firebase.database().ref(`users/${window.UID}/contractorSettings/${key}`).set(on);
-            // Optional sync back to userDirectory if allowable by rules
             firebase.database().ref(`userDirectory/${window.UID}/${key}`).set(on).catch(e=>{});
         } catch(e) {
-            console.warn("Toggle save rejected by Rules", e);
-            el.classList.toggle('on', !on);
-            readout.textContent = !on ? "ON" : "OFF";
+            if(el) el.classList.toggle('on', !on);
+            if(readout) readout.textContent = !on ? "ON" : "OFF";
             if(key === 'activeLeadGen') window.activeLeadGen = !on;
             if(key === 'liveDispatch') window.activeLocation = !on;
         }
@@ -1146,56 +1159,56 @@ window.setSwitch = async function(el, readout, on, key){
 
 window.subscribeSelfDir = async function(){ 
     if(!window.UID) return;
-    // Listen to contractorSettings for toggles to ensure UI sticks
     firebase.database().ref(`users/${window.UID}/contractorSettings`).on('value', snap=>{ 
         const d = snap.val() || {}; 
         
         window.activeLeadGen = !!d.activeLeadGen;
         window.activeLocation = !!d.liveDispatch;
         
-        $('leadsToggle').classList.toggle('on', window.activeLeadGen);
-        $('leadsToggleReadout').textContent = window.activeLeadGen ? "ON" : "OFF";
+        if($('leadsToggle')) $('leadsToggle').classList.toggle('on', window.activeLeadGen);
+        if($('leadsToggleReadout')) $('leadsToggleReadout').textContent = window.activeLeadGen ? "ON" : "OFF";
         
-        $('locationToggle').classList.toggle('on', window.activeLocation);
-        $('locationToggleReadout').textContent = window.activeLocation ? "ON" : "OFF";
+        if($('locationToggle')) $('locationToggle').classList.toggle('on', window.activeLocation);
+        if($('locationToggleReadout')) $('locationToggleReadout').textContent = window.activeLocation ? "ON" : "OFF";
         
         if(window.activeLocation) window.startUberMode(); else window.stopUberMode();
     });
-    // Get trades from userDirectory
     firebase.database().ref(`userDirectory/${window.UID}`).on('value', snap=>{ 
         const d = snap.val() || {};
-        $('leadsZips').value = d.serviceZips || ""; 
-        $('tradesStatus').textContent= `Trades: ${d.trades||'—'}`; 
+        if($('leadsZips')) $('leadsZips').value = d.serviceZips || ""; 
+        if($('tradesStatus')) $('tradesStatus').textContent= `Trades: ${d.trades||'—'}`; 
     });
 };
 
-window.openConfigModal = function() { $('configModal').classList.add('show'); };
-window.closeConfigModal = function() { $('configModal').classList.remove('show'); };
+window.openConfigModal = function() { if($('configModal')) $('configModal').classList.add('show'); };
+window.closeConfigModal = function() { if($('configModal')) $('configModal').classList.remove('show'); };
 
 window.openSupportModal = function(priority) { 
-    $('supportPriority').value = priority.toUpperCase();
-    $('supportPriority').style.color = priority === 'red' ? '#ff4444' : '#2b74ff';
-    $('supportPriority').style.fontWeight = '900';
-    $('supportModal').classList.add('show'); 
+    if($('supportPriority')) {
+        $('supportPriority').value = priority.toUpperCase();
+        $('supportPriority').style.color = priority === 'red' ? '#ff4444' : '#2b74ff';
+        $('supportPriority').style.fontWeight = '900';
+    }
+    if($('supportModal')) $('supportModal').classList.add('show'); 
 };
-window.closeSupportModal = function() { $('supportModal').classList.remove('show'); };
+window.closeSupportModal = function() { if($('supportModal')) $('supportModal').classList.remove('show'); };
 
 window.sendSupport = async function() {
-    const msg = $('supportMsg').value.trim();
+    const msg = $('supportMsg')?.value.trim();
     if(!msg) return;
     try {
         await firebase.database().ref(`supportRequests/${window.UID}`).push({
             uid: window.UID,
             email: window.ME?.email || "",
             name: window.ME?.email || "Contractor",
-            priority: $('supportPriority').value.toLowerCase(),
-            category: $('supportCategory').value || 'General',
+            priority: $('supportPriority')?.value.toLowerCase() || "normal",
+            category: $('supportCategory')?.value || 'General',
             message: msg,
             portal: 'contractor',
             ts: Date.now(),
             status: "open"
         });
-        $('supportMsg').value = "";
+        if($('supportMsg')) $('supportMsg').value = "";
         window.closeSupportModal();
         alert("Support request sent.");
     } catch(e) {}
@@ -1214,12 +1227,12 @@ window.stopUberMode = function(){ if(window.watchId) navigator.geolocation.clear
 
 window.toggleLeads = function(){ window.activeLeadGen=!window.activeLeadGen; window.setSwitch($('leadsToggle'), $('leadsToggleReadout'), window.activeLeadGen, 'activeLeadGen'); window.renderJobsList(); };
 window.toggleLocation = function(){ window.activeLocation=!window.activeLocation; window.setSwitch($('locationToggle'), $('locationToggleReadout'), window.activeLocation, 'liveDispatch'); if(window.activeLocation) window.startUberMode(); else window.stopUberMode(); };
-window.saveZips = async function(){ const zip = $('leadsZips').value; try{ await firebase.database().ref(`userDirectory/${window.UID}/serviceZips`).set(zip); }catch(e){} };
+window.saveZips = async function(){ const zip = $('leadsZips')?.value; try{ await firebase.database().ref(`userDirectory/${window.UID}/serviceZips`).set(zip); }catch(e){} };
 
 window.setTab = function(tab){ 
     window.currentTab=tab; 
-    $('tabActive').classList.toggle('active', tab==='active'); 
-    $('tabUpcoming').classList.toggle('active', tab==='upcoming'); 
+    if($('tabActive')) $('tabActive').classList.toggle('active', tab==='active'); 
+    if($('tabUpcoming')) $('tabUpcoming').classList.toggle('active', tab==='upcoming'); 
     window.subscribeJobs(); 
 };
 
@@ -1280,8 +1293,8 @@ window.managedAssociatesFor = function(uid){
     return Object.values(window.userDirCache.byUid||{}).filter(u => String(u.managerUid||"")===String(uid) && String(u.managerStatus||"")==="approved");
 };
 
-window.openTeamModal = function() { $('teamModal').classList.add('show'); window.renderTeamModalBody(); };
-window.closeTeamModal = function() { $('teamModal').classList.remove('show'); };
+window.openTeamModal = function() { if($('teamModal')) $('teamModal').classList.add('show'); window.renderTeamModalBody(); };
+window.closeTeamModal = function() { if($('teamModal')) $('teamModal').classList.remove('show'); };
 
 window.renderTeamModalBody = async function() {
     await window.loadUserDirectoryCache();
@@ -1334,12 +1347,14 @@ window.renderTeamModalBody = async function() {
         html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">Request Associates By Email</div><div style="display:flex; gap:10px; align-items:center;"><input id="teamSearch" style="width:100%;padding:10px;border-radius:12px;background:#0d1f2d;border:1px solid #254a63;color:#fff;" placeholder="Type exact associate email..." /><button class="chip primary" type="button" id="teamSearchBtn" onclick="window.runTeamSearch()">Search</button></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
     }
 
-    $('teamModalBody').innerHTML = html;
+    if($('teamModalBody')) $('teamModalBody').innerHTML = html;
 };
 
 window.runTeamSearch = async function() {
     const input = $('teamSearch');
     const box = $('teamSearchResults');
+    if(!input || !box) return;
+    
     const email = String(input.value||"").trim().toLowerCase();
     if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; }
     box.innerHTML=`<div class="help">Searching...</div>`;
@@ -1434,23 +1449,24 @@ window.resolveRole = async function(u){
     }catch(e){return "user";}
 };
 
-// UI PERMISSIONS FIX: Branch Managers are NOT God
+// UI PERMISSIONS FIX: Safely check for UI elements before setting them
 window.hydrateRoleFlags = function(role){ 
     window.USER_ROLE = role;
     window.isGod = (role === "god"); 
     window.isBranchManager = (role === "god" || role === "admin");
-    if (window.isGod) {
-        $('roleIndicator').textContent = "LEADERSHIP VIEW";
-        $('godCommsHint').style.display = "flex";
-        $('btnTeam').style.display = "inline-flex";
-    } else if (window.isBranchManager) {
-        $('roleIndicator').textContent = "BRANCH MANAGER VIEW";
-        $('godCommsHint').style.display = "none";
-        $('btnTeam').style.display = "inline-flex";
-    } else {
-        $('roleIndicator').textContent = "ASSOCIATE VIEW";
-        $('godCommsHint').style.display = "none";
-        $('btnTeam').style.display = "none";
+    
+    if($('roleIndicator')) {
+        if(window.isGod) $('roleIndicator').textContent = "LEADERSHIP VIEW";
+        else if(window.isBranchManager) $('roleIndicator').textContent = "BRANCH MANAGER VIEW";
+        else $('roleIndicator').textContent = "ASSOCIATE VIEW";
+    }
+    
+    if($('godCommsHint')) {
+        $('godCommsHint').style.display = window.isGod ? "flex" : "none";
+    }
+    
+    if($('btnTeam')) {
+        $('btnTeam').style.display = window.isBranchManager ? "inline-flex" : "none";
     }
 };
 
