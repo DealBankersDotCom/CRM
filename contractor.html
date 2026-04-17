@@ -182,7 +182,7 @@ body{
     <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
     <button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
     <button class="icon-btn" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
-    <a class="chip danger" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
+    <a class="chip ghost" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
   </nav>
 </header>
 
@@ -583,20 +583,23 @@ window.renderJobDetail = function(id){
     const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
     const isGatekeeper = window.isGod || j.postedBy === window.UID;
+    
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
         let zoomLvl = exact ? 17 : 13;
         if(position) { window.map.panTo(position); window.map.setZoom(zoomLvl); }
     }
+    
     let comHtml = "";
-    if(window.isGod || window.isBranchManager){ 
+    if(window.isGod || (window.isBranchManager && (j.postedBy === window.UID || amIAssigned))){ 
         const vendorPhones = window.formatLocalPhones(j.vendorPhones); 
         let vpHtml = "";
         vendorPhones.forEach(vp => { 
             vpHtml += `<div class="comms-row"><div class="comms-meta"><div class="comms-name">${window.esc(vp.label)}</div><div class="comms-label">${window.esc(vp.number)}</div></div><div class="comms-actions"><a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny">📞 Call</a><a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny">💬 Text</a></div></div>`; 
         });
-        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
+        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
     } 
+    
     let actionHTML = "";
     if (window.isBranchManager || window.isGod) {
         let assignOptions = `<option value="">-- Select Associate --</option>`;
@@ -607,6 +610,7 @@ window.renderJobDetail = function(id){
         });
         actionHTML += `<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;margin-bottom:16px;"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-weight:800;">Direct Assignment Bypass</div><div style="display:flex; align-items:center; gap:8px;"><select id="subAssignSelect" class="chip ghost" style="padding:8px 12px; height:auto; background:#0d1f2d; border:1px solid rgba(255,255,255,.2); color:#fff; cursor:pointer; flex:1;">${assignOptions}</select><button class="chip ghost" id="assignSubBtn" type="button">👥 Force Assign</button></div></div>`;
     }
+    
     if (isAssigned) {
         if (amIAssigned || isGatekeeper) {
             const isEnterprise = j.jobType === 'enterprise';
@@ -636,19 +640,51 @@ window.renderJobDetail = function(id){
             } else { actionHTML += `<div class="kv" style="border-color:var(--bad);background:rgba(239,68,68,0.1);"><b style="color:var(--bad);">LOCKED:</b> Turn on Dispatch Mode & Location sharing in settings to request jobs.</div>`; } 
         }
     }
-    if($('jobDetailBody')) $('jobDetailBody').innerHTML = `<div style="margin-bottom:16px;"><h2 style="margin:0;color:#fff;font-size:22px;">${window.esc(j.title || '(Untitled)')}</h2></div><div class="kv"><b>Trade:</b> ${window.esc(j.trade)}</div> <div class="kv"><b>Type:</b> ${window.esc(j.jobType||'service').toUpperCase()}</div> <div class="kv"><b>Address:</b> ${window.normalizeJobAddress(j)}</div> <div class="kv"><b>Date:</b> ${window.esc(j.date||'')}</div> <div class="kv"><b>Budget:</b> ${window.esc(j.budget||'')}</div> <div class="hr"></div> <div class="kv"><b>Description / Scope:</b><br/>${window.esc(j.desc||'').replace(/\n/g,'<br/>')}</div> ${actionHTML} ${comHtml}`;
+    
+    let clientCommsHtml = "";
+    if (window.isBranchManager || window.isGod) {
+        const fulfillmentUrl = `https://dealbankers.com/fulfillment.html?id=${window.esc(id)}`;
+        clientCommsHtml = `
+        <div class="hr"></div>
+        <div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;">
+            <b>Client / Vendor Fulfillment Comms</b><br>
+            <a href="${fulfillmentUrl}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;">📄 View Public Fulfillment Link</a>
+        </div>
+        <div id="clientCommsLog" class="chat-log" style="max-height:200px;">Loading client comms...</div>
+        <div class="chat-input-row">
+            <textarea class="textarea-mini" id="clientChatInput" placeholder="Message client/vendor on public portal..."></textarea>
+            <button class="chip primary" id="btnSendClientMsg">Send to Client</button>
+        </div>`;
+    }
+
+    if($('jobDetailBody')) $('jobDetailBody').innerHTML = `<div style="margin-bottom:16px;"><h2 style="margin:0;color:#fff;font-size:22px;">${window.esc(j.title || '(Untitled)')}</h2></div><div class="kv"><b>Trade:</b> ${window.esc(j.trade)}</div> <div class="kv"><b>Type:</b> ${window.esc(j.jobType||'service').toUpperCase()}</div> <div class="kv"><b>Address:</b> ${window.normalizeJobAddress(j)}</div> <div class="kv"><b>Date:</b> ${window.esc(j.date||'')}</div> <div class="kv"><b>Budget:</b> ${window.esc(j.budget||'')}</div> <div class="hr"></div> <div class="kv"><b>Description / Scope:</b><br/>${window.esc(j.desc||'').replace(/\n/g,'<br/>')}</div> ${actionHTML} ${comHtml} ${clientCommsHtml}`;
+    
     if(isAssigned && (amIAssigned || isGatekeeper)) window.loadJobCommFeed(id); 
+    if(window.isGod || window.isBranchManager) window.loadClientCommFeed(id);
+
     if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGod || j.postedBy === window.UID) ? "inline-flex" : "none";
 };
 
 window.loadJobCommFeed = async function(id){ 
     const list = $('jobCommsLog'); if(!list) return;
     const snap = await firebase.database().ref(`jobs/${id}/messages`).once("value");
-    const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No comms yet.</div>"; return; } 
+    const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No internal comms yet.</div>"; return; } 
     let html = "";
     Object.values(msgs).sort((a,b)=> a.ts - b.ts).forEach(m => { 
         const mine = m.uid === window.UID; const internal = m.type === 'internal'; 
         html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;"><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</div><div>${window.esc(m.text)}</div></div>`; 
+    });
+    list.innerHTML = html; list.scrollTop = list.scrollHeight;
+};
+
+window.loadClientCommFeed = async function(id){ 
+    const list = $('clientCommsLog'); if(!list) return;
+    const snap = await firebase.database().ref(`jobs/${id}/clientComms`).once("value");
+    const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No client/vendor comms yet.</div>"; return; } 
+    let html = "";
+    Object.values(msgs).sort((a,b)=> a.ts - b.ts).forEach(m => { 
+        const mine = m.uid === window.UID; 
+        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;"><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</div><div>${window.esc(m.text)}</div></div>`; 
     });
     list.innerHTML = html; list.scrollTop = list.scrollHeight;
 };
@@ -708,10 +744,14 @@ document.addEventListener('click', async (e) => {
         const input = $('techChatInput'); const text = (input.value||"").trim(); if(!text) return; internalMsgBtn.disabled = true; 
         try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'internal', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} internalMsgBtn.disabled = false;
     }
+    const sendClientBtn = e.target.closest('#btnSendClientMsg');
+    if(sendClientBtn && window.currentJobId) {
+        const input = $('clientChatInput'); const text = (input.value||"").trim(); if(!text) return; sendClientBtn.disabled = true; 
+        try{ await firebase.database().ref(`jobs/${window.currentJobId}/clientComms`).push({ text, uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadClientCommFeed(window.currentJobId); }catch(err){} sendClientBtn.disabled = false;
+    }
     const trackerStep = e.target.closest('.tracker-step');
     if(trackerStep && window.currentJobId) { const stepId = trackerStep.getAttribute('data-step'); if(stepId) { try { await firebase.database().ref(`jobs/${window.currentJobId}/executionStatus`).set(stepId); } catch(err){} } }
     if(e.target.closest('#btnGodModeEdit') && window.currentJobId) window.openJobModal('edit', window.currentJobId);
-    if(e.target.closest('#backToList')) window.hideDetails();
 });
 
 window.openJobModal = function(mode, id=null){ 
