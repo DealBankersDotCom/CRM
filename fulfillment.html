@@ -106,6 +106,27 @@ body{
 @keyframes spin { to { transform: rotate(360deg); } }
 
 .error-state{text-align:center;padding:40px;color:var(--bad);background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);border-radius:16px;}
+
+.photo-thumb {
+    position: relative;
+    border-radius: 8px;
+    overflow: hidden;
+    border: 1px solid rgba(255,255,255,0.1);
+    aspect-ratio: 1;
+    background: #000;
+}
+.photo-thumb img { width: 100%; height: 100%; object-fit: cover; transition: transform 0.2s ease;}
+.photo-thumb img:hover { transform: scale(1.05); }
+.photo-label {
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    background: rgba(0,0,0,0.7);
+    color: #fff;
+    font-size: 10px;
+    padding: 6px 4px;
+    text-align: center;
+    font-weight: 700;
+}
 </style>
 </head>
 <body>
@@ -123,13 +144,20 @@ body{
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 
 <script>
-// Prevent script injection
 const esc = (s) => String(s || "").replace(/[&<>"']/g, m => ({'&': '&', '<': '<', '>': '>', '"': '"', "'": "'"}[m]));
 
-// Initialize Firebase using your existing config.js
+// URL Parser to transform raw links into clickable buttons in the chat
+window.linkify = function(text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, function(url) {
+        return `<a href="${url}" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:700;word-break:break-all;">${url}</a>`;
+    });
+};
+
 (function ensureFirebaseInit(){
     try{
         if(!firebase.apps || !firebase.apps.length){
@@ -139,13 +167,16 @@ const esc = (s) => String(s || "").replace(/[&<>"']/g, m => ({'&': '&', '<': '<'
 })();
 
 const db = firebase.database();
+let storage;
+try { storage = firebase.storage(); } catch(e) { console.warn("Firebase Storage not initialized."); }
+
 const urlParams = new URLSearchParams(window.location.search);
 const JOB_ID = urlParams.get('id');
+const PORTAL_URL = window.location.href;
 
 const SERVICE_STEPS = [ {id:'Not Left',icon:'🏠'}, {id:'En Route',icon:'🚚'}, {id:'Arrived',icon:'📍'}, {id:'Working',icon:'🔨'}, {id:'Completed',icon:'✅'} ];
 const BID_STEPS = [ {id:'Sourcing',icon:'🔍'}, {id:'Quoted',icon:'📄'}, {id:'Review',icon:'👀'}, {id:'Submitted',icon:'📤'}, {id:'Awarded',icon:'🏆'} ];
 
-// Handle Missing ID
 if(!JOB_ID) {
     document.getElementById('mainContainer').innerHTML = `
         <div class="error-state">
@@ -153,10 +184,8 @@ if(!JOB_ID) {
             <p>No project ID was provided. Please check the link sent by your DealBankers representative.</p>
         </div>`;
 } else {
-    // Listen for real-time job updates
     db.ref(`jobs/${JOB_ID}`).on('value', (snap) => {
         const job = snap.val();
-        
         if(!job) {
             document.getElementById('mainContainer').innerHTML = `
                 <div class="error-state">
@@ -165,9 +194,9 @@ if(!JOB_ID) {
                 </div>`;
             return;
         }
-
         renderDashboard(job);
         loadChat();
+        loadPhotos();
     }, (error) => {
         document.getElementById('mainContainer').innerHTML = `
             <div class="error-state">
@@ -224,6 +253,23 @@ function renderDashboard(job) {
         </div>
 
         <div class="card">
+            <h3 style="margin:0 0 16px 0;color:#fff;">Job Site Photos</h3>
+            <p style="font-size:13px;color:var(--muted);margin-top:0;">Upload progress photos directly from your device. These instantly notify the Project Manager.</p>
+            <div style="display:flex; gap:10px; margin:16px 0;">
+                <select id="photoStage" class="chat-input" style="flex:1;">
+                    <option value="Pre-Job">Pre-Job Photo</option>
+                    <option value="During Job">During Job Photo</option>
+                    <option value="Post-Job">Post-Job Photo</option>
+                </select>
+                <button class="chip primary" style="white-space:nowrap;" onclick="document.getElementById('photoInput').click()">📸 Upload</button>
+                <input type="file" id="photoInput" accept="image/*" capture="environment" style="display:none;" onchange="handlePhotoUpload(event)">
+            </div>
+            <div id="photoGallery" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(110px, 1fr)); gap:12px;">
+                <div style="grid-column:1/-1;font-size:12px;color:var(--muted);">Loading photos...</div>
+            </div>
+        </div>
+
+        <div class="card">
             <h3 style="margin:0 0 16px 0;color:#fff;">Onboarding & Paperwork</h3>
             <p style="font-size:13px;color:var(--muted);margin-top:0;">Securely upload W-9s, Insurance COIs, or signed work orders directly to your project file.</p>
             <div class="doc-upload-area" onclick="document.getElementById('fileInput').click()">
@@ -245,23 +291,110 @@ function renderDashboard(job) {
     `;
 }
 
-// Simulated File Upload Logic
-function handleFileUpload(event) {
+// ---- FILE UPLOADS (DOCUMENTS) ----
+async function handleFileUpload(event) {
     const file = event.target.files[0];
     if(!file) return;
     
-    // In a full build, this hooks into Firebase Storage. 
-    // For now, we log the action into the client chat to notify DealBankers.
-    const text = `📁 Uploaded Document: ${file.name}`;
-    db.ref(`jobs/${JOB_ID}/clientComms`).push({
-        text: text,
-        uid: "client",
-        byName: "Vendor / Partner",
-        ts: Date.now()
-    });
-    alert(`File "${file.name}" received. DealBankers has been notified.`);
+    if (!storage) return alert("Storage is not configured correctly.");
+    
+    try {
+        const storageRef = storage.ref(`jobs/${JOB_ID}/documents/${Date.now()}_${file.name}`);
+        const snapshot = await storageRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        const messageText = `📁 Uploaded Document: ${file.name}\nLink: ${downloadURL}`;
+        
+        // Log to Client Chat
+        await db.ref(`jobs/${JOB_ID}/clientComms`).push({
+            text: messageText, uid: "client", byName: "Vendor / Partner", ts: Date.now()
+        });
+
+        // Ping Internal Command Center
+        await db.ref(`jobs/${JOB_ID}/messages`).push({
+            text: `📁 Document Uploaded on Fulfillment Portal: ${file.name}\nLink: ${downloadURL}\nPortal: ${PORTAL_URL}`,
+            type: 'tech', uid: 'client', byName: 'Fulfillment Portal', ts: Date.now()
+        });
+
+        alert(`File "${file.name}" received securely.`);
+    } catch(e) {
+        console.error(e);
+        alert("File upload failed. Check your Firebase Storage configuration.");
+    } finally {
+        event.target.value = ''; 
+    }
 }
 
+// ---- PHOTO UPLOADS & GALLERY ----
+async function handlePhotoUpload(event) {
+    const file = event.target.files[0];
+    if(!file) return;
+    const stage = document.getElementById('photoStage').value;
+    
+    if (!storage) return alert("Storage is not configured correctly.");
+
+    const gallery = document.getElementById('photoGallery');
+    const tempId = 'loading-' + Date.now();
+    gallery.innerHTML = `<div id="${tempId}" class="photo-thumb" style="display:flex;align-items:center;justify-content:center;background:rgba(255,255,255,0.05);color:var(--accent);font-size:11px;font-weight:700;">Uploading...</div>` + gallery.innerHTML;
+
+    try {
+        const storageRef = storage.ref(`jobs/${JOB_ID}/photos/${Date.now()}_${file.name}`);
+        const snapshot = await storageRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        // Save to Photo Gallery DB
+        await db.ref(`jobs/${JOB_ID}/photos`).push({
+            url: downloadURL, stage: stage, ts: Date.now(), name: file.name
+        });
+        
+        // Log to Client Chat
+        await db.ref(`jobs/${JOB_ID}/clientComms`).push({
+            text: `📸 Uploaded ${stage} Photo.\nLink: ${downloadURL}`,
+            uid: "client", byName: "Vendor / Partner", ts: Date.now()
+        });
+
+        // Ping Internal Command Center
+        await db.ref(`jobs/${JOB_ID}/messages`).push({
+            text: `📸 ${stage} Photo Uploaded by Field Tech/Vendor!\nView Image: ${downloadURL}\nPortal: ${PORTAL_URL}`,
+            type: 'tech', uid: 'client', byName: 'Fulfillment Portal', ts: Date.now()
+        });
+
+    } catch(e) {
+        console.error(e);
+        alert("Photo upload failed. Check your Firebase Storage configuration.");
+        const loader = document.getElementById(tempId);
+        if(loader) loader.remove();
+    } finally {
+        event.target.value = ''; 
+    }
+}
+
+function loadPhotos() {
+    db.ref(`jobs/${JOB_ID}/photos`).on('value', snap => {
+        const photos = snap.val() || {};
+        const gallery = document.getElementById('photoGallery');
+        if(!gallery) return;
+
+        if(!Object.keys(photos).length) {
+            gallery.innerHTML = `<div style="grid-column:1/-1;font-size:12px;color:var(--muted);">No photos uploaded yet. Use the upload button above.</div>`;
+            return;
+        }
+
+        let html = '';
+        Object.values(photos).sort((a,b) => b.ts - a.ts).forEach(p => {
+            html += `
+            <div class="photo-thumb">
+                <a href="${esc(p.url)}" target="_blank">
+                    <img src="${esc(p.url)}" loading="lazy" />
+                </a>
+                <div class="photo-label">${esc(p.stage)}</div>
+            </div>`;
+        });
+        gallery.innerHTML = html;
+    });
+}
+
+// ---- CLIENT CHAT ----
 function loadChat() {
     db.ref(`jobs/${JOB_ID}/clientComms`).on('value', (snap) => {
         const msgs = snap.val() || {};
@@ -279,7 +412,7 @@ function loadChat() {
             html += `
             <div class="chat-item ${mine ? 'chat-me' : 'chat-them'}">
                 <div style="font-size:10px;opacity:0.7;margin-bottom:4px;"><b>${esc(m.byName)}</b> • ${new Date(m.ts).toLocaleTimeString()}</div>
-                <div>${esc(m.text)}</div>
+                <div>${window.linkify(esc(m.text))}</div>
             </div>`;
         });
         box.innerHTML = html;
