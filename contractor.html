@@ -111,7 +111,7 @@ body{
 .comms-panel-god{border-radius:16px;border:1px solid rgba(19,185,129,.4);background:rgba(19,185,129,.05);padding:20px;margin-top:10px;}
 .god-header-row{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;}
 .god-header-row h4{margin:0;color:var(--good);font-weight:900;font-size:16px;text-transform:uppercase;letter-spacing:0.05em;}
-.comms-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);margin-bottom:8px;}
+.comms-row{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border-radius:12px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.08);margin-bottom:8px;flex-wrap:wrap;}
 .comms-meta{display:flex;flex-direction:column;gap:2px;}
 .comms-name{font-weight:800;color:#fff;font-size:14px;}
 .comms-label{color:var(--muted);font-size:13px;}
@@ -215,6 +215,7 @@ body{
             <div class="detail-header">
                 <button id="backToList">← Back to List</button>
                 <div style="display:flex;gap:6px;align-items:center;">
+                    <button class="chip tiny ghost" id="btnActivityLog" style="display:none;" onclick="window.openActivityModal(window.currentJobId)">🕒 Activity Log</button>
                     <button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ God Edit</button>
                     <span class="pill good" id="jobDetailStatus">—</span>
                 </div>
@@ -311,6 +312,18 @@ body{
     </div>
 </div>
 
+<div class="modal-backdrop" id="activityModal">
+    <div class="modal" role="dialog" style="max-width:500px">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+            <h3 style="margin:0;color:#fff;font-size:20px;">Job Activity Log</h3>
+            <button class="chip ghost" onclick="window.closeActivityModal()">✕</button>
+        </div>
+        <div id="activityLogBody" style="max-height:400px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,.08);">
+            Loading...
+        </div>
+    </div>
+</div>
+
 <div class="modal-backdrop" id="teamModal">
     <div class="modal" role="dialog" style="max-width:760px;">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
@@ -395,6 +408,15 @@ window.esc = function(s) {
     if (!s) return "";
     return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 };
+
+// URL Parser to transform raw links into clickable buttons in the chat
+window.linkify = function(text) {
+    const urlRegex = /(https?:\/\/[^\s]+)/g;
+    return text.replace(urlRegex, function(url) {
+        return '<a href="' + url + '" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:700;">' + url + '</a>';
+    });
+};
+
 const $ = (id) => document.getElementById(id); 
 
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
@@ -409,12 +431,13 @@ if(google_key) {
 
 window.formatLocalPhones = function(raw){ 
     if(!raw) return [];
-    return String(raw).split("\n").map(l => { 
+    return String(raw).split("\n").map((l, idx) => { 
+        if(!l.trim()) return null;
         const [a, b] = l.includes("|") ? l.split("|") : ["POC", l]; 
         const label = a.trim(); 
-        const number = b.trim(); 
+        const number = b ? b.trim() : ""; 
         if(!number) return null; 
-        return { label, number }; 
+        return { label, number, raw: l, index: idx }; 
     }).filter(Boolean);
 };
 
@@ -573,6 +596,18 @@ window.renderJobsList = function(){
     el.innerHTML = html;
 };
 
+window.logActivity = async function(jobId, actionText) {
+    if(!jobId) return;
+    try {
+        await firebase.database().ref(`jobs/${jobId}/activity`).push({
+            text: actionText,
+            uid: window.UID,
+            byName: window.ME?.email || "System",
+            ts: Date.now()
+        });
+    } catch(e){}
+};
+
 window.renderJobDetail = function(id){ 
     const j = window.jobsCache[id]; if(!j){ window.hideDetails(); return;} 
     window.currentJobId = id; window.renderJobsList();
@@ -584,6 +619,9 @@ window.renderJobDetail = function(id){
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
     const isGatekeeper = window.isGod || j.postedBy === window.UID;
     
+    if($('btnActivityLog')) $('btnActivityLog').style.display = (window.isBranchManager || window.isGod) ? "inline-flex" : "none";
+    if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGod || j.postedBy === window.UID) ? "inline-flex" : "none";
+
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
         let zoomLvl = exact ? 17 : 13;
@@ -595,9 +633,16 @@ window.renderJobDetail = function(id){
         const vendorPhones = window.formatLocalPhones(j.vendorPhones); 
         let vpHtml = "";
         vendorPhones.forEach(vp => { 
-            vpHtml += `<div class="comms-row"><div class="comms-meta"><div class="comms-name">${window.esc(vp.label)}</div><div class="comms-label">${window.esc(vp.number)}</div></div><div class="comms-actions"><a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny">📞 Call</a><a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny">💬 Text</a></div></div>`; 
+            vpHtml += `<div class="comms-row">
+                <div class="comms-meta"><div class="comms-name">${window.esc(vp.label)}</div><div class="comms-label">${window.esc(vp.number)}</div></div>
+                <div class="comms-actions" style="display:flex;gap:4px;">
+                    <a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny" style="padding:4px 10px;font-size:11px;">📞 Call</a>
+                    <a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny" style="padding:4px 10px;font-size:11px;">💬 Text</a>
+                    ${window.isGod ? `<button class="chip ghost tiny" style="padding:4px 8px;font-size:11px;" title="Edit" onclick="window.editVendorPhone('${j.id}', ${vp.index})">✎</button><button class="chip danger tiny" style="padding:4px 8px;font-size:11px;" title="Delete" onclick="window.deleteVendorPhone('${j.id}', ${vp.index})">✕</button>` : ''}
+                </div>
+            </div>`; 
         });
-        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;">Vendor Phones</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
+        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center;">Vendor / Sub Contacts ${window.isGod ? `<button class="chip ghost" style="padding:4px 10px;font-size:11px;" onclick="window.promptAddVendor('${j.id}')">＋ Add Sub</button>` : ''}</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
     } 
     
     let actionHTML = "";
@@ -661,8 +706,6 @@ window.renderJobDetail = function(id){
     
     if(isAssigned && (amIAssigned || isGatekeeper)) window.loadJobCommFeed(id); 
     if(window.isGod || window.isBranchManager) window.loadClientCommFeed(id);
-
-    if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGod || j.postedBy === window.UID) ? "inline-flex" : "none";
 };
 
 window.loadJobCommFeed = async function(id){ 
@@ -670,9 +713,10 @@ window.loadJobCommFeed = async function(id){
     const snap = await firebase.database().ref(`jobs/${id}/messages`).once("value");
     const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No internal comms yet.</div>"; return; } 
     let html = "";
-    Object.values(msgs).sort((a,b)=> a.ts - b.ts).forEach(m => { 
+    Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => { 
         const mine = m.uid === window.UID; const internal = m.type === 'internal'; 
-        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;"><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</div><div>${window.esc(m.text)}</div></div>`; 
+        const delBtn = window.isGod ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteInternalMsg('${id}', '${m._key}')">✕</span>` : '';
+        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`; 
     });
     list.innerHTML = html; list.scrollTop = list.scrollHeight;
 };
@@ -682,11 +726,89 @@ window.loadClientCommFeed = async function(id){
     const snap = await firebase.database().ref(`jobs/${id}/clientComms`).once("value");
     const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No client/vendor comms yet.</div>"; return; } 
     let html = "";
-    Object.values(msgs).sort((a,b)=> a.ts - b.ts).forEach(m => { 
+    Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => { 
         const mine = m.uid === window.UID; 
-        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;"><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</div><div>${window.esc(m.text)}</div></div>`; 
+        const delBtn = window.isGod ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteClientMsg('${id}', '${m._key}')">✕</span>` : '';
+        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`; 
     });
     list.innerHTML = html; list.scrollTop = list.scrollHeight;
+};
+
+window.openActivityModal = async function(id) {
+    if(!id) return;
+    if($('activityModal')) $('activityModal').classList.add('show');
+    const box = $('activityLogBody');
+    box.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">Loading Activity...</div>';
+    
+    firebase.database().ref(`jobs/${id}/activity`).once('value', snap => {
+        const logs = snap.val() || {};
+        if(!Object.keys(logs).length) {
+            box.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">No activity logged yet.</div>';
+            return;
+        }
+        let html = "";
+        Object.values(logs).sort((a,b) => b.ts - a.ts).forEach(l => {
+            const time = new Date(l.ts).toLocaleString();
+            html += `<div style="padding:10px;border-bottom:1px solid rgba(255,255,255,0.05);">
+                <div style="font-size:10px;color:var(--muted);margin-bottom:4px;"><b>${window.esc(l.byName)}</b> • ${time}</div>
+                <div style="font-size:13px;color:#fff;">${window.esc(l.text)}</div>
+            </div>`;
+        });
+        box.innerHTML = html;
+    });
+};
+
+window.closeActivityModal = function() { if($('activityModal')) $('activityModal').classList.remove('show'); };
+
+window.deleteInternalMsg = async function(jobId, msgKey) {
+    if(!confirm("Permanently delete this internal message?")) return;
+    try { await firebase.database().ref(`jobs/${jobId}/messages/${msgKey}`).remove(); window.loadJobCommFeed(jobId); } catch(e) {}
+};
+
+window.deleteClientMsg = async function(jobId, msgKey) {
+    if(!confirm("Permanently delete this message from the client portal?")) return;
+    try { await firebase.database().ref(`jobs/${jobId}/clientComms/${msgKey}`).remove(); window.loadClientCommFeed(jobId); } catch(e) {}
+};
+
+window.promptAddVendor = async function(jobId) {
+    const j = window.jobsCache[jobId]; if(!j) return;
+    const input = prompt("Enter new Sub Contact (Format: Name | 555-555-5555):");
+    if(!input || !input.trim()) return;
+    let current = (j.vendorPhones || "").trim();
+    let updated = current ? current + "\n" + input.trim() : input.trim();
+    try { 
+        await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: updated}); 
+        window.logActivity(jobId, `Added Sub Contact: ${input.trim()}`);
+        window.renderJobDetail(jobId); 
+    } catch(e){}
+};
+
+window.editVendorPhone = async function(jobId, index) {
+    const j = window.jobsCache[jobId]; if(!j) return;
+    let lines = String(j.vendorPhones || "").split("\n");
+    const oldVal = lines[index];
+    const updated = prompt("Edit Sub Contact:", oldVal);
+    if(updated !== null && updated.trim() !== "") {
+        lines[index] = updated.trim();
+        try { 
+            await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: lines.join("\n")}); 
+            window.logActivity(jobId, `Edited Sub Contact from '${oldVal}' to '${updated.trim()}'`);
+            window.renderJobDetail(jobId); 
+        } catch(e){}
+    }
+};
+
+window.deleteVendorPhone = async function(jobId, index) {
+    if(!confirm("Remove this sub contact?")) return;
+    const j = window.jobsCache[jobId]; if(!j) return;
+    let lines = String(j.vendorPhones || "").split("\n");
+    const removedVal = lines[index];
+    lines.splice(index, 1);
+    try { 
+        await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: lines.join("\n").trim()}); 
+        window.logActivity(jobId, `Deleted Sub Contact: ${removedVal}`);
+        window.renderJobDetail(jobId); 
+    } catch(e){}
 };
 
 window.hideDetails = function(){ 
@@ -718,21 +840,31 @@ document.addEventListener('click', async (e) => {
     const reqBtn = e.target.closest('#btnRequestJob');
     if(reqBtn && window.currentJobId) {
         reqBtn.disabled = true; reqBtn.textContent = "Requesting...";
-        try{ await firebase.database().ref(`jobs/${window.currentJobId}/requests/${window.UID}`).set({ uid: window.UID, email: window.ME.email, ts: firebase.database.ServerValue.TIMESTAMP }); } catch(err){ alert("Request failed."); reqBtn.disabled = false; reqBtn.textContent = "✋ Request Job"; }
+        try{ 
+            await firebase.database().ref(`jobs/${window.currentJobId}/requests/${window.UID}`).set({ uid: window.UID, email: window.ME.email, ts: firebase.database.ServerValue.TIMESTAMP }); 
+            window.logActivity(window.currentJobId, `Job request submitted by ${window.ME.email}`);
+        } catch(err){ alert("Request failed."); reqBtn.disabled = false; reqBtn.textContent = "✋ Request Job"; }
     }
     const approveBtn = e.target.closest('.btnApproveRequest');
     if(approveBtn && window.currentJobId) {
         const targetUid = approveBtn.getAttribute('data-uid'); const targetEmail = approveBtn.getAttribute('data-email');
         if(confirm(`Approve ${targetEmail} for this job?`)) {
             approveBtn.disabled = true; approveBtn.textContent = "Approving...";
-            try { await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: targetUid, assignedSubEmail: targetEmail, executionStatus: 'Not Left', requests: null }); } catch(err){ alert("Approval failed."); approveBtn.disabled = false; approveBtn.textContent = "Approve"; }
+            try { 
+                await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: targetUid, assignedSubEmail: targetEmail, executionStatus: 'Not Left', requests: null }); 
+                window.logActivity(window.currentJobId, `Request approved. Job assigned to ${targetEmail}`);
+            } catch(err){ alert("Approval failed."); approveBtn.disabled = false; approveBtn.textContent = "Approve"; }
         }
     }
     const assignSubBtn = e.target.closest('#assignSubBtn');
     if(assignSubBtn && window.currentJobId) {
         const select = $('subAssignSelect'); if(!select.value) return alert("Please select an associate first.");
         const [subUid, subEmail] = select.value.split('|');
-        try { await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: subUid, assignedSubEmail: subEmail, executionStatus: 'Not Left', requests: null }); alert(`Job assigned to ${subEmail}.`); } catch(err) { alert("Assignment failed."); }
+        try { 
+            await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: subUid, assignedSubEmail: subEmail, executionStatus: 'Not Left', requests: null }); 
+            window.logActivity(window.currentJobId, `Job forcibly assigned to ${subEmail}`);
+            alert(`Job assigned to ${subEmail}.`); 
+        } catch(err) { alert("Assignment failed."); }
     }
     const techMsgBtn = e.target.closest('#btnSendTechMsg');
     if(techMsgBtn && window.currentJobId) {
@@ -750,7 +882,15 @@ document.addEventListener('click', async (e) => {
         try{ await firebase.database().ref(`jobs/${window.currentJobId}/clientComms`).push({ text, uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadClientCommFeed(window.currentJobId); }catch(err){} sendClientBtn.disabled = false;
     }
     const trackerStep = e.target.closest('.tracker-step');
-    if(trackerStep && window.currentJobId) { const stepId = trackerStep.getAttribute('data-step'); if(stepId) { try { await firebase.database().ref(`jobs/${window.currentJobId}/executionStatus`).set(stepId); } catch(err){} } }
+    if(trackerStep && window.currentJobId) { 
+        const stepId = trackerStep.getAttribute('data-step'); 
+        if(stepId) { 
+            try { 
+                await firebase.database().ref(`jobs/${window.currentJobId}/executionStatus`).set(stepId); 
+                window.logActivity(window.currentJobId, `Fulfillment tracker updated to: ${stepId}`);
+            } catch(err){} 
+        } 
+    }
     if(e.target.closest('#btnGodModeEdit') && window.currentJobId) window.openJobModal('edit', window.currentJobId);
 });
 
@@ -779,9 +919,12 @@ window.saveJob = async function() {
         }
         const fuzzy = `${payload.city||''}, ${payload.zip||''}`;
         if(fuzzy.trim().length > 3){ try{ const fll = await window.geocodeAddress(fuzzy); payload.fuzzyLatLng = {lat:fll.lat(), lng:fll.lng()}; }catch(e){} }
+        const isNew = !window.modalLeadId;
         const ref = window.modalLeadId ? firebase.database().ref(`jobs/${window.modalLeadId}`) : firebase.database().ref('jobs').push();
-        if(!window.modalLeadId) payload.postedBy = window.UID;
-        await ref.update(payload); window.closeJobModal();
+        if(isNew) payload.postedBy = window.UID;
+        await ref.update(payload); 
+        window.logActivity(ref.key, isNew ? "Created new job post" : "Edited job details via God Edit");
+        window.closeJobModal();
     } catch(e) { alert("Failed to save."); } finally { if($('btnJobSave')) { $('btnJobSave').disabled = false; $('btnJobSave').textContent = "Save Job"; } }
 };
 
@@ -856,7 +999,15 @@ window.renderTeamModalBody = async function() {
         if(!pending.length) html += `<div class="help">No pending requests.</div>`;
         else pending.forEach(r => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(byUid[r.targetUid]?.name || r.targetEmail)}</strong><span style="font-size:11px;color:var(--warn)">Requested by: ${window.esc(byUid[r.requesterUid]?.name || r.requesterEmail)}</span></div><div class="teamActions"><button class="chip primary" onclick="window.approveRequest('${window.esc(r.id)}')">Approve</button></div></div>`; });
         html += `</div><div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">All Users</div><div class="teamGrid">`;
-        Object.values(byUid).sort((a,b) => String(a.name||a.email||"").localeCompare(String(b.name||b.email||""))).forEach(u => { if(u.role === "system") return; html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.role).toUpperCase()}</span></div><div class="teamActions">${u.uid!==window.UID?`<select class="chip" onchange="window.changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:''}</div></div>`; });
+        Object.values(byUid).sort((a,b) => String(a.name||a.email||"").localeCompare(String(b.name||b.email||""))).forEach(u => { 
+            if(u.role === "system") return; 
+            html += `<div class="teamRow">
+                <div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.role).toUpperCase()}</span></div>
+                <div class="teamActions">
+                    ${u.uid!==window.UID?`<select class="chip" onchange="window.changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:''}
+                </div>
+            </div>`; 
+        });
         html += `</div>`;
     } else if(window.isBranchManager) {
         const myTeam = window.managedAssociatesFor(window.UID);
