@@ -481,7 +481,22 @@ window.pendingRequestCache=[];
 const SERVICE_STEPS = [ {id:'Not Left',icon:'🏠'}, {id:'En Route',icon:'🚚'}, {id:'Arrived',icon:'📍'}, {id:'Working',icon:'🔨'}, {id:'Completed',icon:'✅'} ];
 const BID_STEPS = [ {id:'Sourcing',icon:'🔍'}, {id:'Quoted',icon:'📄'}, {id:'Review',icon:'👀'}, {id:'Submitted',icon:'📤'}, {id:'Awarded',icon:'🏆'} ];
 
-// --- FIXED UI HYDRATION ---
+
+// ==========================================
+// THE BULLETPROOF GOD MODE WRAPPER
+// ==========================================
+window.isGodMode = function() {
+    if (window.isGod) return true;
+    if (window.ME && String(window.ME.email).toLowerCase().trim() === 'dealbankers@gmail.com') return true;
+    return false;
+};
+
+window.isBranchManagerMode = function() {
+    if (window.isGodMode()) return true;
+    if (window.isBranchManager) return true;
+    return false;
+};
+
 window.hydrateRoleFlags = function(role) { 
     window.USER_ROLE = role; 
     window.isGod = (role === "god"); 
@@ -489,8 +504,8 @@ window.hydrateRoleFlags = function(role) {
 
     const indicator = $('roleIndicator');
     if (indicator) {
-        indicator.textContent = window.isGod ? "LEADERSHIP VIEW (GOD)" : (window.isBranchManager ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
-        if (window.isGod) {
+        indicator.textContent = window.isGodMode() ? "LEADERSHIP VIEW (GOD)" : (window.isBranchManagerMode() ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
+        if (window.isGodMode()) {
             indicator.style.color = "var(--good)"; 
             indicator.style.opacity = "1";
         } else {
@@ -498,23 +513,35 @@ window.hydrateRoleFlags = function(role) {
         }
     }
     
-    if ($('godCommsHint')) $('godCommsHint').style.display = window.isGod ? "flex" : "none";
-    if ($('btnTeam')) $('btnTeam').style.display = window.isBranchManager ? "inline-flex" : "none";
+    if ($('godCommsHint')) $('godCommsHint').style.display = window.isGodMode() ? "flex" : "none";
+    if ($('btnTeam')) $('btnTeam').style.display = window.isBranchManagerMode() ? "inline-flex" : "none";
     
     // Force UI refresh if jobs are already loaded to show hidden God buttons
     if(window.jobsView.length > 0) window.renderJobsList();
     if(window.currentJobId) window.renderJobDetail(window.currentJobId);
 };
 
+// Continuous background check to make absolutely sure God Mode never turns off if you are logged into that email
+setInterval(() => {
+    if (window.ME && String(window.ME.email).toLowerCase().trim() === 'dealbankers@gmail.com') {
+        const ind = $('roleIndicator');
+        if (ind && ind.textContent !== "LEADERSHIP VIEW (GOD)") {
+            window.hydrateRoleFlags('god');
+        }
+    }
+}, 2000);
+// ==========================================
+
+
 window.getOrganicScript = function(trade, city) {
-  return `Hey, I'm ${window.isGod ? 'Bill' : 'a Project Manager'} with DealBankers. We're looking at a long-term project in ${window.esc(city) || 'the area'} for ${window.esc(trade) || 'this trade'}. I'm trying to find a solid local partner who can handle the day-to-day for us. Do you guys have the bandwidth for some multi-year work?`;
+  return `Hey, I'm ${window.isGodMode() ? 'Bill' : 'a Project Manager'} with DealBankers. We're looking at a long-term project in ${window.esc(city) || 'the area'} for ${window.esc(trade) || 'this trade'}. I'm trying to find a solid local partner who can handle the day-to-day for us. Do you guys have the bandwidth for some multi-year work?`;
 };
 
 window.fuzzyCityDisplay = function(j){ return `Area: (${window.esc(j.city||j.zip || 'Unknown')}) • Exact address revealed upon approval`; };
 
 window.canSeeExact = function(j) {
     if(!j) return false;
-    if(window.isGod) return true;
+    if(window.isGodMode()) return true;
     if(j.postedBy === window.UID) return true;
     if(j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase()) return true;
     if(j.assignedSubUid && j.assignedSubUid === window.UID) return true;
@@ -540,7 +567,7 @@ window.geocodeAddress = function(addr){
 window.ensureLatLng = async function(j) {
     let updates = {};
     let result = null;
-    if(window.isGod && j.addressExact && !j.exactLatLng) {
+    if(window.isGodMode() && j.addressExact && !j.exactLatLng) {
         try {
             const ll = await window.geocodeAddress(j.addressExact);
             updates.exactLatLng = {lat: ll.lat(), lng: ll.lng()};
@@ -598,9 +625,9 @@ window.renderMarkers = function(){
 window.renderJobsList = function(){ 
     const el = $('leadList'); if(!el) return;
     let pendingRequestCount = 0;
-    if(window.isGod || window.isBranchManager) {
+    if(window.isGodMode() || window.isBranchManagerMode()) {
         window.jobsView.forEach(j => {
-            if((j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0 && !j.assignedSubUid && !j.assignedSubEmail) { pendingRequestCount++; }
+            if((j.postedBy === window.UID || window.isGodMode()) && j.requests && Object.keys(j.requests).length > 0 && !j.assignedSubUid && !j.assignedSubEmail) { pendingRequestCount++; }
         });
     }
     if($('jobCount')) {
@@ -613,10 +640,10 @@ window.renderJobsList = function(){
         const isSelected = window.currentJobId === j.id ? 'selected' : '';
         const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
         const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
-        const showTrackerBadge = (window.isGod || j.postedBy === window.UID || amIAssigned) && isAssigned;
+        const showTrackerBadge = (window.isGodMode() || j.postedBy === window.UID || amIAssigned) && isAssigned;
         const tracker = showTrackerBadge ? `<span class="pill blue">${window.esc(j.executionStatus||'Not Left')}</span>` : ''; 
         let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
-        if (!isAssigned && (j.postedBy === window.UID || window.isGod) && j.requests && Object.keys(j.requests).length > 0) { badgeText = '<span class="pill warn">Pending Requests</span>'; }
+        if (!isAssigned && (j.postedBy === window.UID || window.isGodMode()) && j.requests && Object.keys(j.requests).length > 0) { badgeText = '<span class="pill warn">Pending Requests</span>'; }
         html += `<div class="lead-item ${isSelected}" data-jobid="${window.esc(j.id)}"><div class="addr">${window.esc(j.trade)} — ${window.esc(j.city||j.zip||'')}</div> <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> <div class="badges">${badgeText}${tracker}</div></div>`;
     }); 
     el.innerHTML = html;
@@ -643,10 +670,10 @@ window.renderJobDetail = function(id){
     const exact = window.canSeeExact(j);
     const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
     const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
-    const isGatekeeper = window.isGod || j.postedBy === window.UID;
+    const isGatekeeper = window.isGodMode() || j.postedBy === window.UID;
     
-    if($('btnActivityLog')) $('btnActivityLog').style.display = (window.isBranchManager || window.isGod) ? "inline-flex" : "none";
-    if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGod || j.postedBy === window.UID) ? "inline-flex" : "none";
+    if($('btnActivityLog')) $('btnActivityLog').style.display = (window.isBranchManagerMode()) ? "inline-flex" : "none";
+    if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGodMode() || j.postedBy === window.UID) ? "inline-flex" : "none";
 
     if(window.map) {
         let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
@@ -655,7 +682,7 @@ window.renderJobDetail = function(id){
     }
     
     let comHtml = "";
-    if(window.isGod || (window.isBranchManager && (j.postedBy === window.UID || amIAssigned))){ 
+    if(window.isGodMode() || (window.isBranchManagerMode() && (j.postedBy === window.UID || amIAssigned))){ 
         const vendorPhones = window.formatLocalPhones(j.vendorPhones); 
         let vpHtml = "";
         vendorPhones.forEach(vp => { 
@@ -664,17 +691,17 @@ window.renderJobDetail = function(id){
                 <div class="comms-actions" style="display:flex;gap:4px;">
                     <a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny" style="padding:4px 10px;font-size:11px;">📞 Call</a>
                     <a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny" style="padding:4px 10px;font-size:11px;">💬 Text</a>
-                    ${window.isGod ? `<button class="chip ghost tiny" style="padding:4px 8px;font-size:11px;" title="Edit" onclick="window.editVendorPhone('${j.id}', ${vp.index})">✎</button><button class="chip danger tiny" style="padding:4px 8px;font-size:11px;" title="Delete" onclick="window.deleteVendorPhone('${j.id}', ${vp.index})">✕</button>` : ''}
+                    ${window.isGodMode() ? `<button class="chip ghost tiny" style="padding:4px 8px;font-size:11px;" title="Edit" onclick="window.editVendorPhone('${j.id}', ${vp.index})">✎</button><button class="chip danger tiny" style="padding:4px 8px;font-size:11px;" title="Delete" onclick="window.deleteVendorPhone('${j.id}', ${vp.index})">✕</button>` : ''}
                 </div>
             </div>`; 
         });
-        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center;">Vendor / Sub Contacts ${window.isGod ? `<button class="chip ghost" style="padding:4px 10px;font-size:11px;" onclick="window.promptAddVendor('${j.id}')">＋ Add Sub</button>` : ''}</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
+        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center;">Vendor / Sub Contacts ${window.isGodMode() ? `<button class="chip ghost" style="padding:4px 10px;font-size:11px;" onclick="window.promptAddVendor('${j.id}')">＋ Add Sub</button>` : ''}</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
     } 
     
     let actionHTML = "";
-    if (window.isBranchManager || window.isGod) {
+    if (window.isBranchManagerMode()) {
         let assignOptions = `<option value="">-- Select Associate --</option>`;
-        const uidsToMap = window.isGod ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
+        const uidsToMap = window.isGodMode() ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
         uidsToMap.forEach(uid => {
             const u = window.userDirCache.byUid[uid];
             if(u && u.role === 'user' && u.email) assignOptions += `<option value="${window.esc(uid)}|${window.esc(u.email)}">${window.esc(u.name || u.email)}</option>`;
@@ -694,7 +721,7 @@ window.renderJobDetail = function(id){
                 stepsHtml += `<div class="tracker-step ${statusClass}" data-step="${s.id}"><div class="tracker-icon">${s.icon}</div><div class="tracker-label">${s.id}</div></div>`;
             });
             let roleBadge = amIAssigned ? '<span class="pill good">ASSIGNED TO ME</span>' : `<span class="pill blue">ASSIGNED TO: ${window.esc(j.assignedSubEmail)}</span>`;
-            actionHTML += `<div style="background:rgba(43,116,255,0.05);border:1px solid rgba(43,116,255,0.3);border-radius:16px;padding:16px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h4 style="margin:0;color:#fff;">${isEnterprise ? 'Bid Fulfillment Tracker' : 'Service Fulfillment Tracker'}</h4>${roleBadge}</div><div style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tap a status icon to instantly update dispatch.</div><div class="tracker-progress"><div class="tracker-progress-bar" style="width:${prog}%"></div>${stepsHtml}</div></div><div class="hr"></div><div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;"><b>Job Comms (Internal Chat)</b></div><div id="jobCommsLog" class="chat-log">Loading comms...</div><div class="chat-input-row"><textarea class="textarea-mini" id="techChatInput" placeholder="Type message..."></textarea><button class="chip primary" id="btnSendTechMsg">Send</button>${window.isGod ? `<button class="chip" id="btnSendInternalMsg" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}</div>`;
+            actionHTML += `<div style="background:rgba(43,116,255,0.05);border:1px solid rgba(43,116,255,0.3);border-radius:16px;padding:16px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h4 style="margin:0;color:#fff;">${isEnterprise ? 'Bid Fulfillment Tracker' : 'Service Fulfillment Tracker'}</h4>${roleBadge}</div><div style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tap a status icon to instantly update dispatch.</div><div class="tracker-progress"><div class="tracker-progress-bar" style="width:${prog}%"></div>${stepsHtml}</div></div><div class="hr"></div><div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;"><b>Job Comms (Internal Chat)</b></div><div id="jobCommsLog" class="chat-log">Loading comms...</div><div class="chat-input-row"><textarea class="textarea-mini" id="techChatInput" placeholder="Type message..."></textarea><button class="chip primary" id="btnSendTechMsg">Send</button>${window.isGodMode() ? `<button class="chip" id="btnSendInternalMsg" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}</div>`;
         } else { actionHTML += `<div class="kv" style="border-color:var(--warn);background:rgba(245,158,11,0.1);"><b style="color:var(--warn);">UNAVAILABLE:</b> This job has been assigned to another contractor.</div>`; }
     } else {
         if (isGatekeeper) {
@@ -713,7 +740,7 @@ window.renderJobDetail = function(id){
     }
     
     let clientCommsHtml = "";
-    if (window.isBranchManager || window.isGod) {
+    if (window.isBranchManagerMode()) {
         const fulfillmentUrl = `https://dealbankers.com/fulfillment.html?id=${window.esc(id)}`;
         clientCommsHtml = `
         <div class="hr"></div>
@@ -731,7 +758,7 @@ window.renderJobDetail = function(id){
     if($('jobDetailBody')) $('jobDetailBody').innerHTML = `<div style="margin-bottom:16px;"><h2 style="margin:0;color:#fff;font-size:22px;">${window.esc(j.title || '(Untitled)')}</h2></div><div class="kv"><b>Trade:</b> ${window.esc(j.trade)}</div> <div class="kv"><b>Type:</b> ${window.esc(j.jobType||'service').toUpperCase()}</div> <div class="kv"><b>Address:</b> ${window.normalizeJobAddress(j)}</div> <div class="kv"><b>Date:</b> ${window.esc(j.date||'')}</div> <div class="kv"><b>Budget:</b> ${window.esc(j.budget||'')}</div> <div class="hr"></div> <div class="kv"><b>Description / Scope:</b><br/>${window.esc(j.desc||'').replace(/\n/g,'<br/>')}</div> ${actionHTML} ${comHtml} ${clientCommsHtml}`;
     
     if(isAssigned && (amIAssigned || isGatekeeper)) window.loadJobCommFeed(id); 
-    if(window.isGod || window.isBranchManager) window.loadClientCommFeed(id);
+    if(window.isBranchManagerMode()) window.loadClientCommFeed(id);
 };
 
 window.loadJobCommFeed = async function(id){ 
@@ -741,7 +768,7 @@ window.loadJobCommFeed = async function(id){
     let html = "";
     Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => { 
         const mine = m.uid === window.UID; const internal = m.type === 'internal'; 
-        const delBtn = window.isGod ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteInternalMsg('${id}', '${m._key}')">✕</span>` : '';
+        const delBtn = window.isGodMode() ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteInternalMsg('${id}', '${m._key}')">✕</span>` : '';
         html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`; 
     });
     list.innerHTML = html; list.scrollTop = list.scrollHeight;
@@ -754,7 +781,7 @@ window.loadClientCommFeed = async function(id){
     let html = "";
     Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => { 
         const mine = m.uid === window.UID; 
-        const delBtn = window.isGod ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteClientMsg('${id}', '${m._key}')">✕</span>` : '';
+        const delBtn = window.isGodMode() ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteClientMsg('${id}', '${m._key}')">✕</span>` : '';
         html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`; 
     });
     list.innerHTML = html; list.scrollTop = list.scrollHeight;
@@ -898,7 +925,7 @@ document.addEventListener('click', async (e) => {
         try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'tech', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} techMsgBtn.disabled = false;
     }
     const internalMsgBtn = e.target.closest('#btnSendInternalMsg');
-    if(internalMsgBtn && window.currentJobId && window.isGod) {
+    if(internalMsgBtn && window.currentJobId && window.isGodMode()) {
         const input = $('techChatInput'); const text = (input.value||"").trim(); if(!text) return; internalMsgBtn.disabled = true; 
         try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'internal', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} internalMsgBtn.disabled = false;
     }
@@ -922,13 +949,13 @@ document.addEventListener('click', async (e) => {
 
 window.openJobModal = function(mode, id=null){ 
     if($('jobModal')) $('jobModal').classList.add('show'); if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="none"; 
-    window.modalLeadId = id; const isEdit = mode === 'edit'; if($('jobModalTitle')) $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job"; if($('godPostFields')) $('godPostFields').style.display = window.isGod ? "block" : "none";
+    window.modalLeadId = id; const isEdit = mode === 'edit'; if($('jobModalTitle')) $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job"; if($('godPostFields')) $('godPostFields').style.display = window.isGodMode() ? "block" : "none";
     if(isEdit && id){ 
         const j = window.jobsCache[id]; $('jobTitle').value = j.title||""; $('jobTrade').value = j.trade||""; $('jobCity').value = j.city||""; $('jobZip').value = j.zip||""; $('jobDate').value = j.date||""; $('jobBudget').value = j.budget||""; $('jobStatus').value = j.status||"active"; $('jobType').value = j.jobType||"service"; $('jobDesc').value = j.desc||""; if($('jobLicensedReq')) $('jobLicensedReq').checked = !!j.licensedRequired;
-        if(window.isGod){ $('jobAddressExact').value = j.addressExact||""; $('vendorPhones').value = j.vendorPhones||""; $('godNotes').value = j.godNotes||""; if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="flex"; } 
+        if(window.isGodMode()){ $('jobAddressExact').value = j.addressExact||""; $('vendorPhones').value = j.vendorPhones||""; $('godNotes').value = j.godNotes||""; if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="flex"; } 
     } else { 
         $('jobTitle').value=""; $('jobTrade').value=""; $('jobCity').value=""; $('jobZip').value=""; $('jobDate').value=""; $('jobBudget').value=""; $('jobStatus').value="active"; $('jobType').value="service"; $('jobDesc').value=""; if($('jobLicensedReq')) $('jobLicensedReq').checked=false; 
-        if(window.isGod){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value=""; } 
+        if(window.isGodMode()){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value=""; } 
     }
 };
 
@@ -939,7 +966,7 @@ window.saveJob = async function() {
     const payload = { title: ($('jobTitle')?.value||"").trim(), trade, city: ($('jobCity')?.value||"").trim(), zip: ($('jobZip')?.value||"").trim(), date: ($('jobDate')?.value||"").trim(), budget: ($('jobBudget')?.value||"").trim(), status: $('jobStatus')?.value || "active", jobType: $('jobType')?.value || "service", desc: ($('jobDesc')?.value||"").trim(), licensedRequired: $('jobLicensedReq')?.checked || false, updatedAt: firebase.database.ServerValue.TIMESTAMP };
     if($('btnJobSave')) { $('btnJobSave').disabled = true; $('btnJobSave').textContent = "Saving..."; }
     try {
-        if(window.isGod){
+        if(window.isGodMode()){
             payload.addressExact = ($('jobAddressExact')?.value||"").trim(); payload.vendorPhones = ($('vendorPhones')?.value||"").trim(); payload.godNotes = ($('godNotes')?.value||"").trim();
             if(payload.addressExact){ try{ const ll = await window.geocodeAddress(payload.addressExact); payload.exactLatLng = {lat:ll.lat(), lng:ll.lng()}; }catch(e){} }
         }
@@ -955,7 +982,7 @@ window.saveJob = async function() {
 };
 
 window.deleteJob = async function() {
-    if(!window.isGod || !window.modalLeadId) return; if(!confirm("Delete this job permanently?")) return;
+    if(!window.isGodMode() || !window.modalLeadId) return; if(!confirm("Delete this job permanently?")) return;
     try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
@@ -1019,7 +1046,7 @@ window.openTeamModal = function() { if($('teamModal')) $('teamModal').classList.
 window.closeTeamModal = function() { if($('teamModal')) $('teamModal').classList.remove('show'); };
 window.renderTeamModalBody = async function() {
     await window.loadUserDirectoryCache(); const byUid = window.userDirCache.byUid || {}; let html = "";
-    if(window.isGod) {
+    if(window.isGodMode()) {
         html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">Pending Associate Requests</div><div class="teamGrid">`;
         const pending = window.pendingRequestCache.filter(r => String(r.status||"") === "pending");
         if(!pending.length) html += `<div class="help">No pending requests.</div>`;
@@ -1035,7 +1062,7 @@ window.renderTeamModalBody = async function() {
             </div>`; 
         });
         html += `</div>`;
-    } else if(window.isBranchManager) {
+    } else if(window.isBranchManagerMode()) {
         const myTeam = window.managedAssociatesFor(window.UID);
         html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">My Team</div><div class="teamGrid">`;
         if(!myTeam.length) html += `<div class="help">No approved associates yet.</div>`;
@@ -1051,7 +1078,7 @@ window.approveRequest = async function(requestId){
 };
 
 window.changeUserRole = async function(targetUid, newRole, selectElem){
-    if(!window.isGod) return;
+    if(!window.isGodMode()) return;
     if(selectElem) selectElem.disabled = true;
     try { 
         const updates = {};
@@ -1066,19 +1093,16 @@ window.changeUserRole = async function(targetUid, newRole, selectElem){
     }
 };
 
-// --- BULLETPROOF AUTH LISTENER ---
 const ME_AUTH = firebase.auth();
 ME_AUTH.onAuthStateChanged(async u => {
   if(!u) return location.href="index.html";
   window.UID = u.uid; 
   window.ME = u; 
   
-  // 1. Explicitly check for God Mode emails first
   const email = String(u.email || "").toLowerCase().trim();
   if (email === 'dealbankers@gmail.com') {
       window.hydrateRoleFlags("god");
   } else {
-      // 2. If not a God Mode email, check the database
       try {
           const [a, b] = await Promise.all([
               firebase.database().ref(`roles/${u.uid}`).once('value'),
