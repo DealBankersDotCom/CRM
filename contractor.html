@@ -187,7 +187,7 @@ body{
 </header>
 
 <div class="posture-bar">
-    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">ASSOCIATE VIEW</span></div>
+    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">VERIFYING...</span></div>
     <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
     <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
     <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
@@ -456,6 +456,7 @@ window.sanitizeTel = function(p){
     }catch(e){console.error("Firebase init error", e);}
 })();
 
+// --- GLOBAL STATE ---
 window.UID = "";
 window.USER_ROLE = "user";
 window.isGod = false;
@@ -479,6 +480,46 @@ window.pendingRequestCache=[];
 
 const SERVICE_STEPS = [ {id:'Not Left',icon:'🏠'}, {id:'En Route',icon:'🚚'}, {id:'Arrived',icon:'📍'}, {id:'Working',icon:'🔨'}, {id:'Completed',icon:'✅'} ];
 const BID_STEPS = [ {id:'Sourcing',icon:'🔍'}, {id:'Quoted',icon:'📄'}, {id:'Review',icon:'👀'}, {id:'Submitted',icon:'📤'}, {id:'Awarded',icon:'🏆'} ];
+
+// --- FIXED ROLE RESOLUTION (GOD MODE BYPASS) ---
+window.resolveRole = async function(u) {
+    if (!u) return "user";
+    const email = String(u.email || "").toLowerCase().trim();
+    if (email === 'dealbankers@gmail.com') return "god";
+
+    try {
+        const [a, b] = await Promise.all([
+            firebase.database().ref(`roles/${u.uid}`).once('value'),
+            firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
+        ]);
+        const r = a.val() || b.val() || "user";
+        return (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user";
+    } catch (e) {
+        return "user";
+    }
+};
+
+// --- FIXED UI HYDRATION ---
+window.hydrateRoleFlags = function(role) { 
+    window.USER_ROLE = role; 
+    window.isGod = (role === "god"); 
+    window.isBranchManager = (role === "god" || role === "admin");
+
+    const indicator = $('roleIndicator');
+    if (indicator) {
+        indicator.textContent = window.isGod ? "LEADERSHIP VIEW" : (window.isBranchManager ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
+        if (window.isGod) {
+            indicator.style.color = "var(--accent)";
+            indicator.style.opacity = "1";
+            indicator.style.textShadow = "0 0 10px rgba(43,116,255,0.5)";
+        } else {
+            indicator.style.color = "#fff";
+            indicator.style.textShadow = "none";
+        }
+    }
+    if ($('godCommsHint')) $('godCommsHint').style.display = window.isGod ? "flex" : "none";
+    if ($('btnTeam')) $('btnTeam').style.display = window.isBranchManager ? "inline-flex" : "none";
+};
 
 window.getOrganicScript = function(trade, city) {
   return `Hey, I'm ${window.isGod ? 'Bill' : 'a Project Manager'} with DealBankers. We're looking at a long-term project in ${window.esc(city) || 'the area'} for ${window.esc(trade) || 'this trade'}. I'm trying to find a solid local partner who can handle the day-to-day for us. Do you guys have the bandwidth for some multi-year work?`;
@@ -994,58 +1035,4 @@ window.closeTeamModal = function() { if($('teamModal')) $('teamModal').classList
 window.renderTeamModalBody = async function() {
     await window.loadUserDirectoryCache(); const byUid = window.userDirCache.byUid || {}; let html = "";
     if(window.isGod) {
-        html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">Pending Associate Requests</div><div class="teamGrid">`;
-        const pending = window.pendingRequestCache.filter(r => String(r.status||"") === "pending");
-        if(!pending.length) html += `<div class="help">No pending requests.</div>`;
-        else pending.forEach(r => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(byUid[r.targetUid]?.name || r.targetEmail)}</strong><span style="font-size:11px;color:var(--warn)">Requested by: ${window.esc(byUid[r.requesterUid]?.name || r.requesterEmail)}</span></div><div class="teamActions"><button class="chip primary" onclick="window.approveRequest('${window.esc(r.id)}')">Approve</button></div></div>`; });
-        html += `</div><div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">All Users</div><div class="teamGrid">`;
-        Object.values(byUid).sort((a,b) => String(a.name||a.email||"").localeCompare(String(b.name||b.email||""))).forEach(u => { 
-            if(u.role === "system") return; 
-            html += `<div class="teamRow">
-                <div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.role).toUpperCase()}</span></div>
-                <div class="teamActions">
-                    ${u.uid!==window.UID?`<select class="chip" onchange="window.changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:''}
-                </div>
-            </div>`; 
-        });
-        html += `</div>`;
-    } else if(window.isBranchManager) {
-        const myTeam = window.managedAssociatesFor(window.UID);
-        html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">My Team</div><div class="teamGrid">`;
-        if(!myTeam.length) html += `<div class="help">No approved associates yet.</div>`;
-        else myTeam.forEach(u => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email)}</strong></div><div class="teamActions"><button class="chip danger" onclick="window.removeAssociate('${u.uid}')">Remove</button></div></div>`; });
-        html += `</div>`;
-    }
-    if($('teamModalBody')) $('teamModalBody').innerHTML = html;
-};
-
-window.approveRequest = async function(requestId){
-    const req = window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return;
-    try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`] = req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`] = "approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`] = {status:"approved", targetEmail:String(req.targetEmail).toLowerCase(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.renderTeamModalBody(); }catch(e){ alert("Approve failed"); }
-};
-
-window.changeUserRole = async function(targetUid, newRole){
-    if(!window.isGod) return;
-    try { await firebase.database().ref(`${ROLES_PATH}/${targetUid}`).set(newRole); await firebase.database().ref(`${USER_DIR_PATH}/${targetUid}`).update({role: newRole}); await window.renderTeamModalBody(); } catch(e) { alert("Role update failed."); }
-};
-
-window.resolveRole = async function(u){ 
-    if(String(u.email||"").toLowerCase() === 'dealbankers@gmail.com') return "god";
-    try{ const [a,b] = await Promise.all([firebase.database().ref(`roles/${u.uid}`).once('value'), firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')]); const r = a.val() || b.val() || "user"; return (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user"; }catch(e){return "user";}
-};
-
-window.hydrateRoleFlags = function(role){ 
-    window.USER_ROLE = role; window.isGod = (role === "god"); window.isBranchManager = (role === "god" || role === "admin");
-    if($('roleIndicator')) $('roleIndicator').textContent = window.isGod ? "LEADERSHIP VIEW" : (window.isBranchManager ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
-    if($('godCommsHint')) $('godCommsHint').style.display = window.isGod ? "flex" : "none";
-    if($('btnTeam')) $('btnTeam').style.display = window.isBranchManager ? "inline-flex" : "none";
-};
-
-const ME_AUTH = firebase.auth();
-ME_AUTH.onAuthStateChanged(async u => {
-  if(!u) return location.href="index.html";
-  window.UID=u.uid; window.ME = u; const role = await window.resolveRole(u); window.hydrateRoleFlags(role); window.subscribeJobs(); window.subscribeSelfDir();
-});
-</script>
-</body>
-</html>
+        html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">Pending Associate Requests</div><div class
