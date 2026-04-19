@@ -187,7 +187,7 @@ body{
 </header>
 
 <div class="posture-bar">
-    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">VERIFYING...</span></div>
+    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">VERIFYING AUTH...</span></div>
     <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
     <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
     <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
@@ -481,24 +481,6 @@ window.pendingRequestCache=[];
 const SERVICE_STEPS = [ {id:'Not Left',icon:'🏠'}, {id:'En Route',icon:'🚚'}, {id:'Arrived',icon:'📍'}, {id:'Working',icon:'🔨'}, {id:'Completed',icon:'✅'} ];
 const BID_STEPS = [ {id:'Sourcing',icon:'🔍'}, {id:'Quoted',icon:'📄'}, {id:'Review',icon:'👀'}, {id:'Submitted',icon:'📤'}, {id:'Awarded',icon:'🏆'} ];
 
-// --- FIXED ROLE RESOLUTION (GOD MODE BYPASS) ---
-window.resolveRole = async function(u) {
-    if (!u) return "user";
-    const email = String(u.email || "").toLowerCase().trim();
-    if (email === 'dealbankers@gmail.com') return "god";
-
-    try {
-        const [a, b] = await Promise.all([
-            firebase.database().ref(`roles/${u.uid}`).once('value'),
-            firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
-        ]);
-        const r = a.val() || b.val() || "user";
-        return (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user";
-    } catch (e) {
-        return "user";
-    }
-};
-
 // --- FIXED UI HYDRATION ---
 window.hydrateRoleFlags = function(role) { 
     window.USER_ROLE = role; 
@@ -507,16 +489,21 @@ window.hydrateRoleFlags = function(role) {
 
     const indicator = $('roleIndicator');
     if (indicator) {
-        indicator.textContent = window.isGod ? "LEADERSHIP VIEW" : (window.isBranchManager ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
+        indicator.textContent = window.isGod ? "LEADERSHIP VIEW (GOD)" : (window.isBranchManager ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
         if (window.isGod) {
-            indicator.style.color = "var(--accent)";
+            indicator.style.color = "var(--good)"; 
             indicator.style.opacity = "1";
         } else {
             indicator.style.color = "#fff";
         }
     }
+    
     if ($('godCommsHint')) $('godCommsHint').style.display = window.isGod ? "flex" : "none";
     if ($('btnTeam')) $('btnTeam').style.display = window.isBranchManager ? "inline-flex" : "none";
+    
+    // Force UI refresh if jobs are already loaded to show hidden God buttons
+    if(window.jobsView.length > 0) window.renderJobsList();
+    if(window.currentJobId) window.renderJobDetail(window.currentJobId);
 };
 
 window.getOrganicScript = function(trade, city) {
@@ -1063,7 +1050,6 @@ window.approveRequest = async function(requestId){
     try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`] = req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`] = "approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`] = {status:"approved", targetEmail:String(req.targetEmail).toLowerCase(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.renderTeamModalBody(); }catch(e){ alert("Approve failed"); }
 };
 
-// --- FIXED UPDATE FUNCTION (NO-HANG PROTECTION) ---
 window.changeUserRole = async function(targetUid, newRole, selectElem){
     if(!window.isGod) return;
     if(selectElem) selectElem.disabled = true;
@@ -1080,30 +1066,32 @@ window.changeUserRole = async function(targetUid, newRole, selectElem){
     }
 };
 
-window.resolveRole = async function(u) {
-    if (!u) return "user";
-    const email = String(u.email || "").toLowerCase().trim();
-    if (email === 'dealbankers@gmail.com') return "god";
-
-    try {
-        const [a, b] = await Promise.all([
-            firebase.database().ref(`roles/${u.uid}`).once('value'),
-            firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
-        ]);
-        const r = a.val() || b.val() || "user";
-        return (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user";
-    } catch (e) {
-        return "user";
-    }
-};
-
+// --- BULLETPROOF AUTH LISTENER ---
 const ME_AUTH = firebase.auth();
 ME_AUTH.onAuthStateChanged(async u => {
   if(!u) return location.href="index.html";
   window.UID = u.uid; 
   window.ME = u; 
-  const role = await window.resolveRole(u); 
-  window.hydrateRoleFlags(role); 
+  
+  // 1. Explicitly check for God Mode emails first
+  const email = String(u.email || "").toLowerCase().trim();
+  if (email === 'dealbankers@gmail.com') {
+      window.hydrateRoleFlags("god");
+  } else {
+      // 2. If not a God Mode email, check the database
+      try {
+          const [a, b] = await Promise.all([
+              firebase.database().ref(`roles/${u.uid}`).once('value'),
+              firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
+          ]);
+          const r = a.val() || b.val() || "user";
+          const role = (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user";
+          window.hydrateRoleFlags(role);
+      } catch (e) {
+          window.hydrateRoleFlags("user");
+      }
+  }
+
   window.subscribeJobs(); 
   window.subscribeSelfDir();
 });
