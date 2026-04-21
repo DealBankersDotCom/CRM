@@ -72,9 +72,11 @@ body{
   background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));
 }
 .status{font-size:12px;color:#9ab9d6}
+
+/* CSS FIXED: Ensure all users see panels by stacking gracefully on smaller screens */
 .body{padding:14px;display:grid;grid-template-columns: 340px minmax(0,1fr) 340px;gap:16px;}
-@media(max-width:1180px){ .body{grid-template-columns: 300px minmax(0,1fr)} .col-right{display:none} }
-@media(max-width:960px){ .body{grid-template-columns: 1fr} .col-right{display:block} }
+@media(max-width:1300px){ .body{grid-template-columns: 300px minmax(0,1fr);} .col-right{grid-column: 1 / -1; display:block;} }
+@media(max-width:960px){ .body{grid-template-columns: 1fr;} .col-right{grid-column: 1 / -1; display:block;} }
 
 .panel{border-radius:16px;border:1px solid rgba(255,255,255,.14);background:#0b1825;overflow:hidden;}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
@@ -633,7 +635,7 @@ body{
   // --- NEW: SHARE MODAL LOGIC ---
   window.openShareModal = function() {
       if(!ME || !ME.email) return toast("Authenticating rep account...");
-      
+
       const activeTabEl = document.querySelector("#offeringsTabs .offeringTab.active");
       let dealName = "Coupland";
       if(activeTabEl && activeTabEl.textContent.includes("Tax Notes")) dealName = "Tax Notes";
@@ -704,7 +706,16 @@ body{
     document.querySelectorAll(".retail-field").forEach(el => el.style.display = isSec ? "none" : "block");
   };
 
-  window.openModal = function(mode, item){
+  // FIXED: Ensure selected is cleared out when adding a new lead, and directory cache is loaded for assignments
+  window.openModal = async function(mode, item){
+    if(mode === 'new') {
+        selected = null;
+        selectedId = null;
+    } else {
+        selected = item;
+        selectedId = item.id;
+    }
+
     if($("leadModal")) $("leadModal").classList.add("show");
     if($("leadModalTitle")) $("leadModalTitle").textContent = mode === "edit" ? "Update Dossier" : "New Target Dossier";
     
@@ -730,6 +741,10 @@ body{
     if(isGod || isBranchManager) {
       if($("assignBlock")) $("assignBlock").style.display = "block";
       if($("assignHintPill")) $("assignHintPill").textContent = isGod ? "GOD MODE" : "BRANCH MANAGER";
+      
+      // FIXED: Await directory cache load to ensure assignments list renders properly
+      await loadDirectoryCache();
+
       modalAssignedSet = new Set();
       if(mode === "edit" && item) {
         if($("m_delete") && isGod) $("m_delete").style.display = "block";
@@ -1276,7 +1291,7 @@ body{
         <div class="note-row">
           <textarea id="noteBox" class="input note-box" placeholder="Log criteria, yield requirements, objections...">${escapeHtml(selected.notes||"")}</textarea>
           <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
-            <button class="icon-btn mini" type="button" onclick="window.cmdSaveNotes()">✓</button>
+            <button class=\"icon-btn mini\" type=\"button\" onclick=\"window.cmdSaveNotes()\">✓</button>
           </div>
         </div>
       </div>
