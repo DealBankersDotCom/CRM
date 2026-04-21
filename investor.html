@@ -247,13 +247,18 @@ body{
             <div class="offeringTab" onclick="window.setOfferingTab(this)">Tax Notes (12%)</div>
           </div>
           
-          <div id="offeringsContainer" style="height:600px; border-radius:12px; margin-top:12px; overflow:hidden; border:1px solid var(--line);">
+          <div id="shareLinkContainer" style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+             <input type="text" id="shareLinkInput" class="input" style="flex:1; font-size:12px; border-color:var(--line); padding:6px 10px;" readonly value="Loading personalized link...">
+             <button class="chip primary" type="button" style="padding:6px 12px; font-size:11px;" onclick="window.copyShareLink()">🔗 Copy Link</button>
+          </div>
+
+          <div id="offeringsContainer" style="height:550px; border-radius:12px; overflow:hidden; border:1px solid var(--line);">
             <iframe src="https://www.dealbankers.com/deals/CouplandExec.html" style="width:100%; height:100%; border:none;"></iframe>
           </div>
 
           <div style="height:1px; background:var(--line); margin:16px 0;"></div>
           <div style="font-size:12px; color:var(--muted); line-height:1.4;">
-            <b>Instructions:</b> Select the offering above to instantly load the deal metrics and pitch deck for your current call.
+            <b>Instructions:</b> Copy your personalized share link above and text/email it to the target. When they request the data room, the email will route directly to you.
           </div>
         </div>
       </div>
@@ -563,6 +568,39 @@ body{
     window.updateModalFields();
   };
 
+  // --- NEW: Dynamic Share Link Generation ---
+  window.updateShareLink = function(dealName) {
+      const shareInput = document.getElementById("shareLinkInput");
+      if(!shareInput) return;
+      
+      if(!ME || !ME.email) {
+          shareInput.value = "Authenticating rep account...";
+          return;
+      }
+      
+      const repEmailEnc = encodeURIComponent(ME.email);
+      
+      if(dealName.includes("Coupland")) {
+          shareInput.value = `https://www.dealbankers.com/deals/CouplandExec.html?rep=${repEmailEnc}`;
+      } else {
+          shareInput.value = "No link available for this deal yet.";
+      }
+  };
+
+  window.copyShareLink = async function() {
+      const shareInput = document.getElementById("shareLinkInput");
+      if(!shareInput) return;
+      const val = shareInput.value;
+      if(val && !val.includes("No link") && !val.includes("Authenticating")) {
+          try { 
+              await navigator.clipboard.writeText(val); 
+              toast("Personalized link copied!"); 
+          } catch(e) { 
+              toast("Failed to copy link"); 
+          }
+      }
+  };
+
   window.setOfferingTab = function(el) {
     document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
     if(el) el.classList.add("active");
@@ -572,9 +610,10 @@ body{
 
     if(el.textContent.includes("Coupland")) {
       container.innerHTML = `<iframe src="https://www.dealbankers.com/deals/CouplandExec.html" style="width:100%; height:100%; border:none;"></iframe>`;
-      container.style.height = "600px";
+      container.style.height = "550px";
       container.className = "";
       container.style.border = "1px solid var(--line)";
+      window.updateShareLink("Coupland");
     } else {
       container.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
@@ -589,6 +628,7 @@ body{
       container.style.height = "400px";
       container.className = "iframePlaceholder";
       container.style.border = "1px dashed var(--line)";
+      window.updateShareLink("Tax Notes");
     }
   };
 
@@ -887,8 +927,11 @@ body{
       if(!u) return location.href="index.html";
       UID=u.uid; ME=u;
       
-      // Ensure email is passed to iframe via localStorage
-      try { localStorage.setItem("userEmail", u.email || ""); } catch(e) {}
+      // Attempt to load the link immediately based on the active tab
+      const activeTabEl = document.querySelector("#offeringsTabs .offeringTab.active");
+      if(activeTabEl && activeTabEl.textContent.includes("Coupland")) {
+          window.updateShareLink("Coupland");
+      }
       
       try{
         const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
