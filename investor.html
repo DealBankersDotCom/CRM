@@ -247,9 +247,9 @@ body{
             <div class="offeringTab" onclick="window.setOfferingTab(this)">Tax Notes (12%)</div>
           </div>
           
-          <div id="shareLinkContainer" style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
-             <input type="text" id="shareLinkInput" class="input" style="flex:1; font-size:12px; border-color:var(--line); padding:6px 10px;" readonly value="Loading personalized link...">
-             <button class="chip primary" type="button" style="padding:6px 12px; font-size:11px;" onclick="window.copyShareLink()">🔗 Copy Link</button>
+          <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center; justify-content:space-between; background:rgba(0,0,0,.2); padding:8px 12px; border-radius:10px; border:1px solid var(--line);">
+             <div style="font-size:12px; color:var(--muted);">Send secure data room access to an investor.</div>
+             <button class="chip primary" type="button" style="padding:6px 12px; font-size:11px; margin:0;" onclick="window.openShareModal()">📤 Share Offering</button>
           </div>
 
           <div id="offeringsContainer" style="height:550px; border-radius:12px; overflow:hidden; border:1px solid var(--line);">
@@ -258,13 +258,46 @@ body{
 
           <div style="height:1px; background:var(--line); margin:16px 0;"></div>
           <div style="font-size:12px; color:var(--muted); line-height:1.4;">
-            <b>Instructions:</b> Copy your personalized share link above and text/email it to the target. When they request the data room, the email will route directly to you.
+            <b>Instructions:</b> Select an offering to review the metrics. Click "Share Offering" to draft a direct email from your CRM to the investor.
           </div>
         </div>
       </div>
 
     </div>
   </section>
+</div>
+
+<div class="modalOverlay" id="shareModal">
+  <div class="modalCard" role="dialog" aria-modal="true" style="max-width:600px;">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle" style="font-weight:900; font-size:18px;">Share Executive Summary</div>
+        <div class="modalSub" style="font-size:12px; color:var(--muted); margin-top:4px;">Drafts an email directly from your native mail client.</div>
+      </div>
+      <button class="iconBtn" title="Close" onclick="window.closeShareModal()">✕</button>
+    </div>
+    <div class="modalBody">
+      <div class="formGrid" style="grid-template-columns:1fr;">
+        <div>
+          <div class="lbl">To (Investor Email)</div>
+          <input id="shareTo" class="input" placeholder="investor@example.com" />
+          <div style="font-size:11px; color:var(--muted); margin-top:4px;">Auto-fills if you have a target selected in the queue.</div>
+        </div>
+        <div>
+          <div class="lbl">Subject</div>
+          <input id="shareSubject" class="input" />
+        </div>
+        <div>
+          <div class="lbl">Message</div>
+          <textarea id="shareMsg" class="input ta" style="min-height:180px; font-size:13px; line-height:1.5;"></textarea>
+        </div>
+      </div>
+    </div>
+    <div class="modalActions">
+      <button class="btn ghost" type="button" onclick="window.closeShareModal()">Cancel</button>
+      <button class="btn primary" type="button" onclick="window.submitShare()">Send Email</button>
+    </div>
+  </div>
 </div>
 
 <div id="leadModal" class="modal" aria-hidden="true">
@@ -568,39 +601,6 @@ body{
     window.updateModalFields();
   };
 
-  // --- NEW: Dynamic Share Link Generation ---
-  window.updateShareLink = function(dealName) {
-      const shareInput = document.getElementById("shareLinkInput");
-      if(!shareInput) return;
-      
-      if(!ME || !ME.email) {
-          shareInput.value = "Authenticating rep account...";
-          return;
-      }
-      
-      const repEmailEnc = encodeURIComponent(ME.email);
-      
-      if(dealName.includes("Coupland")) {
-          shareInput.value = `https://www.dealbankers.com/deals/CouplandExec.html?rep=${repEmailEnc}`;
-      } else {
-          shareInput.value = "No link available for this deal yet.";
-      }
-  };
-
-  window.copyShareLink = async function() {
-      const shareInput = document.getElementById("shareLinkInput");
-      if(!shareInput) return;
-      const val = shareInput.value;
-      if(val && !val.includes("No link") && !val.includes("Authenticating")) {
-          try { 
-              await navigator.clipboard.writeText(val); 
-              toast("Personalized link copied!"); 
-          } catch(e) { 
-              toast("Failed to copy link"); 
-          }
-      }
-  };
-
   window.setOfferingTab = function(el) {
     document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
     if(el) el.classList.add("active");
@@ -613,7 +613,6 @@ body{
       container.style.height = "550px";
       container.className = "";
       container.style.border = "1px solid var(--line)";
-      window.updateShareLink("Coupland");
     } else {
       container.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
@@ -628,8 +627,75 @@ body{
       container.style.height = "400px";
       container.className = "iframePlaceholder";
       container.style.border = "1px dashed var(--line)";
-      window.updateShareLink("Tax Notes");
     }
+  };
+
+  // --- NEW: SHARE MODAL LOGIC ---
+  window.openShareModal = function() {
+      if(!ME || !ME.email) return toast("Authenticating rep account...");
+      
+      const activeTabEl = document.querySelector("#offeringsTabs .offeringTab.active");
+      let dealName = "Coupland";
+      if(activeTabEl && activeTabEl.textContent.includes("Tax Notes")) dealName = "Tax Notes";
+
+      const token = btoa(ME.email);
+      let link = "No link available yet.";
+      let subj = "Investment Opportunity";
+      let body = "";
+
+      if(dealName === "Coupland") {
+          link = `https://www.dealbankers.com/deals/CouplandExec.html?token=${token}`;
+          subj = "Exclusive Access: Coupland 14-Lot Subdivision";
+          body = `Hi,\n\nI wanted to share the executive summary for our latest off-market development in the Taylor/Samsung corridor.\n\nYou can access the secure data room and pro-forma here:\n${link}\n\nLet me know when you have a moment to review, and feel free to reply directly to this email with any questions.\n\nBest,\n${ME.displayName || ME.email.split('@')[0]}`;
+      } else {
+          return toast("Sharing is not yet configured for this offering.");
+      }
+
+      if($("shareTo")) {
+          $("shareTo").value = (selected && selected.email) ? selected.email : "";
+      }
+      if($("shareSubject")) $("shareSubject").value = subj;
+      if($("shareMsg")) $("shareMsg").value = body;
+
+      if($("shareModal")) $("shareModal").style.display = "flex";
+  };
+
+  window.closeShareModal = function() {
+      if($("shareModal")) $("shareModal").style.display = "none";
+  };
+
+  window.submitShare = async function() {
+      const to = $("shareTo") ? $("shareTo").value.trim() : "";
+      const subj = $("shareSubject") ? $("shareSubject").value.trim() : "";
+      const msg = $("shareMsg") ? $("shareMsg").value.trim() : "";
+
+      if(!to) return toast("Please provide an investor email.");
+
+      // Log it in the CRM Notes automatically!
+      if (selected && selected.id && typeof firebase !== 'undefined') {
+          const noteAdd = `\n[${new Date().toLocaleDateString()}] Sent Executive Summary to ${to}`;
+          const updatedNotes = (selected.notes || "") + noteAdd;
+          
+          const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selected.id}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selected.id}`;
+          try {
+             if (isGod || isBranchManager) {
+                 await upsertAssignments(selected.id, { ...selected, notes: updatedNotes, updatedAt: Date.now() }, selected.assignedUids || []);
+             } else {
+                 await firebase.database().ref(path).update({ notes: updatedNotes, updatedAt: Date.now() });
+             }
+             selected.notes = updatedNotes;
+             renderConsole();
+          } catch(e) {
+             console.error("Failed to log share in CRM", e);
+          }
+      }
+
+      // Trigger the native mail client
+      const mailtoLink = `mailto:${encodeURIComponent(to)}?subject=${encodeURIComponent(subj)}&body=${encodeURIComponent(msg)}`;
+      window.location.href = mailtoLink;
+
+      window.closeShareModal();
+      toast("Email drafted successfully!");
   };
 
   window.updateModalFields = function(){
@@ -926,12 +992,6 @@ body{
     firebase.auth().onAuthStateChanged(async u=>{
       if(!u) return location.href="index.html";
       UID=u.uid; ME=u;
-      
-      // Attempt to load the link immediately based on the active tab
-      const activeTabEl = document.querySelector("#offeringsTabs .offeringTab.active");
-      if(activeTabEl && activeTabEl.textContent.includes("Coupland")) {
-          window.updateShareLink("Coupland");
-      }
       
       try{
         const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
