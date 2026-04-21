@@ -249,6 +249,11 @@ body{
             <div class="offeringTab" onclick="window.setOfferingTab(this)">Tax Notes (12%)</div>
           </div>
           
+          <div id="shareLinkContainer" style="display:flex; gap:8px; margin-bottom:12px; align-items:center;">
+             <input type="text" id="shareLinkInput" class="input" style="flex:1; font-size:12px; border-color:var(--line); padding:6px 10px;" readonly value="Loading personalized link...">
+             <button class="chip primary" type="button" style="padding:6px 12px; font-size:11px;" onclick="window.copyShareLink()">🔗 Copy Link</button>
+          </div>
+
           <div style="display:flex; gap:8px; margin-bottom:12px; align-items:center; justify-content:space-between; background:rgba(0,0,0,.2); padding:8px 12px; border-radius:10px; border:1px solid var(--line);">
              <div style="font-size:12px; color:var(--muted);">Send secure data room access to an investor.</div>
              <button class="chip primary" type="button" style="padding:6px 12px; font-size:11px; margin:0;" onclick="window.openShareModal()">📤 Share Offering</button>
@@ -260,7 +265,7 @@ body{
 
           <div style="height:1px; background:var(--line); margin:16px 0;"></div>
           <div style="font-size:12px; color:var(--muted); line-height:1.4;">
-            <b>Instructions:</b> Select an offering to review the metrics. Click "Share Offering" to draft a direct email from your CRM to the investor.
+            <b>Instructions:</b> Select an offering to review the metrics. Copy your personalized share link or click "Share Offering" to draft an email directly.
           </div>
         </div>
       </div>
@@ -603,6 +608,41 @@ body{
     window.updateModalFields();
   };
 
+  // --- NEW: Dynamic Share Link Generation (Base64 Encoded Token) ---
+  window.updateShareLink = function(dealName) {
+      const shareInput = document.getElementById("shareLinkInput");
+      if(!shareInput) return;
+      
+      if(!ME || !ME.email) {
+          shareInput.value = "Authenticating rep account...";
+          return;
+      }
+      
+      // Convert the email into a clean, secure-looking Base64 token
+      const token = btoa(ME.email);
+      
+      if(dealName.includes("Coupland")) {
+          // Generates a sleek, institutional-looking URL
+          shareInput.value = `https://www.dealbankers.com/deals/CouplandExec.html?token=${token}`;
+      } else {
+          shareInput.value = "No link available for this deal yet.";
+      }
+  };
+
+  window.copyShareLink = async function() {
+      const shareInput = document.getElementById("shareLinkInput");
+      if(!shareInput) return;
+      const val = shareInput.value;
+      if(val && !val.includes("No link") && !val.includes("Authenticating")) {
+          try { 
+              await navigator.clipboard.writeText(val); 
+              toast("Personalized link copied!"); 
+          } catch(e) { 
+              toast("Failed to copy link"); 
+          }
+      }
+  };
+
   window.setOfferingTab = function(el) {
     document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
     if(el) el.classList.add("active");
@@ -615,6 +655,7 @@ body{
       container.style.height = "550px";
       container.className = "";
       container.style.border = "1px solid var(--line)";
+      window.updateShareLink("Coupland");
     } else {
       container.innerHTML = `
         <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
@@ -629,6 +670,7 @@ body{
       container.style.height = "400px";
       container.className = "iframePlaceholder";
       container.style.border = "1px dashed var(--line)";
+      window.updateShareLink("Tax Notes");
     }
   };
 
@@ -771,6 +813,10 @@ body{
     const rows=[];
     Object.values(userDirCache.byUid||{}).forEach(u=>{
         if(u.role==="system") return; 
+        
+        // PORTAL SEGMENTATION: User must have logged into the Capital Hub to be assigned leads here
+        if(!u.portals || !u.portals.investor) return;
+
         if(isGod){
             if(u.role==="god") return; 
             rows.push(u); 
@@ -797,7 +843,7 @@ body{
         return !q || hay.includes(q);
     });
     if(!rows.length){
-        listEl.innerHTML = `<div class="help">No users available for assignment.</div>`;
+        listEl.innerHTML = `<div class="help">No users available for assignment in this portal.</div>`;
         return;
     } 
     
@@ -973,11 +1019,31 @@ body{
           .forEach(u=>{
             if(u.role==="system") return;
             const currentRole = (u.role === 'admin' ? "BRANCH MANAGER" : (u.role === 'god' ? "GOD MODE" : "ASSOCIATE"));
-            html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${escapeHtml(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${escapeHtml(u.email||u.uid)} • ${escapeHtml(currentRole)}</span></div><div class="teamActions">${u.uid!==UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="window.cmdChangeRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
+            const portalTag = (u.portals && u.portals.investor) ? '<span style="color:var(--good);margin-left:6px;">[Capital Hub]</span>' : '';
+            html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${escapeHtml(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${escapeHtml(u.email||u.uid)} • ${escapeHtml(currentRole)} ${portalTag}</span></div><div class="teamActions">${u.uid!==UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="window.cmdChangeRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
           });
         html+=`</div>`;
       } else if (isBranchManager) {
-        html+=`<div class="help">Associates can be assigned leads directly in the dossier editor. Team structure is locked by Leadership.</div>`;
+        html+=`
+        <div class="field" style="margin-bottom:16px;">
+          <div class="field-label">Claim Associate by Email</div>
+          <div style="display:flex; gap:8px;">
+            <input type="email" id="claimAssociateEmail" class="input" placeholder="associate@example.com" />
+            <button class="btn primary" type="button" onclick="window.cmdClaimAssociate()">Claim</button>
+          </div>
+          <div class="help" style="margin-top:8px;">Note: Associates must have logged into the Capital Hub at least once to be claimed here.</div>
+        </div>
+        <div class="lbl">Your Claimed Associates</div>
+        <div class="teamGrid" id="bmTeamList">`;
+        
+        let listHtml = "";
+        Object.values(byUid).forEach(u => {
+            if(u.managerUid === UID && u.managerStatus === 'approved' && u.portals?.investor) {
+                listHtml += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${escapeHtml(u.name||u.email)}</strong><span style="font-size:11px;color:#9ab9d6">${escapeHtml(u.email)}</span></div><button class="btn danger tiny" onclick="window.cmdRemoveAssociate('${escapeAttr(u.uid)}')">Remove</button></div>`;
+            }
+        });
+        if(!listHtml) listHtml = "<div class='help'>No associates claimed yet.</div>";
+        html += listHtml + `</div>`;
       }
       if($("teamModalBody")) $("teamModalBody").innerHTML=html;
   }
@@ -999,6 +1065,40 @@ body{
       }
   };
 
+  window.cmdClaimAssociate = async function() {
+      const email = $("claimAssociateEmail") ? $("claimAssociateEmail").value.trim().toLowerCase() : "";
+      if(!email) return toast("Enter an email.");
+      
+      const user = Object.values(userDirCache.byUid).find(u => (u.email||"").toLowerCase() === email && u.portals?.investor);
+      
+      if(!user) return toast("User not found in Capital Hub.");
+      if(user.role === 'admin' || user.role === 'god') return toast("Cannot claim a manager/admin.");
+      
+      try {
+          await firebase.database().ref(`${PATHS.USER_DIR}/${user.uid}`).update({
+              managerUid: UID,
+              managerStatus: 'approved'
+          });
+          toast("Associate claimed successfully.");
+          renderTeamModalBody();
+      } catch(e) {
+          console.error(e);
+          toast("Failed to claim associate.");
+      }
+  };
+
+  window.cmdRemoveAssociate = async function(targetUid) {
+      if(!confirm("Remove this associate from your team?")) return;
+      try {
+          await firebase.database().ref(`${PATHS.USER_DIR}/${targetUid}`).update({
+              managerUid: null,
+              managerStatus: null
+          });
+          toast("Associate removed.");
+          renderTeamModalBody();
+      } catch(e) { toast("Failed to remove."); }
+  };
+
   // ==========================================
   // FIREBASE INIT & CORE LOGIC
   // ==========================================
@@ -1007,6 +1107,22 @@ body{
     firebase.auth().onAuthStateChanged(async u=>{
       if(!u) return location.href="index.html";
       UID=u.uid; ME=u;
+      
+      // Attempt to load the link immediately based on the active tab
+      const activeTabEl = document.querySelector("#offeringsTabs .offeringTab.active");
+      if(activeTabEl && activeTabEl.textContent.includes("Coupland")) {
+          window.updateShareLink("Coupland");
+      }
+
+      // NEW: Catch-All Sync for Portal Tagging (Segmentation)
+      try {
+        await firebase.database().ref(`${PATHS.USER_DIR}/${UID}`).update({
+          email: u.email || "",
+          uid: UID,
+          'portals/investor': true,
+          lastActive: Date.now()
+        });
+      } catch(e) { console.warn("Catch-all sync failed", e); }
       
       try{
         const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
@@ -1291,7 +1407,7 @@ body{
         <div class="note-row">
           <textarea id="noteBox" class="input note-box" placeholder="Log criteria, yield requirements, objections...">${escapeHtml(selected.notes||"")}</textarea>
           <div style="display:flex;flex-direction:column;gap:10px;align-items:flex-end;">
-            <button class=\"icon-btn mini\" type=\"button\" onclick=\"window.cmdSaveNotes()\">✓</button>
+            <button class="icon-btn mini" type="button" onclick="window.cmdSaveNotes()">✓</button>
           </div>
         </div>
       </div>
