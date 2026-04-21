@@ -43,7 +43,8 @@ body{
   transition:background .2s,transform .2s,border-color .2s, box-shadow .2s;user-select:none;
 }
 .chip:hover{background:#14314d;transform:translateY(-1px)}
-.chip.primary{background:rgba(168,85,247,.25); border-color:rgba(168,85,247,.55);}
+.chip.primary{background:rgba(168,85,247,.25);
+  border-color:rgba(168,85,247,.55);}
 .chip.danger{background:#6b1111;border-color:rgba(255,85,85,.55)}
 .icon-btn{
   background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
@@ -246,15 +247,8 @@ body{
             <div class="offeringTab" onclick="window.setOfferingTab(this)">Tax Notes (12%)</div>
           </div>
           
-          <div class="iframePlaceholder">
-            <div>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px; opacity:.5;">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <br/>Offerings Module Space<br/><span style="font-weight:400;">(iFrame renders here)</span>
-            </div>
+          <div id="offeringsContainer" style="height:600px; border-radius:12px; margin-top:12px; overflow:hidden; border:1px solid var(--line);">
+            <iframe src="https://www.dealbankers.com/deals/CouplandExec.html" style="width:100%; height:100%; border:none;"></iframe>
           </div>
 
           <div style="height:1px; background:var(--line); margin:16px 0;"></div>
@@ -443,7 +437,6 @@ body{
 <script>
   // Safe Selection Utility
   const $ = (id) => document.getElementById(id);
-
   // 1. Initialize Firebase Safely
   (function ensureFirebaseInit(){
     try{
@@ -458,7 +451,7 @@ body{
       console.error("Firebase init error:", e);
     }
   })();
-  
+
   // Database Paths & Constants
   const PATHS = { 
     INVESTORS_MASTER: "leadsMaster/buyers", 
@@ -469,11 +462,11 @@ body{
     MANAGER_ASSOC: "managerAssociates",
     EMAIL_INDEX: "emailIndex"
   };
-  
+
   let UID="", ME=null, ROLE="associate", isGod=false, isBranchManager=false;
   let investors=[], selectedId=null, selected=null, searchText="", viewFilter="All";
-  let activeInvClass = "Private Wealth"; 
-  
+  let activeInvClass = "Private Wealth";
+
   // Team Cache variables
   let userDirCache={byUid:{},byEmail:{},byUser:{}}; 
   let pendingRequestCache=[];
@@ -503,6 +496,7 @@ body{
       el.style.cssText="position:fixed;left:50%;bottom:20px;transform:translateX(-50%);padding:10px 16px;border-radius:12px;background:rgba(168,85,247,.9);color:#fff;font-weight:800;z-index:99999;box-shadow:0 10px 30px rgba(0,0,0,.5);transition:opacity .2s;";
       document.body.appendChild(el);
     }
+    
     el.textContent=msg; el.style.opacity="1";
     clearTimeout(toastTimer); toastTimer=setTimeout(()=>el.style.opacity="0", 2000);
   }
@@ -525,7 +519,7 @@ body{
     if($("supportMsg")) $("supportMsg").value = ""; 
     if($("supportModal")) $("supportModal").style.display = "flex";
   };
-  
+
   window.closeSupportModal = function(){ 
     if($("supportModal")) $("supportModal").style.display="none"; 
   };
@@ -572,6 +566,30 @@ body{
   window.setOfferingTab = function(el) {
     document.querySelectorAll("#offeringsTabs .offeringTab").forEach(t=>t.classList.remove("active"));
     if(el) el.classList.add("active");
+    
+    const container = document.getElementById("offeringsContainer");
+    if(!container) return;
+
+    if(el.textContent.includes("Coupland")) {
+      container.innerHTML = `<iframe src="https://www.dealbankers.com/deals/CouplandExec.html" style="width:100%; height:100%; border:none;"></iframe>`;
+      container.style.height = "600px";
+      container.className = "";
+      container.style.border = "1px solid var(--line)";
+    } else {
+      container.innerHTML = `
+        <div style="display:flex; flex-direction:column; align-items:center; justify-content:center; height:100%;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-bottom:8px; opacity:.5;">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+            <circle cx="8.5" cy="8.5" r="1.5"></circle>
+            <polyline points="21 15 16 10 5 21"></polyline>
+          </svg>
+          <br/>Cash Investor Exec Summary<br/><span style="font-weight:400;">(Placeholder - Coming Soon)</span>
+        </div>
+      `;
+      container.style.height = "400px";
+      container.className = "iframePlaceholder";
+      container.style.border = "1px dashed var(--line)";
+    }
   };
 
   window.updateModalFields = function(){
@@ -589,20 +607,19 @@ body{
       b.classList.toggle("active", b.getAttribute("data-class") === activeInvClass);
     });
     window.updateModalFields();
-
     if($("m_name")) $("m_name").value = item?.name || ""; 
     if($("m_amount")) $("m_amount").value = item?.amount || "";
-    if($("m_rule")) $("m_rule").value = item?.rule || "Unknown"; 
+    if($("m_rule")) $("m_rule").value = item?.rule || "Unknown";
     if($("m_focus")) $("m_focus").value = item?.focus || "";
     if($("m_links")) $("m_links").value = item?.links || "";
     if($("m_location")) $("m_location").value = item?.location || "";
     if($("m_email")) $("m_email").value = item?.email || ""; 
     if($("m_status")) $("m_status").value = item?.status || "New Lead";
-    if($("m_phones")) $("m_phones").value = (item?.phones || []).join("\n"); 
+    if($("m_phones")) $("m_phones").value = (item?.phones || []).join("\n");
     if($("m_notes")) $("m_notes").value = item?.notes || "";
     if($("m_dossier")) $("m_dossier").value = item?.dossier || "";
     if($("m_custom_script")) $("m_custom_script").value = item?.customScript || "";
-
+    
     // Show Assignment Block for Admins
     if(isGod || isBranchManager) {
       if($("assignBlock")) $("assignBlock").style.display = "block";
@@ -630,7 +647,7 @@ body{
   // ==========================================
 
   function getAssignableRows(){
-    const rows=[]; 
+    const rows=[];
     Object.values(userDirCache.byUid||{}).forEach(u=>{
         if(u.role==="system") return; 
         if(isGod){
@@ -640,11 +657,12 @@ body{
         } 
         if(isBranchManager){
             if(u.uid===UID){ rows.push(u); return; } 
+          
             if(u.role==="user" && String(u.managerUid||"")===String(UID) && String(u.managerStatus||"")==="approved") {
                 rows.push(u);
             }
         }
-    }); 
+    });
     rows.sort((a,b)=>((a.role||"")===(b.role||"") ? String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}) : String(a.role||"").localeCompare(String(b.role||"")))); 
     return rows;
   }
@@ -652,12 +670,11 @@ body{
   window.renderAssignList = function() {
     const listEl = $("assignList");
     if(!listEl) return;
-    const q = ($("assignFilter") ? $("assignFilter").value.toLowerCase().trim() : ""); 
+    const q = ($("assignFilter") ? $("assignFilter").value.toLowerCase().trim() : "");
     const rows = getAssignableRows().filter(r => {
         const hay = `${r.name||""} ${r.email||""}`.toLowerCase(); 
         return !q || hay.includes(q);
-    }); 
-    
+    });
     if(!rows.length){
         listEl.innerHTML = `<div class="help">No users available for assignment.</div>`;
         return;
@@ -724,7 +741,6 @@ body{
     if(!name) return alert("Name required");
 
     if($("m_save_btn")) $("m_save_btn").disabled = true;
-
     const payload = {
       name, 
       invClass: activeInvClass,
@@ -741,7 +757,6 @@ body{
       customScript: $("m_custom_script") ? $("m_custom_script").value.trim() : "",
       updatedAt: Date.now()
     };
-
     if(payload.status === "Substantive Rel. Logged" && (!selected || !selected.relDate)) {
        payload.relDate = Date.now();
     } else if (selected && selected.relDate) {
@@ -750,7 +765,6 @@ body{
 
     try{
       const mode = selected ? 'edit' : 'new';
-      
       if(isGod || isBranchManager) {
          const allowed = new Set(getAssignableRows().map(r=>r.uid));
          let uids = Array.from(modalAssignedSet).filter(uid=>allowed.has(uid));
@@ -779,7 +793,6 @@ body{
   window.cmdDeleteLead = async function() {
       if(!isGod || !selected || !selected.id) return;
       if(!confirm("Delete this target from master and ALL assigned queues?")) return;
-      
       try{
           const targetId = selected.id;
           const updates = {};
@@ -832,7 +845,6 @@ body{
       await loadDirectoryCache();
       const byUid = userDirCache.byUid || {};
       let html = "";
-
       if(isGod){
         html+=`<div class="lbl" style="margin-top:10px;">All Users (Role Management)</div><div class="teamGrid">`;
         Object.values(byUid)
@@ -841,7 +853,7 @@ body{
             if(u.role==="system") return;
             const currentRole = (u.role === 'admin' ? "BRANCH MANAGER" : (u.role === 'god' ? "GOD MODE" : "ASSOCIATE"));
             html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${escapeHtml(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${escapeHtml(u.email||u.uid)} • ${escapeHtml(currentRole)}</span></div><div class="teamActions">${u.uid!==UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="window.cmdChangeRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
-        });
+          });
         html+=`</div>`;
       } else if (isBranchManager) {
         html+=`<div class="help">Associates can be assigned leads directly in the dossier editor. Team structure is locked by Leadership.</div>`;
@@ -874,6 +886,9 @@ body{
     firebase.auth().onAuthStateChanged(async u=>{
       if(!u) return location.href="index.html";
       UID=u.uid; ME=u;
+      
+      // Ensure email is passed to iframe via localStorage
+      try { localStorage.setItem("userEmail", u.email || ""); } catch(e) {}
       
       try{
         const rs = await firebase.database().ref(`${PATHS.ROLES}/${UID}`).once("value");
@@ -992,7 +1007,6 @@ body{
   window.cmdStartClock = async function() {
     if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
     const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-    
     // Also update copies if God/Manager
     if (isGod || isBranchManager) {
        await upsertAssignments(selectedId, { ...selected, relDate: Date.now(), status: "Substantive Rel. Logged", updatedAt: Date.now() }, selected.assignedUids || []);
@@ -1007,7 +1021,6 @@ body{
     const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
     let updates = { status: st, updatedAt: Date.now() };
     if(st === "Substantive Rel. Logged" && (!selected || !selected.relDate)) updates.relDate = Date.now();
-    
     if (isGod || isBranchManager) {
        await upsertAssignments(selectedId, { ...selected, ...updates }, selected.assignedUids || []);
     } else {
@@ -1020,7 +1033,6 @@ body{
     if (typeof firebase === 'undefined' || !UID) return toast("System offline.");
     const notes = $("noteBox") ? $("noteBox").value.trim() : "";
     const path = (isGod||isBranchManager) ? `${PATHS.INVESTORS_MASTER}/${selectedId}` : `${PATHS.INVESTORS_BY_USER}/${UID}/buyers/${selectedId}`;
-    
     if (isGod || isBranchManager) {
        await upsertAssignments(selectedId, { ...selected, notes, updatedAt: Date.now() }, selected.assignedUids || []);
     } else {
@@ -1038,13 +1050,12 @@ body{
     if(!el) return;
     
     if(!selected){ 
-      el.innerHTML = `<div class="tiny" style="color:var(--muted); text-align:center; margin-top:100px; font-weight:800;">No target selected.</div>`; 
+      el.innerHTML = `<div class="tiny" style="color:var(--muted); text-align:center; margin-top:100px; font-weight:800;">No target selected.</div>`;
       return; 
     }
 
     const phones = selected.phones || [];
     const isInst = (selected.invClass === "Institutional Capital");
-    
     let scriptHTML = "";
     let coolingOffHTML = "";
     let dossierHTML = "";
@@ -1106,7 +1117,7 @@ body{
     const encName = encodeURIComponent(selected.name || "");
     const secLink = `https://www.sec.gov/edgar/search/#/q=${encName}`;
     const googleLink = `https://www.google.com/search?q=${encName}+fund`;
-
+    
     el.innerHTML = `
       <div class="lead-header">
         <div class="lead-title">
