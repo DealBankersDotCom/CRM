@@ -21,7 +21,7 @@
 
     <header class="relative w-full h-[60vh] min-h-[500px] flex items-center justify-center overflow-hidden border-b border-gray-800">
         <video autoplay loop muted playsinline class="absolute z-0 w-auto min-w-full min-h-full max-w-none object-cover opacity-40">
-            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3389.mp4?alt=media" type="video/mp4">
+            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3389.mp4?alt=media&token=ef1f3906-6c50-478d-911f-f18e7a4bd057" type="video/mp4">
         </video>
         <div class="absolute inset-0 hero-overlay z-10"></div>
         
@@ -142,25 +142,25 @@
                     <div class="rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-black aspect-video relative">
                         <div class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Site Grading & Exterior</div>
                         <video autoplay loop muted playsinline controls class="w-full h-full object-cover">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3389.mp4?alt=media" type="video/mp4">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3389.mp4?alt=media&token=ef1f3906-6c50-478d-911f-f18e7a4bd057" type="video/mp4">
                         </video>
                     </div>
                     <div class="rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-black aspect-video relative">
                         <div class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Kitchen Interior Trim</div>
                         <video autoplay loop muted playsinline controls class="w-full h-full object-cover">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3390.mp4?alt=media" type="video/mp4">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3390.mp4?alt=media&token=fd1b2c1a-2a6c-49bd-9760-0c1d8824583f" type="video/mp4">
                         </video>
                     </div>
                     <div class="rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-black aspect-video relative">
                         <div class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Custom Stone Finishes</div>
                         <video autoplay loop muted playsinline controls class="w-full h-full object-cover">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FVID_20260401_190744.mp4?alt=media" type="video/mp4">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FVID_20260401_190744.mp4?alt=media&token=d22e8b7d-9cdb-40c9-9fac-1fe4b3f50ce9" type="video/mp4">
                         </video>
                     </div>
                     <div class="rounded-xl overflow-hidden border border-gray-700 shadow-xl bg-black aspect-video relative">
                         <div class="absolute top-2 left-2 bg-black/60 text-white text-xs px-2 py-1 rounded backdrop-blur-sm z-10">Custom Storage & Closets</div>
                         <video autoplay loop muted playsinline controls class="w-full h-full object-cover">
-                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3393.mp4?alt=media" type="video/mp4">
+                            <source src="https://firebasestorage.googleapis.com/v0/b/deal-bankers.firebasestorage.app/o/Coupland%2FIMG_3393.mp4?alt=media&token=c247b84d-c1cf-47b7-98f4-6dfa9af10452" type="video/mp4">
                         </video>
                     </div>
                 </div>
@@ -218,35 +218,53 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // 1. Check for token in URL
+            
+            // 1. Check for token in URL (Rep tracking)
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
+            let repEmail = "";
             
-            // 2. Base Email Setup
-            const sendTo = "dealbankers@gmail.com";
-            const subjectLine = "Data Room Request: Coupland 14-Lot Dev";
-            let emailBody = "Hi Bill,\n\nI am requesting access to the secure data room, pro-forma, and builder videos for the Coupland development deal.\n\n";
-
-            // 3. Logic: If token exists, credit the Rep. If no token, it's Bill's generic link.
             if (token) {
                 try {
-                    const repEmail = atob(token); // Decodes the Base64 token
-                    emailBody += `Referred by Rep: ${repEmail}\n\n`;
+                    repEmail = atob(token); // Decodes the Base64 token
                 } catch (e) {
                     console.error("Invalid sharing token.");
                 }
             }
 
-            emailBody += "Please let me know the next steps.\n\nThank you,\n[Insert Your Name & Phone]";
+            // 2. Fetch logged-in user email from local/session storage (from your backup script)
+            let loggedInUserEmail = "";
+            try {
+                loggedInUserEmail = localStorage.getItem('userEmail') || sessionStorage.getItem('userEmail');
+            } catch (e) {
+                console.log("Could not fetch user email.");
+            }
 
-            // 4. Encode and attach to button
+            // 3. Base Email Setup
+            const sendTo = "dealbankers@gmail.com";
+            const subjectLine = "Request for pro forma on Coupland deal";
+            let emailBody = "Hi Bill,\n\nI am requesting access to the full pro-forma, data room, and JV documents for the Coupland 14-Lot Subdivision.\n\n";
+
+            // Add Investor account details if they are logged in
+            if (loggedInUserEmail) {
+                emailBody += `Please authorize access for my registered account email: ${loggedInUserEmail}\n\n`;
+            }
+
+            // Add the Rep credit if the token was present
+            if (repEmail) {
+                emailBody += `Referred by Rep: ${repEmail}\n\n`;
+            }
+
+            emailBody += "Thank you,\n[Insert Your Name & Phone]";
+
+            // 4. Encode strings and attach to the button
             const encodedSubject = encodeURIComponent(subjectLine);
             const encodedBody = encodeURIComponent(emailBody);
-            const finalLink = `mailto:${sendTo}?subject=${encodedSubject}&body=${encodedBody}`;
+            const finalMailtoLink = `mailto:${sendTo}?subject=${encodedSubject}&body=${encodedBody}`;
 
             const btn = document.getElementById('dataRoomBtn');
             if(btn) {
-                btn.setAttribute('href', finalLink);
+                btn.setAttribute('href', finalMailtoLink);
             }
         });
     </script>
