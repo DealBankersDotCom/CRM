@@ -218,34 +218,28 @@
 
     <script>
         document.addEventListener("DOMContentLoaded", function() {
-            // 1. Read the token from the URL if a rep sent this link
+            // 1. Check for token in URL
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
-            let repEmail = "";
+            
+            // 2. Base Email Setup
+            const sendTo = "dealbankers@gmail.com";
+            const subjectLine = "Data Room Request: Coupland 14-Lot Dev";
+            let emailBody = "Hi Bill,\n\nI am requesting access to the secure data room, pro-forma, and builder videos for the Coupland development deal.\n\n";
 
+            // 3. Logic: If token exists, credit the Rep. If no token, it's Bill's generic link.
             if (token) {
                 try {
-                    // Decode the Base64 token to reveal the rep's email
-                    repEmail = atob(token);
+                    const repEmail = atob(token); // Decodes the Base64 token
+                    emailBody += `Referred by Rep: ${repEmail}\n\n`;
                 } catch (e) {
                     console.error("Invalid sharing token.");
                 }
             }
 
-            // 2. Build the exact mailto link
-            const sendTo = "dealbankers@gmail.com";
-            const subjectLine = "Data Room Request: Coupland 14-Lot Dev";
-            
-            let emailBody = "Hi Bill,\n\nI am requesting access to the secure data room, pro-forma, and builder videos for the Coupland development deal.\n\n";
-            
-            // If the token existed, inject it so Deal Bankers knows who gets the credit
-            if (repEmail) {
-                emailBody += `Referred by Rep: ${repEmail}\n\n`;
-            }
-
             emailBody += "Please let me know the next steps.\n\nThank you,\n[Insert Your Name & Phone]";
 
-            // 3. Encode and attach to button
+            // 4. Encode and attach to button
             const encodedSubject = encodeURIComponent(subjectLine);
             const encodedBody = encodeURIComponent(emailBody);
             const finalLink = `mailto:${sendTo}?subject=${encodedSubject}&body=${encodedBody}`;
