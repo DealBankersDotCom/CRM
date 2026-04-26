@@ -1,0 +1,542 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+<title>DealBankers • WAR ROOM</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Inter:wght@400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+/* --- TACTICAL BATMAN THEME --- */
+:root {
+  --bg1: #020406; 
+  --bg2: #060c12;
+  --bg3: #0a141e;
+  --line: #1e3a5f;
+  --text: #e2e8f0;
+  --muted: #476282;
+  --batman: #eab308; /* Tactical Amber */
+  --cyan: #06b6d4;   /* Holographic Cyan */
+  --bad: #ef4444;
+  --good: #10b981;
+  --shadow: 0 20px 50px rgba(0,0,0,0.8);
+  --glass: rgba(6, 182, 212, 0.05);
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; overflow: hidden; background: var(--bg1); color: var(--text); font-family: 'Inter', sans-serif; }
+
+/* Subtle Grid Background */
+body {
+  background-color: var(--bg1);
+  background-image: 
+    linear-gradient(rgba(30, 58, 95, 0.1) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(30, 58, 95, 0.1) 1px, transparent 1px);
+  background-size: 30px 30px;
+}
+
+/* CRT Scanline Effect Overlay */
+body::after {
+  content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
+  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+  z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.3;
+}
+
+/* Typography */
+.mono { font-family: 'JetBrains Mono', monospace; }
+h1, .logo { font-family: "Orbitron", sans-serif; }
+
+/* --- TACTICAL HEADER --- */
+.header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 12px 24px; border-bottom: 1px solid var(--batman);
+  background: rgba(0,0,0,0.9); backdrop-filter: blur(10px);
+  position: relative; z-index: 100;
+  box-shadow: 0 0 20px rgba(234, 179, 8, 0.15);
+}
+.header .logo { font-weight: 900; font-size: 18px; letter-spacing: 0.2em; color: var(--batman); display: flex; align-items: center; gap: 12px; }
+.header .logo span { color: #fff; }
+.header-nav { display: flex; gap: 12px; }
+.btn-nav {
+  background: transparent; border: 1px solid var(--line); color: var(--text);
+  padding: 6px 16px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  cursor: pointer; text-transform: uppercase; transition: all 0.2s; font-weight: 700;
+}
+.btn-nav:hover { border-color: var(--cyan); color: var(--cyan); background: var(--glass); box-shadow: 0 0 15px rgba(6, 182, 212, 0.2); }
+.btn-nav.danger { border-color: rgba(239, 68, 68, 0.5); color: var(--bad); }
+.btn-nav.danger:hover { box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.1); }
+
+/* --- MAIN LAYOUT --- */
+.war-grid {
+  display: grid;
+  grid-template-columns: 360px minmax(0, 1fr) 400px;
+  height: calc(100vh - 54px);
+  position: relative; z-index: 10;
+}
+
+/* --- PANELS --- */
+.panel {
+  border-right: 1px solid var(--line);
+  display: flex; flex-direction: column;
+  background: rgba(4, 9, 14, 0.85); backdrop-filter: blur(5px);
+  position: relative;
+}
+.panel:last-child { border-right: none; border-left: 1px solid var(--line); }
+.panel-head {
+  padding: 12px 16px; border-bottom: 1px solid var(--line);
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700;
+  color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em;
+  display: flex; justify-content: space-between; align-items: center;
+  background: rgba(0,0,0,0.5);
+}
+.panel-head .glow { color: var(--cyan); text-shadow: 0 0 8px rgba(6, 182, 212, 0.6); font-weight: 900; }
+.panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+
+/* --- LEFT: QUEUE LIST --- */
+.req-item {
+  border: 1px solid var(--line); background: rgba(0,0,0,0.6);
+  border-radius: 6px; padding: 12px; margin-bottom: 10px;
+  cursor: pointer; transition: all 0.2s ease;
+  position: relative; overflow: hidden;
+}
+.req-item:hover { border-color: var(--cyan); background: rgba(6, 182, 212, 0.05); }
+.req-item.active { border-color: var(--batman); background: rgba(234, 179, 8, 0.05); box-shadow: inset 0 0 20px rgba(234, 179, 8, 0.05); }
+.req-item.active::before {
+  content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--batman);
+  box-shadow: 0 0 10px var(--batman);
+}
+.req-type { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--batman); margin-bottom: 4px; font-weight: 700; letter-spacing: 0.05em; }
+.req-addr { font-weight: 900; font-size: 14px; margin-bottom: 6px; color: #fff; letter-spacing: -0.02em; }
+.req-user { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; }
+
+/* --- CENTER: TARGET CONSOLE --- */
+.target-hud { display: none; flex-direction: column; height: 100%; }
+.target-hud.active { display: flex; animation: bootUp 0.3s ease-out forwards; }
+@keyframes bootUp { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+
+.hud-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--line); }
+.hud-title { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -0.02em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;}
+.hud-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); text-transform: uppercase;}
+
+.copy-icon { cursor: pointer; font-size: 14px; color: var(--muted); padding: 4px; border: 1px solid transparent; border-radius: 4px; transition: all 0.2s; }
+.copy-icon:hover { color: var(--batman); border-color: var(--batman); background: rgba(234, 179, 8, 0.1); }
+
+.data-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px; }
+.data-box { background: rgba(0,0,0,0.5); border: 1px solid var(--line); padding: 14px; border-radius: 6px; position: relative; transition: border-color 0.2s; }
+.data-box:focus-within { border-color: var(--cyan); box-shadow: 0 0 15px rgba(6, 182, 212, 0.1); }
+.data-box label { display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--batman); margin-bottom: 8px; text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em; }
+.input-tactical {
+  width: 100%; background: transparent; border: none; border-bottom: 1px dashed var(--line);
+  color: #fff; font-family: 'Inter', sans-serif; font-size: 14px; padding: 6px 0; outline: none;
+  transition: border-color 0.2s;
+}
+.input-tactical:focus { border-bottom-color: var(--cyan); }
+textarea.input-tactical { resize: vertical; min-height: 100px; border: 1px dashed var(--line); padding: 10px; border-radius: 4px; line-height: 1.5; }
+textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 182, 212, 0.02); }
+
+.push-bar {
+  margin-top: auto; padding: 16px; border-top: 1px solid var(--line);
+  background: rgba(0,0,0,0.9); display: flex; justify-content: space-between; align-items: center;
+}
+.btn-push {
+  background: var(--batman); color: #000; border: none; border-radius: 4px;
+  padding: 12px 28px; font-weight: 900; font-family: 'JetBrains Mono', monospace; font-size: 12px;
+  cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em;
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); transition: all 0.2s;
+}
+.btn-push:hover { background: #fde047; box-shadow: 0 0 25px rgba(234, 179, 8, 0.6); transform: translateY(-2px); }
+.btn-push:disabled { background: var(--muted); box-shadow: none; cursor: not-allowed; transform: none; color: #111; }
+
+/* --- RIGHT: OSINT TOOLS --- */
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+.tool-btn {
+  background: rgba(0,0,0,0.6); border: 1px solid var(--line);
+  padding: 14px 10px; border-radius: 6px; text-align: center;
+  color: var(--text); text-decoration: none; font-size: 11px; font-weight: 700;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+  transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
+}
+.tool-btn:hover { border-color: var(--cyan); background: var(--glass); color: var(--cyan); box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.15); transform: translateY(-1px); }
+.tool-btn i { font-size: 22px; font-style: normal; filter: drop-shadow(0 0 4px rgba(255,255,255,0.2)); }
+
+.bexar-section { border-top: 1px dashed var(--line); padding-top: 16px; margin-top: 8px; }
+.bexar-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--batman); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; }
+
+.map-view { width: 100%; height: 280px; background: #000; border: 1px solid var(--line); border-radius: 6px; margin-top: 16px; position: relative; overflow: hidden; }
+.map-view iframe { width: 100%; height: 100%; border: none; filter: contrast(1.2) saturate(1.2) brightness(0.8); transition: filter 0.3s; }
+.map-view:hover iframe { filter: contrast(1) saturate(1) brightness(1); }
+.map-overlay { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.9); border: 1px solid var(--cyan); color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 8px; pointer-events: none; z-index: 10; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
+
+/* Scrollbar */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: var(--bg1); }
+::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="logo">DEALBANKERS <span>// COMMAND & CONTROL WAR ROOM</span></div>
+  <div class="header-nav">
+    <button class="btn-nav" onclick="location.href='profile.html'">Abort to Hub</button>
+    <button class="btn-nav danger" onclick="firebase.auth().signOut()">Terminate Session</button>
+  </div>
+</header>
+
+<div class="war-grid">
+  
+  <div class="panel">
+    <div class="panel-head">
+      <span>Incoming Intel Reqs</span>
+      <span class="glow" id="queueCount">0 PENDING</span>
+    </div>
+    <div class="panel-body" id="requestQueue">
+      <div style="color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; margin-top: 40px; letter-spacing: 0.2em; animation: pulse 2s infinite;">
+        SCANNING NETWORK...
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span>Target Analysis HUD</span>
+      <span id="targetStatus" style="color: var(--muted);">STANDBY</span>
+    </div>
+    <div class="panel-body">
+      <div id="targetHud" class="target-hud">
+        
+        <div class="hud-header">
+          <div class="hud-title">
+            <span id="hudAddress">Select a Target</span>
+            <span class="copy-icon" onclick="copyAddress()" title="Copy Address">📋</span>
+          </div>
+          <div class="hud-meta">REQ BY: <span id="hudRequester" style="color:#fff;">—</span> <span style="color:var(--muted)">//</span> TYPE: <span id="hudType" style="color:#fff;">—</span></div>
+        </div>
+
+        <div class="data-grid">
+          <div class="data-box">
+            <label>Property Owner</label>
+            <input type="text" id="t_owner" class="input-tactical" placeholder="Unknown or Unverified..." />
+          </div>
+          <div class="data-box">
+            <label>Mailing Address</label>
+            <input type="text" id="t_mailing" class="input-tactical" placeholder="Mailing Address..." />
+          </div>
+          <div class="data-box" style="grid-column: 1 / -1;">
+            <label>Skip Traced Phones (Format: Label | Number)</label>
+            <textarea id="t_phones" class="input-tactical" placeholder="e.g.&#10;Owner | 210-555-1234&#10;Daughter | 210-555-9876"></textarea>
+          </div>
+          <div class="data-box" style="grid-column: 1 / -1;">
+            <label>Leadership Analysis & Strategic Notes</label>
+            <textarea id="t_notes" class="input-tactical" placeholder="ARV analysis, equity position, tax flags, recommended pitch approach..."></textarea>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
+    <div class="push-bar">
+      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.4;">
+        <span style="color:var(--good)">► OVERRIDES ASSOCIATE CRM</span><br>
+        <span style="color:var(--cyan)">► SENDS DIRECT CHAT PING</span>
+      </div>
+      <button class="btn-push" id="btnPushData" disabled onclick="pushToUserCRM()">Push Payload</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panel-head">
+      <span>OSINT Systems</span>
+    </div>
+    <div class="panel-body">
+      
+      <div class="bexar-title">Global Deep Search</div>
+      <div class="tool-grid">
+        <a class="tool-btn" id="btnTps" target="_blank">
+          <i>👤</i> TruePeopleSearch
+        </a>
+        <a class="tool-btn" id="btnFtn" target="_blank">
+          <i>🌳</i> FamilyTreeNow
+        </a>
+        <a class="tool-btn" id="btnZillow" target="_blank">
+          <i>🏠</i> Zillow
+        </a>
+        <a class="tool-btn" id="btnGoogle" target="_blank">
+          <i>🔍</i> Google Query
+        </a>
+      </div>
+
+      <div class="bexar-section">
+        <div class="bexar-title">Bexar County Local Access</div>
+        <div class="tool-grid">
+          <a class="tool-btn" href="https://bexar.trueautomation.com/clientdb/?cid=110" target="_blank">
+            <i>🏛️</i> BCAD Appraisals
+          </a>
+          <a class="tool-btn" href="https://bexar.tx.publicsearch.us/" target="_blank">
+            <i>📜</i> County Clerk
+          </a>
+          <a class="tool-btn" href="https://www.bexar.org/1535/Tax-Assessor-Collector" target="_blank">
+            <i>💰</i> Tax Assessor
+          </a>
+          <a class="tool-btn" href="https://gismaps.bexar.org/public/" target="_blank">
+            <i>🗺️</i> GIS Maps
+          </a>
+        </div>
+      </div>
+
+      <div class="map-view">
+        <div class="map-overlay">SATCOM LINK</div>
+        <iframe id="streetViewFrame" src="about:blank"></iframe>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="config.js"></script>
+
+<script>
+// Init Firebase
+(function(){
+  try {
+    if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
+  } catch(e) { console.error("Firebase init err", e); }
+})();
+
+const db = firebase.database();
+let activeRequests = [];
+let currentTargetId = null;
+let currentTarget = null;
+let currentMasterLead = null; // Holds the actual lead data from the DB
+
+// Strict God Mode Gatekeeper
+firebase.auth().onAuthStateChanged(async (user) => {
+  if (!user) return location.href = "index.html";
+  
+  if (user.email !== "dealbankers@gmail.com") {
+    const roleSnap = await db.ref(`roles/${user.uid}`).once('value');
+    if (roleSnap.val() !== 'god') {
+      alert("UNAUTHORIZED ACCESS. CONNECTION SEVERED.");
+      location.href = "profile.html";
+      return;
+    }
+  }
+  
+  listenForRequests();
+});
+
+// Watch for pending requests
+function listenForRequests() {
+  db.ref('warroom_requests').on('value', snap => {
+    const data = snap.val() || {};
+    activeRequests = Object.keys(data)
+      .map(k => ({ id: k, ...data[k] }))
+      .filter(r => r.status === 'pending')
+      .sort((a,b) => (b.ts || 0) - (a.ts || 0)); // Newest first
+    
+    document.getElementById('queueCount').innerText = `${activeRequests.length} PENDING`;
+    renderQueue();
+  });
+}
+
+function renderQueue() {
+  const container = document.getElementById('requestQueue');
+  if (activeRequests.length === 0) {
+    container.innerHTML = `<div style="color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; margin-top: 40px; letter-spacing: 0.1em;">NO ACTIVE INTEL REQS</div>`;
+    return;
+  }
+
+  container.innerHTML = activeRequests.map(req => `
+    <div class="req-item ${currentTargetId === req.id ? 'active' : ''}" onclick="loadTarget('${escapeHtml(req.id)}')">
+      <div class="req-type">>> ${req.requestType === 'skip' ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
+      <div class="req-addr">${escapeHtml(req.address || 'Unknown Target')}</div>
+      <div class="req-user">
+        <span>FR: ${escapeHtml(req.requesterEmail || 'Unknown').split('@')[0]}</span>
+        <span>${new Date(req.ts || Date.now()).toLocaleDateString()}</span>
+      </div>
+    </div>
+  `).join('');
+}
+
+async function loadTarget(reqId) {
+  currentTargetId = reqId;
+  currentTarget = activeRequests.find(r => r.id === reqId);
+  renderQueue(); 
+
+  if (!currentTarget) return;
+
+  const hud = document.getElementById('targetHud');
+  const statusEl = document.getElementById('targetStatus');
+  const pushBtn = document.getElementById('btnPushData');
+
+  hud.classList.remove('active');
+  void hud.offsetWidth; // trigger reflow to restart animation
+  hud.classList.add('active');
+
+  statusEl.innerText = "TARGET LOCKED";
+  statusEl.style.color = "var(--bad)";
+  pushBtn.disabled = true;
+  pushBtn.innerText = "FETCHING INTEL...";
+
+  // Fill Request Meta
+  document.getElementById('hudAddress').innerText = currentTarget.address || 'Unknown Address';
+  document.getElementById('hudRequester').innerText = currentTarget.requesterEmail;
+  document.getElementById('hudType').innerText = currentTarget.requestType === 'skip' ? 'Skip Trace' : 'Analysis';
+
+  // Fetch the LIVE lead from leadsMaster to pre-fill existing data
+  try {
+    if(currentTarget.leadId) {
+        const leadSnap = await db.ref(`leadsMaster/sellers/${currentTarget.leadId}`).once('value');
+        currentMasterLead = leadSnap.val() || {};
+        
+        // Populate inputs with existing Master Data (or fallback to empty)
+        document.getElementById('t_owner').value = currentMasterLead.owner || currentMasterLead.name || '';
+        document.getElementById('t_mailing').value = currentMasterLead.mailing || currentMasterLead.mailingAddress || '';
+        document.getElementById('t_notes').value = currentMasterLead.notes || currentTarget.notes || '';
+        
+        // Reconstruct phones array to string
+        if (currentMasterLead.phones && Array.isArray(currentMasterLead.phones)) {
+            document.getElementById('t_phones').value = currentMasterLead.phones.map(p => `${p.label || 'Phone'} | ${p.phone || p.number || ''}`).join('\n');
+        } else {
+            document.getElementById('t_phones').value = '';
+        }
+    }
+  } catch(e) {
+      console.warn("Could not fetch master lead", e);
+  }
+
+  pushBtn.disabled = false;
+  pushBtn.innerText = "Push Payload";
+
+  updateOSINTLinks(currentTarget, currentMasterLead);
+}
+
+function updateOSINTLinks(req, masterLead) {
+  // Use master owner if available, else blank
+  const ownerStr = masterLead ? (masterLead.owner || masterLead.name || '') : '';
+  const addrEncoded = encodeURIComponent(req.address || '');
+  
+  const ownerParts = ownerStr.split(' ');
+  const first = encodeURIComponent(ownerParts[0] || '');
+  const last = encodeURIComponent(ownerParts[ownerParts.length - 1] || '');
+
+  // Dynamic URLs
+  document.getElementById('btnTps').href = req.address ? `https://www.truepeoplesearch.com/results?name=${encodeURIComponent(ownerStr)}&streetaddress=${addrEncoded}` : '#';
+  document.getElementById('btnFtn').href = ownerStr ? `https://www.familytreenow.com/search/genealogy/results?first=${first}&last=${last}` : '#';
+  document.getElementById('btnZillow').href = req.address ? `https://www.zillow.com/homes/${addrEncoded}_rb/` : '#';
+  document.getElementById('btnGoogle').href = req.address ? `https://www.google.com/search?q=${addrEncoded}` : '#';
+
+  // Tactical Map View Embed (Using standard Google Maps embed without API key dependency)
+  if (req.address) {
+    document.getElementById('streetViewFrame').src = `https://maps.google.com/maps?q=${addrEncoded}&t=k&z=19&output=embed`;
+  } else {
+    document.getElementById('streetViewFrame').src = `about:blank`;
+  }
+}
+
+async function pushToUserCRM() {
+  if (!currentTarget || !currentTarget.leadId) return alert("Error: No Lead ID associated with this request.");
+
+  const btn = document.getElementById('btnPushData');
+  btn.innerText = "TRANSMITTING...";
+  btn.disabled = true;
+
+  // Build the payload
+  const payload = {
+    owner: document.getElementById('t_owner').value.trim(),
+    mailing: document.getElementById('t_mailing').value.trim(),
+    notes: document.getElementById('t_notes').value.trim(),
+    updatedAt: Date.now(),
+    updatedBy: "Leadership (War Room)"
+  };
+
+  // Parse phones safely
+  const phoneRaw = document.getElementById('t_phones').value;
+  const phones = phoneRaw.split('\n').filter(p => p.trim()).map(line => {
+    const [label, phone] = line.includes('|') ? line.split('|') : ['Phone', line];
+    return { label: label.trim(), phone: phone.trim() };
+  });
+  if (phones.length > 0) payload.phones = phones;
+
+  try {
+    const targetUid = currentTarget.requesterUid;
+    const leadId = currentTarget.leadId;
+
+    // 1. Update Master Node
+    await db.ref(`leadsMaster/sellers/${leadId}`).update(payload);
+    
+    // 2. Update Specific Associate's Node
+    if (targetUid) {
+      await db.ref(`leadsByUser/${targetUid}/sellers/${leadId}`).update(payload);
+      
+      // 3. SILENT PING: Send a direct message to the associate
+      const threadId = [firebase.auth().currentUser.uid, targetUid].sort().join('_');
+      const pingMsg = `🚨 WAR ROOM UPDATE: I have completed the analysis/skip trace for ${currentTarget.address}. Your CRM has been updated.`;
+      
+      await db.ref(`direct_messages/${threadId}/messages`).push({
+        sender: firebase.auth().currentUser.uid,
+        by: "Leadership",
+        text: pingMsg,
+        ts: firebase.database.ServerValue.TIMESTAMP
+      });
+    }
+
+    // 4. Mark request as completed
+    await db.ref(`warroom_requests/${currentTargetId}`).update({ 
+        status: 'completed', 
+        completedAt: Date.now(),
+        processorEmail: firebase.auth().currentUser.email
+    });
+
+    // Reset HUD
+    document.getElementById('targetHud').classList.remove('active');
+    document.getElementById('targetStatus').innerText = "TRANSMISSION COMPLETE";
+    document.getElementById('targetStatus').style.color = "var(--good)";
+    
+    setTimeout(() => {
+      document.getElementById('targetStatus').innerText = "STANDBY";
+      document.getElementById('targetStatus').style.color = "var(--muted)";
+    }, 3000);
+
+  } catch(e) {
+    console.error("Push failed", e);
+    alert("TRANSMISSION FAILED. CHECK CONSOLE OR DATABASE RULES.");
+  } finally {
+    btn.innerText = "Push Payload";
+    btn.disabled = false;
+    currentTargetId = null;
+    currentTarget = null;
+  }
+}
+
+// Utility: Copy Address
+function copyAddress() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target") {
+        navigator.clipboard.writeText(addr).then(() => {
+            const status = document.getElementById('targetStatus');
+            const oldText = status.innerText;
+            const oldColor = status.style.color;
+            status.innerText = "ADDRESS COPIED";
+            status.style.color = "var(--cyan)";
+            setTimeout(()=>{
+                status.innerText = oldText;
+                status.style.color = oldColor;
+            }, 1500);
+        });
+    }
+}
+
+function escapeHtml(unsafe) {
+  return (unsafe || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+}
+</script>
+</body>
+</html>
