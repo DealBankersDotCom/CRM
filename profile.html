@@ -12,6 +12,7 @@
 :root {
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
   --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+  --batman:#eab308;
 }
 body {
   margin:0; font-family:"Orbitron",system-ui;
@@ -31,7 +32,21 @@ body {
 .title{font-size:1.4rem;font-weight:700;margin-bottom:10px}
 .portal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
 .plink{padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:14px;
-  text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer}
+  text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer; transition: transform 0.2s, box-shadow 0.2s;}
+.plink:hover { transform: translateY(-2px); }
+
+/* --- SECRET WAR ROOM DOORWAY --- */
+#btnWarRoom {
+  display: none; 
+  border-color: var(--batman); 
+  color: var(--batman); 
+  background: rgba(234, 179, 8, 0.05); 
+  text-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+}
+#btnWarRoom:hover { 
+  background: rgba(234, 179, 8, 0.15); 
+  box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); 
+}
 
 /* --- THE FLOATING CHAT BUTTON --- */
 #chatBubble {
@@ -40,7 +55,7 @@ body {
   border:2px solid #fff; box-shadow:0 0 20px rgba(43,116,255,0.8);
   display:flex; align-items:center; justify-content:center;
   font-size:30px; cursor:pointer; 
-  z-index:9999; /* Force On Top */
+  z-index:9999;
   transition: transform 0.2s, box-shadow 0.2s;
 }
 #chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
@@ -60,7 +75,8 @@ body {
 .sidebar-panel.open { right: 0; }
 
 .panel-header {
-  padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--line);
+  padding: 15px; background: rgba(0,0,0,0.3);
+  border-bottom: 1px solid var(--line);
   display: flex; justify-content: space-between; align-items: center;
 }
 .panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
@@ -110,6 +126,7 @@ body {
       <a class="plink" href="contractor.html">🔧 Contractor</a>
       <a class="plink" href="realtor.html">📎 Realtor</a>
       <a class="plink" href="investor.html">💼 Investor</a>
+      <a class="plink" href="Warroom.html" id="btnWarRoom">🦇 WAR ROOM</a>
     </div>
   </section>
 </div>
@@ -117,7 +134,6 @@ body {
 <div id="chatBubble">💬</div>
 
 <div id="sidePanel" class="sidebar-panel">
-  
   <div class="panel-header">
     <div style="display:flex; align-items:center;">
         <span id="backToRadar">◀ Back</span>
@@ -137,7 +153,6 @@ body {
         <button id="chatSend" class="send-btn">➤</button>
     </div>
   </div>
-
 </div>
 
 <script src="config.js"></script>
@@ -173,6 +188,12 @@ onAuthStateChanged(auth, async (user) => {
   if (role === 'admin' || role === 'god' || user.email === "dealbankers@gmail.com") {
       isAdmin = true;
       startRadar(); // Admin sees Radar
+      
+      // THE SECRET DOOR LOGIC
+      if (role === 'god' || user.email === "dealbankers@gmail.com") {
+          document.getElementById('btnWarRoom').style.display = 'block';
+      }
+      
   } else {
       isAdmin = false;
       // User Logic: Chat path is ALWAYS "direct_messages/{MY_UID}"
@@ -190,7 +211,6 @@ const title = document.getElementById("panelTitle");
 // Toggle Panel
 document.getElementById("chatBubble").onclick = () => {
     sidePanel.classList.toggle("open");
-    
     // If panel opens...
     if (sidePanel.classList.contains("open")) {
         if (!isAdmin) {
@@ -202,6 +222,7 @@ document.getElementById("chatBubble").onclick = () => {
         }
     }
 };
+
 document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
 
 // Back Button (Admin Only)
@@ -223,24 +244,21 @@ function showRadarView() {
 function showChatView(path, name) {
     radarList.style.display = "none";
     chatArea.style.display = "flex";
-    // Only admin gets a back button
     backBtn.style.display = isAdmin ? "inline" : "none";
     title.innerText = name;
-    
     currentChatPath = path;
+    
     loadMessages(path);
 }
 
-/* --- ADMIN MODE: RADAR --- */
+/* --- RADAR LOGIC --- */
 function startRadar() {
-    // Listen to GLOBAL presence
     onValue(ref(db, "presence/global"), (snap) => {
         const data = snap.val() || {};
         radarList.innerHTML = "";
-
         let count = 0;
         Object.keys(data).forEach(uid => {
-            if (uid === currentUser.uid) return; // Don't show self
+            if (uid === currentUser.uid) return; 
             const u = data[uid];
             if (u.state === "online") {
                 count++;
@@ -255,31 +273,22 @@ function startRadar() {
                     </div>
                     <div class="status-dot"></div>
                 `;
-                
-                // Admin Click -> Open User's Chat Channel
-                div.onclick = () => {
-                    showChatView(`direct_messages/${uid}`, u.name || 'User');
-                };
+                div.onclick = () => showChatView(`direct_messages/${uid}`, u.name || 'User');
                 radarList.appendChild(div);
-                
-                // Play sound if new user? (Optional)
             } 
         });
-
         if (count === 0) {
             radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
         }
     });
 }
 
-/* --- MESSAGING LOGIC --- */
+/* --- CHAT LOGIC --- */
 function loadMessages(path) {
     const box = document.getElementById("chatMsgs");
-    box.innerHTML = ""; // Clear old
+    box.innerHTML = ""; 
     
-    // Detach old listener if exists
     if (activeChatListener) off(activeChatListener);
-
     activeChatListener = ref(db, path);
     
     onChildAdded(activeChatListener, (snap) => {
@@ -337,6 +346,5 @@ document.getElementById("logoutBtn").onclick = async () => {
     window.location.href = "index.html";
 };
 </script>
-
 </body>
 </html>
