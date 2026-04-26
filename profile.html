@@ -59,6 +59,11 @@ body {
   transition: transform 0.2s, box-shadow 0.2s;
 }
 #chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
+#chatBadge {
+  position: absolute; top: -2px; right: -2px; width: 16px; height: 16px;
+  background: #ff5555; border-radius: 50%; border: 2px solid var(--bg1);
+  display: none; box-shadow: 0 0 10px #ff5555;
+}
 
 /* --- SIDEBAR PANEL --- */
 .sidebar-panel {
@@ -95,16 +100,19 @@ body {
 /* Chat Area (User Default) */
 #chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
 #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-.msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
+.msg-bubble { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; font-family: 'Inter', sans-serif; line-height: 1.4; }
 .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
-.msg-them { align-self: flex-start; background: #1e2c3a; color: #ddd; border-bottom-left-radius: 2px; }
+.msg-them { align-self: flex-start; background: #1e2c3a; color: #ddd; border-bottom-left-radius: 2px; border: 1px solid var(--line); }
+.msg-time { font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-top: 4px; text-align: right; }
 
-.chat-input-row { padding: 15px; border-top: 1px solid var(--line); display: flex; gap: 10px; }
-.chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; }
-.send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; }
+.chat-input-row { padding: 15px; border-top: 1px solid var(--line); display: flex; gap: 10px; background: rgba(0,0,0,0.4); }
+.chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; outline: none; font-family: 'Inter', sans-serif; }
+.chat-input:focus { border-color: var(--accent); }
+.send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
 
 /* Back Button (Admin Only) */
 #backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
+#backToRadar:hover { color: #fff; }
 </style>
 </head>
 
@@ -131,7 +139,10 @@ body {
   </section>
 </div>
 
-<div id="chatBubble">💬</div>
+<div id="chatBubble">
+  💬
+  <div id="chatBadge"></div>
+</div>
 
 <div id="sidePanel" class="sidebar-panel">
   <div class="panel-header">
@@ -149,7 +160,7 @@ body {
   <div id="chatArea">
     <div id="chatMsgs"></div>
     <div class="chat-input-row">
-        <input id="chatInput" class="chat-input" type="text" placeholder="Type a message...">
+        <input id="chatInput" class="chat-input" type="text" placeholder="Type a message..." autocomplete="off">
         <button id="chatSend" class="send-btn">➤</button>
     </div>
   </div>
@@ -171,6 +182,7 @@ let currentChatPath = null;
 let isAdmin = false;
 let activeChatListener = null;
 
+// The Ping Sound for Incoming Messages
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
 /* --- AUTH & ROLE CHECK --- */
@@ -178,10 +190,8 @@ onAuthStateChanged(auth, async (user) => {
   if (!user) { window.location.href = "index.html"; return; }
   currentUser = user;
   
-  // 1. Presence (Crucial for Radar)
   setPresence(user);
 
-  // 2. Role Check
   const roleSnap = await get(ref(db, `roles/${user.uid}`));
   const role = roleSnap.exists() ? roleSnap.val() : "user";
 
@@ -194,12 +204,33 @@ onAuthStateChanged(auth, async (user) => {
           document.getElementById('btnWarRoom').style.display = 'block';
       }
       
+      // Admin listens for ANY incoming message on the network to trigger badge/sound
+      listenForGlobalAdminPings();
+
   } else {
       isAdmin = false;
       // User Logic: Chat path is ALWAYS "direct_messages/{MY_UID}"
       currentChatPath = `direct_messages/${user.uid}`;
+      listenForUnreadMessages(currentChatPath);
   }
 });
+
+/* --- NOTIFY LEADERSHIP (EMAIL TRIGGER SYSTEM) --- */
+function triggerLeadershipPing(actionType, messageText = "") {
+    if (isAdmin) return; // Admins don't ping themselves
+    
+    // We log to a central 'leadership_pings' node.
+    // This allows you to hook up Zapier or Make.com to email you.
+    push(ref(db, "leadership_pings"), {
+        uid: currentUser.uid,
+        name: currentUser.displayName || currentUser.email.split('@')[0],
+        email: currentUser.email,
+        action: actionType,
+        message: messageText,
+        ts: serverTimestamp(),
+        status: "unread"
+    });
+}
 
 /* --- UI INTERACTIONS --- */
 const sidePanel = document.getElementById("sidePanel");
@@ -207,32 +238,36 @@ const radarList = document.getElementById("radarList");
 const chatArea = document.getElementById("chatArea");
 const backBtn = document.getElementById("backToRadar");
 const title = document.getElementById("panelTitle");
+const chatBadge = document.getElementById("chatBadge");
 
-// Toggle Panel
 document.getElementById("chatBubble").onclick = () => {
     sidePanel.classList.toggle("open");
-    // If panel opens...
+    chatBadge.style.display = "none"; // Clear badge when opened
+    
     if (sidePanel.classList.contains("open")) {
         if (!isAdmin) {
-            // USER: Show Chat immediately
-            showChatView(currentChatPath, "Support Chat");
+            showChatView(currentChatPath, "Leadership Support");
+            
+            // ONLY trigger ping if they haven't opened it in the last 5 minutes to prevent spam
+            const lastPing = sessionStorage.getItem('last_chat_open');
+            if (!lastPing || (Date.now() - parseInt(lastPing)) > 300000) {
+                triggerLeadershipPing("Opened Support Chat");
+                sessionStorage.setItem('last_chat_open', Date.now().toString());
+            }
         } else {
-            // ADMIN: Show Radar (unless already in a chat)
             if(!currentChatPath) showRadarView();
         }
     }
 };
 
 document.getElementById("closePanel").onclick = () => sidePanel.classList.remove("open");
-
-// Back Button (Admin Only)
 backBtn.onclick = () => showRadarView();
 
 function showRadarView() {
     radarList.style.display = "block";
     chatArea.style.display = "none";
     backBtn.style.display = "none";
-    title.innerText = "📡 Live Radar";
+    title.innerText = "📡 Network Radar";
     currentChatPath = null;
     
     if (activeChatListener) {
@@ -264,6 +299,7 @@ function startRadar() {
                 count++;
                 const div = document.createElement("div");
                 div.className = "radar-user";
+                // RADAR LOCATION TAG IS RENDERED HERE
                 const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
                 div.innerHTML = `
                     <div>
@@ -283,7 +319,7 @@ function startRadar() {
     });
 }
 
-/* --- CHAT LOGIC --- */
+/* --- CHAT LOGIC & NOTIFICATIONS --- */
 function loadMessages(path) {
     const box = document.getElementById("chatMsgs");
     box.innerHTML = ""; 
@@ -291,15 +327,61 @@ function loadMessages(path) {
     if (activeChatListener) off(activeChatListener);
     activeChatListener = ref(db, path);
     
+    let isInitialLoad = true;
+
     onChildAdded(activeChatListener, (snap) => {
         const msg = snap.val();
         const div = document.createElement("div");
         const isMe = (msg.sender === currentUser.uid);
+        
         div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
-        div.innerText = msg.text;
+        
+        // Add timestamp formatting
+        const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        div.innerHTML = `<div>${msg.text}</div><div class="msg-time">${timeString}</div>`;
+        
         box.appendChild(div);
-        box.scrollTop = box.scrollHeight;
+        
+        // Auto scroll to bottom
+        setTimeout(() => {
+            box.scrollTop = box.scrollHeight;
+        }, 50);
+
+        // If a new message comes in, and it's NOT from us, play a sound and badge
+        if (!isInitialLoad && !isMe) {
+            pingSound.play().catch(e=>console.warn("Autoplay blocked"));
+            if (!sidePanel.classList.contains("open")) {
+                chatBadge.style.display = "block";
+            }
+        }
     });
+    
+    setTimeout(() => { isInitialLoad = false; }, 1500);
+}
+
+// Background Listener for Users
+function listenForUnreadMessages(path) {
+    let isInitial = true;
+    onChildAdded(ref(db, path), (snap) => {
+        const msg = snap.val();
+        if (!isInitial && msg.sender !== currentUser.uid && !sidePanel.classList.contains("open")) {
+            chatBadge.style.display = "block";
+            pingSound.play().catch(e=>{});
+        }
+    });
+    setTimeout(() => { isInitial = false; }, 1500);
+}
+
+// Background Listener for Admins (Listens to the Pings node)
+function listenForGlobalAdminPings() {
+    let isInitial = true;
+    onChildAdded(ref(db, "leadership_pings"), (snap) => {
+        if (!isInitial && !sidePanel.classList.contains("open")) {
+            chatBadge.style.display = "block";
+            pingSound.play().catch(e=>{});
+        }
+    });
+    setTimeout(() => { isInitial = false; }, 1500);
 }
 
 document.getElementById("chatSend").onclick = sendMsg;
@@ -315,10 +397,16 @@ function sendMsg() {
         text: txt,
         ts: serverTimestamp()
     });
+    
+    // Trigger Ping if User is sending to Admin
+    if (!isAdmin) {
+        triggerLeadershipPing("Sent a Message", txt);
+    }
+
     input.value = "";
 }
 
-/* --- PRESENCE TRACKING (FIXED) --- */
+/* --- PRESENCE TRACKING --- */
 function setPresence(user) {
     const globalRef = ref(db, `presence/global/${user.uid}`);
     const statusRef = ref(db, `presence/${user.uid}`); 
@@ -331,9 +419,10 @@ function setPresence(user) {
 
             set(globalRef, {
                 state: "online",
-                name: user.displayName || user.email,
+                name: user.displayName || user.email.split('@')[0],
                 email: user.email,
                 ts: serverTimestamp(),
+                // PORTAL IDENTIFIER APPLIED HERE
                 page: "Dashboard"
             });
             set(statusRef, {state:"online", ts: serverTimestamp()});
