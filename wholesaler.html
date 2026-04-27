@@ -180,11 +180,11 @@ body{
   </div>
   <nav class="nav">
     <a class="chip" href="profile.html">Dashboard</a>
-    <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;">👥 Team</button>
-    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone">☎</button>
-    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone">☎</button>
+    <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;" onclick="window.openTeamModal()">👥 Team</button>
+    <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone" onclick="window.openSupportModal('blue')">☎</button>
+    <button class="phone-chip red-phone" id="btnRedSupport" type="button" title="Red Phone" onclick="window.openSupportModal('red')">☎</button>
     <button class="icon-btn" id="btnSettings" type="button" title="Settings" onclick="location.href='settings.html'">⚙️</button>
-    <a class="chip danger" id="logoutBtn" style="cursor:pointer;">Log Out</a>
+    <a class="chip danger" id="logoutBtn" style="cursor:pointer;" onclick="window.logout()">Log Out</a>
   </nav>
 </header>
 
@@ -201,21 +201,25 @@ body{
       <div id="panel-acq" class="panel">
         <div class="panel-head"><div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div><div class="pill" id="queueHint">System Online</div></div>
         <div class="panel-body queue">
-          <div class="queue-search"><input id="s_q" class="input" placeholder="Search address, name, phone…" /><button class="chip" id="s_reload" type="button">Search</button></div>
-          <div class="row wrap"><button class="chip primary" id="btnNewLead" type="button">＋ New Lead</button><button class="chip" id="btnImportLegacy" type="button" style="display:none;">⬇ Import Legacy → Master</button><span class="pill" id="queueMeta">—</span></div>
+          <div class="queue-search"><input id="s_q" class="input" placeholder="Search address, name, phone…" onkeydown="if(event.key==='Enter') window.applySearch()" /><button class="chip" id="s_reload" type="button" onclick="window.applySearch()">Search</button></div>
+          <div class="row wrap">
+              <button class="chip primary" id="btnNewLead" type="button" onclick="window.openLeadModal('new')">＋ New Lead</button>
+              <button class="chip" id="btnImportLegacy" type="button" style="display:none;" onclick="window.importLegacyLeads()">⬇ Import Legacy</button>
+              <span class="pill" id="queueMeta">—</span>
+          </div>
           <div class="queue-list" id="leadList"></div>
         </div>
       </div>
 
       <div class="panel col-center" id="panel-console">
-        <div class="panel-head"><div class="panel-title">⌁ Console</div><div class="pager"><button class="nav-btn" id="prevLead" type="button">◀</button><div class="nav-count" id="leadPager">0 / 0</div><button class="nav-btn" id="nextLead" type="button">▶</button></div></div>
+        <div class="panel-head"><div class="panel-title">⌁ Console</div><div class="pager"><button class="nav-btn" id="prevLead" type="button" onclick="window.prevLead()">◀</button><div class="nav-count" id="leadPager">0 / 0</div><button class="nav-btn" id="nextLead" type="button" onclick="window.nextLead()">▶</button></div></div>
         <div class="panel-body">
           <div class="lead-header">
             <div class="lead-title"><h2 id="leadAddress">No lead selected</h2><div class="lead-sub"><span id="leadOwner">Select a lead from the queue.</span></div></div>
             <div class="lead-actions">
-              <button class="chip warroom" id="btnReqAnalysis" type="button" disabled>🦇 Req Analysis</button>
-              <button class="chip warroom" id="btnReqSkip" type="button" disabled>🦇 Req Skip Trace</button>
-              <button class="chip" id="btnEditLead" type="button" disabled>✎ Edit</button>
+              <button class="chip warroom" id="btnReqAnalysis" type="button" disabled onclick="window.requestWarRoom('analysis')">🦇 Req Analysis</button>
+              <button class="chip warroom" id="btnReqSkip" type="button" disabled onclick="window.requestWarRoom('skip')">🦇 Req Skip Trace</button>
+              <button class="chip" id="btnEditLead" type="button" disabled onclick="window.openLeadModal('edit')">✎ Edit</button>
             </div>
           </div>
 
@@ -227,18 +231,23 @@ body{
           <div class="field">
             <div class="field-label">Active Number</div>
             <div class="callRow">
-                <div style="flex:1;min-width:220px"><select id="phoneSelect" class="select" disabled></select></div>
-                <button id="callBtn" class="callBtn" type="button" disabled>📞 CALL</button>
-                <button id="copyBtn" class="copyBtn" type="button" disabled>Copy</button>
+                <div style="flex:1;min-width:220px"><select id="phoneSelect" class="select" disabled onchange="window.onPhoneChanged()"></select></div>
+                <button id="callBtn" class="callBtn" type="button" disabled onclick="window.callCurrentPhone()">📞 CALL</button>
+                <button id="copyBtn" class="copyBtn" type="button" disabled onclick="window.copyCurrentPhone()">Copy</button>
             </div>
             <div class="smallHint" id="callHint" style="margin-top:8px;display:none;">Mobile: direct dial. Desktop: copies to clipboard.</div>
           </div>
 
-          <button id="btnOpenQuickLog" class="chip primary" style="width:100%; justify-content:center; padding:16px; margin-top:16px; font-size:15px; display:none; background: linear-gradient(180deg, #2b74ff, #0a58ca); box-shadow: 0 5px 15px rgba(43,116,255,0.4);">
+          <button id="btnOpenQuickLog" class="chip primary" style="width:100%; justify-content:center; padding:16px; margin-top:16px; font-size:15px; display:none; background: linear-gradient(180deg, #2b74ff, #0a58ca); box-shadow: 0 5px 15px rgba(43,116,255,0.4);" onclick="window.openQuickLog()">
             ⚡ QUICK LOG (Status & Notes)
           </button>
 
-          <div class="field"><div class="field-label">Location Intel</div><div class="map-head" id="mapHead" style="display:none;"><div class="map-actions"><button class="map-link" id="areaMapLink" type="button">Area Map</button><button class="map-link" id="streetViewLink" type="button">Street View</button><span class="map-hint" id="mapHint"></span></div></div><div class="map-wrap" id="mapWrap" style="display:none;"><iframe id="streetFrame" loading="lazy"></iframe></div><div class="map-warn" id="mapWarn"></div></div>
+          <div class="field" style="border-color: rgba(0,255,106,0.3); background: rgba(0,255,106,0.05); margin-top:16px;">
+            <div class="field-label" style="color:var(--good);">Dispo / JV Hub</div>
+            <div id="dispoHubContent" style="font-size:13px; color:#9ab9d6;">Select a lead to view Dispo status.</div>
+          </div>
+
+          <div class="field"><div class="field-label">Location Intel</div><div class="map-head" id="mapHead" style="display:none;"><div class="map-actions"><button class="map-link" id="areaMapLink" type="button" onclick="window.setMapMode('area')">Area Map</button><button class="map-link" id="streetViewLink" type="button" onclick="window.setMapMode('street')">Street View</button><span class="map-hint" id="mapHint"></span></div></div><div class="map-wrap" id="mapWrap" style="display:none;"><iframe id="streetFrame" loading="lazy"></iframe></div><div class="map-warn" id="mapWarn"></div></div>
         </div>
       </div>
 
@@ -248,23 +257,23 @@ body{
   </section>
 </div>
 
-<div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;"></div>
+<div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;" onclick="window.closeQuickLog()"></div>
 <div id="quickLogFlyout" class="flyout-panel">
     <div class="flyout-header">
         <div style="font-weight:900; color:var(--accent); font-size:1.1rem; letter-spacing:0.05em;">⚡ QUICK LOG: <span id="flyoutPhoneLabel" style="color:#fff;"></span></div>
-        <button class="iconBtn mini" id="closeFlyoutBtn" style="width:32px;height:32px; font-size:16px;">✕</button>
+        <button class="iconBtn mini" id="closeFlyoutBtn" style="width:32px;height:32px; font-size:16px;" onclick="window.closeQuickLog()">✕</button>
     </div>
     
     <div class="field-label" style="margin-top:10px;">Quick Status Update</div>
     <div class="quick-grid">
-        <button class="qbtn" type="button" data-status="No Answer">No Answer</button>
-        <button class="qbtn" type="button" data-status="Left VM">Left VM</button>
-        <button class="qbtn" type="button" data-status="Spoke to Owner">Spoke to Owner</button>
-        <button class="qbtn" type="button" data-status="Relative / Associate">Relative</button>
-        <button class="qbtn" type="button" data-status="Wrong Party">Wrong Party</button>
-        <button class="qbtn dnc" type="button" data-status="Do Not Call">Do Not Call</button>
-        <button class="qbtn hot" type="button" data-status="Hot Lead">Hot Lead</button>
-        <button class="qbtn follow" type="button" data-status="Follow-Up Needed">Follow-Up</button>
+        <button class="qbtn" type="button" onclick="window.logStatus('No Answer')">No Answer</button>
+        <button class="qbtn" type="button" onclick="window.logStatus('Left VM')">Left VM</button>
+        <button class="qbtn" type="button" onclick="window.logStatus('Spoke to Owner')">Spoke to Owner</button>
+        <button class="qbtn" type="button" onclick="window.logStatus('Relative / Associate')">Relative</button>
+        <button class="qbtn" type="button" onclick="window.logStatus('Wrong Party')">Wrong Party</button>
+        <button class="qbtn dnc" type="button" onclick="window.logStatus('Do Not Call')">Do Not Call</button>
+        <button class="qbtn hot" type="button" onclick="window.logStatus('Hot Lead')">Hot Lead</button>
+        <button class="qbtn follow" type="button" onclick="window.logStatus('Follow-Up Needed')">Follow-Up</button>
     </div>
 
     <div class="field-label" style="margin-top:20px;">Add Team Note</div>
@@ -272,18 +281,18 @@ body{
         <textarea id="noteComposer" class="input note-box" placeholder="Type your note here…" style="min-height:120px;"></textarea>
         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:10px;">
             <div id="noteStatus" class="note-status" style="display:none; color:var(--good); font-weight:800;">Saved ✓</div>
-            <button id="noteSaveBtn" class="btn primary" type="button" disabled style="width:100px;">Save Note</button>
+            <button id="noteSaveBtn" class="btn primary" type="button" style="width:100px;" onclick="window.saveQuickNote()">Save Note</button>
         </div>
     </div>
 </div>
 
-<div id="chatBubble" title="Chat">💬<div id="chatBadge"></div></div>
+<div id="chatBubble" title="Chat" onclick="window.openPanel()">💬<div id="chatBadge"></div></div>
 
-<div id="sidePanel" class="sidebar-panel" aria-hidden="true"><div class="panel-header"><div style="display:flex; align-items:center;"><span id="backToRadar">◀ Back</span><span id="panelTitle" class="panel-title2">Support Chat</span></div><button class="close-btn" id="closePanel" title="Close">✕</button></div><div id="radarList"><div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div></div><div id="chatArea"><div id="chatMsgs"></div><div class="chat-input-row"><input id="chatInput" class="chat-input" type="text" placeholder="Type a message..." /><button id="chatSend" class="send-btn" type="button">➤</button></div></div></div>
+<div id="sidePanel" class="sidebar-panel" aria-hidden="true"><div class="panel-header"><div style="display:flex; align-items:center;"><span id="backToRadar" onclick="window.showRadarView()">◀ Back</span><span id="panelTitle" class="panel-title2">Support Chat</span></div><button class="close-btn" id="closePanel" title="Close" onclick="window.closePanel()">✕</button></div><div id="radarList" onclick="window.handleRadarClick(event)"><div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div></div><div id="chatArea"><div id="chatMsgs"></div><div class="chat-input-row"><input id="chatInput" class="chat-input" type="text" placeholder="Type a message..." onkeydown="if(event.key==='Enter') window.sendMsg()" /><button id="chatSend" class="send-btn" type="button" onclick="window.sendMsg()">➤</button></div></div></div>
 
 <div id="leadModal" class="modal" aria-hidden="true">
   <div class="modalCard" role="dialog" aria-modal="true" aria-label="Lead Editor">
-    <div class="modalHead"><div><strong id="leadModalTitle">Lead Editor</strong><div class="status" id="leadModalSub" style="margin-top:4px;">Create or edit a lead.</div></div><button class="btn" id="leadModalClose" type="button">Close</button></div>
+    <div class="modalHead"><div><strong id="leadModalTitle">Lead Editor</strong><div class="status" id="leadModalSub" style="margin-top:4px;">Create or edit a lead.</div></div><button class="btn" id="leadModalClose" type="button" onclick="window.closeLeadModal()">Close</button></div>
     <div class="modalBody">
       <div class="formGrid">
         <div><div class="lbl">Address</div><input id="m_address" class="input" placeholder="123 Main St, San Antonio, TX" /></div>
@@ -302,7 +311,7 @@ body{
         </div>
 
         <div><div class="lbl">Source</div><input id="m_source" class="input" placeholder="Facebook / Cold-call / Referral" /></div>
-        <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." /><div class="assignBtns"><button class="btn tiny" type="button" id="assignAllBtn">All</button><button class="btn tiny ghost" type="button" id="assignNoneBtn">None</button></div></div><div id="assignList" class="assignList"></div><div class="help">Assigns Leads to Associates queues.</div></div>
+        <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." oninput="window.renderAssignList()" /><div class="assignBtns"><button class="btn tiny" type="button" onclick="window.assignAll()">All</button><button class="btn tiny ghost" type="button" onclick="window.assignNone()">None</button></div></div><div id="assignList" class="assignList" onchange="window.handleAssignChange(event)"></div><div class="help">Assigns Leads to Associates queues.</div></div>
         <div style="grid-column:1/-1"><div class="lbl">Phones / POCs (one per line)</div><textarea id="m_phones" class="input ta" placeholder="Format: Label | Number
 Owner | (210) 555-1234
 Daughter Lisa | 210-555-2222"></textarea></div>
@@ -310,17 +319,17 @@ Daughter Lisa | 210-555-2222"></textarea></div>
       </div>
       <div id="modalToast" class="modalToast"></div>
       <div class="modalActions">
-          <button class="btn danger" id="m_delete" type="button" style="display:none; margin-right:auto;">Delete Lead</button>
-          <button class="btn" id="m_cancel" type="button">Cancel</button>
-          <button class="btn primary" id="m_save" type="button">Save Lead</button>
+          <button class="btn danger" id="m_delete" type="button" style="display:none; margin-right:auto;" onclick="window.deleteLead()">Delete Lead</button>
+          <button class="btn" id="m_cancel" type="button" onclick="window.closeLeadModal()">Cancel</button>
+          <button class="btn primary" id="m_save" type="button" onclick="window.saveLeadFromModal()">Save Lead</button>
       </div>
     </div>
   </div>
 </div>
 
-<div id="teamModal" class="modal" aria-hidden="true"><div class="modalCard" style="max-width:760px;" role="dialog" aria-modal="true" aria-label="Team Management"><div class="modalHead"><div><strong id="teamModalTitle">Team Management</strong><div class="status" style="margin-top:4px;">Manage Branch Managers and Associates</div></div><button class="btn" id="teamModalClose" type="button">Close</button></div><div class="modalBody" id="teamModalBody"></div></div></div>
+<div id="teamModal" class="modal" aria-hidden="true"><div class="modalCard" style="max-width:760px;" role="dialog" aria-modal="true" aria-label="Team Management"><div class="modalHead"><div><strong id="teamModalTitle">Team Management</strong><div class="status" style="margin-top:4px;">Manage Branch Managers and Associates</div></div><button class="btn" id="teamModalClose" type="button" onclick="window.closeTeamModal()">Close</button></div><div class="modalBody" id="teamModalBody"></div></div></div>
 
-<div class="modalOverlay" id="supportModal"><div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="supportTitle"><div class="modalHead"><div><div class="modalTitle" id="supportTitle">Support Request</div><div class="modalSub" id="supportSub">Send a request to Leadership Team</div></div><button class="iconBtn" id="supportCloseBtn" title="Close">✕</button></div><div class="modalBody"><div class="grid2"><div><div class="lbl">Priority</div><select id="supportPriority" class="input"><option value="blue">Blue Phone Support (not urgent)</option><option value="red">Red Phone Support (urgent)</option></select></div><div><div class="lbl">Portal</div><input id="supportPortal" class="input" readonly /></div><div style="grid-column:1/-1"><div class="lbl">Category</div><select id="supportCategory" class="input"></select></div><div style="grid-column:1/-1"><div class="lbl">Message</div><textarea id="supportMsg" class="input" style="min-height:120px;resize:vertical" placeholder="Tell the Leadership Team what you need..."></textarea><div class="help">If it's about a lead, include the address or phone number.</div></div></div></div><div class="modalActions"><button class="btn ghost" type="button" id="supportCancelBtn">Cancel</button><button class="btn" type="button" id="supportSendBtn">Send Request</button></div></div></div>
+<div class="modalOverlay" id="supportModal"><div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="supportTitle"><div class="modalHead"><div><div class="modalTitle" id="supportTitle">Support Request</div><div class="modalSub" id="supportSub">Send a request to Leadership Team</div></div><button class="iconBtn" id="supportCloseBtn" title="Close" onclick="window.closeSupportModal()">✕</button></div><div class="modalBody"><div class="grid2"><div><div class="lbl">Priority</div><select id="supportPriority" class="input"><option value="blue">Blue Phone Support (not urgent)</option><option value="red">Red Phone Support (urgent)</option></select></div><div><div class="lbl">Portal</div><input id="supportPortal" class="input" readonly /></div><div style="grid-column:1/-1"><div class="lbl">Category</div><select id="supportCategory" class="input"></select></div><div style="grid-column:1/-1"><div class="lbl">Message</div><textarea id="supportMsg" class="input" style="min-height:120px;resize:vertical" placeholder="Tell the Leadership Team what you need..."></textarea><div class="help">If it's about a lead, include the address or phone number.</div></div></div></div><div class="modalActions"><button class="btn ghost" type="button" id="supportCancelBtn" onclick="window.closeSupportModal()">Cancel</button><button class="btn" type="button" id="supportSendBtn" onclick="window.submitSupportRequest()">Send Request</button></div></div></div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
@@ -329,589 +338,629 @@ Daughter Lisa | 210-555-2222"></textarea></div>
 <script src="app-auth.js"></script>
 <script>
 (function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig. Check config.js load order.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){console.error("Firebase init error:", e);}})();
-const $=(id)=>document.getElementById(id);
-let UID="", ME=null, ROLE="associate", isGod=false, isBranchManager=false;
-let sellerList=[], sellerView=[], currentLead=null, currentLeadId="", currentIndex=-1, currentPhone="", currentPhoneLabel="", activeLogRef=null, activeChatRef=null, mapMode="area";
-const LEADS_MASTER_PATH="leadsMaster", LEADS_BY_USER_PATH="leadsByUser", USER_DIR_PATH="userDirectory", LEGACY_LEADS_PATH="leads", ROLES_PATH="roles", PRESENCE_PATH="presence/global", DMS_PATH="direct_messages", TEAM_CALLLOG_PATH="team_call_log", SUPPORT_REQUESTS_PATH="supportRequests", EMAIL_INDEX_PATH="emailIndex", MANAGER_ASSOCIATES_PATH="managerAssociates";
+
+// STRICT WINDOW SCOPING FOR ALL GLOBALS & FUNCTIONS
+window.$ = function(id) { return document.getElementById(id); };
+window.UID = ""; window.ME = null; window.ROLE = "associate"; window.isGod = false; window.isBranchManager = false;
+window.sellerList = []; window.sellerView = []; window.currentLead = null; window.currentLeadId = ""; window.currentIndex = -1;
+window.currentPhone = ""; window.currentPhoneLabel = ""; window.activeLogRef = null; window.activeChatRef = null; window.mapMode = "area";
+window.userDirCache = {byUid:{},byEmail:{},byUser:{}}; window.pendingRequestCache = []; window.modalAssignedSet = new Set();
+window.modalMode = "new"; window.modalLeadId = null; window.branchLeadRefs = []; window.leadsRef = null; window.legacyRef = null;
+
+const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; const USER_DIR_PATH="userDirectory"; const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
-function esc(s){ return String(s || "").replace(/[&<>"']/g, m => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[m])); }
-
-function modalToast(msg,good){const el=$("modalToast"); el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}
-function toast(msg){const el=$("noteStatus"); el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);} 
-function fmtPhoneKey(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} function tsToLocal(ts){try{const d=new Date(ts); return isNaN(d.getTime())?"":d.toLocaleString();}catch(e){return "";}} function initialsFromUser(u){const base=(u&&(u.displayName||u.email))?(u.displayName||u.email):""; const parts=String(base).split(/[\s._-]+/).filter(Boolean); return (parts.map(p=>p[0]?.toUpperCase()||"").join("").slice(0,2)||"U");} function usernameFromEmail(email){const e=String(email||"").toLowerCase().trim(); const local=e.split("@")[0]||""; return local.replace(/[^a-z0-9_]/g,"").slice(0,24)||"user";}
-function emailLookupKey(email){return String(email||"").trim().toLowerCase().replace(/\./g,",");}
-function mapRole(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin"; return "user";} function roleLabel(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} function isAdminLike(){return isGod||isBranchManager;}
-let userDirCache={byUid:{},byEmail:{},byUser:{}}; let pendingRequestCache=[];
+window.esc = function(s){ return String(s || "").replace(/[&<>"']/g, m => ({ '&': '&', '<': '<', '>': '>', '"': '"', "'": ''' }[m])); }
+window.modalToast = function(msg,good){const el=$("modalToast"); el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}
+window.toast = function(msg){const el=$("noteStatus"); el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);} 
+window.fmtPhoneKey = function(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} 
+window.tsToLocal = function(ts){try{const d=new Date(ts); return isNaN(d.getTime())?"":d.toLocaleString();}catch(e){return "";}} 
+window.initialsFromUser = function(u){const base=(u&&(u.displayName||u.email))?(u.displayName||u.email):""; const parts=String(base).split(/[\s._-]+/).filter(Boolean); return (parts.map(p=>p[0]?.toUpperCase()||"").join("").slice(0,2)||"U");} 
+window.usernameFromEmail = function(email){const e=String(email||"").toLowerCase().trim(); const local=e.split("@")[0]||""; return local.replace(/[^a-z0-9_]/g,"").slice(0,24)||"user";}
+window.emailLookupKey = function(email){return String(email||"").trim().toLowerCase().replace(/\./g,",");}
+window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin"; return "user";} 
+window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} 
+window.isAdminLike = function(){return window.isGod||window.isBranchManager;}
 
 /* --- LEADERSHIP PING SYSTEM (EMAIL WEBHOOK TRIGGER) --- */
-function triggerLeadershipPing(actionType, messageText = "") {
-    if (isGod) return; 
+window.triggerLeadershipPing = function(actionType, messageText = "") {
+    if (window.isGod) return; 
     firebase.database().ref("leadership_pings").push({
-        uid: UID, name: ME?.displayName || ME?.email.split('@')[0], email: ME?.email,
+        uid: window.UID, name: window.ME?.displayName || window.ME?.email.split('@')[0], email: window.ME?.email,
         action: actionType, message: messageText, ts: firebase.database.ServerValue.TIMESTAMP, status: "unread"
     });
 }
 
+/* --- LOGOUT --- */
+window.logout = function() { firebase.auth().signOut().then(() => { location.href="index.html"; }); };
+
 /* --- WAR ROOM REQUEST LOGIC --- */
-async function requestWarRoom(type) {
-    if(!currentLeadId || !currentLead) return;
+window.requestWarRoom = async function(type) {
+    if(!window.currentLeadId || !window.currentLead) return;
     $("btnReqAnalysis").disabled = true; $("btnReqSkip").disabled = true;
     
     const req = {
-        requesterUid: UID, requesterEmail: ME?.email || "", leadId: currentLeadId,
-        address: currentLead.address || currentLead.Address || "Unknown",
-        owner: currentLead.owner || currentLead.Owner || currentLead.name || "",
-        phones: $("m_phones").value || "", notes: currentLead.notes || "",
+        requesterUid: window.UID, requesterEmail: window.ME?.email || "", leadId: window.currentLeadId,
+        address: window.currentLead.address || window.currentLead.Address || "Unknown",
+        owner: window.currentLead.owner || window.currentLead.Owner || window.currentLead.name || "",
+        phones: $("m_phones").value || "", notes: window.currentLead.notes || "",
         requestType: type, status: 'pending', ts: Date.now()
     };
     try {
         await firebase.database().ref('warroom_requests').push(req);
-        triggerLeadershipPing(`Requested ${type === 'skip' ? 'Skip Trace' : 'Analysis'} for ${req.address}`, "Sent to War Room.");
+        window.triggerLeadershipPing(`Requested ${type === 'skip' ? 'Skip Trace' : 'Analysis'} for ${req.address}`, "Sent to War Room.");
         alert("Sent to Leadership War Room!");
     } catch(e) { alert("Request failed"); }
-    setTimeout(() => { if(currentLeadId && !isGod) { $("btnReqAnalysis").disabled = false; $("btnReqSkip").disabled = false; } }, 2000);
+    setTimeout(() => { if(window.currentLeadId && !window.isGod) { $("btnReqAnalysis").disabled = false; $("btnReqSkip").disabled = false; } }, 2000);
 }
-$("btnReqAnalysis").addEventListener("click", () => requestWarRoom('analysis'));
-$("btnReqSkip").addEventListener("click", () => requestWarRoom('skip'));
 
-async function readExact(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
-function buildUserCache(rows){const byUid={}, byEmail={}, byUser={}; rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;}); return {byUid,byEmail,byUser};}
-async function loadGodDirectoryCache(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){console.warn("userDirectory read failed", e);} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){console.warn("roles read failed", e);} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value"); managerAssociates=mSnap.val()||{};}catch(e){console.warn("managerAssociates read failed", e);} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});}); if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} userDirCache=cache; pendingRequestCache=pending; return cache;}
-async function loadSelfDirectoryCache(){const [row, roleRaw]=await Promise.all([readExact(`${USER_DIR_PATH}/${UID}`), readExact(`${ROLES_PATH}/${UID}`)]); const cache=buildUserCache([{uid:UID,row:row||{},role:roleRaw||row?.role||"user"}]); userDirCache=cache; pendingRequestCache=[]; return cache;}
-async function loadBranchManagerDirectoryCache(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([readExact(`${USER_DIR_PATH}/${UID}`), readExact(`${ROLES_PATH}/${UID}`), readExact(`${MANAGER_ASSOCIATES_PATH}/${UID}`)]); const rows=[{uid:UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap); const details=await Promise.all(targetUids.map(async targetUid=>{const row=await readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=buildUserCache(rows); Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); userDirCache=cache; pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${UID}__${targetUid}`, requesterUid:UID, requesterEmail:cache.byUid[UID]?.email||String(ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status); return cache;}
-async function loadUserDirectoryCache(){if(isGod) return loadGodDirectoryCache(); if(isBranchManager) return loadBranchManagerDirectoryCache(); return loadSelfDirectoryCache();}
-function managedAssociatesFor(uid){return Object.values(userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
-async function resolveMyRole(u){
+/* --- DISPO / JV APPROVAL & PHOTO LOGIC --- */
+window.approveDispo = async function() {
+    if (!window.isGod || !window.currentLeadId) return;
+    try {
+        const updates = {};
+        updates[`${LEADS_MASTER_PATH}/sellers/${window.currentLeadId}/dispoApproved`] = true;
+        updates[`${LEADS_MASTER_PATH}/sellers/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
+        
+        const snap = await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${window.currentLeadId}/assignedTo`).once('value');
+        const assignedTo = snap.val() || {};
+        Object.keys(assignedTo).forEach(uid => {
+            updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${window.currentLeadId}/dispoApproved`] = true;
+            updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
+        });
+        
+        await firebase.database().ref().update(updates);
+        alert("Approved for Dispo ✓");
+        if (window.currentLead) window.currentLead.dispoApproved = true;
+        window.selectLeadByIndex(window.currentIndex);
+    } catch(e) { alert("Approval failed"); }
+};
+
+window.uploadPhotos = function() {
+    alert("Photo upload module opening... (Integration pending)");
+};
+
+window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
+window.buildUserCache = function(rows){const byUid={}, byEmail={}, byUser={}; rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;}); return {byUid,byEmail,byUser};}
+window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value"); managerAssociates=mSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});}); if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending; return cache;}
+window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[]; return cache;}
+window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap); const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows); Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status); return cache;}
+window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache(); return window.loadSelfDirectoryCache();}
+window.managedAssociatesFor = function(uid){return Object.values(window.userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
+window.resolveMyRole = async function(u){
   const emailStr = String(u?.email || "").toLowerCase().trim();
   if(emailStr === "dealbankers@gmail.com") return "god";
   try{
-    const roleSnap = await firebase.database().ref(`${ROLES_PATH}/${UID}`).once("value");
+    const roleSnap = await firebase.database().ref(`${ROLES_PATH}/${window.UID}`).once("value");
     const raw = roleSnap.val();
     if(raw != null) return mapRole(raw);
-  }catch(e){ console.warn("direct role read failed", e); }
-  return mapRole(userDirCache.byUid?.[UID]?.role || "user");
+  }catch(e){ }
+  return mapRole(window.userDirCache.byUid?.[window.UID]?.role || "user");
 }
-function getAssignableRows(){const rows=[]; Object.values(userDirCache.byUid||{}).forEach(u=>{if(u.role==="system") return; if(isGod){if(u.role==="god") return; rows.push(u); return;} if(isBranchManager){if(u.uid===UID){rows.push(u); return;} if(u.role==="user"&&String(u.managerUid||"")===String(UID)&&String(u.managerStatus||"")==="approved") rows.push(u);}}); rows.sort((a,b)=>((a.role||"")===(b.role||"")?String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}):String(a.role||"").localeCompare(String(b.role||"")))); return rows;}
-function leadIdFor(lead){return String((lead&&(lead.id||lead.docnum))?(lead.id||lead.docnum):"");}
-function normalizePhones(lead){const out=[]; if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set(); return out.filter(p=>{const k=fmtPhoneKey(p.phone); if(!p.phone||k==="unknown"||seen.has(k)) return false; seen.add(k); return true;}).map(p=>({label:String(p.label||"Phone"), phone:String(p.phone)}));}
-function leadStatus(lead){const s=(lead?.status||lead?.leadStatus||lead?.state||"").toString().trim(); if(!s) return "New"; const up=s.toLowerCase(); if(up.includes("dnc")) return "DNC"; if(up.includes("hot")) return "Hot"; if(up.includes("work")) return "Working"; if(up.includes("done")||up.includes("closed")) return "Done"; return s;}
-function badgeHTML(lead,legacy){const s=(lead?.status||"New"); const cls=(s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new"; 
-let html = `<span class="badge ${cls}">${esc(s==="DNC"?"DNC":s)}</span>${legacy?'<span class="badge legacy">LEGACY</span>':''}`;
+window.getAssignableRows = function(){const rows=[]; Object.values(window.userDirCache.byUid||{}).forEach(u=>{if(u.role==="system") return; if(window.isGod){if(u.role==="god") return; rows.push(u); return;} if(window.isBranchManager){if(u.uid===window.UID){rows.push(u); return;} if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") rows.push(u);}}); rows.sort((a,b)=>((a.role||"")===(b.role||"")?String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}):String(a.role||"").localeCompare(String(b.role||"")))); return rows;}
+window.leadIdFor = function(lead){return String((lead&&(lead.id||lead.docnum))?(lead.id||lead.docnum):"");}
+window.normalizePhones = function(lead){const out=[]; if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set(); return out.filter(p=>{const k=window.fmtPhoneKey(p.phone); if(!p.phone||k==="unknown"||seen.has(k)) return false; seen.add(k); return true;}).map(p=>({label:String(p.label||"Phone"), phone:String(p.phone)}));}
+window.leadStatus = function(lead){const s=(lead?.status||lead?.leadStatus||lead?.state||"").toString().trim(); if(!s) return "New"; const up=s.toLowerCase(); if(up.includes("dnc")) return "DNC"; if(up.includes("hot")) return "Hot"; if(up.includes("work")) return "Working"; if(up.includes("done")||up.includes("closed")) return "Done"; return s;}
+window.badgeHTML = function(lead,legacy){const s=(lead?.status||"New"); const cls=(s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new"; 
+let html = `<span class="badge ${cls}">${window.esc(s==="DNC"?"DNC":s)}</span>${legacy?'<span class="badge legacy">LEGACY</span>':''}`;
 if(lead?.isLive) html += `<span class="badge live">LIVE / JV</span>`;
 return html;}
-function isArchivedLead(lead){const v=lead?.archived; return v===true||String(v).toLowerCase()==="true"||v===1||String(v)==="1";}
-function applySearch(){const q=($("s_q").value||"").toLowerCase().trim(); sellerView=!q?sellerList.slice():sellerList.filter(l=>{const hay=[l.address||"",l.Address||"",l.owner||"",l.Owner||"",l.notes||"",l.Notes||"",normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); return hay.includes(q);}); sellerView=sellerView.filter(l=>!isArchivedLead(l)); renderQueue(); if(sellerView.length){if(currentLeadId){const idx=sellerView.findIndex(x=>leadIdFor(x)===currentLeadId); if(idx>=0) return selectLeadByIndex(idx);} selectLeadByIndex(Math.min(Math.max(currentIndex,0), sellerView.length-1));} else {clearConsole(); updatePager();}}
+window.isArchivedLead = function(lead){const v=lead?.archived; return v===true||String(v).toLowerCase()==="true"||v===1||String(v)==="1";}
+window.applySearch = function(){const q=($("s_q").value||"").toLowerCase().trim(); window.sellerView=!q?window.sellerList.slice():window.sellerList.filter(l=>{const hay=[l.address||"",l.Address||"",l.owner||"",l.Owner||"",l.notes||"",l.Notes||"",window.normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); return hay.includes(q);}); window.sellerView=window.sellerView.filter(l=>!window.isArchivedLead(l)); window.renderQueue(); if(window.sellerView.length){if(window.currentLeadId){const idx=window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId); if(idx>=0) return window.selectLeadByIndex(idx);} window.selectLeadByIndex(Math.min(Math.max(window.currentIndex,0), window.sellerView.length-1));} else {window.clearConsole(); window.updatePager();}}
 
-function renderQueue(){
+window.renderQueue = function(){
   const el=$("leadList");
-  $("leadCountPill").textContent=`${sellerView.length} leads`; 
-  $("queueMeta").textContent=sellerView.length?`Showing ${sellerView.length}`:"Empty"; 
-  if(!sellerView.length){
+  $("leadCountPill").textContent=`${window.sellerView.length} leads`; 
+  $("queueMeta").textContent=window.sellerView.length?`Showing ${window.sellerView.length}`:"Empty"; 
+  if(!window.sellerView.length){
     el.innerHTML=`<div class="log-empty" style="padding:22px 12px;">No leads match your search.</div>`; 
     return;
   } 
   let html = "";
-  sellerView.forEach((lead,idx)=>{
-    const id=leadIdFor(lead), addr=(lead.address||lead.Address||"—").toString(), owner=(lead.owner||lead.Owner||lead.name||"—").toString(), type=(lead.type||"seller").toString(), source=(lead.source||"").toString(); 
-    const phones=normalizePhones(lead), phoneLine=phones.slice(0,2).map(p=>`${esc(p.label)}: ${esc(p.phone)}`).join("<br>"); 
-    html += `<div class="lead-item${idx===currentIndex?" selected":""}" data-idx="${idx}">
-      <div class="addr">${esc(addr)}</div>
-      <div class="meta"><div>${esc(owner)}</div><div style="opacity:.9">${esc(type)}${source?" • "+esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style="opacity:.7">No phones yet</div>`}</div>
-      <div class="badges">${badgeHTML(lead,!!lead.__legacy)}</div>
+  window.sellerView.forEach((lead,idx)=>{
+    const id=window.leadIdFor(lead), addr=(lead.address||lead.Address||"—").toString(), owner=(lead.owner||lead.Owner||lead.name||"—").toString(), type=(lead.type||"seller").toString(), source=(lead.source||"").toString(); 
+    const phones=window.normalizePhones(lead), phoneLine=phones.slice(0,2).map(p=>`${window.esc(p.label)}: ${window.esc(p.phone)}`).join("<br>"); 
+    html += `<div class="lead-item${idx===window.currentIndex?" selected":""}" onclick="window.selectLeadByIndex(${idx})">
+      <div class="addr">${window.esc(addr)}</div>
+      <div class="meta"><div>${window.esc(owner)}</div><div style="opacity:.9">${window.esc(type)}${source?" • "+window.esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style="opacity:.7">No phones yet</div>`}</div>
+      <div class="badges">${window.badgeHTML(lead,!!lead.__legacy)}</div>
     </div>`;
   });
   el.innerHTML = html;
 }
 
-function updatePager(){const total=sellerView.length||0, current=(currentIndex>=0&&total)?(currentIndex+1):0; $("leadPager").textContent=`${current} / ${total}`;}
-function setMapVisibility(on){$("mapHead").style.display=on?"":"none"; $("mapWrap").style.display=on?"":"none"; $("mapWarn").style.display="none";}
+window.updatePager = function(){const total=window.sellerView.length||0, current=(window.currentIndex>=0&&total)?(window.currentIndex+1):0; $("leadPager").textContent=`${current} / ${total}`;}
+window.setMapVisibility = function(on){$("mapHead").style.display=on?"":"none"; $("mapWrap").style.display=on?"":"none"; $("mapWarn").style.display="none";}
 
-function clearConsole(){
-  currentLead=null; currentLeadId=""; currentIndex=-1;
+window.clearConsole = function(){
+  window.currentLead=null; window.currentLeadId=""; window.currentIndex=-1;
   $("leadAddress").textContent="No lead selected"; 
   $("leadOwner").textContent="Select a lead from the queue."; 
-  $("phoneSelect").innerHTML=""; 
-  $("phoneSelect").disabled=true; 
-  $("callBtn").disabled=true; 
-  $("copyBtn").disabled=true; 
-  $("noteSaveBtn").disabled=true; 
-  $("btnEditLead").disabled=true; 
-  $("btnReqAnalysis").disabled=true; 
-  $("btnReqSkip").disabled=true; 
+  $("dispoHubContent").innerHTML="Select a lead to view Dispo status.";
+  $("phoneSelect").innerHTML=""; $("phoneSelect").disabled=true; 
+  $("callBtn").disabled=true; $("copyBtn").disabled=true; 
+  $("btnEditLead").disabled=true; $("btnReqAnalysis").disabled=true; $("btnReqSkip").disabled=true; 
   $("btnOpenQuickLog").style.display="none";
-  currentPhone=""; currentPhoneLabel=""; 
+  window.currentPhone=""; window.currentPhoneLabel=""; 
   $("noteComposer").value="";
-  setMapVisibility(false); 
-  detachCallLog(); renderCallLogEmpty(); $("callHint").style.display="none";
+  window.setMapVisibility(false); 
+  window.detachCallLog(); window.renderCallLogEmpty(); $("callHint").style.display="none";
   $("leadNotesField").style.display="none"; $("leadNotesText").textContent="";
 }
 
-function selectLeadByIndex(idx){
-  if(!sellerView.length) return; 
-  idx=Math.max(0, Math.min(idx, sellerView.length-1)); 
-  currentIndex=idx; currentLead=sellerView[idx]; currentLeadId=leadIdFor(currentLead); 
-  updatePager(); renderQueue();
-  const addr=(currentLead.address||currentLead.Address||"—").toString(), owner=(currentLead.owner||currentLead.Owner||currentLead.name||"—").toString(); 
+window.selectLeadByIndex = function(idx){
+  if(!window.sellerView.length) return; 
+  idx=Math.max(0, Math.min(idx, window.sellerView.length-1)); 
+  window.currentIndex=idx; window.currentLead=window.sellerView[idx]; window.currentLeadId=window.leadIdFor(window.currentLead); 
+  window.updatePager(); window.renderQueue();
+  const addr=(window.currentLead.address||window.currentLead.Address||"—").toString(), owner=(window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||"—").toString(); 
   $("leadAddress").textContent=addr; $("leadOwner").textContent=owner; 
 
-  const notes = (currentLead.notes || currentLead.Notes || "").toString().trim();
+  const notes = (window.currentLead.notes || window.currentLead.Notes || "").toString().trim();
   if(notes) { $("leadNotesField").style.display=""; $("leadNotesText").textContent=notes; } else { $("leadNotesField").style.display="none"; }
 
-  $("btnEditLead").disabled=false; 
-  if(!isGod) {
-    $("btnReqAnalysis").disabled=false; $("btnReqSkip").disabled=false; 
+  const dh = $("dispoHubContent");
+  if (!window.currentLead.isLive) {
+      dh.innerHTML = "Deal is not marked for Network JV.";
+  } else if (!window.currentLead.dispoApproved) {
+      let dhtml = "<span style='color:var(--warn); font-weight:800;'>Status: Pending Leadership Approval</span>";
+      if (window.isGod) dhtml += `<br><button class="btn primary tiny" style="margin-top:8px" onclick="window.approveDispo()">Approve for Dispo</button>`;
+      dh.innerHTML = dhtml;
+  } else {
+      dh.innerHTML = `<span style='color:var(--good); font-weight:800;'>Status: Approved for Dispo Board</span><br>
+      <button class="btn tiny" style="margin-top:8px; background:var(--accent); color:#fff;" onclick="window.uploadPhotos()">📷 Upload Photos</button>`;
   }
 
-  const sel=$("phoneSelect"), phones=normalizePhones(currentLead); 
+  $("btnEditLead").disabled=false; 
+  if(!window.isGod) { $("btnReqAnalysis").disabled=false; $("btnReqSkip").disabled=false; }
+
+  const sel=$("phoneSelect"), phones=window.normalizePhones(window.currentLead); 
   sel.innerHTML=""; 
   if(!phones.length){
-    sel.disabled=true; $("callBtn").disabled=true; $("copyBtn").disabled=true; $("noteSaveBtn").disabled=true; 
+    sel.disabled=true; $("callBtn").disabled=true; $("copyBtn").disabled=true; 
     $("btnOpenQuickLog").style.display="none";
-    detachCallLog(); renderCallLogEmpty("No phones on this lead yet."); $("callHint").style.display="none";
+    window.detachCallLog(); window.renderCallLogEmpty("No phones on this lead yet."); $("callHint").style.display="none";
   } else {
     sel.disabled=false;
     phones.forEach(p=>{const opt=document.createElement("option"); opt.value=p.phone; opt.textContent=`${p.label} — ${p.phone}`; sel.appendChild(opt);}); 
-    sel.selectedIndex=0; currentPhone=phones[0].phone; currentPhoneLabel=phones[0].label; 
-    $("callBtn").disabled=false; $("copyBtn").disabled=false; $("noteSaveBtn").disabled=false; $("callHint").style.display=""; 
+    sel.selectedIndex=0; window.currentPhone=phones[0].phone; window.currentPhoneLabel=phones[0].label; 
+    $("callBtn").disabled=false; $("copyBtn").disabled=false; $("callHint").style.display=""; 
     $("btnOpenQuickLog").style.display="flex";
-    onPhoneChanged();
+    window.onPhoneChanged();
   } 
-  if(addr.trim()){setMapVisibility(true); buildMap(addr);} else setMapVisibility(false);
+  if(addr.trim()){window.setMapVisibility(true); window.buildMap(addr);} else window.setMapVisibility(false);
 } 
 
-function onPhoneChanged(){const sel=$("phoneSelect"); currentPhone=sel.value||""; currentPhoneLabel=(sel.options[sel.selectedIndex]?.textContent||"").split("—")[0].trim()||"Phone"; $("noteComposer").value=""; attachCallLog(fmtPhoneKey(currentPhone)); $("flyoutPhoneLabel").textContent=currentPhoneLabel + ": " + currentPhone;}
-$("phoneSelect").addEventListener("change", onPhoneChanged); $("prevLead").onclick=()=>{if(sellerView.length) selectLeadByIndex((currentIndex<=0)?0:currentIndex-1);}; $("nextLead").onclick=()=>{if(sellerView.length) selectLeadByIndex((currentIndex>=sellerView.length-1)?sellerView.length-1:currentIndex+1);}; $("s_reload").onclick=applySearch; $("s_q").addEventListener("keydown", e=>{if(e.key==="Enter") applySearch();});
-function sanitizeTel(phone){const raw=(phone||"").toString().trim(); if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
-function isMobileish(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"");}
-function doTelDial(phone){const tel=sanitizeTel(phone); if(!tel) return; const a=document.createElement("a"); a.href="tel:"+tel; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();}
-$("callBtn").addEventListener("click", async()=>{if(!currentPhone) return; await logStatus("Call Attempt"); if(isMobileish()) return doTelDial(currentPhone); try{await navigator.clipboard.writeText(currentPhone); alert("Copied to clipboard!");}catch(e){}});
-$("copyBtn").addEventListener("click", async()=>{if(!currentPhone) return; try{await navigator.clipboard.writeText(currentPhone); alert("Copied!");}catch(e){}});
+window.onPhoneChanged = function(){const sel=$("phoneSelect"); window.currentPhone=sel.value||""; window.currentPhoneLabel=(sel.options[sel.selectedIndex]?.textContent||"").split("—")[0].trim()||"Phone"; $("noteComposer").value=""; window.attachCallLog(window.fmtPhoneKey(window.currentPhone)); $("flyoutPhoneLabel").textContent=window.currentPhoneLabel + ": " + window.currentPhone;}
+window.prevLead = function(){if(window.sellerView.length) window.selectLeadByIndex((window.currentIndex<=0)?0:window.currentIndex-1);}; 
+window.nextLead = function(){if(window.sellerView.length) window.selectLeadByIndex((window.currentIndex>=window.sellerView.length-1)?window.sellerView.length-1:window.currentIndex+1);}; 
+
+window.sanitizeTel = function(phone){const raw=(phone||"").toString().trim(); if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
+window.isMobileish = function(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"");}
+window.doTelDial = function(phone){const tel=window.sanitizeTel(phone); if(!tel) return; const a=document.createElement("a"); a.href="tel:"+tel; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();}
+
+window.callCurrentPhone = async function(){if(!window.currentPhone) return; await window.logStatus("Call Attempt", true); if(window.isMobileish()) return window.doTelDial(window.currentPhone); try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied to clipboard!");}catch(e){}};
+window.copyCurrentPhone = async function(){if(!window.currentPhone) return; try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied!");}catch(e){}};
 
 /* --- QUICK LOG FLYOUT MENU --- */
-$("btnOpenQuickLog").addEventListener("click", () => {
+window.openQuickLog = function() {
     $("flyoutOverlay").style.display = "flex";
     setTimeout(() => { $("quickLogFlyout").classList.add("open"); }, 10);
-});
-function closeQuickLog() {
+};
+window.closeQuickLog = function() {
     $("quickLogFlyout").classList.remove("open");
     setTimeout(() => { $("flyoutOverlay").style.display = "none"; }, 300);
-}
-$("closeFlyoutBtn").addEventListener("click", closeQuickLog);
-$("flyoutOverlay").addEventListener("click", closeQuickLog);
+};
 
-function renderCallLogEmpty(msg){$("callLog").innerHTML=`<div class="log-empty">${esc(msg||"No call history for this number.")}</div>`; $("logCount").textContent="0 entries";}
-function detachCallLog(){if(activeLogRef){try{activeLogRef.off();}catch(e){} activeLogRef=null;}}
-function callLogRefForPhoneKey(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
+window.renderCallLogEmpty = function(msg){$("callLog").innerHTML=`<div class="log-empty">${window.esc(msg||"No call history for this number.")}</div>`; $("logCount").textContent="0 entries";}
+window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;}}
+window.callLogRefForPhoneKey = function(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
 
-function attachCallLog(phoneKey){
-  detachCallLog();
-  if(!phoneKey||phoneKey==="unknown") return renderCallLogEmpty("Select a valid number to view log."); 
+window.attachCallLog = function(phoneKey){
+  window.detachCallLog();
+  if(!phoneKey||phoneKey==="unknown") return window.renderCallLogEmpty("Select a valid number to view log."); 
   const items=[]; 
-  activeLogRef=callLogRefForPhoneKey(phoneKey); 
+  window.activeLogRef=window.callLogRefForPhoneKey(phoneKey); 
   const redraw=()=>{
     const log=$("callLog");
-    if(!items.length){ renderCallLogEmpty(); return; }
+    if(!items.length){ window.renderCallLogEmpty(); return; }
     const sorted=items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)); 
     let html = "";
     sorted.forEach(it=>{
       const kindClass=it.type==="note"?"note":((it.status||"").toLowerCase().includes("dnc")?"dnc":((it.status||"").toLowerCase().includes("hot")?"hot":"status")); 
       const label=it.type==="note"?"NOTE":"STATUS"; 
-      html += `<div class="log-item"><div class="log-top"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="log-tag ${kindClass}">${label}</span><span class="pill" style="padding:2px 8px">${esc(it.phoneLabel||it.phone||"")}</span></div><div>${esc(it.byName||it.by||"—")} • ${esc(tsToLocal(it.ts))}</div></div><div class="log-text">${esc(it.type==="status"?(it.status||""):(it.text||""))}</div></div>`;
+      html += `<div class="log-item"><div class="log-top"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="log-tag ${kindClass}">${label}</span><span class="pill" style="padding:2px 8px">${window.esc(it.phoneLabel||it.phone||"")}</span></div><div>${window.esc(it.byName||it.by||"—")} • ${window.esc(window.tsToLocal(it.ts))}</div></div><div class="log-text">${window.esc(it.type==="status"?(it.status||""):(it.text||""))}</div></div>`;
     });
     log.innerHTML = html;
     $("logCount").textContent=`${sorted.length} entr${sorted.length===1?"y":"ies"}`;
   }; 
-  activeLogRef.limitToLast(120).on("child_added", snap=>{const v=snap.val()||{}; v._key=snap.key; items.push(v); redraw();}, ()=>renderCallLogEmpty("Call log unavailable."));
-  activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();}); 
-  activeLogRef.on("child_removed", snap=>{const i=items.findIndex(x=>x._key===snap.key); if(i>=0) items.splice(i,1); redraw();});
+  window.activeLogRef.limitToLast(120).on("child_added", snap=>{const v=snap.val()||{}; v._key=snap.key; items.push(v); redraw();}, ()=>window.renderCallLogEmpty("Call log unavailable."));
+  window.activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();}); 
+  window.activeLogRef.on("child_removed", snap=>{const i=items.findIndex(x=>x._key===snap.key); if(i>=0) items.splice(i,1); redraw();});
 }
 
-async function pushLogEntry(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return; await callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:UID||"", by:ME?.email||"", byName:ME?.displayName||ME?.email||"User", phone:currentPhone||"", phoneLabel:currentPhoneLabel||"", leadId:currentLeadId||"", leadAddress:currentLead?.address||currentLead?.Address||""});}
-async function logStatus(status){const phoneKey=fmtPhoneKey(currentPhone); if(!currentPhone||phoneKey==="unknown") return; await pushLogEntry(phoneKey, {type:"status", status}); toast("Logged ✓"); closeQuickLog();}
-document.querySelectorAll(".qbtn[data-status]").forEach(btn=>btn.addEventListener("click", ()=>logStatus(btn.getAttribute("data-status")||"Status"))); $("noteSaveBtn").addEventListener("click", async()=>{const text=($("noteComposer").value||"").trim(); const phoneKey=fmtPhoneKey(currentPhone); if(!text||!currentPhone||phoneKey==="unknown") return; await pushLogEntry(phoneKey, {type:"note", text}); $("noteComposer").value=""; toast("Saved ✓"); closeQuickLog();});
-function buildMap(address){const addr=(address||"").trim(); if(!addr){setMapVisibility(false); return;} const q=encodeURIComponent(addr); const src=mapMode==="street"?`https://www.google.com/maps?q=${q}&layer=c&output=embed`:`https://www.google.com/maps?q=${q}&output=embed`; $("streetFrame").src=src; $("mapHint").textContent=mapMode==="street"?"Street View":"Area Map";}
-$("areaMapLink").onclick=()=>{mapMode="area"; if(currentLead) buildMap(currentLead.address||currentLead.Address||"");}; $("streetViewLink").onclick=()=>{mapMode="street"; if(currentLead) buildMap(currentLead.address||currentLead.Address||"");};
+window.pushLogEntry = async function(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return; await window.callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:window.UID||"", by:window.ME?.email||"", byName:window.ME?.displayName||window.ME?.email||"User", phone:window.currentPhone||"", phoneLabel:window.currentPhoneLabel||"", leadId:window.currentLeadId||"", leadAddress:window.currentLead?.address||window.currentLead?.Address||""});}
+window.logStatus = async function(status, keepOpen){const phoneKey=window.fmtPhoneKey(window.currentPhone); if(!window.currentPhone||phoneKey==="unknown") return; await window.pushLogEntry(phoneKey, {type:"status", status}); window.toast("Logged ✓"); if(!keepOpen) window.closeQuickLog();}
+window.saveQuickNote = async function(){const text=($("noteComposer").value||"").trim(); const phoneKey=window.fmtPhoneKey(window.currentPhone); if(!text||!window.currentPhone||phoneKey==="unknown") return; await window.pushLogEntry(phoneKey, {type:"note", text}); $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
 
-let leadsRef=null, legacyRef=null, branchLeadRefs=[];
-function detachLeadRefs(){
-  if(leadsRef){try{leadsRef.off();}catch(e){} leadsRef=null;}
-  if(legacyRef){try{legacyRef.off();}catch(e){} legacyRef=null;}
-  if(branchLeadRefs.length){ branchLeadRefs.forEach(ref=>{ try{ref.off();}catch(e){} }); branchLeadRefs=[]; }
+window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
+window.buildMap = function(address){const addr=(address||"").trim(); if(!addr){window.setMapVisibility(false); return;} const q=encodeURIComponent(addr); const src=window.mapMode==="street"?`https://www.google.com/maps?q=${q}&layer=c&output=embed`:`https://www.google.com/maps?q=${q}&output=embed`; $("streetFrame").src=src; $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";}
+
+window.detachLeadRefs = function(){
+  if(window.leadsRef){try{window.leadsRef.off();}catch(e){} window.leadsRef=null;}
+  if(window.legacyRef){try{window.legacyRef.off();}catch(e){} window.legacyRef=null;}
+  if(window.branchLeadRefs.length){ window.branchLeadRefs.forEach(ref=>{ try{ref.off();}catch(e){} }); window.branchLeadRefs=[]; }
 }
-function setListFromMap(byId){sellerList=Array.from(byId.values()); sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||""))); applySearch();}
-function subscribeAssociateAssignedLeads(){
-  detachLeadRefs(); $("status").textContent="Loading assigned leads…";
+window.setListFromMap = function(byId){window.sellerList=Array.from(byId.values()); window.sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||""))); window.applySearch();}
+
+window.subscribeAssociateAssignedLeads = function(){
+  window.detachLeadRefs(); $("status").textContent="Loading assigned leads…";
   const byId=new Map(); let queueLoaded=false, masterLoaded=false, flatLoaded=false;
   const updateStatus=()=>{
     if(byId.size){ $("status").textContent=`Acq (Assigned): ${byId.size} items`; return; }
-    if(queueLoaded&&masterLoaded&&flatLoaded){ sellerList=[]; sellerView=[]; renderQueue(); clearConsole(); updatePager(); $("status").textContent="No leads assigned yet."; }
+    if(queueLoaded&&masterLoaded&&flatLoaded){ window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); $("status").textContent="No leads assigned yet."; }
   };
   const mergeLead=(leadId, payload, source)=>{
     const prior=byId.get(leadId)||{}; const next={...prior, ...payload, id:leadId};
     if(source==="queue") next.__fromQueue=true; if(source==="master") next.__fromMaster=true; if(source==="flat") next.__fromFlat=true;
-    byId.set(leadId, next); setListFromMap(byId); updateStatus();
+    byId.set(leadId, next); window.setListFromMap(byId); updateStatus();
   };
   const removeLead=(leadId, source)=>{
     const prior=byId.get(leadId); if(!prior) return;
     if(source==="queue") delete prior.__fromQueue; if(source==="master") delete prior.__fromMaster; if(source==="flat") delete prior.__fromFlat;
     if(prior.__fromQueue||prior.__fromMaster||prior.__fromFlat){ byId.set(leadId, prior); }else{ byId.delete(leadId); }
-    setListFromMap(byId); updateStatus();
+    window.setListFromMap(byId); updateStatus();
   };
-  leadsRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`);
-  leadsRef.on("child_added", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); leadsRef.on("child_changed", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); leadsRef.on("child_removed", snap=>removeLead(snap.key, "queue"));
-  leadsRef.once("value").then(()=>{queueLoaded=true; updateStatus();}).catch(()=>{queueLoaded=true; updateStatus();});
-  const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`); branchLeadRefs.push(masterAssignedRef);
-  const handleMaster=(snap)=>{const leadId=snap.key; const val=snap.val()||{}; if(val?.assignedTo && val.assignedTo[UID]) mergeLead(leadId, val, "master"); else removeLead(leadId, "master");};
+  window.leadsRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`);
+  window.leadsRef.on("child_added", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); window.leadsRef.on("child_changed", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); window.leadsRef.on("child_removed", snap=>removeLead(snap.key, "queue"));
+  window.leadsRef.once("value").then(()=>{queueLoaded=true; updateStatus();}).catch(()=>{queueLoaded=true; updateStatus();});
+  const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`); window.branchLeadRefs.push(masterAssignedRef);
+  const handleMaster=(snap)=>{const leadId=snap.key; const val=snap.val()||{}; if(val?.assignedTo && val.assignedTo[window.UID]) mergeLead(leadId, val, "master"); else removeLead(leadId, "master");};
   masterAssignedRef.on("child_added", handleMaster); masterAssignedRef.on("child_changed", handleMaster); masterAssignedRef.on("child_removed", snap=>removeLead(snap.key, "master"));
   masterAssignedRef.once("value").then(()=>{masterLoaded=true; updateStatus();}).catch(()=>{masterLoaded=true; updateStatus();});
-  const flatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}`); branchLeadRefs.push(flatRef);
+  const flatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}`); window.branchLeadRefs.push(flatRef);
   const handleFlat=(snap)=>{const key=snap.key; if(key==="sellers"||key==="buyers") return; const val=snap.val()||{}; if(val && typeof val==="object" && !Array.isArray(val)){const maybeLeadId=String(val.id||val.docnum||key||""); const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones)); if(hasLeadShape && maybeLeadId) mergeLead(maybeLeadId, val, "flat");}};
   flatRef.on("child_added", handleFlat); flatRef.on("child_changed", handleFlat); flatRef.on("child_removed", snap=>removeLead(snap.key, "flat"));
   flatRef.once("value").then(()=>{flatLoaded=true; updateStatus();}).catch(()=>{flatLoaded=true; updateStatus();});
 }
-function subscribeBranchScopedLeads(){
-  detachLeadRefs(); $("status").textContent="Loading branch leads…";
-  const byId=new Map(); const sourceMap=new Map(); const scope=[UID,...managedAssociatesFor(UID).map(u=>u.uid)];
+
+window.subscribeBranchScopedLeads = function(){
+  window.detachLeadRefs(); $("status").textContent="Loading branch leads…";
+  const byId=new Map(); const sourceMap=new Map(); const scope=[window.UID,...window.managedAssociatesFor(window.UID).map(u=>u.uid)];
   let loaded=0; const total=scope.length;
-  function showEmptyIfDone(){ if(loaded < total || byId.size) return; sellerList=[]; sellerView=[]; renderQueue(); clearConsole(); updatePager(); $("status").textContent="No branch leads yet."; }
+  function showEmptyIfDone(){ if(loaded < total || byId.size) return; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); $("status").textContent="No branch leads yet."; }
   function rebuildLead(leadId){
     const sources=sourceMap.get(leadId);
-    if(!sources || !sources.size){ sourceMap.delete(leadId); byId.delete(leadId); setListFromMap(byId); if(byId.size){ $("status").textContent=`Acq (Branch): ${byId.size} items`; }else{ showEmptyIfDone(); } return; }
+    if(!sources || !sources.size){ sourceMap.delete(leadId); byId.delete(leadId); window.setListFromMap(byId); if(byId.size){ $("status").textContent=`Acq (Branch): ${byId.size} items`; }else{ showEmptyIfDone(); } return; }
     const rows=Array.from(sources.entries()).map(([uid,val])=>({uid,...val}));
     rows.sort((a,b)=>Number(b.updatedAt||b.assignedAt||b.createdAt||0)-Number(a.updatedAt||a.assignedAt||a.createdAt||0));
     const chosen={...rows[0]}; const assignedUids=rows.map(r=>r.uid); chosen.assignedUids=assignedUids; chosen.assignedTo=assignedUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{});
-    byId.set(leadId, chosen); setListFromMap(byId); $("status").textContent=`Acq (Branch): ${byId.size} items`;
+    byId.set(leadId, chosen); window.setListFromMap(byId); $("status").textContent=`Acq (Branch): ${byId.size} items`;
   }
   scope.forEach(uid=>{
-    const ref=firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/sellers`); branchLeadRefs.push(ref);
+    const ref=firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/sellers`); window.branchLeadRefs.push(ref);
     ref.on("child_added", snap=>{const leadId=snap.key; const val=snap.val()||{}; if(!sourceMap.has(leadId)) sourceMap.set(leadId,new Map()); sourceMap.get(leadId).set(uid,{id:leadId,...val}); rebuildLead(leadId);});
     ref.on("child_changed", snap=>{const leadId=snap.key; const val=snap.val()||{}; if(!sourceMap.has(leadId)) sourceMap.set(leadId,new Map()); sourceMap.get(leadId).set(uid,{id:leadId,...val}); rebuildLead(leadId);});
     ref.on("child_removed", snap=>{const leadId=snap.key; if(sourceMap.has(leadId)) sourceMap.get(leadId).delete(uid); rebuildLead(leadId);});
     ref.once("value").then(()=>{ loaded++; showEmptyIfDone(); }).catch(()=>{ loaded++; showEmptyIfDone(); });
   });
 }
-function subscribeGodAllLeads(){
-  detachLeadRefs(); $("status").textContent="Loading ALL leads…";
-  const byId=new Map(); let masterLoaded=false; let legacyLoaded=false; let personalLoaded=false;
-  const showEmptyIfDone=()=>{ if(byId.size){ $("status").textContent=`Acq (ALL): ${byId.size} items`; return; } if(masterLoaded && legacyLoaded && personalLoaded){ sellerList=[]; sellerView=[]; renderQueue(); clearConsole(); updatePager(); $("status").textContent="No leads available."; } };
-  
-  // 1. MASTER LEADS
-  leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
-  leadsRef.on("child_added", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId); showEmptyIfDone();});
-  leadsRef.on("child_changed", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:false}); setListFromMap(byId); showEmptyIfDone();});
-  leadsRef.on("child_removed", snap=>{byId.delete(snap.key); setListFromMap(byId); showEmptyIfDone();});
-  leadsRef.once("value").then(()=>{ masterLoaded=true; showEmptyIfDone(); }).catch(()=>{ masterLoaded=true; showEmptyIfDone(); });
-  
-  // 2. LEGACY LEADS
-  legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`);
-  legacyRef.on("child_added", snap=>{if(byId.has(snap.key)) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId); showEmptyIfDone();});
-  legacyRef.on("child_changed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy===false) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{}),__legacy:true}); setListFromMap(byId); showEmptyIfDone();});
-  legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); setListFromMap(byId); showEmptyIfDone();});
-  legacyRef.once("value").then(()=>{ legacyLoaded=true; showEmptyIfDone(); }).catch(()=>{ legacyLoaded=true; showEmptyIfDone(); });
 
-  // 3. PERSONAL TESTER LEADS (If God saved them in their own queue)
-  const myFlatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`); branchLeadRefs.push(myFlatRef);
-  myFlatRef.on("child_added", snap=>{if(byId.has(snap.key)) return; byId.set(snap.key,{id:snap.key,...(snap.val()||{})}); setListFromMap(byId); showEmptyIfDone();});
-  myFlatRef.on("child_changed", snap=>{byId.set(snap.key,{id:snap.key,...(snap.val()||{})}); setListFromMap(byId); showEmptyIfDone();});
-  myFlatRef.on("child_removed", snap=>{if(byId.has(snap.key)) byId.delete(snap.key); setListFromMap(byId); showEmptyIfDone();});
-  myFlatRef.once("value").then(()=>{ personalLoaded=true; showEmptyIfDone(); }).catch(()=>{ personalLoaded=true; showEmptyIfDone(); });
+window.subscribeGodAllLeads = function(){
+  window.detachLeadRefs(); $("status").textContent="Loading ALL leads…";
+  const byId=new Map(); let masterDone=false; let legacyDone=false; let personalDone=false;
+  
+  const checkDone = () => {
+      if(masterDone && legacyDone && personalDone) {
+          if(byId.size) { $("status").textContent=`Acq (ALL): ${byId.size} items`; }
+          else { $("status").textContent="No leads available."; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); }
+      } else if (byId.size) {
+          $("status").textContent=`Acq (ALL): ${byId.size} items`;
+      }
+  };
+
+  const processSnap = (snap, isLegacy) => {
+      const val = snap.val() || {}; const id = snap.key;
+      if(!byId.has(id) || !isLegacy) {
+          byId.set(id, { id, ...val, __legacy: isLegacy });
+          window.setListFromMap(byId);
+      }
+      checkDone();
+  };
+
+  // 1. MASTER
+  window.leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
+  window.leadsRef.on("child_added", s=>processSnap(s, false));
+  window.leadsRef.on("child_changed", s=>processSnap(s, false));
+  window.leadsRef.on("child_removed", snap=>{byId.delete(snap.key); window.setListFromMap(byId); checkDone();});
+  window.leadsRef.once("value").then(()=>{ masterDone=true; checkDone(); }).catch(()=>{ masterDone=true; checkDone(); });
+  
+  // 2. LEGACY
+  window.legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`);
+  window.legacyRef.on("child_added", s=>processSnap(s, true));
+  window.legacyRef.on("child_changed", s=>processSnap(s, true));
+  window.legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); window.setListFromMap(byId); checkDone();});
+  window.legacyRef.once("value").then(()=>{ legacyDone=true; checkDone(); }).catch(()=>{ legacyDone=true; checkDone(); });
+
+  // 3. PERSONAL / TEAM (Crucial for God Mode testers)
+  const myFlatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`); window.branchLeadRefs.push(myFlatRef);
+  myFlatRef.on("child_added", s=>processSnap(s, false));
+  myFlatRef.on("child_changed", s=>processSnap(s, false));
+  myFlatRef.on("child_removed", snap=>{ /* rely on master sync */ });
+  myFlatRef.once("value").then(()=>{ personalDone=true; checkDone(); }).catch(()=>{ personalDone=true; checkDone(); });
 
   $("btnImportLegacy").style.display="";
 }
 
-const leadModal=$("leadModal"); let modalMode="new", modalLeadId=null, modalAssignedSet=new Set();
-function renderAssignList(){
+window.renderAssignList = function(){
   const listEl=$("assignList"), q=($("assignFilter").value||"").toLowerCase().trim(); 
-  const rows=getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
+  const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
   if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`; return;} 
   listEl.innerHTML=rows.map(r=>{
-    const checked=modalAssignedSet.has(r.uid)?"checked":""; 
+    const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
     const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
-    return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${esc(r.uid)}" ${checked}/><div class="assignMeta"><div class="assignName">${esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${esc(r.email||r.uid)}</div></div><div class="assignTag">${tag}</div></label>`;
+    return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${window.esc(r.uid)}" ${checked} onchange="window.handleAssignChange(this)" /><div class="assignMeta"><div class="assignName">${window.esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${window.esc(r.email||r.uid)}</div></div><div class="assignTag">${tag}</div></label>`;
   }).join("");
 }
-$("assignFilter").addEventListener("input", renderAssignList); $("assignAllBtn").addEventListener("click", ()=>{getAssignableRows().forEach(r=>modalAssignedSet.add(r.uid)); renderAssignList();}); $("assignNoneBtn").addEventListener("click", ()=>{modalAssignedSet=new Set(); renderAssignList();});
+window.assignAll = function(){window.getAssignableRows().forEach(r=>window.modalAssignedSet.add(r.uid)); window.renderAssignList();}; 
+window.assignNone = function(){window.modalAssignedSet=new Set(); window.renderAssignList();};
+window.handleAssignChange = function(el){const uid = el.getAttribute("data-uid"); if(el.checked) window.modalAssignedSet.add(uid); else window.modalAssignedSet.delete(uid);};
 
-function openLeadModal(mode){
-  modalMode=mode; const isEdit=mode==="edit"; modalToast("", true); $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)";
-  
+window.openLeadModal = function(mode){
+  window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true); $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)";
   $("m_delete").style.display=isEdit?"block":"none"; 
-  
-  $("assignBlock").style.display=isAdminLike()?"":"none"; $("assignHintPill").textContent=roleLabel(ROLE); modalAssignedSet=new Set(); 
-  if(isEdit&&currentLead){
-    modalLeadId=currentLeadId; $("m_address").value=currentLead.address||currentLead.Address||""; $("m_owner").value=currentLead.owner||currentLead.Owner||currentLead.name||""; $("m_mailing").value=currentLead.mailing||currentLead.Mailing||currentLead.mailingAddress||""; $("m_status").value=leadStatus(currentLead); $("m_type").value=currentLead.type||"seller"; $("m_source").value=currentLead.source||""; $("m_phones").value=normalizePhones(currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); $("m_notes").value=currentLead.notes||currentLead.Notes||""; $("m_isLive").checked = !!currentLead.isLive;
-    Object.keys(currentLead.assignedTo||{}).forEach(uid=>{if(currentLead.assignedTo[uid]) modalAssignedSet.add(uid);});
-    (currentLead.assignedUids||[]).forEach(uid=>modalAssignedSet.add(String(uid)));
+  $("assignBlock").style.display=window.isAdminLike()?"":"none"; $("assignHintPill").textContent=window.roleLabel(window.ROLE); window.modalAssignedSet=new Set(); 
+  if(isEdit&&window.currentLead){
+    window.modalLeadId=window.currentLeadId; $("m_address").value=window.currentLead.address||window.currentLead.Address||""; $("m_owner").value=window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||""; $("m_mailing").value=window.currentLead.mailing||window.currentLead.Mailing||window.currentLead.mailingAddress||""; $("m_status").value=window.leadStatus(window.currentLead); $("m_type").value=window.currentLead.type||"seller"; $("m_source").value=window.currentLead.source||""; $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; $("m_isLive").checked = !!window.currentLead.isLive;
+    Object.keys(window.currentLead.assignedTo||{}).forEach(uid=>{if(window.currentLead.assignedTo[uid]) window.modalAssignedSet.add(uid);});
+    (window.currentLead.assignedUids||[]).forEach(uid=>window.modalAssignedSet.add(String(uid)));
   } else {
-    modalLeadId=null; $("m_address").value=""; $("m_owner").value=""; $("m_mailing").value=""; $("m_status").value="New"; $("m_type").value="seller"; $("m_source").value=""; $("m_phones").value=""; $("m_notes").value=""; $("m_isLive").checked = false;
-    if(isBranchManager) modalAssignedSet.add(UID);
+    window.modalLeadId=null; $("m_address").value=""; $("m_owner").value=""; $("m_mailing").value=""; $("m_status").value="New"; $("m_type").value="seller"; $("m_source").value=""; $("m_phones").value=""; $("m_notes").value=""; $("m_isLive").checked = false;
+    if(window.isBranchManager) window.modalAssignedSet.add(window.UID);
   } 
-  if(isAdminLike()) renderAssignList(); leadModal.classList.add("show"); leadModal.setAttribute("aria-hidden","false");
+  if(window.isAdminLike()) window.renderAssignList(); $("leadModal").classList.add("show"); $("leadModal").setAttribute("aria-hidden","false");
 }
-function closeLeadModal(){leadModal.classList.remove("show"); leadModal.setAttribute("aria-hidden","true");}
-$("btnNewLead").onclick=()=>openLeadModal("new");
-$("btnEditLead").onclick=()=>{if(currentLead) openLeadModal("edit");}; $("leadModalClose").onclick=closeLeadModal; $("m_cancel").onclick=closeLeadModal; leadModal.addEventListener("click", e=>{if(e.target===leadModal) closeLeadModal();});
-function parsePhonesFromModal(){const lines=($("m_phones").value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set(); lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});}); return out;}
+window.closeLeadModal = function(){$("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true");}
+window.parsePhonesFromModal = function(){const lines=($("m_phones").value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set(); lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});}); return out;}
 
-async function upsertLeadMasterAndAssignments(leadId,payload,assigneeUids){
-  await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`).update({...payload, id:leadId, assignedTo:assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{}), assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:ME?.email||""});
-  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={...payload,id:leadId,assignedBy:ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  if(modalMode==="edit"&&currentLead){ const prev=Object.keys(currentLead.assignedTo||{}).filter(uid=>currentLead.assignedTo[uid]); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]=null; }); }
+window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
+  await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`).update({...payload, id:leadId, assignedTo:assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{}), assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:window.ME?.email||""});
+  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
+  if(window.modalMode==="edit"&&window.currentLead){ const prev=Object.keys(window.currentLead.assignedTo||{}).filter(uid=>window.currentLead.assignedTo[uid]); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]=null; }); }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
-async function upsertBranchAssignments(leadId,payload,assigneeUids){
-  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={...payload,id:leadId,assignedBy:ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  if(modalMode==="edit"&&currentLead){ const prev=((currentLead.assignedUids||[]).map(String)).filter(uid=>getAssignableRows().some(r=>String(r.uid)===String(uid))); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]=null; }); }
+window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
+  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
+  if(window.modalMode==="edit"&&window.currentLead){ const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]=null; }); }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
 
-async function saveLeadFromModal(){
-  const address=($("m_address").value||"").trim(); if(!address) return modalToast("Address required.", false);
-  const payload={ address, owner:($("m_owner").value||"").trim(), mailing:($("m_mailing").value||"").trim(), status:($("m_status").value||"New").trim(), type:($("m_type").value||"seller").trim().toLowerCase(), isLive: $("m_isLive").checked, source:($("m_source").value||"").trim(), notes:($("m_notes").value||"").trim(), phones:parsePhonesFromModal() };
-  $("m_save").disabled=true; modalToast("Saving…", true);
+window.saveLeadFromModal = async function(){
+  const address=($("m_address").value||"").trim(); if(!address) return window.modalToast("Address required.", false);
+  const payload={ address, owner:($("m_owner").value||"").trim(), mailing:($("m_mailing").value||"").trim(), status:($("m_status").value||"New").trim(), type:($("m_type").value||"seller").trim().toLowerCase(), isLive: $("m_isLive").checked, source:($("m_source").value||"").trim(), notes:($("m_notes").value||"").trim(), phones:window.parsePhonesFromModal() };
+  $("m_save").disabled=true; window.modalToast("Saving…", true);
 
-  if (payload.isLive && (!currentLead || !currentLead.isLive)) {
-      triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
+  if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
+      window.triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
   }
 
   try{
-    if(isGod){
-      const allowed=new Set(getAssignableRows().map(r=>r.uid)); const uids=Array.from(modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(modalMode==="edit"&&modalLeadId)?modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).push().key;
-      await upsertLeadMasterAndAssignments(leadId,{...payload,createdAt:(modalMode==="edit"&&currentLead?.createdAt)?currentLead.createdAt:Date.now(),createdBy:(modalMode==="edit"&&currentLead?.createdBy)?currentLead.createdBy:(ME?.email||"")},uids);
-      modalToast("Saved ✓", true); closeLeadModal(); return;
+    if(window.isGod){
+      const allowed=new Set(window.getAssignableRows().map(r=>r.uid)); const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).push().key;
+      await window.upsertLeadMasterAndAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
+      window.modalToast("Saved ✓", true); window.closeLeadModal(); return;
     }
-    if(isBranchManager){
-      const allowed=new Set(getAssignableRows().map(r=>r.uid)); let uids=Array.from(modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[UID]; const leadId=(modalMode==="edit"&&modalLeadId)?modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`).push().key;
-      await upsertBranchAssignments(leadId,{...payload,createdAt:(modalMode==="edit"&&currentLead?.createdAt)?currentLead.createdAt:Date.now(),createdBy:(modalMode==="edit"&&currentLead?.createdBy)?currentLead.createdBy:(ME?.email||"")},uids);
-      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`).update({...payload, id:leadId, assignedTo:{[UID]:true}, assignedUids:[UID], dispoApproved:false}); }
-      modalToast("Saved ✓", true); closeLeadModal(); return;
+    if(window.isBranchManager){
+      const allowed=new Set(window.getAssignableRows().map(r=>r.uid)); let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`).push().key;
+      await window.upsertBranchAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
+      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`).update({...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}); }
+      window.modalToast("Saved ✓", true); window.closeLeadModal(); return;
     }
-    const leadId=(modalMode==="edit"&&modalLeadId)?modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers`).push().key;
+    const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`).push().key;
     const finalUpdates = {};
-    finalUpdates[`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:ME?.email||"",createdAt:(modalMode==="edit"&&currentLead?.createdAt)?currentLead.createdAt:Date.now(),createdBy:(modalMode==="edit"&&currentLead?.createdBy)?currentLead.createdBy:(ME?.email||"")};
-    if(payload.isLive && (!currentLead || !currentLead.isLive)) { finalUpdates[`${LEADS_MASTER_PATH}/sellers/${leadId}`] = {...payload, id:leadId, assignedTo:{[UID]:true}, assignedUids:[UID], dispoApproved:false}; }
+    finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/sellers/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:window.ME?.email||"",createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")};
+    if(payload.isLive && (!window.currentLead || !window.currentLead.isLive)) { finalUpdates[`${LEADS_MASTER_PATH}/sellers/${leadId}`] = {...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}; }
     await firebase.database().ref().update(finalUpdates);
     
-    modalToast("Saved ✓", true); closeLeadModal();
-  }catch(e){ console.warn("saveLeadFromModal failed", e); modalToast("Save failed. Check rules.", false); } finally { $("m_save").disabled=false; }
+    window.modalToast("Saved ✓", true); window.closeLeadModal();
+  }catch(e){ window.modalToast("Save failed.", false); } finally { $("m_save").disabled=false; }
 }
-$("m_save").onclick=saveLeadFromModal;
 
-// DELETION LOGIC (ADAPTIVE)
-$("m_delete").addEventListener("click", async () => {
-    if(!modalLeadId) return; 
+window.deleteLead = async function(){
+    if(!window.modalLeadId) return; 
     if(!confirm("Are you sure you want to completely delete this lead?")) return; 
     try{
-        if(isGod) {
-            const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${modalLeadId}/assignedTo`).once("value"); 
+        if(window.isGod) {
+            const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${window.modalLeadId}/assignedTo`).once("value"); 
             const assignedTo=snap.val()||{}; 
-            const updates={[`${LEADS_MASTER_PATH}/sellers/${modalLeadId}`]:null}; 
-            Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${modalLeadId}`]=null); 
+            const updates={[`${LEADS_MASTER_PATH}/sellers/${window.modalLeadId}`]:null}; 
+            Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${window.modalLeadId}`]=null); 
             await firebase.database().ref().update(updates); 
         } else {
-            await firebase.database().ref(`${LEADS_BY_USER_PATH}/${UID}/sellers/${modalLeadId}`).remove();
+            await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers/${window.modalLeadId}`).remove();
         }
-        closeLeadModal(); clearConsole(); alert("Lead deleted ✓");
-    }catch(e){console.warn("delete failed", e); alert("Delete failed");}
-});
+        window.closeLeadModal(); window.clearConsole(); alert("Lead deleted ✓");
+    }catch(e){ alert("Delete failed"); }
+};
 
-async function renderTeamModalBody(){
-  await loadUserDirectoryCache(); const byUid=userDirCache.byUid||{}; let html="";
-  if(isGod){
-    html+=`<div class="lbl">Pending Associate Requests</div><div class="teamGrid">`; const pending=pendingRequestCache.filter(r=>String(r.status||"")==="pending");
-    if(!pending.length){ html+=`<div class="help">No pending requests.</div>`; }else{ pending.forEach(r=>{ const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown"; const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Requested by Branch Manager: ${esc(managerName)}</span><span style="font-size:11px;color:#9ab9d6">${esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="btn primary tiny" onclick="approveRequest('${esc(r.id)}')">Approve</button><button class="btn danger tiny" onclick="denyRequest('${esc(r.id)}')">Deny</button></div></div>`; }); } html+=`</div>`;
-    html+=`<div class="lbl" style="margin-top:24px;">All Users (Role Management)</div><div class="teamGrid">`; Object.values(byUid).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})).forEach(u=>{ if(u.role==="system") return; const currentRole=roleLabel(u.role); const managerName=u.managerUid&&String(u.managerStatus||"")==="approved" ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : ""; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)} ${u.uid===UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)} • ${esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#00ff6a">Manager: ${esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`; }); html+=`</div>`;
-  } else if(isBranchManager){
-    const myTeam=managedAssociatesFor(UID); html+=`<div class="lbl">My Approved Team (Associates)</div><div class="teamGrid">`; if(!myTeam.length){ html+=`<div class="help">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#00ff6a">Active Team Member</span><span style="font-size:11px;color:#9ab9d6">${esc(u.email||u.uid)}</span></div><div class="teamActions"><button class="btn danger tiny" onclick="removeAssociate('${u.uid}')">Remove</button></div></div>`; }); } html+=`</div>`;
-    const myPending=pendingRequestCache.filter(r=>String(r.requesterUid)===String(UID)&&String(r.status||"")==="pending"); html+=`<div class="lbl" style="margin-top:24px;">Pending Requests</div><div class="teamGrid">`; if(!myPending.length){ html+=`<div class="help">No pending requests.</div>`; }else{ myPending.forEach(r=>{ html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(r.targetEmail||"Associate")}</strong><span style="font-size:11px;color:var(--warn)">Awaiting Leadership Team Approval</span></div><div class="teamActions"><button class="btn danger tiny" onclick="removeAssociate('${r.targetUid}')">Cancel</button></div></div>`; }); } html+=`</div>`;
-    html+=`<div class="lbl" style="margin-top:24px;">Request Associates By Email</div><div class="assignTools"><input id="teamSearch" class="input" placeholder="Type exact associate email..." autocapitalize="none" autocomplete="off" spellcheck="false" /><div class="assignBtns"><button class="btn tiny primary" type="button" id="teamSearchBtn">Search</button></div></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
+window.renderTeamModalBody = async function(){
+  await window.loadUserDirectoryCache(); const byUid=window.userDirCache.byUid||{}; let html="";
+  if(window.isGod){
+    html+=`<div class="lbl">Pending Associate Requests</div><div class="teamGrid">`; const pending=window.pendingRequestCache.filter(r=>String(r.status||"")==="pending");
+    if(!pending.length){ html+=`<div class="help">No pending requests.</div>`; }else{ pending.forEach(r=>{ const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown"; const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Requested by Branch Manager: ${window.esc(managerName)}</span><span style="font-size:11px;color:#9ab9d6">${window.esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="btn primary tiny" onclick="window.approveRequest('${window.esc(r.id)}')">Approve</button><button class="btn danger tiny" onclick="window.denyRequest('${window.esc(r.id)}')">Deny</button></div></div>`; }); } html+=`</div>`;
+    html+=`<div class="lbl" style="margin-top:24px;">All Users (Role Management)</div><div class="teamGrid">`; Object.values(byUid).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})).forEach(u=>{ if(u.role==="system") return; const currentRole=window.roleLabel(u.role); const managerName=u.managerUid&&String(u.managerStatus||"")==="approved" ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : ""; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)} ${u.uid===window.UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.email||u.uid)} • ${window.esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#00ff6a">Manager: ${window.esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==window.UID?`<select class="select" style="padding:4px;font-size:12px;width:auto;" onchange="window.changeUserRole('${u.uid}', this.value)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`; }); html+=`</div>`;
+  } else if(window.isBranchManager){
+    const myTeam=window.managedAssociatesFor(window.UID); html+=`<div class="lbl">My Approved Team (Associates)</div><div class="teamGrid">`; if(!myTeam.length){ html+=`<div class="help">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#00ff6a">Active Team Member</span><span style="font-size:11px;color:#9ab9d6">${window.esc(u.email||u.uid)}</span></div><div class="teamActions"><button class="btn danger tiny" onclick="window.removeAssociate('${u.uid}')">Remove</button></div></div>`; }); } html+=`</div>`;
+    const myPending=window.pendingRequestCache.filter(r=>String(r.requesterUid)===String(window.UID)&&String(r.status||"")==="pending"); html+=`<div class="lbl" style="margin-top:24px;">Pending Requests</div><div class="teamGrid">`; if(!myPending.length){ html+=`<div class="help">No pending requests.</div>`; }else{ myPending.forEach(r=>{ html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(r.targetEmail||"Associate")}</strong><span style="font-size:11px;color:var(--warn)">Awaiting Leadership Team Approval</span></div><div class="teamActions"><button class="btn danger tiny" onclick="window.removeAssociate('${r.targetUid}')">Cancel</button></div></div>`; }); } html+=`</div>`;
+    html+=`<div class="lbl" style="margin-top:24px;">Request Associates By Email</div><div class="assignTools"><input id="teamSearch" class="input" placeholder="Type exact associate email..." autocapitalize="none" autocomplete="off" spellcheck="false" /><div class="assignBtns"><button class="btn tiny primary" type="button" onclick="window.runTeamSearch()">Search</button></div></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
   }
   $("teamModalBody").innerHTML=html;
-  if(isBranchManager){ const input=$("teamSearch"); const box=$("teamSearchResults"); const runSearch=async()=>{ const email=String(input.value||"").trim().toLowerCase(); if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; } box.innerHTML=`<div class="help">Searching...</div>`; try{ const snap=await firebase.database().ref(`${EMAIL_INDEX_PATH}/${emailLookupKey(email)}`).once("value"); const targetUid=snap.val(); if(!targetUid || String(targetUid)===String(UID)){ box.innerHTML=`<div class="help">No match found.</div>`; return; } const myPending=pendingRequestCache.find(r=>String(r.requesterUid)===String(UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending"); const mineApproved=String(userDirCache.byUid[targetUid]?.managerUid||"")===String(UID)&&String(userDirCache.byUid[targetUid]?.managerStatus||"")==="approved"; const statusLine=myPending ? '<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>' : (mineApproved ? '<span style="font-size:11px;color:#00ff6a">Already on your team</span>' : '<span style="font-size:11px;color:#9ab9d6">Match found</span>'); const action=myPending ? '<button class="btn ghost tiny" disabled>Pending...</button>' : (mineApproved ? `<button class="btn danger tiny" onclick="removeAssociate('${targetUid}')">Remove</button>` : `<button class="btn primary tiny" onclick="requestAssociate('${targetUid}','${encodeURIComponent(email)}')">Request</button>`); box.innerHTML=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${esc(email)}</strong>${statusLine}</div><div class="teamActions">${action}</div></div>`; }catch(e){ console.warn("team email search failed", e); box.innerHTML=`<div class="help">Search unavailable right now.</div>`; } }; $("teamSearchBtn").onclick=runSearch; input.addEventListener("keydown", e=>{if(e.key==="Enter"){e.preventDefault(); runSearch();}}); }
 }
-$("btnTeam").onclick=async()=>{$("teamModal").classList.add("show"); $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await renderTeamModalBody();}; $("teamModalClose").onclick=()=>$("teamModal").classList.remove("show");
+window.openTeamModal = async function(){$("teamModal").classList.add("show"); $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await window.renderTeamModalBody();}; 
+window.closeTeamModal = function(){$("teamModal").classList.remove("show");};
 
-function supportCategoriesForPortal(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"]; return ["Hot lead / seller needs call","Need comp / ARV help","Need dispo / buyer help","System bug","Other"];}
-async function submitSupportRequest({priority, portal, category, message}){
-  if(!UID) return; 
-  await firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${UID}`).push({uid:UID, email:ME?.email||"", name:ME?.displayName||ME?.email||"User", portal:portal||"wholesaler", priority:priority||"blue", category:category||"General", message:message||"", ts:Date.now(), status:"open"});
-  triggerLeadershipPing(`Submitted ${priority} support ticket`, message);
+window.runTeamSearch = async function(){
+    const input=$("teamSearch"); const box=$("teamSearchResults");
+    const email=String(input.value||"").trim().toLowerCase(); if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; } 
+    box.innerHTML=`<div class="help">Searching...</div>`; 
+    try{ 
+        const snap=await firebase.database().ref(`${EMAIL_INDEX_PATH}/${window.emailLookupKey(email)}`).once("value"); 
+        const targetUid=snap.val(); 
+        if(!targetUid || String(targetUid)===String(window.UID)){ box.innerHTML=`<div class="help">No match found.</div>`; return; } 
+        const myPending=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending"); 
+        const mineApproved=String(window.userDirCache.byUid[targetUid]?.managerUid||"")===String(window.UID)&&String(window.userDirCache.byUid[targetUid]?.managerStatus||"")==="approved"; 
+        const statusLine=myPending ? '<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>' : (mineApproved ? '<span style="font-size:11px;color:#00ff6a">Already on your team</span>' : '<span style="font-size:11px;color:#9ab9d6">Match found</span>'); 
+        const action=myPending ? '<button class="btn ghost tiny" disabled>Pending...</button>' : (mineApproved ? `<button class="btn danger tiny" onclick="window.removeAssociate('${targetUid}')">Remove</button>` : `<button class="btn primary tiny" onclick="window.requestAssociate('${targetUid}','${encodeURIComponent(email)}')">Request</button>`); 
+        box.innerHTML=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(email)}</strong>${statusLine}</div><div class="teamActions">${action}</div></div>`; 
+    }catch(e){ box.innerHTML=`<div class="help">Search unavailable right now.</div>`; }
+};
+
+window.requestAssociate=async function(targetUid,targetEmailEnc){if(!targetUid) return; const targetEmail=decodeURIComponent(targetEmailEnc||"").toLowerCase(); const already=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending"); if(already) return window.toast("Already pending"); try{ const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=window.UID; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]="pending"; updates[`${MANAGER_ASSOCIATES_PATH}/${window.UID}/${targetUid}`]={status:"pending", targetEmail:targetEmail||String(window.userDirCache.byUid[targetUid]?.email||"").toLowerCase(), requestedAt:Date.now()}; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); alert("Request sent to God Mode"); await window.renderTeamModalBody(); }catch(e){ alert("Request failed"); }};
+window.approveRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]="approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]={status:"approved", targetEmail:String(req.targetEmail||window.userDirCache.byUid[req.targetUid]?.email||"").toLowerCase(), requestedAt:Date.now(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Associate approved"); await window.renderTeamModalBody(); }catch(e){ window.toast("Approve failed"); }};
+window.denyRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Request denied"); await window.renderTeamModalBody(); }catch(e){ window.toast("Deny failed"); }};
+window.removeAssociate=async function(targetUid){if(!targetUid) return; try{ const managerUid=String(window.userDirCache.byUid[targetUid]?.managerUid||window.UID); const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); if(window.isBranchManager) window.subscribeBranchScopedLeads(); if(window.isGod) window.subscribeGodAllLeads(); window.toast("Associate removed"); await window.renderTeamModalBody(); }catch(e){ window.toast("Remove failed"); }};
+
+window.supportCategoriesForPortal = function(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"]; return ["Hot lead / seller needs call","Need comp / ARV help","Need dispo / buyer help","System bug","Other"];}
+window.submitSupportRequest = async function(){
+  const priority=$("supportPriority").value; const portal=$("supportPortal").value; const category=$("supportCategory").value; const message=($("supportMsg").value||"").trim();
+  if(!window.UID || !message) return alert("Type a message first.");
+  try {
+      await firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${window.UID}`).push({uid:window.UID, email:window.ME?.email||"", name:window.ME?.displayName||window.ME?.email||"User", portal:portal||"wholesaler", priority:priority||"blue", category:category||"General", message:message||"", ts:Date.now(), status:"open"});
+      window.triggerLeadershipPing(`Submitted ${priority} support ticket`, message);
+      window.closeSupportModal(); alert("Support request sent to Leadership!");
+  } catch(e) { alert("Support request failed"); }
 }
-function openSupportModal(priority){$("supportPortal").value="wholesaler"; $("supportPriority").value=priority==="red"?"red":"blue"; $("supportSub").textContent=priority==="red"?"Red = urgent. Use for hot leads or anything that can’t wait.":"Blue = not urgent. Use for questions or general support."; const cats=supportCategoriesForPortal("wholesaler"); $("supportCategory").innerHTML=cats.map(c=>`<option value="${esc(c)}">${esc(c)}</option>`).join(""); $("supportMsg").value=""; $("supportModal").style.display="flex";} function closeSupportModal(){$("supportModal").style.display="none";}
-$("btnBlueSupport").addEventListener("click", ()=>openSupportModal("blue")); 
-$("btnRedSupport").addEventListener("click", ()=>openSupportModal("red")); 
-$("supportCloseBtn").onclick=closeSupportModal; $("supportCancelBtn").onclick=closeSupportModal; $("supportSendBtn").onclick=async()=>{const message=($("supportMsg").value||"").trim(); if(!message) return alert("Type a message first."); try{await submitSupportRequest({priority:$("supportPriority").value, portal:$("supportPortal").value, category:$("supportCategory").value, message}); closeSupportModal(); alert("Support request sent to Leadership!");}catch(e){console.warn("support request failed", e); alert("Support request failed");}};
-function trackPresence(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`); const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
+window.openSupportModal = function(priority){$("supportPortal").value="wholesaler"; $("supportPriority").value=priority==="red"?"red":"blue"; $("supportSub").textContent=priority==="red"?"Red = urgent. Use for hot leads or anything that can’t wait.":"Blue = not urgent. Use for questions or general support."; const cats=window.supportCategoriesForPortal("wholesaler"); $("supportCategory").innerHTML=cats.map(c=>`<option value="${window.esc(c)}">${window.esc(c)}</option>`).join(""); $("supportMsg").value=""; $("supportModal").style.display="flex";} 
+window.closeSupportModal = function(){$("supportModal").style.display="none";}
 
-/* EVENT DELEGATION REFACTOR FOR RADAR LIST */
-function startRadar(){
+window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`); const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
+
+window.startRadar = function(){
   $("radarList").style.display=""; $("chatArea").style.display="none"; $("panelTitle").textContent="Admin Radar"; $("backToRadar").style.display="none"; const list=$("radarList");
   firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
-    const v=snap.val()||{}; let users=Object.values(v).filter(x=>x&&x.online&&String(x.uid||"")!==String(UID));
+    const v=snap.val()||{}; let users=Object.values(v).filter(x=>x&&x.online&&String(x.uid||"")!==String(window.UID));
     if(!users.length){ list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
     let html = "";
-    users.forEach(u=>{ html += `<div class="radar-user" data-uid="${esc(u.uid)}" data-name="${esc(u.name||u.email||"User")}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${esc(u.page||u.portal||"")}</div></div></div><div class="pill">DM</div> </div>`; });
+    users.forEach(u=>{ html += `<div class="radar-user" data-uid="${window.esc(u.uid)}" data-name="${window.esc(u.name||u.email||"User")}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${window.esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class="pill">DM</div> </div>`; });
     list.innerHTML = html;
   });
 }
 
-function setupChat(path,title,showBack){$("chatArea").style.display="flex"; $("radarList").style.display="none"; $("panelTitle").textContent=title||"Chat"; $("backToRadar").style.display=showBack?"":"none"; $("chatMsgs").innerHTML=""; if(activeChatRef){try{activeChatRef.off();}catch(e){} activeChatRef=null;} activeChatRef=firebase.database().ref(path); 
-  
+window.setupChat = function(path,title,showBack){
+  $("chatArea").style.display="flex"; $("radarList").style.display="none"; $("panelTitle").textContent=title||"Chat"; $("backToRadar").style.display=showBack?"":"none"; $("chatMsgs").innerHTML=""; if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path); 
   let isInitialLoad = true;
-  activeChatRef.limitToLast(80).on("child_added", snap=>{
-    const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(UID); 
+  window.activeChatRef.limitToLast(80).on("child_added", snap=>{
+    const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID); 
     const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them"); 
-    
     const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    div.innerHTML = `<div>${esc(m.text||"")}</div><div class="msg-time">${timeString}</div>`;
-    
+    div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class="msg-time">${timeString}</div>`;
     $("chatMsgs").appendChild(div); 
     setTimeout(() => { $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight; }, 50);
-    
-    if(!isInitialLoad && !mine) {
-        pingSound.play().catch(e=>{});
-        if(!$("sidePanel").classList.contains("open")) { $("chatBadge").style.display = "block"; }
-    }
+    if(!isInitialLoad && !mine) { pingSound.play().catch(e=>{}); if(!$("sidePanel").classList.contains("open")) { $("chatBadge").style.display = "block"; } }
   });
   setTimeout(() => { isInitialLoad = false; }, 1500);
-  
-  const sendChat=async()=>{const text=($("chatInput").value||"").trim(); if(!text) return; $("chatInput").value=""; await activeChatRef.push().set({text, uid:UID||"", sender:UID||"", by:ME?.displayName||ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP}); if(!isGod) triggerLeadershipPing("Sent a Message", text); }; 
-  $("chatSend").onclick=sendChat; $("chatInput").onkeydown=e=>{if(e.key==="Enter") sendChat();}; $("chatInput").onfocus=()=>{setTimeout(()=>{window.scrollTo(0,0);$("chatMsgs").scrollTop=$("chatMsgs").scrollHeight;},300);}; $("backToRadar").onclick=()=>{startRadar(); $("sidePanel").classList.add("open");};
 }
 
-function listenForUnreadMessages(path) {
+window.sendMsg = async function(){
+  const text=($("chatInput").value||"").trim(); if(!text) return; $("chatInput").value=""; 
+  await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:window.ME?.displayName||window.ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP}); 
+  if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
+}; 
+
+window.listenForUnreadMessages = function(path) {
     let isInitial = true;
     firebase.database().ref(path).on("child_added", (snap) => {
         const msg = snap.val();
-        if (!isInitial && (msg.sender !== UID && msg.uid !== UID) && !$("sidePanel").classList.contains("open")) {
-            $("chatBadge").style.display = "block";
-            pingSound.play().catch(e=>{});
+        if (!isInitial && (msg.sender !== window.UID && msg.uid !== window.UID) && !$("sidePanel").classList.contains("open")) {
+            $("chatBadge").style.display = "block"; pingSound.play().catch(e=>{});
         }
     });
     setTimeout(() => { isInitial = false; }, 1500);
 }
 
-function listenForGlobalAdminPings() {
+window.listenForGlobalAdminPings = function() {
     let isInitial = true;
     firebase.database().ref("leadership_pings").on("child_added", (snap) => {
         if (!isInitial && !$("sidePanel").classList.contains("open")) {
-            $("chatBadge").style.display = "block";
-            pingSound.play().catch(e=>{});
+            $("chatBadge").style.display = "block"; pingSound.play().catch(e=>{});
         }
     });
     setTimeout(() => { isInitial = false; }, 1500);
 }
 
-function openPanel(){$("sidePanel").classList.add("open"); $("sidePanel").setAttribute("aria-hidden","false"); $("chatBadge").style.display = "none";
-    if(!isGod) {
+window.openPanel = function(){
+    $("sidePanel").classList.add("open"); $("sidePanel").setAttribute("aria-hidden","false"); $("chatBadge").style.display = "none";
+    if(!window.isGod) {
         const lastPing = sessionStorage.getItem('last_chat_open');
         if (!lastPing || (Date.now() - parseInt(lastPing)) > 300000) {
-            triggerLeadershipPing("Opened Support Chat");
-            sessionStorage.setItem('last_chat_open', Date.now().toString());
+            window.triggerLeadershipPing("Opened Support Chat"); sessionStorage.setItem('last_chat_open', Date.now().toString());
         }
     }
 } 
-function closePanel(){$("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true");}
-$("chatBubble").onclick=openPanel; $("closePanel").onclick=closePanel;
+window.closePanel = function(){$("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true");}
+window.showRadarView = function() { $("radarList").style.display="block"; $("chatArea").style.display="none"; $("backToRadar").style.display="none"; $("panelTitle").textContent="📡 Network Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
 
-$("logoutBtn").addEventListener("click", () => {
-    firebase.auth().signOut().then(() => { location.href="index.html"; });
-});
+window.handleRadarClick = function(e) {
+  const userEl = e.target.closest(".radar-user");
+  if(userEl) {
+    const peer = userEl.getAttribute("data-uid"); const name = userEl.getAttribute("data-name");
+    if(peer) { const threadId = [window.UID, peer].sort().join('_'); window.setupChat(`${DMS_PATH}/${threadId}/messages`, `DM: ${name}`, true); }
+  }
+}
 
-async function upsertMyUserDirectory(u){
-  const email=(u.email||"").toLowerCase();
-  await firebase.database().ref(`${USER_DIR_PATH}/${u.uid}`).update({uid:u.uid, email, name:u.displayName||u.email||"User", username:usernameFromEmail(email), initials:initialsFromUser(u), updatedAt:Date.now()});
-  if(email){ try{await firebase.database().ref(`${EMAIL_INDEX_PATH}/${emailLookupKey(email)}`).set(u.uid);}catch(e){console.warn("emailIndex upsert failed", e);} }
-}
-async function syncManagerAssociatesIndexFromDirectory(){
-  if(!isGod) return;
-  const updates={};
-  Object.values(userDirCache.byUid||{}).forEach(u=>{
-    const managerUid=String(u.managerUid||"").trim(); const status=String(u.managerStatus||"").trim();
-    if(!managerUid || (status!=="pending" && status!=="approved")) return;
-    updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${u.uid}`]={status, targetEmail:String(u.email||"").toLowerCase(), requestedAt:Number(u.updatedAt||Date.now()), approvedAt:status==="approved"?Number(u.updatedAt||Date.now()):null};
-  });
-  if(Object.keys(updates).length){ try{await firebase.database().ref().update(updates);}catch(e){console.warn("managerAssociates sync failed", e);} }
-}
-$("btnImportLegacy").onclick=async()=>{if(!isGod) return; if(!confirm("Import all legacy /leads/sellers into /leadsMaster/sellers?")) return; try{const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`).once("value"); const legacy=legacySnap.val()||{}; const updates={}; Object.keys(legacy).forEach(leadId=>{const v=legacy[leadId]||{}; updates[`${LEADS_MASTER_PATH}/sellers/${leadId}`]={...v,id:leadId,__migratedFrom:"legacy",updatedAt:Date.now(),updatedBy:ME?.email||"",assignedTo:{[UID]:true},assignedUids:[UID]}; updates[`${LEADS_BY_USER_PATH}/${UID}/sellers/${leadId}`]={...v,id:leadId,assignedBy:ME?.email||"",assignedAt:Date.now(),archived:false};}); if(Object.keys(updates).length) await firebase.database().ref().update(updates); alert("Legacy imported ✓");}catch(e){console.warn("legacy import failed", e); alert("Legacy import failed. Check console + rules.");}};
+window.importLegacyLeads = async function(){if(!window.isGod) return; if(!confirm("Import all legacy /leads/sellers into /leadsMaster/sellers?")) return; try{const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`).once("value"); const legacy=legacySnap.val()||{}; const updates={}; Object.keys(legacy).forEach(leadId=>{const v=legacy[leadId]||{}; updates[`${LEADS_MASTER_PATH}/sellers/${leadId}`]={...v,id:leadId,__migratedFrom:"legacy",updatedAt:Date.now(),updatedBy:window.ME?.email||"",assignedTo:{[window.UID]:true},assignedUids:[window.UID]}; updates[`${LEADS_BY_USER_PATH}/${window.UID}/sellers/${leadId}`]={...v,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false};}); if(Object.keys(updates).length) await firebase.database().ref().update(updates); alert("Legacy imported ✓");}catch(e){ alert("Legacy import failed. Check console + rules.");}};
 
 firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return location.href="index.html";
-  UID=u.uid; ME=u;
+  window.UID=u.uid; window.ME=u;
 
-  try{await upsertMyUserDirectory(u);}catch(e){console.warn("userDirectory upsert failed", e);}
-  try{trackPresence(u);}catch(e){console.warn("Presence failed:", e);}
-  try{await loadUserDirectoryCache();}catch(e){console.warn("initial directory cache failed", e);}
+  try{await window.upsertMyUserDirectory(u);}catch(e){}
+  try{window.trackPresence(u);}catch(e){}
+  try{await window.loadUserDirectoryCache();}catch(e){}
 
   try{
-    ROLE=await resolveMyRole(u);
+    window.ROLE=await window.resolveMyRole(u);
     if(String(u.email||"").toLowerCase().trim()==="dealbankers@gmail.com"){
-      ROLE="god";
-      try{await firebase.database().ref(`${ROLES_PATH}/${UID}`).set("god");}catch(e){}
-      try{await firebase.database().ref(`${USER_DIR_PATH}/${UID}`).update({role:"god"});}catch(e){}
+      window.ROLE="god";
+      try{await firebase.database().ref(`${ROLES_PATH}/${window.UID}`).set("god");}catch(e){}
+      try{await firebase.database().ref(`${USER_DIR_PATH}/${window.UID}`).update({role:"god"});}catch(e){}
     }
-    isGod=ROLE==="god"; isBranchManager=!isGod&&ROLE==="admin";
-    $("roleReadout").textContent="ROLE: "+roleLabel(ROLE);
-    $("btnTeam").style.display=isAdminLike()?"":"none";
-    $("btnImportLegacy").style.display=isGod?"":"none";
+    window.isGod=window.ROLE==="god"; window.isBranchManager=!window.isGod&&window.ROLE==="admin";
+    $("roleReadout").textContent="ROLE: "+window.roleLabel(window.ROLE);
+    $("btnTeam").style.display=window.isAdminLike()?"":"none";
+    $("btnImportLegacy").style.display=window.isGod?"":"none";
     
-    if(isGod) { 
+    if(window.isGod) { 
         $("btnReqAnalysis").style.display = "none";
         $("btnReqSkip").style.display = "none";
-        listenForGlobalAdminPings(); 
+        window.listenForGlobalAdminPings(); 
     } else { 
         $("btnReqAnalysis").style.display = "inline-flex";
         $("btnReqSkip").style.display = "inline-flex";
-        listenForUnreadMessages(`${DMS_PATH}/${UID}/messages`); 
+        window.listenForUnreadMessages(`${DMS_PATH}/${window.UID}/messages`); 
     }
 
   }catch(e){
-    ROLE="user"; isGod=false; isBranchManager=false;
+    window.ROLE="user"; window.isGod=false; window.isBranchManager=false;
     $("roleReadout").textContent="ROLE: ASSOCIATE";
     $("btnTeam").style.display="none"; $("btnImportLegacy").style.display="none";
   }
 
   try{
-    if(isAdminLike()){ $("radarList").style.display=""; startRadar(); }
-    else{ setupChat(`${DMS_PATH}/${UID}/messages`, "Leadership Support", false); }
-  }catch(e){ console.warn("chat boot failed", e); }
+    if(window.isAdminLike()){ $("radarList").style.display=""; window.startRadar(); }
+    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
+  }catch(e){ }
 
-  if(isGod){ try{await syncManagerAssociatesIndexFromDirectory();}catch(e){} }
-
-  try{ await loadUserDirectoryCache(); }catch(e){}
+  if(window.isGod){ try{await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
+  try{ await window.loadUserDirectoryCache(); }catch(e){}
 
   try{
-    if(isGod){ subscribeGodAllLeads(); }
-    else if(isBranchManager){ subscribeBranchScopedLeads(); }
-    else{ subscribeAssociateAssignedLeads(); }
-  }catch(e){ $("status").textContent="Leads subscribe error (see console)."; }
-});
-$("callHint").style.display="none";
-
-/* --- GLOBAL MASTER EVENT LISTENERS (DELEGATION) --- */
-$("leadList").addEventListener("click", (e) => {
-  const item = e.target.closest(".lead-item");
-  if(item) { const idx = parseInt(item.getAttribute("data-idx"), 10); if(!isNaN(idx)) selectLeadByIndex(idx); }
-});
-$("assignList").addEventListener("change", (e) => {
-  if(e.target.classList.contains("assign-cb")){
-    const uid = e.target.getAttribute("data-uid");
-    if(e.target.checked) modalAssignedSet.add(uid); else modalAssignedSet.delete(uid);
-  }
-});
-$("radarList").addEventListener("click", (e) => {
-  const userEl = e.target.closest(".radar-user");
-  if(userEl) {
-    const peer = userEl.getAttribute("data-uid");
-    const name = userEl.getAttribute("data-name");
-    if(peer) {
-      const threadId = [UID, peer].sort().join('_');
-      setupChat(`${DMS_PATH}/${threadId}/messages`, `DM: ${name}`, true);
-    }
-  }
+    if(window.isGod){ window.subscribeGodAllLeads(); }
+    else if(window.isBranchManager){ window.subscribeBranchScopedLeads(); }
+    else{ window.subscribeAssociateAssignedLeads(); }
+  }catch(e){ $("status").textContent="Leads subscribe error."; }
 });
 </script>
 </body>
