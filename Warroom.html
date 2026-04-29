@@ -227,7 +227,9 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
           </div>
           <div class="data-box" style="grid-column: 1 / -1;">
             <label>Skip Traced Phones (Format: Label | Number)</label>
-            <textarea id="t_phones" class="input-tactical" placeholder="e.g.&#10;Owner | 210-555-1234&#10;Daughter | 210-555-9876"></textarea>
+            <textarea id="t_phones" class="input-tactical" placeholder="e.g.
+Owner | 210-555-1234
+Daughter | 210-555-9876"></textarea>
           </div>
           <div class="data-box" style="grid-column: 1 / -1;">
             <label>Leadership Analysis & Strategic Notes</label>
@@ -346,6 +348,7 @@ function listenForRequests() {
   });
 }
 
+/* EVENT DELEGATION & BATCH RENDERING FIX */
 function renderQueue() {
   const container = document.getElementById('requestQueue');
   if (activeRequests.length === 0) {
@@ -353,17 +356,31 @@ function renderQueue() {
     return;
   }
 
-  container.innerHTML = activeRequests.map(req => `
-    <div class="req-item ${currentTargetId === req.id ? 'active' : ''}" onclick="loadTarget('${escapeHtml(req.id)}')">
-      <div class="req-type">>> ${req.requestType === 'skip' ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
-      <div class="req-addr">${escapeHtml(req.address || 'Unknown Target')}</div>
-      <div class="req-user">
-        <span>FR: ${escapeHtml(req.requesterEmail || 'Unknown').split('@')[0]}</span>
-        <span>${new Date(req.ts || Date.now()).toLocaleDateString()}</span>
+  let html = "";
+  activeRequests.forEach(req => {
+    html += `
+      <div class="req-item ${currentTargetId === req.id ? 'active' : ''}" data-id="${escapeHtml(req.id)}">
+        <div class="req-type">>> ${req.requestType === 'skip' ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
+        <div class="req-addr">${escapeHtml(req.address || 'Unknown Target')}</div>
+        <div class="req-user">
+          <span>FR: ${escapeHtml(req.requesterEmail || 'Unknown').split('@')[0]}</span>
+          <span>${new Date(req.ts || Date.now()).toLocaleDateString()}</span>
+        </div>
       </div>
-    </div>
-  `).join('');
+    `;
+  });
+  container.innerHTML = html;
 }
+
+// Master Event Listener for the Queue List
+document.getElementById('requestQueue').addEventListener('click', (e) => {
+    const item = e.target.closest('.req-item');
+    if(item) {
+        const reqId = item.getAttribute('data-id');
+        if(reqId) loadTarget(reqId);
+    }
+});
+
 
 async function loadTarget(reqId) {
   currentTargetId = reqId;
@@ -433,7 +450,7 @@ function updateOSINTLinks(req, masterLead) {
   document.getElementById('btnZillow').href = req.address ? `https://www.zillow.com/homes/${addrEncoded}_rb/` : '#';
   document.getElementById('btnGoogle').href = req.address ? `https://www.google.com/search?q=${addrEncoded}` : '#';
 
-  // Tactical Map View Embed (Using standard Google Maps embed without API key dependency)
+  // Tactical Map View Embed (Fixed valid Google Maps Embed formatting)
   if (req.address) {
     document.getElementById('streetViewFrame').src = `https://maps.google.com/maps?q=${addrEncoded}&t=k&z=19&output=embed`;
   } else {
@@ -535,7 +552,7 @@ function copyAddress() {
 }
 
 function escapeHtml(unsafe) {
-  return (unsafe || '').replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#039;");
+  return (unsafe || '').replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
 }
 </script>
 </body>
