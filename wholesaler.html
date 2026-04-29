@@ -195,6 +195,7 @@ body{
       <div class="seg">
         <button id="tabAcq" class="active" type="button">Acq</button>
         <button id="tabDispo" type="button">Dispo</button>
+        <button id="tabMarket" type="button">Market</button>
       </div>
     </div>
     <div class="body">
@@ -252,7 +253,7 @@ body{
 
       <div class="panel col-right" id="panel-calllog"><div class="panel-head"><div class="panel-title">⌁ Team Call Log</div><div class="pill" id="logCount">0 entries</div></div><div class="panel-body"><div class="log" id="callLog"><div class="log-empty" id="logEmpty">No call history for this number.<br><br>Select a lead + number, then log a status or add a note.</div></div></div></div>
   
-      <div id="panel-dispo" style="display:none; height:80vh; grid-column:1 / -1;"><div class="card" style="height:100%; display:flex; flex-direction:column;"><div class="top"><div style="display:flex;align-items:center;gap:10px"><div style="font-weight:900;letter-spacing:.12em;font-size:12px;color:#cfe3ff">● DISPO</div><div style="font-size:12px;color:#9ab9d6">Live Deals / Inventory Board</div><span class="pill" id="dispoHintPill">System Online</span></div><div><a class="chip" href="dispo.html" target="_blank" rel="noreferrer">Open Fullscreen</a><button class="chip primary" id="dispoRefreshBtn" type="button">Refresh</button></div></div><div style="position:relative;width:100%;height:100%;flex:1;background:#0b1825"><iframe id="iframeDispo" src="dispo.html" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;border:none;display:block;background:#0b1825"></iframe><div style="position:absolute;top:0;left:0;right:0;height:56px;background:#0b1825;border-bottom:1px solid rgba(255,255,255,.12);z-index:5;pointer-events:auto" aria-hidden="true"></div></div></div></div>
+      <div id="panel-market" style="display:none; height:80vh; grid-column:1 / -1;"><div class="card" style="height:100%; display:flex; flex-direction:column;"><div class="top"><div style="display:flex;align-items:center;gap:10px"><div style="font-weight:900;letter-spacing:.12em;font-size:12px;color:#cfe3ff">● MARKET</div><div style="font-size:12px;color:#9ab9d6">Live Deals / Inventory Board</div><span class="pill" id="dispoHintPill">System Online</span></div><div><a class="chip" href="dispo.html" target="_blank" rel="noreferrer">Open Fullscreen</a><button class="chip primary" id="dispoRefreshBtn" type="button">Refresh</button></div></div><div style="position:relative;width:100%;height:100%;flex:1;background:#0b1825"><iframe id="iframeDispo" src="dispo.html" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;border:none;display:block;background:#0b1825"></iframe><div style="position:absolute;top:0;left:0;right:0;height:56px;background:#0b1825;border-bottom:1px solid rgba(255,255,255,.12);z-index:5;pointer-events:auto" aria-hidden="true"></div></div></div></div>
     </div>
   </section>
 </div>
@@ -299,7 +300,7 @@ body{
         <div><div class="lbl">Owner / Primary Name</div><input id="m_owner" class="input" placeholder="JOHN DOE" /></div>
         <div><div class="lbl">Mailing Address</div><input id="m_mailing" class="input" placeholder="Mailing address (optional)" /></div>
         <div><div class="lbl">Lead Status</div><select id="m_status" class="select"><option value="New">New</option><option value="Working">Working</option><option value="Hot">Hot</option><option value="DNC">Do Not Call</option><option value="Done">Done</option></select></div>
-        <div><div class="lbl">Lead Type</div><select id="m_type" class="select"><option value="seller">Seller</option><option value="buyer">Buyer</option><option value="realtor">Realtor</option><option value="wholesaler">Wholesaler</option><option value="contractor">Contractor</option><option value="investor">Investor</option><option value="other">Other</option></select></div>
+        <div><div class="lbl">Lead Type</div><select id="m_type" class="select"><option value="seller">Seller</option><option value="private wealth investor">Private Wealth Investor</option><option value="realtor">Realtor</option><option value="wholesaler">Wholesaler</option><option value="contractor">Contractor</option><option value="other">Other</option></select></div>
         
         <div style="background: rgba(0,255,106,0.05); border: 1px solid rgba(0,255,106,0.3); padding: 12px; border-radius: 12px;">
           <div class="lbl" style="color:var(--good);">Network Market Status</div>
@@ -361,6 +362,7 @@ window.currentPhone = ""; window.currentPhoneLabel = ""; window.activeLogRef = n
 window.userDirCache = {byUid:{},byEmail:{},byUser:{}}; window.pendingRequestCache = []; window.modalAssignedSet = new Set();
 window.modalMode = "new"; window.modalLeadId = null; window.branchLeadRefs = []; window.leadsRef = null; window.legacyRef = null;
 window.userQuotas = { firstTs: 0, analysis: 0, skip: 0 };
+window.currentCategory = "sellers";
 
 const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; const USER_DIR_PATH="userDirectory";
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
@@ -386,20 +388,45 @@ window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(
 window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} 
 window.isAdminLike = function(){return window.isGod||window.isBranchManager;}
 
-/* --- UI TAB CONTROLS --- */
-window.showAcq = function(){
-  if($("tabAcq")) $("tabAcq").classList.add("active"); if($("tabDispo")) $("tabDispo").classList.remove("active");
-  if($("panel-acq")) $("panel-acq").style.display="block"; if($("panel-console")) $("panel-console").style.display="block";
-  if($("panel-calllog")) $("panel-calllog").style.display="block";
-  if($("panel-dispo")) $("panel-dispo").style.display="none";
-  if($("crumb")) $("crumb").textContent="Acquisition";
+/* --- UI CATEGORY / TAB CONTROLS --- */
+window.switchCategory = function(cat) {
+    if(window.currentCategory === cat && $("panel-acq") && $("panel-acq").style.display !== "none") return;
+    window.currentCategory = cat;
+    
+    if($("tabAcq")) $("tabAcq").classList.toggle("active", cat === 'sellers');
+    if($("tabDispo")) $("tabDispo").classList.toggle("active", cat === 'buyers');
+    if($("tabMarket")) $("tabMarket").classList.remove("active");
+
+    if($("panel-acq")) $("panel-acq").style.display="block"; 
+    if($("panel-console")) $("panel-console").style.display="block";
+    if($("panel-calllog")) $("panel-calllog").style.display="block";
+    if($("panel-market")) $("panel-market").style.display="none";
+    
+    if($("crumb")) $("crumb").textContent = cat === 'sellers' ? "Acquisition" : "Disposition";
+    
+    window.clearConsole();
+    window.sellerList = [];
+    window.sellerView = [];
+    window.renderQueue();
+    
+    if(window.isGod){ window.subscribeGodAllLeads(); }
+    else if(window.isBranchManager){ window.subscribeBranchScopedLeads(); }
+    else{ window.subscribeAssociateAssignedLeads(); }
 };
-window.showDispo = function(){
-  if($("tabDispo")) $("tabDispo").classList.add("active"); if($("tabAcq")) $("tabAcq").classList.remove("active");
-  if($("panel-acq")) $("panel-acq").style.display="none"; if($("panel-console")) $("panel-console").style.display="none";
-  if($("panel-calllog")) $("panel-calllog").style.display="none"; if($("panel-dispo")) $("panel-dispo").style.display="block";
-  if($("crumb")) $("crumb").textContent="Disposition";
+
+window.showMarketBoard = function() {
+    if($("tabAcq")) $("tabAcq").classList.remove("active");
+    if($("tabDispo")) $("tabDispo").classList.remove("active");
+    if($("tabMarket")) $("tabMarket").classList.add("active");
+    
+    if($("panel-acq")) $("panel-acq").style.display="none"; 
+    if($("panel-console")) $("panel-console").style.display="none";
+    if($("panel-calllog")) $("panel-calllog").style.display="none";
+    if($("panel-market")) $("panel-market").style.display="block";
+    
+    if($("crumb")) $("crumb").textContent = "Market Board";
 };
+
 window.refreshDispo = function(){
   const f=$("iframeDispo"); if(!f) return;
   const src=f.getAttribute("src")||"dispo.html";
@@ -489,7 +516,8 @@ window.requestWarRoomModal = async function(type) {
         notes: notes,
         requestType: type, 
         status: 'pending', 
-        ts: Date.now()
+        ts: Date.now(),
+        category: window.currentCategory
     };
     
     try {
@@ -509,13 +537,13 @@ window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
         const updates = {};
-        updates[`${LEADS_MASTER_PATH}/sellers/${window.currentLeadId}/dispoApproved`] = true;
-        updates[`${LEADS_MASTER_PATH}/sellers/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
-        const snap = await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${window.currentLeadId}/assignedTo`).once('value');
+        updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
+        updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
+        const snap = await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/assignedTo`).once('value');
         const assignedTo = snap.val() || {};
         Object.keys(assignedTo).forEach(uid => {
-            updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${window.currentLeadId}/dispoApproved`] = true;
-            updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
+            updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
+            updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
         });
         await firebase.database().ref().update(updates);
         alert("Approved for Dispo ✓");
@@ -701,11 +729,11 @@ window.detachLeadRefs = function(){
 window.setListFromMap = function(byId){window.sellerList=Array.from(byId.values()); window.sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||""))); window.applySearch();}
 
 window.subscribeAssociateAssignedLeads = function(){
-  window.detachLeadRefs(); if($("status")) $("status").textContent="Loading assigned leads…";
+  window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading assigned ${window.currentCategory}…`;
   const byId=new Map(); let queueLoaded=false, masterLoaded=false, flatLoaded=false;
   const updateStatus=()=>{
-    if(byId.size){ if($("status")) $("status").textContent=`Acq (Assigned): ${byId.size} items`; return; }
-    if(queueLoaded&&masterLoaded&&flatLoaded){ window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent="No leads assigned yet."; }
+    if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Assigned): ${byId.size} items`; return; }
+    if(queueLoaded&&masterLoaded&&flatLoaded){ window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent=`No ${window.currentCategory} assigned yet.`; }
   };
   const mergeLead=(leadId, payload, source)=>{
     const prior=byId.get(leadId)||{};
@@ -719,35 +747,47 @@ window.subscribeAssociateAssignedLeads = function(){
     if(prior.__fromQueue||prior.__fromMaster||prior.__fromFlat){ byId.set(leadId, prior); }else{ byId.delete(leadId); }
     window.setListFromMap(byId); updateStatus();
   };
-  window.leadsRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`);
+  window.leadsRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`);
   window.leadsRef.on("child_added", snap=>mergeLead(snap.key, snap.val()||{}, "queue"));
   window.leadsRef.on("child_changed", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); window.leadsRef.on("child_removed", snap=>removeLead(snap.key, "queue"));
   window.leadsRef.once("value").then(()=>{queueLoaded=true; updateStatus();}).catch(()=>{queueLoaded=true; updateStatus();});
-  const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`); window.branchLeadRefs.push(masterAssignedRef);
+  const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`); window.branchLeadRefs.push(masterAssignedRef);
   const handleMaster=(snap)=>{const leadId=snap.key; const val=snap.val()||{}; if(val?.assignedTo && val.assignedTo[window.UID]) mergeLead(leadId, val, "master"); else removeLead(leadId, "master");};
   masterAssignedRef.on("child_added", handleMaster); masterAssignedRef.on("child_changed", handleMaster); masterAssignedRef.on("child_removed", snap=>removeLead(snap.key, "master"));
   masterAssignedRef.once("value").then(()=>{masterLoaded=true; updateStatus();}).catch(()=>{masterLoaded=true; updateStatus();});
   const flatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}`); window.branchLeadRefs.push(flatRef);
-  const handleFlat=(snap)=>{const key=snap.key; if(key==="sellers"||key==="buyers") return; const val=snap.val()||{}; if(val && typeof val==="object" && !Array.isArray(val)){const maybeLeadId=String(val.id||val.docnum||key||""); const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones)); if(hasLeadShape && maybeLeadId) mergeLead(maybeLeadId, val, "flat");}};
+  const handleFlat=(snap)=>{
+    const key=snap.key; if(key==="sellers"||key==="buyers") return; 
+    const val=snap.val()||{}; 
+    if(val && typeof val==="object" && !Array.isArray(val)){
+      const maybeLeadId=String(val.id||val.docnum||key||""); 
+      const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones)); 
+      if(hasLeadShape && maybeLeadId) {
+        if (window.currentCategory === 'buyers' && (val.type||'').toLowerCase() !== 'private wealth investor' && (val.type||'').toLowerCase() !== 'buyer') return;
+        if (window.currentCategory === 'sellers' && ((val.type||'').toLowerCase() === 'private wealth investor' || (val.type||'').toLowerCase() === 'buyer')) return;
+        mergeLead(maybeLeadId, val, "flat");
+      }
+    }
+  };
   flatRef.on("child_added", handleFlat); flatRef.on("child_changed", handleFlat); flatRef.on("child_removed", snap=>removeLead(snap.key, "flat"));
   flatRef.once("value").then(()=>{flatLoaded=true; updateStatus();}).catch(()=>{flatLoaded=true; updateStatus();});
 }
 
 window.subscribeBranchScopedLeads = function(){
-  window.detachLeadRefs(); if($("status")) $("status").textContent="Loading branch leads…";
+  window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading branch ${window.currentCategory}…`;
   const byId=new Map(); const sourceMap=new Map(); const scope=[window.UID,...window.managedAssociatesFor(window.UID).map(u=>u.uid)];
   let loaded=0; const total=scope.length;
-  function showEmptyIfDone(){ if(loaded < total || byId.size) return; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent="No branch leads yet."; }
+  function showEmptyIfDone(){ if(loaded < total || byId.size) return; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent=`No branch ${window.currentCategory} yet.`; }
   function rebuildLead(leadId){
     const sources=sourceMap.get(leadId);
-    if(!sources || !sources.size){ sourceMap.delete(leadId); byId.delete(leadId); window.setListFromMap(byId); if(byId.size){ if($("status")) $("status").textContent=`Acq (Branch): ${byId.size} items`; }else{ showEmptyIfDone(); } return; }
+    if(!sources || !sources.size){ sourceMap.delete(leadId); byId.delete(leadId); window.setListFromMap(byId); if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Branch): ${byId.size} items`; }else{ showEmptyIfDone(); } return; }
     const rows=Array.from(sources.entries()).map(([uid,val])=>({uid,...val}));
     rows.sort((a,b)=>Number(b.updatedAt||b.assignedAt||b.createdAt||0)-Number(a.updatedAt||a.assignedAt||a.createdAt||0));
     const chosen={...rows[0]}; const assignedUids=rows.map(r=>r.uid); chosen.assignedUids=assignedUids; chosen.assignedTo=assignedUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{});
-    byId.set(leadId, chosen); window.setListFromMap(byId); if($("status")) $("status").textContent=`Acq (Branch): ${byId.size} items`;
+    byId.set(leadId, chosen); window.setListFromMap(byId); if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Branch): ${byId.size} items`;
   }
   scope.forEach(uid=>{
-    const ref=firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/sellers`); window.branchLeadRefs.push(ref);
+    const ref=firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}`); window.branchLeadRefs.push(ref);
     ref.on("child_added", snap=>{const leadId=snap.key; const val=snap.val()||{}; if(!sourceMap.has(leadId)) sourceMap.set(leadId,new Map()); sourceMap.get(leadId).set(uid,{id:leadId,...val}); rebuildLead(leadId);});
     ref.on("child_changed", snap=>{const leadId=snap.key; const val=snap.val()||{}; if(!sourceMap.has(leadId)) sourceMap.set(leadId,new Map()); sourceMap.get(leadId).set(uid,{id:leadId,...val}); rebuildLead(leadId);});
     ref.on("child_removed", snap=>{const leadId=snap.key; if(sourceMap.has(leadId)) sourceMap.get(leadId).delete(uid); rebuildLead(leadId);});
@@ -756,14 +796,14 @@ window.subscribeBranchScopedLeads = function(){
 }
 
 window.subscribeGodAllLeads = function(){
-  window.detachLeadRefs(); if($("status")) $("status").textContent="Loading ALL leads…";
+  window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading ALL ${window.currentCategory}…`;
   const byId=new Map(); let masterDone=false; let legacyDone=false; let personalDone=false;
   const checkDone = () => {
       if(masterDone && legacyDone && personalDone) {
-          if(byId.size) { if($("status")) $("status").textContent=`Acq (ALL): ${byId.size} items`; }
-          else { if($("status")) $("status").textContent="No leads available."; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); }
+          if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
+          else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); }
       } else if (byId.size) {
-          if($("status")) $("status").textContent=`Acq (ALL): ${byId.size} items`;
+          if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`;
       }
   };
 
@@ -776,19 +816,19 @@ window.subscribeGodAllLeads = function(){
       checkDone();
   };
 
-  window.leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`);
+  window.leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`);
   window.leadsRef.on("child_added", s=>processSnap(s, false));
   window.leadsRef.on("child_changed", s=>processSnap(s, false));
   window.leadsRef.on("child_removed", snap=>{byId.delete(snap.key); window.setListFromMap(byId); checkDone();});
   window.leadsRef.once("value").then(()=>{ masterDone=true; checkDone(); }).catch(()=>{ masterDone=true; checkDone(); });
   
-  window.legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`);
+  window.legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`);
   window.legacyRef.on("child_added", s=>processSnap(s, true));
   window.legacyRef.on("child_changed", s=>processSnap(s, true));
   window.legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); window.setListFromMap(byId); checkDone();});
   window.legacyRef.once("value").then(()=>{ legacyDone=true; checkDone(); }).catch(()=>{ legacyDone=true; checkDone(); });
   
-  const myFlatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`); window.branchLeadRefs.push(myFlatRef);
+  const myFlatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`); window.branchLeadRefs.push(myFlatRef);
   myFlatRef.on("child_added", s=>processSnap(s, false));
   myFlatRef.on("child_changed", s=>processSnap(s, false));
   myFlatRef.on("child_removed", snap=>{ });
@@ -831,7 +871,7 @@ window.openLeadModal = function(mode){
     if($("m_owner")) $("m_owner").value=window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||""; 
     if($("m_mailing")) $("m_mailing").value=window.currentLead.mailing||window.currentLead.Mailing||window.currentLead.mailingAddress||""; 
     if($("m_status")) $("m_status").value=window.leadStatus(window.currentLead); 
-    if($("m_type")) $("m_type").value=window.currentLead.type||"seller"; 
+    if($("m_type")) $("m_type").value=window.currentLead.type||(window.currentCategory === 'buyers' ? 'private wealth investor' : 'seller'); 
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
     if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
@@ -844,7 +884,7 @@ window.openLeadModal = function(mode){
     if($("m_owner")) $("m_owner").value=""; 
     if($("m_mailing")) $("m_mailing").value=""; 
     if($("m_status")) $("m_status").value="New"; 
-    if($("m_type")) $("m_type").value="seller"; 
+    if($("m_type")) $("m_type").value=window.currentCategory === "buyers" ? "private wealth investor" : "seller"; 
     if($("m_source")) $("m_source").value=""; 
     if($("m_phones")) $("m_phones").value=""; 
     if($("m_notes")) $("m_notes").value=""; 
@@ -858,21 +898,21 @@ window.closeLeadModal = function(){if($("leadModal")) { $("leadModal").classList
 window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set(); lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});}); return out;}
 
 window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
-  await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`).update({...payload, id:leadId, assignedTo:assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{}), assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:window.ME?.email||""});
-  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  if(window.modalMode==="edit"&&window.currentLead){ const prev=Object.keys(window.currentLead.assignedTo||{}).filter(uid=>window.currentLead.assignedTo[uid]); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]=null; }); }
+  await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{}), assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:window.ME?.email||""});
+  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
+  if(window.modalMode==="edit"&&window.currentLead){ const prev=Object.keys(window.currentLead.assignedTo||{}).filter(uid=>window.currentLead.assignedTo[uid]); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
 window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
   const updates={};
-  assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  if(window.modalMode==="edit"&&window.currentLead){ const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${leadId}`]=null; }); }
+  assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
+  if(window.modalMode==="edit"&&window.currentLead){ const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
 
 window.saveLeadFromModal = async function(skipClose){
   const address=($("m_address")?.value||"").trim(); if(!address){ window.modalToast("Address required.", false); return null; }
-  const payload={ address, owner:($("m_owner")?.value||"").trim(), mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||"seller").trim().toLowerCase(), isLive: $("m_isLive")?.checked || false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
+  const payload={ address, owner:($("m_owner")?.value||"").trim(), mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "private wealth investor" : "seller")).trim().toLowerCase(), isLive: $("m_isLive")?.checked || false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
   if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
       window.triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
@@ -881,21 +921,21 @@ window.saveLeadFromModal = async function(skipClose){
   try{
     let leadIdToReturn = null;
     if(window.isGod){
-      const allowed=new Set(window.getAssignableRows().map(r=>r.uid)); const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).push().key;
+      const allowed=new Set(window.getAssignableRows().map(r=>r.uid)); const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       await window.upsertLeadMasterAndAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
     } else if(window.isBranchManager){
       const allowed=new Set(window.getAssignableRows().map(r=>r.uid));
-      let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`).push().key;
+      let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       await window.upsertBranchAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
-      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${leadId}`).update({...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}); }
+      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}); }
     } else {
-      const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers`).push().key;
+      const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       const finalUpdates = {};
-      finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/sellers/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:window.ME?.email||"",createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")};
-      if(payload.isLive && (!window.currentLead || !window.currentLead.isLive)) { finalUpdates[`${LEADS_MASTER_PATH}/sellers/${leadId}`] = {...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}; }
+      finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:window.ME?.email||"",createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")};
+      if(payload.isLive && (!window.currentLead || !window.currentLead.isLive)) { finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}; }
       await firebase.database().ref().update(finalUpdates);
     }
     
@@ -910,13 +950,13 @@ window.deleteLead = async function(){
     if(!confirm("Are you sure you want to completely delete this lead?")) return;
     try{
         if(window.isGod) {
-            const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/sellers/${window.modalLeadId}/assignedTo`).once("value");
+            const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
             const assignedTo=snap.val()||{}; 
-            const updates={[`${LEADS_MASTER_PATH}/sellers/${window.modalLeadId}`]:null}; 
-            Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/sellers/${window.modalLeadId}`]=null); 
+            const updates={[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`]:null}; 
+            Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`]=null); 
             await firebase.database().ref().update(updates); 
         } else {
-            await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/sellers/${window.modalLeadId}`).remove();
+            await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
         }
         window.closeLeadModal(); window.clearConsole(); alert("Lead deleted ✓");
     }catch(e){ alert("Delete failed"); }
@@ -1061,8 +1101,22 @@ window.openPanel = function(){
 window.closePanel = function(){if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }}
 window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="📡 Network Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
 
-window.importLegacyLeads = async function(){if(!window.isGod) return; if(!confirm("Import all legacy /leads/sellers into /leadsMaster/sellers?")) return;
-try{const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers`).once("value"); const legacy=legacySnap.val()||{}; const updates={}; Object.keys(legacy).forEach(leadId=>{const v=legacy[leadId]||{}; updates[`${LEADS_MASTER_PATH}/sellers/${leadId}`]={...v,id:leadId,__migratedFrom:"legacy",updatedAt:Date.now(),updatedBy:window.ME?.email||"",assignedTo:{[window.UID]:true},assignedUids:[window.UID]}; updates[`${LEADS_BY_USER_PATH}/${window.UID}/sellers/${leadId}`]={...v,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false};}); if(Object.keys(updates).length) await firebase.database().ref().update(updates); alert("Legacy imported ✓");}catch(e){ alert("Legacy import failed. Check console + rules.");}};
+window.importLegacyLeads = async function(){
+  if(!window.isGod) return; 
+  if(!confirm(`Import all legacy /leads/${window.currentCategory} into /leadsMaster/${window.currentCategory}?`)) return;
+  try{
+    const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`).once("value"); 
+    const legacy=legacySnap.val()||{}; 
+    const updates={}; 
+    Object.keys(legacy).forEach(leadId=>{
+      const v=legacy[leadId]||{}; 
+      updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`]={...v,id:leadId,__migratedFrom:"legacy",updatedAt:Date.now(),updatedBy:window.ME?.email||"",assignedTo:{[window.UID]:true},assignedUids:[window.UID]}; 
+      updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`]={...v,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false};
+    }); 
+    if(Object.keys(updates).length) await firebase.database().ref().update(updates); 
+    alert("Legacy imported ✓");
+  }catch(e){ alert("Legacy import failed. Check console + rules.");}
+};
 
 
 /* --- MASTER EVENT INITIALIZATION --- */
@@ -1075,8 +1129,9 @@ function initStaticEvents() {
     attach('btnRedSupport', () => window.openSupportModal('red'));
     attach('btnSettings', () => location.href='settings.html');
     
-    attach('tabAcq', window.showAcq);
-    attach('tabDispo', window.showDispo);
+    attach('tabAcq', () => window.switchCategory('sellers'));
+    attach('tabDispo', () => window.switchCategory('buyers'));
+    attach('tabMarket', window.showMarketBoard);
     attach('dispoRefreshBtn', window.refreshDispo);
     
     attach('s_reload', window.applySearch);
@@ -1166,8 +1221,7 @@ function initStaticEvents() {
         });
     }
     
-    // Auto-select tab logic on load
-    window.showAcq();
+    window.switchCategory('sellers');
 }
 window.addEventListener("DOMContentLoaded", initStaticEvents);
 
