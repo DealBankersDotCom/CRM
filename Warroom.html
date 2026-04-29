@@ -153,8 +153,7 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 .tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 20px; }
 .tool-btn {
   background: rgba(0,0,0,0.6); border: 1px solid var(--line);
-  padding: 14px 10px; border-radius: 6px; text-align: center;
-  color: var(--text); text-decoration: none; font-size: 11px; font-weight: 700;
+  padding: 14px 10px; border-radius: 6px; text-align: center; color: var(--text); text-decoration: none; font-size: 11px; font-weight: 700;
   display: flex; flex-direction: column; align-items: center; gap: 8px;
   transition: all 0.2s; cursor: pointer; text-transform: uppercase; letter-spacing: 0.05em;
 }
@@ -195,7 +194,7 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
     </div>
     <div class="panel-body" id="requestQueue">
       <div style="color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; margin-top: 40px; letter-spacing: 0.2em; animation: pulse 2s infinite;">
-        SCANNING NETWORK...
+         SCANNING NETWORK...
       </div>
     </div>
   </div>
@@ -316,7 +315,7 @@ const db = firebase.database();
 let activeRequests = [];
 let currentTargetId = null;
 let currentTarget = null;
-let currentMasterLead = null; // Holds the actual lead data from the DB
+let currentMasterLead = null;
 
 // Strict God Mode Gatekeeper
 firebase.auth().onAuthStateChanged(async (user) => {
@@ -381,7 +380,6 @@ document.getElementById('requestQueue').addEventListener('click', (e) => {
     }
 });
 
-
 async function loadTarget(reqId) {
   currentTargetId = reqId;
   currentTarget = activeRequests.find(r => r.id === reqId);
@@ -417,7 +415,7 @@ async function loadTarget(reqId) {
         document.getElementById('t_owner').value = currentMasterLead.owner || currentMasterLead.name || '';
         document.getElementById('t_mailing').value = currentMasterLead.mailing || currentMasterLead.mailingAddress || '';
         document.getElementById('t_notes').value = currentMasterLead.notes || currentTarget.notes || '';
-        
+
         // Reconstruct phones array to string
         if (currentMasterLead.phones && Array.isArray(currentMasterLead.phones)) {
             document.getElementById('t_phones').value = currentMasterLead.phones.map(p => `${p.label || 'Phone'} | ${p.phone || p.number || ''}`).join('\n');
@@ -450,7 +448,7 @@ function updateOSINTLinks(req, masterLead) {
   document.getElementById('btnZillow').href = req.address ? `https://www.zillow.com/homes/${addrEncoded}_rb/` : '#';
   document.getElementById('btnGoogle').href = req.address ? `https://www.google.com/search?q=${addrEncoded}` : '#';
 
-  // Tactical Map View Embed (Fixed valid Google Maps Embed formatting)
+  // Tactical Map View Embed 
   if (req.address) {
     document.getElementById('streetViewFrame').src = `https://maps.google.com/maps?q=${addrEncoded}&t=k&z=19&output=embed`;
   } else {
@@ -480,6 +478,7 @@ async function pushToUserCRM() {
     const [label, phone] = line.includes('|') ? line.split('|') : ['Phone', line];
     return { label: label.trim(), phone: phone.trim() };
   });
+
   if (phones.length > 0) payload.phones = phones;
 
   try {
@@ -488,16 +487,16 @@ async function pushToUserCRM() {
 
     // 1. Update Master Node
     await db.ref(`leadsMaster/sellers/${leadId}`).update(payload);
-    
+
     // 2. Update Specific Associate's Node
     if (targetUid) {
       await db.ref(`leadsByUser/${targetUid}/sellers/${leadId}`).update(payload);
-      
+
       // 3. SILENT PING: Send a direct message to the associate
-      const threadId = [firebase.auth().currentUser.uid, targetUid].sort().join('_');
       const pingMsg = `🚨 WAR ROOM UPDATE: I have completed the analysis/skip trace for ${currentTarget.address}. Your CRM has been updated.`;
       
-      await db.ref(`direct_messages/${threadId}/messages`).push({
+      await db.ref(`direct_messages/${targetUid}/messages`).push({
+        uid: firebase.auth().currentUser.uid,
         sender: firebase.auth().currentUser.uid,
         by: "Leadership",
         text: pingMsg,
@@ -516,7 +515,7 @@ async function pushToUserCRM() {
     document.getElementById('targetHud').classList.remove('active');
     document.getElementById('targetStatus').innerText = "TRANSMISSION COMPLETE";
     document.getElementById('targetStatus').style.color = "var(--good)";
-    
+
     setTimeout(() => {
       document.getElementById('targetStatus').innerText = "STANDBY";
       document.getElementById('targetStatus').style.color = "var(--muted)";
@@ -552,7 +551,12 @@ function copyAddress() {
 }
 
 function escapeHtml(unsafe) {
-  return (unsafe || '').replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'");
+  return String(unsafe || '')
+    .replace(/&/g, "&"+"amp;")
+    .replace(/</g, "&"+"lt;")
+    .replace(/>/g, "&"+"gt;")
+    .replace(/"/g, "&"+"quot;")
+    .replace(/'/g, "&"+"#39;");
 }
 </script>
 </body>
