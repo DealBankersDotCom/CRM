@@ -1,4 +1,4 @@
- <!DOCTYPE html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="utf-8" />
@@ -258,6 +258,45 @@ body{
   </section>
 </div>
 
+<div class="modalOverlay" id="settingsModal">
+  <div class="modalCard" style="max-width:640px;">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle" style="font-size:15px; color:#fff; font-weight:900; letter-spacing:0.08em; text-transform:uppercase;">Wholesaler Profile Settings</div>
+        <div class="modalSub">Update your photo and wholesale track record.</div>
+      </div>
+      <button class="iconBtn" id="settingsCloseBtn">✕</button>
+    </div>
+    <div class="modalBody">
+       <div class="field" style="padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,.1);">
+         <div class="field-label">Profile Photo</div>
+         <div class="photo-upload-area" style="display:flex; align-items:center; gap:16px;">
+            <div class="photo-preview" id="set_photoPreview" style="width:80px; height:80px; border-radius:50%; background:#133e6a; border:2px solid var(--accent); background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:24px; color:#fff;">U</div>
+            <div style="flex:1;">
+                <input type="file" id="set_photoUpload" accept="image/*" style="display:none;" />
+                <button class="btn primary" id="btnTriggerUpload" type="button" style="padding:10px 14px; font-size:13px;">Upload New Photo</button>
+                <div style="font-size:11px; color:var(--muted); margin-top:8px;">Max size 2MB. JPG, PNG.</div>
+                <input type="hidden" id="set_photoUrlHidden" />
+            </div>
+         </div>
+       </div>
+       <div class="field">
+         <div class="field-label">Wholesale Bio / Pitch</div>
+         <textarea id="bio_wholesaler" class="input ta" placeholder="Target markets, acquisition strategy, monthly volume..."></textarea>
+       </div>
+       <div class="field" style="margin-bottom:0;">
+         <div class="field-label">Key Metrics / Experience</div>
+         <input type="text" id="exp_wholesaler" class="input" placeholder="e.g. 5 yrs exp, 10+ deals/mo">
+       </div>
+    </div>
+    <div class="modalActions">
+      <span id="settingsStatus" style="color:var(--good); display:none; margin-right:auto; font-weight:800; font-size:12px;">Saved ✓</span>
+      <button class="btn ghost" id="settingsCancelBtn">Cancel</button>
+      <button class="btn primary" id="settingsSaveBtn">Save Changes</button>
+    </div>
+  </div>
+</div>
+
 <div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;"></div>
 <div id="quickLogFlyout" class="flyout-panel">
     <div class="flyout-header">
@@ -349,12 +388,12 @@ Daughter Lisa | 210-555-2222"></textarea></div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 <script>
 (function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig. Check config.js load order.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){console.error("Firebase init error:", e);}})();
 
-// STRICT WINDOW SCOPING FOR ALL GLOBALS & FUNCTIONS
 window.$ = function(id) { return document.getElementById(id); };
 window.UID = ""; window.ME = null; window.ROLE = "associate"; window.isGod = false; window.isBranchManager = false;
 window.sellerList = []; window.sellerView = []; window.currentLead = null; window.currentLeadId = ""; window.currentIndex = -1;
@@ -368,15 +407,7 @@ const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; c
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
-window.esc = function(s){ 
-  return String(s || "")
-    .replace(/&/g, "&"+"amp;")
-    .replace(/</g, "&"+"lt;")
-    .replace(/>/g, "&"+"gt;")
-    .replace(/"/g, "&"+"quot;")
-    .replace(/'/g, "&"+"#39;"); 
-}
-
+window.esc = function(s){ return String(s || "").replace(/&/g, "&"+"amp;").replace(/</g, "&"+"lt;").replace(/>/g, "&"+"gt;").replace(/"/g, "&"+"quot;").replace(/'/g, "&"+"#39;"); }
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
 window.fmtPhoneKey = function(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} 
@@ -388,7 +419,6 @@ window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(
 window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} 
 window.isAdminLike = function(){return window.isGod||window.isBranchManager;}
 
-/* --- UI CATEGORY / TAB CONTROLS --- */
 window.switchCategory = function(cat) {
     if(window.currentCategory === cat && $("panel-acq") && $("panel-acq").style.display !== "none") return;
     window.currentCategory = cat;
@@ -433,7 +463,6 @@ window.refreshDispo = function(){
   f.setAttribute("src", src.split("?")[0]+"?t="+Date.now());
 };
 
-/* --- LEADERSHIP PING SYSTEM --- */
 window.triggerLeadershipPing = function(actionType, messageText = "") {
     if (window.isGod) return;
     firebase.database().ref("leadership_pings").push({
@@ -442,10 +471,8 @@ window.triggerLeadershipPing = function(actionType, messageText = "") {
     });
 }
 
-/* --- LOGOUT --- */
 window.logout = function() { firebase.auth().signOut().then(() => { location.href="index.html"; }); };
 
-/* --- WAR ROOM QUOTAS & REQUESTS --- */
 window.fetchQuotas = async function() {
     if(window.isGod) return;
     try {
@@ -532,7 +559,6 @@ window.requestWarRoomModal = async function(type) {
     }
 }
 
-/* --- DISPO / JV APPROVAL & PHOTO LOGIC --- */
 window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
@@ -551,9 +577,8 @@ window.approveDispo = async function() {
         window.selectLeadByIndex(window.currentIndex);
     } catch(e) { alert("Approval failed"); }
 };
-window.uploadPhotos = function() {
-    alert("Photo upload module opening... (Integration pending)");
-};
+
+window.uploadPhotos = function() { alert("Photo upload module opening... (Integration pending)"); };
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
 window.buildUserCache = function(rows){const byUid={}, byEmail={}, byUser={}; rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;}); return {byUid,byEmail,byUser};}
@@ -677,7 +702,6 @@ window.doTelDial = function(phone){const tel=window.sanitizeTel(phone); if(!tel)
 window.callCurrentPhone = async function(){if(!window.currentPhone) return; await window.logStatus("Call Attempt", true); if(window.isMobileish()) return window.doTelDial(window.currentPhone); try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied to clipboard!");}catch(e){}};
 window.copyCurrentPhone = async function(){if(!window.currentPhone) return; try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied!");}catch(e){}};
 
-/* --- QUICK LOG FLYOUT MENU --- */
 window.openQuickLog = function() {
     if($("flyoutOverlay")) $("flyoutOverlay").style.display = "flex";
     setTimeout(() => { if($("quickLogFlyout")) $("quickLogFlyout").classList.add("open"); }, 10);
@@ -1049,7 +1073,7 @@ window.setupChat = function(path,title,showBack){
   window.activeChatRef.limitToLast(80).on("child_added", snap=>{
     const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID); 
     const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them"); 
-    const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+    const timeString = new Date(m.ts || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
     div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class="msg-time">${timeString}</div>`;
     if($("chatMsgs")) { $("chatMsgs").appendChild(div); setTimeout(() => { $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight; }, 50); }
     if(!isInitialLoad && !mine) { pingSound.play().catch(e=>{}); if($("sidePanel") && !$("sidePanel").classList.contains("open")) { if($("chatBadge")) $("chatBadge").style.display = "block"; } }
@@ -1101,21 +1125,89 @@ window.openPanel = function(){
 window.closePanel = function(){if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }}
 window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="📡 Network Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
 
-window.importLegacyLeads = async function(){
-  if(!window.isGod) return; 
-  if(!confirm(`Import all legacy /leads/${window.currentCategory} into /leadsMaster/${window.currentCategory}?`)) return;
-  try{
-    const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`).once("value"); 
-    const legacy=legacySnap.val()||{}; 
-    const updates={}; 
-    Object.keys(legacy).forEach(leadId=>{
-      const v=legacy[leadId]||{}; 
-      updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`]={...v,id:leadId,__migratedFrom:"legacy",updatedAt:Date.now(),updatedBy:window.ME?.email||"",assignedTo:{[window.UID]:true},assignedUids:[window.UID]}; 
-      updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`]={...v,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false};
-    }); 
-    if(Object.keys(updates).length) await firebase.database().ref().update(updates); 
-    alert("Legacy imported ✓");
-  }catch(e){ alert("Legacy import failed. Check console + rules.");}
+/* --- SETTINGS CHAMELEON LOGIC --- */
+window.loadSettings = async function() {
+    if(!window.UID) return;
+    try {
+        const snap = await firebase.database().ref(`userDirectory/${window.UID}`).once("value");
+        const data = snap.val() || {};
+        
+        const preview = $("set_photoPreview");
+        const hiddenUrl = $("set_photoUrlHidden");
+        if (data.photoURL) {
+            preview.style.backgroundImage = `url('${window.esc(data.photoURL)}')`;
+            preview.textContent = "";
+            hiddenUrl.value = data.photoURL;
+        } else {
+            preview.style.backgroundImage = "";
+            preview.textContent = window.initialsFromUser({displayName: data.name, email: data.email});
+            hiddenUrl.value = "";
+        }
+        
+        const roles = data.roles || {};
+        $("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
+        $("exp_wholesaler").value = roles.wholesaler?.experience || "";
+
+    } catch(e) { }
+};
+
+window.handlePhotoUpload = async function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    if (file.size > 2 * 1024 * 1024) {
+        alert("File is too large. Max size is 2MB.");
+        return;
+    }
+
+    const preview = $("set_photoPreview");
+    preview.textContent = "⌛";
+    preview.style.backgroundImage = "";
+
+    try {
+        const fileExt = file.name.split('.').pop();
+        const sRef = firebase.storage().ref(`profile_photos/${window.UID}_${Date.now()}.${fileExt}`);
+        const snapshot = await sRef.put(file);
+        const downloadURL = await snapshot.ref.getDownloadURL();
+        
+        $("set_photoUrlHidden").value = downloadURL;
+        preview.style.backgroundImage = `url('${downloadURL}')`;
+        preview.textContent = "";
+        
+    } catch(error) {
+        alert("Photo upload failed. Ensure Storage Rules allow uploads.");
+        preview.textContent = window.initialsFromUser(window.ME);
+    }
+};
+
+window.saveSettings = async function() {
+    if(!window.UID) return;
+    const btn = $("settingsSaveBtn");
+    if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+    
+    try {
+        const bio = $("bio_wholesaler").value.trim();
+        const exp = $("exp_wholesaler").value.trim();
+        const photo = $("set_photoUrlHidden").value.trim();
+        
+        const updates = {};
+        if (photo) updates[`userDirectory/${window.UID}/photoURL`] = photo;
+        updates[`userDirectory/${window.UID}/bio`] = bio; // Fallback
+        updates[`userDirectory/${window.UID}/roles/wholesaler/bio`] = bio;
+        updates[`userDirectory/${window.UID}/roles/wholesaler/experience`] = exp;
+        updates[`userDirectory/${window.UID}/updatedAt`] = Date.now();
+        
+        await firebase.database().ref().update(updates);
+        
+        if($("settingsStatus")) {
+            $("settingsStatus").style.display = 'inline-block';
+            setTimeout(() => { $("settingsStatus").style.display = 'none'; }, 2000);
+        }
+    } catch(e) {
+        alert("Failed to save settings. Check database rules.");
+    } finally {
+        if(btn) { btn.disabled = false; btn.textContent = "Save Changes"; }
+    }
 };
 
 
@@ -1127,8 +1219,14 @@ function initStaticEvents() {
     attach('btnTeam', window.openTeamModal);
     attach('btnBlueSupport', () => window.openSupportModal('blue'));
     attach('btnRedSupport', () => window.openSupportModal('red'));
-    attach('btnSettings', () => location.href='settings.html');
     
+    attach('btnSettings', () => { window.loadSettings(); $('settingsModal').style.display = 'flex'; });
+    attach('settingsCloseBtn', () => $('settingsModal').style.display = 'none');
+    attach('settingsCancelBtn', () => $('settingsModal').style.display = 'none');
+    attach('settingsSaveBtn', window.saveSettings);
+    attach('btnTriggerUpload', () => $('set_photoUpload').click());
+    if($('set_photoUpload')) $('set_photoUpload').addEventListener('change', window.handlePhotoUpload);
+
     attach('tabAcq', () => window.switchCategory('sellers'));
     attach('tabDispo', () => window.switchCategory('buyers'));
     attach('tabMarket', window.showMarketBoard);
@@ -1275,5 +1373,3 @@ firebase.auth().onAuthStateChanged(async u=>{
 </script>
 </body>
 </html>
-
-
