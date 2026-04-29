@@ -258,45 +258,6 @@ body{
   </section>
 </div>
 
-<div class="modalOverlay" id="settingsModal">
-  <div class="modalCard" style="max-width:640px;">
-    <div class="modalHead">
-      <div>
-        <div class="modalTitle" style="font-size:15px; color:#fff; font-weight:900; letter-spacing:0.08em; text-transform:uppercase;">Wholesaler Profile Settings</div>
-        <div class="modalSub">Update your photo and wholesale track record.</div>
-      </div>
-      <button class="iconBtn" id="settingsCloseBtn">✕</button>
-    </div>
-    <div class="modalBody">
-       <div class="field" style="padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,.1);">
-         <div class="field-label">Profile Photo</div>
-         <div class="photo-upload-area" style="display:flex; align-items:center; gap:16px;">
-            <div class="photo-preview" id="set_photoPreview" style="width:80px; height:80px; border-radius:50%; background:#133e6a; border:2px solid var(--accent); background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:24px; color:#fff;">U</div>
-            <div style="flex:1;">
-                <input type="file" id="set_photoUpload" accept="image/*" style="display:none;" />
-                <button class="btn primary" id="btnTriggerUpload" type="button" style="padding:10px 14px; font-size:13px;">Upload New Photo</button>
-                <div style="font-size:11px; color:var(--muted); margin-top:8px;">Max size 2MB. JPG, PNG.</div>
-                <input type="hidden" id="set_photoUrlHidden" />
-            </div>
-         </div>
-       </div>
-       <div class="field">
-         <div class="field-label">Wholesale Bio / Pitch</div>
-         <textarea id="bio_wholesaler" class="input ta" placeholder="Target markets, acquisition strategy, monthly volume..."></textarea>
-       </div>
-       <div class="field" style="margin-bottom:0;">
-         <div class="field-label">Key Metrics / Experience</div>
-         <input type="text" id="exp_wholesaler" class="input" placeholder="e.g. 5 yrs exp, 10+ deals/mo">
-       </div>
-    </div>
-    <div class="modalActions">
-      <span id="settingsStatus" style="color:var(--good); display:none; margin-right:auto; font-weight:800; font-size:12px;">Saved ✓</span>
-      <button class="btn ghost" id="settingsCancelBtn">Cancel</button>
-      <button class="btn primary" id="settingsSaveBtn">Save Changes</button>
-    </div>
-  </div>
-</div>
-
 <div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;"></div>
 <div id="quickLogFlyout" class="flyout-panel">
     <div class="flyout-header">
@@ -388,7 +349,6 @@ Daughter Lisa | 210-555-2222"></textarea></div>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 <script>
@@ -1025,8 +985,30 @@ window.runTeamSearch = async function(){
     }catch(e){ box.innerHTML=`<div class="help">Search unavailable right now.</div>`; }
 };
 
-window.requestAssociate=async function(targetUid,targetEmailEnc){if(!targetUid) return; const targetEmail=decodeURIComponent(targetEmailEnc||"").toLowerCase(); const already=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
-if(already) return window.toast("Already pending"); try{ const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=window.UID; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]="pending"; updates[`${MANAGER_ASSOCIATES_PATH}/${window.UID}/${targetUid}`]={status:"pending", targetEmail:targetEmail||String(window.userDirCache.byUid[targetUid]?.email||"").toLowerCase(), requestedAt:Date.now()}; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); alert("Request sent to God Mode"); await window.renderTeamModalBody(); }catch(e){ alert("Request failed"); }};
+window.requestAssociate=async function(targetUid,targetEmailEnc){
+    if(!targetUid) return; 
+    const targetEmail=decodeURIComponent(targetEmailEnc||"").toLowerCase(); 
+    const already=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
+    if(already) return window.toast("Already pending"); 
+    
+    try { 
+        const updates={}; 
+        updates[`${MANAGER_ASSOCIATES_PATH}/${window.UID}/${targetUid}`] = {
+            status: "pending", 
+            targetEmail: targetEmail || String(window.userDirCache.byUid[targetUid]?.email||"").toLowerCase(), 
+            requestedAt: Date.now()
+        }; 
+        
+        await firebase.database().ref().update(updates); 
+        await window.loadUserDirectoryCache(); 
+        alert("Request sent to Leadership for approval"); 
+        await window.renderTeamModalBody(); 
+    } catch(e) { 
+        console.error(e);
+        alert("Request failed. Please check network connection."); 
+    }
+};
+
 window.approveRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]="approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]={status:"approved", targetEmail:String(req.targetEmail||window.userDirCache.byUid[req.targetUid]?.email||"").toLowerCase(), requestedAt:Date.now(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Associate approved"); await window.renderTeamModalBody(); }catch(e){ window.toast("Approve failed"); }};
 window.denyRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Request denied"); await window.renderTeamModalBody(); }catch(e){ window.toast("Deny failed"); }};
 window.removeAssociate=async function(targetUid){if(!targetUid) return; try{ const managerUid=String(window.userDirCache.byUid[targetUid]?.managerUid||window.UID); const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); if(window.isBranchManager) window.subscribeBranchScopedLeads(); if(window.isGod) window.subscribeGodAllLeads(); window.toast("Associate removed"); await window.renderTeamModalBody(); }catch(e){ window.toast("Remove failed"); }};
@@ -1125,92 +1107,6 @@ window.openPanel = function(){
 window.closePanel = function(){if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }}
 window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="📡 Network Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
 
-/* --- SETTINGS CHAMELEON LOGIC --- */
-window.loadSettings = async function() {
-    if(!window.UID) return;
-    try {
-        const snap = await firebase.database().ref(`userDirectory/${window.UID}`).once("value");
-        const data = snap.val() || {};
-        
-        const preview = $("set_photoPreview");
-        const hiddenUrl = $("set_photoUrlHidden");
-        if (data.photoURL) {
-            preview.style.backgroundImage = `url('${window.esc(data.photoURL)}')`;
-            preview.textContent = "";
-            hiddenUrl.value = data.photoURL;
-        } else {
-            preview.style.backgroundImage = "";
-            preview.textContent = window.initialsFromUser({displayName: data.name, email: data.email});
-            hiddenUrl.value = "";
-        }
-        
-        const roles = data.roles || {};
-        $("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
-        $("exp_wholesaler").value = roles.wholesaler?.experience || "";
-
-    } catch(e) { }
-};
-
-window.handlePhotoUpload = async function(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-    
-    if (file.size > 2 * 1024 * 1024) {
-        alert("File is too large. Max size is 2MB.");
-        return;
-    }
-
-    const preview = $("set_photoPreview");
-    preview.textContent = "⌛";
-    preview.style.backgroundImage = "";
-
-    try {
-        const fileExt = file.name.split('.').pop();
-        const sRef = firebase.storage().ref(`profile_photos/${window.UID}_${Date.now()}.${fileExt}`);
-        const snapshot = await sRef.put(file);
-        const downloadURL = await snapshot.ref.getDownloadURL();
-        
-        $("set_photoUrlHidden").value = downloadURL;
-        preview.style.backgroundImage = `url('${downloadURL}')`;
-        preview.textContent = "";
-        
-    } catch(error) {
-        alert("Photo upload failed. Ensure Storage Rules allow uploads.");
-        preview.textContent = window.initialsFromUser(window.ME);
-    }
-};
-
-window.saveSettings = async function() {
-    if(!window.UID) return;
-    const btn = $("settingsSaveBtn");
-    if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
-    
-    try {
-        const bio = $("bio_wholesaler").value.trim();
-        const exp = $("exp_wholesaler").value.trim();
-        const photo = $("set_photoUrlHidden").value.trim();
-        
-        const updates = {};
-        if (photo) updates[`userDirectory/${window.UID}/photoURL`] = photo;
-        updates[`userDirectory/${window.UID}/bio`] = bio; // Fallback
-        updates[`userDirectory/${window.UID}/roles/wholesaler/bio`] = bio;
-        updates[`userDirectory/${window.UID}/roles/wholesaler/experience`] = exp;
-        updates[`userDirectory/${window.UID}/updatedAt`] = Date.now();
-        
-        await firebase.database().ref().update(updates);
-        
-        if($("settingsStatus")) {
-            $("settingsStatus").style.display = 'inline-block';
-            setTimeout(() => { $("settingsStatus").style.display = 'none'; }, 2000);
-        }
-    } catch(e) {
-        alert("Failed to save settings. Check database rules.");
-    } finally {
-        if(btn) { btn.disabled = false; btn.textContent = "Save Changes"; }
-    }
-};
-
-
 /* --- MASTER EVENT INITIALIZATION --- */
 function initStaticEvents() {
     const attach = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
@@ -1219,14 +1115,8 @@ function initStaticEvents() {
     attach('btnTeam', window.openTeamModal);
     attach('btnBlueSupport', () => window.openSupportModal('blue'));
     attach('btnRedSupport', () => window.openSupportModal('red'));
+    attach('btnSettings', () => location.href='settings.html');
     
-    attach('btnSettings', () => { window.loadSettings(); $('settingsModal').style.display = 'flex'; });
-    attach('settingsCloseBtn', () => $('settingsModal').style.display = 'none');
-    attach('settingsCancelBtn', () => $('settingsModal').style.display = 'none');
-    attach('settingsSaveBtn', window.saveSettings);
-    attach('btnTriggerUpload', () => $('set_photoUpload').click());
-    if($('set_photoUpload')) $('set_photoUpload').addEventListener('change', window.handlePhotoUpload);
-
     attach('tabAcq', () => window.switchCategory('sellers'));
     attach('tabDispo', () => window.switchCategory('buyers'));
     attach('tabMarket', window.showMarketBoard);
