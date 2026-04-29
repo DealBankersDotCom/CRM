@@ -5,133 +5,182 @@
 <meta name="viewport" content="width=device-width,initial-scale=1"/>
 <title>DealBankers • Dashboard</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg"/>
-<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600&family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet"/>
 
 <style>
 /* --- CORE DASHBOARD STYLE --- */
 :root {
   --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
   --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
-  --batman:#eab308;
+  --batman:#eab308; --good:#00ff6a; --warn:#ffd24d; --bad:#ff5555;
 }
 body {
-  margin:0; font-family:"Orbitron",system-ui;
+  margin:0; font-family:"Inter",system-ui;
   background:linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
   color:var(--text); min-height:100vh;
 }
-.header{display:flex;justify-content:space-between;align-items:center;
+
+/* --- HEADER & NAVIGATION (UNIFORM) --- */
+.header{
+  display:flex;justify-content:space-between;align-items:center;
   padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
-  background:linear-gradient(180deg,rgba(255,255,255,.1),rgba(255,255,255,.04))}
-.nav{display:flex;gap:10px;flex-wrap:wrap}
-.chip{padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.2);
-  background:#0d1823;color:var(--text);text-decoration:none;cursor:pointer}
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  position:sticky;top:0;z-index:50;backdrop-filter: blur(10px);
+}
+.header .leftTitle{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.04em; font-family:"Orbitron", sans-serif;}
+.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{
+  padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.22);
+  background:#0d1823;color:var(--text);text-decoration:none;cursor:pointer;font-weight:800;
+  transition:background .2s,transform .2s,border-color .2s, box-shadow .2s;user-select:none;
+}
+.chip:hover{background:#14314d;transform:translateY(-1px)}
 .chip.primary{background:#133e6a}
+
+.icon-btn{
+  background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.25);
+  border-radius:50%;width:34px;height:34px;font-size:18px;color:white;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s ease, background .15s ease;
+}
+.icon-btn:hover{background:rgba(255,255,255,0.20);transform:translateY(-1px)}
+.phone-chip{
+  width:48px;height:48px;border-radius:999px;border:1px solid rgba(255,255,255,.24);
+  display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:28px;
+  font-weight:900;line-height:1;color:#fff;padding:0;
+  box-shadow:0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16);
+  transition:transform .15s ease, filter .15s ease, box-shadow .15s ease;
+}
+.phone-chip:hover{transform:translateY(-1px) scale(1.03);filter:brightness(1.06)}
+.phone-chip:active{transform:translateY(0) scale(.98)}
+.blue-phone{background:linear-gradient(180deg,#2b74ff,#0a58ca);box-shadow:0 0 18px rgba(43,116,255,.42), 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16)}
+.red-phone{background:linear-gradient(180deg,#d92626,#8f1010);box-shadow:0 0 18px rgba(255,42,42,.36), 0 10px 24px rgba(0,0,0,.28), inset 0 1px 0 rgba(255,255,255,.16)}
+
+/* --- DASHBOARD PORTAL CARDS --- */
 .wrap{max-width:900px;padding:24px;margin:0 auto}
 .card{background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.15);
-  border-radius:20px;padding:20px;margin-top:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
-.title{font-size:1.4rem;font-weight:700;margin-bottom:10px}
-.portal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;margin-top:14px}
-.plink{padding:14px;border:1px solid rgba(255,255,255,.15);border-radius:14px;
-  text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:700;cursor:pointer; transition: transform 0.2s, box-shadow 0.2s;}
-.plink:hover { transform: translateY(-2px); }
+  border-radius:20px;padding:30px;margin-top:20px;box-shadow:0 20px 50px rgba(0,0,0,.5)}
+.title{font-size:1.8rem;font-weight:900;margin-bottom:10px; font-family:"Orbitron", sans-serif;}
+.portal-links{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:16px;margin-top:24px}
+.plink{padding:18px;border:1px solid rgba(255,255,255,.15);border-radius:16px;
+  text-align:center;text-decoration:none;background:#0e2231;color:var(--text);font-weight:800;
+  font-size:1.1rem;cursor:pointer; transition: transform 0.2s, box-shadow 0.2s, background 0.2s;}
+.plink:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(0,0,0,0.4); background:#14314d; }
 
 /* --- SECRET WAR ROOM DOORWAY --- */
 #btnWarRoom {
-  display: none; 
-  border-color: var(--batman); 
-  color: var(--batman); 
-  background: rgba(234, 179, 8, 0.05); 
-  text-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
+  display: none; border-color: var(--batman); color: var(--batman);
+  background: rgba(234, 179, 8, 0.05); text-shadow: 0 0 8px rgba(234, 179, 8, 0.4);
 }
-#btnWarRoom:hover { 
-  background: rgba(234, 179, 8, 0.15); 
-  box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); 
-}
+#btnWarRoom:hover { background: rgba(234, 179, 8, 0.15); box-shadow: 0 0 15px rgba(234, 179, 8, 0.3); }
 
-/* --- THE FLOATING CHAT BUTTON --- */
+/* --- MODALS (SETTINGS & SUPPORT) --- */
+.modalOverlay{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:18px;z-index:13000;background:rgba(0,0,0,.65);backdrop-filter:blur(10px)}
+.modalCard{width:min(640px, 96vw);border-radius:20px;border:1px solid rgba(255,255,255,.14);background:rgba(11,24,37,.98);box-shadow:0 22px 80px rgba(0,0,0,.8);overflow:hidden; max-height:92vh;display:flex;flex-direction:column;}
+.modalHead{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px 20px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
+.modalTitle{font-weight:900;letter-spacing:.08em;font-size:15px;color:#fff;text-transform:uppercase;}
+.modalSub{font-size:12px;color:#9ab9d6;margin-top:4px}
+.iconBtn{background:rgba(255,255,255,.10);border:1px solid rgba(255,255,255,.20);border-radius:12px;width:40px;height:36px;color:#ff7777;cursor:pointer;font-weight:1000; display:flex; align-items:center; justify-content:center;}
+.iconBtn:hover{background:rgba(255,255,255,.18)}
+.modalBody{padding:20px;overflow:auto;}
+.modalActions{display:flex;gap:10px;justify-content:flex-end;align-items:center;margin-top:12px;position:sticky;bottom:0;background:rgba(11,19,27,.95);backdrop-filter:blur(8px);padding:16px 20px;border-top:1px solid rgba(255,255,255,.12);}
+
+.field{margin-bottom:20px;}
+.field-label{font-size:11px;letter-spacing:.12em;font-weight:900;color:#9ab9d6;margin-bottom:8px;text-transform:uppercase;}
+.input{width:100%;background:#0d1f2d;border:1px solid #254a63;color:#fff;border-radius:12px;padding:12px 14px;outline:none;font-family:inherit;}
+.input:focus{border-color:rgba(43,116,255,.6);box-shadow:0 0 0 4px rgba(43,116,255,.12)}
+.ta{min-height:100px;resize:vertical;line-height:1.5;}
+
+.btn{padding:12px 18px;border-radius:12px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-weight:900;transition:all 0.15s;}
+.btn:hover{background:rgba(255,255,255,.10);transform:translateY(-1px);}
+.btn.primary{border-color:rgba(43,116,255,.55);background:rgba(43,116,255,.18);}
+.btn.primary:hover{background:var(--accent);box-shadow:0 0 15px rgba(43,116,255,.4);}
+.btn.ghost{background:transparent;border-color:transparent;}
+.btn.ghost:hover{background:rgba(255,255,255,.05);}
+
+.role-checkboxes {display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;}
+.role-checkboxes label {color:#fff; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer;}
+.role-checkboxes input[type="checkbox"] {width:18px; height:18px; cursor:pointer;}
+
+/* --- CHAT BUBBLE & SIDEBAR --- */
 #chatBubble {
-  position:fixed; bottom:20px; right:20px; width:60px; height:60px;
-  border-radius:50%; background:var(--accent); color:white;
-  border:2px solid #fff; box-shadow:0 0 20px rgba(43,116,255,0.8);
+  position:fixed; bottom:24px; right:24px; width:60px; height:60px;
+  border-radius:50%; background:#133e6a; color:white;
+  border:2px solid var(--accent); box-shadow:0 0 20px rgba(43,116,255,0.8);
   display:flex; align-items:center; justify-content:center;
-  font-size:30px; cursor:pointer; 
-  z-index:9999;
+  font-size:30px; cursor:pointer; z-index:9999;
   transition: transform 0.2s, box-shadow 0.2s;
 }
-#chatBubble:hover { transform: scale(1.1); box-shadow:0 0 30px rgba(43,116,255,1); }
+#chatBubble:hover { transform: scale(1.08); box-shadow:0 0 30px rgba(43,116,255,1); }
 #chatBadge {
   position: absolute; top: -2px; right: -2px; width: 16px; height: 16px;
   background: #ff5555; border-radius: 50%; border: 2px solid var(--bg1);
   display: none; box-shadow: 0 0 10px #ff5555;
 }
 
-/* --- SIDEBAR PANEL --- */
 .sidebar-panel {
-  position: fixed;
-  top: 0; right: -360px; width: 340px; height: 100vh;
-  background: rgba(11, 24, 37, 0.98);
-  backdrop-filter: blur(12px);
-  border-left: 1px solid var(--accent);
-  box-shadow: -10px 0 40px rgba(0,0,0,0.8);
-  transition: right 0.3s ease-in-out;
-  z-index: 10000;
+  position: fixed; top: 0; right: -100%; width: min(340px, 100vw); height: 100dvh;
+  background: rgba(11, 24, 37, 0.98); backdrop-filter: blur(12px);
+  border-left: 1px solid var(--accent); box-shadow: -10px 0 40px rgba(0,0,0,0.8);
+  transition: right 0.3s ease-in-out; z-index: 10000;
   display: flex; flex-direction: column;
 }
 .sidebar-panel.open { right: 0; }
-
 .panel-header {
-  padding: 15px; background: rgba(0,0,0,0.3);
-  border-bottom: 1px solid var(--line);
+  padding: 15px; background: rgba(0,0,0,0.3); border-bottom: 1px solid var(--line);
   display: flex; justify-content: space-between; align-items: center;
 }
-.panel-title { color: #fff; font-size: 1.1rem; text-shadow: 0 0 10px var(--accent); }
-.close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; }
+.panel-title { color: #fff; font-size: 1.05rem; text-shadow: 0 0 10px var(--accent); font-weight:900; }
+.close-btn { background: none; border: none; color: #ff5555; font-size: 1.2rem; cursor: pointer; font-weight:900; }
 
-/* Radar List (Admin Only) */
 #radarList { flex: 1; overflow-y: auto; padding: 10px; display: none; }
 .radar-user {
-  padding: 12px; margin-bottom: 8px; border-radius: 8px;
+  padding: 12px; margin-bottom: 8px; border-radius: 10px;
   background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.1);
   cursor: pointer; display: flex; justify-content: space-between; align-items: center;
 }
 .radar-user:hover { background: rgba(43,116,255,0.2); border-color: var(--accent); }
 .status-dot { width: 8px; height: 8px; background: #00ff6a; border-radius: 50%; box-shadow: 0 0 8px #00ff6a; }
 
-/* Chat Area (User Default) */
 #chatArea { flex: 1; display: none; flex-direction: column; background: rgba(0,0,0,0.2); }
 #chatMsgs { flex: 1; overflow-y: auto; padding: 15px; display: flex; flex-direction: column; gap: 10px; }
-.msg-bubble { padding: 10px 14px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; font-family: 'Inter', sans-serif; line-height: 1.4; }
+.msg-bubble { padding: 8px 12px; border-radius: 12px; max-width: 85%; font-size: 0.9rem; word-wrap: break-word; }
 .msg-me { align-self: flex-end; background: var(--accent); color: white; border-bottom-right-radius: 2px; }
 .msg-them { align-self: flex-start; background: #1e2c3a; color: #ddd; border-bottom-left-radius: 2px; border: 1px solid var(--line); }
 .msg-time { font-size: 0.65rem; color: rgba(255,255,255,0.5); margin-top: 4px; text-align: right; }
 
-.chat-input-row { padding: 15px; border-top: 1px solid var(--line); display: flex; gap: 10px; background: rgba(0,0,0,0.4); }
-.chat-input { flex: 1; padding: 10px; border-radius: 8px; border: 1px solid #333; background: #080f16; color: white; outline: none; font-family: 'Inter', sans-serif; }
+.chat-input-row { padding: 15px; border-top: 1px solid var(--line); display: flex; gap: 10px; background: rgba(11,24,37,1); }
+.chat-input { flex: 1; padding: 10px; border-radius: 10px; border: 1px solid #333; background: #080f16; color: white; outline: none; }
 .chat-input:focus { border-color: var(--accent); }
-.send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: bold; }
+.send-btn { padding: 0 15px; background: var(--accent); color: white; border: none; border-radius: 10px; cursor: pointer; font-weight: 900; }
 
-/* Back Button (Admin Only) */
-#backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; }
+#backToRadar { font-size: 0.8rem; color: var(--muted); cursor: pointer; margin-right: 10px; display: none; font-weight:900; }
 #backToRadar:hover { color: #fff; }
 </style>
 </head>
 
 <body>
 <header class="header">
-  <div>DEALBANKERS • Dashboard</div>
+  <div class="leftTitle">
+    <div>DEALBANKERS • Dashboard</div>
+  </div>
   <nav class="nav">
-    <a class="chip" href="settings.html">⚙ Settings</a>
-    <a class="chip primary" href="#" id="logoutBtn">Log Out</a>
+    <button class="phone-chip blue-phone" id="btnBlueSupport" title="Blue Phone">☎</button>
+    <button class="phone-chip red-phone" id="btnRedSupport" title="Red Phone">☎</button>
+    <button class="icon-btn" id="btnSettings" title="Account Settings">⚙️</button>
+    <a class="chip" id="logoutBtn" style="cursor:pointer;">Log Out</a>
   </nav>
 </header>
 
 <div class="wrap">
   <section class="card">
-    <div class="title">Welcome.</div>
-    <div>Select your workspace:</div>
+    <div class="title">Welcome to HQ.</div>
+    <div style="color:var(--muted); font-size:1.1rem; font-weight:600;">Select your workspace module:</div>
+    
     <div class="portal-links">
       <a class="plink" href="wholesaler.html">🏠 Wholesaler</a>
       <a class="plink" href="contractor.html">🔧 Contractor</a>
+      <a class="plink" href="network.html">📇 Network</a>
       <a class="plink" href="realtor.html">📎 Realtor</a>
       <a class="plink" href="investor.html">💼 Investor</a>
       <a class="plink" href="Warroom.html" id="btnWarRoom">🦇 WAR ROOM</a>
@@ -139,10 +188,81 @@ body {
   </section>
 </div>
 
-<div id="chatBubble">
-  💬
-  <div id="chatBadge"></div>
+<div class="modalOverlay" id="settingsModal">
+  <div class="modalCard">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle">Account & Profile Settings</div>
+        <div class="modalSub">Customize your baseball card and platform access.</div>
+      </div>
+      <button class="iconBtn" id="settingsCloseBtn">✕</button>
+    </div>
+    <div class="modalBody">
+       <div class="field">
+         <div class="field-label">Profile Photo URL</div>
+         <input type="text" id="set_photo" class="input" placeholder="https://..." />
+       </div>
+       <div class="field">
+         <div class="field-label">Definite Chief Aim / Bio</div>
+         <textarea id="set_bio" class="input ta" placeholder="Tell the network who you are and what value you bring..."></textarea>
+       </div>
+       <div class="field">
+         <div class="field-label">My Platform Roles</div>
+         <div class="role-checkboxes">
+            <label><input type="checkbox" id="set_isWholesaler"> Wholesaler</label>
+            <label><input type="checkbox" id="set_isContractor"> Contractor</label>
+            <label><input type="checkbox" id="set_isRealtor"> Realtor</label>
+            <label><input type="checkbox" id="set_isInvestor"> Investor</label>
+         </div>
+       </div>
+    </div>
+    <div class="modalActions">
+      <span id="settingsStatus" style="color:var(--good); display:none; margin-right:auto; font-weight:800; font-size:12px;">Saved ✓</span>
+      <button class="btn ghost" id="settingsCancelBtn">Cancel</button>
+      <button class="btn primary" id="settingsSaveBtn">Save Changes</button>
+    </div>
+  </div>
 </div>
+
+<div class="modalOverlay" id="supportModal">
+  <div class="modalCard" style="max-width:540px;">
+    <div class="modalHead">
+      <div>
+        <div class="modalTitle" id="supportTitle">Support Request</div>
+        <div class="modalSub" id="supportSub">Send a request to Leadership Team</div>
+      </div>
+      <button class="iconBtn" id="supportCloseBtn">✕</button>
+    </div>
+    <div class="modalBody">
+      <div class="field">
+          <div class="field-label">Priority</div>
+          <select id="supportPriority" class="input" disabled>
+              <option value="blue">Blue Phone Support (not urgent)</option>
+              <option value="red">Red Phone Support (urgent)</option>
+          </select>
+      </div>
+      <div class="field">
+          <div class="field-label">Category</div>
+          <select id="supportCategory" class="input">
+              <option value="Account Issue">Account Issue</option>
+              <option value="Portal Access">Portal Access</option>
+              <option value="System Bug">System Bug</option>
+              <option value="Other">Other</option>
+          </select>
+      </div>
+      <div class="field" style="margin-bottom:0;">
+          <div class="field-label">Message</div>
+          <textarea id="supportMsg" class="input ta" placeholder="Describe the issue..."></textarea>
+      </div>
+    </div>
+    <div class="modalActions">
+      <button class="btn ghost" id="supportCancelBtn">Cancel</button>
+      <button class="btn primary" id="supportSendBtn">Send Request</button>
+    </div>
+  </div>
+</div>
+
+<div id="chatBubble">💬<div id="chatBadge"></div></div>
 
 <div id="sidePanel" class="sidebar-panel">
   <div class="panel-header">
@@ -171,7 +291,7 @@ body {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
-import { getDatabase, ref, get, set, push, onDisconnect, onValue, onChildAdded, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+import { getDatabase, ref, get, set, update, push, onDisconnect, onValue, onChildAdded, serverTimestamp, off } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
 
 const app = initializeApp(window.firebaseConfig);
 const auth = getAuth(app);
@@ -182,7 +302,6 @@ let currentChatPath = null;
 let isAdmin = false;
 let activeChatListener = null;
 
-// The Ping Sound for Incoming Messages
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
 /* --- AUTH & ROLE CHECK --- */
@@ -197,30 +316,21 @@ onAuthStateChanged(auth, async (user) => {
 
   if (role === 'admin' || role === 'god' || user.email === "dealbankers@gmail.com") {
       isAdmin = true;
-      startRadar(); // Admin sees Radar
+      startRadar(); 
       
-      // THE SECRET DOOR LOGIC
       if (role === 'god' || user.email === "dealbankers@gmail.com") {
           document.getElementById('btnWarRoom').style.display = 'block';
       }
-      
-      // Admin listens for ANY incoming message on the network to trigger badge/sound
       listenForGlobalAdminPings();
-
   } else {
       isAdmin = false;
-      // User Logic: Chat path is ALWAYS "direct_messages/{MY_UID}"
-      currentChatPath = `direct_messages/${user.uid}`;
+      currentChatPath = `direct_messages/${user.uid}/messages`;
       listenForUnreadMessages(currentChatPath);
   }
 });
 
-/* --- NOTIFY LEADERSHIP (EMAIL TRIGGER SYSTEM) --- */
 function triggerLeadershipPing(actionType, messageText = "") {
-    if (isAdmin) return; // Admins don't ping themselves
-    
-    // We log to a central 'leadership_pings' node.
-    // This allows you to hook up Zapier or Make.com to email you.
+    if (isAdmin) return;
     push(ref(db, "leadership_pings"), {
         uid: currentUser.uid,
         name: currentUser.displayName || currentUser.email.split('@')[0],
@@ -232,7 +342,106 @@ function triggerLeadershipPing(actionType, messageText = "") {
     });
 }
 
-/* --- UI INTERACTIONS --- */
+/* --- SETTINGS MODAL LOGIC --- */
+async function loadSettings() {
+    if(!currentUser) return;
+    try {
+        const snap = await get(ref(db, `userDirectory/${currentUser.uid}`));
+        const data = snap.val() || {};
+        document.getElementById('set_photo').value = data.photoURL || "";
+        document.getElementById('set_bio').value = data.bio || "";
+        document.getElementById('set_isWholesaler').checked = !!data.isWholesaler;
+        document.getElementById('set_isContractor').checked = !!data.isContractor;
+        document.getElementById('set_isRealtor').checked = !!data.isRealtor;
+        document.getElementById('set_isInvestor').checked = !!data.isInvestor;
+    } catch(e) { console.error("Error loading settings"); }
+}
+
+async function saveSettings() {
+    if(!currentUser) return;
+    const btn = document.getElementById('settingsSaveBtn');
+    btn.disabled = true; btn.innerText = "Saving...";
+    
+    const updates = {
+        photoURL: document.getElementById('set_photo').value.trim(),
+        bio: document.getElementById('set_bio').value.trim(),
+        isWholesaler: document.getElementById('set_isWholesaler').checked,
+        isContractor: document.getElementById('set_isContractor').checked,
+        isRealtor: document.getElementById('set_isRealtor').checked,
+        isInvestor: document.getElementById('set_isInvestor').checked,
+        updatedAt: Date.now()
+    };
+    
+    try {
+        await update(ref(db, `userDirectory/${currentUser.uid}`), updates);
+        const statusEl = document.getElementById('settingsStatus');
+        statusEl.style.display = 'inline-block';
+        setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
+    } catch(e) {
+        alert("Failed to save settings.");
+    } finally {
+        btn.disabled = false; btn.innerText = "Save Changes";
+    }
+}
+
+/* --- SUPPORT MODAL LOGIC --- */
+function openSupport(priority) {
+    document.getElementById('supportPriority').value = priority;
+    document.getElementById('supportSub').innerText = priority === 'red' ? "Red = urgent. Critical system issues." : "Blue = not urgent. General dashboard support.";
+    document.getElementById('supportMsg').value = "";
+    document.getElementById('supportModal').style.display = "flex";
+}
+
+function closeSupport() {
+    document.getElementById('supportModal').style.display = "none";
+}
+
+async function sendSupport() {
+    const msg = document.getElementById('supportMsg').value.trim();
+    if(!msg) return alert("Please enter a message.");
+    
+    const payload = {
+        uid: currentUser.uid,
+        email: currentUser.email,
+        name: currentUser.displayName || currentUser.email.split('@')[0],
+        portal: "dashboard",
+        priority: document.getElementById('supportPriority').value,
+        category: document.getElementById('supportCategory').value,
+        message: msg,
+        ts: Date.now(),
+        status: "open"
+    };
+    
+    try {
+        await push(ref(db, `supportRequests/${currentUser.uid}`), payload);
+        if(!isAdmin) {
+            triggerLeadershipPing(`Submitted ${payload.priority} support ticket`, msg);
+        }
+        closeSupport();
+        alert("Support request sent to Leadership!");
+    } catch(e) {
+        alert("Failed to send support request.");
+    }
+}
+
+/* --- EVENT LISTENERS --- */
+document.getElementById('btnSettings').onclick = () => { loadSettings(); document.getElementById('settingsModal').style.display = 'flex'; };
+document.getElementById('settingsCloseBtn').onclick = () => document.getElementById('settingsModal').style.display = 'none';
+document.getElementById('settingsCancelBtn').onclick = () => document.getElementById('settingsModal').style.display = 'none';
+document.getElementById('settingsSaveBtn').onclick = saveSettings;
+
+document.getElementById('btnBlueSupport').onclick = () => openSupport('blue');
+document.getElementById('btnRedSupport').onclick = () => openSupport('red');
+document.getElementById('supportCloseBtn').onclick = closeSupport;
+document.getElementById('supportCancelBtn').onclick = closeSupport;
+document.getElementById('supportSendBtn').onclick = sendSupport;
+
+document.getElementById("logoutBtn").onclick = async () => {
+    await signOut(auth);
+    window.location.href = "index.html";
+};
+
+/* --- CHAT INTERACTIONS --- */
 const sidePanel = document.getElementById("sidePanel");
 const radarList = document.getElementById("radarList");
 const chatArea = document.getElementById("chatArea");
@@ -242,13 +451,11 @@ const chatBadge = document.getElementById("chatBadge");
 
 document.getElementById("chatBubble").onclick = () => {
     sidePanel.classList.toggle("open");
-    chatBadge.style.display = "none"; // Clear badge when opened
+    chatBadge.style.display = "none";
     
     if (sidePanel.classList.contains("open")) {
         if (!isAdmin) {
             showChatView(currentChatPath, "Leadership Support");
-            
-            // ONLY trigger ping if they haven't opened it in the last 5 minutes to prevent spam
             const lastPing = sessionStorage.getItem('last_chat_open');
             if (!lastPing || (Date.now() - parseInt(lastPing)) > 300000) {
                 triggerLeadershipPing("Opened Support Chat");
@@ -295,21 +502,22 @@ function startRadar() {
         Object.keys(data).forEach(uid => {
             if (uid === currentUser.uid) return; 
             const u = data[uid];
-            if (u.state === "online") {
+  
+            if (u.state === "online" || u.online === true) {
                 count++;
                 const div = document.createElement("div");
                 div.className = "radar-user";
-                // RADAR LOCATION TAG IS RENDERED HERE
-                const loc = u.page ? `<br><small style="color:#88a5bf">On: ${u.page}</small>` : "";
+           
+                const loc = u.page ? `<br><small style="color:#88a5bf">On: ${window.esc(u.page)}</small>` : "";
                 div.innerHTML = `
                     <div>
-                        <div style="font-weight:bold; color:#fff">${u.name || 'User'}</div>
-                        <small style="color:#666">${u.email}</small>
+                        <div style="font-weight:bold; color:#fff">${window.esc(u.name) || 'User'}</div>
+                        <small style="color:#666">${window.esc(u.email)}</small>
                         ${loc}
                     </div>
                     <div class="status-dot"></div>
                 `;
-                div.onclick = () => showChatView(`direct_messages/${uid}`, u.name || 'User');
+                div.onclick = () => showChatView(`direct_messages/${uid}/messages`, u.name || 'User');
                 radarList.appendChild(div);
             } 
         });
@@ -328,43 +536,35 @@ function loadMessages(path) {
     activeChatListener = ref(db, path);
     
     let isInitialLoad = true;
-
     onChildAdded(activeChatListener, (snap) => {
         const msg = snap.val();
         const div = document.createElement("div");
-        const isMe = (msg.sender === currentUser.uid);
+        const isMe = (msg.sender === currentUser.uid || msg.uid === currentUser.uid);
         
         div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
         
-        // Add timestamp formatting
-        const timeString = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        div.innerHTML = `<div>${msg.text}</div><div class="msg-time">${timeString}</div>`;
+        const timeString = new Date(msg.ts || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        div.innerHTML = `<div>${window.esc(msg.text)}</div><div class="msg-time">${timeString}</div>`;
         
         box.appendChild(div);
         
-        // Auto scroll to bottom
-        setTimeout(() => {
-            box.scrollTop = box.scrollHeight;
-        }, 50);
+        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
 
-        // If a new message comes in, and it's NOT from us, play a sound and badge
         if (!isInitialLoad && !isMe) {
-            pingSound.play().catch(e=>console.warn("Autoplay blocked"));
+            pingSound.play().catch(e=>{});
             if (!sidePanel.classList.contains("open")) {
                 chatBadge.style.display = "block";
             }
         }
     });
-    
     setTimeout(() => { isInitialLoad = false; }, 1500);
 }
 
-// Background Listener for Users
 function listenForUnreadMessages(path) {
     let isInitial = true;
     onChildAdded(ref(db, path), (snap) => {
         const msg = snap.val();
-        if (!isInitial && msg.sender !== currentUser.uid && !sidePanel.classList.contains("open")) {
+        if (!isInitial && msg.sender !== currentUser.uid && msg.uid !== currentUser.uid && !sidePanel.classList.contains("open")) {
             chatBadge.style.display = "block";
             pingSound.play().catch(e=>{});
         }
@@ -372,7 +572,6 @@ function listenForUnreadMessages(path) {
     setTimeout(() => { isInitial = false; }, 1500);
 }
 
-// Background Listener for Admins (Listens to the Pings node)
 function listenForGlobalAdminPings() {
     let isInitial = true;
     onChildAdded(ref(db, "leadership_pings"), (snap) => {
@@ -394,11 +593,11 @@ function sendMsg() {
     
     push(ref(db, currentChatPath), {
         sender: currentUser.uid,
+        by: currentUser.displayName || currentUser.email || "User",
         text: txt,
         ts: serverTimestamp()
     });
     
-    // Trigger Ping if User is sending to Admin
     if (!isAdmin) {
         triggerLeadershipPing("Sent a Message", txt);
     }
@@ -411,7 +610,6 @@ function setPresence(user) {
     const globalRef = ref(db, `presence/global/${user.uid}`);
     const statusRef = ref(db, `presence/${user.uid}`); 
     const conRef = ref(db, ".info/connected");
-
     onValue(conRef, (s) => {
         if (s.val() === true) {
             onDisconnect(globalRef).set({state:"offline", last: serverTimestamp()});
@@ -419,21 +617,16 @@ function setPresence(user) {
 
             set(globalRef, {
                 state: "online",
+                online: true,
                 name: user.displayName || user.email.split('@')[0],
                 email: user.email,
                 ts: serverTimestamp(),
-                // PORTAL IDENTIFIER APPLIED HERE
                 page: "Dashboard"
             });
             set(statusRef, {state:"online", ts: serverTimestamp()});
         }
     });
 }
-
-document.getElementById("logoutBtn").onclick = async () => {
-    await signOut(auth);
-    window.location.href = "index.html";
-};
 </script>
 </body>
 </html>
