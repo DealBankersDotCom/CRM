@@ -257,7 +257,7 @@ body{
   </section>
 </div>
 
-<div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;" id="flyoutOverlayAction"></div>
+<div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;"></div>
 <div id="quickLogFlyout" class="flyout-panel">
     <div class="flyout-header">
         <div style="font-weight:900; color:var(--accent); font-size:1.1rem; letter-spacing:0.05em;">⚡ QUICK LOG: <span id="flyoutPhoneLabel" style="color:#fff;"></span></div>
@@ -366,7 +366,15 @@ const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; c
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
 
-window.esc = function(s){ return String(s || "").replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'"); }
+window.esc = function(s){ 
+  return String(s || "")
+    .replace(/&/g, "&"+"amp;")
+    .replace(/</g, "&"+"lt;")
+    .replace(/>/g, "&"+"gt;")
+    .replace(/"/g, "&"+"quot;")
+    .replace(/'/g, "&"+"#39;"); 
+}
+
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
 window.fmtPhoneKey = function(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} 
@@ -1061,25 +1069,21 @@ try{const legacySnap=await firebase.database().ref(`${LEGACY_LEADS_PATH}/sellers
 function initStaticEvents() {
     const attach = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
 
-    // Header & Main Navigation
     attach('logoutBtn', window.logout);
     attach('btnTeam', window.openTeamModal);
     attach('btnBlueSupport', () => window.openSupportModal('blue'));
     attach('btnRedSupport', () => window.openSupportModal('red'));
     attach('btnSettings', () => location.href='settings.html');
     
-    // Tabs & Top Controls
     attach('tabAcq', window.showAcq);
     attach('tabDispo', window.showDispo);
     attach('dispoRefreshBtn', window.refreshDispo);
     
-    // Queue Search & Controls
     attach('s_reload', window.applySearch);
     const sQ = $("s_q"); if(sQ) sQ.addEventListener('keydown', (e) => { if(e.key==='Enter') window.applySearch(); });
     attach('btnNewLead', () => window.openLeadModal('new'));
     attach('btnImportLegacy', window.importLegacyLeads);
     
-    // Central Console Navigation
     attach('prevLead', window.prevLead);
     attach('nextLead', window.nextLead);
     attach('btnEditLead', () => window.openLeadModal('edit'));
@@ -1090,13 +1094,11 @@ function initStaticEvents() {
     attach('streetViewLink', () => window.setMapMode('street'));
     const pS = $("phoneSelect"); if(pS) pS.addEventListener('change', window.onPhoneChanged);
 
-    // Quick Log Panel
     attach('closeFlyoutBtn', window.closeQuickLog);
     attach('noteSaveBtn', window.saveQuickNote);
     const qg = $("quickGridContainer");
     if (qg) qg.addEventListener('click', (e) => { const btn = e.target.closest('.qbtn'); if(btn && btn.dataset.status) window.logStatus(btn.dataset.status); });
 
-    // Modals
     attach('leadModalClose', window.closeLeadModal);
     attach('m_delete', window.deleteLead);
     attach('m_cancel', window.closeLeadModal);
@@ -1113,14 +1115,12 @@ function initStaticEvents() {
 
     const aF = $("assignFilter"); if(aF) aF.addEventListener('input', window.renderAssignList);
 
-    // Chat / Support Panel
     attach('chatBubble', window.openPanel);
     attach('closePanel', window.closePanel);
     attach('backToRadar', window.showRadarView);
     attach('chatSend', window.sendMsg);
     const ci = $("chatInput"); if(ci) ci.addEventListener('keydown', (e) => { if(e.key==='Enter') window.sendMsg(); });
 
-    // Dynamic List Delegation - Lead Queue
     const listEl = $("leadList");
     if (listEl) {
         listEl.addEventListener('click', (e) => {
@@ -1132,7 +1132,6 @@ function initStaticEvents() {
         });
     }
 
-    // Dynamic List Delegation - Assign List
     const assignList = $("assignList");
     if(assignList) {
         assignList.addEventListener('change', (e) => {
@@ -1140,7 +1139,6 @@ function initStaticEvents() {
         });
     }
 
-    // Dynamic List Delegation - Team Modal
     const tmb = $("teamModalBody");
     if(tmb) {
         tmb.addEventListener('click', (e) => {
@@ -1160,7 +1158,6 @@ function initStaticEvents() {
         });
     }
 
-    // Dynamic List Delegation - Dispo & Console
     const pc = $("panel-console");
     if(pc) {
         pc.addEventListener('click', (e) => {
@@ -1168,9 +1165,11 @@ function initStaticEvents() {
             if(e.target.closest('.btn-upload-photos')) window.uploadPhotos();
         });
     }
+    
+    // Auto-select tab logic on load
+    window.showAcq();
 }
 window.addEventListener("DOMContentLoaded", initStaticEvents);
-
 
 firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return location.href="index.html";
