@@ -159,300 +159,361 @@ body{
 .switch-input::after{content:'';width:22px;height:22px;border-radius:50%;background:#fff;position:absolute;top:1px;left:1px;transition:transform .15s ease}
 .switch-input.on::after{transform:translateX(20px)}
 
+.photo-upload-area { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
+.role-section { display:none; margin-top:20px; padding:16px; border:1px dashed rgba(255,255,255,.15); border-radius:12px; background:rgba(0,0,0,.2); }
+
 @media(max-width:768px){
-  .wrap{flex-direction:column;height:calc(100vh - 120px);}
-  .side-panel{width:100%;height:45vh;border-right:none;border-bottom:1px solid rgba(255,255,255,.1);}
-  .content-panel{height:55vh;}
-  #jobDetailContainer{position:fixed;inset:0;height:100dvh;z-index:100;}
-  .detail-header{padding:12px 16px;}
-  .job-body{padding:16px;}
+.wrap{flex-direction:column;height:calc(100vh - 120px);}
+.side-panel{width:100%;height:45vh;border-right:none;border-bottom:1px solid rgba(255,255,255,.1);}
+.content-panel{height:55vh;}
+#jobDetailContainer{position:fixed;inset:0;height:100dvh;z-index:100;}
+.detail-header{padding:12px 16px;}
+.job-body{padding:16px;}
 }
 </style>
 </head>
 <body data-portal="contractor">
 
 <header class="header">
-  <div class="leftTitle">
-    <div>DEALBANKERS • Contractor Command</div>
-    <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
-  </div>
-  <nav class="nav">
-    <a class="chip ghost" href="profile.html">Dashboard</a>
-    <button class="chip primary" id="btnTeam" type="button" style="display:none;" onclick="window.openTeamModal()">👥 Team</button>
-    <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
-    <button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
-    <button class="icon-btn" type="button" title="Settings" onclick="window.openConfigModal()">⚙️</button>
-    <a class="chip ghost" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
-  </nav>
+<div class="leftTitle">
+<div>DEALBANKERS • Contractor Command</div>
+<div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
+</div>
+<nav class="nav">
+<a class="chip ghost" href="profile.html">Dashboard</a>
+<button class="chip primary" id="btnTeam" type="button" style="display:none;" onclick="window.openTeamModal()">👥 Team</button>
+<button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
+<button class="phone-chip red-phone" type="button" title="Red Phone Urgent" onclick="window.openSupportModal('red')">☎</button>
+<button class="icon-btn" type="button" title="Settings" onclick="window.openSettingsModal()">⚙️</button>
+<a class="chip ghost" id="logoutBtn" style="cursor:pointer;" onclick="if(typeof firebase !== 'undefined') firebase.auth().signOut().then(()=>location.href='index.html')">Log Out</a>
+</nav>
 </header>
 
 <div class="posture-bar">
-    <div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">VERIFYING AUTH...</span></div>
-    <div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
-    <div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
-    <div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
-    <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Uber Comms Active</span></div>
+<div class="posture-item"><span id="roleIndicator" style="font-weight:900;color:#fff;">VERIFYING AUTH...</span></div>
+<div class="posture-item"><span id="tradesStatus">Trades: —</span></div>
+<div class="posture-item">Accepting Jobs: <span id="leadsToggleReadout">—</span></div>
+<div class="posture-item">Live Location: <span id="locationToggleReadout">—</span></div>
+<div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Uber Comms Active</span></div>
 </div>
 
 <div class="wrap">
-    <aside class="side-panel" id="jobListContainer">
-        <div id="listContainer">
-            <div class="panel-head">
-                <div class="panel-title">● Service Ops <span class="pill" id="jobCount">0 jobs</span></div>
-                <div class="seg">
-                    <button id="tabActive" class="active" type="button" onclick="window.setTab('active')">Active</button>
-                    <button id="tabUpcoming" type="button" onclick="window.setTab('upcoming')">Upcoming</button>
-                </div>
-            </div>
-            <div class="tool-bar">
-                <div style="flex:1"><input id="jobSearch" class="input-mini" placeholder="Search Title, Trade, ZIP..." oninput="window.subscribeJobs()" /></div>
-                <button class="chip tiny primary" type="button" onclick="window.openJobModal('new')">+ Post</button>
-            </div>
-            <div class="list-panel" id="leadList">Loading leads...</div>
-        </div>
+<aside class="side-panel" id="jobListContainer">
+<div id="listContainer">
+<div class="panel-head">
+<div class="panel-title">● Service Ops <span class="pill" id="jobCount">0 jobs</span></div>
+<div class="seg">
+<button id="tabActive" class="active" type="button" onclick="window.setTab('active')">Active</button>
+<button id="tabUpcoming" type="button" onclick="window.setTab('upcoming')">Upcoming</button>
+</div>
+</div>
+<div class="tool-bar">
+<div style="flex:1"><input id="jobSearch" class="input-mini" placeholder="Search Title, Trade, ZIP..." oninput="window.subscribeJobs()" /></div>
+<button class="chip tiny primary" type="button" onclick="window.openJobModal('new')">+ Post</button>
+</div>
+<div class="list-panel" id="leadList">Loading leads...</div>
+</div>
 
-        <div id="detailContainer">
-            <div class="detail-header">
-                <button id="backToList">← Back to List</button>
-                <div style="display:flex;gap:6px;align-items:center;">
-                    <button class="chip tiny ghost" id="btnActivityLog" style="display:none;" onclick="window.openActivityModal(window.currentJobId)">🕒 Activity Log</button>
-                    <button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ God Edit</button>
-                    <span class="pill good" id="jobDetailStatus">—</span>
-                </div>
-            </div>
-            <div class="job-body" id="jobDetailBody">Select a job from the list or map to view details.</div>
-        </div>
-    </aside>
+<div id="detailContainer">
+<div class="detail-header">
+<button id="backToList">← Back to List</button>
+<div style="display:flex;gap:6px;align-items:center;">
+<button class="chip tiny ghost" id="btnActivityLog" style="display:none;" onclick="window.openActivityModal(window.currentJobId)">🕒 Activity Log</button>
+<button class="chip tiny" id="btnGodModeEdit" style="display:none;" onclick="window.openJobModal('edit', window.currentJobId)">✎ God Edit</button>
+<span class="pill good" id="jobDetailStatus">—</span>
+</div>
+</div>
+<div class="job-body" id="jobDetailBody">Select a job from the list or map to view details.</div>
+</div>
+</aside>
 
-    <section class="content-panel" id="mapContainer">
-        <div id="mapViewContainer">
-            <div id="mapView">Job Map Loading (needs API key)...</div>
-        </div>
-    </section>
+<section class="content-panel" id="mapContainer">
+<div id="mapViewContainer">
+<div id="mapView">Job Map Loading (needs API key)...</div>
+</div>
+</section>
 </div>
 
 <div class="modal-backdrop" id="jobModal">
-    <div class="modal" role="dialog">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 id="jobModalTitle" style="margin:0;font-size:22px;color:#fff;">Post Job</h3>
-            <button class="chip ghost" onclick="window.closeJobModal()">✕</button>
-        </div>
-        <div class="grid">
-            <div style="grid-column:1/-1">
-                <label class="small">Job Title</label>
-                <input id="jobTitle" placeholder="e.g., Drywall repair 2 bedrooms" />
-            </div>
-            <div>
-                <label class="small">Trade</label>
-                <input id="jobTrade" placeholder="Drywall, Plumbing, etc." />
-            </div>
-            <div>
-                <label class="small">Status</label>
-                <select id="jobStatus">
-                    <option value="active">Active</option>
-                    <option value="upcoming">Upcoming</option>
-                </select>
-            </div>
-            <div>
-                <label class="small">Job Type</label>
-                <select id="jobType">
-                    <option value="service">Service Order (Pizza Tracker)</option>
-                    <option value="enterprise">Enterprise (Bid Process)</option>
-                </select>
-            </div>
-            <div>
-                <label class="small">Target Date (YYYY-MM-DD)</label>
-                <input id="jobDate" placeholder="2026-04-10" />
-            </div>
-            <div>
-                <label class="small">City / Region (Public)</label>
-                <input id="jobCity" placeholder="San Antonio" />
-            </div>
-            <div>
-                <label class="small">ZIP Code (Public)</label>
-                <input id="jobZip" placeholder="78210" />
-            </div>
-            <div style="grid-column:1/-1">
-                <label class="small">Budget</label>
-                <input id="jobBudget" placeholder="$800" />
-            </div>
-            <div style="grid-column:1/-1">
-                <label class="small">Scope / Description (Tech sees this)</label>
-                <textarea id="jobDesc" rows="4" placeholder="Scope of work, required tools, etc..."></textarea>
-            </div>
-            <div style="grid-column:1/-1; display:flex; align-items:center; gap:8px; margin-top:8px;">
-                <input type="checkbox" id="jobLicensedReq" style="width:auto; margin:0;" />
-                <label class="small" style="margin:0; color:#fff; text-transform:none; letter-spacing:normal;">Require Licensed Subcontractor</label>
-            </div>
-        </div>
+<div class="modal" role="dialog">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<h3 id="jobModalTitle" style="margin:0;font-size:22px;color:#fff;">Post Job</h3>
+<button class="chip ghost" onclick="window.closeJobModal()">✕</button>
+</div>
+<div class="grid">
+<div style="grid-column:1/-1">
+<label class="small">Job Title</label>
+<input id="jobTitle" placeholder="e.g., Drywall repair 2 bedrooms" />
+</div>
+<div>
+<label class="small">Trade</label>
+<input id="jobTrade" placeholder="Drywall, Plumbing, etc." />
+</div>
+<div>
+<label class="small">Status</label>
+<select id="jobStatus">
+<option value="active">Active</option>
+<option value="upcoming">Upcoming</option>
+</select>
+</div>
+<div>
+<label class="small">Job Type</label>
+<select id="jobType">
+<option value="service">Service Order (Pizza Tracker)</option>
+<option value="enterprise">Enterprise (Bid Process)</option>
+</select>
+</div>
+<div>
+<label class="small">Target Date (YYYY-MM-DD)</label>
+<input id="jobDate" placeholder="2026-04-10" />
+</div>
+<div>
+<label class="small">City / Region (Public)</label>
+<input id="jobCity" placeholder="San Antonio" />
+</div>
+<div>
+<label class="small">ZIP Code (Public)</label>
+<input id="jobZip" placeholder="78210" />
+</div>
+<div style="grid-column:1/-1">
+<label class="small">Budget</label>
+<input id="jobBudget" placeholder="$800" />
+</div>
+<div style="grid-column:1/-1">
+<label class="small">Scope / Description (Tech sees this)</label>
+<textarea id="jobDesc" rows="4" placeholder="Scope of work, required tools, etc..."></textarea>
+</div>
+<div style="grid-column:1/-1; display:flex; align-items:center; gap:8px; margin-top:8px;">
+<input type="checkbox" id="jobLicensedReq" style="width:auto; margin:0;" />
+<label class="small" style="margin:0; color:#fff; text-transform:none; letter-spacing:normal;">Require Licensed Subcontractor</label>
+</div>
+</div>
 
-        <div id="godPostFields" style="display:none;margin-top:20px;padding-top:20px;border-top:1px dashed rgba(255,255,255,0.2);">
-            <h4 style="color:var(--good);margin:0 0 16px 0;font-size:16px;">🔒 Leadership Only Fields</h4>
-            <div class="grid">
-                <div style="grid-column:1/-1">
-                    <label class="small">Exact Address (Hidden from tech until approved)</label>
-                    <input id="jobAddressExact" placeholder="123 Main St, San Antonio, TX 78210" />
-                </div>
-                <div style="grid-column:1/-1">
-                    <label class="small">Vendor Phones (Format: Label | Number)</label>
-                    <textarea id="vendorPhones" rows="2" placeholder="Owner | 210-555-1234&#10;Manager | 210-555-2222"></textarea>
-                </div>
-                <div style="grid-column:1/-1">
-                    <label class="small">Private Leadership Notes</label>
-                    <textarea id="godNotes" rows="2" placeholder="Pricing secrets, warnings, etc..."></textarea>
-                </div>
-            </div>
-        </div>
+<div id="godPostFields" style="display:none;margin-top:20px;padding-top:20px;border-top:1px dashed rgba(255,255,255,0.2);">
+<h4 style="color:var(--good);margin:0 0 16px 0;font-size:16px;">🔒 Leadership Only Fields</h4>
+<div class="grid">
+<div style="grid-column:1/-1">
+<label class="small">Exact Address (Hidden from tech until approved)</label>
+<input id="jobAddressExact" placeholder="123 Main St, San Antonio, TX 78210" />
+</div>
+<div style="grid-column:1/-1">
+<label class="small">Vendor Phones (Format: Label | Number)</label>
+<textarea id="vendorPhones" rows="2" placeholder="Owner | 210-555-1234&#10;Manager | 210-555-2222"></textarea>
+</div>
+<div style="grid-column:1/-1">
+<label class="small">Private Leadership Notes</label>
+<textarea id="godNotes" rows="2" placeholder="Pricing secrets, warnings, etc..."></textarea>
+</div>
+</div>
+</div>
 
-        <div class="modalActions">
-            <button class="chip danger" id="btnGodDeleteJob" style="display:none;margin-right:auto;" onclick="window.deleteJob()">Delete Post</button>
-            <button class="chip ghost" onclick="window.closeJobModal()">Cancel</button>
-            <button class="chip primary" id="btnJobSave" onclick="window.saveJob()">Save Job</button>
-        </div>
-    </div>
+<div class="modalActions">
+<button class="chip danger" id="btnGodDeleteJob" style="display:none;margin-right:auto;" onclick="window.deleteJob()">Delete Post</button>
+<button class="chip ghost" onclick="window.closeJobModal()">Cancel</button>
+<button class="chip primary" id="btnJobSave" onclick="window.saveJob()">Save Job</button>
+</div>
+</div>
 </div>
 
 <div class="modal-backdrop" id="activityModal">
-    <div class="modal" role="dialog" style="max-width:500px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;color:#fff;font-size:20px;">Job Activity Log</h3>
-            <button class="chip ghost" onclick="window.closeActivityModal()">✕</button>
-        </div>
-        <div id="activityLogBody" style="max-height:400px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,.08);">
-            Loading...
-        </div>
-    </div>
+<div class="modal" role="dialog" style="max-width:500px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<h3 style="margin:0;color:#fff;font-size:20px;">Job Activity Log</h3>
+<button class="chip ghost" onclick="window.closeActivityModal()">✕</button>
+</div>
+<div id="activityLogBody" style="max-height:400px; overflow-y:auto; padding:10px; background:rgba(0,0,0,0.2); border-radius:12px; border:1px solid rgba(255,255,255,.08);">
+Loading...
+</div>
+</div>
 </div>
 
 <div class="modal-backdrop" id="teamModal">
-    <div class="modal" role="dialog" style="max-width:760px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <div>
-                <h3 style="margin:0;color:#fff;font-size:22px;">Team Management</h3>
-                <div style="color:var(--muted);font-size:12px;margin-top:4px;">Manage Branch Managers and Associates</div>
-            </div>
-            <button class="chip ghost" onclick="window.closeTeamModal()">✕</button>
-        </div>
-        <div id="teamModalBody">Loading directory...</div>
-    </div>
+<div class="modal" role="dialog" style="max-width:760px;">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<div>
+<h3 style="margin:0;color:#fff;font-size:22px;">Team Management</h3>
+<div style="color:var(--muted);font-size:12px;margin-top:4px;">Manage Branch Managers and Associates</div>
+</div>
+<button class="chip ghost" onclick="window.closeTeamModal()">✕</button>
+</div>
+<div id="teamModalBody">Loading directory...</div>
+</div>
 </div>
 
-<div class="modal-backdrop" id="configModal">
-    <div class="modal" role="dialog" style="max-width:500px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;color:#fff;font-size:22px;">Command Settings</h3>
-            <button class="chip ghost" onclick="window.closeConfigModal()">✕</button>
-        </div>
-        <div style="display:flex;flex-direction:column;gap:16px;">
-            <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
-                <label class="small" style="color:#fff;">Dispatch Mode</label>
-                <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Receive open market service orders in your area.</div>
-                <div class="toggle-switch" onclick="window.toggleLeads()">
-                    <span>Accepting Leads</span><div class="switch-input" id="leadsToggle"></div>
-                </div>
-            </div>
-            
-            <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
-                <label class="small" style="color:#fff;">Dispatch (Location Sharing)</label>
-                <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">Required to claim jobs. Broadcasts location for assignment.</div>
-                <div class="toggle-switch" onclick="window.toggleLocation()">
-                    <span>Dispatch Relay</span><div class="switch-input" id="locationToggle"></div>
-                </div>
-            </div>
-            <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
-                <label class="small" style="color:#fff;">Lead Gen ZIPs (Separate with commas)</label>
-                <input id="leadsZips" placeholder="e.g., 78210, 78212" onblur="window.saveZips()" />
-            </div>
-        </div>
+<div class="modal-backdrop" id="settingsModal">
+  <div class="modal" role="dialog" style="max-width:640px;">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+      <div>
+        <h3 style="margin:0;color:#fff;font-size:22px;">Command Settings</h3>
+        <div style="color:var(--muted);font-size:12px;margin-top:4px;">Customize your global identity, pitches, and dispatch ops.</div>
+      </div>
+      <button class="chip ghost" id="settingsCloseBtn">✕</button>
     </div>
+
+    <div style="display:flex;flex-direction:column;gap:16px;">
+       <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
+         <label class="small" style="color:#fff;">Global Profile Photo</label>
+         <div class="photo-upload-area">
+            <div id="set_photoPreview" style="width:60px; height:60px; border-radius:50%; background:#133e6a; border:2px solid var(--accent); background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:20px; color:#fff;">U</div>
+            <div style="flex:1;">
+                <input type="file" id="set_photoUpload" accept="image/*" style="display:none;" />
+                <button class="chip primary" id="btnTriggerUpload" type="button" style="padding:6px 12px; font-size:12px;">Upload Photo</button>
+                <div style="font-size:11px; color:var(--muted); margin-top:6px;">Max size 2MB. JPG, PNG.</div>
+                <input type="hidden" id="set_photoUrlHidden" />
+            </div>
+         </div>
+       </div>
+
+       <div style="background:rgba(255,255,255,.03);padding:16px;border-radius:12px;border:1px solid rgba(255,255,255,.05);">
+         <label class="small" style="color:#fff;">Active Platform Roles</label>
+         <div style="display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;">
+            <label style="color:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center;"><input type="checkbox" id="set_isWholesaler" class="role-cb" value="wholesaler" style="width:16px;height:16px;margin-right:6px;"> Wholesaler</label>
+            <label style="color:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center;"><input type="checkbox" id="set_isContractor" class="role-cb" value="contractor" style="width:16px;height:16px;margin-right:6px;"> Contractor</label>
+            <label style="color:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center;"><input type="checkbox" id="set_isRealtor" class="role-cb" value="realtor" style="width:16px;height:16px;margin-right:6px;"> Realtor</label>
+            <label style="color:#fff; font-size:13px; cursor:pointer; display:flex; align-items:center;"><input type="checkbox" id="set_isInvestor" class="role-cb" value="investor" style="width:16px;height:16px;margin-right:6px;"> Investor</label>
+         </div>
+       </div>
+
+       <div id="roleSectionsContainer">
+         <div class="role-section" id="sec_wholesaler" style="border-color:rgba(43,116,255,.5);">
+            <label class="small" style="color:var(--accent);">Wholesaler Pitch</label>
+            <textarea id="bio_wholesaler" class="input" style="min-height:80px; margin-bottom:10px;" placeholder="Target markets, acquisition strategy, monthly volume..."></textarea>
+            <input type="text" id="exp_wholesaler" class="input" placeholder="e.g. 5 yrs exp, 10+ deals/mo">
+         </div>
+
+         <div class="role-section" id="sec_contractor" style="border-color:#f59e0b;">
+            <label class="small" style="color:#f59e0b;">Contractor Pitch & Ops</label>
+            <textarea id="bio_contractor" class="input" style="min-height:80px; margin-bottom:10px;" placeholder="Licensed trades, specialties, typical job sizes, what level you are at..."></textarea>
+            <input type="text" id="exp_contractor" class="input" style="margin-bottom:16px;" placeholder="e.g. Licensed & Bonded, Serving Bexar County">
+
+            <div style="background:rgba(255,255,255,.05);padding:12px;border-radius:10px;margin-bottom:10px;">
+               <div style="display:flex;justify-content:space-between;align-items:center;">
+                 <div><label class="small" style="color:#fff;margin:0;">Dispatch Mode</label><div style="font-size:11px;color:var(--muted);">Receive open market service orders.</div></div>
+                 <div class="toggle-switch" onclick="window.toggleLeads()"><span id="leadsToggleReadout" style="font-size:11px;margin-right:6px;">OFF</span><div class="switch-input" id="leadsToggle"></div></div>
+               </div>
+            </div>
+
+            <div style="background:rgba(255,255,255,.05);padding:12px;border-radius:10px;margin-bottom:10px;">
+               <div style="display:flex;justify-content:space-between;align-items:center;">
+                 <div><label class="small" style="color:#fff;margin:0;">Dispatch (Location Sharing)</label><div style="font-size:11px;color:var(--muted);">Required to claim jobs.</div></div>
+                 <div class="toggle-switch" onclick="window.toggleLocation()"><span id="locationToggleReadout" style="font-size:11px;margin-right:6px;">OFF</span><div class="switch-input" id="locationToggle"></div></div>
+               </div>
+            </div>
+
+            <label class="small" style="color:#fff;">Lead Gen ZIPs (Separate with commas)</label>
+            <input id="leadsZips" class="input" placeholder="e.g., 78210, 78212" />
+         </div>
+
+         <div class="role-section" id="sec_realtor" style="border-color:var(--good);">
+            <label class="small" style="color:var(--good);">Realtor Pitch</label>
+            <textarea id="bio_realtor" class="input" style="min-height:80px; margin-bottom:10px;" placeholder="Brokerage affiliation, primary focus (commercial, residential)..."></textarea>
+            <input type="text" id="exp_realtor" class="input" placeholder="e.g. TREC #1234567, Top Producer 2025">
+         </div>
+
+         <div class="role-section" id="sec_investor" style="border-color:var(--hot);">
+            <label class="small" style="color:var(--hot);">Investor Pitch</label>
+            <textarea id="bio_investor" class="input" style="min-height:80px; margin-bottom:10px;" placeholder="Investment criteria, capital stack, preferred asset classes..."></textarea>
+            <input type="text" id="exp_investor" class="input" placeholder="e.g. Multi-family value-add, 78210 Zip Code">
+         </div>
+       </div>
+    </div>
+
+    <div class="modalActions">
+      <span id="settingsStatus" style="color:var(--good); display:none; margin-right:auto; font-weight:800; font-size:12px;">Saved ✓</span>
+      <button class="chip ghost" id="settingsCancelBtn">Cancel</button>
+      <button class="chip primary" id="settingsSaveBtn">Save Changes</button>
+    </div>
+  </div>
 </div>
 
 <div class="modal-backdrop" id="supportModal">
-    <div class="modal" role="dialog" style="max-width:480px">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
-            <h3 style="margin:0;color:#fff;font-size:22px;">Support Request</h3>
-            <button class="chip ghost" onclick="window.closeSupportModal()">✕</button>
-        </div>
-        <div class="job-body" style="padding:0">
-            <label class="small">Priority</label>
-            <input id="supportPriority" class="input-mini" readonly style="margin-bottom:10px;"/>
-            
-            <label class="small">Category</label>
-            <select id="supportCategory" class="input-mini" style="margin-bottom:10px; width:100%;">
-                <option>Service order issue</option>
-                <option>Need pricing help</option>
-                <option>Need materials approval</option>
-                <option>Emergency / water</option>
-                <option>Website / system bug</option>
-                <option>Enterprise contract support</option>
-                <option>Other</option>
-            </select>
+<div class="modal" role="dialog" style="max-width:480px">
+<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+<h3 style="margin:0;color:#fff;font-size:22px;">Support Request</h3>
+<button class="chip ghost" onclick="window.closeSupportModal()">✕</button>
+</div>
+<div class="job-body" style="padding:0">
+<label class="small">Priority</label>
+<input id="supportPriority" class="input-mini" readonly style="margin-bottom:10px;"/>
 
-            <label class="small">Message</label>
-            <textarea id="supportMsg" rows="4" placeholder="What do you need? If it's about a job, include the address or Contract ID." style="width:100%; border-radius:10px; padding:10px; background:#0d1f2d; color:#fff; border:1px solid #254a63;"></textarea>
-        </div>
-        <div class="modalActions">
-            <button class="chip primary" onclick="window.sendSupport()">Send Request</button>
-        </div>
-    </div>
+<label class="small">Category</label>
+<select id="supportCategory" class="input-mini" style="margin-bottom:10px; width:100%;">
+<option>Service order issue</option>
+<option>Need pricing help</option>
+<option>Need materials approval</option>
+<option>Emergency / water</option>
+<option>Website / system bug</option>
+<option>Enterprise contract support</option>
+<option>Other</option>
+</select>
+
+<label class="small">Message</label>
+<textarea id="supportMsg" rows="4" placeholder="What do you need? If it's about a job, include the address or Contract ID."
+style="width:100%; border-radius:10px; padding:10px; background:#0d1f2d; color:#fff; border:1px solid #254a63;"></textarea>
+</div>
+<div class="modalActions">
+<button class="chip primary" onclick="window.sendSupport()">Send Request</button>
+</div>
+</div>
 </div>
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
 
 <script>
 window.esc = function(s) {
-    if (!s) return "";
-    return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
+if (!s) return "";
+return String(s).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;");
 };
 
 window.linkify = function(text) {
-    const urlRegex = /(https?:\/\/[^\s]+)/g;
-    return text.replace(urlRegex, function(url) {
-        return '<a href="' + url + '" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:700;">' + url + '</a>';
-    });
+const urlRegex = /(https?:\/\/[^\s]+)/g;
+return text.replace(urlRegex, function(url) {
+return '<a href="' + url + '" target="_blank" style="color:var(--accent);text-decoration:underline;font-weight:700;">' + url + '</a>';
+});
 };
 
-const $ = (id) => document.getElementById(id); 
+const $ = (id) => document.getElementById(id);
 
 const google_key = window.CONTRACTOR_MAPS_KEY || window.firebaseConfig?.googleMapsApiKey || '';
 if(google_key) {
-    const mapScript = document.createElement('script');
-    mapScript.src = `https://maps.googleapis.com/maps/api/js?key=${google_key}&callback=initMap&libraries=geometry`;
-    mapScript.async = true; mapScript.defer = true; 
-    document.body.appendChild(mapScript);
+const mapScript = document.createElement('script');
+mapScript.src = `https://maps.googleapis.com/maps/api/js?key=${google_key}&callback=initMap&libraries=geometry`;
+mapScript.async = true; mapScript.defer = true;
+document.body.appendChild(mapScript);
 } else {
-    if($('mapView')) $('mapView').innerHTML = "<div style='padding:20px;color:#fff;'>Google Maps API Key Missing.</div>";
+if($('mapView')) $('mapView').innerHTML = "<div style='padding:20px;color:#fff;'>Google Maps API Key Missing.</div>";
 }
 
-window.formatLocalPhones = function(raw){ 
-    if(!raw) return [];
-    return String(raw).split("\n").map((l, idx) => { 
-        if(!l.trim()) return null;
-        const [a, b] = l.includes("|") ? l.split("|") : ["POC", l]; 
-        const label = a.trim(); 
-        const number = b ? b.trim() : ""; 
-        if(!number) return null; 
-        return { label, number, raw: l, index: idx }; 
-    }).filter(Boolean);
+window.formatLocalPhones = function(raw){
+if(!raw) return [];
+return String(raw).split("\n").map((l, idx) => {
+if(!l.trim()) return null;
+const [a, b] = l.includes("|") ? l.split("|") : ["POC", l];
+const label = a.trim();
+const number = b ? b.trim() : "";
+if(!number) return null;
+return { label, number, raw: l, index: idx };
+}).filter(Boolean);
 };
 
-window.sanitizeTel = function(p){ 
-    let d = String(p||"").replace(/[^\d+]/g, '');
-    if (d.startsWith("1") && d.length === 11) d = "+" + d;
-    else if (d.length === 10) d = "+1" + d; 
-    return d; 
+window.sanitizeTel = function(p){
+let d = String(p||"").replace(/[^\d+]/g, '');
+if (d.startsWith("1") && d.length === 11) d = "+" + d;
+else if (d.length === 10) d = "+1" + d;
+return d;
 };
 
 (function ensureFirebaseInit(){
-    try{
-        if(!firebase.apps || !firebase.apps.length){
-            firebase.initializeApp(window.firebaseConfig);
-        }
-    }catch(e){console.error("Firebase init error", e);}
+try{
+if(!firebase.apps || !firebase.apps.length){
+firebase.initializeApp(window.firebaseConfig);
+}
+}catch(e){console.error("Firebase init error", e);}
 })();
 
 // --- GLOBAL STATE ---
@@ -474,7 +535,7 @@ const USER_DIR_PATH="userDirectory";
 const ROLES_PATH="roles";
 const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const EMAIL_INDEX_PATH="emailIndex";
-window.userDirCache={byUid:{},byEmail:{},byUser:{}}; 
+window.userDirCache={byUid:{},byEmail:{},byUser:{}};
 window.pendingRequestCache=[];
 
 const SERVICE_STEPS = [ {id:'Not Left',icon:'🏠'}, {id:'En Route',icon:'🚚'}, {id:'Arrived',icon:'📍'}, {id:'Working',icon:'🔨'}, {id:'Completed',icon:'✅'} ];
@@ -484,677 +545,837 @@ const BID_STEPS = [ {id:'Sourcing',icon:'🔍'}, {id:'Quoted',icon:'📄'}, {id:
 // BULLETPROOF GOD MODE WRAPPER
 // ==========================================
 window.isGodMode = function() {
-    if (window.isGod) return true;
-    if (window.ME && String(window.ME.email).toLowerCase().trim() === 'dealbankers@gmail.com') return true;
-    return false;
+if (window.isGod) return true;
+if (window.ME && String(window.ME.email).toLowerCase().trim() === 'dealbankers@gmail.com') return true;
+return false;
 };
 
 window.isBranchManagerMode = function() {
-    if (window.isGodMode()) return true;
-    if (window.isBranchManager) return true;
-    return false;
+if (window.isGodMode()) return true;
+if (window.isBranchManager) return true;
+return false;
 };
 
-window.hydrateRoleFlags = function(role) { 
-    window.USER_ROLE = role; 
-    window.isGod = (role === "god"); 
-    window.isBranchManager = (role === "god" || role === "admin");
+window.hydrateRoleFlags = function(role) {
+window.USER_ROLE = role;
+window.isGod = (role === "god");
+window.isBranchManager = (role === "god" || role === "admin");
 
-    const indicator = $('roleIndicator');
-    if (indicator) {
-        indicator.textContent = window.isGodMode() ? "LEADERSHIP VIEW (GOD)" : (window.isBranchManagerMode() ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
-        if (window.isGodMode()) {
-            indicator.style.color = "var(--good)"; 
-            indicator.style.opacity = "1";
-        } else {
-            indicator.style.color = "#fff";
-        }
-    }
-    
-    if ($('godCommsHint')) $('godCommsHint').style.display = window.isGodMode() ? "flex" : "none";
-    if ($('btnTeam')) $('btnTeam').style.display = window.isBranchManagerMode() ? "inline-flex" : "none";
-    
-    if(window.jobsView.length > 0) window.renderJobsList();
-    if(window.currentJobId) window.renderJobDetail(window.currentJobId);
+const indicator = $('roleIndicator');
+if (indicator) {
+indicator.textContent = window.isGodMode() ? "LEADERSHIP VIEW (GOD)" : (window.isBranchManagerMode() ? "BRANCH MANAGER VIEW" : "ASSOCIATE VIEW");
+if (window.isGodMode()) {
+indicator.style.color = "var(--good)";
+indicator.style.opacity = "1";
+} else {
+indicator.style.color = "#fff";
+}
+}
+
+if ($('godCommsHint')) $('godCommsHint').style.display = window.isGodMode() ? "flex" : "none";
+if ($('btnTeam')) $('btnTeam').style.display = window.isBranchManagerMode() ? "inline-flex" : "none";
+
+if(window.jobsView.length > 0) window.renderJobsList();
+if(window.currentJobId) window.renderJobDetail(window.currentJobId);
 };
 // ==========================================
 
 window.getOrganicScript = function(trade, city) {
-  return `Hey, I'm ${window.isGodMode() ? 'Bill' : 'a Project Manager'} with DealBankers. We're looking at a long-term project in ${window.esc(city) || 'the area'} for ${window.esc(trade) || 'this trade'}. I'm trying to find a solid local partner who can handle the day-to-day for us. Do you guys have the bandwidth for some multi-year work?`;
+return `Hey, I'm ${window.isGodMode() ? 'Bill' : 'a Project Manager'} with DealBankers.
+We're looking at a long-term project in ${window.esc(city) || 'the area'} for ${window.esc(trade) || 'this trade'}.
+I'm trying to find a solid local partner who can handle the day-to-day for us.
+Do you guys have the bandwidth for some multi-year work?`;
 };
 
 window.fuzzyCityDisplay = function(j){ return `Area: (${window.esc(j.city||j.zip || 'Unknown')}) • Exact address revealed upon approval`; };
 
 window.canSeeExact = function(j) {
-    if(!j) return false;
-    if(window.isGodMode()) return true;
-    if(j.postedBy === window.UID) return true;
-    if(j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase()) return true;
-    if(j.assignedSubUid && j.assignedSubUid === window.UID) return true;
-    return false;
+if(!j) return false;
+if(window.isGodMode()) return true;
+if(j.postedBy === window.UID) return true;
+if(j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase()) return true;
+if(j.assignedSubUid && j.assignedSubUid === window.UID) return true;
+return false;
 };
 
-window.normalizeJobAddress = function(j){ 
-    if(!j) return "—"; 
-    if(window.canSeeExact(j)) return window.esc(j.addressExact || j.address || `${j.city||''}, ${j.zip||''}`); 
-    return window.fuzzyCityDisplay(j);
+window.normalizeJobAddress = function(j){
+if(!j) return "—";
+if(window.canSeeExact(j)) return window.esc(j.addressExact || j.address || `${j.city||''}, ${j.zip||''}`);
+return window.fuzzyCityDisplay(j);
 };
 
-window.geocodeAddress = function(addr){ 
-    return new Promise((resolve, reject)=>{ 
-        if(!window.google || !window.google.maps || !window.google.maps.Geocoder){ reject("Google Geocoder not loaded"); return;} 
-        new google.maps.Geocoder().geocode({'address': addr}, (results, status)=>{ 
-            if(status === 'OK'){ resolve(results[0].geometry.location); } 
-            else { reject("Geocoding failed: " + status); } 
-        }); 
-    });
+window.geocodeAddress = function(addr){
+return new Promise((resolve, reject)=>{
+if(!window.google || !window.google.maps || !window.google.maps.Geocoder){ reject("Google Geocoder not loaded"); return;}
+new google.maps.Geocoder().geocode({'address': addr}, (results, status)=>{
+if(status === 'OK'){ resolve(results[0].geometry.location); }
+else { reject("Geocoding failed: " + status); }
+});
+});
 };
 
 window.ensureLatLng = async function(j) {
-    let updates = {};
-    let result = null;
-    if(window.isGodMode() && j.addressExact && !j.exactLatLng) {
-        try {
-            const ll = await window.geocodeAddress(j.addressExact);
-            updates.exactLatLng = {lat: ll.lat(), lng: ll.lng()};
-            result = updates.exactLatLng;
-        } catch(e){}
-    }
-    if (!result) {
-        const fuzzy = `${j.city||''}, ${j.zip||''}`;
-        if(fuzzy.trim().length > 3 && !j.fuzzyLatLng) {
-            try {
-                const fll = await window.geocodeAddress(fuzzy);
-                updates.fuzzyLatLng = {lat: fll.lat(), lng: fll.lng()};
-                result = updates.fuzzyLatLng;
-            } catch(e){}
-        } else if (j.fuzzyLatLng) {
-            result = j.fuzzyLatLng;
-        }
-    }
-    if(Object.keys(updates).length > 0) { firebase.database().ref(`jobs/${j.id}`).update(updates); }
-    return result || j.exactLatLng || j.fuzzyLatLng;
+let updates = {};
+let result = null;
+if(window.isGodMode() && j.addressExact && !j.exactLatLng) {
+try {
+const ll = await window.geocodeAddress(j.addressExact);
+updates.exactLatLng = {lat: ll.lat(), lng: ll.lng()};
+result = updates.exactLatLng;
+} catch(e){}
+}
+if (!result) {
+const fuzzy = `${j.city||''}, ${j.zip||''}`;
+if(fuzzy.trim().length > 3 && !j.fuzzyLatLng) {
+try {
+const fll = await window.geocodeAddress(fuzzy);
+updates.fuzzyLatLng = {lat: fll.lat(), lng: fll.lng()};
+result = updates.fuzzyLatLng;
+} catch(e){}
+} else if (j.fuzzyLatLng) {
+result = j.fuzzyLatLng;
+}
+}
+if(Object.keys(updates).length > 0) { firebase.database().ref(`jobs/${j.id}`).update(updates); }
+return result || j.exactLatLng || j.fuzzyLatLng;
 };
 
-window.initMap = function(){ 
-    if(!window.google || !window.google.maps) return; 
-    const lat = window.userLocation?.lat || 29.4241;
-    const lng = window.userLocation?.lng || -98.4936; 
-    window.map = new google.maps.Map($('mapView'), { 
-        center: {lat, lng}, zoom: 11, styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}], disableDefaultUI: true, zoomControl: true, mapTypeControl: false, scaleControl: false, streetViewControl: false, rotateControl: false, fullscreenControl: false, gestureHandling: 'auto', clickableIcons: false 
-    });
-    google.maps.event.trigger(window.map, "resize"); 
+window.initMap = function(){
+if(!window.google || !window.google.maps) return;
+const lat = window.userLocation?.lat || 29.4241;
+const lng = window.userLocation?.lng || -98.4936;
+window.map = new google.maps.Map($('mapView'), {
+center: {lat, lng}, zoom: 11, styles: [{featureType:"poi",elementType:"labels",stylers:[{visibility:"off"}]}], disableDefaultUI: true, zoomControl: true, mapTypeControl: false, scaleControl: false, streetViewControl: false, rotateControl: false, fullscreenControl: false, gestureHandling: 'auto', clickableIcons: false
+});
+google.maps.event.trigger(window.map, "resize");
 };
 
 window.clearMarkers = function(){ window.markers.forEach(m=>m.setMap(null)); window.markers=[]; };
 
-window.renderMarkers = function(){ 
-    if(!window.map) return; 
-    window.clearMarkers();
-    const bounds = new google.maps.LatLngBounds(); 
-    let hasValidPins = false;
-    window.jobsView.forEach(j => { 
-        const exact = window.canSeeExact(j);
-        let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        if(!position) { window.ensureLatLng(j); return; }
-        hasValidPins = true;
-        const marker = new google.maps.Marker({ position, map: window.map, title: window.esc(j.trade), animation: google.maps.Animation.DROP, clickable: true }); 
-        marker.addListener('click', ()=>window.renderJobDetail(j.id));
-        window.markers.push(marker); bounds.extend(position); 
-    });
-    if(hasValidPins && !window.currentJobId) {
-        if(window.markers.length > 1) window.map.fitBounds(bounds);
-        else if(window.markers.length === 1) { window.map.setCenter(window.markers[0].getPosition()); window.map.setZoom(12); }
-    }
+window.renderMarkers = function(){
+if(!window.map) return;
+window.clearMarkers();
+const bounds = new google.maps.LatLngBounds();
+let hasValidPins = false;
+window.jobsView.forEach(j => {
+const exact = window.canSeeExact(j);
+let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
+if(!position) { window.ensureLatLng(j); return; }
+hasValidPins = true;
+const marker = new google.maps.Marker({ position, map: window.map, title: window.esc(j.trade), animation: google.maps.Animation.DROP, clickable: true });
+marker.addListener('click', ()=>window.renderJobDetail(j.id));
+window.markers.push(marker); bounds.extend(position);
+});
+if(hasValidPins && !window.currentJobId) {
+if(window.markers.length > 1) window.map.fitBounds(bounds);
+else if(window.markers.length === 1) { window.map.setCenter(window.markers[0].getPosition()); window.map.setZoom(12); }
+}
 };
 
-window.renderJobsList = function(){ 
-    const el = $('leadList'); if(!el) return;
-    let pendingRequestCount = 0;
-    if(window.isGodMode() || window.isBranchManagerMode()) {
-        window.jobsView.forEach(j => {
-            if((j.postedBy === window.UID || window.isGodMode()) && j.requests && Object.keys(j.requests).length > 0 && !j.assignedSubUid && !j.assignedSubEmail) { pendingRequestCount++; }
-        });
-    }
-    if($('jobCount')) {
-        if(pendingRequestCount > 0) $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill warn" style="margin-left:4px;">${pendingRequestCount} Pending Approvals</span>`;
-        else $('jobCount').textContent=`${window.jobsView.length} jobs`;
-    }
-    if(window.jobsView.length === 0) { el.innerHTML = `<div class="empty-state">No jobs found.</div>`; return; }
-    let html = "";
-    window.jobsView.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0)).forEach(j => { 
-        const isSelected = window.currentJobId === j.id ? 'selected' : '';
-        const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
-        const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
-        const showTrackerBadge = (window.isGodMode() || j.postedBy === window.UID || amIAssigned) && isAssigned;
-        const tracker = showTrackerBadge ? `<span class="pill blue">${window.esc(j.executionStatus||'Not Left')}</span>` : ''; 
-        let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
-        if (!isAssigned && (j.postedBy === window.UID || window.isGodMode()) && j.requests && Object.keys(j.requests).length > 0) { badgeText = '<span class="pill warn">Pending Requests</span>'; }
-        html += `<div class="lead-item ${isSelected}" data-jobid="${window.esc(j.id)}"><div class="addr">${window.esc(j.trade)} — ${window.esc(j.city||j.zip||'')}</div> <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> <div class="badges">${badgeText}${tracker}</div></div>`;
-    }); 
-    el.innerHTML = html;
+window.renderJobsList = function(){
+const el = $('leadList'); if(!el) return;
+let pendingRequestCount = 0;
+if(window.isGodMode() || window.isBranchManagerMode()) {
+window.jobsView.forEach(j => {
+if((j.postedBy === window.UID || window.isGodMode()) && j.requests && Object.keys(j.requests).length > 0 && !j.assignedSubUid && !j.assignedSubEmail) { pendingRequestCount++; }
+});
+}
+if($('jobCount')) {
+if(pendingRequestCount > 0) $('jobCount').innerHTML = `${window.jobsView.length} jobs <span class="pill warn" style="margin-left:4px;">${pendingRequestCount} Pending Approvals</span>`;
+else $('jobCount').textContent=`${window.jobsView.length} jobs`;
+}
+if(window.jobsView.length === 0) { el.innerHTML = `<div class="empty-state" style="padding:16px;text-align:center;color:var(--muted);">No jobs found.</div>`; return; }
+let html = "";
+window.jobsView.sort((a,b)=> (b.updatedAt||0) - (a.updatedAt||0)).forEach(j => {
+const isSelected = window.currentJobId === j.id ? 'selected' : '';
+const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
+const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
+const showTrackerBadge = (window.isGodMode() || j.postedBy === window.UID || amIAssigned) && isAssigned;
+const tracker = showTrackerBadge ? `<span class="pill blue">${window.esc(j.executionStatus||'Not Left')}</span>` : '';
+let badgeText = amIAssigned ? '<span class="pill good">Assigned to Me ✓</span>' : (isAssigned ? '<span class="pill">Assigned</span>' : '<span class="pill warn">Open Market</span>');
+if (!isAssigned && (j.postedBy === window.UID || window.isGodMode()) && j.requests && Object.keys(j.requests).length > 0) { badgeText = '<span class="pill warn">Pending Requests</span>';
+}
+html += `<div class="lead-item ${isSelected}" data-jobid="${window.esc(j.id)}"><div class="addr">${window.esc(j.trade)} — ${window.esc(j.city||j.zip||'')}</div> <div class="meta"><b>${window.esc(j.title)}</b> • ${window.esc(j.budget||'$—')}</div> <div class="badges">${badgeText}${tracker}</div></div>`;
+});
+el.innerHTML = html;
 };
 
 window.logActivity = async function(jobId, actionText) {
-    if(!jobId) return;
-    try {
-        await firebase.database().ref(`jobs/${jobId}/activity`).push({
-            text: actionText,
-            uid: window.UID,
-            byName: window.ME?.email || "System",
-            ts: Date.now()
-        });
-    } catch(e){}
+if(!jobId) return;
+try {
+await firebase.database().ref(`jobs/${jobId}/activity`).push({
+text: actionText,
+uid: window.UID,
+byName: window.ME?.email || "System",
+ts: Date.now()
+});
+} catch(e){}
 };
 
-window.renderJobDetail = function(id){ 
-    const j = window.jobsCache[id]; if(!j){ window.hideDetails(); return;} 
-    window.currentJobId = id; window.renderJobsList();
-    if($('listContainer')) $('listContainer').style.display="none"; 
-    if($('detailContainer')) $('detailContainer').style.display="flex"; 
-    if($('jobDetailStatus')) $('jobDetailStatus').textContent = window.esc(j.status); 
-    const exact = window.canSeeExact(j);
-    const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
-    const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
-    const isGatekeeper = window.isGodMode() || j.postedBy === window.UID;
-    
-    if($('btnActivityLog')) $('btnActivityLog').style.display = (window.isBranchManagerMode()) ? "inline-flex" : "none";
-    if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGodMode() || j.postedBy === window.UID) ? "inline-flex" : "none";
+window.renderJobDetail = function(id){
+const j = window.jobsCache[id]; if(!j){ window.hideDetails(); return;}
+window.currentJobId = id; window.renderJobsList();
+if($('listContainer')) $('listContainer').style.display="none";
+if($('detailContainer')) $('detailContainer').style.display="flex";
+if($('jobDetailStatus')) $('jobDetailStatus').textContent = window.esc(j.status);
+const exact = window.canSeeExact(j);
+const isAssigned = !!j.assignedSubEmail || !!j.assignedSubUid;
+const amIAssigned = j.assignedSubUid === window.UID || (j.assignedSubEmail && window.ME?.email && j.assignedSubEmail.toLowerCase() === window.ME.email.toLowerCase());
+const isGatekeeper = window.isGodMode() || j.postedBy === window.UID;
 
-    if(window.map) {
-        let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
-        let zoomLvl = exact ? 17 : 13;
-        if(position) { window.map.panTo(position); window.map.setZoom(zoomLvl); }
-    }
-    
-    let comHtml = "";
-    if(window.isGodMode() || (window.isBranchManagerMode() && (j.postedBy === window.UID || amIAssigned))){ 
-        const vendorPhones = window.formatLocalPhones(j.vendorPhones); 
-        let vpHtml = "";
-        vendorPhones.forEach(vp => { 
-            vpHtml += `<div class="comms-row">
-                <div class="comms-meta"><div class="comms-name">${window.esc(vp.label)}</div><div class="comms-label">${window.esc(vp.number)}</div></div>
-                <div class="comms-actions" style="display:flex;gap:4px;">
-                    <a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny" style="padding:4px 10px;font-size:11px;">📞 Call</a>
-                    <a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny" style="padding:4px 10px;font-size:11px;">💬 Text</a>
-                    ${window.isGodMode() ? `<button class="chip ghost tiny" style="padding:4px 8px;font-size:11px;" title="Edit" onclick="window.editVendorPhone('${j.id}', ${vp.index})">✎</button><button class="chip danger tiny" style="padding:4px 8px;font-size:11px;" title="Delete" onclick="window.deleteVendorPhone('${j.id}', ${vp.index})">✕</button>` : ''}
-                </div>
-            </div>`; 
-        });
-        comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center;">Vendor / Sub Contacts ${window.isGodMode() ? `<button class="chip ghost" style="padding:4px 10px;font-size:11px;" onclick="window.promptAddVendor('${j.id}')">＋ Add Sub</button>` : ''}</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
-    } 
-    
-    let actionHTML = "";
-    if (window.isBranchManagerMode()) {
-        let assignOptions = `<option value="">-- Select Associate --</option>`;
-        const uidsToMap = window.isGodMode() ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
-        uidsToMap.forEach(uid => {
-            const u = window.userDirCache.byUid[uid];
-            if(u && u.role === 'user' && u.email) assignOptions += `<option value="${window.esc(uid)}|${window.esc(u.email)}">${window.esc(u.name || u.email)}</option>`;
-        });
-        actionHTML += `<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;margin-bottom:16px;"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-weight:800;">Direct Assignment Bypass</div><div style="display:flex; align-items:center; gap:8px;"><select id="subAssignSelect" class="chip ghost" style="padding:8px 12px; height:auto; background:#0d1f2d; border:1px solid rgba(255,255,255,.2); color:#fff; cursor:pointer; flex:1;">${assignOptions}</select><button class="chip ghost" id="assignSubBtn" type="button">👥 Force Assign</button></div></div>`;
-    }
-    
-    if (isAssigned) {
-        if (amIAssigned || isGatekeeper) {
-            const isEnterprise = j.jobType === 'enterprise';
-            const steps = isEnterprise ? BID_STEPS : SERVICE_STEPS;
-            const stepIdx = steps.findIndex(s=>s.id === (j.executionStatus || steps[0].id)); 
-            const prog = Math.max(0, (stepIdx / (steps.length - 1)) * 100); 
-            let stepsHtml = "";
-            steps.forEach((s, idx) => {
-                const statusClass = idx < stepIdx ? 'completed' : (idx === stepIdx ? 'active' : '');
-                stepsHtml += `<div class="tracker-step ${statusClass}" data-step="${s.id}"><div class="tracker-icon">${s.icon}</div><div class="tracker-label">${s.id}</div></div>`;
-            });
-            let roleBadge = amIAssigned ? '<span class="pill good">ASSIGNED TO ME</span>' : `<span class="pill blue">ASSIGNED TO: ${window.esc(j.assignedSubEmail)}</span>`;
-            actionHTML += `<div style="background:rgba(43,116,255,0.05);border:1px solid rgba(43,116,255,0.3);border-radius:16px;padding:16px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h4 style="margin:0;color:#fff;">${isEnterprise ? 'Bid Fulfillment Tracker' : 'Service Fulfillment Tracker'}</h4>${roleBadge}</div><div style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tap a status icon to instantly update dispatch.</div><div class="tracker-progress"><div class="tracker-progress-bar" style="width:${prog}%"></div>${stepsHtml}</div></div><div class="hr"></div><div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;"><b>Job Comms (Internal Chat)</b></div><div id="jobCommsLog" class="chat-log">Loading comms...</div><div class="chat-input-row"><textarea class="textarea-mini" id="techChatInput" placeholder="Type message..."></textarea><button class="chip primary" id="btnSendTechMsg">Send</button>${window.isGodMode() ? `<button class="chip" id="btnSendInternalMsg" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}</div>`;
-        } else { actionHTML += `<div class="kv" style="border-color:var(--warn);background:rgba(245,158,11,0.1);"><b style="color:var(--warn);">UNAVAILABLE:</b> This job has been assigned to another contractor.</div>`; }
-    } else {
-        if (isGatekeeper) {
-            const reqs = j.requests || {}; const reqKeys = Object.keys(reqs);
-            if (reqKeys.length > 0) {
-                actionHTML += `<div class="claim-bar"><h4>Pending Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
-                reqKeys.forEach(ruid => { actionHTML += `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);"><span style="color:#fff;font-size:14px;font-weight:600;">${window.esc(reqs[ruid].email)}</span><button class="chip good btnApproveRequest" style="border:none;" data-uid="${window.esc(ruid)}" data-email="${window.esc(reqs[ruid].email)}">Approve</button></div>`; });
-                actionHTML += `</div></div>`;
-            } else { actionHTML += `<div class="claim-bar"><h4>No requests yet.</h4><p>Waiting for contractors to raise their hand.</p></div>`; }
-        } else {
-            if(window.activeLocation && window.activeLeadGen){ 
-                if (j.requests && j.requests[window.UID]) actionHTML += `<div class="claim-bar" style="border-color:var(--warn);background:linear-gradient(135deg,#1f1406,#2b1d0a);"><h4 style="color:var(--warn);">✋ Request Pending</h4><p>Waiting for the job poster to approve your request.</p></div>`;
-                else actionHTML += `<div class="claim-bar"><div style="display:flex;justify-content:space-between;align-items:center;"><h4>Request This Order</h4><button class="chip primary" id="btnRequestJob">✋ Request Job</button></div><p>Exact address will be revealed immediately upon approval.</p></div>`; 
-            } else { actionHTML += `<div class="kv" style="border-color:var(--bad);background:rgba(239,68,68,0.1);"><b style="color:var(--bad);">LOCKED:</b> Turn on Dispatch Mode & Location sharing in settings to request jobs.</div>`; } 
-        }
-    }
-    
-    let clientCommsHtml = "";
-    if (window.isBranchManagerMode()) {
-        const fulfillmentUrl = `https://dealbankers.com/fulfillment.html?id=${window.esc(id)}`;
-        clientCommsHtml = `
-        <div class="hr"></div>
-        <div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;">
-            <b>Client / Vendor Fulfillment Comms</b><br>
-            <a href="${fulfillmentUrl}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;">📄 View Public Fulfillment Link</a>
-        </div>
-        <div id="clientCommsLog" class="chat-log" style="max-height:200px;">Loading client comms...</div>
-        <div class="chat-input-row">
-            <textarea class="textarea-mini" id="clientChatInput" placeholder="Message client/vendor on public portal..."></textarea>
-            <button class="chip primary" id="btnSendClientMsg">Send to Client</button>
-        </div>`;
-    }
+if($('btnActivityLog')) $('btnActivityLog').style.display = (window.isBranchManagerMode()) ? "inline-flex" : "none";
+if($('btnGodModeEdit')) $('btnGodModeEdit').style.display = (window.isGodMode() || j.postedBy === window.UID) ? "inline-flex" : "none";
 
-    if($('jobDetailBody')) $('jobDetailBody').innerHTML = `<div style="margin-bottom:16px;"><h2 style="margin:0;color:#fff;font-size:22px;">${window.esc(j.title || '(Untitled)')}</h2></div><div class="kv"><b>Trade:</b> ${window.esc(j.trade)}</div> <div class="kv"><b>Type:</b> ${window.esc(j.jobType||'service').toUpperCase()}</div> <div class="kv"><b>Address:</b> ${window.normalizeJobAddress(j)}</div> <div class="kv"><b>Date:</b> ${window.esc(j.date||'')}</div> <div class="kv"><b>Budget:</b> ${window.esc(j.budget||'')}</div> <div class="hr"></div> <div class="kv"><b>Description / Scope:</b><br/>${window.esc(j.desc||'').replace(/\n/g,'<br/>')}</div> ${actionHTML} ${comHtml} ${clientCommsHtml}`;
-    
-    if(isAssigned && (amIAssigned || isGatekeeper)) window.loadJobCommFeed(id); 
-    if(window.isBranchManagerMode()) window.loadClientCommFeed(id);
+if(window.map) {
+let position = exact ? (j.exactLatLng || j.fuzzyLatLng) : j.fuzzyLatLng;
+let zoomLvl = exact ? 17 : 13;
+if(position) { window.map.panTo(position); window.map.setZoom(zoomLvl); }
+}
+
+let comHtml = "";
+if(window.isGodMode() || (window.isBranchManagerMode() && (j.postedBy === window.UID || amIAssigned))){
+const vendorPhones = window.formatLocalPhones(j.vendorPhones);
+let vpHtml = "";
+vendorPhones.forEach(vp => {
+vpHtml += `<div class="comms-row">
+<div class="comms-meta"><div class="comms-name">${window.esc(vp.label)}</div><div class="comms-label">${window.esc(vp.number)}</div></div>
+<div class="comms-actions" style="display:flex;gap:4px;">
+<a href="tel:${window.sanitizeTel(vp.number)}" class="chip primary tiny" style="padding:4px 10px;font-size:11px;">📞 Call</a>
+<a href="sms:${window.sanitizeTel(vp.number)}" class="chip tiny" style="padding:4px 10px;font-size:11px;">💬 Text</a>
+${window.isGodMode() ? `<button class="chip ghost tiny" style="padding:4px 8px;font-size:11px;" title="Edit" onclick="window.editVendorPhone('${j.id}', ${vp.index})">✎</button><button class="chip danger tiny" style="padding:4px 8px;font-size:11px;"
+title="Delete" onclick="window.deleteVendorPhone('${j.id}', ${vp.index})">✕</button>` : ''}
+</div>
+</div>`;
+});
+comHtml = `<div class="comms-panel-god"><div class="god-header-row"><h4>🔒 Active Management Controls</h4></div><div class="field-box" style="margin-bottom:12px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;"><div style="font-size:11px; color:var(--good); font-weight:800; text-transform:uppercase; margin-bottom:6px;">Organic Call Script</div><div class="kv" style="font-style:italic; background:none; border:none; padding:0;">"${window.getOrganicScript(j.trade, j.city)}"</div></div><div class="kv" style="margin-bottom:12px;background:rgba(0,0,0,0.3);border:none;"><b>Private Leadership Notes:</b><br/>${window.esc(j.godNotes||'—').replace(/\n/g,'<br/>')}</div><div class="hr"></div><h4 style="margin:10px 0;color:#fff;font-size:13px;display:flex;justify-content:space-between;align-items:center;">Vendor / Sub Contacts ${window.isGodMode() ?
+`<button class="chip ghost" style="padding:4px 10px;font-size:11px;" onclick="window.promptAddVendor('${j.id}')">＋ Add Sub</button>` : ''}</h4><div class="log-box">${vpHtml||'<p style="color:var(--muted);font-size:12px;">No vendor numbers logged.</p>'}</div></div>`;
+}
+
+let actionHTML = "";
+if (window.isBranchManagerMode()) {
+let assignOptions = `<option value="">-- Select Associate --</option>`;
+const uidsToMap = window.isGodMode() ? Object.keys(window.userDirCache.byUid) : window.managedAssociatesFor(window.UID).map(u=>u.uid);
+uidsToMap.forEach(uid => {
+const u = window.userDirCache.byUid[uid];
+if(u && u.role === 'user' && u.email) assignOptions += `<option value="${window.esc(uid)}|${window.esc(u.email)}">${window.esc(u.name || u.email)}</option>`;
+});
+actionHTML += `<div style="background:rgba(255,255,255,0.05);padding:12px;border-radius:12px;margin-bottom:16px;"><div style="font-size:11px;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-weight:800;">Direct Assignment Bypass</div><div style="display:flex; align-items:center; gap:8px;"><select id="subAssignSelect" class="chip ghost" style="padding:8px 12px; height:auto; background:#0d1f2d; border:1px solid rgba(255,255,255,.2); color:#fff; cursor:pointer; flex:1;">${assignOptions}</select><button class="chip ghost" id="assignSubBtn" type="button">👥 Force Assign</button></div></div>`;
+}
+
+if (isAssigned) {
+if (amIAssigned || isGatekeeper) {
+const isEnterprise = j.jobType === 'enterprise';
+const steps = isEnterprise ? BID_STEPS : SERVICE_STEPS;
+const stepIdx = steps.findIndex(s=>s.id === (j.executionStatus || steps[0].id));
+const prog = Math.max(0, (stepIdx / (steps.length - 1)) * 100);
+let stepsHtml = "";
+steps.forEach((s, idx) => {
+const statusClass = idx < stepIdx ? 'completed' : (idx === stepIdx ? 'active' : '');
+stepsHtml += `<div class="tracker-step ${statusClass}" data-step="${s.id}"><div class="tracker-icon">${s.icon}</div><div class="tracker-label">${s.id}</div></div>`;
+});
+let roleBadge = amIAssigned ? '<span class="pill good">ASSIGNED TO ME</span>' : `<span class="pill blue">ASSIGNED TO: ${window.esc(j.assignedSubEmail)}</span>`;
+actionHTML += `<div style="background:rgba(43,116,255,0.05);border:1px solid rgba(43,116,255,0.3);border-radius:16px;padding:16px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h4 style="margin:0;color:#fff;">${isEnterprise ? 'Bid Fulfillment Tracker' : 'Service Fulfillment Tracker'}</h4>${roleBadge}</div><div style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tap a status icon to instantly update dispatch.</div><div class="tracker-progress"><div class="tracker-progress-bar" style="width:${prog}%"></div>${stepsHtml}</div></div><div class="hr"></div><div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;"><b>Job Comms (Internal Chat)</b></div><div id="jobCommsLog" class="chat-log">Loading comms...</div><div class="chat-input-row"><textarea class="textarea-mini" id="techChatInput" placeholder="Type message..."></textarea><button class="chip primary" id="btnSendTechMsg">Send</button>${window.isGodMode() ?
+`<button class="chip" id="btnSendInternalMsg" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}</div>`;
+} else { actionHTML += `<div class="kv" style="border-color:var(--warn);background:rgba(245,158,11,0.1);"><b style="color:var(--warn);">UNAVAILABLE:</b> This job has been assigned to another contractor.</div>`; }
+} else {
+if (isGatekeeper) {
+const reqs = j.requests || {}; const reqKeys = Object.keys(reqs);
+if (reqKeys.length > 0) {
+actionHTML += `<div class="claim-bar"><h4>Pending Requests</h4><div style="display:flex;flex-direction:column;gap:8px;margin-top:10px;">`;
+reqKeys.forEach(ruid => { actionHTML += `<div style="display:flex;justify-content:space-between;align-items:center;background:rgba(0,0,0,0.3);padding:10px 14px;border-radius:10px;border:1px solid rgba(255,255,255,0.1);"><span style="color:#fff;font-size:14px;font-weight:600;">${window.esc(reqs[ruid].email)}</span><button class="chip good btnApproveRequest" style="border:none;" data-uid="${window.esc(ruid)}" data-email="${window.esc(reqs[ruid].email)}">Approve</button></div>`; });
+actionHTML += `</div></div>`;
+} else { actionHTML += `<div class="claim-bar"><h4>No requests yet.</h4><p>Waiting for contractors to raise their hand.</p></div>`; }
+} else {
+if(window.activeLocation && window.activeLeadGen){
+if (j.requests && j.requests[window.UID]) actionHTML += `<div class="claim-bar" style="border-color:var(--warn);background:linear-gradient(135deg,#1f1406,#2b1d0a);"><h4 style="color:var(--warn);">✋ Request Pending</h4><p>Waiting for the job poster to approve your request.</p></div>`;
+else actionHTML += `<div class="claim-bar"><div style="display:flex;justify-content:space-between;align-items:center;"><h4>Request This Order</h4><button class="chip primary" id="btnRequestJob">✋ Request Job</button></div><p>Exact address will be revealed immediately upon approval.</p></div>`;
+} else { actionHTML += `<div class="kv" style="border-color:var(--bad);background:rgba(239,68,68,0.1);"><b style="color:var(--bad);">LOCKED:</b> Turn on Dispatch Mode & Location sharing in settings to request jobs.</div>`;
+}
+}
+}
+
+let clientCommsHtml = "";
+if (window.isBranchManagerMode()) {
+const fulfillmentUrl = `https://dealbankers.com/fulfillment.html?id=${window.esc(id)}`;
+clientCommsHtml = `
+<div class="hr"></div>
+<div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;">
+<b>Client / Vendor Fulfillment Comms</b><br>
+<a href="${fulfillmentUrl}" target="_blank" style="color:var(--accent);font-size:12px;text-decoration:none;">📄 View Public Fulfillment Link</a>
+</div>
+<div id="clientCommsLog" class="chat-log" style="max-height:200px;">Loading client comms...</div>
+<div class="chat-input-row">
+<textarea class="textarea-mini" id="clientChatInput" placeholder="Message client/vendor on public portal..."></textarea>
+<button class="chip primary" id="btnSendClientMsg">Send to Client</button>
+</div>`;
+}
+
+if($('jobDetailBody')) $('jobDetailBody').innerHTML = `<div style="margin-bottom:16px;"><h2 style="margin:0;color:#fff;font-size:22px;">${window.esc(j.title || '(Untitled)')}</h2></div><div class="kv"><b>Trade:</b> ${window.esc(j.trade)}</div> <div class="kv"><b>Type:</b> ${window.esc(j.jobType||'service').toUpperCase()}</div> <div class="kv"><b>Address:</b> ${window.normalizeJobAddress(j)}</div> <div class="kv"><b>Date:</b> ${window.esc(j.date||'')}</div> <div class="kv"><b>Budget:</b> ${window.esc(j.budget||'')}</div> <div class="hr"></div> <div class="kv"><b>Description / Scope:</b><br/>${window.esc(j.desc||'').replace(/\n/g,'<br/>')}</div> ${actionHTML} ${comHtml} ${clientCommsHtml}`;
+
+if(isAssigned && (amIAssigned || isGatekeeper)) window.loadJobCommFeed(id);
+if(window.isBranchManagerMode()) window.loadClientCommFeed(id);
 };
 
-window.loadJobCommFeed = async function(id){ 
-    const list = $('jobCommsLog'); if(!list) return;
-    const snap = await firebase.database().ref(`jobs/${id}/messages`).once("value");
-    const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No internal comms yet.</div>"; return; } 
-    let html = "";
-    Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => { 
-        const mine = m.uid === window.UID; const internal = m.type === 'internal'; 
-        const delBtn = window.isGodMode() ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteInternalMsg('${id}', '${m._key}')">✕</span>` : '';
-        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`; 
-    });
-    list.innerHTML = html; list.scrollTop = list.scrollHeight;
+window.loadJobCommFeed = async function(id){
+const list = $('jobCommsLog'); if(!list) return;
+const snap = await firebase.database().ref(`jobs/${id}/messages`).once("value");
+const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No internal comms yet.</div>"; return; }
+let html = "";
+Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => {
+const mine = m.uid === window.UID; const internal = m.type === 'internal';
+const delBtn = window.isGodMode() ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteInternalMsg('${id}', '${m._key}')">✕</span>` : '';
+html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'} ${internal?'msg-internal':''}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`;
+});
+list.innerHTML = html; list.scrollTop = list.scrollHeight;
 };
 
-window.loadClientCommFeed = async function(id){ 
-    const list = $('clientCommsLog'); if(!list) return;
-    const snap = await firebase.database().ref(`jobs/${id}/clientComms`).once("value");
-    const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No client/vendor comms yet.</div>"; return; } 
-    let html = "";
-    Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => { 
-        const mine = m.uid === window.UID; 
-        const delBtn = window.isGodMode() ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteClientMsg('${id}', '${m._key}')">✕</span>` : '';
-        html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`; 
-    });
-    list.innerHTML = html; list.scrollTop = list.scrollHeight;
+window.loadClientCommFeed = async function(id){
+const list = $('clientCommsLog'); if(!list) return;
+const snap = await firebase.database().ref(`jobs/${id}/clientComms`).once("value");
+const msgs = snap.val() || {}; if(!Object.keys(msgs).length){ list.innerHTML = "<div class='pill'>No client/vendor comms yet.</div>"; return; }
+let html = "";
+Object.keys(msgs).map(k => ({...msgs[k], _key: k})).sort((a,b)=> a.ts - b.ts).forEach(m => {
+const mine = m.uid === window.UID;
+const delBtn = window.isGodMode() ? `<span style="cursor:pointer;color:var(--bad);margin-left:8px;font-weight:900;" title="Delete Message" onclick="window.deleteClientMsg('${id}', '${m._key}')">✕</span>` : '';
+html += `<div class="chat-log-item ${mine?'chat-me':'chat-them'}"> <div style="font-size:11px;opacity:0.7;margin-bottom:4px;display:flex;justify-content:space-between;align-items:center;"><span><b>${window.esc(m.byName||'System')}</b> • ${new Date(m.ts).toLocaleTimeString()}</span>${delBtn}</div><div>${window.linkify(window.esc(m.text))}</div></div>`;
+});
+list.innerHTML = html; list.scrollTop = list.scrollHeight;
 };
 
 window.openActivityModal = async function(id) {
-    if(!id) return;
-    if($('activityModal')) $('activityModal').classList.add('show');
-    const box = $('activityLogBody');
-    box.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">Loading Activity...</div>';
-    
-    firebase.database().ref(`jobs/${id}/activity`).once('value', snap => {
-        const logs = snap.val() || {};
-        if(!Object.keys(logs).length) {
-            box.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">No activity logged yet.</div>';
-            return;
-        }
-        let html = "";
-        Object.values(logs).sort((a,b) => b.ts - a.ts).forEach(l => {
-            const time = new Date(l.ts).toLocaleString();
-            html += `<div style="padding:10px;border-bottom:1px solid rgba(255,255,255,0.05);">
-                <div style="font-size:10px;color:var(--muted);margin-bottom:4px;"><b>${window.esc(l.byName)}</b> • ${time}</div>
-                <div style="font-size:13px;color:#fff;">${window.esc(l.text)}</div>
-            </div>`;
-        });
-        box.innerHTML = html;
-    });
+if(!id) return;
+if($('activityModal')) $('activityModal').classList.add('show');
+const box = $('activityLogBody');
+box.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">Loading Activity...</div>';
+
+firebase.database().ref(`jobs/${id}/activity`).once('value', snap => {
+const logs = snap.val() || {};
+if(!Object.keys(logs).length) {
+box.innerHTML = '<div style="color:var(--muted);text-align:center;padding:20px;">No activity logged yet.</div>';
+return;
+}
+let html = "";
+Object.values(logs).sort((a,b) => b.ts - a.ts).forEach(l => {
+const time = new Date(l.ts).toLocaleString();
+html += `<div style="padding:10px;border-bottom:1px solid rgba(255,255,255,0.05);">
+<div style="font-size:10px;color:var(--muted);margin-bottom:4px;"><b>${window.esc(l.byName)}</b> • ${time}</div>
+<div style="font-size:13px;color:#fff;">${window.esc(l.text)}</div>
+</div>`;
+});
+box.innerHTML = html;
+});
 };
 
 window.closeActivityModal = function() { if($('activityModal')) $('activityModal').classList.remove('show'); };
 
 window.deleteInternalMsg = async function(jobId, msgKey) {
-    if(!confirm("Permanently delete this internal message?")) return;
-    try { await firebase.database().ref(`jobs/${jobId}/messages/${msgKey}`).remove(); window.loadJobCommFeed(jobId); } catch(e) {}
+if(!confirm("Permanently delete this internal message?")) return;
+try { await firebase.database().ref(`jobs/${jobId}/messages/${msgKey}`).remove(); window.loadJobCommFeed(jobId); } catch(e) {}
 };
 
 window.deleteClientMsg = async function(jobId, msgKey) {
-    if(!confirm("Permanently delete this message from the client portal?")) return;
-    try { await firebase.database().ref(`jobs/${jobId}/clientComms/${msgKey}`).remove(); window.loadClientCommFeed(jobId); } catch(e) {}
+if(!confirm("Permanently delete this message from the client portal?")) return;
+try { await firebase.database().ref(`jobs/${jobId}/clientComms/${msgKey}`).remove(); window.loadClientCommFeed(jobId); } catch(e) {}
 };
 
 window.promptAddVendor = async function(jobId) {
-    const j = window.jobsCache[jobId]; if(!j) return;
-    const input = prompt("Enter new Sub Contact (Format: Name | 555-555-5555):");
-    if(!input || !input.trim()) return;
-    let current = (j.vendorPhones || "").trim();
-    let updated = current ? current + "\n" + input.trim() : input.trim();
-    try { 
-        await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: updated}); 
-        window.logActivity(jobId, `Added Sub Contact: ${input.trim()}`);
-        window.renderJobDetail(jobId); 
-    } catch(e){}
+const j = window.jobsCache[jobId]; if(!j) return;
+const input = prompt("Enter new Sub Contact (Format: Name | 555-555-5555):");
+if(!input || !input.trim()) return;
+let current = (j.vendorPhones || "").trim();
+let updated = current ? current + "\n" + input.trim() : input.trim();
+try {
+await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: updated});
+window.logActivity(jobId, `Added Sub Contact: ${input.trim()}`);
+window.renderJobDetail(jobId);
+} catch(e){}
 };
 
 window.editVendorPhone = async function(jobId, index) {
-    const j = window.jobsCache[jobId]; if(!j) return;
-    let lines = String(j.vendorPhones || "").split("\n");
-    const oldVal = lines[index];
-    const updated = prompt("Edit Sub Contact:", oldVal);
-    if(updated !== null && updated.trim() !== "") {
-        lines[index] = updated.trim();
-        try { 
-            await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: lines.join("\n")}); 
-            window.logActivity(jobId, `Edited Sub Contact from '${oldVal}' to '${updated.trim()}'`);
-            window.renderJobDetail(jobId); 
-        } catch(e){}
-    }
+const j = window.jobsCache[jobId]; if(!j) return;
+let lines = String(j.vendorPhones || "").split("\n");
+const oldVal = lines[index];
+const updated = prompt("Edit Sub Contact:", oldVal);
+if(updated !== null && updated.trim() !== "") {
+lines[index] = updated.trim();
+try {
+await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: lines.join("\n")});
+window.logActivity(jobId, `Edited Sub Contact from '${oldVal}' to '${updated.trim()}'`);
+window.renderJobDetail(jobId);
+} catch(e){}
+}
 };
 
 window.deleteVendorPhone = async function(jobId, index) {
-    if(!confirm("Remove this sub contact?")) return;
-    const j = window.jobsCache[jobId]; if(!j) return;
-    let lines = String(j.vendorPhones || "").split("\n");
-    const removedVal = lines[index];
-    lines.splice(index, 1);
-    try { 
-        await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: lines.join("\n").trim()}); 
-        window.logActivity(jobId, `Deleted Sub Contact: ${removedVal}`);
-        window.renderJobDetail(jobId); 
-    } catch(e){}
+if(!confirm("Remove this sub contact?")) return;
+const j = window.jobsCache[jobId]; if(!j) return;
+let lines = String(j.vendorPhones || "").split("\n");
+const removedVal = lines[index];
+lines.splice(index, 1);
+try {
+await firebase.database().ref(`jobs/${jobId}`).update({vendorPhones: lines.join("\n").trim()});
+window.logActivity(jobId, `Deleted Sub Contact: ${removedVal}`);
+window.renderJobDetail(jobId);
+} catch(e){}
 };
 
-window.hideDetails = function(){ 
-    window.currentJobId=null; window.renderJobsList(); 
-    if($('detailContainer')) $('detailContainer').style.display="none"; 
-    if($('listContainer')) $('listContainer').style.display="flex";
-    if(window.map && window.markers.length > 0) {
-        const bounds = new google.maps.LatLngBounds();
-        window.markers.forEach(m => bounds.extend(m.getPosition()));
-        window.map.fitBounds(bounds);
-    }
+window.hideDetails = function(){
+window.currentJobId=null; window.renderJobsList();
+if($('detailContainer')) $('detailContainer').style.display="none";
+if($('listContainer')) $('listContainer').style.display="flex";
+if(window.map && window.markers.length > 0) {
+const bounds = new google.maps.LatLngBounds();
+window.markers.forEach(m => bounds.extend(m.getPosition()));
+window.map.fitBounds(bounds);
+}
 };
 
-window.subscribeJobs = function(){ 
-    if(!window.jobsView.length && $('leadList')) $('leadList').innerHTML = "<div class='empty-state'>Loading...</div>";
-    firebase.database().ref('jobs').on('value', snap => { 
-        window.jobsCache = snap.val() || {}; window.jobsView = []; 
-        Object.keys(window.jobsCache).forEach(id => { const j = {...window.jobsCache[id], id}; if((j.status||'active') === window.currentTab) window.jobsView.push(j); }); 
-        const searchQ = ($('jobSearch')?.value||"").toLowerCase();
-        if(searchQ) { window.jobsView = window.jobsView.filter(j => { const hay = `${j.title||''} ${j.trade||''} ${j.city||''} ${j.zip||''}`.toLowerCase(); return hay.includes(searchQ); }); }
-        window.renderJobsList(); window.renderMarkers(); 
-        if(window.currentJobId && window.jobsCache[window.currentJobId]) window.renderJobDetail(window.currentJobId); 
-    }); 
+window.subscribeJobs = function(){
+if(!window.jobsView.length && $('leadList')) $('leadList').innerHTML = "<div class='empty-state' style='padding:16px;text-align:center;color:var(--muted);'>Loading...</div>";
+firebase.database().ref('jobs').on('value', snap => {
+window.jobsCache = snap.val() || {}; window.jobsView = [];
+Object.keys(window.jobsCache).forEach(id => { const j = {...window.jobsCache[id], id}; if((j.status||'active') === window.currentTab) window.jobsView.push(j); });
+const searchQ = ($('jobSearch')?.value||"").toLowerCase();
+if(searchQ) { window.jobsView = window.jobsView.filter(j => { const hay = `${j.title||''} ${j.trade||''} ${j.city||''} ${j.zip||''}`.toLowerCase(); return hay.includes(searchQ); }); }
+window.renderJobsList(); window.renderMarkers();
+if(window.currentJobId && window.jobsCache[window.currentJobId]) window.renderJobDetail(window.currentJobId);
+});
 };
 
 document.addEventListener('click', async (e) => {
-    const leadItem = e.target.closest('.lead-item'); if(leadItem && leadItem.closest('#leadList')) { const jid = leadItem.getAttribute('data-jobid'); if(jid) window.renderJobDetail(jid); }
-    if(e.target.closest('#backToList')) window.hideDetails();
-    const reqBtn = e.target.closest('#btnRequestJob');
-    if(reqBtn && window.currentJobId) {
-        reqBtn.disabled = true; reqBtn.textContent = "Requesting...";
-        try{ 
-            await firebase.database().ref(`jobs/${window.currentJobId}/requests/${window.UID}`).set({ uid: window.UID, email: window.ME.email, ts: firebase.database.ServerValue.TIMESTAMP }); 
-            window.logActivity(window.currentJobId, `Job request submitted by ${window.ME.email}`);
-        } catch(err){ alert("Request failed."); reqBtn.disabled = false; reqBtn.textContent = "✋ Request Job"; }
-    }
-    const approveBtn = e.target.closest('.btnApproveRequest');
-    if(approveBtn && window.currentJobId) {
-        const targetUid = approveBtn.getAttribute('data-uid'); const targetEmail = approveBtn.getAttribute('data-email');
-        if(confirm(`Approve ${targetEmail} for this job?`)) {
-            approveBtn.disabled = true; approveBtn.textContent = "Approving...";
-            try { 
-                await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: targetUid, assignedSubEmail: targetEmail, executionStatus: 'Not Left', requests: null }); 
-                window.logActivity(window.currentJobId, `Request approved. Job assigned to ${targetEmail}`);
-            } catch(err){ alert("Approval failed."); approveBtn.disabled = false; approveBtn.textContent = "Approve"; }
-        }
-    }
-    const assignSubBtn = e.target.closest('#assignSubBtn');
-    if(assignSubBtn && window.currentJobId) {
-        const select = $('subAssignSelect'); if(!select.value) return alert("Please select an associate first.");
-        const [subUid, subEmail] = select.value.split('|');
-        try { 
-            await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: subUid, assignedSubEmail: subEmail, executionStatus: 'Not Left', requests: null }); 
-            window.logActivity(window.currentJobId, `Job forcibly assigned to ${subEmail}`);
-            alert(`Job assigned to ${subEmail}.`); 
-        } catch(err) { alert("Assignment failed."); }
-    }
-    const techMsgBtn = e.target.closest('#btnSendTechMsg');
-    if(techMsgBtn && window.currentJobId) {
-        const input = $('techChatInput'); const text = (input.value||"").trim(); if(!text) return; techMsgBtn.disabled = true; 
-        try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'tech', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} techMsgBtn.disabled = false;
-    }
-    const internalMsgBtn = e.target.closest('#btnSendInternalMsg');
-    if(internalMsgBtn && window.currentJobId && window.isGodMode()) {
-        const input = $('techChatInput'); const text = (input.value||"").trim(); if(!text) return; internalMsgBtn.disabled = true; 
-        try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'internal', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} internalMsgBtn.disabled = false;
-    }
-    const sendClientBtn = e.target.closest('#btnSendClientMsg');
-    if(sendClientBtn && window.currentJobId) {
-        const input = $('clientChatInput'); const text = (input.value||"").trim(); if(!text) return; sendClientBtn.disabled = true; 
-        try{ await firebase.database().ref(`jobs/${window.currentJobId}/clientComms`).push({ text, uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadClientCommFeed(window.currentJobId); }catch(err){} sendClientBtn.disabled = false;
-    }
-    const trackerStep = e.target.closest('.tracker-step');
-    if(trackerStep && window.currentJobId) { 
-        const stepId = trackerStep.getAttribute('data-step'); 
-        if(stepId) { 
-            try { 
-                await firebase.database().ref(`jobs/${window.currentJobId}/executionStatus`).set(stepId); 
-                window.logActivity(window.currentJobId, `Fulfillment tracker updated to: ${stepId}`);
-            } catch(err){} 
-        } 
-    }
-    if(e.target.closest('#btnGodModeEdit') && window.currentJobId) window.openJobModal('edit', window.currentJobId);
+const leadItem = e.target.closest('.lead-item'); if(leadItem && leadItem.closest('#leadList')) { const jid = leadItem.getAttribute('data-jobid'); if(jid) window.renderJobDetail(jid); }
+if(e.target.closest('#backToList')) window.hideDetails();
+const reqBtn = e.target.closest('#btnRequestJob');
+if(reqBtn && window.currentJobId) {
+reqBtn.disabled = true; reqBtn.textContent = "Requesting...";
+try{
+await firebase.database().ref(`jobs/${window.currentJobId}/requests/${window.UID}`).set({ uid: window.UID, email: window.ME.email, ts: firebase.database.ServerValue.TIMESTAMP });
+window.logActivity(window.currentJobId, `Job request submitted by ${window.ME.email}`);
+} catch(err){ alert("Request failed."); reqBtn.disabled = false; reqBtn.textContent = "✋ Request Job"; }
+}
+const approveBtn = e.target.closest('.btnApproveRequest');
+if(approveBtn && window.currentJobId) {
+const targetUid = approveBtn.getAttribute('data-uid'); const targetEmail = approveBtn.getAttribute('data-email');
+if(confirm(`Approve ${targetEmail} for this job?`)) {
+approveBtn.disabled = true; approveBtn.textContent = "Approving...";
+try {
+await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: targetUid, assignedSubEmail: targetEmail, executionStatus: 'Not Left', requests: null });
+window.logActivity(window.currentJobId, `Request approved. Job assigned to ${targetEmail}`);
+} catch(err){ alert("Approval failed."); approveBtn.disabled = false; approveBtn.textContent = "Approve"; }
+}
+}
+const assignSubBtn = e.target.closest('#assignSubBtn');
+if(assignSubBtn && window.currentJobId) {
+const select = $('subAssignSelect'); if(!select.value) return alert("Please select an associate first.");
+const [subUid, subEmail] = select.value.split('|');
+try {
+await firebase.database().ref(`jobs/${window.currentJobId}`).update({ assignedSubUid: subUid, assignedSubEmail: subEmail, executionStatus: 'Not Left', requests: null });
+window.logActivity(window.currentJobId, `Job forcibly assigned to ${subEmail}`);
+alert(`Job assigned to ${subEmail}.`);
+} catch(err) { alert("Assignment failed."); }
+}
+const techMsgBtn = e.target.closest('#btnSendTechMsg');
+if(techMsgBtn && window.currentJobId) {
+const input = $('techChatInput'); const text = (input.value||"").trim(); if(!text) return; techMsgBtn.disabled = true;
+try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'tech', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} techMsgBtn.disabled = false;
+}
+const internalMsgBtn = e.target.closest('#btnSendInternalMsg');
+if(internalMsgBtn && window.currentJobId && window.isGodMode()) {
+const input = $('techChatInput'); const text = (input.value||"").trim(); if(!text) return; internalMsgBtn.disabled = true;
+try{ await firebase.database().ref(`jobs/${window.currentJobId}/messages`).push({ text, type:'internal', uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadJobCommFeed(window.currentJobId); }catch(err){} internalMsgBtn.disabled = false;
+}
+const sendClientBtn = e.target.closest('#btnSendClientMsg');
+if(sendClientBtn && window.currentJobId) {
+const input = $('clientChatInput'); const text = (input.value||"").trim(); if(!text) return; sendClientBtn.disabled = true;
+try{ await firebase.database().ref(`jobs/${window.currentJobId}/clientComms`).push({ text, uid:window.UID, byName:window.ME.email, ts: Date.now() }); input.value = ""; window.loadClientCommFeed(window.currentJobId); }catch(err){} sendClientBtn.disabled = false;
+}
+const trackerStep = e.target.closest('.tracker-step');
+if(trackerStep && window.currentJobId) {
+const stepId = trackerStep.getAttribute('data-step');
+if(stepId) {
+try {
+await firebase.database().ref(`jobs/${window.currentJobId}/executionStatus`).set(stepId);
+window.logActivity(window.currentJobId, `Fulfillment tracker updated to: ${stepId}`);
+} catch(err){}
+}
+}
+if(e.target.closest('#btnGodModeEdit') && window.currentJobId) window.openJobModal('edit', window.currentJobId);
 });
 
-window.openJobModal = function(mode, id=null){ 
-    if($('jobModal')) $('jobModal').classList.add('show'); if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="none"; 
-    window.modalLeadId = id; const isEdit = mode === 'edit'; if($('jobModalTitle')) $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job"; if($('godPostFields')) $('godPostFields').style.display = window.isGodMode() ? "block" : "none";
-    if(isEdit && id){ 
-        const j = window.jobsCache[id]; $('jobTitle').value = j.title||""; $('jobTrade').value = j.trade||""; $('jobCity').value = j.city||""; $('jobZip').value = j.zip||""; $('jobDate').value = j.date||""; $('jobBudget').value = j.budget||""; $('jobStatus').value = j.status||"active"; $('jobType').value = j.jobType||"service"; $('jobDesc').value = j.desc||""; if($('jobLicensedReq')) $('jobLicensedReq').checked = !!j.licensedRequired;
-        if(window.isGodMode()){ $('jobAddressExact').value = j.addressExact||""; $('vendorPhones').value = j.vendorPhones||""; $('godNotes').value = j.godNotes||""; if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="flex"; } 
-    } else { 
-        $('jobTitle').value=""; $('jobTrade').value=""; $('jobCity').value=""; $('jobZip').value=""; $('jobDate').value=""; $('jobBudget').value=""; $('jobStatus').value="active"; $('jobType').value="service"; $('jobDesc').value=""; if($('jobLicensedReq')) $('jobLicensedReq').checked=false; 
-        if(window.isGodMode()){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value=""; } 
-    }
+window.openJobModal = function(mode, id=null){
+if($('jobModal')) $('jobModal').classList.add('show'); if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="none";
+window.modalLeadId = id; const isEdit = mode === 'edit'; if($('jobModalTitle')) $('jobModalTitle').textContent = isEdit ? "Edit Job" : "Post Job";
+if($('godPostFields')) $('godPostFields').style.display = window.isGodMode() ? "block" : "none";
+if(isEdit && id){
+const j = window.jobsCache[id]; $('jobTitle').value = j.title||""; $('jobTrade').value = j.trade||""; $('jobCity').value = j.city||""; $('jobZip').value = j.zip||""; $('jobDate').value = j.date||"";
+$('jobBudget').value = j.budget||""; $('jobStatus').value = j.status||"active"; $('jobType').value = j.jobType||"service"; $('jobDesc').value = j.desc||""; if($('jobLicensedReq')) $('jobLicensedReq').checked = !!j.licensedRequired;
+if(window.isGodMode()){ $('jobAddressExact').value = j.addressExact||""; $('vendorPhones').value = j.vendorPhones||""; $('godNotes').value = j.godNotes||""; if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="flex"; }
+} else {
+$('jobTitle').value=""; $('jobTrade').value=""; $('jobCity').value=""; $('jobZip').value=""; $('jobDate').value=""; $('jobBudget').value=""; $('jobStatus').value="active"; $('jobType').value="service"; $('jobDesc').value=""; if($('jobLicensedReq')) $('jobLicensedReq').checked=false;
+if(window.isGodMode()){ $('jobAddressExact').value=""; $('vendorPhones').value=""; $('godNotes').value=""; }
+}
 };
 
 window.closeJobModal = function(){ if($('jobModal')) $('jobModal').classList.remove('show'); };
 
-// BULLETPROOF SAVE FUNCTION
 window.saveJob = async function() {
-    const trade = ($('jobTrade')?.value||"").trim(); if(!trade) return alert("Trade is required.");
-    
-    const payload = { 
-        title: ($('jobTitle')?.value||"").trim(), 
-        trade: trade, 
-        city: ($('jobCity')?.value||"").trim(), 
-        zip: ($('jobZip')?.value||"").trim(), 
-        date: ($('jobDate')?.value||"").trim(), 
-        budget: ($('jobBudget')?.value||"").trim(), 
-        status: $('jobStatus')?.value || "active", 
-        jobType: $('jobType')?.value || "service", 
-        desc: ($('jobDesc')?.value||"").trim(), 
-        licensedRequired: $('jobLicensedReq')?.checked || false, 
-        updatedAt: firebase.database.ServerValue.TIMESTAMP 
-    };
+const trade = ($('jobTrade')?.value||"").trim(); if(!trade) return alert("Trade is required.");
 
-    const btn = $('btnJobSave');
-    if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+const payload = {
+title: ($('jobTitle')?.value||"").trim(),
+trade: trade,
+city: ($('jobCity')?.value||"").trim(),
+zip: ($('jobZip')?.value||"").trim(),
+date: ($('jobDate')?.value||"").trim(),
+budget: ($('jobBudget')?.value||"").trim(),
+status: $('jobStatus')?.value || "active",
+jobType: $('jobType')?.value || "service",
+desc: ($('jobDesc')?.value||"").trim(),
+licensedRequired: $('jobLicensedReq')?.checked || false,
+updatedAt: firebase.database.ServerValue.TIMESTAMP
+};
 
-    try {
-        if(window.isGodMode()){
-            payload.addressExact = ($('jobAddressExact')?.value||"").trim(); 
-            payload.vendorPhones = ($('vendorPhones')?.value||"").trim(); 
-            payload.godNotes = ($('godNotes')?.value||"").trim();
-            if(payload.addressExact){ 
-                try{ 
-                    const ll = await window.geocodeAddress(payload.addressExact); 
-                    payload.exactLatLng = {lat:ll.lat(), lng:ll.lng()}; 
-                } catch(e){} 
-            }
-        }
-        const fuzzy = `${payload.city||''}, ${payload.zip||''}`;
-        if(fuzzy.trim().length > 3){ 
-            try{ 
-                const fll = await window.geocodeAddress(fuzzy); 
-                payload.fuzzyLatLng = {lat:fll.lat(), lng:fll.lng()}; 
-            } catch(e){} 
-        }
+const btn = $('btnJobSave');
+if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
 
-        const isNew = !window.modalLeadId;
-        const ref = window.modalLeadId ? firebase.database().ref(`jobs/${window.modalLeadId}`) : firebase.database().ref('jobs').push();
-        
-        if(isNew) payload.postedBy = window.UID;
+try {
+if(window.isGodMode()){
+payload.addressExact = ($('jobAddressExact')?.value||"").trim();
+payload.vendorPhones = ($('vendorPhones')?.value||"").trim();
+payload.godNotes = ($('godNotes')?.value||"").trim();
+if(payload.addressExact){
+try{
+const ll = await window.geocodeAddress(payload.addressExact);
+payload.exactLatLng = {lat:ll.lat(), lng:ll.lng()};
+} catch(e){}
+}
+}
+const fuzzy = `${payload.city||''}, ${payload.zip||''}`;
+if(fuzzy.trim().length > 3){
+try{
+const fll = await window.geocodeAddress(fuzzy);
+payload.fuzzyLatLng = {lat:fll.lat(), lng:fll.lng()};
+} catch(e){}
+}
 
-        // ANTI-HANG TIMEOUT PROTECTION
-        await Promise.race([
-            ref.update(payload),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Database timeout. Save blocked by Firebase Rules.")), 6000))
-        ]);
+const isNew = !window.modalLeadId;
+const ref = window.modalLeadId ? firebase.database().ref(`jobs/${window.modalLeadId}`) : firebase.database().ref('jobs').push();
 
-        if (ref.key) {
-            window.logActivity(ref.key, isNew ? "Created new job post" : "Edited job details via God Edit");
-        }
-        window.closeJobModal();
-        
-    } catch(e) { 
-        console.error("Save failed:", e);
-        alert("Failed to save: " + e.message); 
-    } finally { 
-        if(btn) { btn.disabled = false; btn.textContent = "Save Job"; } 
-    }
+if(isNew) payload.postedBy = window.UID;
+
+await Promise.race([
+ref.update(payload),
+new Promise((_, reject) => setTimeout(() => reject(new Error("Database timeout. Save blocked by Firebase Rules.")), 6000))
+]);
+
+if (ref.key) {
+window.logActivity(ref.key, isNew ? "Created new job post" : "Edited job details via God Edit");
+}
+window.closeJobModal();
+
+} catch(e) {
+console.error("Save failed:", e);
+alert("Failed to save: " + e.message);
+} finally {
+if(btn) { btn.disabled = false; btn.textContent = "Save Job"; }
+}
 };
 
 window.deleteJob = async function() {
-    if(!window.isGodMode() || !window.modalLeadId) return; if(!confirm("Delete this job permanently?")) return;
-    try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
+if(!window.isGodMode() || !window.modalLeadId) return; if(!confirm("Delete this job permanently?")) return;
+try{ await firebase.database().ref(`jobs/${window.modalLeadId}`).remove(); window.closeJobModal(); window.hideDetails(); }catch(e){}
 };
 
-window.setSwitch = async function(el, readout, on, key){ 
-    if(el) el.classList.toggle('on',on); if(readout) readout.textContent = on ? "ON" : "OFF"; 
-    if(window.UID) {
-        try { await firebase.database().ref(`users/${window.UID}/contractorSettings/${key}`).set(on); firebase.database().ref(`userDirectory/${window.UID}/${key}`).set(on).catch(e=>{}); } catch(e) { if(el) el.classList.toggle('on', !on); if(readout) readout.textContent = !on ? "ON" : "OFF"; }
-    }
+window.setSwitch = async function(el, readout, on, key){
+if(el) el.classList.toggle('on',on); if(readout) readout.textContent = on ? "ON" : "OFF";
+if(window.UID) {
+try { await firebase.database().ref(`users/${window.UID}/contractorSettings/${key}`).set(on); firebase.database().ref(`userDirectory/${window.UID}/${key}`).set(on).catch(e=>{}); } catch(e) { if(el) el.classList.toggle('on', !on); if(readout) readout.textContent = !on ? "ON" : "OFF"; }
+}
 };
 
-window.subscribeSelfDir = async function(){ 
-    if(!window.UID) return;
-    firebase.database().ref(`users/${window.UID}/contractorSettings`).on('value', snap=>{ 
-        const d = snap.val() || {}; window.activeLeadGen = !!d.activeLeadGen; window.activeLocation = !!d.liveDispatch;
-        if($('leadsToggle')) $('leadsToggle').classList.toggle('on', window.activeLeadGen);
-        if($('leadsToggleReadout')) $('leadsToggleReadout').textContent = window.activeLeadGen ? "ON" : "OFF";
-        if($('locationToggle')) $('locationToggle').classList.toggle('on', window.activeLocation);
-        if($('locationToggleReadout')) $('locationToggleReadout').textContent = window.activeLocation ? "ON" : "OFF";
-        if(window.activeLocation) window.startUberMode(); else window.stopUberMode();
-    });
-    firebase.database().ref(`userDirectory/${window.UID}`).on('value', snap=>{ 
-        const d = snap.val() || {}; if($('leadsZips')) $('leadsZips').value = d.serviceZips || ""; if($('tradesStatus')) $('tradesStatus').textContent= `Trades: ${d.trades||'—'}`; 
-    });
+window.subscribeSelfDir = async function(){
+if(!window.UID) return;
+firebase.database().ref(`users/${window.UID}/contractorSettings`).on('value', snap=>{
+const d = snap.val() || {}; window.activeLeadGen = !!d.activeLeadGen; window.activeLocation = !!d.liveDispatch;
+if($('leadsToggle')) $('leadsToggle').classList.toggle('on', window.activeLeadGen);
+if($('leadsToggleReadout')) $('leadsToggleReadout').textContent = window.activeLeadGen ? "ON" : "OFF";
+if($('locationToggle')) $('locationToggle').classList.toggle('on', window.activeLocation);
+if($('locationToggleReadout')) $('locationToggleReadout').textContent = window.activeLocation ? "ON" : "OFF";
+if(window.activeLocation) window.startUberMode(); else window.stopUberMode();
+});
+firebase.database().ref(`userDirectory/${window.UID}`).on('value', snap=>{
+const d = snap.val() || {}; if($('leadsZips')) $('leadsZips').value = d.serviceZips || ""; if($('tradesStatus')) $('tradesStatus').textContent= `Trades: ${d.trades||'—'}`;
+});
 };
 
-window.openConfigModal = function() { if($('configModal')) $('configModal').classList.add('show'); };
-window.closeConfigModal = function() { if($('configModal')) $('configModal').classList.remove('show'); };
-window.openSupportModal = function(priority) { 
-    if($('supportPriority')) { $('supportPriority').value = priority.toUpperCase(); $('supportPriority').style.color = priority === 'red' ? '#ff4444' : '#2b74ff'; $('supportPriority').style.fontWeight = '900'; }
-    if($('supportModal')) $('supportModal').classList.add('show'); 
+/* --- SETTINGS CHAMELEON LOGIC FOR CONTRACTOR --- */
+window.openSettingsModal = function() {
+if($('settingsModal')) $('settingsModal').classList.add('show');
+window.loadSettings();
+};
+window.closeSettingsModal = function() {
+if($('settingsModal')) $('settingsModal').classList.remove('show');
+};
+
+window.loadSettings = async function() {
+if(!window.UID) return;
+try {
+const snap = await firebase.database().ref(`userDirectory/${window.UID}`).once("value");
+const data = snap.val() || {};
+
+const preview = $("set_photoPreview");
+const hiddenUrl = $("set_photoUrlHidden");
+if (data.photoURL) {
+preview.style.backgroundImage = `url('${window.esc(data.photoURL)}')`;
+preview.textContent = "";
+hiddenUrl.value = data.photoURL;
+} else {
+preview.style.backgroundImage = "";
+const nameStr = data.name || data.email || "";
+const pts = nameStr.split(/[\s._-]+/).filter(Boolean);
+preview.textContent = pts.map(p=>p[0]?.toUpperCase()||"").join("").slice(0,2)||"U";
+hiddenUrl.value = "";
+}
+
+$("set_isWholesaler").checked = !!data.isWholesaler;
+$("set_isContractor").checked = !!data.isContractor;
+$("set_isRealtor").checked = !!data.isRealtor;
+$("set_isInvestor").checked = !!data.isInvestor;
+
+['wholesaler', 'contractor', 'realtor', 'investor'].forEach(r => {
+const isChecked = !!data[`is${r.charAt(0).toUpperCase() + r.slice(1)}`];
+const sec = $(`sec_${r}`);
+if(sec) sec.style.display = isChecked ? "block" : "none";
+});
+
+const roles = data.roles || {};
+$("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
+$("exp_wholesaler").value = roles.wholesaler?.experience || "";
+
+$("bio_contractor").value = roles.contractor?.bio || "";
+$("exp_contractor").value = roles.contractor?.experience || "";
+
+$("bio_realtor").value = roles.realtor?.bio || "";
+$("exp_realtor").value = roles.realtor?.experience || "";
+
+$("bio_investor").value = roles.investor?.bio || "";
+$("exp_investor").value = roles.investor?.experience || "";
+
+if($('leadsZips')) $('leadsZips').value = data.serviceZips || "";
+
+} catch(e) { console.error(e); }
+};
+
+window.handlePhotoUpload = async function(e) {
+const file = e.target.files[0];
+if (!file) return;
+if (file.size > 2 * 1024 * 1024) { alert("Max size 2MB."); return; }
+
+const preview = $("set_photoPreview");
+preview.textContent = "⌛";
+preview.style.backgroundImage = "";
+
+try {
+const fileExt = file.name.split('.').pop();
+const sRef = firebase.storage().ref(`profile_photos/${window.UID}_${Date.now()}.${fileExt}`);
+const snapshot = await sRef.put(file);
+const downloadURL = await snapshot.ref.getDownloadURL();
+
+$("set_photoUrlHidden").value = downloadURL;
+preview.style.backgroundImage = `url('${downloadURL}')`;
+preview.textContent = "";
+} catch(err) {
+alert("Upload failed.");
+preview.textContent = "U";
+}
+};
+
+window.saveSettings = async function() {
+if(!window.UID) return;
+const btn = $("settingsSaveBtn");
+if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
+
+let currentData = {};
+try {
+const snap = await firebase.database().ref(`userDirectory/${window.UID}`).once("value");
+if(snap.exists()) currentData = snap.val() || {};
+} catch(e) {}
+
+const wCb = $("set_isWholesaler").checked;
+const cCb = $("set_isContractor").checked;
+const rCb = $("set_isRealtor").checked;
+const iCb = $("set_isInvestor").checked;
+
+const wBio = $("bio_wholesaler").value.trim();
+const cBio = $("bio_contractor").value.trim();
+const rBio = $("bio_realtor").value.trim();
+const iBio = $("bio_investor").value.trim();
+
+const updates = {
+...currentData,
+photoURL: $("set_photoUrlHidden").value.trim() || currentData.photoURL || "",
+isWholesaler: wCb,
+isContractor: cCb,
+isRealtor: rCb,
+isInvestor: iCb,
+serviceZips: $("leadsZips").value.trim(),
+roles: {
+...currentData.roles,
+wholesaler: { ...currentData.roles?.wholesaler, bio: wBio, experience: $("exp_wholesaler").value.trim() },
+contractor: { ...currentData.roles?.contractor, bio: cBio, experience: $("exp_contractor").value.trim() },
+realtor: { ...currentData.roles?.realtor, bio: rBio, experience: $("exp_realtor").value.trim() },
+investor: { ...currentData.roles?.investor, bio: iBio, experience: $("exp_investor").value.trim() }
+},
+updatedAt: Date.now()
+};
+
+updates.bio = updates.roles.wholesaler.bio || updates.roles.contractor.bio || "";
+
+try {
+await firebase.database().ref(`userDirectory/${window.UID}`).update(updates);
+if($("settingsStatus")) {
+$("settingsStatus").style.display = 'inline-block';
+setTimeout(() => { $("settingsStatus").style.display = 'none'; }, 2000);
+}
+} catch(e) {
+alert("Failed to save settings.");
+} finally {
+if(btn) { btn.disabled = false; btn.textContent = "Save Changes"; }
+}
+};
+
+
+window.openSupportModal = function(priority) {
+if($('supportPriority')) { $('supportPriority').value = priority.toUpperCase(); $('supportPriority').style.color = priority === 'red' ? '#ff4444' : '#2b74ff'; $('supportPriority').style.fontWeight = '900'; }
+if($('supportModal')) $('supportModal').classList.add('show');
 };
 window.closeSupportModal = function() { if($('supportModal')) $('supportModal').classList.remove('show'); };
 window.sendSupport = async function() {
-    const msg = $('supportMsg')?.value.trim(); if(!msg) return;
-    try { await firebase.database().ref(`supportRequests/${window.UID}`).push({ uid: window.UID, email: window.ME?.email || "", name: window.ME?.email || "Contractor", priority: $('supportPriority')?.value.toLowerCase() || "normal", category: $('supportCategory')?.value || 'General', message: msg, portal: 'contractor', ts: Date.now(), status: "open" }); if($('supportMsg')) $('supportMsg').value = ""; window.closeSupportModal(); alert("Support request sent."); } catch(e) {}
+const msg = $('supportMsg')?.value.trim(); if(!msg) return;
+try { await firebase.database().ref(`supportRequests/${window.UID}`).push({ uid: window.UID, email: window.ME?.email || "", name: window.ME?.email || "Contractor", priority: $('supportPriority')?.value.toLowerCase() || "normal", category: $('supportCategory')?.value || 'General', message: msg, portal: 'contractor', ts: Date.now(), status: "open" });
+if($('supportMsg')) $('supportMsg').value = ""; window.closeSupportModal(); alert("Support request sent."); } catch(e) {}
 };
 window.startUberMode = function(){
-    if(!navigator.geolocation){alert("GPS not supported."); return;} if(window.watchId) return;
-    window.watchId = navigator.geolocation.watchPosition( pos => { firebase.database().ref(`contractorLocations/${window.UID}`).update({lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now()}); }, err => { console.warn("GPS Error", err); } );
+if(!navigator.geolocation){alert("GPS not supported."); return;} if(window.watchId) return;
+window.watchId = navigator.geolocation.watchPosition( pos => { firebase.database().ref(`contractorLocations/${window.UID}`).update({lat:pos.coords.latitude, lng:pos.coords.longitude, ts:Date.now()}); }, err => { console.warn("GPS Error", err); } );
 };
 window.stopUberMode = function(){ if(window.watchId) navigator.geolocation.clearWatch(window.watchId); window.watchId=null; };
 window.toggleLeads = function(){ window.activeLeadGen=!window.activeLeadGen; window.setSwitch($('leadsToggle'), $('leadsToggleReadout'), window.activeLeadGen, 'activeLeadGen'); window.renderJobsList(); };
 window.toggleLocation = function(){ window.activeLocation=!window.activeLocation; window.setSwitch($('locationToggle'), $('locationToggleReadout'), window.activeLocation, 'liveDispatch'); if(window.activeLocation) window.startUberMode(); else window.stopUberMode(); };
-window.saveZips = async function(){ const zip = $('leadsZips')?.value; try{ await firebase.database().ref(`userDirectory/${window.UID}/serviceZips`).set(zip); }catch(e){} };
 window.setTab = function(tab){ window.currentTab=tab; if($('tabActive')) $('tabActive').classList.toggle('active', tab==='active'); if($('tabUpcoming')) $('tabUpcoming').classList.toggle('active', tab==='upcoming'); window.subscribeJobs(); };
 window.usernameFromEmail = function(email){ const e=String(email||"").toLowerCase().trim(); return e.split("@")[0].replace(/[^a-z0-9_]/g,"").slice(0,24)||"user"; };
 window.emailLookupKey = function(email){return String(email||"").trim().toLowerCase().replace(/\./g,",");};
 window.loadUserDirectoryCache = async function(){
-    try {
-        const [uSnap, rSnap, mSnap] = await Promise.all([firebase.database().ref(USER_DIR_PATH).once("value"), firebase.database().ref(ROLES_PATH).once("value"), firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value")]);
-        const users = uSnap.val()||{}; const roles = rSnap.val()||{}; const managerAssociates = mSnap.val()||{}; const allUids = Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const byUid = {};
-        allUids.forEach(uid => { const row = users[uid] || {}; const roleRaw = roles[uid] || row.role || "user"; let role = (roleRaw === "god") ? "god" : (roleRaw === "admin" || roleRaw === "branchmanager") ? "admin" : "user"; byUid[uid] = { ...row, uid, email: String(row.email||"").toLowerCase().trim(), role }; });
-        window.userDirCache = { byUid };
-        const pending = [];
-        Object.keys(managerAssociates||{}).forEach(mUid=>{ Object.keys(managerAssociates[mUid]||{}).forEach(tUid=>{ const info = managerAssociates[mUid][tUid]||{}; if(info.status) pending.push({ id: `${mUid}__${tUid}`, requesterUid: mUid, requesterEmail: byUid[mUid]?.email||"", targetUid: tUid, targetEmail: String(info.targetEmail||byUid[tUid]?.email||"").toLowerCase(), status: info.status }); }); });
-        window.pendingRequestCache = pending;
-    } catch(e) { console.warn("Cache load failed", e); }
+try {
+const [uSnap, rSnap, mSnap] = await Promise.all([firebase.database().ref(USER_DIR_PATH).once("value"), firebase.database().ref(ROLES_PATH).once("value"), firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value")]);
+const users = uSnap.val()||{}; const roles = rSnap.val()||{}; const managerAssociates = mSnap.val()||{}; const allUids = Array.from(new Set([...Object.keys(users), ...Object.keys(roles)]));
+const byUid = {};
+allUids.forEach(uid => { const row = users[uid] || {}; const roleRaw = roles[uid] || row.role || "user"; let role = (roleRaw === "god") ? "god" : (roleRaw === "admin" || roleRaw === "branchmanager") ? "admin" : "user"; byUid[uid] = { ...row, uid, email: String(row.email||"").toLowerCase().trim(), role }; });
+window.userDirCache = { byUid };
+const pending = [];
+Object.keys(managerAssociates||{}).forEach(mUid=>{ Object.keys(managerAssociates[mUid]||{}).forEach(tUid=>{ const info = managerAssociates[mUid][tUid]||{}; if(info.status) pending.push({ id: `${mUid}__${tUid}`, requesterUid: mUid, requesterEmail: byUid[mUid]?.email||"", targetUid: tUid, targetEmail: String(info.targetEmail||byUid[tUid]?.email||"").toLowerCase(), status: info.status }); }); });
+window.pendingRequestCache = pending;
+} catch(e) { console.warn("Cache load failed", e); }
 };
 window.managedAssociatesFor = function(uid){ return Object.values(window.userDirCache.byUid||{}).filter(u => String(u.managerUid||"")===String(uid) && String(u.managerStatus||"")==="approved"); };
 window.openTeamModal = function() { if($('teamModal')) $('teamModal').classList.add('show'); window.renderTeamModalBody(); };
 window.closeTeamModal = function() { if($('teamModal')) $('teamModal').classList.remove('show'); };
 window.renderTeamModalBody = async function() {
-    await window.loadUserDirectoryCache(); const byUid = window.userDirCache.byUid || {}; let html = "";
-    if(window.isGodMode()) {
-        html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">Pending Associate Requests</div><div class="teamGrid">`;
-        const pending = window.pendingRequestCache.filter(r => String(r.status||"") === "pending");
-        if(!pending.length) html += `<div class="help">No pending requests.</div>`;
-        else pending.forEach(r => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(byUid[r.targetUid]?.name || r.targetEmail)}</strong><span style="font-size:11px;color:var(--warn)">Requested by: ${window.esc(byUid[r.requesterUid]?.name || r.requesterEmail)}</span></div><div class="teamActions"><button class="chip primary" onclick="window.approveRequest('${window.esc(r.id)}')">Approve</button></div></div>`; });
-        html += `</div><div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">All Users</div><div class="teamGrid">`;
-        Object.values(byUid).sort((a,b) => String(a.name||a.email||"").localeCompare(String(b.name||b.email||""))).forEach(u => { 
-            if(u.role === "system") return; 
-            html += `<div class="teamRow">
-                <div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.role).toUpperCase()}</span></div>
-                <div class="teamActions">
-                    ${u.uid!==window.UID?`<select class="chip" onchange="window.changeUserRole('${u.uid}', this.value, this)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:''}
-                </div>
-            </div>`; 
-        });
-        html += `</div>`;
-    } else if(window.isBranchManagerMode()) {
-        const myTeam = window.managedAssociatesFor(window.UID);
-        html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">My Team</div><div class="teamGrid">`;
-        if(!myTeam.length) html += `<div class="help">No approved associates yet.</div>`;
-        else myTeam.forEach(u => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email)}</strong></div><div class="teamActions"><button class="chip danger" onclick="window.removeAssociate('${u.uid}')">Remove</button></div></div>`; });
-        html += `</div>`;
-    }
-    if($('teamModalBody')) $('teamModalBody').innerHTML = html;
+await window.loadUserDirectoryCache(); const byUid = window.userDirCache.byUid || {}; let html = "";
+if(window.isGodMode()) {
+html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">Pending Associate Requests</div><div class="teamGrid">`;
+const pending = window.pendingRequestCache.filter(r => String(r.status||"") === "pending");
+if(!pending.length) html += `<div class="help">No pending requests.</div>`;
+else pending.forEach(r => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(byUid[r.targetUid]?.name || r.targetEmail)}</strong><span style="font-size:11px;color:var(--warn)">Requested by: ${window.esc(byUid[r.requesterUid]?.name || r.requesterEmail)}</span></div><div class="teamActions"><button class="chip primary" onclick="window.approveRequest('${window.esc(r.id)}')">Approve</button></div></div>`; });
+html += `</div><div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-top:24px; margin-bottom:6px;">All Users</div><div class="teamGrid">`;
+Object.values(byUid).sort((a,b) => String(a.name||a.email||"").localeCompare(String(b.name||b.email||""))).forEach(u => {
+if(u.role === "system") return;
+html += `<div class="teamRow">
+<div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.role).toUpperCase()}</span></div>
+<div class="teamActions">
+${u.uid!==window.UID?`<select class="chip" onchange="window.changeUserRole('${u.uid}', this.value, this)"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:''}
+</div>
+</div>`;
+});
+html += `</div>`;
+} else if(window.isBranchManagerMode()) {
+const myTeam = window.managedAssociatesFor(window.UID);
+html += `<div style="font-size:12px; font-weight:800; color:var(--muted); text-transform:uppercase; margin-bottom:6px;">My Team</div><div class="teamGrid">`;
+if(!myTeam.length) html += `<div class="help">No approved associates yet.</div>`;
+else myTeam.forEach(u => { html += `<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email)}</strong></div><div class="teamActions"><button class="chip danger" onclick="window.removeAssociate('${u.uid}')">Remove</button></div></div>`; });
+html += `</div>`;
+}
+if($('teamModalBody')) $('teamModalBody').innerHTML = html;
 };
 
 window.approveRequest = async function(requestId){
-    const req = window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return;
-    try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`] = req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`] = "approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`] = {status:"approved", targetEmail:String(req.targetEmail).toLowerCase(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.renderTeamModalBody(); }catch(e){ alert("Approve failed"); }
+const req = window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return;
+try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`] = req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`] = "approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`] = {status:"approved", targetEmail:String(req.targetEmail).toLowerCase(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.renderTeamModalBody();
+}catch(e){ alert("Approve failed"); }
 };
 
 window.changeUserRole = async function(targetUid, newRole, selectElem){
-    if(!window.isGodMode()) return;
-    if(selectElem) selectElem.disabled = true;
-    try { 
-        const updates = {};
-        updates[`roles/${targetUid}`] = newRole;
-        updates[`userDirectory/${targetUid}/role`] = newRole;
-        await firebase.database().ref().update(updates); 
-        await window.renderTeamModalBody(); 
-    } catch(e) { 
-        alert("Role update failed. Please check your connection."); 
-    } finally {
-        if(selectElem) selectElem.disabled = false;
-    }
+if(!window.isGodMode()) return;
+if(selectElem) selectElem.disabled = true;
+try {
+const updates = {};
+updates[`roles/${targetUid}`] = newRole;
+updates[`userDirectory/${targetUid}/role`] = newRole;
+await firebase.database().ref().update(updates);
+await window.renderTeamModalBody();
+} catch(e) {
+alert("Role update failed. Please check your connection.");
+} finally {
+if(selectElem) selectElem.disabled = false;
+}
 };
+
+document.addEventListener('DOMContentLoaded', () => {
+    if($('settingsCloseBtn')) $('settingsCloseBtn').addEventListener('click', window.closeSettingsModal);
+    if($('settingsCancelBtn')) $('settingsCancelBtn').addEventListener('click', window.closeSettingsModal);
+    if($('settingsSaveBtn')) $('settingsSaveBtn').addEventListener('click', window.saveSettings);
+    if($('btnTriggerUpload')) $('btnTriggerUpload').addEventListener('click', () => $('set_photoUpload').click());
+    if($('set_photoUpload')) $('set_photoUpload').addEventListener('change', window.handlePhotoUpload);
+
+    document.querySelectorAll('.role-cb').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const sec = document.getElementById(`sec_${e.target.value}`);
+            if(sec) sec.style.display = e.target.checked ? "block" : "none";
+        });
+    });
+});
 
 const ME_AUTH = firebase.auth();
 ME_AUTH.onAuthStateChanged(async u => {
-  if(!u) return location.href="index.html";
-  window.UID = u.uid; 
-  window.ME = u; 
-  
-  const email = String(u.email || "").toLowerCase().trim();
-  if (email === 'dealbankers@gmail.com') {
-      window.hydrateRoleFlags("god");
-      // BACKGROUND FORCE-SYNC SO FIREBASE SECURITY RULES DON'T BLOCK SAVES
-      try {
-          firebase.database().ref(`roles/${u.uid}`).set("god").catch(()=>{});
-          firebase.database().ref(`userDirectory/${u.uid}`).update({role: "god"}).catch(()=>{});
-      } catch(e){}
-  } else {
-      try {
-          const [a, b] = await Promise.all([
-              firebase.database().ref(`roles/${u.uid}`).once('value'),
-              firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
-          ]);
-          const r = a.val() || b.val() || "user";
-          const role = (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user";
-          window.hydrateRoleFlags(role);
-      } catch (e) {
-          window.hydrateRoleFlags("user");
-      }
-  }
+if(!u) return location.href="index.html";
+window.UID = u.uid;
+window.ME = u;
 
-  window.subscribeJobs(); 
-  window.subscribeSelfDir();
+const email = String(u.email || "").toLowerCase().trim();
+if (email === 'dealbankers@gmail.com') {
+window.hydrateRoleFlags("god");
+try {
+firebase.database().ref(`roles/${u.uid}`).set("god").catch(()=>{});
+firebase.database().ref(`userDirectory/${u.uid}`).update({role: "god"}).catch(()=>{});
+} catch(e){}
+} else {
+try {
+const [a, b] = await Promise.all([
+firebase.database().ref(`roles/${u.uid}`).once('value'),
+firebase.database().ref(`userDirectory/${u.uid}/role`).once('value')
+]);
+const r = a.val() || b.val() || "user";
+const role = (r === "god") ? "god" : (r === "admin" || r === "branchmanager") ? "admin" : "user";
+window.hydrateRoleFlags(role);
+} catch (e) {
+window.hydrateRoleFlags("user");
+}
+}
+
+window.subscribeJobs();
+window.subscribeSelfDir();
 });
 </script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </body>
 </html>
