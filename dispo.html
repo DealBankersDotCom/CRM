@@ -148,13 +148,10 @@
     const auth = getAuth(app);
     const dealsContainer = document.getElementById('dealsContainer');
     
-    /* FRAME DETECTION */
     if (window.self === window.top) {
         document.getElementById('chatBubble').style.display = 'flex';
     }
 
-    /* DEAL LOADING & CAROUSEL */
-    // Map to the new standard leadsMaster node for sellers (properties)
     const dealsRef = ref(db, 'leadsMaster/sellers');
     window.dealPhotos = {}; 
 
@@ -170,7 +167,6 @@
       snapshot.forEach(dealSnap => {
         const deal = dealSnap.val();
         
-        // Strict gatekeeper: Must be Live AND Approved by Leadership
         if (!deal || deal.isLive !== true || deal.dispoApproved !== true) return;
         
         hasDeals = true;
@@ -182,9 +178,9 @@
         window.dealPhotos[dealId] = { images: photos, index: 0 };
 
         const dealData = {
-          title: deal.address || 'Confidential Address',
-          location: 'Active Wholesale Deal',
-          price: 'Contact for Price & Access',
+          title: deal.marketingTitle || deal.address || 'Confidential Address',
+          location: deal.marketingTitle ? (deal.address || 'Active Wholesale Deal') : 'Active Wholesale Deal',
+          price: deal.marketingPrice || 'Contact for Price & Access',
           notes: deal.marketingDetails || deal.notes || 'Contact us for more details about this investment opportunity.',
         };
 
@@ -229,7 +225,6 @@
         if(counterEl) counterEl.innerText = `${data.index + 1} / ${data.images.length}`;
     };
 
-    /* CHAT LOGIC */
     let currentUser = null;
     let chatPath = null;
     const chatBubble = document.getElementById('chatBubble');
