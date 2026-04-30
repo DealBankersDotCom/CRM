@@ -297,7 +297,7 @@ body{
 
 <div id="chatBubble" title="Chat">💬<div id="chatBadge"></div></div>
 
-<div id="sidePanel" class="sidebar-panel" aria-hidden="true"><div class="panel-header"><div style="display:flex; align-items:center;"><span id="backToRadar">◀ Back</span><span id="panelTitle" class="panel-title2">Support Chat</span></div><button class="close-btn" id="closePanel" title="Close">✕</button></div><div id="radarList"><div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div></div><div id="chatArea"><div id="chatMsgs"></div><div class="chat-input-row"><input id="chatInput" class="chat-input" type="text" placeholder="Type a message..." /><button id="chatSend" class="send-btn" type="button">➤</button></div></div></div>
+<div id="sidePanel" class="sidebar-panel" aria-hidden="true"><div class="panel-header"><div style="display:flex; align-items:center;"><span id="backToRadar">◀ Back</span><span id="panelTitle" class="panel-title2">Team Radar</span></div><button class="close-btn" id="closePanel" title="Close">✕</button></div><div id="radarList"><div style="padding:20px; text-align:center; color:#666;">Scanning for users...</div></div><div id="chatArea"><div id="chatMsgs"></div><div class="chat-input-row"><input id="chatInput" class="chat-input" type="text" placeholder="Type a message..." /><button id="chatSend" class="send-btn" type="button">➤</button></div></div></div>
 
 <div id="leadModal" class="modal" aria-hidden="true">
   <div class="modalCard" role="dialog" aria-modal="true" aria-label="Lead Editor">
@@ -308,7 +308,7 @@ body{
         <div><div class="lbl">Owner / Primary Name</div><input id="m_owner" class="input" placeholder="JOHN DOE" /></div>
         <div><div class="lbl">Mailing Address</div><input id="m_mailing" class="input" placeholder="Mailing address (optional)" /></div>
         <div><div class="lbl">Lead Status</div><select id="m_status" class="select"><option value="New">New</option><option value="Working">Working</option><option value="Hot">Hot</option><option value="DNC">Do Not Call</option><option value="Done">Done</option></select></div>
-        <div><div class="lbl">Lead Type</div><select id="m_type" class="select"><option value="seller">Seller</option><option value="private wealth investor">Private Wealth Investor</option><option value="realtor">Realtor</option><option value="wholesaler">Wholesaler</option><option value="contractor">Contractor</option><option value="other">Other</option></select></div>
+        <div><div class="lbl">Lead Type</div><select id="m_type" class="select"></select></div>
         
         <div style="background: rgba(0,255,106,0.05); border: 1px solid rgba(0,255,106,0.3); padding: 12px; border-radius: 12px;">
           <div class="lbl" style="color:var(--good);">Network Market Status</div>
@@ -696,7 +696,39 @@ window.normalizePhones = function(lead){const out=[]; if(Array.isArray(lead?.pho
 window.leadStatus = function(lead){const s=(lead?.status||lead?.leadStatus||lead?.state||"").toString().trim(); if(!s) return "New"; const up=s.toLowerCase(); if(up.includes("dnc")) return "DNC"; if(up.includes("hot")) return "Hot"; if(up.includes("work")) return "Working"; if(up.includes("done")||up.includes("closed")) return "Done"; return s;}
 window.badgeHTML = function(lead,legacy){const s=(lead?.status||"New"); const cls=(s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new"; let html = `<span class="badge ${cls}">${window.esc(s==="DNC"?"DNC":s)}</span>${legacy?'<span class="badge legacy">LEGACY</span>':''}`; if(lead?.isLive) html += `<span class="badge live">LIVE / JV</span>`; return html;}
 window.isArchivedLead = function(lead){const v=lead?.archived; return v===true||String(v).toLowerCase()==="true"||v===1||String(v)==="1";}
-window.applySearch = function(){const q=($("s_q")?.value||"").toLowerCase().trim(); window.sellerView=!q?window.sellerList.slice():window.sellerList.filter(l=>{const hay=[l.address||"",l.Address||"",l.owner||"",l.Owner||"",l.notes||"",l.Notes||"",window.normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); return hay.includes(q);}); window.sellerView=window.sellerView.filter(l=>!window.isArchivedLead(l)); window.renderQueue(); if(window.sellerView.length){if(window.currentLeadId){const idx=window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId); if(idx>=0) return window.selectLeadByIndex(idx);} window.selectLeadByIndex(Math.min(Math.max(window.currentIndex,0), window.sellerView.length-1));} else {window.clearConsole(); window.updatePager();}}
+
+window.applySearch = function(){
+  const q = ($("s_q")?.value||"").toLowerCase().trim(); 
+  let view = window.sellerList.slice();
+  
+  if (window.currentCategory === 'buyers') {
+      view = view.filter(l => String(l.type||"").toLowerCase() === "private wealth investor");
+  } else if (window.currentCategory === 'sellers') {
+      view = view.filter(l => {
+          const t = String(l.type||"").toLowerCase();
+          return t !== "private wealth investor" && t !== "buyer";
+      });
+  }
+  
+  if (q) {
+      view = view.filter(l => {
+          const hay = [l.address||"", l.Address||"", l.owner||"", l.Owner||"", l.notes||"", l.Notes||"", window.normalizePhones(l).map(x=>x.phone).join(" ")].join(" ").toLowerCase(); 
+          return hay.includes(q);
+      });
+  }
+  
+  window.sellerView = view.filter(l => !window.isArchivedLead(l)); 
+  window.renderQueue(); 
+  if(window.sellerView.length){
+      if(window.currentLeadId){
+          const idx = window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId); 
+          if(idx>=0) return window.selectLeadByIndex(idx);
+      } 
+      window.selectLeadByIndex(Math.min(Math.max(window.currentIndex,0), window.sellerView.length-1));
+  } else {
+      window.clearConsole(); window.updatePager();
+  }
+}
 
 window.renderQueue = function(){
   const el=$("leadList");
@@ -882,11 +914,7 @@ window.subscribeAssociateAssignedLeads = function(){
     if(val && typeof val==="object" && !Array.isArray(val)){
       const maybeLeadId=String(val.id||val.docnum||key||""); 
       const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones)); 
-      if(hasLeadShape && maybeLeadId) {
-        if (window.currentCategory === 'buyers' && (val.type||'').toLowerCase() !== 'private wealth investor' && (val.type||'').toLowerCase() !== 'buyer') return;
-        if (window.currentCategory === 'sellers' && ((val.type||'').toLowerCase() === 'private wealth investor' || (val.type||'').toLowerCase() === 'buyer')) return;
-        mergeLead(maybeLeadId, val, "flat");
-      }
+      if(hasLeadShape && maybeLeadId) mergeLead(maybeLeadId, val, "flat");
     }
   };
   flatRef.on("child_added", handleFlat); flatRef.on("child_changed", handleFlat); flatRef.on("child_removed", snap=>removeLead(snap.key, "flat"));
@@ -985,13 +1013,22 @@ window.openLeadModal = function(mode){
       if (!window.isGod) window.fetchQuotas();
   }
 
+  const typeSelect = $("m_type");
+  if(typeSelect) {
+      if(window.currentCategory === 'buyers') {
+          typeSelect.innerHTML = '<option value="private wealth investor">Private Wealth Investor</option>';
+      } else {
+          typeSelect.innerHTML = '<option value="seller">Seller</option><option value="realtor">Realtor</option><option value="wholesaler">Wholesaler</option><option value="contractor">Contractor</option><option value="other">Other</option>';
+      }
+  }
+
   if(isEdit&&window.currentLead){
     window.modalLeadId=window.currentLeadId; 
     if($("m_address")) $("m_address").value=window.currentLead.address||window.currentLead.Address||""; 
     if($("m_owner")) $("m_owner").value=window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||""; 
     if($("m_mailing")) $("m_mailing").value=window.currentLead.mailing||window.currentLead.Mailing||window.currentLead.mailingAddress||""; 
     if($("m_status")) $("m_status").value=window.leadStatus(window.currentLead); 
-    if($("m_type")) $("m_type").value=window.currentLead.type||(window.currentCategory === 'buyers' ? 'private wealth investor' : 'seller'); 
+    if($("m_type")) $("m_type").value=window.currentLead.type || (window.currentCategory === 'buyers' ? 'private wealth investor' : 'seller'); 
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
     if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
@@ -1173,7 +1210,7 @@ window.closeSupportModal = function(){if($("supportModal")) $("supportModal").st
 window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`); const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
 
 window.startRadar = function(){
-  if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Admin Radar";
+  if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
   firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
     const v=snap.val()||{}; 
@@ -1250,7 +1287,7 @@ window.openPanel = function(){
     }
 } 
 window.closePanel = function(){if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }}
-window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="📡 Network Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
+window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
 
 /* --- SETTINGS CHAMELEON LOGIC --- */
 window.loadSettings = async function() {
