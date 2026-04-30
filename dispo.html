@@ -22,11 +22,8 @@
 
     /* COMPACT GRID */
     .deal-container { 
-      padding: 20px; 
-      display: grid; 
-      /* Smaller min-width (300px) allows more cards per row */
-      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); 
-      gap: 20px; 
+      padding: 20px; display: grid; 
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; 
       max-width: 1600px; margin: 0 auto;
     }
     
@@ -61,7 +58,7 @@
 
     .deal-details { padding: 12px; flex: 1; display: flex; flex-direction: column; }
     .deal-title { font-size: 1rem; font-weight: 700; margin: 0 0 4px 0; color: #f3f4f6; }
-    .deal-location { font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; }
+    .deal-location { font-size: 0.8rem; color: #9ca3af; margin-bottom: 8px; font-weight:600;}
     .deal-price { font-size: 1.1rem; color: #10b981; font-weight: 700; margin-bottom: 8px; }
     .deal-notes { font-size: 0.85rem; color: #d1d5db; white-space: pre-line; margin-bottom: 12px; line-height: 1.3; flex: 1; }
     
@@ -141,23 +138,24 @@
       authDomain: "deal-bankers.firebaseapp.com",
       databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
       projectId: "deal-bankers",
-      storageBucket: "deal-bankers.appspot.com",
+      storageBucket: "deal-bankers.firebasestorage.app",
       messagingSenderId: "485110155601",
       appId: "1:485110155601:web:b4c38350ac58c1a2ecab70"
     };
-
+    
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
     const dealsContainer = document.getElementById('dealsContainer');
-
+    
     /* FRAME DETECTION */
     if (window.self === window.top) {
         document.getElementById('chatBubble').style.display = 'flex';
     }
 
     /* DEAL LOADING & CAROUSEL */
-    const dealsRef = ref(db, 'deals');
+    // Map to the new standard leadsMaster node for sellers (properties)
+    const dealsRef = ref(db, 'leadsMaster/sellers');
     window.dealPhotos = {}; 
 
     onValue(dealsRef, (snapshot) => {
@@ -167,31 +165,34 @@
         return;
       }
 
-      snapshot.forEach(uidSnap => {
-        uidSnap.forEach(dealSnap => {
-          const deal = dealSnap.val();
-          if (!deal || (deal.status && deal.status.toLowerCase() !== 'active')) return;
+      let hasDeals = false;
 
-          const dealId = dealSnap.key;
-          const photos = Array.isArray(deal.photos) ? deal.photos : [];
-          
-          if(photos.length === 0) photos.push('https://via.placeholder.com/400x225?text=No+Images');
+      snapshot.forEach(dealSnap => {
+        const deal = dealSnap.val();
+        
+        // Strict gatekeeper: Must be Live AND Approved by Leadership
+        if (!deal || deal.isLive !== true || deal.dispoApproved !== true) return;
+        
+        hasDeals = true;
+        const dealId = dealSnap.key;
+        const photos = (Array.isArray(deal.photos) && deal.photos.length > 0) ? deal.photos : [];
+        
+        if(photos.length === 0) photos.push('https://via.placeholder.com/400x225?text=No+Images');
 
-          window.dealPhotos[dealId] = { images: photos, index: 0 };
+        window.dealPhotos[dealId] = { images: photos, index: 0 };
 
-          const dealData = {
-            title: deal.title || 'Untitled Deal',
-            location: deal.location || deal.address || 'Unknown',
-            price: deal.price ? `$${Number(deal.price).toLocaleString()}` : 'Contact for Price',
-            notes: deal.notes || '',
-          };
+        const dealData = {
+          title: deal.address || 'Confidential Address',
+          location: 'Active Wholesale Deal',
+          price: 'Contact for Price & Access',
+          notes: deal.marketingDetails || deal.notes || 'Contact us for more details about this investment opportunity.',
+        };
 
-          const card = document.createElement('div');
-          card.classList.add('deal-card');
-          
-          const showArrows = photos.length > 1 ? '' : 'display:none;';
-          
-          card.innerHTML = `
+        const card = document.createElement('div');
+        card.classList.add('deal-card');
+        const showArrows = photos.length > 1 ? '' : 'display:none;';
+        
+        card.innerHTML = `
             <div class="deal-gallery" id="gallery-${dealId}">
               <img src="${photos[0]}" id="img-${dealId}" alt="Deal Image" loading="lazy" />
               <button class="carousel-btn prev-btn" style="${showArrows}" onclick="changePhoto('${dealId}', -1)">&#10094;</button>
@@ -200,16 +201,19 @@
             </div>
             <div class="deal-details">
               <h2 class="deal-title">${dealData.title}</h2>
-              <p class="deal-location">📍 ${dealData.location}</p>
+              <p class="deal-location">⚡ ${dealData.location}</p>
               <p class="deal-price">${dealData.price}</p>
               <div class="deal-notes">${dealData.notes}</div>
               <button class="viewDealBtn" onclick="openChatWithContext('${dealData.title}')">
                 I'm Interested
               </button>
             </div>`;
-          dealsContainer.appendChild(card);
-        });
+        dealsContainer.appendChild(card);
       });
+
+      if(!hasDeals) {
+         dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals currently available on the Dispo Board.</p>`;
+      }
     });
 
     window.changePhoto = (dealId, direction) => {
@@ -218,6 +222,7 @@
         data.index += direction;
         if (data.index < 0) data.index = data.images.length - 1;
         if (data.index >= data.images.length) data.index = 0;
+        
         const imgEl = document.getElementById(`img-${dealId}`);
         const counterEl = document.getElementById(`counter-${dealId}`);
         if(imgEl) imgEl.src = data.images[data.index];
@@ -231,12 +236,12 @@
     const chatPanel = document.getElementById('chatPanel');
     const chatInput = document.getElementById('chatInput');
     const chatBody = document.getElementById('chatBody');
-
+    
     chatBubble.onclick = () => {
       chatPanel.classList.toggle('open');
       if(chatPanel.classList.contains('open')) chatBody.scrollTop = chatBody.scrollHeight;
     };
-
+    
     window.openChatWithContext = (dealTitle) => {
         if (window.self === window.top) {
             chatPanel.classList.add('open');
@@ -266,7 +271,7 @@
             signInAnonymously(auth).catch(console.error);
         }
     });
-
+    
     function setupChat(uid) {
         chatPath = `direct_messages/${uid}`;
         const chatRef = ref(db, chatPath);
@@ -283,6 +288,7 @@
 
     document.getElementById('chatSend').onclick = sendMessage;
     chatInput.addEventListener('keypress', (e) => { if(e.key === "Enter") sendMessage(); });
+    
     function sendMessage() {
         const text = chatInput.value.trim();
         if (!text || !currentUser) return;
