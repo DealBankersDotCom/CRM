@@ -250,7 +250,7 @@ body{
             ⚡ QUICK LOG (Status & Notes)
           </button>
 
-          <div class="field" style="border-color: rgba(0,255,106,0.3); background: rgba(0,255,106,0.05); margin-top:16px;">
+          <div class="field" id="dispoHubWrapper" style="display:none; border-color: rgba(0,255,106,0.3); background: rgba(0,255,106,0.05); margin-top:16px;">
             <div class="field-label" style="color:var(--good);">Dispo / JV Hub</div>
             <div id="dispoHubContent" style="font-size:13px; color:#9ab9d6;">Select a lead to view Dispo status.</div>
           </div>
@@ -762,6 +762,7 @@ window.clearConsole = function(){
   if($("leadAddress")) $("leadAddress").textContent="No lead selected"; 
   if($("leadOwner")) $("leadOwner").textContent="Select a lead from the queue."; 
   if($("dispoHubContent")) $("dispoHubContent").innerHTML="Select a lead to view Dispo status.";
+  if($("dispoHubWrapper")) $("dispoHubWrapper").style.display="none";
   if($("phoneSelect")) { $("phoneSelect").innerHTML=""; $("phoneSelect").disabled=true; }
   if($("callBtn")) $("callBtn").disabled=true;
   if($("copyBtn")) $("copyBtn").disabled=true; 
@@ -787,16 +788,20 @@ window.selectLeadByIndex = function(idx){
   if(notes) { if($("leadNotesField")) $("leadNotesField").style.display=""; if($("leadNotesText")) $("leadNotesText").textContent=notes; } else { if($("leadNotesField")) $("leadNotesField").style.display="none"; }
 
   const dh = $("dispoHubContent");
+  const dhw = $("dispoHubWrapper");
   if (dh) {
       if (!window.currentLead.isLive) {
           dh.innerHTML = "Deal is not marked for Network JV.";
+          if(dhw) dhw.style.display="none";
       } else if (!window.currentLead.dispoApproved) {
           let dhtml = "<span style='color:var(--warn); font-weight:800;'>Status: Pending Leadership Approval</span>";
           if (window.isGod) dhtml += `<br><button class="btn primary tiny btn-approve-dispo" style="margin-top:8px">Approve for Dispo</button>`;
           dh.innerHTML = dhtml;
+          if(dhw) dhw.style.display="block";
       } else {
           dh.innerHTML = `<span style='color:var(--good); font-weight:800;'>Status: Approved for Dispo Board</span><br>
           <button class="btn tiny btn-upload-photos" style="margin-top:8px; background:var(--accent); color:#fff;">📷 Upload Photos</button>`;
+          if(dhw) dhw.style.display="block";
       }
   }
 
