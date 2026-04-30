@@ -179,6 +179,9 @@ body{
 .deal-photo-thumb { width:100%; aspect-ratio:1; border-radius:8px; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,.2); position:relative; overflow:hidden;}
 .deal-photo-del { position:absolute; top:4px; right:4px; background:rgba(0,0,0,.7); color:#fff; border:none; width:20px; height:20px; border-radius:50%; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
 .deal-photo-del:hover { background:var(--bad);}
+
+#btnApprovals { background: rgba(255,42,42,.15); border-color: rgba(255,42,42,.4); }
+#btnApprovals:hover { background: rgba(255,42,42,.25); transform:translateY(-1px); }
 </style>
 </head>
 <body data-portal="wholesaler">
@@ -189,6 +192,10 @@ body{
     <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
   </div>
   <nav class="nav">
+    <button class="icon-btn" id="btnApprovals" type="button" title="Pending Approvals" style="display:none; position:relative; width:auto; padding:0 12px; border-radius:8px;">
+      🔔 <span style="font-size:12px; font-weight:900; margin-left:6px;">Approvals</span>
+      <span id="approvalBadge" style="display:none; position:absolute; top:-6px; right:-6px; background:var(--hot); color:white; font-size:10px; border-radius:10px; padding:2px 6px; font-weight:bold; box-shadow:0 0 8px rgba(255,0,0,0.8);">0</span>
+    </button>
     <a class="chip" href="profile.html">Dashboard</a>
     <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;">👥 Team</button>
     <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone">☎</button>
@@ -269,6 +276,18 @@ body{
       <div id="panel-market" style="display:none; height:80vh; grid-column:1 / -1;"><div class="card" style="height:100%; display:flex; flex-direction:column;"><div class="top"><div style="display:flex;align-items:center;gap:10px"><div style="font-weight:900;letter-spacing:.12em;font-size:12px;color:#cfe3ff">● MARKET</div><div style="font-size:12px;color:#9ab9d6">Live Deals / Inventory Board</div><span class="pill" id="dispoHintPill">System Online</span></div><div><a class="chip" href="dispo.html" target="_blank" rel="noreferrer">Open Fullscreen</a><button class="chip primary" id="dispoRefreshBtn" type="button">Refresh</button></div></div><div style="position:relative;width:100%;height:100%;flex:1;background:#0b1825"><iframe id="iframeDispo" src="dispo.html" loading="lazy" referrerpolicy="no-referrer" style="width:100%;height:100%;border:none;display:block;background:#0b1825"></iframe><div style="position:absolute;top:0;left:0;right:0;height:56px;background:#0b1825;border-bottom:1px solid rgba(255,255,255,.12);z-index:5;pointer-events:auto" aria-hidden="true"></div></div></div></div>
     </div>
   </section>
+</div>
+
+<div id="approvalsModal" class="modal" aria-hidden="true">
+  <div class="modalCard" style="max-width: 640px;">
+    <div class="modalHead">
+      <div><strong style="font-size:14px; text-transform:uppercase; letter-spacing:1px; color:#fff;">Pending Network Approvals</strong><div class="status" style="margin-top:4px;">Deals requested to go live by your team.</div></div>
+      <button class="iconBtn" id="approvalsCloseBtn">✕</button>
+    </div>
+    <div class="modalBody">
+       <div id="approvalsListContent" style="display:flex; flex-direction:column; gap:10px;"></div>
+    </div>
+  </div>
 </div>
 
 <div id="flyoutOverlay" class="modalOverlay" style="z-index:10999;"></div>
@@ -469,6 +488,8 @@ window.modalMode = "new"; window.modalLeadId = null; window.branchLeadRefs = [];
 window.userQuotas = { firstTs: 0, analysis: 0, skip: 0 };
 window.currentCategory = "sellers";
 window.modalCurrentPhotos = [];
+window.pendingApprovals = [];
+window.pendingSelectId = null;
 
 const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; const USER_DIR_PATH="userDirectory";
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
@@ -485,6 +506,91 @@ window.emailLookupKey = function(email){return String(email||"").trim().toLowerC
 window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin"; return "user";} 
 window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} 
 window.isAdminLike = function(){return window.isGod||window.isBranchManager;}
+
+/* --- NOTIFICATION BELL LOGIC --- */
+window.initApprovalListener = function() {
+    if (!window.isGod) return;
+    const btn = $('btnApprovals');
+    if (btn) btn.style.display = 'flex';
+
+    const updateBadge = () => {
+        const count = window.pendingApprovals.length;
+        const badge = $('approvalBadge');
+        if (badge) {
+            if (count > 0) {
+                badge.style.display = 'inline-block';
+                badge.textContent = count;
+            } else {
+                badge.style.display = 'none';
+            }
+        }
+    };
+
+    const processCat = (snap, cat) => {
+        const data = snap.val() || {};
+        window.pendingApprovals = window.pendingApprovals.filter(l => l.__cat !== cat);
+        Object.keys(data).forEach(k => {
+            const lead = data[k];
+            if (lead && lead.isLive === true && lead.dispoApproved !== true) {
+                window.pendingApprovals.push({ ...lead, id: k, __cat: cat });
+            }
+        });
+        window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+        updateBadge();
+    };
+
+    firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).on('value', s => processCat(s, 'sellers'));
+    firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).on('value', s => processCat(s, 'buyers'));
+};
+
+window.openApprovalsModal = function() {
+    const c = $('approvalsListContent');
+    if(!c) return;
+    if(window.pendingApprovals.length === 0) {
+        c.innerHTML = `<div class="help" style="text-align:center; padding:20px;">No pending approvals at this time.</div>`;
+    } else {
+        c.innerHTML = window.pendingApprovals.map(l => `
+            <div class="teamRow" style="cursor:pointer; background: rgba(43,116,255,0.05); border-color: rgba(43,116,255,0.2);" onclick="window.openApprovalLead('${window.esc(l.id)}', '${window.esc(l.__cat)}')">
+                <div class="teamMeta">
+                    <strong style="color:#cfe3ff; font-size:14px;">${window.esc(l.address || l.owner || 'Unknown Target')}</strong>
+                    <span style="font-size:11px; color:#9ab9d6;">Category: <span style="color:#fff;">${l.__cat === 'buyers' ? 'Dispo/Buyer' : 'Acq/Seller'}</span> | Requested By: <span style="color:#fff;">${window.esc(l.updatedBy || l.createdBy || 'Unknown')}</span></span>
+                </div>
+                <div class="teamActions">
+                    <button class="btn primary tiny">Review Deal</button>
+                </div>
+            </div>
+        `).join('');
+    }
+    const m = $('approvalsModal');
+    if(m) m.style.display = 'flex';
+};
+
+window.closeApprovalsModal = function() {
+    const m = $('approvalsModal');
+    if(m) m.style.display = 'none';
+};
+
+window.openApprovalLead = function(id, cat) {
+    window.closeApprovalsModal();
+    window.pendingSelectId = id;
+    if (window.currentCategory !== cat) {
+        window.switchCategory(cat);
+    } else {
+        const sq = $('s_q');
+        if(sq) sq.value = "";
+        window.applySearch();
+    }
+};
+
+window.applyPendingSelection = function() {
+    if (!window.pendingSelectId || !window.sellerView) return;
+    const idx = window.sellerView.findIndex(l => window.leadIdFor(l) === window.pendingSelectId);
+    if (idx >= 0) {
+        window.selectLeadByIndex(idx);
+        window.pendingSelectId = null;
+    }
+};
+/* -------------------------------- */
 
 window.switchCategory = function(cat) {
     if(window.currentCategory === cat && $("panel-acq") && $("panel-acq").style.display !== "none") return;
@@ -756,12 +862,17 @@ window.applySearch = function(){
   if(window.sellerView.length){
       if(window.currentLeadId){
           const idx = window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId); 
-          if(idx>=0) return window.selectLeadByIndex(idx);
+          if(idx>=0) {
+              window.selectLeadByIndex(idx);
+              window.applyPendingSelection();
+              return;
+          }
       } 
       window.selectLeadByIndex(Math.min(Math.max(window.currentIndex,0), window.sellerView.length-1));
   } else {
       window.clearConsole(); window.updatePager();
   }
+  window.applyPendingSelection();
 }
 
 window.renderQueue = function(){
@@ -1239,10 +1350,19 @@ window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUi
   if(window.modalMode==="edit"&&window.currentLead){ const prev=Object.keys(window.currentLead.assignedTo||{}).filter(uid=>window.currentLead.assignedTo[uid]); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
+
 window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
   const updates={};
   assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  if(window.modalMode==="edit"&&window.currentLead){ const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); }
+  
+  const masterPayload = {...payload, id:leadId, assignedTo: {}, assignedUids: assigneeUids};
+  assigneeUids.forEach(uid => masterPayload.assignedTo[uid] = true);
+  updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = masterPayload;
+
+  if(window.modalMode==="edit"&&window.currentLead){ 
+      const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); 
+      prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); 
+  }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
 
@@ -1281,15 +1401,17 @@ window.saveLeadFromModal = async function(skipClose){
       let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       window.modalLeadId = leadId;
-      await window.upsertBranchAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
-      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false}); }
+      const payloadWithMeta = {...payload, createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false};
+      await window.upsertBranchAssignments(leadId, payloadWithMeta, uids);
     } else {
       const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       window.modalLeadId = leadId;
       const finalUpdates = {};
-      finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:window.ME?.email||"",createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")};
-      if(payload.isLive) { finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false}; }
+      const payloadWithMeta = {...payload, id:leadId, archived:false, updatedAt:Date.now(), updatedBy:window.ME?.email||"", createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false};
+      
+      finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = payloadWithMeta;
+      finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payloadWithMeta, assignedTo:{[window.UID]:true}, assignedUids:[window.UID]};
       await firebase.database().ref().update(finalUpdates);
     }
     
@@ -1645,6 +1767,8 @@ function initStaticEvents() {
     attach('btnTeam', window.openTeamModal);
     attach('btnBlueSupport', () => window.openSupportModal('blue'));
     attach('btnRedSupport', () => window.openSupportModal('red'));
+    attach('btnApprovals', window.openApprovalsModal);
+    attach('approvalsCloseBtn', window.closeApprovalsModal);
     
     attach('btnSettings', () => { window.loadSettings(); $('settingsModal').style.display = 'flex'; });
     attach('settingsCloseBtn', () => $('settingsModal').style.display = 'none');
@@ -1815,6 +1939,7 @@ firebase.auth().onAuthStateChanged(async u=>{
     
     if(window.isGod) { 
         window.listenForGlobalAdminPings(); 
+        window.initApprovalListener();
     } else { 
         window.listenForUnreadMessages(`${DMS_PATH}/${window.UID}/messages`); 
     }
