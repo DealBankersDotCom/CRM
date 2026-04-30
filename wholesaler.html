@@ -602,23 +602,15 @@ window.closeApprovalsModal = function() {
 window.openApprovalLead = function(id, cat) {
     window.closeApprovalsModal();
     window.pendingSelectId = id;
+    const sq = $('s_q');
+    if(sq) sq.value = "";
     if (window.currentCategory !== cat) {
         window.switchCategory(cat);
     } else {
-        const sq = $('s_q');
-        if(sq) sq.value = "";
         window.applySearch();
     }
 };
 
-window.applyPendingSelection = function() {
-    if (!window.pendingSelectId || !window.sellerView) return;
-    const idx = window.sellerView.findIndex(l => window.leadIdFor(l) === window.pendingSelectId);
-    if (idx >= 0) {
-        window.selectLeadByIndex(idx);
-        window.pendingSelectId = null;
-    }
-};
 /* -------------------------------- */
 
 window.switchCategory = function(cat) {
@@ -888,20 +880,32 @@ window.applySearch = function(){
   
   window.sellerView = view.filter(l => !window.isArchivedLead(l)); 
   window.renderQueue(); 
+
+  if (window.pendingSelectId) {
+      const idx = window.sellerView.findIndex(x => window.leadIdFor(x) === window.pendingSelectId);
+      if (idx >= 0) {
+          window.selectLeadByIndex(idx);
+          window.pendingSelectId = null;
+          return;
+      }
+  }
+
   if(window.sellerView.length){
-      if(window.currentLeadId){
+      if(window.currentLeadId && !window.pendingSelectId){
           const idx = window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId); 
           if(idx>=0) {
               window.selectLeadByIndex(idx);
-              window.applyPendingSelection();
               return;
           }
       } 
-      window.selectLeadByIndex(Math.min(Math.max(window.currentIndex,0), window.sellerView.length-1));
+      if(!window.pendingSelectId) {
+          window.selectLeadByIndex(Math.min(Math.max(window.currentIndex,0), window.sellerView.length-1));
+      } else {
+          window.clearConsole(); window.updatePager();
+      }
   } else {
       window.clearConsole(); window.updatePager();
   }
-  window.applyPendingSelection();
 }
 
 window.renderQueue = function(){
@@ -1137,7 +1141,6 @@ window.subscribeGodAllLeads = function(){
   const checkDone = () => {
       if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
       else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`; }
-      window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager();
   };
 
   const processSnap = (id, val, isLegacy) => {
@@ -1168,7 +1171,6 @@ window.subscribeGodAllLeads = function(){
 
           window.setListFromMap(byId);
           checkDone();
-          window.applyPendingSelection();
       } catch(e) {
           console.error("God Mode Sync Error:", e);
           if($("status")) $("status").textContent=`Sync Error. Check DB Rules.`;
@@ -1179,13 +1181,9 @@ window.subscribeGodAllLeads = function(){
   
   const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`);
   window.branchLeadRefs.push(masterRef);
-  masterRef.on('child_added', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); window.applyPendingSelection(); });
-  masterRef.on('child_changed', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); window.applyPendingSelection(); });
+  masterRef.on('child_added', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); });
+  masterRef.on('child_changed', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); });
   masterRef.on('child_removed', s => { byId.delete(s.key); window.setListFromMap(byId); checkDone(); });
-
-  const usersRef = firebase.database().ref(`${LEADS_BY_USER_PATH}`);
-  window.branchLeadRefs.push(usersRef);
-  usersRef.on('child_changed', s => { syncAll(); }); 
 
   if($("btnImportLegacy")) $("btnImportLegacy").style.display="";
 }
@@ -2009,7 +2007,6 @@ firebase.auth().onAuthStateChanged(async u=>{
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
-  try{ await window.loadUserDirectoryCache(); }catch(e){}
 
   try{
     if(window.isGod){ window.subscribeGodAllLeads(); }
