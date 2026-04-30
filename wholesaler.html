@@ -169,8 +169,11 @@ body{
 /* Settings Specific Mods */
 .photo-upload-area { display:flex; align-items:center; gap:16px; margin-bottom:12px; }
 .photo-preview { width:80px; height:80px; border-radius:50%; background:#133e6a; border:2px solid var(--accent); background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:24px; color:#fff;}
-.role-section { margin-top:20px; padding:16px; border:1px dashed rgba(255,255,255,.15); border-radius:12px; background:rgba(0,0,0,.2); }
-.role-section .lbl { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:6px; font-family:system-ui, sans-serif; }
+.role-checkboxes {display:flex; gap:16px; flex-wrap:wrap; margin-top:8px;}
+.role-checkboxes label {color:#fff; font-size:13px; font-weight:600; display:flex; align-items:center; gap:8px; cursor:pointer;}
+.role-checkboxes input[type="checkbox"] {width:18px; height:18px; cursor:pointer;}
+.role-section { display:none; margin-top:20px; padding:16px; border:1px dashed rgba(255,255,255,.15); border-radius:12px; background:rgba(0,0,0,.2); }
+.role-section .lbl { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:6px;}
 </style>
 </head>
 <body data-portal="wholesaler">
@@ -355,35 +358,70 @@ Daughter Lisa | 210-555-2222"></textarea></div>
   <div class="modalCard" style="max-width: 640px;">
     <div class="modalHead">
       <div>
-        <div class="modalTitle" style="font-size:15px; color:#fff; font-weight:900; letter-spacing:0.08em; text-transform:uppercase;">Wholesaler Profile Settings</div>
-        <div class="modalSub">Update your photo and wholesale track record.</div>
+        <div class="modalTitle" style="font-size:15px; color:#fff; font-weight:900; letter-spacing:0.08em; text-transform:uppercase;">Account Settings</div>
+        <div class="modalSub">Update your global photo and portal-specific pitches.</div>
       </div>
       <button class="iconBtn" id="settingsCloseBtn">✕</button>
     </div>
     <div class="modalBody">
        <div class="field" style="padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,.1);">
-         <div class="field-label">Profile Photo</div>
+         <div class="field-label">Global Profile Photo</div>
          <div class="photo-upload-area" style="display:flex; align-items:center; gap:16px;">
             <div class="photo-preview" id="set_photoPreview" style="width:80px; height:80px; border-radius:50%; background:#133e6a; border:2px solid var(--accent); background-size:cover; background-position:center; display:flex; align-items:center; justify-content:center; font-weight:900; font-size:24px; color:#fff;">U</div>
             <div style="flex:1;">
                 <input type="file" id="set_photoUpload" accept="image/*" style="display:none;" />
                 <button class="btn primary" id="btnTriggerUpload" type="button" style="padding:10px 14px; font-size:13px;">Upload New Photo</button>
-                <div style="font-size:11px; color:var(--muted); margin-top:8px;">Max size 15MB. JPG, PNG. Auto-compressed.</div>
+                <div style="font-size:11px; color:var(--muted); margin-top:8px;">Max size 15MB. JPG, PNG.</div>
                 <input type="hidden" id="set_photoUrlHidden" />
             </div>
          </div>
        </div>
-       
-       <div class="role-section" id="sec_wholesaler" style="border-color:var(--accent); display:block; padding:0; border:none; background:transparent; margin-top:0;">
-         <div class="field">
-           <div class="field-label">Wholesale Bio / Pitch</div>
-           <textarea id="bio_wholesaler" class="input ta" placeholder="Target markets, acquisition strategy, monthly volume..."></textarea>
-         </div>
-         <div class="field" style="margin-bottom:0;">
-           <div class="field-label">Key Metrics / Experience</div>
-           <input type="text" id="exp_wholesaler" class="input" placeholder="e.g. 5 yrs exp, 10+ deals/mo">
+
+       <div class="field" style="padding-bottom:20px; border-bottom:1px solid rgba(255,255,255,.1);">
+         <div class="field-label">Active Platform Roles</div>
+         <div style="font-size:12px; color:var(--muted); margin-bottom:10px;">Check the roles you actively operate in.</div>
+         <div class="role-checkboxes">
+            <label><input type="checkbox" id="set_isWholesaler" class="role-cb" value="wholesaler"> Wholesaler</label>
+            <label><input type="checkbox" id="set_isContractor" class="role-cb" value="contractor"> Contractor</label>
+            <label><input type="checkbox" id="set_isRealtor" class="role-cb" value="realtor"> Realtor</label>
+            <label><input type="checkbox" id="set_isInvestor" class="role-cb" value="investor"> Investor</label>
          </div>
        </div>
+
+       <div id="roleSectionsContainer">
+         <div class="role-section" id="sec_wholesaler" style="border-color:var(--accent);">
+            <div class="lbl" style="color:var(--accent);">Wholesaler Pitch</div>
+            <div class="field" style="margin-bottom:0;">
+                <div class="field-label">Acquisition Strategy & Markets</div>
+                <textarea id="bio_wholesaler" class="input ta" placeholder="Target markets, acquisition strategy, monthly volume..."></textarea>
+            </div>
+         </div>
+
+         <div class="role-section" id="sec_contractor" style="border-color:#ffb020;">
+            <div class="lbl" style="color:#ffb020;">Contractor Pitch</div>
+            <div class="field" style="margin-bottom:0;">
+                <div class="field-label">Trades & Specialties</div>
+                <textarea id="bio_contractor" class="input ta" placeholder="Licensed trades, specialties, typical job sizes..."></textarea>
+            </div>
+         </div>
+
+         <div class="role-section" id="sec_realtor" style="border-color:var(--good);">
+            <div class="lbl" style="color:var(--good);">Realtor Pitch</div>
+            <div class="field" style="margin-bottom:0;">
+                <div class="field-label">Brokerage & Focus</div>
+                <textarea id="bio_realtor" class="input ta" placeholder="Brokerage affiliation, primary focus (commercial, residential)..."></textarea>
+            </div>
+         </div>
+
+         <div class="role-section" id="sec_investor" style="border-color:#a855f7;">
+            <div class="lbl" style="color:#a855f7;">Investor Pitch</div>
+            <div class="field" style="margin-bottom:0;">
+                <div class="field-label">Target Buy Box</div>
+                <textarea id="bio_investor" class="input ta" placeholder="Investment criteria, capital stack, preferred asset classes..."></textarea>
+            </div>
+         </div>
+       </div>
+
     </div>
     <div class="modalActions">
       <span id="settingsStatus" style="color:var(--good); display:none; margin-right:auto; font-weight:800; font-size:12px;">Saved ✓</span>
@@ -1138,7 +1176,16 @@ window.startRadar = function(){
   if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Admin Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
   firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
-    const v=snap.val()||{}; let users=Object.values(v).filter(x=>x&&x.online&&String(x.uid||"")!==String(window.UID));
+    const v=snap.val()||{}; 
+    let users=Object.values(v).filter(x=>{
+        if(!x||!x.online||String(x.uid||"")===String(window.UID)) return false;
+        if(window.isGod) return true;
+        if(window.isBranchManager) {
+            const uInfo = window.userDirCache.byUid[x.uid];
+            return uInfo && String(uInfo.managerUid) === String(window.UID) && String(uInfo.managerStatus) === "approved";
+        }
+        return false;
+    });
     if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
     let html = "";
@@ -1227,6 +1274,20 @@ window.loadSettings = async function() {
         const roles = data.roles || {};
         $("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
         $("exp_wholesaler").value = roles.wholesaler?.experience || "";
+        $("bio_contractor").value = roles.contractor?.bio || "";
+        $("bio_realtor").value = roles.realtor?.bio || "";
+        $("bio_investor").value = roles.investor?.bio || "";
+
+        $("set_isWholesaler").checked = !!data.isWholesaler;
+        $("set_isContractor").checked = !!data.isContractor;
+        $("set_isRealtor").checked = !!data.isRealtor;
+        $("set_isInvestor").checked = !!data.isInvestor;
+
+        ['wholesaler', 'contractor', 'realtor', 'investor'].forEach(r => {
+            const isChecked = !!data[`is${r.charAt(0).toUpperCase() + r.slice(1)}`];
+            const sec = $("sec_" + r);
+            if(sec) sec.style.display = isChecked ? "block" : "none";
+        });
 
     } catch(e) { console.error("Error loading settings", e); }
 };
@@ -1272,7 +1333,7 @@ window.handlePhotoUpload = async function(e) {
                     preview.textContent = "";
                 } catch(error) {
                     console.error("Upload failed", error);
-                    alert("Photo upload failed. Ensure Storage Rules allow uploads.");
+                    alert("Photo upload failed. Ensure Storage Rules allow uploads. " + error.message);
                     preview.textContent = window.initialsFromUser(window.ME);
                 }
             }, 'image/jpeg', 0.85);
@@ -1293,23 +1354,32 @@ window.saveSettings = async function() {
     
     const wBio = $("bio_wholesaler").value.trim();
     const wExp = $("exp_wholesaler").value.trim();
+    const cBio = $("bio_contractor").value.trim();
+    const rBio = $("bio_realtor").value.trim();
+    const iBio = $("bio_investor").value.trim();
 
-    // Merge currentData with the new settings to ensure we don't drop name/email/role
+    const wCb = $("set_isWholesaler").checked;
+    const cCb = $("set_isContractor").checked;
+    const rCb = $("set_isRealtor").checked;
+    const iCb = $("set_isInvestor").checked;
+
     const updates = {
         ...currentData,
         photoURL: $("set_photoUrlHidden").value.trim() || currentData.photoURL || "",
-        bio: wBio, 
+        bio: wBio || cBio || rBio || iBio, 
+        isWholesaler: wCb,
+        isContractor: cCb,
+        isRealtor: rCb,
+        isInvestor: iCb,
         roles: {
             ...currentData.roles,
-            wholesaler: { ...currentData.roles?.wholesaler, bio: wBio, experience: wExp }
+            wholesaler: { ...currentData.roles?.wholesaler, bio: wBio, experience: wExp },
+            contractor: { ...currentData.roles?.contractor, bio: cBio },
+            realtor: { ...currentData.roles?.realtor, bio: rBio },
+            investor: { ...currentData.roles?.investor, bio: iBio }
         },
         updatedAt: Date.now()
     };
-    
-    updates.isWholesaler = null;
-    updates.isContractor = null;
-    updates.isRealtor = null;
-    updates.isInvestor = null;
     
     try {
         await firebase.database().ref(`userDirectory/${window.UID}`).update(updates);
@@ -1340,6 +1410,13 @@ function initStaticEvents() {
     attach('settingsSaveBtn', window.saveSettings);
     attach('btnTriggerUpload', () => $('set_photoUpload').click());
     if($('set_photoUpload')) $('set_photoUpload').addEventListener('change', window.handlePhotoUpload);
+
+    document.querySelectorAll('.role-cb').forEach(cb => {
+        cb.addEventListener('change', (e) => {
+            const sec = $("sec_" + e.target.value);
+            if(sec) sec.style.display = e.target.checked ? "block" : "none";
+        });
+    });
 
     attach('tabAcq', () => window.switchCategory('sellers'));
     attach('tabDispo', () => window.switchCategory('buyers'));
@@ -1434,6 +1511,18 @@ function initStaticEvents() {
             if(e.target.closest('.btn-upload-photos')) window.uploadPhotos();
         });
     }
+
+    const rList = $("radarList");
+    if(rList) {
+        rList.addEventListener('click', (e) => {
+            const item = e.target.closest('.radar-user');
+            if (item) {
+                const tUid = item.getAttribute('data-uid');
+                const tName = item.getAttribute('data-name');
+                if(tUid) window.setupChat(`${DMS_PATH}/${tUid}/messages`, tName, true);
+            }
+        });
+    }
     
     window.switchCategory('sellers');
 }
@@ -1487,6 +1576,5 @@ firebase.auth().onAuthStateChanged(async u=>{
   }catch(e){ if($("status")) $("status").textContent="Leads subscribe error."; }
 });
 </script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </body>
 </html>
