@@ -324,7 +324,11 @@ body{
           <div style="font-size:11px; color:#9ab9d6; margin-top:6px;">Checking this alerts Leadership to approve the deal for the Dispo Board.</div>
           
           <div id="m_marketingBlock" style="display:none; margin-top:16px; border-top:1px dashed rgba(0,255,106,0.3); padding-top:12px;">
-             <div class="lbl" style="color:var(--good);">Marketing Details (Dispo Board)</div>
+             <div class="lbl" style="color:var(--good); margin-bottom:12px;">Marketing Details (Public Dispo Board)</div>
+             <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-bottom:12px;">
+                <div><div class="lbl" style="color:#cfe3ff;">Public Deal Title</div><input id="m_marketingTitle" class="input" placeholder="e.g. 3/2 Fixer Upper in Alamo Heights" /></div>
+                <div><div class="lbl" style="color:#cfe3ff;">Asking Price</div><input id="m_marketingPrice" class="input" placeholder="e.g. $150,000" /></div>
+             </div>
              <textarea id="m_marketingDetails" class="input ta" placeholder="Public pitch for buyers: ROI, property condition, estimated ARV, access details..."></textarea>
              
              <div class="lbl" style="color:var(--good); margin-top:16px;">Deal Photos</div>
@@ -1186,6 +1190,8 @@ window.openLeadModal = function(mode){
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
     if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
+    if($("m_marketingTitle")) $("m_marketingTitle").value = window.currentLead.marketingTitle || window.currentLead.MarketingTitle || "";
+    if($("m_marketingPrice")) $("m_marketingPrice").value = window.currentLead.marketingPrice || window.currentLead.MarketingPrice || "";
     if($("m_marketingDetails")) $("m_marketingDetails").value = window.currentLead.marketingDetails || window.currentLead.MarketingDetails || "";
 
     if($("m_isLive")) {
@@ -1206,6 +1212,8 @@ window.openLeadModal = function(mode){
     if($("m_source")) $("m_source").value=""; 
     if($("m_phones")) $("m_phones").value=""; 
     if($("m_notes")) $("m_notes").value=""; 
+    if($("m_marketingTitle")) $("m_marketingTitle").value=""; 
+    if($("m_marketingPrice")) $("m_marketingPrice").value=""; 
     if($("m_marketingDetails")) $("m_marketingDetails").value=""; 
 
     if($("m_isLive")) {
@@ -1250,9 +1258,11 @@ window.saveLeadFromModal = async function(skipClose){
   }
 
   const isLiveVal = $("m_isLive")?.checked || false;
+  const marketingTitle = ($("m_marketingTitle")?.value||"").trim();
+  const marketingPrice = ($("m_marketingPrice")?.value||"").trim();
   const marketingDetails = ($("m_marketingDetails")?.value||"").trim();
 
-  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: isLiveVal, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), marketingDetails: marketingDetails, phones:window.parsePhonesFromModal(), photos: window.modalCurrentPhotos || [] };
+  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: isLiveVal, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), marketingTitle: marketingTitle, marketingPrice: marketingPrice, marketingDetails: marketingDetails, phones:window.parsePhonesFromModal(), photos: window.modalCurrentPhotos || [] };
   
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
   if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
