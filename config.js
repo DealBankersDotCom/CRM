@@ -11,8 +11,8 @@ window.firebaseConfig = {
   measurementId: "G-KTNXZM14F7"
 };
 
-// Wholesale portal Street View + map key (keep this unchanged):
+// Wholesale portal Street View + map key:
 window.MAPS_JS_KEY = "AIzaSyC3bn6cYLdP53ITSPLO1jx_CmKIMOGO8Q4";
 
-// Contractor tracking map key (NEW):
+// Contractor tracking map key:
 window.CONTRACTOR_MAPS_KEY = "AIzaSyBGTUG4NyhUUGh9MW1JFof1NLyeszhNOVk";
