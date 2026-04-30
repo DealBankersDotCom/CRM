@@ -5,7 +5,7 @@ window.firebaseConfig = {
   authDomain: "deal-bankers.firebaseapp.com",
   databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
   projectId: "deal-bankers",
-  storageBucket: "deal-bankers.appspot.com",
+  storageBucket: "deal-bankers.firebasestorage.app",
   messagingSenderId: "485110155601",
   appId: "1:485110155601:web:b4c38350ac58c1a2ecab70",
   measurementId: "G-KTNXZM14F7"
