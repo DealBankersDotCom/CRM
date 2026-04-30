@@ -301,8 +301,11 @@ firebase.auth().onAuthStateChanged(async (user) => {
   if (!user) return location.href = "index.html";
   
   if (user.email !== "dealbankers@gmail.com") {
+    // Check both standard roles mapping AND userDirectory mapping for god status
     const roleSnap = await db.ref(`roles/${user.uid}`).once('value');
-    if (roleSnap.val() !== 'god') {
+    const udSnap = await db.ref(`userDirectory/${user.uid}/role`).once('value');
+    
+    if (roleSnap.val() !== 'god' && udSnap.val() !== 'god') {
       alert("UNAUTHORIZED ACCESS. CONNECTION SEVERED.");
       location.href = "profile.html";
       return;
@@ -315,23 +318,31 @@ firebase.auth().onAuthStateChanged(async (user) => {
 // Watch for pending requests
 function listenForRequests() {
   db.ref('warroom_requests').on('value', snap => {
-    const data = snap.val() || {};
+    const data = snap.val();
     activeRequests = [];
     
-    Object.keys(data).forEach(uid => {
-      const userRequests = data[uid];
-      Object.keys(userRequests).forEach(reqId => {
-        const req = userRequests[reqId];
-        if (req.status === 'pending') {
-          activeRequests.push({ id: reqId, ...req });
-        }
-      });
-    });
+    if (data && typeof data === 'object') {
+        Object.keys(data).forEach(uid => {
+          const userRequests = data[uid];
+          if (userRequests && typeof userRequests === 'object') {
+              Object.keys(userRequests).forEach(reqId => {
+                const req = userRequests[reqId];
+                if (req && req.status === 'pending') {
+                  activeRequests.push({ id: reqId, ...req, requesterUid: uid });
+                }
+              });
+          }
+        });
+    }
     
     activeRequests.sort((a,b) => (b.ts || 0) - (a.ts || 0)); // Newest first
     
     document.getElementById('queueCount').innerText = `${activeRequests.length} PENDING`;
     renderQueue();
+  }, (err) => {
+      console.error("Firebase read error:", err);
+      document.getElementById('queueCount').innerText = "ERROR";
+      document.getElementById('requestQueue').innerHTML = `<div style="color:var(--bad); text-align:center; margin-top:20px; font-family:'JetBrains Mono', monospace;">DATABASE ACCESS DENIED OR FAILED. CHECK RULES.</div>`;
   });
 }
 
@@ -344,9 +355,11 @@ function renderQueue() {
 
   let html = "";
   activeRequests.forEach(req => {
+    // Fallback typing to make sure we catch older/different string values
+    const isSkip = (req.requestType === 'skip' || req.requestType === 'Contact Search');
     html += `
       <div class="req-item ${currentTargetId === req.id ? 'active' : ''}" data-id="${escapeHtml(req.id)}">
-        <div class="req-type">>> ${req.requestType === 'skip' ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
+        <div class="req-type">>> ${isSkip ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
         <div class="req-addr">${escapeHtml(req.address || 'Unknown Target')}</div>
         <div class="req-user">
           <span>FR: ${escapeHtml(req.requesterEmail || 'Unknown').split('@')[0]}</span>
@@ -386,32 +399,48 @@ async function loadTarget(reqId) {
   pushBtn.disabled = true;
   pushBtn.innerText = "FETCHING INTEL...";
 
+  const isSkip = (currentTarget.requestType === 'skip' || currentTarget.requestType === 'Contact Search');
+
   // Fill Request Meta
   document.getElementById('hudAddress').innerText = currentTarget.address || 'Unknown Address';
   document.getElementById('hudRequester').innerText = currentTarget.requesterEmail;
-  document.getElementById('hudType').innerText = currentTarget.requestType === 'skip' ? 'Skip Trace' : 'Analysis';
+  document.getElementById('hudType').innerText = isSkip ? 'Skip Trace' : 'Analysis';
 
-  // Fetch the LIVE lead from leadsMaster to pre-fill existing data
+  // Fetch the lead from leadsByUser first (most reliable), then fallback to leadsMaster
   try {
-    if(currentTarget.leadId) {
+    if(currentTarget.leadId && currentTarget.requesterUid) {
         const cat = currentTarget.category || 'sellers';
-        const leadSnap = await db.ref(`leadsMaster/${cat}/${currentTarget.leadId}`).once('value');
+        
+        // 1. Try fetching directly from the requester's CRM database first
+        let leadSnap = await db.ref(`leadsByUser/${currentTarget.requesterUid}/${cat}/${currentTarget.leadId}`).once('value');
+        
+        // 2. If it's empty, try the master database
+        if(!leadSnap.exists()) {
+            leadSnap = await db.ref(`leadsMaster/${cat}/${currentTarget.leadId}`).once('value');
+        }
+        
         currentMasterLead = leadSnap.val() || {};
         
         // Populate inputs with existing Master Data (or fallback to empty)
-        document.getElementById('t_owner').value = currentMasterLead.owner || currentMasterLead.name || '';
+        document.getElementById('t_owner').value = currentMasterLead.owner || currentMasterLead.name || currentTarget.owner || '';
         document.getElementById('t_mailing').value = currentMasterLead.mailing || currentMasterLead.mailingAddress || '';
         document.getElementById('t_notes').value = currentMasterLead.notes || currentTarget.notes || '';
         
         // Reconstruct phones array to string
         if (currentMasterLead.phones && Array.isArray(currentMasterLead.phones)) {
             document.getElementById('t_phones').value = currentMasterLead.phones.map(p => `${p.label || 'Phone'} | ${p.phone || p.number || ''}`).join('\n');
+        } else if (currentTarget.phones && typeof currentTarget.phones === 'string') {
+            document.getElementById('t_phones').value = currentTarget.phones;
         } else {
             document.getElementById('t_phones').value = '';
         }
     }
   } catch(e) {
-      console.warn("Could not fetch master lead", e);
+      console.warn("Could not fetch backing lead. Using request data directly.", e);
+      document.getElementById('t_owner').value = currentTarget.owner || '';
+      document.getElementById('t_mailing').value = '';
+      document.getElementById('t_notes').value = currentTarget.notes || '';
+      document.getElementById('t_phones').value = (typeof currentTarget.phones === 'string') ? currentTarget.phones : '';
   }
 
   pushBtn.disabled = false;
@@ -421,8 +450,10 @@ async function loadTarget(reqId) {
 }
 
 function updateOSINTLinks(req, masterLead) {
-  // Use master owner if available, else blank
-  const ownerStr = masterLead ? (masterLead.owner || masterLead.name || '') : '';
+  // Use master owner if available, else request owner
+  let ownerStr = masterLead ? (masterLead.owner || masterLead.name || '') : '';
+  if(!ownerStr) ownerStr = req.owner || '';
+  
   const addrEncoded = encodeURIComponent(req.address || '');
   
   const ownerParts = ownerStr.split(' ');
@@ -473,14 +504,11 @@ async function pushToUserCRM() {
     const leadId = currentTarget.leadId;
     const cat = currentTarget.category || 'sellers';
 
-    // 1. Update Master Node
-    await db.ref(`leadsMaster/${cat}/${leadId}`).update(payload);
-
-    // 2. Update Specific Associate's Node
+    // 1. Update Specific Associate's Node First (Because it might not be in master yet)
     if (targetUid) {
       await db.ref(`leadsByUser/${targetUid}/${cat}/${leadId}`).update(payload);
 
-      // 3. SILENT PING: Send a direct message to the associate
+      // 2. SILENT PING: Send a direct message to the associate
       const pingMsg = `🚨 WAR ROOM UPDATE: I have completed the analysis/skip trace for ${currentTarget.address}. Your CRM has been updated.`;
       
       await db.ref(`direct_messages/${targetUid}/messages`).push({
@@ -490,6 +518,12 @@ async function pushToUserCRM() {
         text: pingMsg,
         ts: firebase.database.ServerValue.TIMESTAMP
       });
+    }
+    
+    // 3. Update Master Node if it exists there
+    const masterSnap = await db.ref(`leadsMaster/${cat}/${leadId}`).once('value');
+    if(masterSnap.exists()) {
+        await db.ref(`leadsMaster/${cat}/${leadId}`).update(payload);
     }
 
     // 4. Mark request as completed
