@@ -107,7 +107,7 @@
   </header>
 
   <div id="dealsContainer" class="deal-container">
-    <div style="color:#9ca3af; text-align:center; grid-column: 1/-1; padding: 40px;">Loading live deals...</div>
+    <div style="color:#9ca3af; text-align:center; grid-column: 1/-1; padding: 40px;">Connecting to secure network...</div>
   </div>
 
   <div id="chatBubble">💬</div>
@@ -155,62 +155,68 @@
     const dealsRef = ref(db, 'leadsMaster/sellers');
     window.dealPhotos = {}; 
 
-    onValue(dealsRef, (snapshot) => {
-      dealsContainer.innerHTML = '';
-      if (!snapshot.exists()) {
-        dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals found.</p>`;
-        return;
-      }
+    function loadDeals() {
+        onValue(dealsRef, (snapshot) => {
+          dealsContainer.innerHTML = '';
+          if (!snapshot.exists()) {
+            dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals found.</p>`;
+            return;
+          }
 
-      let hasDeals = false;
+          let hasDeals = false;
 
-      snapshot.forEach(dealSnap => {
-        const deal = dealSnap.val();
-        
-        if (!deal || deal.isLive !== true || deal.dispoApproved !== true) return;
-        
-        hasDeals = true;
-        const dealId = dealSnap.key;
-        const photos = (Array.isArray(deal.photos) && deal.photos.length > 0) ? deal.photos : [];
-        
-        if(photos.length === 0) photos.push('https://via.placeholder.com/400x225?text=No+Images');
+          snapshot.forEach(dealSnap => {
+            const deal = dealSnap.val();
+            
+            // Truthy check in case they are stored differently
+            if (!deal || !deal.isLive || !deal.dispoApproved) return;
+            
+            hasDeals = true;
+            const dealId = dealSnap.key;
+            const photos = (Array.isArray(deal.photos) && deal.photos.length > 0) ? deal.photos : [];
+            
+            if(photos.length === 0) photos.push('https://via.placeholder.com/400x225?text=No+Images');
 
-        window.dealPhotos[dealId] = { images: photos, index: 0 };
+            window.dealPhotos[dealId] = { images: photos, index: 0 };
 
-        const dealData = {
-          title: deal.marketingTitle || deal.address || 'Confidential Address',
-          location: deal.marketingTitle ? (deal.address || 'Active Wholesale Deal') : 'Active Wholesale Deal',
-          price: deal.marketingPrice || 'Contact for Price & Access',
-          notes: deal.marketingDetails || deal.notes || 'Contact us for more details about this investment opportunity.',
-        };
+            const dealData = {
+              title: deal.marketingTitle || deal.address || 'Confidential Address',
+              location: deal.marketingTitle ? (deal.address || 'Active Wholesale Deal') : 'Active Wholesale Deal',
+              price: deal.marketingPrice || 'Contact for Price & Access',
+              notes: deal.marketingDetails || deal.notes || 'Contact us for more details about this investment opportunity.',
+            };
 
-        const card = document.createElement('div');
-        card.classList.add('deal-card');
-        const showArrows = photos.length > 1 ? '' : 'display:none;';
-        
-        card.innerHTML = `
-            <div class="deal-gallery" id="gallery-${dealId}">
-              <img src="${photos[0]}" id="img-${dealId}" alt="Deal Image" loading="lazy" />
-              <button class="carousel-btn prev-btn" style="${showArrows}" onclick="changePhoto('${dealId}', -1)">&#10094;</button>
-              <button class="carousel-btn next-btn" style="${showArrows}" onclick="changePhoto('${dealId}', 1)">&#10095;</button>
-              <div class="photo-counter" id="counter-${dealId}">1 / ${photos.length}</div>
-            </div>
-            <div class="deal-details">
-              <h2 class="deal-title">${dealData.title}</h2>
-              <p class="deal-location">⚡ ${dealData.location}</p>
-              <p class="deal-price">${dealData.price}</p>
-              <div class="deal-notes">${dealData.notes}</div>
-              <button class="viewDealBtn" onclick="openChatWithContext('${dealData.title}')">
-                I'm Interested
-              </button>
-            </div>`;
-        dealsContainer.appendChild(card);
-      });
+            const card = document.createElement('div');
+            card.classList.add('deal-card');
+            const showArrows = photos.length > 1 ? '' : 'display:none;';
+            
+            card.innerHTML = `
+                <div class="deal-gallery" id="gallery-${dealId}">
+                  <img src="${photos[0]}" id="img-${dealId}" alt="Deal Image" loading="lazy" />
+                  <button class="carousel-btn prev-btn" style="${showArrows}" onclick="changePhoto('${dealId}', -1)">❮</button>
+                  <button class="carousel-btn next-btn" style="${showArrows}" onclick="changePhoto('${dealId}', 1)">❯</button>
+                  <div class="photo-counter" id="counter-${dealId}">1 / ${photos.length}</div>
+                </div>
+                <div class="deal-details">
+                  <h2 class="deal-title">${dealData.title}</h2>
+                  <p class="deal-location">⚡ ${dealData.location}</p>
+                  <p class="deal-price">${dealData.price}</p>
+                  <div class="deal-notes">${dealData.notes}</div>
+                  <button class="viewDealBtn" onclick="openChatWithContext('${dealData.title}')">
+                    I'm Interested
+                  </button>
+                </div>`;
+            dealsContainer.appendChild(card);
+          });
 
-      if(!hasDeals) {
-         dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals currently available on the Dispo Board.</p>`;
-      }
-    });
+          if(!hasDeals) {
+             dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals currently available on the Dispo Board.</p>`;
+          }
+        }, (error) => {
+            console.error("Firebase Read Error:", error);
+            dealsContainer.innerHTML = `<p style="padding:20px; text-align:center; color: #ef4444;">Error pulling data. Check Database Rules.</p>`;
+        });
+    }
 
     window.changePhoto = (dealId, direction) => {
         const data = window.dealPhotos[dealId];
@@ -251,6 +257,8 @@
         if (user) {
             currentUser = user;
             setupChat(user.uid);
+            loadDeals(); // Fetch deals AFTER auth is confirmed
+            
             if (window.self === window.top) {
                 const presenceRef = ref(db, `presence/global/${user.uid}`);
                 onDisconnect(presenceRef).set({state: "offline", last: serverTimestamp()});
