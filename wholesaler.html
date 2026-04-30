@@ -304,8 +304,8 @@ body{
     <div class="modalHead"><div><strong id="leadModalTitle">Lead Editor</strong><div class="status" id="leadModalSub" style="margin-top:4px;">Create or edit a lead.</div></div><button class="btn" id="leadModalClose" type="button">Close</button></div>
     <div class="modalBody">
       <div class="formGrid">
-        <div><div class="lbl">Address</div><input id="m_address" class="input" placeholder="123 Main St, San Antonio, TX" /></div>
-        <div><div class="lbl">Owner / Primary Name</div><input id="m_owner" class="input" placeholder="JOHN DOE" /></div>
+        <div id="addrBlock"><div class="lbl">Address</div><input id="m_address" class="input" placeholder="123 Main St, San Antonio, TX" /></div>
+        <div><div class="lbl" id="ownerLabel">Owner / Primary Name</div><input id="m_owner" class="input" placeholder="JOHN DOE" /></div>
         <div><div class="lbl">Mailing Address</div><input id="m_mailing" class="input" placeholder="Mailing address (optional)" /></div>
         <div><div class="lbl">Lead Status</div><select id="m_status" class="select"><option value="New">New</option><option value="Working">Working</option><option value="Hot">Hot</option><option value="DNC">Do Not Call</option><option value="Done">Done</option></select></div>
         <div><div class="lbl">Lead Type</div><select id="m_type" class="select"></select></div>
@@ -342,9 +342,9 @@ Daughter Lisa | 210-555-2222"></textarea></div>
       </div>
       <div id="modalToast" class="modalToast"></div>
       <div class="modalActions">
-          <button class="btn danger" id="m_delete" type="button" style="display:none; margin-right:auto;">Delete Lead</button>
+          <button class="btn danger" id="m_delete" type="button" style="display:none; margin-right:auto;">Delete</button>
           <button class="btn" id="m_cancel" type="button">Cancel</button>
-          <button class="btn primary" id="m_save" type="button">Save Lead</button>
+          <button class="btn primary" id="m_save" type="button">Save</button>
       </div>
     </div>
   </div>
@@ -702,11 +702,14 @@ window.applySearch = function(){
   let view = window.sellerList.slice();
   
   if (window.currentCategory === 'buyers') {
-      view = view.filter(l => String(l.type||"").toLowerCase() === "private wealth investor");
+      view = view.filter(l => {
+          const t = String(l.type||"").toLowerCase();
+          return t === "private wealth investor" || t === "wholesale buyer" || t === "both" || t.includes("buyer") || t.includes("investor");
+      });
   } else if (window.currentCategory === 'sellers') {
       view = view.filter(l => {
           const t = String(l.type||"").toLowerCase();
-          return t !== "private wealth investor" && t !== "buyer";
+          return !t.includes("investor") && !t.includes("buyer") && t !== "both";
       });
   }
   
@@ -914,7 +917,13 @@ window.subscribeAssociateAssignedLeads = function(){
     if(val && typeof val==="object" && !Array.isArray(val)){
       const maybeLeadId=String(val.id||val.docnum||key||""); 
       const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones)); 
-      if(hasLeadShape && maybeLeadId) mergeLead(maybeLeadId, val, "flat");
+      if(hasLeadShape && maybeLeadId) {
+        const t = String(val.type||"").toLowerCase();
+        const isBuyer = t.includes('investor') || t.includes('buyer') || t === 'both';
+        if (window.currentCategory === 'buyers' && !isBuyer) return;
+        if (window.currentCategory === 'sellers' && isBuyer) return;
+        mergeLead(maybeLeadId, val, "flat");
+      }
     }
   };
   flatRef.on("child_added", handleFlat); flatRef.on("child_changed", handleFlat); flatRef.on("child_removed", snap=>removeLead(snap.key, "flat"));
@@ -1016,10 +1025,18 @@ window.openLeadModal = function(mode){
   const typeSelect = $("m_type");
   if(typeSelect) {
       if(window.currentCategory === 'buyers') {
-          typeSelect.innerHTML = '<option value="private wealth investor">Private Wealth Investor</option>';
+          typeSelect.innerHTML = '<option value="wholesale buyer">Wholesale Buyer (Active Deals)</option><option value="private wealth investor">Private Wealth Investor (Passive/Funding)</option><option value="both">Both (Active & Passive)</option>';
       } else {
           typeSelect.innerHTML = '<option value="seller">Seller</option><option value="realtor">Realtor</option><option value="wholesaler">Wholesaler</option><option value="contractor">Contractor</option><option value="other">Other</option>';
       }
+  }
+
+  if (window.currentCategory === 'buyers') {
+      if($("addrBlock")) $("addrBlock").style.display = "none";
+      if($("ownerLabel")) $("ownerLabel").textContent = "Buyer / Investor Name";
+  } else {
+      if($("addrBlock")) $("addrBlock").style.display = "block";
+      if($("ownerLabel")) $("ownerLabel").textContent = "Owner / Primary Name";
   }
 
   if(isEdit&&window.currentLead){
@@ -1028,7 +1045,7 @@ window.openLeadModal = function(mode){
     if($("m_owner")) $("m_owner").value=window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||""; 
     if($("m_mailing")) $("m_mailing").value=window.currentLead.mailing||window.currentLead.Mailing||window.currentLead.mailingAddress||""; 
     if($("m_status")) $("m_status").value=window.leadStatus(window.currentLead); 
-    if($("m_type")) $("m_type").value=window.currentLead.type || (window.currentCategory === 'buyers' ? 'private wealth investor' : 'seller'); 
+    if($("m_type")) $("m_type").value=window.currentLead.type || (window.currentCategory === 'buyers' ? 'wholesale buyer' : 'seller'); 
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
     if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
@@ -1041,7 +1058,7 @@ window.openLeadModal = function(mode){
     if($("m_owner")) $("m_owner").value=""; 
     if($("m_mailing")) $("m_mailing").value=""; 
     if($("m_status")) $("m_status").value="New"; 
-    if($("m_type")) $("m_type").value=window.currentCategory === "buyers" ? "private wealth investor" : "seller"; 
+    if($("m_type")) $("m_type").value=window.currentCategory === "buyers" ? "wholesale buyer" : "seller"; 
     if($("m_source")) $("m_source").value=""; 
     if($("m_phones")) $("m_phones").value=""; 
     if($("m_notes")) $("m_notes").value=""; 
@@ -1068,8 +1085,17 @@ window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
 }
 
 window.saveLeadFromModal = async function(skipClose){
-  const address=($("m_address")?.value||"").trim(); if(!address){ window.modalToast("Address required.", false); return null; }
-  const payload={ address, owner:($("m_owner")?.value||"").trim(), mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "private wealth investor" : "seller")).trim().toLowerCase(), isLive: $("m_isLive")?.checked || false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
+  let address=($("m_address")?.value||"").trim(); 
+  const owner=($("m_owner")?.value||"").trim();
+  
+  if (window.currentCategory === 'buyers') {
+      if(!owner){ window.modalToast("Buyer Name required.", false); return null; }
+      address = owner; 
+  } else {
+      if(!address){ window.modalToast("Address required.", false); return null; }
+  }
+
+  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: $("m_isLive")?.checked || false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
   if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
       window.triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
@@ -1115,7 +1141,7 @@ window.deleteLead = async function(){
         } else {
             await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
         }
-        window.closeLeadModal(); window.clearConsole(); window.toast("Lead deleted ✓");
+        window.closeLeadModal(); window.clearConsole(); window.toast("Deleted ✓");
     }catch(e){ alert("Delete failed"); }
 };
 
