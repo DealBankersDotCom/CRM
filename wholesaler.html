@@ -174,6 +174,11 @@ body{
 .role-checkboxes input[type="checkbox"] {width:18px; height:18px; cursor:pointer;}
 .role-section { display:none; margin-top:20px; padding:16px; border:1px dashed rgba(255,255,255,.15); border-radius:12px; background:rgba(0,0,0,.2); }
 .role-section .lbl { font-size:12px; font-weight:900; text-transform:uppercase; letter-spacing:0.1em; margin-bottom:12px; border-bottom:1px solid rgba(255,255,255,.1); padding-bottom:6px;}
+
+.deal-photos-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(80px, 1fr)); gap:10px; margin-top:10px;}
+.deal-photo-thumb { width:100%; aspect-ratio:1; border-radius:8px; background-size:cover; background-position:center; border:1px solid rgba(255,255,255,.2); position:relative; overflow:hidden;}
+.deal-photo-del { position:absolute; top:4px; right:4px; background:rgba(0,0,0,.7); color:#fff; border:none; width:20px; height:20px; border-radius:50%; font-size:10px; cursor:pointer; display:flex; align-items:center; justify-content:center;}
+.deal-photo-del:hover { background:var(--bad);}
 </style>
 </head>
 <body data-portal="wholesaler">
@@ -310,6 +315,23 @@ body{
         <div><div class="lbl">Lead Status</div><select id="m_status" class="select"><option value="New">New</option><option value="Working">Working</option><option value="Hot">Hot</option><option value="DNC">Do Not Call</option><option value="Done">Done</option></select></div>
         <div><div class="lbl">Lead Type</div><select id="m_type" class="select"></select></div>
         
+        <div id="jvMarketStatusBlock" style="background: rgba(0,255,106,0.05); border: 1px solid rgba(0,255,106,0.3); padding: 12px; border-radius: 12px;">
+          <div class="lbl" style="color:var(--good);">Network Market Status</div>
+          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+            <input type="checkbox" id="m_isLive" style="width:20px; height:20px; margin:0; cursor:pointer;" />
+            <span style="font-size:13px; color:#fff; font-weight:800;">Make Deal "Live" for Network JV</span>
+          </div>
+          <div style="font-size:11px; color:#9ab9d6; margin-top:6px;">Checking this alerts Leadership to approve the deal for the Dispo Board.</div>
+          
+          <div id="m_photosBlock" style="display:none; margin-top:16px; border-top:1px dashed rgba(0,255,106,0.3); padding-top:12px;">
+             <div class="lbl" style="color:var(--good);">Deal Photos (Dispo Board)</div>
+             <input type="file" id="m_photoUpload" accept="image/*" multiple style="display:none;" />
+             <button class="btn tiny" id="m_btnUploadPhotos" type="button" style="background:var(--good); color:#000;">＋ Upload Photos</button>
+             <div id="m_photoGrid" class="deal-photos-grid"></div>
+             <div style="font-size:11px; color:var(--muted); margin-top:6px;">These photos will be visible to buyers once approved.</div>
+          </div>
+        </div>
+
         <div><div class="lbl">Source</div><input id="m_source" class="input" placeholder="Facebook / Cold-call / Referral" /></div>
         <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." /><div class="assignBtns"><button class="btn tiny" id="btnAssignAll" type="button">All</button><button class="btn tiny ghost" id="btnAssignNone" type="button">None</button></div></div><div id="assignList" class="assignList"></div><div class="help">Assigns Leads to Associates queues.</div></div>
         
@@ -439,6 +461,7 @@ window.userDirCache = {byUid:{},byEmail:{},byUser:{}}; window.pendingRequestCach
 window.modalMode = "new"; window.modalLeadId = null; window.branchLeadRefs = []; window.leadsRef = null; window.legacyRef = null;
 window.userQuotas = { firstTs: 0, analysis: 0, skip: 0 };
 window.currentCategory = "sellers";
+window.modalCurrentPhotos = [];
 
 const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; const USER_DIR_PATH="userDirectory";
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
@@ -662,7 +685,17 @@ window.approveDispo = async function() {
     } catch(e) { alert("Approval failed"); }
 };
 
-window.uploadPhotos = function() { alert("Photo upload module opening... (Integration pending)"); };
+window.uploadPhotos = function() { 
+    if(!window.currentLeadId) return alert("Select a lead first.");
+    window.openLeadModal('edit');
+    setTimeout(() => {
+        if($("m_isLive") && !$("m_isLive").checked) {
+            $("m_isLive").checked = true;
+            $("m_isLive").dispatchEvent(new Event('change'));
+        }
+        $("m_photoUpload").click();
+    }, 300);
+};
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
 window.buildUserCache = function(rows){const byUid={}, byEmail={}, byUser={}; rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;}); return {byUid,byEmail,byUser};}
@@ -790,7 +823,7 @@ window.selectLeadByIndex = function(idx){
           dhw.style.display="block";
       } else {
           dh.innerHTML = `<span style='color:var(--good); font-weight:800;'>Status: Approved for Dispo Board</span><br>
-          <button class="btn tiny btn-upload-photos" style="margin-top:8px; background:var(--accent); color:#fff;">📷 Upload Photos</button>`;
+          <button class="btn tiny btn-upload-photos" style="margin-top:8px; background:var(--accent); color:#fff;">📷 Manage Photos</button>`;
           dhw.style.display="block";
       }
   }
@@ -1004,6 +1037,108 @@ window.assignAll = function(){window.getAssignableRows().forEach(r=>window.modal
 window.assignNone = function(){window.modalAssignedSet=new Set(); window.renderAssignList();};
 window.handleAssignChange = function(el){const uid = el.getAttribute("data-uid"); if(el.checked) window.modalAssignedSet.add(uid); else window.modalAssignedSet.delete(uid);};
 
+window.renderModalPhotos = function() {
+    const grid = $("m_photoGrid");
+    if(!grid) return;
+    if(!window.modalCurrentPhotos || window.modalCurrentPhotos.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; color:var(--muted); font-size:11px; padding:8px 0;">No photos uploaded yet.</div>`;
+        return;
+    }
+    grid.innerHTML = window.modalCurrentPhotos.map((url, idx) => `
+        <div class="deal-photo-thumb" style="background-image:url('${window.esc(url)}')">
+            <button class="deal-photo-del" type="button" data-idx="${idx}" title="Remove Photo">✕</button>
+        </div>
+    `).join("");
+};
+
+window.deleteModalPhoto = async function(idx) {
+    if(!confirm("Remove this photo from the deal?")) return;
+    try {
+        const url = window.modalCurrentPhotos[idx];
+        window.modalCurrentPhotos.splice(idx, 1);
+        window.renderModalPhotos();
+        if(window.modalMode === "edit" && window.modalLeadId) {
+            const updates = {};
+            updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
+            if(window.currentLead && window.currentLead.assignedUids) {
+                window.currentLead.assignedUids.forEach(uid => {
+                    updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
+                });
+            }
+            await firebase.database().ref().update(updates);
+        }
+        
+        try {
+            const ref = firebase.storage().refFromURL(url);
+            await ref.delete();
+        } catch(storageErr) {
+            console.warn("Storage deletion error (might already be deleted or URL mismatch)", storageErr);
+        }
+        window.modalToast("Photo removed.", true);
+    } catch(e) {
+        console.error(e);
+        window.modalToast("Failed to update database.", false);
+    }
+};
+
+window.handleDealPhotoUpload = async function(e) {
+    if(!window.modalLeadId && window.modalMode === "new") {
+        alert("Please Save the lead first before uploading photos.");
+        return;
+    }
+    const files = e.target.files;
+    if(!files || files.length === 0) return;
+    
+    if(!window.modalCurrentPhotos) window.modalCurrentPhotos = [];
+    
+    const maxFiles = 10;
+    if(window.modalCurrentPhotos.length + files.length > maxFiles) {
+        alert(`You can only upload up to ${maxFiles} photos total.`);
+        return;
+    }
+
+    const btn = $("m_btnUploadPhotos");
+    const originalText = btn.textContent;
+    btn.textContent = "Uploading...";
+    btn.disabled = true;
+
+    try {
+        for(let i=0; i<files.length; i++) {
+            const file = files[i];
+            if (file.size > 15 * 1024 * 1024) continue; 
+            
+            const fileExt = file.name.split('.').pop() || 'jpg';
+            const fileName = `deal_photos/${window.modalLeadId}/${Date.now()}_${i}.${fileExt}`;
+            const sRef = firebase.storage().ref(fileName);
+            
+            const snapshot = await sRef.put(file);
+            const downloadURL = await snapshot.ref.getDownloadURL();
+            window.modalCurrentPhotos.push(downloadURL);
+        }
+        
+        window.renderModalPhotos();
+        
+        if(window.modalMode === "edit" && window.modalLeadId) {
+            const updates = {};
+            updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
+            if(window.currentLead && window.currentLead.assignedUids) {
+                window.currentLead.assignedUids.forEach(uid => {
+                    updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
+                });
+            }
+            await firebase.database().ref().update(updates);
+        }
+        window.modalToast("Photos uploaded successfully.", true);
+    } catch(err) {
+        console.error("Deal photo upload failed", err);
+        alert("Upload failed. Ensure Storage rules allow uploads.");
+    } finally {
+        btn.textContent = originalText;
+        btn.disabled = false;
+        e.target.value = ""; 
+    }
+};
+
 window.openLeadModal = function(mode){
   window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true); 
   if($("leadModalTitle")) $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)";
@@ -1029,10 +1164,14 @@ window.openLeadModal = function(mode){
   if (window.currentCategory === 'buyers') {
       if($("addrBlock")) $("addrBlock").style.display = "none";
       if($("ownerLabel")) $("ownerLabel").textContent = "Buyer / Investor Name";
+      if($("jvMarketStatusBlock")) $("jvMarketStatusBlock").style.display = "none";
   } else {
       if($("addrBlock")) $("addrBlock").style.display = "block";
       if($("ownerLabel")) $("ownerLabel").textContent = "Owner / Primary Name";
+      if($("jvMarketStatusBlock")) $("jvMarketStatusBlock").style.display = "block";
   }
+
+  window.modalCurrentPhotos = [];
 
   if(isEdit&&window.currentLead){
     window.modalLeadId=window.currentLeadId; 
@@ -1044,6 +1183,11 @@ window.openLeadModal = function(mode){
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
     if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
+    if($("m_isLive")) {
+        $("m_isLive").checked = !!window.currentLead.isLive;
+        $("m_isLive").dispatchEvent(new Event('change'));
+    }
+    if(window.currentLead.photos) window.modalCurrentPhotos = Array.isArray(window.currentLead.photos) ? [...window.currentLead.photos] : [];
     
     Object.keys(window.currentLead.assignedTo||{}).forEach(uid=>{if(window.currentLead.assignedTo[uid]) window.modalAssignedSet.add(uid);});
     (window.currentLead.assignedUids||[]).forEach(uid=>window.modalAssignedSet.add(String(uid)));
@@ -1057,12 +1201,20 @@ window.openLeadModal = function(mode){
     if($("m_source")) $("m_source").value=""; 
     if($("m_phones")) $("m_phones").value=""; 
     if($("m_notes")) $("m_notes").value=""; 
+    if($("m_isLive")) {
+        $("m_isLive").checked = false;
+        $("m_isLive").dispatchEvent(new Event('change'));
+    }
     
     if(window.isBranchManager) window.modalAssignedSet.add(window.UID);
   } 
+  
+  window.renderModalPhotos();
+
   if(window.isAdminLike()) window.renderAssignList(); 
   if($("leadModal")) { $("leadModal").classList.add("show"); $("leadModal").setAttribute("aria-hidden","false"); }
 }
+
 window.closeLeadModal = function(){if($("leadModal")) { $("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true"); }}
 window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set(); lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});}); return out;}
 
@@ -1090,31 +1242,47 @@ window.saveLeadFromModal = async function(skipClose){
       if(!address){ window.modalToast("Address required.", false); return null; }
   }
 
-  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: window.modalMode === 'edit' ? (!!window.currentLead?.isLive) : false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
+  const isLiveVal = $("m_isLive")?.checked || false;
+
+  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: isLiveVal, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal(), photos: window.modalCurrentPhotos || [] };
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
+  if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
+      window.triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
+  }
 
   try{
     let leadIdToReturn = null;
     if(window.isGod){
       const allowed=new Set(window.getAssignableRows().map(r=>r.uid)); const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
+      window.modalLeadId = leadId; 
       await window.upsertLeadMasterAndAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
     } else if(window.isBranchManager){
       const allowed=new Set(window.getAssignableRows().map(r=>r.uid));
       let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
+      window.modalLeadId = leadId;
       await window.upsertBranchAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
-      
+      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false}); }
     } else {
       const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
+      window.modalLeadId = leadId;
       const finalUpdates = {};
       finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:window.ME?.email||"",createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")};
-      
+      if(payload.isLive) { finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false}; }
       await firebase.database().ref().update(finalUpdates);
     }
     
     window.modalToast("Saved ✓", true); 
+    
+    if (isLiveVal && skipClose !== true) {
+        if(confirm("Lead saved! Would you like to upload deal photos now?")) {
+            $("m_photoUpload").click();
+            return leadIdToReturn;
+        }
+    }
+
     if(skipClose !== true) window.closeLeadModal();
     return leadIdToReturn;
   }catch(e){ window.modalToast("Save failed.", false); return null; } finally { if($("m_save")) $("m_save").disabled=false; }
@@ -1575,6 +1743,29 @@ function initStaticEvents() {
                 const tUid = item.getAttribute('data-uid');
                 const tName = item.getAttribute('data-name');
                 if(tUid) window.setupChat(`${DMS_PATH}/${tUid}/messages`, tName, true);
+            }
+        });
+    }
+
+    const isLiveCb = $("m_isLive");
+    if(isLiveCb) {
+        isLiveCb.addEventListener('change', (e) => {
+            const photoBlock = $("m_photosBlock");
+            if(photoBlock) {
+                photoBlock.style.display = e.target.checked ? "block" : "none";
+            }
+        });
+    }
+
+    attach('m_btnUploadPhotos', () => $("m_photoUpload").click());
+    if($('m_photoUpload')) $('m_photoUpload').addEventListener('change', window.handleDealPhotoUpload);
+    
+    const photoGrid = $("m_photoGrid");
+    if(photoGrid) {
+        photoGrid.addEventListener('click', (e) => {
+            if(e.target.classList.contains('deal-photo-del')) {
+                const idx = parseInt(e.target.dataset.idx, 10);
+                if(!isNaN(idx)) window.deleteModalPhoto(idx);
             }
         });
     }
