@@ -142,7 +142,7 @@
       messagingSenderId: "485110155601",
       appId: "1:485110155601:web:b4c38350ac58c1a2ecab70"
     };
-    
+
     const app = initializeApp(firebaseConfig);
     const db = getDatabase(app);
     const auth = getAuth(app);
@@ -153,7 +153,7 @@
     }
 
     const dealsRef = ref(db, 'leadsMaster/sellers');
-    window.dealPhotos = {}; 
+    window.dealPhotos = {};
 
     function loadDeals() {
         onValue(dealsRef, (snapshot) => {
@@ -167,14 +167,23 @@
 
           snapshot.forEach(dealSnap => {
             const deal = dealSnap.val();
+            if (!deal) return;
             
-            // Truthy check in case they are stored differently
-            if (!deal || !deal.isLive || !deal.dispoApproved) return;
+            // BULLETPROOF FLAG CHECKS: Checks both boolean and string variants safely
+            const isLive = deal.isLive === true || String(deal.isLive).toLowerCase() === 'true';
+            const isApproved = deal.dispoApproved === true || String(deal.dispoApproved).toLowerCase() === 'true';
+            
+            if (!isLive || !isApproved) return; // Skip if not live AND approved
             
             hasDeals = true;
             const dealId = dealSnap.key;
-            const photos = (Array.isArray(deal.photos) && deal.photos.length > 0) ? deal.photos : [];
             
+            // FIREBASE PHOTO SAFETY: Safely parse photos in case an array was converted to an object
+            let photos = [];
+            if (deal.photos) {
+                if (Array.isArray(deal.photos)) photos = [...deal.photos];
+                else if (typeof deal.photos === 'object') photos = Object.values(deal.photos);
+            }
             if(photos.length === 0) photos.push('https://via.placeholder.com/400x225?text=No+Images');
 
             window.dealPhotos[dealId] = { images: photos, index: 0 };
@@ -185,6 +194,9 @@
               price: deal.marketingPrice || 'Contact for Price & Access',
               notes: deal.marketingDetails || deal.notes || 'Contact us for more details about this investment opportunity.',
             };
+            
+            // SAFELY ESCAPE QUOTES FOR HTML ATTRIBUTES
+            const safeTitle = (dealData.title).replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
             const card = document.createElement('div');
             card.classList.add('deal-card');
@@ -202,7 +214,7 @@
                   <p class="deal-location">⚡ ${dealData.location}</p>
                   <p class="deal-price">${dealData.price}</p>
                   <div class="deal-notes">${dealData.notes}</div>
-                  <button class="viewDealBtn" onclick="openChatWithContext('${dealData.title}')">
+                  <button class="viewDealBtn" onclick="openChatWithContext('${safeTitle}')">
                     I'm Interested
                   </button>
                 </div>`;
@@ -233,6 +245,7 @@
 
     let currentUser = null;
     let chatPath = null;
+    
     const chatBubble = document.getElementById('chatBubble');
     const chatPanel = document.getElementById('chatPanel');
     const chatInput = document.getElementById('chatInput');
