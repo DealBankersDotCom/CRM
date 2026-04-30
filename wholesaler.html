@@ -524,26 +524,52 @@ window.initApprovalListener = function() {
                 badge.style.display = 'none';
             }
         }
+        const btnContent = $('approvalsListContent');
+        if(btnContent && window.pendingApprovals.length > 0) {
+            window.openApprovalsModal(true); // silent update
+        }
     };
 
-    const processCat = (snap, cat) => {
-        const data = snap.val() || {};
-        window.pendingApprovals = window.pendingApprovals.filter(l => l.__cat !== cat);
-        Object.keys(data).forEach(k => {
-            const lead = data[k];
-            if (lead && lead.isLive === true && lead.dispoApproved !== true) {
-                window.pendingApprovals.push({ ...lead, id: k, __cat: cat });
+    const scanForApprovals = async () => {
+        let pending = new Map();
+        
+        const checkLead = (lead, id, cat) => {
+            const isLive = lead && (lead.isLive === true || String(lead.isLive).toLowerCase() === 'true');
+            const isApproved = lead && (lead.dispoApproved === true || String(lead.dispoApproved).toLowerCase() === 'true');
+            if (isLive && !isApproved) {
+                pending.set(id, { ...lead, id, __cat: cat });
             }
-        });
-        window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
-        updateBadge();
+        };
+
+        try {
+            const [ms, mb, users] = await Promise.all([
+                firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value'),
+                firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value'),
+                firebase.database().ref(LEADS_BY_USER_PATH).once('value')
+            ]);
+
+            const msVal = ms.val() || {}; Object.keys(msVal).forEach(k => checkLead(msVal[k], k, 'sellers'));
+            const mbVal = mb.val() || {}; Object.keys(mbVal).forEach(k => checkLead(mbVal[k], k, 'buyers'));
+
+            const uVal = users.val() || {};
+            Object.keys(uVal).forEach(uid => {
+                ['sellers', 'buyers'].forEach(cat => {
+                    const catData = uVal[uid][cat] || {};
+                    Object.keys(catData).forEach(k => checkLead(catData[k], k, cat));
+                });
+            });
+
+            window.pendingApprovals = Array.from(pending.values());
+            window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
+            updateBadge();
+        } catch(e) { console.error("Error scanning approvals:", e); }
     };
 
-    firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).on('value', s => processCat(s, 'sellers'));
-    firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).on('value', s => processCat(s, 'buyers'));
+    scanForApprovals();
+    setInterval(scanForApprovals, 5000); // Polling safeguard
 };
 
-window.openApprovalsModal = function() {
+window.openApprovalsModal = function(silent = false) {
     const c = $('approvalsListContent');
     if(!c) return;
     if(window.pendingApprovals.length === 0) {
@@ -561,8 +587,11 @@ window.openApprovalsModal = function() {
             </div>
         `).join('');
     }
-    const m = $('approvalsModal');
-    if(m) m.style.display = 'flex';
+    
+    if (!silent) {
+        const m = $('approvalsModal');
+        if(m) m.style.display = 'flex';
+    }
 };
 
 window.closeApprovalsModal = function() {
@@ -932,9 +961,12 @@ window.selectLeadByIndex = function(idx){
   const dh = $("dispoHubContent");
   const dhw = $("dispoHubWrapper");
   if (dh && dhw) {
-      if (!window.currentLead.isLive) {
+      const isLive = window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === 'true';
+      const isAppr = window.currentLead.dispoApproved === true || String(window.currentLead.dispoApproved).toLowerCase() === 'true';
+
+      if (!isLive) {
           dhw.style.display="none";
-      } else if (!window.currentLead.dispoApproved) {
+      } else if (!isAppr) {
           let dhtml = "<span style='color:var(--warn); font-weight:800;'>Status: Pending Leadership Approval</span>";
           if (window.isGod) dhtml += `<br><button class="btn primary tiny btn-approve-dispo" style="margin-top:8px">Approve for Dispo</button>`;
           dh.innerHTML = dhtml;
@@ -1100,43 +1132,61 @@ window.subscribeBranchScopedLeads = function(){
 
 window.subscribeGodAllLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading ALL ${window.currentCategory}…`;
-  const byId=new Map(); let masterDone=false; let legacyDone=false; let personalDone=false;
+  const byId=new Map(); 
+
   const checkDone = () => {
-      if(masterDone && legacyDone && personalDone) {
-          if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
-          else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); }
-      } else if (byId.size) {
-          if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`;
-      }
+      if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
+      else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`; }
+      window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager();
   };
 
-  const processSnap = (snap, isLegacy) => {
-      const val = snap.val() || {}; const id = snap.key;
+  const processSnap = (id, val, isLegacy) => {
       if(!byId.has(id) || !isLegacy) {
           byId.set(id, { id, ...val, __legacy: isLegacy });
-          window.setListFromMap(byId);
       }
-      checkDone();
   };
 
-  window.leadsRef=firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`);
-  window.leadsRef.on("child_added", s=>processSnap(s, false));
-  window.leadsRef.on("child_changed", s=>processSnap(s, false));
-  window.leadsRef.on("child_removed", snap=>{byId.delete(snap.key); window.setListFromMap(byId); checkDone();});
-  window.leadsRef.once("value").then(()=>{ masterDone=true; checkDone(); }).catch(()=>{ masterDone=true; checkDone(); });
-  
-  window.legacyRef=firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`);
-  window.legacyRef.on("child_added", s=>processSnap(s, true));
-  window.legacyRef.on("child_changed", s=>processSnap(s, true));
-  window.legacyRef.on("child_removed", snap=>{if(byId.has(snap.key)&&byId.get(snap.key).__legacy) byId.delete(snap.key); window.setListFromMap(byId); checkDone();});
-  window.legacyRef.once("value").then(()=>{ legacyDone=true; checkDone(); }).catch(()=>{ legacyDone=true; checkDone(); });
-  
-  const myFlatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`); window.branchLeadRefs.push(myFlatRef);
-  myFlatRef.on("child_added", s=>processSnap(s, false));
-  myFlatRef.on("child_changed", s=>processSnap(s, false));
-  myFlatRef.on("child_removed", snap=>{ });
-  myFlatRef.once("value").then(()=>{ personalDone=true; checkDone(); }).catch(()=>{ personalDone=true; checkDone(); });
+  const syncAll = async () => {
+      try {
+          const [masterSnap, legacySnap, usersSnap] = await Promise.all([
+              firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).once('value'),
+              firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`).once('value'),
+              firebase.database().ref(`${LEADS_BY_USER_PATH}`).once('value')
+          ]);
 
+          const legVal = legacySnap.val() || {};
+          Object.keys(legVal).forEach(k => processSnap(k, legVal[k], true));
+
+          const mastVal = masterSnap.val() || {};
+          Object.keys(mastVal).forEach(k => processSnap(k, mastVal[k], false));
+
+          const usersVal = usersSnap.val() || {};
+          Object.keys(usersVal).forEach(uid => {
+              const catData = usersVal[uid][window.currentCategory] || {};
+              Object.keys(catData).forEach(k => processSnap(k, catData[k], false));
+          });
+
+          window.setListFromMap(byId);
+          checkDone();
+          window.applyPendingSelection();
+      } catch(e) {
+          console.error("God Mode Sync Error:", e);
+          if($("status")) $("status").textContent=`Sync Error. Check DB Rules.`;
+      }
+  };
+
+  syncAll();
+  
+  const masterRef = firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`);
+  window.branchLeadRefs.push(masterRef);
+  masterRef.on('child_added', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); window.applyPendingSelection(); });
+  masterRef.on('child_changed', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); window.applyPendingSelection(); });
+  masterRef.on('child_removed', s => { byId.delete(s.key); window.setListFromMap(byId); checkDone(); });
+
+  const usersRef = firebase.database().ref(`${LEADS_BY_USER_PATH}`);
+  window.branchLeadRefs.push(usersRef);
+  usersRef.on('child_changed', s => { syncAll(); }); 
+  
   if($("btnImportLegacy")) $("btnImportLegacy").style.display="";
 }
 
@@ -1306,7 +1356,7 @@ window.openLeadModal = function(mode){
     if($("m_marketingDetails")) $("m_marketingDetails").value = window.currentLead.marketingDetails || window.currentLead.MarketingDetails || "";
 
     if($("m_isLive")) {
-        $("m_isLive").checked = !!window.currentLead.isLive;
+        $("m_isLive").checked = window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === 'true';
         $("m_isLive").dispatchEvent(new Event('change'));
     }
     if(window.currentLead.photos) window.modalCurrentPhotos = Array.isArray(window.currentLead.photos) ? [...window.currentLead.photos] : [];
@@ -1385,7 +1435,7 @@ window.saveLeadFromModal = async function(skipClose){
   const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: isLiveVal, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), marketingTitle: marketingTitle, marketingPrice: marketingPrice, marketingDetails: marketingDetails, phones:window.parsePhonesFromModal(), photos: window.modalCurrentPhotos || [] };
   
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
-  if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
+  if (payload.isLive && (!window.currentLead || (window.currentLead.isLive !== true && String(window.currentLead.isLive).toLowerCase() !== 'true'))) {
       window.triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
   }
 
@@ -1401,14 +1451,16 @@ window.saveLeadFromModal = async function(skipClose){
       let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       window.modalLeadId = leadId;
-      const payloadWithMeta = {...payload, createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false};
+      const isCurrentlyApproved = window.modalMode === 'edit' ? (window.currentLead?.dispoApproved === true || String(window.currentLead?.dispoApproved).toLowerCase() === 'true') : false;
+      const payloadWithMeta = {...payload, createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: isCurrentlyApproved};
       await window.upsertBranchAssignments(leadId, payloadWithMeta, uids);
     } else {
       const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       window.modalLeadId = leadId;
       const finalUpdates = {};
-      const payloadWithMeta = {...payload, id:leadId, archived:false, updatedAt:Date.now(), updatedBy:window.ME?.email||"", createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: window.modalMode === 'edit' ? (!!window.currentLead?.dispoApproved) : false};
+      const isCurrentlyApproved = window.modalMode === 'edit' ? (window.currentLead?.dispoApproved === true || String(window.currentLead?.dispoApproved).toLowerCase() === 'true') : false;
+      const payloadWithMeta = {...payload, id:leadId, archived:false, updatedAt:Date.now(), updatedBy:window.ME?.email||"", createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: isCurrentlyApproved};
       
       finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = payloadWithMeta;
       finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payloadWithMeta, assignedTo:{[window.UID]:true}, assignedUids:[window.UID]};
