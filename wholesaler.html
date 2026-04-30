@@ -186,6 +186,14 @@ body{
 </head>
 <body data-portal="wholesaler">
 
+<div id="warRoomBanner" style="display:none; position:fixed; top:20px; left:50%; transform:translateX(-50%); background:var(--batman); color:#000; padding:14px 24px; border-radius:12px; box-shadow:0 10px 30px rgba(234, 179, 8, 0.4); z-index:99999; align-items:center; gap:16px; border:2px solid #fff; cursor:pointer;" onclick="this.style.display='none'">
+    <div style="font-size:28px;">🚨</div>
+    <div style="display:flex; flex-direction:column;">
+        <div style="font-size:14px; font-weight:900; letter-spacing:1px; text-transform:uppercase;">War Room Intel Complete</div>
+        <div id="warRoomBannerText" style="font-size:13px; font-weight:600; margin-top:2px; color:#111;"></div>
+    </div>
+</div>
+
 <header class="header">
   <div class="leftTitle">
     <div>DEALBANKERS • Wholesaler Portal</div>
@@ -492,9 +500,9 @@ window.pendingApprovals = [];
 window.pendingSelectId = null;
 
 const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; const USER_DIR_PATH="userDirectory";
-const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log"; const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
-const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3'); 
-
+const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log";
+const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
+const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
 window.esc = function(s){ return String(s || "").replace(/&/g, "&"+"amp;").replace(/</g, "&"+"lt;").replace(/>/g, "&"+"gt;").replace(/"/g, "&"+"quot;").replace(/'/g, "&"+"#39;"); }
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
@@ -506,6 +514,24 @@ window.emailLookupKey = function(email){return String(email||"").trim().toLowerC
 window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin"; return "user";} 
 window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} 
 window.isAdminLike = function(){return window.isGod||window.isBranchManager;}
+
+/* --- NOTIFICATION BLIP HANDSHAKE --- */
+window.listenForNotifications = function() {
+    firebase.database().ref(`notifications/${window.UID}`).on("child_added", snap => {
+        const notif = snap.val();
+        if(notif && notif.type === "warroom_update" && notif.read === false) {
+            const banner = document.getElementById('warRoomBanner');
+            const text = document.getElementById('warRoomBannerText');
+            if(banner && text) {
+                text.textContent = notif.message || "Your lead intel has been updated.";
+                banner.style.display = 'flex';
+                try { pingSound.play(); } catch(e){}
+                setTimeout(() => { banner.style.display = 'none'; }, 8000);
+            }
+            snap.ref.update({read: true});
+        }
+    });
+};
 
 /* --- NOTIFICATION BELL LOGIC --- */
 window.initApprovalListener = function() {
@@ -526,13 +552,12 @@ window.initApprovalListener = function() {
         }
         const btnContent = $('approvalsListContent');
         if(btnContent && window.pendingApprovals.length > 0) {
-            window.openApprovalsModal(true); 
+            window.openApprovalsModal(true);
         }
     };
 
     const scanForApprovals = async () => {
         let pending = new Map();
-        
         const checkLead = (lead, id, cat) => {
             const isLive = lead && (lead.isLive === true || String(lead.isLive).toLowerCase() === 'true');
             const isApproved = lead && (lead.dispoApproved === true || String(lead.dispoApproved).toLowerCase() === 'true');
@@ -547,7 +572,6 @@ window.initApprovalListener = function() {
                 firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})})),
                 firebase.database().ref(LEADS_BY_USER_PATH).once('value').catch(()=>({val:()=>({})}))
             ]);
-
             const msVal = ms.val() || {}; Object.keys(msVal).forEach(k => checkLead(msVal[k], k, 'sellers'));
             const mbVal = mb.val() || {}; Object.keys(mbVal).forEach(k => checkLead(mbVal[k], k, 'buyers'));
 
@@ -558,7 +582,6 @@ window.initApprovalListener = function() {
                     Object.keys(catData).forEach(k => checkLead(catData[k], k, cat));
                 });
             });
-
             window.pendingApprovals = Array.from(pending.values());
             window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
             updateBadge();
@@ -610,8 +633,6 @@ window.openApprovalLead = function(id, cat) {
         window.applySearch();
     }
 };
-
-/* -------------------------------- */
 
 window.switchCategory = function(cat) {
     if(window.currentCategory === cat && $("panel-acq") && $("panel-acq").style.display !== "none") return;
@@ -692,7 +713,6 @@ window.updateQuotaUI = function() {
     const aLeft = Math.max(0, 5 - window.userQuotas.analysis);
     const sLeft = Math.max(0, 100 - window.userQuotas.skip);
     if($("quotaReadout")) $("quotaReadout").textContent = `Remaining this week -> Reports: ${aLeft}/5 | Skips: ${sLeft}/100`;
-    
     const btnA = $("btnReqAnalysisModal");
     const btnS = $("btnReqSkipModal");
     if (btnA) btnA.disabled = aLeft <= 0;
@@ -722,7 +742,6 @@ window.requestWarRoomModal = async function(type) {
     
     window.modalToast("Saving lead before request...", true);
     const leadId = await window.saveLeadFromModal(true);
-    
     if (!leadId) {
         window.updateQuotaUI();
         return;
@@ -732,7 +751,6 @@ window.requestWarRoomModal = async function(type) {
     const owner = ($("m_owner")?.value||"").trim() || "";
     const phones = $("m_phones")?.value || "";
     const notes = ($("m_notes")?.value||"").trim() || "";
-    
     const req = {
         requesterUid: window.UID || "Unknown", 
         requesterEmail: window.ME?.email || "", 
@@ -765,7 +783,7 @@ window.requestWarRoom = async function(type) {
     if (type === 'analysis' && window.userQuotas.analysis >= 5) return alert("Deal Report limit reached.");
     if (type === 'skip' && window.userQuotas.skip >= 100) return alert("Contact Search limit reached.");
     
-    if($("btnReqAnalysis")) $("btnReqAnalysis").disabled = true; 
+    if($("btnReqAnalysis")) $("btnReqAnalysis").disabled = true;
     if($("btnReqSkip")) $("btnReqSkip").disabled = true;
     
     const req = {
@@ -827,16 +845,26 @@ window.uploadPhotos = function() {
             $("m_isLive").checked = true;
             $("m_isLive").dispatchEvent(new Event('change'));
         }
-        $("m_photoUpload").click();
+        if($("m_photoUpload")) $("m_photoUpload").click();
     }, 300);
 };
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
-window.buildUserCache = function(rows){const byUid={}, byEmail={}, byUser={}; rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;}); return {byUid,byEmail,byUser};}
-window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value"); managerAssociates=mSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});}); if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending; return cache;}
-window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[]; return cache;}
-window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap); const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows); Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status); return cache;}
-window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache(); return window.loadSelfDirectoryCache();}
+window.buildUserCache = function(rows){const byUid={}, byEmail={}, byUser={};
+rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;});
+return {byUid,byEmail,byUser};}
+window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
+managerAssociates=mSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
+if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending;
+return cache;}
+window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[];
+return cache;}
+window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap);
+const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows);
+Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
+return cache;}
+window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
+return window.loadSelfDirectoryCache();}
 window.managedAssociatesFor = function(uid){return Object.values(window.userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
 window.resolveMyRole = async function(u){
   const emailStr = String(u?.email || "").toLowerCase().trim();
@@ -848,15 +876,22 @@ window.resolveMyRole = async function(u){
   }catch(e){ }
   return mapRole(window.userDirCache.byUid?.[window.UID]?.role || "user");
 }
-window.getAssignableRows = function(){const rows=[]; Object.values(window.userDirCache.byUid||{}).forEach(u=>{if(u.role==="system") return; if(window.isGod){if(u.role==="god") return; rows.push(u); return;} if(window.isBranchManager){if(u.uid===window.UID){rows.push(u); return;} if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") rows.push(u);}}); rows.sort((a,b)=>((a.role||"")===(b.role||"")?String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}):String(a.role||"").localeCompare(String(b.role||"")))); return rows;}
+window.getAssignableRows = function(){const rows=[];
+Object.values(window.userDirCache.byUid||{}).forEach(u=>{if(u.role==="system") return; if(window.isGod){if(u.role==="god") return; rows.push(u); return;} if(window.isBranchManager){if(u.uid===window.UID){rows.push(u); return;} if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") rows.push(u);}}); rows.sort((a,b)=>((a.role||"")===(b.role||"")?String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}):String(a.role||"").localeCompare(String(b.role||"")))); return rows;}
 window.leadIdFor = function(lead){return String((lead&&(lead.id||lead.docnum))?(lead.id||lead.docnum):"");}
-window.normalizePhones = function(lead){const out=[]; if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set(); return out.filter(p=>{const k=window.fmtPhoneKey(p.phone); if(!p.phone||k==="unknown"||seen.has(k)) return false; seen.add(k); return true;}).map(p=>({label:String(p.label||"Phone"), phone:String(p.phone)}));}
-window.leadStatus = function(lead){const s=(lead?.status||lead?.leadStatus||lead?.state||"").toString().trim(); if(!s) return "New"; const up=s.toLowerCase(); if(up.includes("dnc")) return "DNC"; if(up.includes("hot")) return "Hot"; if(up.includes("work")) return "Working"; if(up.includes("done")||up.includes("closed")) return "Done"; return s;}
-window.badgeHTML = function(lead,legacy){const s=(lead?.status||"New"); const cls=(s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new"; let html = `<span class="badge ${cls}">${window.esc(s==="DNC"?"DNC":s)}</span>${legacy?'<span class="badge legacy">LEGACY</span>':''}`; if(lead?.isLive) html += `<span class="badge live">LIVE / JV</span>`; return html;}
+window.normalizePhones = function(lead){const out=[];
+if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set();
+return out.filter(p=>{const k=window.fmtPhoneKey(p.phone); if(!p.phone||k==="unknown"||seen.has(k)) return false; seen.add(k); return true;}).map(p=>({label:String(p.label||"Phone"), phone:String(p.phone)}));}
+window.leadStatus = function(lead){const s=(lead?.status||lead?.leadStatus||lead?.state||"").toString().trim(); if(!s) return "New"; const up=s.toLowerCase();
+if(up.includes("dnc")) return "DNC"; if(up.includes("hot")) return "Hot"; if(up.includes("work")) return "Working"; if(up.includes("done")||up.includes("closed")) return "Done"; return s;}
+window.badgeHTML = function(lead,legacy){const s=(lead?.status||"New"); const cls=(s==="New")?"new":(s==="Working")?"working":(s==="Hot")?"hot":(s==="DNC")?"dnc":(s==="Done")?"done":"new";
+let html = `<span class="badge ${cls}">${window.esc(s==="DNC"?"DNC":s)}</span>${legacy?'<span class="badge legacy">LEGACY</span>':''}`; if(lead?.isLive) html += `<span class="badge live">LIVE / JV</span>`;
+return html;}
 window.isArchivedLead = function(lead){const v=lead?.archived; return v===true||String(v).toLowerCase()==="true"||v===1||String(v)==="1";}
 
 window.applySearch = function(){
-  const q = ($("s_q")?.value||"").toLowerCase().trim(); 
+  const sq = $("s_q");
+  const q = (sq?.value||"").toLowerCase().trim(); 
   let view = window.sellerList.slice();
   
   if (window.currentCategory === 'buyers') {
@@ -879,8 +914,8 @@ window.applySearch = function(){
   }
   
   window.sellerView = view.filter(l => !window.isArchivedLead(l)); 
-  window.renderQueue(); 
-
+  window.renderQueue();
+  
   if (window.pendingSelectId) {
       const idx = window.sellerView.findIndex(x => window.leadIdFor(x) === window.pendingSelectId);
       if (idx >= 0) {
@@ -892,7 +927,7 @@ window.applySearch = function(){
 
   if(window.sellerView.length){
       if(window.currentLeadId && !window.pendingSelectId){
-          const idx = window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId); 
+          const idx = window.sellerView.findIndex(x=>window.leadIdFor(x)===window.currentLeadId);
           if(idx>=0) {
               window.selectLeadByIndex(idx);
               return;
@@ -930,17 +965,18 @@ window.renderQueue = function(){
 }
 
 window.updatePager = function(){const total=window.sellerView.length||0, current=(window.currentIndex>=0&&total)?(window.currentIndex+1):0; if($("leadPager")) $("leadPager").textContent=`${current} / ${total}`;}
-window.setMapVisibility = function(on){if($("mapHead")) $("mapHead").style.display=on?"":"none"; if($("mapWrap")) $("mapWrap").style.display=on?"":"none"; if($("mapWarn")) $("mapWarn").style.display="none";}
+window.setMapVisibility = function(on){if($("mapHead")) $("mapHead").style.display=on?"":"none"; if($("mapWrap")) $("mapWrap").style.display=on?"":"none";
+if($("mapWarn")) $("mapWarn").style.display="none";}
 
 window.clearConsole = function(){
   window.currentLead=null; window.currentLeadId=""; window.currentIndex=-1;
   if($("leadAddress")) $("leadAddress").textContent="No lead selected"; 
-  if($("leadOwner")) $("leadOwner").textContent="Select a lead from the queue."; 
+  if($("leadOwner")) $("leadOwner").textContent="Select a lead from the queue.";
   if($("dispoHubContent")) $("dispoHubContent").innerHTML="Select a lead to view Dispo status.";
   if($("dispoHubWrapper")) $("dispoHubWrapper").style.display="none";
   if($("phoneSelect")) { $("phoneSelect").innerHTML=""; $("phoneSelect").disabled=true; }
   if($("callBtn")) $("callBtn").disabled=true;
-  if($("copyBtn")) $("copyBtn").disabled=true; 
+  if($("copyBtn")) $("copyBtn").disabled=true;
   if($("btnEditLead")) $("btnEditLead").disabled=true; 
   if($("btnReqAnalysis")) $("btnReqAnalysis").disabled=true; 
   if($("btnReqSkip")) $("btnReqSkip").disabled=true; 
@@ -949,7 +985,8 @@ window.clearConsole = function(){
   if($("noteComposer")) $("noteComposer").value="";
   window.setMapVisibility(false); 
   window.detachCallLog(); window.renderCallLogEmpty(); if($("callHint")) $("callHint").style.display="none";
-  if($("leadNotesField")) $("leadNotesField").style.display="none"; if($("leadNotesText")) $("leadNotesText").textContent="";
+  if($("leadNotesField")) $("leadNotesField").style.display="none";
+  if($("leadNotesText")) $("leadNotesText").textContent="";
 }
 
 window.selectLeadByIndex = function(idx){
@@ -957,17 +994,17 @@ window.selectLeadByIndex = function(idx){
   idx=Math.max(0, Math.min(idx, window.sellerView.length-1)); 
   window.currentIndex=idx; window.currentLead=window.sellerView[idx]; window.currentLeadId=window.leadIdFor(window.currentLead); 
   window.updatePager(); window.renderQueue();
-  const addr=(window.currentLead.address||window.currentLead.Address||"—").toString(), owner=(window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||"—").toString(); 
+  const addr=(window.currentLead.address||window.currentLead.Address||"—").toString(), owner=(window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||"—").toString();
   if($("leadAddress")) $("leadAddress").textContent=addr; if($("leadOwner")) $("leadOwner").textContent=owner;
   const notes = (window.currentLead.notes || window.currentLead.Notes || "").toString().trim();
-  if(notes) { if($("leadNotesField")) $("leadNotesField").style.display=""; if($("leadNotesText")) $("leadNotesText").textContent=notes; } else { if($("leadNotesField")) $("leadNotesField").style.display="none"; }
+  if(notes) { if($("leadNotesField")) $("leadNotesField").style.display=""; if($("leadNotesText")) $("leadNotesText").textContent=notes;
+  } else { if($("leadNotesField")) $("leadNotesField").style.display="none"; }
 
   const dh = $("dispoHubContent");
   const dhw = $("dispoHubWrapper");
   if (dh && dhw) {
       const isLive = window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === 'true';
       const isAppr = window.currentLead.dispoApproved === true || String(window.currentLead.dispoApproved).toLowerCase() === 'true';
-
       if (!isLive) {
           dhw.style.display="none";
       } else if (!isAppr) {
@@ -985,17 +1022,19 @@ window.selectLeadByIndex = function(idx){
   if($("btnEditLead")) $("btnEditLead").disabled=false; 
   if(!window.isGod) { if($("btnReqAnalysis")) $("btnReqAnalysis").disabled=false; if($("btnReqSkip")) $("btnReqSkip").disabled=false; }
 
-  const sel=$("phoneSelect"), phones=window.normalizePhones(window.currentLead); 
+  const sel=$("phoneSelect"), phones=window.normalizePhones(window.currentLead);
   if (sel) {
       sel.innerHTML=""; 
       if(!phones.length){
-        sel.disabled=true; if($("callBtn")) $("callBtn").disabled=true; if($("copyBtn")) $("copyBtn").disabled=true;
+        sel.disabled=true; if($("callBtn")) $("callBtn").disabled=true;
+        if($("copyBtn")) $("copyBtn").disabled=true;
         if($("btnOpenQuickLog")) $("btnOpenQuickLog").style.display="none";
         window.detachCallLog(); window.renderCallLogEmpty("No phones on this lead yet."); if($("callHint")) $("callHint").style.display="none";
       } else {
         sel.disabled=false;
         phones.forEach(p=>{const opt=document.createElement("option"); opt.value=p.phone; opt.textContent=`${p.label} — ${p.phone}`; sel.appendChild(opt);}); 
-        sel.selectedIndex=0; window.currentPhone=phones[0].phone; window.currentPhoneLabel=phones[0].label; 
+        sel.selectedIndex=0; window.currentPhone=phones[0].phone;
+        window.currentPhoneLabel=phones[0].label; 
         if($("callBtn")) $("callBtn").disabled=false; if($("copyBtn")) $("copyBtn").disabled=false; if($("callHint")) $("callHint").style.display=""; 
         if($("btnOpenQuickLog")) $("btnOpenQuickLog").style.display="flex";
         window.onPhoneChanged();
@@ -1004,17 +1043,20 @@ window.selectLeadByIndex = function(idx){
   if(addr.trim()){window.setMapVisibility(true); window.buildMap(addr);} else window.setMapVisibility(false);
 } 
 
-window.onPhoneChanged = function(){const sel=$("phoneSelect"); if(!sel) return; window.currentPhone=sel.value||""; window.currentPhoneLabel=(sel.options[sel.selectedIndex]?.textContent||"").split("—")[0].trim()||"Phone"; if($("noteComposer")) $("noteComposer").value=""; window.attachCallLog(window.fmtPhoneKey(window.currentPhone)); if($("flyoutPhoneLabel")) $("flyoutPhoneLabel").textContent=window.currentPhoneLabel + ": " + window.currentPhone;}
+window.onPhoneChanged = function(){const sel=$("phoneSelect"); if(!sel) return; window.currentPhone=sel.value||""; window.currentPhoneLabel=(sel.options[sel.selectedIndex]?.textContent||"").split("—")[0].trim()||"Phone"; if($("noteComposer")) $("noteComposer").value=""; window.attachCallLog(window.fmtPhoneKey(window.currentPhone));
+if($("flyoutPhoneLabel")) $("flyoutPhoneLabel").textContent=window.currentPhoneLabel + ": " + window.currentPhone;}
 window.prevLead = function(){if(window.sellerView.length) window.selectLeadByIndex((window.currentIndex<=0)?0:window.currentIndex-1);}; 
 window.nextLead = function(){if(window.sellerView.length) window.selectLeadByIndex((window.currentIndex>=window.sellerView.length-1)?window.sellerView.length-1:window.currentIndex+1);}; 
 
-window.sanitizeTel = function(phone){const raw=(phone||"").toString().trim(); if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
+window.sanitizeTel = function(phone){const raw=(phone||"").toString().trim();
+if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
 window.isMobileish = function(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"");}
-window.doTelDial = function(phone){const tel=window.sanitizeTel(phone); if(!tel) return; const a=document.createElement("a"); a.href="tel:"+tel; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();}
+window.doTelDial = function(phone){const tel=window.sanitizeTel(phone);
+if(!tel) return; const a=document.createElement("a"); a.href="tel:"+tel; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();}
 
-window.callCurrentPhone = async function(){if(!window.currentPhone) return; await window.logStatus("Call Attempt", true); if(window.isMobileish()) return window.doTelDial(window.currentPhone); try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied to clipboard!");}catch(e){}};
+window.callCurrentPhone = async function(){if(!window.currentPhone) return; await window.logStatus("Call Attempt", true); if(window.isMobileish()) return window.doTelDial(window.currentPhone);
+try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied to clipboard!");}catch(e){}};
 window.copyCurrentPhone = async function(){if(!window.currentPhone) return; try{await navigator.clipboard.writeText(window.currentPhone); alert("Copied!");}catch(e){}};
-
 window.openQuickLog = function() {
     if($("flyoutOverlay")) $("flyoutOverlay").style.display = "flex";
     setTimeout(() => { if($("quickLogFlyout")) $("quickLogFlyout").classList.add("open"); }, 10);
@@ -1023,8 +1065,8 @@ window.closeQuickLog = function() {
     if($("quickLogFlyout")) $("quickLogFlyout").classList.remove("open");
     setTimeout(() => { if($("flyoutOverlay")) $("flyoutOverlay").style.display = "none"; }, 300);
 };
-
-window.renderCallLogEmpty = function(msg){if($("callLog")) $("callLog").innerHTML=`<div class="log-empty">${window.esc(msg||"No call history for this number.")}</div>`; if($("logCount")) $("logCount").textContent="0 entries";}
+window.renderCallLogEmpty = function(msg){if($("callLog")) $("callLog").innerHTML=`<div class="log-empty">${window.esc(msg||"No call history for this number.")}</div>`;
+if($("logCount")) $("logCount").textContent="0 entries";}
 window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;}}
 window.callLogRefForPhoneKey = function(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
 
@@ -1034,7 +1076,8 @@ window.attachCallLog = function(phoneKey){
   const items=[]; 
   window.activeLogRef=window.callLogRefForPhoneKey(phoneKey); 
   const redraw=()=>{
-    const log=$("callLog"); if(!log) return;
+    const log=$("callLog");
+    if(!log) return;
     if(!items.length){ window.renderCallLogEmpty(); return; }
     const sorted=items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)); 
     let html = "";
@@ -1052,25 +1095,31 @@ window.attachCallLog = function(phoneKey){
 }
 
 window.pushLogEntry = async function(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return; await window.callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:window.UID||"", by:window.ME?.email||"", byName:window.ME?.displayName||window.ME?.email||"User", phone:window.currentPhone||"", phoneLabel:window.currentPhoneLabel||"", leadId:window.currentLeadId||"", leadAddress:window.currentLead?.address||window.currentLead?.Address||""});}
-window.logStatus = async function(status, keepOpen){const phoneKey=window.fmtPhoneKey(window.currentPhone); if(!window.currentPhone||phoneKey==="unknown") return; await window.pushLogEntry(phoneKey, {type:"status", status}); window.toast("Logged ✓"); if(!keepOpen) window.closeQuickLog();}
-window.saveQuickNote = async function(){const text=($("noteComposer")?.value||"").trim(); const phoneKey=window.fmtPhoneKey(window.currentPhone); if(!text||!window.currentPhone||phoneKey==="unknown") return; await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
+window.logStatus = async function(status, keepOpen){const phoneKey=window.fmtPhoneKey(window.currentPhone);
+if(!window.currentPhone||phoneKey==="unknown") return; await window.pushLogEntry(phoneKey, {type:"status", status}); window.toast("Logged ✓"); if(!keepOpen) window.closeQuickLog();}
+window.saveQuickNote = async function(){const text=($("noteComposer")?.value||"").trim(); const phoneKey=window.fmtPhoneKey(window.currentPhone); if(!text||!window.currentPhone||phoneKey==="unknown") return;
+await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
-window.buildMap = function(address){const addr=(address||"").trim(); if(!addr){window.setMapVisibility(false); return;} const q=encodeURIComponent(addr); const src=window.mapMode==="street"?`https://www.google.com/maps?q=${q}&layer=c&output=embed`:`https://www.google.com/maps?q=${q}&output=embed`; if($("streetFrame")) $("streetFrame").src=src; if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";}
+window.buildMap = function(address){const addr=(address||"").trim(); if(!addr){window.setMapVisibility(false);
+return;} const q=encodeURIComponent(addr); const src=window.mapMode==="street"?`http://googleusercontent.com/maps.google.com/maps?q=${q}&layer=c&output=embed`:`http://googleusercontent.com/maps.google.com/maps?q=${q}&output=embed`; if($("streetFrame")) $("streetFrame").src=src; if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";}
 
 window.detachLeadRefs = function(){
   if(window.leadsRef){try{window.leadsRef.off();}catch(e){} window.leadsRef=null;}
   if(window.legacyRef){try{window.legacyRef.off();}catch(e){} window.legacyRef=null;}
-  if(window.branchLeadRefs.length){ window.branchLeadRefs.forEach(ref=>{ try{ref.off();}catch(e){} }); window.branchLeadRefs=[]; }
+  if(window.branchLeadRefs.length){ window.branchLeadRefs.forEach(ref=>{ try{ref.off();}catch(e){} });
+  window.branchLeadRefs=[]; }
 }
 window.setListFromMap = function(byId){window.sellerList=Array.from(byId.values()); window.sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||""))); window.applySearch();}
 
 window.subscribeAssociateAssignedLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading assigned ${window.currentCategory}…`;
-  const byId=new Map(); let queueLoaded=false, masterLoaded=false, flatLoaded=false;
+  const byId=new Map();
+  let queueLoaded=false, masterLoaded=false, flatLoaded=false;
   const updateStatus=()=>{
     if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Assigned): ${byId.size} items`; return; }
-    if(queueLoaded&&masterLoaded&&flatLoaded){ window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent=`No ${window.currentCategory} assigned yet.`; }
+    if(queueLoaded&&masterLoaded&&flatLoaded){ window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager();
+    if($("status")) $("status").textContent=`No ${window.currentCategory} assigned yet.`; }
   };
   const mergeLead=(leadId, payload, source)=>{
     const prior=byId.get(leadId)||{};
@@ -1089,16 +1138,17 @@ window.subscribeAssociateAssignedLeads = function(){
   window.leadsRef.on("child_changed", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); window.leadsRef.on("child_removed", snap=>removeLead(snap.key, "queue"));
   window.leadsRef.once("value").then(()=>{queueLoaded=true; updateStatus();}).catch(()=>{queueLoaded=true; updateStatus();});
   const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`); window.branchLeadRefs.push(masterAssignedRef);
-  const handleMaster=(snap)=>{const leadId=snap.key; const val=snap.val()||{}; if(val?.assignedTo && val.assignedTo[window.UID]) mergeLead(leadId, val, "master"); else removeLead(leadId, "master");};
+  const handleMaster=(snap)=>{const leadId=snap.key; const val=snap.val()||{};
+  if(val?.assignedTo && val.assignedTo[window.UID]) mergeLead(leadId, val, "master"); else removeLead(leadId, "master");};
   masterAssignedRef.on("child_added", handleMaster); masterAssignedRef.on("child_changed", handleMaster); masterAssignedRef.on("child_removed", snap=>removeLead(snap.key, "master"));
   masterAssignedRef.once("value").then(()=>{masterLoaded=true; updateStatus();}).catch(()=>{masterLoaded=true; updateStatus();});
   const flatRef=firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}`); window.branchLeadRefs.push(flatRef);
   const handleFlat=(snap)=>{
     const key=snap.key; if(key==="sellers"||key==="buyers") return; 
-    const val=snap.val()||{}; 
+    const val=snap.val()||{};
     if(val && typeof val==="object" && !Array.isArray(val)){
       const maybeLeadId=String(val.id||val.docnum||key||""); 
-      const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones)); 
+      const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones));
       if(hasLeadShape && maybeLeadId) {
         const t = String(val.type||"").toLowerCase();
         const isBuyer = t.includes('investor') || t.includes('buyer') || t === 'both';
@@ -1115,15 +1165,20 @@ window.subscribeAssociateAssignedLeads = function(){
 window.subscribeBranchScopedLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading branch ${window.currentCategory}…`;
   const byId=new Map(); const sourceMap=new Map(); const scope=[window.UID,...window.managedAssociatesFor(window.UID).map(u=>u.uid)];
-  let loaded=0; const total=scope.length;
-  function showEmptyIfDone(){ if(loaded < total || byId.size) return; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent=`No branch ${window.currentCategory} yet.`; }
+  let loaded=0;
+  const total=scope.length;
+  function showEmptyIfDone(){ if(loaded < total || byId.size) return; window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager(); if($("status")) $("status").textContent=`No branch ${window.currentCategory} yet.`;
+  }
   function rebuildLead(leadId){
     const sources=sourceMap.get(leadId);
-    if(!sources || !sources.size){ sourceMap.delete(leadId); byId.delete(leadId); window.setListFromMap(byId); if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Branch): ${byId.size} items`; }else{ showEmptyIfDone(); } return; }
+    if(!sources || !sources.size){ sourceMap.delete(leadId); byId.delete(leadId); window.setListFromMap(byId);
+    if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Branch): ${byId.size} items`; }else{ showEmptyIfDone(); } return;
+    }
     const rows=Array.from(sources.entries()).map(([uid,val])=>({uid,...val}));
     rows.sort((a,b)=>Number(b.updatedAt||b.assignedAt||b.createdAt||0)-Number(a.updatedAt||a.assignedAt||a.createdAt||0));
     const chosen={...rows[0]}; const assignedUids=rows.map(r=>r.uid); chosen.assignedUids=assignedUids; chosen.assignedTo=assignedUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{});
-    byId.set(leadId, chosen); window.setListFromMap(byId); if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Branch): ${byId.size} items`;
+    byId.set(leadId, chosen); window.setListFromMap(byId);
+    if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Branch): ${byId.size} items`;
   }
   scope.forEach(uid=>{
     const ref=firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}`); window.branchLeadRefs.push(ref);
@@ -1136,11 +1191,11 @@ window.subscribeBranchScopedLeads = function(){
 
 window.subscribeGodAllLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading ALL ${window.currentCategory}…`;
-  const byId=new Map(); 
-
+  const byId=new Map();
   const checkDone = () => {
       if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
-      else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`; }
+      else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`;
+      }
   };
 
   const processSnap = (id, val, isLegacy) => {
@@ -1156,7 +1211,6 @@ window.subscribeGodAllLeads = function(){
               firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`).once('value').catch(()=>({val:()=>({})})),
               firebase.database().ref(`${LEADS_BY_USER_PATH}`).once('value').catch(()=>({val:()=>({})}))
           ]);
-
           const legVal = legacySnap.val() || {};
           Object.keys(legVal).forEach(k => processSnap(k, legVal[k], true));
 
@@ -1168,7 +1222,6 @@ window.subscribeGodAllLeads = function(){
               const catData = usersVal[uid][window.currentCategory] || {};
               Object.keys(catData).forEach(k => processSnap(k, catData[k], false));
           });
-
           window.setListFromMap(byId);
           checkDone();
       } catch(e) {
@@ -1190,9 +1243,11 @@ window.subscribeGodAllLeads = function(){
 
 window.renderAssignList = function(){
   const listEl=$("assignList"); if(!listEl) return;
-  const q=($("assignFilter")?.value||"").toLowerCase().trim(); 
+  const sq = $("assignFilter");
+  const q=(sq?.value||"").toLowerCase().trim();
   const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
-  if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`; return;} 
+  if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`;
+  return;} 
   listEl.innerHTML=rows.map(r=>{
     const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
     const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
@@ -1256,7 +1311,6 @@ window.handleDealPhotoUpload = async function(e) {
     if(!files || files.length === 0) return;
     
     if(!window.modalCurrentPhotos) window.modalCurrentPhotos = [];
-    
     const maxFiles = 10;
     if(window.modalCurrentPhotos.length + files.length > maxFiles) {
         alert(`You can only upload up to ${maxFiles} photos total.`);
@@ -1264,44 +1318,44 @@ window.handleDealPhotoUpload = async function(e) {
     }
 
     const btn = $("m_btnUploadPhotos");
-    const originalText = btn.textContent;
-    btn.textContent = "Uploading...";
-    btn.disabled = true;
-
-    try {
-        for(let i=0; i<files.length; i++) {
-            const file = files[i];
-            if (file.size > 15 * 1024 * 1024) continue; 
-            
-            const fileExt = file.name.split('.').pop() || 'jpg';
-            const fileName = `deal_photos/${window.modalLeadId}/${Date.now()}_${i}.${fileExt}`;
-            const sRef = firebase.storage().ref(fileName);
-            
-            const snapshot = await sRef.put(file, { contentType: file.type });
-            const downloadURL = await snapshot.ref.getDownloadURL();
-            window.modalCurrentPhotos.push(downloadURL);
-        }
-        
-        window.renderModalPhotos();
-        
-        if(window.modalMode === "edit" && window.modalLeadId) {
-            const updates = {};
-            updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
-            if(window.currentLead && window.currentLead.assignedUids) {
-                window.currentLead.assignedUids.forEach(uid => {
-                    updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
-                });
-            }
-            await firebase.database().ref().update(updates);
-        }
-        window.modalToast("Photos uploaded successfully.", true);
-    } catch(err) {
-        console.error("Deal photo upload failed", err);
-        alert(`Upload failed (${err.code || 'unknown'}). Ensure Firebase Storage rules allow writes to /deal_photos/.`);
-    } finally {
-        btn.textContent = originalText;
-        btn.disabled = false;
-        e.target.value = ""; 
+    if(btn){
+      const originalText = btn.textContent;
+      btn.textContent = "Uploading...";
+      btn.disabled = true;
+      try {
+          for(let i=0; i<files.length; i++) {
+              const file = files[i];
+              if (file.size > 15 * 1024 * 1024) continue; 
+              
+              const fileExt = file.name.split('.').pop() || 'jpg';
+              const fileName = `deal_photos/${window.modalLeadId}/${Date.now()}_${i}.${fileExt}`;
+              const sRef = firebase.storage().ref(fileName);
+              
+              const snapshot = await sRef.put(file, { contentType: file.type });
+              const downloadURL = await snapshot.ref.getDownloadURL();
+              window.modalCurrentPhotos.push(downloadURL);
+          }
+          
+          window.renderModalPhotos();
+          if(window.modalMode === "edit" && window.modalLeadId) {
+              const updates = {};
+              updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
+              if(window.currentLead && window.currentLead.assignedUids) {
+                  window.currentLead.assignedUids.forEach(uid => {
+                      updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}/photos`] = window.modalCurrentPhotos;
+                  });
+              }
+              await firebase.database().ref().update(updates);
+          }
+          window.modalToast("Photos uploaded successfully.", true);
+      } catch(err) {
+          console.error("Deal photo upload failed", err);
+          alert(`Upload failed (${err.code || 'unknown'}). Ensure Firebase Storage rules allow writes to /deal_photos/.`);
+      } finally {
+          btn.textContent = originalText;
+          btn.disabled = false;
+          e.target.value = ""; 
+      }
     }
 };
 
@@ -1309,7 +1363,7 @@ window.openLeadModal = function(mode){
   window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true); 
   if($("leadModalTitle")) $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)";
   if($("m_delete")) $("m_delete").style.display=isEdit?"block":"none"; 
-  if($("assignBlock")) $("assignBlock").style.display=window.isAdminLike()?"":"none"; 
+  if($("assignBlock")) $("assignBlock").style.display=window.isAdminLike()?"":"none";
   if($("assignHintPill")) $("assignHintPill").textContent=window.roleLabel(window.ROLE); 
   window.modalAssignedSet=new Set();
   
@@ -1343,11 +1397,11 @@ window.openLeadModal = function(mode){
     window.modalLeadId=window.currentLeadId; 
     if($("m_address")) $("m_address").value=window.currentLead.address||window.currentLead.Address||""; 
     if($("m_owner")) $("m_owner").value=window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||""; 
-    if($("m_mailing")) $("m_mailing").value=window.currentLead.mailing||window.currentLead.Mailing||window.currentLead.mailingAddress||""; 
+    if($("m_mailing")) $("m_mailing").value=window.currentLead.mailing||window.currentLead.Mailing||window.currentLead.mailingAddress||"";
     if($("m_status")) $("m_status").value=window.leadStatus(window.currentLead); 
     if($("m_type")) $("m_type").value=window.currentLead.type || (window.currentCategory === 'buyers' ? 'wholesale buyer' : 'seller'); 
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
-    if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
+    if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n");
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
     if($("m_marketingTitle")) $("m_marketingTitle").value = window.currentLead.marketingTitle || window.currentLead.MarketingTitle || "";
     if($("m_marketingPrice")) $("m_marketingPrice").value = window.currentLead.marketingPrice || window.currentLead.MarketingPrice || "";
@@ -1373,8 +1427,7 @@ window.openLeadModal = function(mode){
     if($("m_notes")) $("m_notes").value=""; 
     if($("m_marketingTitle")) $("m_marketingTitle").value=""; 
     if($("m_marketingPrice")) $("m_marketingPrice").value=""; 
-    if($("m_marketingDetails")) $("m_marketingDetails").value=""; 
-
+    if($("m_marketingDetails")) $("m_marketingDetails").value="";
     if($("m_isLive")) {
         $("m_isLive").checked = false;
         $("m_isLive").dispatchEvent(new Event('change'));
@@ -1385,12 +1438,14 @@ window.openLeadModal = function(mode){
   
   window.renderModalPhotos();
 
-  if(window.isAdminLike()) window.renderAssignList(); 
+  if(window.isAdminLike()) window.renderAssignList();
   if($("leadModal")) { $("leadModal").classList.add("show"); $("leadModal").setAttribute("aria-hidden","false"); }
 }
 
 window.closeLeadModal = function(){if($("leadModal")) { $("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true"); }}
-window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set(); lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});}); return out;}
+window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set();
+lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});});
+return out;}
 
 window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
   await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{}), assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:window.ME?.email||""});
@@ -1406,7 +1461,6 @@ window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
   const masterPayload = {...payload, id:leadId, assignedTo: {}, assignedUids: assigneeUids};
   assigneeUids.forEach(uid => masterPayload.assignedTo[uid] = true);
   updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = masterPayload;
-
   if(window.modalMode==="edit"&&window.currentLead){ 
       const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); 
       prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); 
@@ -1420,7 +1474,7 @@ window.saveLeadFromModal = async function(skipClose){
   
   if (window.currentCategory === 'buyers') {
       if(!owner){ window.modalToast("Buyer Name required.", false); return null; }
-      address = owner; 
+      address = owner;
   } else {
       if(!address){ window.modalToast("Address required.", false); return null; }
   }
@@ -1440,7 +1494,8 @@ window.saveLeadFromModal = async function(skipClose){
   try{
     let leadIdToReturn = null;
     if(window.isGod){
-      const allowed=new Set(window.getAssignableRows().map(r=>r.uid)); const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).push().key;
+      const allowed=new Set(window.getAssignableRows().map(r=>r.uid));
+      const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       window.modalLeadId = leadId; 
       await window.upsertLeadMasterAndAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
@@ -1465,11 +1520,10 @@ window.saveLeadFromModal = async function(skipClose){
       await firebase.database().ref().update(finalUpdates);
     }
     
-    window.modalToast("Saved ✓", true); 
-    
+    window.modalToast("Saved ✓", true);
     if (isLiveVal && skipClose !== true) {
         if(confirm("Lead saved! Would you like to upload deal photos now?")) {
-            $("m_photoUpload").click();
+            if($("m_photoUpload")) $("m_photoUpload").click();
             return leadIdToReturn;
         }
     }
@@ -1480,7 +1534,7 @@ window.saveLeadFromModal = async function(skipClose){
 }
 
 window.deleteLead = async function(){
-    if(!window.modalLeadId) return; 
+    if(!window.modalLeadId) return;
     if(!confirm("Are you sure you want to completely delete this lead?")) return;
     try{
         if(window.isGod) {
@@ -1494,6 +1548,15 @@ window.deleteLead = async function(){
         }
         window.closeLeadModal(); window.clearConsole(); window.toast("Deleted ✓");
     }catch(e){ alert("Delete failed"); }
+};
+
+window.changeUserRole = async function(uid, role) {
+    if(!window.isGod) return;
+    try {
+        await firebase.database().ref(`${ROLES_PATH}/${uid}`).set(role);
+        await firebase.database().ref(`${USER_DIR_PATH}/${uid}`).update({role: role});
+        window.toast("Role updated ✓");
+    } catch(e) { window.toast("Failed to update role"); }
 };
 
 window.renderTeamModalBody = async function(){
@@ -1517,55 +1580,57 @@ window.renderTeamModalBody = async function(){
 }
 window.openTeamModal = async function(){if($("teamModal")) $("teamModal").classList.add("show"); if($("teamModalBody")) $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await window.renderTeamModalBody();}; 
 window.closeTeamModal = function(){if($("teamModal")) $("teamModal").classList.remove("show");};
-
 window.runTeamSearch = async function(){
     const input=$("teamSearch"); const box=$("teamSearchResults");
     if(!input || !box) return;
-    const email=String(input.value||"").trim().toLowerCase(); if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; } 
-    box.innerHTML=`<div class="help">Searching...</div>`; 
+    const email=String(input.value||"").trim().toLowerCase();
+    if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; } 
+    box.innerHTML=`<div class="help">Searching...</div>`;
     try{ 
         const snap=await firebase.database().ref(`${EMAIL_INDEX_PATH}/${window.emailLookupKey(email)}`).once("value");
-        const targetUid=snap.val(); 
+        const targetUid=snap.val();
         if(!targetUid || String(targetUid)===String(window.UID)){ box.innerHTML=`<div class="help">No match found.</div>`; return; } 
-        const myPending=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending"); 
+        const myPending=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
         const mineApproved=String(window.userDirCache.byUid[targetUid]?.managerUid||"")===String(window.UID)&&String(window.userDirCache.byUid[targetUid]?.managerStatus||"")==="approved"; 
-        const statusLine=myPending ? '<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>' : (mineApproved ? '<span style="font-size:11px;color:#00ff6a">Already on your team</span>' : '<span style="font-size:11px;color:#9ab9d6">Match found</span>'); 
+        const statusLine=myPending ? '<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>' : (mineApproved ? '<span style="font-size:11px;color:#00ff6a">Already on your team</span>' : '<span style="font-size:11px;color:#9ab9d6">Match found</span>');
         const action=myPending ? '<button class="btn ghost tiny" disabled>Pending...</button>' : (mineApproved ? `<button class="btn danger tiny btn-remove" data-uid="${targetUid}">Remove</button>` : `<button class="btn primary tiny btn-request-assoc" data-uid="${targetUid}" data-email="${encodeURIComponent(email)}">Request</button>`);
         box.innerHTML=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(email)}</strong>${statusLine}</div><div class="teamActions">${action}</div></div>`; 
     }catch(e){ box.innerHTML=`<div class="help">Search unavailable right now.</div>`; }
 };
 
 window.requestAssociate=async function(targetUid,targetEmailEnc){
-    if(!targetUid) return; 
+    if(!targetUid) return;
     const targetEmail=decodeURIComponent(targetEmailEnc||"").toLowerCase(); 
     const already=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
     if(already) return window.toast("Already pending"); 
     
     try { 
-        const updates={}; 
+        const updates={};
         updates[`${MANAGER_ASSOCIATES_PATH}/${window.UID}/${targetUid}`] = {
             status: "pending", 
             targetEmail: targetEmail || String(window.userDirCache.byUid[targetUid]?.email||"").toLowerCase(), 
             requestedAt: Date.now()
-        }; 
-        
+        };
         await firebase.database().ref().update(updates); 
         await window.loadUserDirectoryCache(); 
         alert("Request sent to Leadership for approval"); 
-        await window.renderTeamModalBody(); 
+        await window.renderTeamModalBody();
     } catch(e) { 
         console.error(e);
         alert("Request failed. Please check network connection."); 
     }
 };
-
-window.approveRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]="approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]={status:"approved", targetEmail:String(req.targetEmail||window.userDirCache.byUid[req.targetUid]?.email||"").toLowerCase(), requestedAt:Date.now(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Associate approved"); await window.renderTeamModalBody(); }catch(e){ window.toast("Approve failed"); }};
-window.denyRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Request denied"); await window.renderTeamModalBody(); }catch(e){ window.toast("Deny failed"); }};
-window.removeAssociate=async function(targetUid){if(!targetUid) return; try{ const managerUid=String(window.userDirCache.byUid[targetUid]?.managerUid||window.UID); const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); if(window.isBranchManager) window.subscribeBranchScopedLeads(); if(window.isGod) window.subscribeGodAllLeads(); window.toast("Associate removed"); await window.renderTeamModalBody(); }catch(e){ window.toast("Remove failed"); }};
-
-window.supportCategoriesForPortal = function(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"]; return ["Hot lead / seller needs call","Need comp / ARV help","Need dispo / buyer help","System bug","Other"];}
+window.approveRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=req.requesterUid; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]="approved"; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]={status:"approved", targetEmail:String(req.targetEmail||window.userDirCache.byUid[req.targetUid]?.email||"").toLowerCase(), requestedAt:Date.now(), approvedAt:Date.now()}; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); window.toast("Associate approved");
+await window.renderTeamModalBody(); }catch(e){ window.toast("Approve failed"); }};
+window.denyRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null; await firebase.database().ref().update(updates);
+await window.loadUserDirectoryCache(); window.toast("Request denied"); await window.renderTeamModalBody(); }catch(e){ window.toast("Deny failed"); }};
+window.removeAssociate=async function(targetUid){if(!targetUid) return; try{ const managerUid=String(window.userDirCache.byUid[targetUid]?.managerUid||window.UID); const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null;
+updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); if(window.isBranchManager) window.subscribeBranchScopedLeads(); if(window.isGod) window.subscribeGodAllLeads(); window.toast("Associate removed"); await window.renderTeamModalBody(); }catch(e){ window.toast("Remove failed"); }};
+window.supportCategoriesForPortal = function(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"];
+return ["Hot lead / seller needs call","Need comp / ARV help","Need dispo / buyer help","System bug","Other"];}
 window.submitSupportRequest = async function(){
-  const priority=$("supportPriority")?.value; const portal=$("supportPortal")?.value; const category=$("supportCategory")?.value; const message=($("supportMsg")?.value||"").trim();
+  const priority=$("supportPriority")?.value;
+  const portal=$("supportPortal")?.value; const category=$("supportCategory")?.value; const message=($("supportMsg")?.value||"").trim();
   if(!window.UID || !message) return alert("Type a message first.");
   try {
       await firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${window.UID}`).push({uid:window.UID, email:window.ME?.email||"", name:window.ME?.displayName||window.ME?.email||"User", portal:portal||"wholesaler", priority:priority||"blue", category:category||"General", message:message||"", ts:Date.now(), status:"open"});
@@ -1584,10 +1649,12 @@ window.openSupportModal = function(priority){
 } 
 window.closeSupportModal = function(){if($("supportModal")) $("supportModal").style.display="none";}
 
-window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`); const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
+window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
+const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
 
 window.startRadar = function(){
-  if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar";
+  if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none";
+  if($("panelTitle")) $("panelTitle").textContent="Team Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
   firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
     const v=snap.val()||{}; 
@@ -1603,13 +1670,15 @@ window.startRadar = function(){
     if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
     let html = "";
-    users.forEach(u=>{ html += `<div class="radar-user" data-uid="${window.esc(u.uid)}" data-name="${window.esc(u.name||u.email||"User")}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${window.esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class="pill">DM</div> </div>`; });
+    users.forEach(u=>{ html += `<div class="radar-user" data-uid="${window.esc(u.uid)}" data-name="${window.esc(u.name||u.email||"User")}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${window.esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class="pill">DM</div> </div>`;
+    });
     if(list) list.innerHTML = html;
   });
 }
 
 window.setupChat = function(path,title,showBack){
-  if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML=""; if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path); 
+  if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML="";
+  if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path); 
   let isInitialLoad = true;
   window.activeChatRef.limitToLast(80).on("child_added", snap=>{
     const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID); 
@@ -1627,7 +1696,6 @@ window.sendMsg = async function(){
   await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:window.ME?.displayName||window.ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP}); 
   if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
 };
-
 window.listenForUnreadMessages = function(path) {
     let isInitial = true;
     firebase.database().ref(path).on("child_added", (snap) => {
@@ -1664,7 +1732,9 @@ window.openPanel = function(){
     }
 } 
 window.closePanel = function(){if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }}
-window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null; } }
+window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block";
+if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null;
+} }
 
 /* --- SETTINGS CHAMELEON LOGIC --- */
 window.loadSettings = async function() {
@@ -1672,37 +1742,39 @@ window.loadSettings = async function() {
     try {
         const snap = await firebase.database().ref(`userDirectory/${window.UID}`).once("value");
         const data = snap.val() || {};
-        
         const preview = $("set_photoPreview");
         const hiddenUrl = $("set_photoUrlHidden");
         if (data.photoURL) {
-            preview.style.backgroundImage = `url('${window.esc(data.photoURL)}')`;
-            preview.textContent = "";
-            hiddenUrl.value = data.photoURL;
+            if(preview) {
+                preview.style.backgroundImage = `url('${window.esc(data.photoURL)}')`;
+                preview.textContent = "";
+            }
+            if(hiddenUrl) hiddenUrl.value = data.photoURL;
         } else {
-            preview.style.backgroundImage = "";
-            preview.textContent = window.initialsFromUser({displayName: data.name, email: data.email});
-            hiddenUrl.value = "";
+            if(preview) {
+                preview.style.backgroundImage = "";
+                preview.textContent = window.initialsFromUser({displayName: data.name, email: data.email});
+            }
+            if(hiddenUrl) hiddenUrl.value = "";
         }
         
         const roles = data.roles || {};
-        $("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
-        $("exp_wholesaler").value = roles.wholesaler?.experience || "";
-        $("bio_contractor").value = roles.contractor?.bio || "";
-        $("bio_realtor").value = roles.realtor?.bio || "";
-        $("bio_investor").value = roles.investor?.bio || "";
+        if($("bio_wholesaler")) $("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
+        if($("exp_wholesaler")) $("exp_wholesaler").value = roles.wholesaler?.experience || "";
+        if($("bio_contractor")) $("bio_contractor").value = roles.contractor?.bio || "";
+        if($("bio_realtor")) $("bio_realtor").value = roles.realtor?.bio || "";
+        if($("bio_investor")) $("bio_investor").value = roles.investor?.bio || "";
 
-        $("set_isWholesaler").checked = !!data.isWholesaler;
-        $("set_isContractor").checked = !!data.isContractor;
-        $("set_isRealtor").checked = !!data.isRealtor;
-        $("set_isInvestor").checked = !!data.isInvestor;
+        if($("set_isWholesaler")) $("set_isWholesaler").checked = !!data.isWholesaler;
+        if($("set_isContractor")) $("set_isContractor").checked = !!data.isContractor;
+        if($("set_isRealtor")) $("set_isRealtor").checked = !!data.isRealtor;
+        if($("set_isInvestor")) $("set_isInvestor").checked = !!data.isInvestor;
 
         ['wholesaler', 'contractor', 'realtor', 'investor'].forEach(r => {
             const isChecked = !!data[`is${r.charAt(0).toUpperCase() + r.slice(1)}`];
             const sec = $("sec_" + r);
             if(sec) sec.style.display = isChecked ? "block" : "none";
         });
-
     } catch(e) { console.error("Error loading settings", e); }
 };
 
@@ -1712,9 +1784,10 @@ window.handlePhotoUpload = async function(e) {
     if (file.size > 15 * 1024 * 1024) { alert("File is too large. Max size is 15MB."); return; }
     
     const preview = $("set_photoPreview");
-    preview.textContent = "⌛";
-    preview.style.backgroundImage = "";
-
+    if(preview) {
+        preview.textContent = "⌛";
+        preview.style.backgroundImage = "";
+    }
     const reader = new FileReader();
     reader.readAsDataURL(file);
     reader.onload = function(event) {
@@ -1725,7 +1798,6 @@ window.handlePhotoUpload = async function(e) {
             const MAX_DIM = 400; 
             let width = img.width;
             let height = img.height;
-
             if (width > height) {
                 if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; }
             } else {
@@ -1736,19 +1808,21 @@ window.handlePhotoUpload = async function(e) {
             canvas.height = height;
             const ctx = canvas.getContext('2d');
             ctx.drawImage(img, 0, 0, width, height);
-            
             canvas.toBlob(async (blob) => {
                 try {
                     const sRef = firebase.storage().ref(`profile_photos/${window.UID}_${Date.now()}.jpg`);
                     const snapshot = await sRef.put(blob, { contentType: 'image/jpeg' });
                     const downloadURL = await snapshot.ref.getDownloadURL();
-                    $("set_photoUrlHidden").value = downloadURL;
-                    preview.style.backgroundImage = `url('${downloadURL}')`;
-                    preview.textContent = "";
+     
+                    if($("set_photoUrlHidden")) $("set_photoUrlHidden").value = downloadURL;
+                    if(preview) {
+                        preview.style.backgroundImage = `url('${downloadURL}')`;
+                        preview.textContent = "";
+                    }
                 } catch(error) {
                     console.error("Upload failed", error);
                     alert("Photo upload failed. Ensure Storage Rules allow uploads. " + error.message);
-                    preview.textContent = window.initialsFromUser(window.ME);
+                    if(preview) preview.textContent = window.initialsFromUser(window.ME);
                 }
             }, 'image/jpeg', 0.85);
         };
@@ -1766,20 +1840,20 @@ window.saveSettings = async function() {
         if(snap.exists()) currentData = snap.val() || {};
     } catch(e) {}
     
-    const wBio = $("bio_wholesaler").value.trim();
-    const wExp = $("exp_wholesaler").value.trim();
-    const cBio = $("bio_contractor").value.trim();
-    const rBio = $("bio_realtor").value.trim();
-    const iBio = $("bio_investor").value.trim();
+    const wBio = $("bio_wholesaler")?.value.trim() || "";
+    const wExp = $("exp_wholesaler")?.value.trim() || "";
+    const cBio = $("bio_contractor")?.value.trim() || "";
+    const rBio = $("bio_realtor")?.value.trim() || "";
+    const iBio = $("bio_investor")?.value.trim() || "";
 
-    const wCb = $("set_isWholesaler").checked;
-    const cCb = $("set_isContractor").checked;
-    const rCb = $("set_isRealtor").checked;
-    const iCb = $("set_isInvestor").checked;
+    const wCb = $("set_isWholesaler")?.checked || false;
+    const cCb = $("set_isContractor")?.checked || false;
+    const rCb = $("set_isRealtor")?.checked || false;
+    const iCb = $("set_isInvestor")?.checked || false;
 
     const updates = {
         ...currentData,
-        photoURL: $("set_photoUrlHidden").value.trim() || currentData.photoURL || "",
+        photoURL: $("set_photoUrlHidden")?.value.trim() || currentData.photoURL || "",
         bio: wBio || cBio || rBio || iBio, 
         isWholesaler: wCb,
         isContractor: cCb,
@@ -1794,7 +1868,6 @@ window.saveSettings = async function() {
         },
         updatedAt: Date.now()
     };
-    
     try {
         await firebase.database().ref(`userDirectory/${window.UID}`).update(updates);
         if($("settingsStatus")) {
@@ -1811,6 +1884,7 @@ window.saveSettings = async function() {
 
 /* --- MASTER EVENT INITIALIZATION --- */
 function initStaticEvents() {
+    // SAFE EVENT BINDING: Prevents 'Cannot read properties of null' if you temporarily remove an element.
     const attach = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
 
     attach('logoutBtn', window.logout);
@@ -1820,27 +1894,26 @@ function initStaticEvents() {
     attach('btnApprovals', () => window.openApprovalsModal(false));
     attach('approvalsCloseBtn', window.closeApprovalsModal);
     
-    attach('btnSettings', () => { window.loadSettings(); $('settingsModal').style.display = 'flex'; });
-    attach('settingsCloseBtn', () => $('settingsModal').style.display = 'none');
-    attach('settingsCancelBtn', () => $('settingsModal').style.display = 'none');
+    attach('btnSettings', () => { window.loadSettings(); if($('settingsModal')) $('settingsModal').style.display = 'flex'; });
+    attach('settingsCloseBtn', () => { if($('settingsModal')) $('settingsModal').style.display = 'none'; });
+    attach('settingsCancelBtn', () => { if($('settingsModal')) $('settingsModal').style.display = 'none'; });
     attach('settingsSaveBtn', window.saveSettings);
-    attach('btnTriggerUpload', () => $('set_photoUpload').click());
+    attach('btnTriggerUpload', () => { if($('set_photoUpload')) $('set_photoUpload').click(); });
     if($('set_photoUpload')) $('set_photoUpload').addEventListener('change', window.handlePhotoUpload);
-
     document.querySelectorAll('.role-cb').forEach(cb => {
         cb.addEventListener('change', (e) => {
             const sec = $("sec_" + e.target.value);
             if(sec) sec.style.display = e.target.checked ? "block" : "none";
         });
     });
-
     attach('tabAcq', () => window.switchCategory('sellers'));
     attach('tabDispo', () => window.switchCategory('buyers'));
     attach('tabMarket', window.showMarketBoard);
     attach('dispoRefreshBtn', window.refreshDispo);
     
     attach('s_reload', window.applySearch);
-    const sQ = $("s_q"); if(sQ) sQ.addEventListener('keydown', (e) => { if(e.key==='Enter') window.applySearch(); });
+    const sQ = $("s_q");
+    if(sQ) sQ.addEventListener('keydown', (e) => { if(e.key==='Enter') window.applySearch(); });
     attach('btnNewLead', () => window.openLeadModal('new'));
     attach('btnImportLegacy', window.importLegacyLeads);
     
@@ -1875,14 +1948,17 @@ function initStaticEvents() {
     attach('supportCancelBtn', window.closeSupportModal);
     attach('supportSendBtn', window.submitSupportRequest);
 
-    const aF = $("assignFilter"); if(aF) aF.addEventListener('input', window.renderAssignList);
+    const aF = $("assignFilter");
+    if(aF) aF.addEventListener('input', window.renderAssignList);
 
     attach('chatBubble', window.openPanel);
     attach('closePanel', window.closePanel);
     attach('backToRadar', window.showRadarView);
     attach('chatSend', window.sendMsg);
-    const ci = $("chatInput"); if(ci) ci.addEventListener('keydown', (e) => { if(e.key==='Enter') window.sendMsg(); });
+    const ci = $("chatInput");
+    if(ci) ci.addEventListener('keydown', (e) => { if(e.key==='Enter') window.sendMsg(); });
 
+    // DYNAMIC EVENT DELEGATION - Safe queue clicker
     const listEl = $("leadList");
     if (listEl) {
         listEl.addEventListener('click', (e) => {
@@ -1950,7 +2026,7 @@ function initStaticEvents() {
         });
     }
 
-    attach('m_btnUploadPhotos', () => $("m_photoUpload").click());
+    attach('m_btnUploadPhotos', () => { if($("m_photoUpload")) $("m_photoUpload").click() });
     if($('m_photoUpload')) $('m_photoUpload').addEventListener('change', window.handleDealPhotoUpload);
     
     const photoGrid = $("m_photoGrid");
@@ -1971,6 +2047,9 @@ firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return location.href="index.html";
   window.UID=u.uid; window.ME=u;
 
+  // INITIALIZE WAR ROOM NOTIFICATION BLIP LISTENER
+  window.listenForNotifications();
+
   try{if(typeof window.upsertMyUserDirectory === 'function') await window.upsertMyUserDirectory(u);}catch(e){}
   try{window.trackPresence(u);}catch(e){}
   try{await window.loadUserDirectoryCache();}catch(e){}
@@ -1986,7 +2065,6 @@ firebase.auth().onAuthStateChanged(async u=>{
     if($("roleReadout")) $("roleReadout").textContent="ROLE: "+window.roleLabel(window.ROLE);
     if($("btnTeam")) $("btnTeam").style.display=window.isAdminLike()?"":"none";
     if($("btnImportLegacy")) $("btnImportLegacy").style.display=window.isGod?"":"none";
-    
     if(window.isGod) { 
         window.listenForGlobalAdminPings(); 
         window.initApprovalListener();
