@@ -310,15 +310,6 @@ body{
         <div><div class="lbl">Lead Status</div><select id="m_status" class="select"><option value="New">New</option><option value="Working">Working</option><option value="Hot">Hot</option><option value="DNC">Do Not Call</option><option value="Done">Done</option></select></div>
         <div><div class="lbl">Lead Type</div><select id="m_type" class="select"></select></div>
         
-        <div style="background: rgba(0,255,106,0.05); border: 1px solid rgba(0,255,106,0.3); padding: 12px; border-radius: 12px;">
-          <div class="lbl" style="color:var(--good);">Network Market Status</div>
-          <div style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-            <input type="checkbox" id="m_isLive" style="width:20px; height:20px; margin:0; cursor:pointer;" />
-            <span style="font-size:13px; color:#fff; font-weight:800;">Make Deal "Live" for Network JV</span>
-          </div>
-          <div style="font-size:11px; color:#9ab9d6; margin-top:6px;">Checking this alerts Leadership to approve the deal for the Dispo Hub.</div>
-        </div>
-
         <div><div class="lbl">Source</div><input id="m_source" class="input" placeholder="Facebook / Cold-call / Referral" /></div>
         <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." /><div class="assignBtns"><button class="btn tiny" id="btnAssignAll" type="button">All</button><button class="btn tiny ghost" id="btnAssignNone" type="button">None</button></div></div><div id="assignList" class="assignList"></div><div class="help">Assigns Leads to Associates queues.</div></div>
         
@@ -789,19 +780,18 @@ window.selectLeadByIndex = function(idx){
 
   const dh = $("dispoHubContent");
   const dhw = $("dispoHubWrapper");
-  if (dh) {
+  if (dh && dhw) {
       if (!window.currentLead.isLive) {
-          dh.innerHTML = "Deal is not marked for Network JV.";
-          if(dhw) dhw.style.display="none";
+          dhw.style.display="none";
       } else if (!window.currentLead.dispoApproved) {
           let dhtml = "<span style='color:var(--warn); font-weight:800;'>Status: Pending Leadership Approval</span>";
           if (window.isGod) dhtml += `<br><button class="btn primary tiny btn-approve-dispo" style="margin-top:8px">Approve for Dispo</button>`;
           dh.innerHTML = dhtml;
-          if(dhw) dhw.style.display="block";
+          dhw.style.display="block";
       } else {
           dh.innerHTML = `<span style='color:var(--good); font-weight:800;'>Status: Approved for Dispo Board</span><br>
           <button class="btn tiny btn-upload-photos" style="margin-top:8px; background:var(--accent); color:#fff;">📷 Upload Photos</button>`;
-          if(dhw) dhw.style.display="block";
+          dhw.style.display="block";
       }
   }
 
@@ -1054,7 +1044,7 @@ window.openLeadModal = function(mode){
     if($("m_source")) $("m_source").value=window.currentLead.source||""; 
     if($("m_phones")) $("m_phones").value=window.normalizePhones(window.currentLead).map(p=>`${p.label} | ${p.phone}`).join("\n"); 
     if($("m_notes")) $("m_notes").value=window.currentLead.notes||window.currentLead.Notes||""; 
-    if($("m_isLive")) $("m_isLive").checked = !!window.currentLead.isLive;
+    
     Object.keys(window.currentLead.assignedTo||{}).forEach(uid=>{if(window.currentLead.assignedTo[uid]) window.modalAssignedSet.add(uid);});
     (window.currentLead.assignedUids||[]).forEach(uid=>window.modalAssignedSet.add(String(uid)));
   } else {
@@ -1067,7 +1057,7 @@ window.openLeadModal = function(mode){
     if($("m_source")) $("m_source").value=""; 
     if($("m_phones")) $("m_phones").value=""; 
     if($("m_notes")) $("m_notes").value=""; 
-    if($("m_isLive")) $("m_isLive").checked = false;
+    
     if(window.isBranchManager) window.modalAssignedSet.add(window.UID);
   } 
   if(window.isAdminLike()) window.renderAssignList(); 
@@ -1100,11 +1090,8 @@ window.saveLeadFromModal = async function(skipClose){
       if(!address){ window.modalToast("Address required.", false); return null; }
   }
 
-  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: $("m_isLive")?.checked || false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
+  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: window.modalMode === 'edit' ? (!!window.currentLead?.isLive) : false, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), phones:window.parsePhonesFromModal() };
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
-  if (payload.isLive && (!window.currentLead || !window.currentLead.isLive)) {
-      window.triggerLeadershipPing("Requested JV/Dispo Approval", `Lead: ${payload.address} requires approval to go live on the Dispo board.`);
-  }
 
   try{
     let leadIdToReturn = null;
@@ -1117,13 +1104,13 @@ window.saveLeadFromModal = async function(skipClose){
       let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       await window.upsertBranchAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
-      if(payload.isLive) { await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}); }
+      
     } else {
       const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
       const finalUpdates = {};
       finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = {...payload,id:leadId,archived:false,updatedAt:Date.now(),updatedBy:window.ME?.email||"",createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")};
-      if(payload.isLive && (!window.currentLead || !window.currentLead.isLive)) { finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payload, id:leadId, assignedTo:{[window.UID]:true}, assignedUids:[window.UID], dispoApproved:false}; }
+      
       await firebase.database().ref().update(finalUpdates);
     }
     
