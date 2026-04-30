@@ -526,7 +526,7 @@ window.initApprovalListener = function() {
         }
         const btnContent = $('approvalsListContent');
         if(btnContent && window.pendingApprovals.length > 0) {
-            window.openApprovalsModal(true); // silent update
+            window.openApprovalsModal(true); 
         }
     };
 
@@ -542,22 +542,13 @@ window.initApprovalListener = function() {
         };
 
         try {
-            const [ms, mb, users] = await Promise.all([
-                firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value'),
-                firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value'),
-                firebase.database().ref(LEADS_BY_USER_PATH).once('value')
+            const [ms, mb] = await Promise.all([
+                firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value').catch(()=>({val:()=>({})})),
+                firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})}))
             ]);
 
             const msVal = ms.val() || {}; Object.keys(msVal).forEach(k => checkLead(msVal[k], k, 'sellers'));
             const mbVal = mb.val() || {}; Object.keys(mbVal).forEach(k => checkLead(mbVal[k], k, 'buyers'));
-
-            const uVal = users.val() || {};
-            Object.keys(uVal).forEach(uid => {
-                ['sellers', 'buyers'].forEach(cat => {
-                    const catData = uVal[uid][cat] || {};
-                    Object.keys(catData).forEach(k => checkLead(catData[k], k, cat));
-                });
-            });
 
             window.pendingApprovals = Array.from(pending.values());
             window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
@@ -566,7 +557,7 @@ window.initApprovalListener = function() {
     };
 
     scanForApprovals();
-    setInterval(scanForApprovals, 5000); // Polling safeguard
+    setInterval(scanForApprovals, 5000); 
 };
 
 window.openApprovalsModal = function(silent = false) {
@@ -1148,10 +1139,9 @@ window.subscribeGodAllLeads = function(){
 
   const syncAll = async () => {
       try {
-          const [masterSnap, legacySnap, usersSnap] = await Promise.all([
-              firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).once('value'),
-              firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`).once('value'),
-              firebase.database().ref(`${LEADS_BY_USER_PATH}`).once('value')
+          const [masterSnap, legacySnap] = await Promise.all([
+              firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).once('value').catch(()=>({val:()=>({})})),
+              firebase.database().ref(`${LEGACY_LEADS_PATH}/${window.currentCategory}`).once('value').catch(()=>({val:()=>({})}))
           ]);
 
           const legVal = legacySnap.val() || {};
@@ -1160,10 +1150,14 @@ window.subscribeGodAllLeads = function(){
           const mastVal = masterSnap.val() || {};
           Object.keys(mastVal).forEach(k => processSnap(k, mastVal[k], false));
 
-          const usersVal = usersSnap.val() || {};
-          Object.keys(usersVal).forEach(uid => {
-              const catData = usersVal[uid][window.currentCategory] || {};
-              Object.keys(catData).forEach(k => processSnap(k, catData[k], false));
+          const uids = Object.keys(window.userDirCache.byUid || {});
+          const userSnaps = await Promise.all(uids.map(uid => firebase.database().ref(`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}`).once('value').catch(()=>null)));
+          
+          userSnaps.forEach(snap => {
+              if(snap && typeof snap.val === 'function') {
+                  const catData = snap.val() || {};
+                  Object.keys(catData).forEach(k => processSnap(k, catData[k], false));
+              }
           });
 
           window.setListFromMap(byId);
@@ -1183,10 +1177,6 @@ window.subscribeGodAllLeads = function(){
   masterRef.on('child_changed', s => { processSnap(s.key, s.val(), false); window.setListFromMap(byId); window.applyPendingSelection(); });
   masterRef.on('child_removed', s => { byId.delete(s.key); window.setListFromMap(byId); checkDone(); });
 
-  const usersRef = firebase.database().ref(`${LEADS_BY_USER_PATH}`);
-  window.branchLeadRefs.push(usersRef);
-  usersRef.on('child_changed', s => { syncAll(); }); 
-  
   if($("btnImportLegacy")) $("btnImportLegacy").style.display="";
 }
 
