@@ -367,7 +367,7 @@ body{
         </div>
 
         <div><div class="lbl">Source</div><input id="m_source" class="input" placeholder="Facebook / Cold-call / Referral" /></div>
-        <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." /><div class="assignBtns"><button class="btn tiny" id="btnAssignAll" type="button">All Active (30d)</button><button class="btn tiny ghost" id="btnAssignNone" type="button">None</button></div></div><div id="assignList" class="assignList"></div><div class="help">Assigns Leads to Associates queues.</div></div>
+        <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." /><div class="assignBtns"><button class="btn tiny ghost" id="btnAssignNone" type="button">None</button></div></div><div id="assignList" class="assignList"></div><div class="help">Assigns Leads to Associates queues.</div></div>
         
         <div style="grid-column:1/-1" id="warRoomBlock">
           <div style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.3); padding: 12px; border-radius: 12px;">
@@ -952,7 +952,6 @@ window.getAssignableRows = function(){
         if(u.role==="system") return; 
         if(window.isGod){
             if(u.role==="god") return; 
-            // SHOW EVERYONE IN GOD MODE, WE WILL JUST SORT THEM
             rows.push(u); 
             return;
         } 
@@ -963,8 +962,6 @@ window.getAssignableRows = function(){
             }
         }
     }); 
-    
-    // Sort active users to the top, then alphabetically
     rows.sort((a,b)=>{
         const aActive=a.lastActive>thirtyDaysAgo?1:0; 
         const bActive=b.lastActive>thirtyDaysAgo?1:0; 
@@ -1198,7 +1195,7 @@ await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) 
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
 
-// MAP URL FIX: HTTPS to prevent mixed content blocking
+// MAP BUG FIXED - RESTORED ORIGINAL HTTPS QUERY STRING 
 window.buildMap = function(address){
     const addr=(address||"").trim(); 
     if(!addr){window.setMapVisibility(false); return;} 
@@ -1360,7 +1357,7 @@ window.renderAssignList = function(){
     return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${window.esc(r.uid)}" ${checked} /><div class="assignMeta"><div class="assignName">${window.esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${window.esc(r.email||r.uid)} &bull; ${activeStr}</div></div><div class="assignTag">${tag}</div></label>`;
   }).join("");
 }
-window.assignAll = function(){const thirtyDaysAgo=Date.now()-(30*24*60*60*1000); window.getAssignableRows().forEach(r=>{if(window.isGod&&r.lastActive<thirtyDaysAgo) return; window.modalAssignedSet.add(r.uid);}); window.renderAssignList();}; 
+
 window.assignNone = function(){window.modalAssignedSet=new Set(); window.renderAssignList();};
 window.handleAssignChange = function(el){const uid = el.getAttribute("data-uid"); if(el.checked) window.modalAssignedSet.add(uid); else window.modalAssignedSet.delete(uid);};
 
@@ -1545,7 +1542,6 @@ window.openLeadModal = function(mode){
   window.renderModalPhotos();
 
   if(window.isAdminLike()) window.renderAssignList();
-  if(window.isGod && $("btnAssignAll")) $("btnAssignAll").textContent = "All Active (30d)";
   if($("leadModal")) { $("leadModal").classList.add("show"); $("leadModal").setAttribute("aria-hidden","false"); }
 }
 
@@ -1759,7 +1755,7 @@ window.openSupportModal = function(priority){
   if($("supportSub")) $("supportSub").textContent=priority==="red"?"Red = urgent. Use for hot leads or anything that can’t wait.":"Blue = not urgent. Use for questions or general support.";
   const cats=window.supportCategoriesForPortal("wholesaler"); 
   if($("supportCategory")) $("supportCategory").innerHTML=cats.map(c=>`<option value="${window.esc(c)}">${window.esc(c)}</option>`).join(""); 
-  if($supportMsg) $("supportMsg").value=""; 
+  if($("supportMsg")) $("supportMsg").value=""; 
   if($("supportModal")) $("supportModal").style.display="flex";
 } 
 window.closeSupportModal = function(){
@@ -2061,7 +2057,6 @@ function initStaticEvents() {
     attach('btnReqSkipModal', () => window.requestWarRoomModal('skip'));
     attach('btnReqAnalysis', () => window.requestWarRoom('analysis'));
     attach('btnReqSkip', () => window.requestWarRoom('skip'));
-    attach('btnAssignAll', window.assignAll);
     attach('btnAssignNone', window.assignNone);
     
     attach('teamModalClose', window.closeTeamModal);
