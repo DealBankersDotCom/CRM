@@ -69,21 +69,25 @@ h1, .logo { font-family: "Orbitron", sans-serif; }
 /* --- MAIN LAYOUT --- */
 .war-grid {
   display: grid; grid-template-columns: 360px minmax(0, 1fr) 400px; height: calc(100vh - 54px); position: relative; z-index: 10;
+  min-height: 0; /* Prevents grid stretching */
 }
 
 /* --- PANELS --- */
 .panel {
   border-right: 1px solid var(--line); display: flex; flex-direction: column; background: rgba(4, 9, 14, 0.85); backdrop-filter: blur(5px); position: relative;
+  min-height: 0; /* Prevents panel stretching */
+  overflow: hidden;
 }
 .panel:last-child { border-right: none; border-left: 1px solid var(--line); }
 .panel-head {
   padding: 12px 16px; border-bottom: 1px solid var(--line);
   font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5);
+  flex-shrink: 0;
 }
 .panel-head .glow { color: var(--cyan); text-shadow: 0 0 8px rgba(6, 182, 212, 0.6); font-weight: 900; display:flex; align-items:center; gap:8px;}
 .refresh-btn { background:none; border:1px solid var(--cyan); color:var(--cyan); border-radius:4px; font-size:9px; padding:2px 6px; cursor:pointer; font-family:'JetBrains Mono', monospace;}
 .refresh-btn:hover { background:var(--cyan); color:#000; }
-.panel-body { flex: 1; overflow-y: auto; padding: 16px; }
+.panel-body { flex: 1; overflow-y: auto; padding: 16px; min-height: 0; }
 
 /* --- LEFT: QUEUE LIST --- */
 .req-item {
@@ -100,11 +104,11 @@ h1, .logo { font-family: "Orbitron", sans-serif; }
 .req-user { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; }
 
 /* --- CENTER: TARGET CONSOLE --- */
-.target-hud { display: none; flex-direction: column; height: 100%; }
+.target-hud { display: none; flex-direction: column; height: 100%; min-height: 0; }
 .target-hud.active { display: flex; animation: bootUp 0.3s ease-out forwards; }
 @keyframes bootUp { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
 
-.hud-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--line); }
+.hud-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--line); flex-shrink: 0; }
 .hud-title { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -0.02em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;}
 .hud-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); text-transform: uppercase;}
 
@@ -122,7 +126,7 @@ h1, .logo { font-family: "Orbitron", sans-serif; }
 textarea.input-tactical { resize: vertical; min-height: 100px; border: 1px dashed var(--line); padding: 10px; border-radius: 4px; line-height: 1.5; }
 textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 182, 212, 0.02); }
 
-.push-bar { margin-top: auto; padding: 16px; border-top: 1px solid var(--line); background: rgba(0,0,0,0.9); display: flex; justify-content: space-between; align-items: center; }
+.push-bar { flex-shrink: 0; padding: 16px; border-top: 1px solid var(--line); background: rgba(0,0,0,0.9); display: flex; justify-content: space-between; align-items: center; z-index: 20; }
 .btn-push {
   background: var(--batman); color: #000; border: none; border-radius: 4px; padding: 12px 28px; font-weight: 900; font-family: 'JetBrains Mono', monospace; font-size: 12px;
   cursor: pointer; text-transform: uppercase; letter-spacing: 0.1em; box-shadow: 0 0 15px rgba(234, 179, 8, 0.4); transition: all 0.2s;
@@ -141,7 +145,7 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 .bexar-section { border-top: 1px dashed var(--line); padding-top: 16px; margin-top: 8px; }
 .bexar-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--batman); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; }
 
-.map-view { width: 100%; height: 280px; background: #000; border: 1px solid var(--line); border-radius: 6px; margin-top: 16px; position: relative; overflow: hidden; }
+.map-view { width: 100%; height: 280px; background: #000; border: 1px solid var(--line); border-radius: 6px; margin-top: 16px; position: relative; overflow: hidden; flex-shrink: 0; }
 .map-view iframe { width: 100%; height: 100%; border: none; filter: contrast(1.2) saturate(1.2) brightness(0.8); transition: filter 0.3s; }
 .map-view:hover iframe { filter: contrast(1) saturate(1) brightness(1); }
 .map-overlay { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.9); border: 1px solid var(--cyan); color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 8px; pointer-events: none; z-index: 10; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
@@ -170,7 +174,7 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
       <span>Incoming Intel Reqs</span>
       <span class="glow">
         <span id="queueCount">0 PENDING</span>
-        <button class="refresh-btn" onclick="listenForRequests()">↻ REFRESH</button>
+        <button class="refresh-btn" onclick="renderQueue()">↻ REFRESH</button>
       </span>
     </div>
     <div class="panel-body" id="requestQueue">
@@ -185,8 +189,9 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
       <span>Target Analysis HUD</span>
       <span id="targetStatus" style="color: var(--muted);">STANDBY</span>
     </div>
-    <div class="panel-body">
-      <div id="targetHud" class="target-hud">
+    
+    <div id="targetHud" class="target-hud">
+      <div class="panel-body">
         
         <div class="hud-header">
           <div class="hud-title">
@@ -219,14 +224,15 @@ Daughter | 210-555-9876"></textarea>
         </div>
 
       </div>
-    </div>
-    
-    <div class="push-bar">
-      <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.4;">
-        <span style="color:var(--good)">► OVERRIDES ASSOCIATE CRM</span><br>
-        <span style="color:var(--cyan)">► SENDS DIRECT CHAT PING</span>
+      
+      <div class="push-bar">
+        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.4;">
+          <span style="color:var(--good)">► OVERRIDES ASSOCIATE CRM</span><br>
+          <span style="color:var(--cyan)">► SENDS DIRECT CHAT PING</span>
+        </div>
+        <button class="btn-push" id="btnPushData" disabled onclick="pushToUserCRM()">Push Payload</button>
       </div>
-      <button class="btn-push" id="btnPushData" disabled onclick="pushToUserCRM()">Push Payload</button>
+
     </div>
   </div>
 
@@ -298,6 +304,7 @@ let activeRequests = [];
 let currentTargetId = null;
 let currentTarget = null;
 let currentMasterLead = null;
+let isListening = false;
 
 // Strict God Mode Gatekeeper
 firebase.auth().onAuthStateChanged(async (user) => {
@@ -318,13 +325,16 @@ firebase.auth().onAuthStateChanged(async (user) => {
   listenForRequests();
 });
 
-// Watch for pending requests
+// Watch for pending requests LIVE
 function listenForRequests() {
+  if (isListening) return; // Prevent duplicate listeners
+  isListening = true;
+
   document.getElementById('queueCount').innerText = `SCANNING...`;
-  db.ref('warroom_requests').once('value')
-    .then(snap => {
+  
+  // Replaced .once() with .on() for real-time live updates!
+  db.ref('warroom_requests').on('value', snap => {
         const data = snap.val();
-        console.log("Raw War Room Data:", data); // Debugging log
         
         activeRequests = [];
         
@@ -348,8 +358,7 @@ function listenForRequests() {
         
         document.getElementById('queueCount').innerText = `${activeRequests.length} PENDING`;
         renderQueue();
-    })
-    .catch(err => {
+    }, err => {
         console.error("Firebase read error:", err);
         document.getElementById('queueCount').innerText = "ERROR";
         document.getElementById('requestQueue').innerHTML = `<div style="color:var(--bad); text-align:center; margin-top:20px; font-family:'JetBrains Mono', monospace;">DATABASE ACCESS DENIED OR FAILED. CHECK RULES.</div>`;
@@ -476,9 +485,9 @@ function updateOSINTLinks(req, masterLead) {
   document.getElementById('btnZillow').href = req.address ? `https://www.zillow.com/homes/${addrEncoded}_rb/` : '#';
   document.getElementById('btnGoogle').href = req.address ? `https://www.google.com/search?q=${addrEncoded}` : '#';
 
-  // Tactical Map View Embed 
+  // Tactical Map View Embed
   if (req.address) {
-    document.getElementById('streetViewFrame').src = `http://googleusercontent.com/maps.google.com/maps?q=${addrEncoded}&t=k&z=19&output=embed`;
+    document.getElementById('streetViewFrame').src = `https://maps.google.com/maps?q=${addrEncoded}&t=k&z=19&output=embed`;
   } else {
     document.getElementById('streetViewFrame').src = `about:blank`;
   }
@@ -558,7 +567,8 @@ async function pushToUserCRM() {
     setTimeout(() => {
       document.getElementById('targetStatus').innerText = "STANDBY";
       document.getElementById('targetStatus').style.color = "var(--muted)";
-      listenForRequests(); // Auto-refresh the list after a successful push
+      // Because we now use .on() at the top, we don't need to manually refresh here. 
+      // The listener handles it instantly.
     }, 3000);
 
   } catch(e) {
