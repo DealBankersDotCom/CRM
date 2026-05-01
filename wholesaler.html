@@ -367,7 +367,18 @@ body{
         </div>
 
         <div><div class="lbl">Source</div><input id="m_source" class="input" placeholder="Facebook / Cold-call / Referral" /></div>
-        <div style="grid-column:1/-1" id="assignBlock"><div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div><div class="assignTools"><input id="assignFilter" class="input" placeholder="Filter users (name / email)..." /><div class="assignBtns"><button class="btn tiny ghost" id="btnAssignNone" type="button">None</button></div></div><div id="assignList" class="assignList"></div><div class="help">Assigns Leads to Associates queues.</div></div>
+        
+        <div style="grid-column:1/-1" id="assignBlock">
+            <div class="lbl">Assign lead recipients <span class="pill" id="assignHintPill">Role</span></div>
+            <div class="assignTools">
+                <input id="assignFilter" class="input" placeholder="Filter users (name / email)..." />
+                <div class="assignBtns">
+                    <button class="btn tiny ghost" id="btnAssignNone" type="button">Select None</button>
+                </div>
+            </div>
+            <div id="assignList" class="assignList"></div>
+            <div class="help">Assigns Leads to Associate queues. Active users are highlighted.</div>
+        </div>
         
         <div style="grid-column:1/-1" id="warRoomBlock">
           <div style="background: rgba(234, 179, 8, 0.05); border: 1px solid rgba(234, 179, 8, 0.3); padding: 12px; border-radius: 12px;">
@@ -563,7 +574,6 @@ window.initApprovalListener = function() {
         };
 
         try {
-            // ONLY check leadsMaster to prevent ghost copies from throwing false positives
             const [ms, mb] = await Promise.all([
                 firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value').catch(()=>({val:()=>({})})),
                 firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})}))
@@ -874,7 +884,6 @@ window.uploadPhotos = function() {
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
 
-// GOD MODE 30-DAY ACTIVE ASSIGNMENT PATCH
 window.buildUserCache = function(rows){
     const byUid={}, byEmail={}, byUser={};
     rows.forEach(item=>{
@@ -891,7 +900,8 @@ window.buildUserCache = function(rows){
     return {byUid,byEmail,byUser};
 }
 
-window.loadGodDirectoryCache = async function(){
+// UNIFIED DIRECTORY LOADER: Grants Branch Managers the ability to see all users like God mode does
+window.loadGlobalDirectoryCache = async function(){
     let users={}, roles={}, managerAssociates={}, presence={}; 
     try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} 
     try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} 
@@ -924,13 +934,10 @@ window.loadGodDirectoryCache = async function(){
 window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[];
 return cache;}
 
-window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap);
-const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows);
-Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
-return cache;}
-
-window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
-return window.loadSelfDirectoryCache();}
+window.loadUserDirectoryCache = async function(){
+    if(window.isGod || window.isBranchManager) return window.loadGlobalDirectoryCache(); 
+    return window.loadSelfDirectoryCache();
+}
 
 window.managedAssociatesFor = function(uid){return Object.values(window.userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
 
@@ -952,16 +959,18 @@ window.getAssignableRows = function(){
         if(u.role==="system") return; 
         if(window.isGod){
             if(u.role==="god") return; 
-            rows.push(u); 
+            rows.push(u); // ALL users added back, filtering happens visually
             return;
         } 
         if(window.isBranchManager){
             if(u.uid===window.UID){rows.push(u); return;} 
-            if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") {
-                rows.push(u);
+            if(u.role==="user") {
+                rows.push(u); // Allows BM to assign to any associate
             }
         }
     }); 
+    
+    // Sort active users to the top, then alphabetically
     rows.sort((a,b)=>{
         const aActive=a.lastActive>thirtyDaysAgo?1:0; 
         const bActive=b.lastActive>thirtyDaysAgo?1:0; 
@@ -1195,12 +1204,12 @@ await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) 
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
 
-// MAP BUG FIXED - RESTORED ORIGINAL HTTPS QUERY STRING 
+// MAP URL FIX: HTTPS to prevent mixed content blocking
 window.buildMap = function(address){
     const addr=(address||"").trim(); 
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
-    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=${q}&output=embed`; 
+    const src=window.mapMode==="street"?`https://googleusercontent.com/maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://googleusercontent.com/maps.google.com/maps?q=${q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
     if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";
 }
@@ -2144,16 +2153,6 @@ function initStaticEvents() {
 
     attach('m_btnUploadPhotos', () => { if($("m_photoUpload")) $("m_photoUpload").click() });
     if($('m_photoUpload')) $('m_photoUpload').addEventListener('change', window.handleDealPhotoUpload);
-    
-    const photoGrid = $("m_photoGrid");
-    if(photoGrid) {
-        photoGrid.addEventListener('click', (e) => {
-            if(e.target.classList.contains('deal-photo-del')) {
-                const idx = parseInt(e.target.dataset.idx, 10);
-                if(!isNaN(idx)) window.deleteModalPhoto(idx);
-            }
-        });
-    }
     
     window.switchCategory('sellers');
 }
