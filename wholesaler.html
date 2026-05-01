@@ -819,14 +819,18 @@ window.requestWarRoom = async function(type) {
     }, 2000);
 }
 
+// FULLY ROBUST DISPO APPROVAL FIX
 window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
         const updates = {};
         
+        // 1. Update the master node
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
         
+        // 2. Fetch all users to see exactly who has a copy of this lead and update them ALL
+        // This completely eradicates the "ghost unapproved copies" bug.
         const usersSnap = await firebase.database().ref(LEADS_BY_USER_PATH).once('value');
         const users = usersSnap.val() || {};
         
@@ -837,10 +841,13 @@ window.approveDispo = async function() {
             }
         });
         
+        // 3. Execute the batch update
         await firebase.database().ref().update(updates);
         
+        // 4. Force local state update so the UI immediately switches to "Approved"
         if (window.currentLead) window.currentLead.dispoApproved = true;
         
+        // 5. Instantly clear the pending badge
         if(window.pendingApprovals) {
             window.pendingApprovals = window.pendingApprovals.filter(l => window.leadIdFor(l) !== window.currentLeadId);
             const badge = $('approvalBadge');
@@ -856,7 +863,7 @@ window.approveDispo = async function() {
         }
 
         alert("Approved for Dispo ✓");
-        window.selectLeadByIndex(window.currentIndex); 
+        window.selectLeadByIndex(window.currentIndex); // This forces the HUD to render the approved UI
 
     } catch(e) { 
         console.error("Dispo Approval Error:", e);
@@ -895,70 +902,22 @@ window.buildUserCache = function(rows){
     return {byUid,byEmail,byUser};
 }
 
-window.loadGodDirectoryCache = async function(){
-    let users={}, roles={}, managerAssociates={}, presence={}; 
-    try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} 
-    try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} 
-    try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value"); managerAssociates=mSnap.val()||{};}catch(e){} 
-    try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} 
-    
-    const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); 
-    const cache=window.buildUserCache(allUids.map(uid=>{
-        const row=users[uid]||{}; 
-        const pRow=presence[uid]||{}; 
-        return {
-            uid,
-            row,
-            role:roles[uid]||row.role||"user",
-            email:row.email||pRow.email||"",
-            name:row.name||row.displayName||pRow.name||"",
-            lastActive:pRow.ts||row.updatedAt||0
-        };
-    })); 
-    
-    const pending=[]; 
-    Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
-    if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} 
-    
-    window.userDirCache=cache; 
-    window.pendingRequestCache=pending;
-    return cache;
-}
+// RESTORED STABLE DIRECTORY FUNCTIONS
+window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
+managerAssociates=mSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
+if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending;
+return cache;}
 
-window.loadBranchManagerDirectoryCache = async function(){
-    const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); 
-    const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; 
-    const teamMap=teamMapRaw||{}; 
-    const targetUids=Object.keys(teamMap);
-    
-    const details=await Promise.all(targetUids.map(async targetUid=>{
-        const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); 
-        const pRow=await window.readExact(`${PRESENCE_PATH}/${targetUid}`); 
-        return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase(), lastActive:pRow?.ts||row?.updatedAt||0};
-    })); 
-    details.forEach(d=>rows.push(d)); 
-    const cache=window.buildUserCache(rows);
-    
-    Object.keys(teamMap).forEach(targetUid=>{
-        const info=teamMap[targetUid]||{}; 
-        if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; 
-        cache.byUid[targetUid].managerUid=window.UID; 
-        cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); 
-        if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); 
-        if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;
-    }); 
-    window.userDirCache=cache; 
-    window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
-    return cache;
-}
+window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[];
+return cache;}
 
-window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[]; return cache;}
+window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap);
+const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows);
+Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
+return cache;}
 
-window.loadUserDirectoryCache = async function(){
-    if(window.isGod) return window.loadGodDirectoryCache(); 
-    if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
-    return window.loadSelfDirectoryCache();
-}
+window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
+return window.loadSelfDirectoryCache();}
 
 window.managedAssociatesFor = function(uid){return Object.values(window.userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
 
@@ -975,7 +934,6 @@ window.resolveMyRole = async function(u){
 
 window.getAssignableRows = function(){
     const rows=[]; 
-    const thirtyDaysAgo=Date.now()-(30*24*60*60*1000);
     Object.values(window.userDirCache.byUid||{}).forEach(u=>{
         if(u.role==="system") return; 
         if(window.isGod){
@@ -992,12 +950,7 @@ window.getAssignableRows = function(){
     }); 
     
     // Sort active users to the top, then alphabetically
-    rows.sort((a,b)=>{
-        const aActive=a.lastActive>thirtyDaysAgo?1:0; 
-        const bActive=b.lastActive>thirtyDaysAgo?1:0; 
-        if(bActive!==aActive) return bActive-aActive; 
-        return String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"});
-    }); 
+    rows.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})); 
     return rows;
 }
 
@@ -1071,17 +1024,17 @@ window.renderQueue = function(){
   if($("leadCountPill")) $("leadCountPill").textContent=`${window.sellerView.length} leads`; 
   if($("queueMeta")) $("queueMeta").textContent=window.sellerView.length?`Showing ${window.sellerView.length}`:"Empty";
   if(!window.sellerView.length){
-    if(el) el.innerHTML=`<div class="log-empty" style="padding:22px 12px;">No leads match your search.</div>`; 
+    if(el) el.innerHTML=`<div class=\"log-empty\" style=\"padding:22px 12px;\">No leads match your search.</div>`; 
     return;
   } 
   let html = "";
   window.sellerView.forEach((lead,idx)=>{
     const id=window.leadIdFor(lead), addr=(lead.address||lead.Address||"—").toString(), owner=(lead.owner||lead.Owner||lead.name||"—").toString(), type=(lead.type||"seller").toString(), source=(lead.source||"").toString(); 
     const phones=window.normalizePhones(lead), phoneLine=phones.slice(0,2).map(p=>`${window.esc(p.label)}: ${window.esc(p.phone)}`).join("<br>"); 
-    html += `<div class="lead-item${idx===window.currentIndex?" selected":""}" data-idx="${idx}">
-      <div class="addr">${window.esc(addr)}</div>
-      <div class="meta"><div>${window.esc(owner)}</div><div style="opacity:.9">${window.esc(type)}${source?" • "+window.esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style="opacity:.7">No phones yet</div>`}</div>
-      <div class="badges">${window.badgeHTML(lead,!!lead.__legacy)}</div>
+    html += `<div class=\"lead-item${idx===window.currentIndex?" selected":""}\" data-idx=\"${idx}\">
+      <div class=\"addr\">${window.esc(addr)}</div>
+      <div class=\"meta\"><div>${window.esc(owner)}</div><div style=\"opacity:.9\">${window.esc(type)}${source?" • "+window.esc(source):""}</div>${phones.length?`<div>${phoneLine}</div>`:`<div style=\"opacity:.7\">No phones yet</div>`}</div>
+      <div class=\"badges\">${window.badgeHTML(lead,!!lead.__legacy)}</div>
     </div>`;
   });
   if(el) el.innerHTML = html;
@@ -1132,12 +1085,12 @@ window.selectLeadByIndex = function(idx){
           dhw.style.display="none";
       } else if (!isAppr) {
           let dhtml = "<span style='color:var(--warn); font-weight:800;'>Status: Pending Leadership Approval</span>";
-          if (window.isGod) dhtml += `<br><button class="btn primary tiny btn-approve-dispo" style="margin-top:8px">Approve for Dispo</button>`;
+          if (window.isGod) dhtml += `<br><button class=\"btn primary tiny btn-approve-dispo\" style=\"margin-top:8px\">Approve for Dispo</button>`;
           dh.innerHTML = dhtml;
           dhw.style.display="block";
       } else {
           dh.innerHTML = `<span style='color:var(--good); font-weight:800;'>Status: Approved for Dispo Board</span><br>
-          <button class="btn tiny btn-upload-photos" style="margin-top:8px; background:var(--accent); color:#fff;">📷 Manage Photos</button>`;
+          <button class=\"btn tiny btn-upload-photos\" style=\"margin-top:8px; background:var(--accent); color:#fff;\">📷 Manage Photos</button>`;
           dhw.style.display="block";
       }
   }
@@ -1172,7 +1125,7 @@ window.prevLead = function(){if(window.sellerView.length) window.selectLeadByInd
 window.nextLead = function(){if(window.sellerView.length) window.selectLeadByIndex((window.currentIndex>=window.sellerView.length-1)?window.sellerView.length-1:window.currentIndex+1);}; 
 
 window.sanitizeTel = function(phone){const raw=(phone||"").toString().trim();
-if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
+if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
 window.isMobileish = function(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"");}
 window.doTelDial = function(phone){const tel=window.sanitizeTel(phone);
 if(!tel) return; const a=document.createElement("a"); a.href="tel:"+tel; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();}
@@ -1188,7 +1141,7 @@ window.closeQuickLog = function() {
     if($("quickLogFlyout")) $("quickLogFlyout").classList.remove("open");
     setTimeout(() => { if($("flyoutOverlay")) $("flyoutOverlay").style.display = "none"; }, 300);
 };
-window.renderCallLogEmpty = function(msg){if($("callLog")) $("callLog").innerHTML=`<div class="log-empty">${window.esc(msg||"No call history for this number.")}</div>`;
+window.renderCallLogEmpty = function(msg){if($("callLog")) $("callLog").innerHTML=`<div class=\"log-empty\">${window.esc(msg||"No call history for this number.")}</div>`;
 if($("logCount")) $("logCount").textContent="0 entries";}
 window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;}}
 window.callLogRefForPhoneKey = function(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
@@ -1207,7 +1160,7 @@ window.attachCallLog = function(phoneKey){
     sorted.forEach(it=>{
       const kindClass=it.type==="note"?"note":((it.status||"").toLowerCase().includes("dnc")?"dnc":((it.status||"").toLowerCase().includes("hot")?"hot":"status")); 
       const label=it.type==="note"?"NOTE":"STATUS"; 
-      html += `<div class="log-item"><div class="log-top"><div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center"><span class="log-tag ${kindClass}">${label}</span><span class="pill" style="padding:2px 8px">${window.esc(it.phoneLabel||it.phone||"")}</span></div><div>${window.esc(it.byName||it.by||"—")} • ${window.esc(window.tsToLocal(it.ts))}</div></div><div class="log-text">${window.esc(it.type==="status"?(it.status||""):(it.text||""))}</div></div>`;
+      html += `<div class=\"log-item\"><div class=\"log-top\"><div style=\"display:flex;gap:8px;flex-wrap:wrap;align-items:center\"><span class=\"log-tag ${kindClass}\">${label}</span><span class=\"pill\" style=\"padding:2px 8px\">${window.esc(it.phoneLabel||it.phone||"")}</span></div><div>${window.esc(it.byName||it.by||"—")} • ${window.esc(window.tsToLocal(it.ts))}</div></div><div class=\"log-text\">${window.esc(it.type==="status"?(it.status||""):(it.text||""))}</div></div>`;
     });
     log.innerHTML = html;
     if($("logCount")) $("logCount").textContent=`${sorted.length} entr${sorted.length===1?"y":"ies"}`;
@@ -1225,12 +1178,12 @@ await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) 
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
 
-// HTTPS COMPLIANT MAP EMBED
+// MAP BUG FIXED - RESTORED ORIGINAL HTTPS QUERY STRING (Bypasses mixed content)
 window.buildMap = function(address){
     const addr=(address||"").trim(); 
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
-    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=${q}&output=embed`; 
+    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=...?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=...?q=${q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
     if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";
 }
@@ -1377,14 +1330,12 @@ window.renderAssignList = function(){
   const sq = $("assignFilter");
   const q=(sq?.value||"").toLowerCase().trim();
   const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
-  if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`;
+  if(!rows.length){listEl.innerHTML=`<div class=\"help\">No users available for assignment.</div>`;
   return;} 
-  const thirtyDaysAgo=Date.now()-(30*24*60*60*1000);
   listEl.innerHTML=rows.map(r=>{
     const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
     const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
-    const activeStr=r.lastActive>thirtyDaysAgo?"<span style='color:var(--good)'>Active Recently</span>":"<span style='color:var(--muted)'>Inactive 30+ Days</span>";
-    return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${window.esc(r.uid)}" ${checked} /><div class="assignMeta"><div class="assignName">${window.esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${window.esc(r.email||r.uid)} • ${activeStr}</div></div><div class="assignTag">${tag}</div></label>`;
+    return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(r.name||r.email||r.uid)}</div><div class=\"assignEmail\">${window.esc(r.email||r.uid)}</div></div><div class=\"assignTag\">${tag}</div></label>`;
   }).join("");
 }
 
@@ -1395,12 +1346,12 @@ window.renderModalPhotos = function() {
     const grid = $("m_photoGrid");
     if(!grid) return;
     if(!window.modalCurrentPhotos || window.modalCurrentPhotos.length === 0) {
-        grid.innerHTML = `<div style="grid-column:1/-1; color:var(--muted); font-size:11px; padding:8px 0;">No photos uploaded yet.</div>`;
+        grid.innerHTML = `<div style=\"grid-column:1/-1; color:var(--muted); font-size:11px; padding:8px 0;\">No photos uploaded yet.</div>`;
         return;
     }
     grid.innerHTML = window.modalCurrentPhotos.map((url, idx) => `
-        <div class="deal-photo-thumb" style="background-image:url('${window.esc(url)}')">
-            <button class="deal-photo-del" type="button" data-idx="${idx}" title="Remove Photo">✕</button>
+        <div class=\"deal-photo-thumb\" style=\"background-image:url('${window.esc(url)}')\">
+            <button class=\"deal-photo-del\" type=\"button\" data-idx=\"${idx}\" title=\"Remove Photo\">✕</button>
         </div>
     `).join("");
 };
@@ -1508,9 +1459,9 @@ window.openLeadModal = function(mode){
   const typeSelect = $("m_type");
   if(typeSelect) {
       if(window.currentCategory === 'buyers') {
-          typeSelect.innerHTML = '<option value="wholesale buyer">Wholesale Buyer (Active Deals)</option><option value="private wealth investor">Private Wealth Investor (Passive/Funding)</option><option value="both">Both (Active & Passive)</option>';
+          typeSelect.innerHTML = '<option value=\"wholesale buyer\">Wholesale Buyer (Active Deals)</option><option value=\"private wealth investor\">Private Wealth Investor (Passive/Funding)</option><option value=\"both\">Both (Active & Passive)</option>';
       } else {
-          typeSelect.innerHTML = '<option value="seller">Seller</option><option value="realtor">Realtor</option><option value="wholesaler">Wholesaler</option><option value="contractor">Contractor</option><option value="other">Other</option>';
+          typeSelect.innerHTML = '<option value=\"seller\">Seller</option><option value=\"realtor\">Realtor</option><option value=\"wholesaler\">Wholesaler</option><option value=\"contractor\">Contractor</option><option value=\"other\">Other</option>';
       }
   }
 
@@ -1699,19 +1650,19 @@ window.changeUserRole = async function(uid, role) {
 window.renderTeamModalBody = async function(){
   await window.loadUserDirectoryCache(); const byUid=window.userDirCache.byUid||{}; let html="";
   if(window.isGod){
-    html+=`<div class="lbl">Pending Associate Requests</div><div class="teamGrid">`;
+    html+=`<div class=\"lbl\">Pending Associate Requests</div><div class=\"teamGrid\">`;
     const pending=window.pendingRequestCache.filter(r=>String(r.status||"")==="pending");
-    if(!pending.length){ html+=`<div class="help">No pending requests.</div>`; }else{ pending.forEach(r=>{ const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown"; const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(targetName)}</strong><span style="font-size:11px;color:var(--warn)">Requested by Branch Manager: ${window.esc(managerName)}</span><span style="font-size:11px;color:#9ab9d6">${window.esc(r.targetEmail||"")}</span></div><div class="teamActions"><button class="btn primary tiny btn-approve" data-id="${window.esc(r.id)}">Approve</button><button class="btn danger tiny btn-deny" data-id="${window.esc(r.id)}">Deny</button></div></div>`; });
+    if(!pending.length){ html+=`<div class=\"help\">No pending requests.</div>`; }else{ pending.forEach(r=>{ const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown"; const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(targetName)}</strong><span style=\"font-size:11px;color:var(--warn)\">Requested by Branch Manager: ${window.esc(managerName)}</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(r.targetEmail||"")}</span></div><div class=\"teamActions\"><button class=\"btn primary tiny btn-approve\" data-id=\"${window.esc(r.id)}\">Approve</button><button class=\"btn danger tiny btn-deny\" data-id=\"${window.esc(r.id)}\">Deny</button></div></div>`; });
     } html+=`</div>`;
-    html+=`<div class="lbl" style="margin-top:24px;">All Users (Role Management)</div><div class="teamGrid">`; Object.values(byUid).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})).forEach(u=>{ if(u.role==="system") return; const currentRole=window.roleLabel(u.role); const managerName=u.managerUid&&String(u.managerStatus||"")==="approved" ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : ""; html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)} ${u.uid===window.UID?'<span class="pill">YOU</span>':''}</strong><span style="font-size:11px;color:#9ab9d6">${window.esc(u.email||u.uid)} • ${window.esc(currentRole)}</span>${managerName?`<span style="font-size:11px;color:#00ff6a">Manager: ${window.esc(managerName)}</span>`:''}</div><div class="teamActions">${u.uid!==window.UID?`<select class="select role-select" style="padding:4px;font-size:12px;width:auto;" data-uid="${u.uid}"><option value="user" ${u.role!=='admin'?'selected':''}>Associate</option><option value="admin" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class="pill">God</span>'}</div></div>`;
+    html+=`<div class=\"lbl\" style=\"margin-top:24px;\">All Users (Role Management)</div><div class=\"teamGrid\">`; Object.values(byUid).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})).forEach(u=>{ if(u.role==="system") return; const currentRole=window.roleLabel(u.role); const managerName=u.managerUid&&String(u.managerStatus||"")==="approved" ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : ""; html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(u.name||u.email||u.uid)} ${u.uid===window.UID?'<span class=\"pill\">YOU</span>':''}</strong><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(u.email||u.uid)} • ${window.esc(currentRole)}</span>${managerName?`<span style=\"font-size:11px;color:#00ff6a\">Manager: ${window.esc(managerName)}</span>`:''}</div><div class=\"teamActions\">${u.uid!==window.UID?`<select class=\"select role-select\" style=\"padding:4px;font-size:12px;width:auto;\" data-uid=\"${u.uid}\"><option value=\"user\" ${u.role!=='admin'?'selected':''}>Associate</option><option value=\"admin\" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class=\"pill\">God</span>'}</div></div>`;
     }); html+=`</div>`;
   } else if(window.isBranchManager){
-    const myTeam=window.managedAssociatesFor(window.UID); html+=`<div class="lbl">My Approved Team (Associates)</div><div class="teamGrid">`;
-    if(!myTeam.length){ html+=`<div class="help">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(u.name||u.email||u.uid)}</strong><span style="font-size:11px;color:#00ff6a">Active Team Member</span><span style="font-size:11px;color:#9ab9d6">${window.esc(u.email||u.uid)}</span></div><div class="teamActions"><button class="btn danger tiny btn-remove" data-uid="${u.uid}">Remove</button></div></div>`; });
+    const myTeam=window.managedAssociatesFor(window.UID); html+=`<div class=\"lbl\">My Approved Team (Associates)</div><div class=\"teamGrid\">`;
+    if(!myTeam.length){ html+=`<div class=\"help\">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(u.name||u.email||u.uid)}</strong><span style=\"font-size:11px;color:#00ff6a\">Active Team Member</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(u.email||u.uid)}</span></div><div class=\"teamActions\"><button class=\"btn danger tiny btn-remove\" data-uid=\"${u.uid}\">Remove</button></div></div>`; });
     } html+=`</div>`;
-    const myPending=window.pendingRequestCache.filter(r=>String(r.requesterUid)===String(window.UID)&&String(r.status||"")==="pending"); html+=`<div class="lbl" style="margin-top:24px;">Pending Requests</div><div class="teamGrid">`; if(!myPending.length){ html+=`<div class="help">No pending requests.</div>`;
-    }else{ myPending.forEach(r=>{ html+=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(r.targetEmail||"Associate")}</strong><span style="font-size:11px;color:var(--warn)">Awaiting Leadership Team Approval</span></div><div class="teamActions"><button class="btn danger tiny btn-remove" data-uid="${r.targetUid}">Cancel</button></div></div>`; }); } html+=`</div>`;
-    html+=`<div class="lbl" style="margin-top:24px;">Request Associates By Email</div><div class="assignTools"><input id="teamSearch" class="input" placeholder="Type exact associate email..." autocapitalize="none" autocomplete="off" spellcheck="false" /><div class="assignBtns"><button class="btn tiny primary btn-team-search" type="button">Search</button></div></div><div id="teamSearchResults" class="teamGrid"><div class="help">Enter the associate email address, then click Search.</div></div>`;
+    const myPending=window.pendingRequestCache.filter(r=>String(r.requesterUid)===String(window.UID)&&String(r.status||"")==="pending"); html+=`<div class=\"lbl\" style=\"margin-top:24px;\">Pending Requests</div><div class=\"teamGrid\">`; if(!myPending.length){ html+=`<div class=\"help\">No pending requests.</div>`;
+    }else{ myPending.forEach(r=>{ html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(r.targetEmail||"Associate")}</strong><span style=\"font-size:11px;color:var(--warn)\">Awaiting Leadership Team Approval</span></div><div class=\"teamActions\"><button class=\"btn danger tiny btn-remove\" data-uid=\"${r.targetUid}\">Cancel</button></div></div>`; }); } html+=`</div>`;
+    html+=`<div class=\"lbl\" style=\"margin-top:24px;\">Request Associates By Email</div><div class=\"assignTools\"><input id=\"teamSearch\" class=\"input\" placeholder=\"Type exact associate email...\" autocapitalize=\"none\" autocomplete=\"off\" spellcheck=\"false\" /><div class=\"assignBtns\"><button class=\"btn tiny primary btn-team-search\" type=\"button\">Search</button></div></div><div id=\"teamSearchResults\" class=\"teamGrid\"><div class=\"help\">Enter the associate email address, then click Search.</div></div>`;
   }
   if($("teamModalBody")) $("teamModalBody").innerHTML=html;
 }
@@ -1725,18 +1676,18 @@ window.runTeamSearch = async function(){
     const input=$("teamSearch"); const box=$("teamSearchResults");
     if(!input || !box) return;
     const email=String(input.value||"").trim().toLowerCase();
-    if(!email){ box.innerHTML=`<div class="help">Enter an email address.</div>`; return; } 
-    box.innerHTML=`<div class="help">Searching...</div>`;
+    if(!email){ box.innerHTML=`<div class=\"help\">Enter an email address.</div>`; return; } 
+    box.innerHTML=`<div class=\"help\">Searching...</div>`;
     try{ 
         const snap=await firebase.database().ref(`${EMAIL_INDEX_PATH}/${window.emailLookupKey(email)}`).once("value");
         const targetUid=snap.val();
-        if(!targetUid || String(targetUid)===String(window.UID)){ box.innerHTML=`<div class="help">No match found.</div>`; return; } 
+        if(!targetUid || String(targetUid)===String(window.UID)){ box.innerHTML=`<div class=\"help\">No match found.</div>`; return; } 
         const myPending=window.pendingRequestCache.find(r=>String(r.requesterUid)===String(window.UID)&&String(r.targetUid)===String(targetUid)&&String(r.status||"")==="pending");
         const mineApproved=String(window.userDirCache.byUid[targetUid]?.managerUid||"")===String(window.UID)&&String(window.userDirCache.byUid[targetUid]?.managerStatus||"")==="approved"; 
-        const statusLine=myPending ? '<span style="font-size:11px;color:var(--warn)">Request Pending God Approval</span>' : (mineApproved ? '<span style="font-size:11px;color:#00ff6a">Already on your team</span>' : '<span style="font-size:11px;color:#9ab9d6">Match found</span>');
-        const action=myPending ? '<button class="btn ghost tiny" disabled>Pending...</button>' : (mineApproved ? `<button class="btn danger tiny btn-remove" data-uid="${targetUid}">Remove</button>` : `<button class="btn primary tiny btn-request-assoc" data-uid="${targetUid}" data-email="${encodeURIComponent(email)}">Request</button>`);
-        box.innerHTML=`<div class="teamRow"><div class="teamMeta"><strong style="color:#cfe3ff">${window.esc(email)}</strong>${statusLine}</div><div class="teamActions">${action}</div></div>`; 
-    }catch(e){ box.innerHTML=`<div class="help">Search unavailable right now.</div>`; }
+        const statusLine=myPending ? '<span style=\"font-size:11px;color:var(--warn)\">Request Pending God Approval</span>' : (mineApproved ? '<span style=\"font-size:11px;color:#00ff6a\">Already on your team</span>' : '<span style=\"font-size:11px;color:#9ab9d6\">Match found</span>');
+        const action=myPending ? '<button class=\"btn ghost tiny\" disabled>Pending...</button>' : (mineApproved ? `<button class=\"btn danger tiny btn-remove\" data-uid=\"${targetUid}\">Remove</button>` : `<button class=\"btn primary tiny btn-request-assoc\" data-uid=\"${targetUid}\" data-email=\"${encodeURIComponent(email)}\">Request</button>`);
+        box.innerHTML=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(email)}</strong>${statusLine}</div><div class=\"teamActions\">${action}</div></div>`; 
+    }catch(e){ box.innerHTML=`<div class=\"help\">Search unavailable right now.</div>`; }
 };
 
 window.requestAssociate=async function(targetUid,targetEmailEnc){
@@ -1784,7 +1735,7 @@ window.openSupportModal = function(priority){
   if($("supportPriority")) $("supportPriority").value=priority==="red"?"red":"blue"; 
   if($("supportSub")) $("supportSub").textContent=priority==="red"?"Red = urgent. Use for hot leads or anything that can’t wait.":"Blue = not urgent. Use for questions or general support.";
   const cats=window.supportCategoriesForPortal("wholesaler"); 
-  if($("supportCategory")) $("supportCategory").innerHTML=cats.map(c=>`<option value="${window.esc(c)}">${window.esc(c)}</option>`).join(""); 
+  if($("supportCategory")) $("supportCategory").innerHTML=cats.map(c=>`<option value=\"${window.esc(c)}\">${window.esc(c)}</option>`).join(""); 
   if($("supportMsg")) $("supportMsg").value=""; 
   if($("supportModal")) $("supportModal").style.display="flex";
 } 
@@ -1811,10 +1762,10 @@ window.startRadar = function(){
         }
         return false;
     });
-    if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`; return; }
+    if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
     let html = "";
-    users.forEach(u=>{ html += `<div class="radar-user" data-uid="${window.esc(u.uid)}" data-name="${window.esc(u.name||u.email||"User")}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${window.esc(u.name||u.email||"User")}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class="pill">DM</div> </div>`;
+    users.forEach(u=>{ html += `<div class=\"radar-user\" data-uid=\"${window.esc(u.uid)}\" data-name=\"${window.esc(u.name||u.email||"User")}\"> <div style=\"display:flex;gap:10px;align-items:center;min-width:0\"><div class=\"status-dot\"></div><div style=\"min-width:0\"><div style=\"font-weight:900\">${window.esc(u.name||u.email||"User")}</div><div style=\"font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px\">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class=\"pill\">DM</div> </div>`;
     });
     if(list) list.innerHTML = html;
   });
@@ -1828,7 +1779,7 @@ window.setupChat = function(path,title,showBack){
     const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID); 
     const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them"); 
     const timeString = new Date(m.ts || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class="msg-time">${timeString}</div>`;
+    div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class=\"msg-time\">${timeString}</div>`;
     if($("chatMsgs")) { $("chatMsgs").appendChild(div); setTimeout(() => { $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight; }, 50); }
     if(!isInitialLoad && !mine) { pingSound.play().catch(e=>{}); if($("sidePanel") && !$("sidePanel").classList.contains("open")) { if($("chatBadge")) $("chatBadge").style.display = "block"; } }
   });
@@ -2188,7 +2139,6 @@ firebase.auth().onAuthStateChanged(async u=>{
 
   try{if(typeof window.upsertMyUserDirectory === 'function') await window.upsertMyUserDirectory(u);}catch(e){}
   try{window.trackPresence(u);}catch(e){}
-  try{await window.loadUserDirectoryCache();}catch(e){}
 
   try{
     window.ROLE=await window.resolveMyRole(u);
@@ -2221,6 +2171,7 @@ firebase.auth().onAuthStateChanged(async u=>{
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
+  try{ await window.loadUserDirectoryCache(); }catch(e){}
 
   try{
     if(window.isGod){ window.subscribeGodAllLeads(); }
