@@ -873,22 +873,67 @@ window.uploadPhotos = function() {
 };
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
-window.buildUserCache = function(rows){const byUid={}, byEmail={}, byUser={};
-rows.forEach(item=>{const uid=String(item?.uid||"").trim(); if(!uid) return; const row=item?.row||{}; const role=mapRole(item?.role||row.role||"user"); const email=String(item?.email||row.email||"").toLowerCase().trim(); const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); byUid[uid]={...row, uid, email, username, role}; if(email) byEmail[email]=uid; if(username) byUser[username]=uid;});
-return {byUid,byEmail,byUser};}
-window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
-managerAssociates=mSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
-if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending;
-return cache;}
+
+// GOD MODE 30-DAY ACTIVE ASSIGNMENT PATCH
+window.buildUserCache = function(rows){
+    const byUid={}, byEmail={}, byUser={};
+    rows.forEach(item=>{
+        const uid=String(item?.uid||"").trim(); if(!uid) return; 
+        const row=item?.row||{}; 
+        const role=mapRole(item?.role||row.role||"user"); 
+        const email=String(item?.email||row.email||"").toLowerCase().trim(); 
+        const username=String(row.username||row.userName||usernameFromEmail(email)).toLowerCase(); 
+        const name=String(item?.name||row.name||row.displayName||email.split('@')[0]||uid).trim(); 
+        byUid[uid]={...row, uid, email, username, name, role, lastActive:item?.lastActive||0}; 
+        if(email) byEmail[email]=uid; 
+        if(username) byUser[username]=uid;
+    });
+    return {byUid,byEmail,byUser};
+}
+
+window.loadGodDirectoryCache = async function(){
+    let users={}, roles={}, managerAssociates={}, presence={}; 
+    try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} 
+    try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} 
+    try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value"); managerAssociates=mSnap.val()||{};}catch(e){} 
+    try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} 
+    
+    const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); 
+    const cache=window.buildUserCache(allUids.map(uid=>{
+        const row=users[uid]||{}; 
+        const pRow=presence[uid]||{}; 
+        return {
+            uid,
+            row,
+            role:roles[uid]||row.role||"user",
+            email:row.email||pRow.email||"",
+            name:row.name||row.displayName||pRow.name||"",
+            lastActive:pRow.ts||row.updatedAt||0
+        };
+    })); 
+    
+    const pending=[]; 
+    Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
+    if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} 
+    
+    window.userDirCache=cache; 
+    window.pendingRequestCache=pending;
+    return cache;
+}
+
 window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[];
 return cache;}
+
 window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap);
 const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows);
 Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
 return cache;}
+
 window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
 return window.loadSelfDirectoryCache();}
+
 window.managedAssociatesFor = function(uid){return Object.values(window.userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
+
 window.resolveMyRole = async function(u){
   const emailStr = String(u?.email || "").toLowerCase().trim();
   if(emailStr === "dealbankers@gmail.com") return "god";
@@ -899,8 +944,28 @@ window.resolveMyRole = async function(u){
   }catch(e){ }
   return mapRole(window.userDirCache.byUid?.[window.UID]?.role || "user");
 }
-window.getAssignableRows = function(){const rows=[];
-Object.values(window.userDirCache.byUid||{}).forEach(u=>{if(u.role==="system") return; if(window.isGod){if(u.role==="god") return; rows.push(u); return;} if(window.isBranchManager){if(u.uid===window.UID){rows.push(u); return;} if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") rows.push(u);}}); rows.sort((a,b)=>((a.role||"")===(b.role||"")?String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"}):String(a.role||"").localeCompare(String(b.role||"")))); return rows;}
+
+window.getAssignableRows = function(){
+    const rows=[]; 
+    const thirtyDaysAgo=Date.now()-(30*24*60*60*1000);
+    Object.values(window.userDirCache.byUid||{}).forEach(u=>{
+        if(u.role==="system") return; 
+        if(window.isGod){
+            if(u.role==="god") return; 
+            if(u.lastActive > thirtyDaysAgo) rows.push(u); // ONLY ACTIVE USERS
+            return;
+        } 
+        if(window.isBranchManager){
+            if(u.uid===window.UID){rows.push(u); return;} 
+            if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") {
+                if(u.lastActive > thirtyDaysAgo) rows.push(u);
+            }
+        }
+    }); 
+    rows.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})); 
+    return rows;
+}
+
 window.leadIdFor = function(lead){return String((lead&&(lead.id||lead.docnum))?(lead.id||lead.docnum):"");}
 window.normalizePhones = function(lead){const out=[];
 if(Array.isArray(lead?.phones)){lead.phones.forEach(p=>{if(!p) return; if(typeof p==="string") out.push({label:"Phone",phone:p}); else out.push({label:(p.label||p.name||"Phone"), phone:(p.phone||p.number||p.value||"")});});} [["Owner",lead?.phone],["Owner",lead?.Phone],["Owner",lead?.ownerPhone],["Owner",lead?.mobile],["Owner",lead?.cell]].forEach(([lab,val])=>{if(val) out.push({label:lab,phone:val});}); const seen=new Set();
@@ -1124,12 +1189,13 @@ window.saveQuickNote = async function(){const text=($("noteComposer")?.value||""
 await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
-// HTTPS FIX FOR GOOGLE MAPS - MIXED CONTENT ERROR RESOLVED
+
+// MAP BUG FIXED - RESTORED ORIGINAL HTTPS QUERY STRING 
 window.buildMap = function(address){
     const addr=(address||"").trim(); 
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
-    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=${q}&output=embed`; 
+    const src=window.mapMode==="street"?`http://googleusercontent.com/maps.google.com/maps?q=${q}&layer=c&output=embed`:`http://googleusercontent.com/maps.google.com/maps?q=${q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
     if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";
 }
