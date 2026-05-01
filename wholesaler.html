@@ -574,6 +574,7 @@ window.initApprovalListener = function() {
         };
 
         try {
+            // ONLY check leadsMaster to prevent ghost copies from throwing false positives
             const [ms, mb] = await Promise.all([
                 firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value').catch(()=>({val:()=>({})})),
                 firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})}))
@@ -818,18 +819,14 @@ window.requestWarRoom = async function(type) {
     }, 2000);
 }
 
-// FULLY ROBUST DISPO APPROVAL FIX
 window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
         const updates = {};
         
-        // 1. Update the master node
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
         
-        // 2. Fetch all users to see exactly who has a copy of this lead and update them ALL
-        // This completely eradicates the "ghost unapproved copies" bug.
         const usersSnap = await firebase.database().ref(LEADS_BY_USER_PATH).once('value');
         const users = usersSnap.val() || {};
         
@@ -840,13 +837,10 @@ window.approveDispo = async function() {
             }
         });
         
-        // 3. Execute the batch update
         await firebase.database().ref().update(updates);
         
-        // 4. Force local state update so the UI immediately switches to "Approved"
         if (window.currentLead) window.currentLead.dispoApproved = true;
         
-        // 5. Instantly clear the pending badge
         if(window.pendingApprovals) {
             window.pendingApprovals = window.pendingApprovals.filter(l => window.leadIdFor(l) !== window.currentLeadId);
             const badge = $('approvalBadge');
@@ -862,7 +856,7 @@ window.approveDispo = async function() {
         }
 
         alert("Approved for Dispo ✓");
-        window.selectLeadByIndex(window.currentIndex); // This forces the HUD to render the approved UI
+        window.selectLeadByIndex(window.currentIndex); 
 
     } catch(e) { 
         console.error("Dispo Approval Error:", e);
@@ -884,6 +878,7 @@ window.uploadPhotos = function() {
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
 
+// ORIGINAL STABLE DIRECTORY LOADING (Fixes DB Permission Denied errors)
 window.buildUserCache = function(rows){
     const byUid={}, byEmail={}, byUser={};
     rows.forEach(item=>{
@@ -900,8 +895,7 @@ window.buildUserCache = function(rows){
     return {byUid,byEmail,byUser};
 }
 
-// UNIFIED DIRECTORY LOADER: Grants Branch Managers the ability to see all users like God mode does
-window.loadGlobalDirectoryCache = async function(){
+window.loadGodDirectoryCache = async function(){
     let users={}, roles={}, managerAssociates={}, presence={}; 
     try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} 
     try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} 
@@ -931,11 +925,38 @@ window.loadGlobalDirectoryCache = async function(){
     return cache;
 }
 
-window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[];
-return cache;}
+window.loadBranchManagerDirectoryCache = async function(){
+    const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); 
+    const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; 
+    const teamMap=teamMapRaw||{}; 
+    const targetUids=Object.keys(teamMap);
+    
+    const details=await Promise.all(targetUids.map(async targetUid=>{
+        const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); 
+        const pRow=await window.readExact(`${PRESENCE_PATH}/${targetUid}`); 
+        return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase(), lastActive:pRow?.ts||row?.updatedAt||0};
+    })); 
+    details.forEach(d=>rows.push(d)); 
+    const cache=window.buildUserCache(rows);
+    
+    Object.keys(teamMap).forEach(targetUid=>{
+        const info=teamMap[targetUid]||{}; 
+        if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; 
+        cache.byUid[targetUid].managerUid=window.UID; 
+        cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); 
+        if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); 
+        if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;
+    }); 
+    window.userDirCache=cache; 
+    window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
+    return cache;
+}
+
+window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[]; return cache;}
 
 window.loadUserDirectoryCache = async function(){
-    if(window.isGod || window.isBranchManager) return window.loadGlobalDirectoryCache(); 
+    if(window.isGod) return window.loadGodDirectoryCache(); 
+    if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
     return window.loadSelfDirectoryCache();
 }
 
@@ -964,8 +985,8 @@ window.getAssignableRows = function(){
         } 
         if(window.isBranchManager){
             if(u.uid===window.UID){rows.push(u); return;} 
-            if(u.role==="user") {
-                rows.push(u); // Allows BM to assign to any associate
+            if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") {
+                rows.push(u);
             }
         }
     }); 
@@ -1204,12 +1225,12 @@ await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) 
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
 
-// MAP URL FIX: HTTPS to prevent mixed content blocking
+// HTTPS COMPLIANT MAP EMBED
 window.buildMap = function(address){
     const addr=(address||"").trim(); 
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
-    const src=window.mapMode==="street"?`https://googleusercontent.com/maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://googleusercontent.com/maps.google.com/maps?q=${q}&output=embed`; 
+    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=${q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
     if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";
 }
@@ -1363,7 +1384,7 @@ window.renderAssignList = function(){
     const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
     const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
     const activeStr=r.lastActive>thirtyDaysAgo?"<span style='color:var(--good)'>Active Recently</span>":"<span style='color:var(--muted)'>Inactive 30+ Days</span>";
-    return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${window.esc(r.uid)}" ${checked} /><div class="assignMeta"><div class="assignName">${window.esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${window.esc(r.email||r.uid)} &bull; ${activeStr}</div></div><div class="assignTag">${tag}</div></label>`;
+    return `<label class="assignRow"><input type="checkbox" class="assign-cb" data-uid="${window.esc(r.uid)}" ${checked} /><div class="assignMeta"><div class="assignName">${window.esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${window.esc(r.email||r.uid)} • ${activeStr}</div></div><div class="assignTag">${tag}</div></label>`;
   }).join("");
 }
 
