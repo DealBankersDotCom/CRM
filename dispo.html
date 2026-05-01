@@ -154,6 +154,16 @@
 
     const dealsRef = ref(db, 'leadsMaster/sellers');
     window.dealPhotos = {};
+    
+    // Privacy Function: Strips the street address and only returns City, State, Zip
+    function extractArea(addressStr) {
+        if(!addressStr) return 'Undisclosed Area';
+        const parts = addressStr.split(',');
+        if(parts.length > 1) {
+            return parts.slice(1).join(',').trim(); 
+        }
+        return addressStr.replace(/^\\d+\\s+/, '*** '); 
+    }
 
     function loadDeals() {
         onValue(dealsRef, (snapshot) => {
@@ -173,30 +183,31 @@
             const isLive = deal.isLive === true || String(deal.isLive).toLowerCase() === 'true';
             const isApproved = deal.dispoApproved === true || String(deal.dispoApproved).toLowerCase() === 'true';
             
-            if (!isLive || !isApproved) return; // Skip if not live AND approved
+            if (!isLive || !isApproved) return; 
             
             hasDeals = true;
             const dealId = dealSnap.key;
             
-            // FIREBASE PHOTO SAFETY: Safely parse photos in case an array was converted to an object
+            // FIREBASE PHOTO SAFETY: Safely parse photos
             let photos = [];
             if (deal.photos) {
                 if (Array.isArray(deal.photos)) photos = [...deal.photos];
                 else if (typeof deal.photos === 'object') photos = Object.values(deal.photos);
             }
-            if(photos.length === 0) photos.push('https://via.placeholder.com/400x225?text=No+Images');
+            if(photos.length === 0) photos.push('https://via.placeholder.com/400x225/111827/3b82f6?text=Confidential+Property');
 
             window.dealPhotos[dealId] = { images: photos, index: 0 };
 
+            // STRICT PRIVACY MAPPING
             const dealData = {
-              title: deal.marketingTitle || deal.address || 'Confidential Address',
-              location: deal.marketingTitle ? (deal.address || 'Active Wholesale Deal') : 'Active Wholesale Deal',
-              price: deal.marketingPrice || 'Contact for Price & Access',
-              notes: deal.marketingDetails || deal.notes || 'Contact us for more details about this investment opportunity.',
+              title: deal.marketingTitle || 'Off-Market Investment Opportunity',
+              location: extractArea(deal.address),
+              price: deal.marketingPrice || 'Inquire for Pricing',
+              notes: deal.marketingDetails || 'Contact our dispositions team for full property details, repair estimates, and access instructions.',
             };
             
             // SAFELY ESCAPE QUOTES FOR HTML ATTRIBUTES
-            const safeTitle = (dealData.title).replace(/'/g, "\\'").replace(/"/g, "&quot;");
+            const safeTitle = String(dealData.title).replace(/'/g, "\\'").replace(/"/g, "&quot;");
 
             const card = document.createElement('div');
             card.classList.add('deal-card');
@@ -211,7 +222,7 @@
                 </div>
                 <div class="deal-details">
                   <h2 class="deal-title">${dealData.title}</h2>
-                  <p class="deal-location">⚡ ${dealData.location}</p>
+                  <p class="deal-location">📍 ${dealData.location}</p>
                   <p class="deal-price">${dealData.price}</p>
                   <div class="deal-notes">${dealData.notes}</div>
                   <button class="viewDealBtn" onclick="openChatWithContext('${safeTitle}')">
@@ -270,7 +281,7 @@
         if (user) {
             currentUser = user;
             setupChat(user.uid);
-            loadDeals(); // Fetch deals AFTER auth is confirmed
+            loadDeals(); 
             
             if (window.self === window.top) {
                 const presenceRef = ref(db, `presence/global/${user.uid}`);
