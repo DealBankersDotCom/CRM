@@ -550,10 +550,6 @@ window.initApprovalListener = function() {
                 badge.style.display = 'none';
             }
         }
-        const btnContent = $('approvalsListContent');
-        if(btnContent && window.pendingApprovals.length > 0) {
-            window.openApprovalsModal(true);
-        }
     };
 
     const scanForApprovals = async () => {
@@ -618,6 +614,7 @@ window.openApprovalsModal = function(silent = false) {
 };
 
 window.closeApprovalsModal = function() {
+    if (document.activeElement) document.activeElement.blur(); // Fix for aria-hidden warning
     const m = $('approvalsModal');
     if(m) m.style.display = 'none';
 };
@@ -818,23 +815,60 @@ window.requestWarRoom = async function(type) {
     }, 2000);
 }
 
+// FULLY ROBUST DISPO APPROVAL FIX
 window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
         const updates = {};
+        
+        // 1. Update the master node
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
-        const snap = await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/assignedTo`).once('value');
-        const assignedTo = snap.val() || {};
-        Object.keys(assignedTo).forEach(uid => {
+        
+        // 2. Build a reliable list of assigned users
+        let uidsToUpdate = [];
+        if (window.currentLead.assignedUids && Array.isArray(window.currentLead.assignedUids)) {
+            uidsToUpdate = [...window.currentLead.assignedUids];
+        }
+        if (window.currentLead.assignedTo) {
+            Object.keys(window.currentLead.assignedTo).forEach(uid => {
+                if(!uidsToUpdate.includes(uid)) uidsToUpdate.push(uid);
+            });
+        }
+        
+        // 3. Update all individual associate nodes
+        uidsToUpdate.forEach(uid => {
             updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
             updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
         });
+        
         await firebase.database().ref().update(updates);
-        alert("Approved for Dispo ✓");
+        
+        // 4. Force local state update so the UI immediately switches to "Approved"
         if (window.currentLead) window.currentLead.dispoApproved = true;
-        window.selectLeadByIndex(window.currentIndex);
-    } catch(e) { alert("Approval failed"); }
+        
+        // 5. Instantly clear the pending badge
+        if(window.pendingApprovals) {
+            window.pendingApprovals = window.pendingApprovals.filter(l => window.leadIdFor(l) !== window.currentLeadId);
+            const badge = $('approvalBadge');
+            if (badge) {
+                if (window.pendingApprovals.length > 0) {
+                    badge.style.display = 'inline-block';
+                    badge.textContent = window.pendingApprovals.length;
+                } else {
+                    badge.style.display = 'none';
+                    window.closeApprovalsModal();
+                }
+            }
+        }
+
+        alert("Approved for Dispo ✓");
+        window.selectLeadByIndex(window.currentIndex); // This forces the HUD to render the approved UI
+
+    } catch(e) { 
+        console.error("Dispo Approval Error:", e);
+        alert("Approval failed: " + e.message); 
+    }
 };
 
 window.uploadPhotos = function() { 
@@ -1101,8 +1135,9 @@ window.saveQuickNote = async function(){const text=($("noteComposer")?.value||""
 await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
+// HTTPS FIX FOR GOOGLE MAPS
 window.buildMap = function(address){const addr=(address||"").trim(); if(!addr){window.setMapVisibility(false);
-return;} const q=encodeURIComponent(addr); const src=window.mapMode==="street"?`http://googleusercontent.com/maps.google.com/maps?q=${q}&layer=c&output=embed`:`http://googleusercontent.com/maps.google.com/maps?q=${q}&output=embed`; if($("streetFrame")) $("streetFrame").src=src; if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";}
+return;} const q=encodeURIComponent(addr); const src=window.mapMode==="street"?`https://googleusercontent.com/maps.google.com/maps?q=${q}&layer=c&output=embed`:`https://googleusercontent.com/maps.google.com/maps?q=${q}&output=embed`; if($("streetFrame")) $("streetFrame").src=src; if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";}
 
 window.detachLeadRefs = function(){
   if(window.leadsRef){try{window.leadsRef.off();}catch(e){} window.leadsRef=null;}
@@ -1442,7 +1477,11 @@ window.openLeadModal = function(mode){
   if($("leadModal")) { $("leadModal").classList.add("show"); $("leadModal").setAttribute("aria-hidden","false"); }
 }
 
-window.closeLeadModal = function(){if($("leadModal")) { $("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true"); }}
+window.closeLeadModal = function(){
+    if (document.activeElement) document.activeElement.blur();
+    if($("leadModal")) { $("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true"); }
+}
+
 window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set();
 lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});});
 return out;}
@@ -1579,7 +1618,11 @@ window.renderTeamModalBody = async function(){
   if($("teamModalBody")) $("teamModalBody").innerHTML=html;
 }
 window.openTeamModal = async function(){if($("teamModal")) $("teamModal").classList.add("show"); if($("teamModalBody")) $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await window.renderTeamModalBody();}; 
-window.closeTeamModal = function(){if($("teamModal")) $("teamModal").classList.remove("show");};
+window.closeTeamModal = function(){
+    if (document.activeElement) document.activeElement.blur();
+    if($("teamModal")) $("teamModal").classList.remove("show");
+};
+
 window.runTeamSearch = async function(){
     const input=$("teamSearch"); const box=$("teamSearchResults");
     if(!input || !box) return;
@@ -1647,7 +1690,10 @@ window.openSupportModal = function(priority){
   if($("supportMsg")) $("supportMsg").value=""; 
   if($("supportModal")) $("supportModal").style.display="flex";
 } 
-window.closeSupportModal = function(){if($("supportModal")) $("supportModal").style.display="none";}
+window.closeSupportModal = function(){
+    if (document.activeElement) document.activeElement.blur();
+    if($("supportModal")) $("supportModal").style.display="none";
+}
 
 window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
 const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
@@ -1731,7 +1777,11 @@ window.openPanel = function(){
         }
     }
 } 
-window.closePanel = function(){if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }}
+window.closePanel = function(){
+    if (document.activeElement) document.activeElement.blur();
+    if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }
+}
+
 window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block";
 if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null;
 } }
@@ -1884,7 +1934,6 @@ window.saveSettings = async function() {
 
 /* --- MASTER EVENT INITIALIZATION --- */
 function initStaticEvents() {
-    // SAFE EVENT BINDING: Prevents 'Cannot read properties of null' if you temporarily remove an element.
     const attach = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
 
     attach('logoutBtn', window.logout);
@@ -1895,8 +1944,8 @@ function initStaticEvents() {
     attach('approvalsCloseBtn', window.closeApprovalsModal);
     
     attach('btnSettings', () => { window.loadSettings(); if($('settingsModal')) $('settingsModal').style.display = 'flex'; });
-    attach('settingsCloseBtn', () => { if($('settingsModal')) $('settingsModal').style.display = 'none'; });
-    attach('settingsCancelBtn', () => { if($('settingsModal')) $('settingsModal').style.display = 'none'; });
+    attach('settingsCloseBtn', () => { if(document.activeElement) document.activeElement.blur(); if($('settingsModal')) $('settingsModal').style.display = 'none'; });
+    attach('settingsCancelBtn', () => { if(document.activeElement) document.activeElement.blur(); if($('settingsModal')) $('settingsModal').style.display = 'none'; });
     attach('settingsSaveBtn', window.saveSettings);
     attach('btnTriggerUpload', () => { if($('set_photoUpload')) $('set_photoUpload').click(); });
     if($('set_photoUpload')) $('set_photoUpload').addEventListener('change', window.handlePhotoUpload);
@@ -1958,7 +2007,7 @@ function initStaticEvents() {
     const ci = $("chatInput");
     if(ci) ci.addEventListener('keydown', (e) => { if(e.key==='Enter') window.sendMsg(); });
 
-    // DYNAMIC EVENT DELEGATION - Safe queue clicker
+    // DYNAMIC EVENT DELEGATION
     const listEl = $("leadList");
     if (listEl) {
         listEl.addEventListener('click', (e) => {
