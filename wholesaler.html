@@ -411,24 +411,6 @@ Daughter Lisa | 210-555-2222"></textarea></div>
 
 <div id="teamModal" class="modal" aria-hidden="true"><div class="modalCard" style="max-width:760px;" role="dialog" aria-modal="true" aria-label="Team Management"><div class="modalHead"><div><strong id="teamModalTitle">Team Management</strong><div class="status" style="margin-top:4px;">Manage Branch Managers and Associates</div></div><button class="btn" id="teamModalClose" type="button">Close</button></div><div class="modalBody" id="teamModalBody"></div></div></div>
 
-
-<div class="modalOverlay" id="godMsgModal" style="display:none;z-index:3000">
-  <div class="modalCard" role="dialog" aria-modal="true" style="max-width:420px">
-    <div class="modalHead">
-      <div>
-        <div class="modalTitle">Message from Leadership</div>
-        <div class="modalSub" id="godMsgFrom">GOD</div>
-      </div>
-      <button class="btn" id="godMsgClose" type="button">Close</button>
-    </div>
-    <div class="modalBody">
-      <div id="godMsgText" style="white-space:pre-wrap;font-size:15px;line-height:1.5"></div>
-      <div style="margin-top:14px;display:flex;gap:8px;justify-content:flex-end">
-        <button class="btn primary" id="godMsgReply" type="button">Reply in Chat</button>
-      </div>
-    </div>
-  </div>
-</div>
 <div class="modalOverlay" id="supportModal"><div class="modalCard" role="dialog" aria-modal="true" aria-labelledby="supportTitle"><div class="modalHead"><div><div class="modalTitle" id="supportTitle">Support Request</div><div class="modalSub" id="supportSub">Send a request to Leadership Team</div></div><button class="iconBtn" id="supportCloseBtn" title="Close">✕</button></div><div class="modalBody"><div class="grid2"><div><div class="lbl">Priority</div><select id="supportPriority" class="input"><option value="blue">Blue Phone Support (not urgent)</option><option value="red">Red Phone Support (urgent)</option></select></div><div><div class="lbl">Portal</div><input id="supportPortal" class="input" readonly /></div><div style="grid-column:1/-1"><div class="lbl">Category</div><select id="supportCategory" class="input"></select></div><div style="grid-column:1/-1"><div class="lbl">Message</div><textarea id="supportMsg" class="input" style="min-height:120px;resize:vertical" placeholder="Tell the Leadership Team what you need..."></textarea><div class="help">If it's about a lead, include the address or phone number.</div></div></div></div><div class="modalActions"><button class="btn ghost" type="button" id="supportCancelBtn">Cancel</button><button class="btn" type="button" id="supportSendBtn">Send Request</button></div></div></div>
 
 <div class="modalOverlay" id="settingsModal">
@@ -567,12 +549,11 @@ window.listenForNotifications = function() {
 window.initApprovalListener = function() {
     if (!window.isGod) return;
     const btn = $('btnApprovals');
-    if (btn) btn.style.display = 'none';
+    if (btn) btn.style.display = 'flex';
 
     const updateBadge = () => {
         const count = window.pendingApprovals.length;
         const badge = $('approvalBadge');
-        if (btn) btn.style.display = count > 0 ? 'flex' : 'none';
         if (badge) {
             if (count > 0) {
                 badge.style.display = 'inline-block';
@@ -665,7 +646,7 @@ window.switchCategory = function(cat) {
 
     if($("panel-acq")) $("panel-acq").style.display="block"; 
     if($("panel-console")) $("panel-console").style.display="block";
-    if($("panel-calllog")) $("panel-calllog").style.display="block";
+    if($("panel-calllog")) $("panel-calllog").style.display="none"; // HIDE UNTIL LEAD SELECTED
     if($("panel-market")) $("panel-market").style.display="none";
     
     if($("crumb")) $("crumb").textContent = cat === 'sellers' ? "Acquisition" : "Disposition";
@@ -922,54 +903,9 @@ window.buildUserCache = function(rows){
     return {byUid,byEmail,byUser};
 }
 
-
-// GOD MESSAGE SYSTEM - popup chat from GOD to any online user
-window.sendGodMessage = async function(targetUid, targetName){
-  if(!window.isGod) return alert('Only GOD can send');
-  const text = prompt(`Message to ${targetName||'user'}:`);
-  if(!text || !text.trim()) return;
-  const payload = {
-    fromUid: window.UID,
-    fromName: window.ME?.displayName || window.ME?.email || 'Leadership',
-    text: text.trim(),
-    ts: firebase.database.ServerValue.TIMESTAMP
-  };
-  try{
-    await firebase.database().ref(`god_pops/${targetUid}`).push(payload);
-    // also drop in DM for history
-    await firebase.database().ref(`${DMS_PATH}/${targetUid}/messages`).push({...payload, type:'god_popup'});
-    window.toast(`Message sent to ${targetName}`);
-  }catch(e){ console.error(e); alert('Failed to send'); }
-};
-
-window.listenForGodMessages = function(){
-  if(!window.UID) return;
-  const ref = firebase.database().ref(`god_pops/${window.UID}`);
-  ref.on('child_added', snap=>{
-    const msg = snap.val(); if(!msg) return;
-    const modal = $("godMsgModal");
-    if(modal){
-      $("godMsgFrom").textContent = msg.fromName || 'Leadership';
-      $("godMsgText").textContent = msg.text || '';
-      modal.style.display = 'flex';
-      $("godMsgClose").onclick = ()=>{ modal.style.display='none'; };
-      $("godMsgReply").onclick = ()=>{ 
-        modal.style.display='none'; 
-        // open DM back to GOD
-        if(window.isGod) return;
-        window.setupChat(`${DMS_PATH}/${window.UID}/messages`, msg.fromName||'Leadership', false);
-        window.openPanel();
-      };
-    } else {
-      alert(`${msg.fromName}: ${msg.text}`);
-    }
-    snap.ref.remove();
-  });
-};
-
 // RESTORED STABLE DIRECTORY FUNCTIONS
 window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}, presence={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
-managerAssociates=mSnap.val()||{};}catch(e){} try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:{...(users[uid]||{}), name:(users[uid]?.name||users[uid]?.displayName)||presence[uid]?.name, email:users[uid]?.email||presence[uid]?.email},role:roles[uid]||users[uid]?.role||"user",lastActive:presence[uid]?.ts||0}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
+managerAssociates=mSnap.val()||{};}catch(e){} try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user",lastActive:presence[uid]?.ts||0}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
 if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending;
 return cache;}
 
@@ -1123,7 +1059,8 @@ window.clearConsole = function(){
   if($("phoneSelect")) { $("phoneSelect").innerHTML=""; $("phoneSelect").disabled=true; }
   if($("callBtn")) $("callBtn").disabled=true;
   if($("copyBtn")) $("copyBtn").disabled=true;
-  if($("btnEditLead")) $("btnEditLead").disabled=true; 
+  if($("btnEditLead")) $("btnEditLead").disabled=true;
+  if($("panel-calllog")) $("panel-calllog").style.display="none"; // hide log when no lead 
   if($("btnReqAnalysis")) $("btnReqAnalysis").disabled=true; 
   if($("btnReqSkip")) $("btnReqSkip").disabled=true; 
   if($("btnOpenQuickLog")) $("btnOpenQuickLog").style.display="none";
@@ -1184,6 +1121,7 @@ window.selectLeadByIndex = function(idx){
         if($("callBtn")) $("callBtn").disabled=false; if($("copyBtn")) $("copyBtn").disabled=false; if($("callHint")) $("callHint").style.display=""; 
         if($("btnOpenQuickLog")) $("btnOpenQuickLog").style.display="flex";
         window.onPhoneChanged();
+        if($("panel-calllog")) $("panel-calllog").style.display="block"; // SHOW ON LEAD SELECT
       }
   }
   if(addr.trim()){window.setMapVisibility(true); window.buildMap(addr);} else window.setMapVisibility(false);
@@ -1213,32 +1151,52 @@ window.closeQuickLog = function() {
 };
 window.renderCallLogEmpty = function(msg){if($("callLog")) $("callLog").innerHTML=`<div class=\"log-empty\">${window.esc(msg||"No call history for this number.")}</div>`;
 if($("logCount")) $("logCount").textContent="0 entries";}
-window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;}}
+window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;} if(window.activeLogRefs){window.activeLogRefs.forEach(r=>{try{r.off();}catch(e){}}); window.activeLogRefs=null;}}
 window.callLogRefForPhoneKey = function(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
 
 window.attachCallLog = function(phoneKey){
   window.detachCallLog();
-  if(!phoneKey||phoneKey==="unknown") return window.renderCallLogEmpty("Select a valid number to view log."); 
-  const items=[]; 
-  window.activeLogRef=window.callLogRefForPhoneKey(phoneKey); 
+  if(!phoneKey||phoneKey==="unknown") return window.renderCallLogEmpty("Select a valid number to view log.");
+  const items=[];
   const redraw=()=>{
     const log=$("callLog");
     if(!log) return;
     if(!items.length){ window.renderCallLogEmpty(); return; }
-    const sorted=items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0)); 
+    const sorted=items.slice().sort((a,b)=>(b.ts||0)-(a.ts||0));
     let html = "";
     sorted.forEach(it=>{
-      const kindClass=it.type==="note"?"note":((it.status||"").toLowerCase().includes("dnc")?"dnc":((it.status||"").toLowerCase().includes("hot")?"hot":"status")); 
-      const label=it.type==="note"?"NOTE":"STATUS"; 
+      const kindClass=it.type==="note"?"note":((it.status||"").toLowerCase().includes("dnc")?"dnc":((it.status||"").toLowerCase().includes("hot")?"hot":"status"));
+      const label=it.type==="note"?"NOTE":"STATUS";
       html += `<div class=\"log-item\"><div class=\"log-top\"><div style=\"display:flex;gap:8px;flex-wrap:wrap;align-items:center\"><span class=\"log-tag ${kindClass}\">${label}</span><span class=\"pill\" style=\"padding:2px 8px\">${window.esc(it.phoneLabel||it.phone||"")}</span></div><div>${window.esc(it.byName||it.by||"—")} • ${window.esc(window.tsToLocal(it.ts))}</div></div><div class=\"log-text\">${window.esc(it.type==="status"?(it.status||""):(it.text||""))}</div></div>`;
     });
     log.innerHTML = html;
     if($("logCount")) $("logCount").textContent=`${sorted.length} entr${sorted.length===1?"y":"ies"}`;
-  }; 
+  };
+  // GOD MODE: show entire gamut of notes for this lead across ALL phones (no limit)
+  if(window.isGod && window.currentLead){
+    const phones = window.normalizePhones(window.currentLead);
+    if(!phones.length) return window.renderCallLogEmpty("No phones on this lead yet.");
+    window.activeLogRefs = [];
+    const leadId = window.currentLeadId;
+    phones.forEach(p=>{
+      const pk = window.fmtPhoneKey(p.phone);
+      const ref = window.callLogRefForPhoneKey(pk);
+      window.activeLogRefs.push(ref);
+      // No limit for god - entire history
+      ref.on("child_added", snap=>{const v=snap.val()||{}; if(v.leadId && v.leadId!==leadId) return; v._key=snap.key+"_"+pk; items.push(v); redraw();}, ()=>window.renderCallLogEmpty("Call log unavailable."));
+      ref.on("child_changed", snap=>{const v=snap.val()||{}; if(v.leadId && v.leadId!==leadId) return; const key=snap.key+"_"+pk; const i=items.findIndex(x=>x._key===key); const nv={_key:key, ...(v)}; if(i>=0) items[i]=nv; else items.push(nv); redraw();});
+      ref.on("child_removed", snap=>{const key=snap.key+"_"+pk; const i=items.findIndex(x=>x._key===key); if(i>=0) items.splice(i,1); redraw();});
+    });
+    window.activeLogRef = { off: ()=>{ if(window.activeLogRefs){ window.activeLogRefs.forEach(r=>{try{r.off()}catch(e){}}); window.activeLogRefs=null; } } };
+    return;
+  }
+  // REGULAR USER: show last 120 for current phone only
+  window.activeLogRef=window.callLogRefForPhoneKey(phoneKey);
   window.activeLogRef.limitToLast(120).on("child_added", snap=>{const v=snap.val()||{}; v._key=snap.key; items.push(v); redraw();}, ()=>window.renderCallLogEmpty("Call log unavailable."));
-  window.activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();}); 
+  window.activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();});
   window.activeLogRef.on("child_removed", snap=>{const i=items.findIndex(x=>x._key===snap.key); if(i>=0) items.splice(i,1); redraw();});
 }
+
 
 window.pushLogEntry = async function(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return; await window.callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:window.UID||"", by:window.ME?.email||"", byName:window.ME?.displayName||window.ME?.email||"User", phone:window.currentPhone||"", phoneLabel:window.currentPhoneLabel||"", leadId:window.currentLeadId||"", leadAddress:window.currentLead?.address||window.currentLead?.Address||""});}
 window.logStatus = async function(status, keepOpen){const phoneKey=window.fmtPhoneKey(window.currentPhone);
@@ -1400,17 +1358,12 @@ window.renderAssignList = function(){
   const sq = $("assignFilter");
   const q=(sq?.value||"").toLowerCase().trim();
   const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
-  const f30=$("filterActive30"); if(f30) f30.parentElement.style.display = window.isGod? "" : "none";
-  if(!rows.length){listEl.innerHTML=`<div class="help">No users available for assignment.</div>`;return;}
+  if(!rows.length){listEl.innerHTML=`<div class=\"help\">No users available for assignment.</div>`;
+  return;} 
   listEl.innerHTML=rows.map(r=>{
-    const checked=window.modalAssignedSet.has(r.uid)?"checked":"";
-    const tag=r.role==="admin"?"MANAGER":"ASSOC";
-    const last = Number(r.lastActive||0);
-    const days = last? Math.floor((Date.now()-last)/(24*60*60*1000)) : 999;
-    const activeLabel = window.isGod && last? (days===0?"today":days===1?"1d ago":`${days}d ago`) : "";
-    const isOnline = last && (Date.now()-last) < 300000;
-    const msgBtn = window.isGod ? `<button class="icon-btn mini msg-btn" data-uid="${window.esc(r.uid)}" data-name="${window.esc(r.name||r.email||'')}" title="${isOnline?'Message (online)':'Message'}" style="margin-left:6px;${isOnline?'border-color:#00ff6a':''}">💬</button>` : "";
-    return `<div class="assignRow" style="display:flex;align-items:center"><label style="display:flex;gap:10px;align-items:flex-start;flex:1;cursor:pointer"><input type="checkbox" class="assign-cb" data-uid="${window.esc(r.uid)}" ${checked} /><div class="assignMeta"><div class="assignName">${window.esc(r.name||r.email||r.uid)}</div><div class="assignEmail">${window.esc(r.email||r.uid)}${activeLabel?` • ${activeLabel}`:""}</div></div></label><div class="assignTag">${tag}</div>${msgBtn}</div>`;
+    const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
+    const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
+    return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(r.name||r.email||r.uid)}</div><div class=\"assignEmail\">${window.esc(r.email||r.uid)}</div></div><div class=\"assignTag\">${tag}</div></label>`;
   }).join("");
 }
 
@@ -1830,8 +1783,12 @@ window.startRadar = function(){
     const v=snap.val()||{}; 
     let users=Object.values(v).filter(x=>{
         if(!x||!x.online||String(x.uid||"")===String(window.UID)) return false;
-        // Show all online users to everyone - GOD sees all, others see GOD + online team
-        return true;
+        if(window.isGod) return true;
+        if(window.isBranchManager) {
+            const uInfo = window.userDirCache.byUid[x.uid];
+            return uInfo && String(uInfo.managerUid) === String(window.UID) && String(uInfo.managerStatus) === "approved";
+        }
+        return false;
     });
     if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
@@ -2147,11 +2104,6 @@ function initStaticEvents() {
         });
     }
 
-    if(assignList) {
-        assignList.addEventListener('click', (e) => {
-            const btn = e.target.closest('.msg-btn'); if(btn) { e.preventDefault(); e.stopPropagation(); window.sendGodMessage(btn.dataset.uid, btn.dataset.name); }
-        });
-    }
     const tmb = $("teamModalBody");
     if(tmb) {
         tmb.addEventListener('click', (e) => {
@@ -2214,7 +2166,6 @@ firebase.auth().onAuthStateChanged(async u=>{
 
   // INITIALIZE WAR ROOM NOTIFICATION BLIP LISTENER
   window.listenForNotifications();
-  window.listenForGodMessages();
 
   try{if(typeof window.upsertMyUserDirectory === 'function') await window.upsertMyUserDirectory(u);}catch(e){}
   try{window.trackPresence(u);}catch(e){}
@@ -2245,8 +2196,8 @@ firebase.auth().onAuthStateChanged(async u=>{
   }
 
   try{
-    if($("radarList")) $("radarList").style.display=""; window.startRadar();
-    if(!window.isAdminLike()){ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
+    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar(); }
+    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
