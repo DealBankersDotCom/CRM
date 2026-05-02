@@ -523,7 +523,7 @@ const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; c
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log";
 const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
-window.esc = function(s){ return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
+window.esc = function(s){ return String(s || "").replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'"); }
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
 window.fmtPhoneKey = function(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} 
@@ -1790,12 +1790,12 @@ window.closeSupportModal = function(){
     if($("supportModal")) $("supportModal").style.display="none";
 }
 
-// === CHAT FIXES: STEP 3 ===
+// === CHAT FIXES ===
 window.startRadar = function(){
   if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none";
   if($("panelTitle")) $("panelTitle").textContent="Team Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
-  
+
   if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r => { try { r.off(); } catch(e){} }); }
   window.radarUnreadRefs = [];
 
@@ -1810,17 +1810,18 @@ window.startRadar = function(){
         }
         return false;
     });
-  
-    if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users online.</div>`; return; }
+
+    if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
     let html = "";
     users.forEach(u=>{ 
         const safeUid = window.esc(u.uid);
-        html += `<div class=\"radar-user\" data-uid=\"${safeUid}\" data-name=\"${window.esc(u.name||u.email||"User")}\"> <div style=\"display:flex;gap:10px;align-items:center;min-width:0\"><div class=\"status-dot\"></div><div style=\"min-width:0\"><div style=\"font-weight:900\">${window.esc(u.name||u.email||"User")}</div><div style=\"font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px\">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class=\"pill\" id=\"unread-pill-${safeUid}\">DM</div> </div>`;
+        const dispName = window.esc(window.userDirCache.byUid[u.uid]?.name || u.name || u.email || "User");
+        html += `<div class="radar-user" data-uid="${safeUid}" data-name="${dispName}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${dispName}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class="pill" id="unread-pill-${safeUid}" style="transition:all 0.2s;">DM</div> </div>`;
     });
     if(list) list.innerHTML = html;
 
-    if(window.isGod) {
+    if(window.isGod || window.isBranchManager) {
         if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r => { try { r.off(); } catch(e){} }); }
         window.radarUnreadRefs = [];
         
@@ -1832,7 +1833,7 @@ window.startRadar = function(){
                 let unreadCount = 0;
                 msgs.forEach(m => {
                     const val = m.val();
-                    if (val.read === false && val.sender !== window.UID) unreadCount++;
+                    if (val.read === false && String(val.sender) !== String(window.UID)) unreadCount++;
                 });
                 const pill = document.getElementById(`unread-pill-${safeUid}`);
                 if (pill) {
@@ -1841,11 +1842,13 @@ window.startRadar = function(){
                         pill.style.background = "#ff5555";
                         pill.style.color = "#fff";
                         pill.style.borderColor = "#ff5555";
+                        pill.style.boxShadow = "0 0 10px rgba(255,85,85,0.4)";
                     } else {
                         pill.textContent = "DM";
                         pill.style.background = "rgba(0,0,0,.18)";
                         pill.style.color = "#9ab9d6";
                         pill.style.borderColor = "rgba(255,255,255,.16)";
+                        pill.style.boxShadow = "none";
                     }
                 }
             });
@@ -1854,25 +1857,29 @@ window.startRadar = function(){
   });
 }
 
-// === CHAT FIXES: STEP 2 ===
 window.setupChat = function(path,title,showBack){
   if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML="";
-  if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path); 
-  
-  if(window.isGod) {
+  if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path);
+
+  if(window.isAdminLike()) {
       window.activeChatRef.orderByChild("read").equalTo(false).once("value", snap => {
           const updates = {};
-          snap.forEach(child => { if (child.val().sender !== window.UID) { updates[child.key + "/read"] = true; } });
+          snap.forEach(child => { if (String(child.val().sender) !== String(window.UID)) { updates[child.key + "/read"] = true; } });
           if(Object.keys(updates).length > 0) window.activeChatRef.update(updates);
       });
   }
 
   let isInitialLoad = true;
   window.activeChatRef.limitToLast(80).on("child_added", snap=>{
-    const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID); 
-    const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them"); 
+    const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID);
+
+    if(window.isAdminLike() && !mine && m.read === false) {
+        snap.ref.update({read: true});
+    }
+
+    const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them");
     const timeString = new Date(m.ts || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class=\"msg-time\">${timeString}</div>`;
+    div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class="msg-time">${timeString}</div>`;
     if($("chatMsgs")) { $("chatMsgs").appendChild(div); setTimeout(() => { $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight; }, 50); }
     if(!isInitialLoad && !mine) { pingSound.play().catch(e=>{}); if($("sidePanel") && !$("sidePanel").classList.contains("open")) { if($("chatBadge")) $("chatBadge").style.display = "block"; } }
   });
@@ -2235,8 +2242,6 @@ function initStaticEvents() {
 }
 window.addEventListener("DOMContentLoaded", initStaticEvents);
 
-
-// === CHAT FIXES: STEP 1 ===
 window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
 const path=(location.pathname||"").toLowerCase();
 let portal="wholesaler", page="Wholesaler Portal";
@@ -2258,7 +2263,6 @@ firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return location.href="index.html";
   window.UID=u.uid; window.ME=u;
 
-  // INITIALIZE WAR ROOM NOTIFICATION BLIP LISTENER
   window.listenForNotifications();
 
   try{if(typeof window.upsertMyUserDirectory === 'function') await window.upsertMyUserDirectory(u);}catch(e){}
@@ -2283,27 +2287,23 @@ firebase.auth().onAuthStateChanged(async u=>{
     }
 
   }catch(e){
-    window.ROLE="user"; window.isGod=false;
-    window.isBranchManager=false;
+    window.ROLE="user"; window.isGod=false; window.isBranchManager=false;
     if($("roleReadout")) $("roleReadout").textContent="ROLE: ASSOCIATE";
     if($("btnTeam")) $("btnTeam").style.display="none"; 
     if($("btnImportLegacy")) $("btnImportLegacy").style.display="none";
   }
 
+  if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
+  try{ await window.loadUserDirectoryCache(); }catch(e){}
+
   try{
-    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar();
-    }
+    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar(); }
     else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership", false); }
   }catch(e){ }
 
-  if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
-  try{ await window.loadUserDirectoryCache();
-  }catch(e){}
-
   try{
     if(window.isGod){ window.subscribeGodAllLeads(); }
-    else if(window.isBranchManager){ window.subscribeBranchScopedLeads();
-    }
+    else if(window.isBranchManager){ window.subscribeBranchScopedLeads(); }
     else{ window.subscribeAssociateAssignedLeads(); }
   }catch(e){ if($("status")) $("status").textContent="Leads subscribe error."; }
 });
