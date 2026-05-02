@@ -567,11 +567,12 @@ window.listenForNotifications = function() {
 window.initApprovalListener = function() {
     if (!window.isGod) return;
     const btn = $('btnApprovals');
-    if (btn) btn.style.display = 'flex';
+    if (btn) btn.style.display = 'none';
 
     const updateBadge = () => {
         const count = window.pendingApprovals.length;
         const badge = $('approvalBadge');
+        if (btn) btn.style.display = count > 0 ? 'flex' : 'none';
         if (badge) {
             if (count > 0) {
                 badge.style.display = 'inline-block';
@@ -1829,12 +1830,8 @@ window.startRadar = function(){
     const v=snap.val()||{}; 
     let users=Object.values(v).filter(x=>{
         if(!x||!x.online||String(x.uid||"")===String(window.UID)) return false;
-        if(window.isGod) return true;
-        if(window.isBranchManager) {
-            const uInfo = window.userDirCache.byUid[x.uid];
-            return uInfo && String(uInfo.managerUid) === String(window.UID) && String(uInfo.managerStatus) === "approved";
-        }
-        return false;
+        // Show all online users to everyone - GOD sees all, others see GOD + online team
+        return true;
     });
     if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
@@ -2248,8 +2245,8 @@ firebase.auth().onAuthStateChanged(async u=>{
   }
 
   try{
-    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar(); }
-    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
+    if($("radarList")) $("radarList").style.display=""; window.startRadar();
+    if(!window.isAdminLike()){ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
