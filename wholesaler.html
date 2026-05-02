@@ -523,7 +523,14 @@ const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; c
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log";
 const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
-window.esc = function(s){ return String(s || "").replace(/&/g, "&").replace(/</g, "<").replace(/>/g, ">").replace(/"/g, """).replace(/'/g, "'"); }
+window.esc = function(s){ 
+  return String(s || "")
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;"); 
+}
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
 window.fmtPhoneKey = function(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} 
@@ -1141,7 +1148,7 @@ window.prevLead = function(){if(window.sellerView.length) window.selectLeadByInd
 window.nextLead = function(){if(window.sellerView.length) window.selectLeadByIndex((window.currentIndex>=window.sellerView.length-1)?window.sellerView.length-1:window.currentIndex+1);}; 
 
 window.sanitizeTel = function(phone){const raw=(phone||"").toString().trim();
-if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
+if(!raw) return ""; let digits=raw.replace(/[^\d+]/g,""); const justNums=digits.replace(/\D/g,""); if(!digits.startsWith("+")&&justNums.length===10) digits="+1"+justNums; if(!digits.startsWith("+")&&justNums.length===11&&justNums.startsWith("1")) digits="+"+justNums; return digits;}
 window.isMobileish = function(){return /Android|iPhone|iPad|iPod|Mobile/i.test(navigator.userAgent||"");}
 window.doTelDial = function(phone){const tel=window.sanitizeTel(phone);
 if(!tel) return; const a=document.createElement("a"); a.href="tel:"+tel; a.style.display="none"; document.body.appendChild(a); a.click(); a.remove();}
@@ -1218,9 +1225,11 @@ window.buildMap = function(address){
     const addr=(address||"").trim();
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
-    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=...?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=...?q=${q}&output=embed`; 
+    const src = window.mapMode==="street"
+      ? `https://www.google.com/maps?q=${q}&layer=c&output=embed`
+      : `https://www.google.com/maps?q=${q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
-    if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";
+    if($("mapHint")) $("mapHint").textContent = window.mapMode==="street" ? "Street View" : "Area Map";
 }
 
 window.detachLeadRefs = function(){
