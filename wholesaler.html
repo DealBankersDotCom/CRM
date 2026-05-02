@@ -1379,15 +1379,17 @@ window.renderAssignList = function(){
   const listEl=$("assignList"); if(!listEl) return;
   const sq = $("assignFilter");
   const q=(sq?.value||"").toLowerCase().trim();
-  const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
+  const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return!q||hay.includes(q);});
   if(!rows.length){listEl.innerHTML=`<div class=\"help\">No users available for assignment.</div>`;
-  return;} 
+  return;}
   listEl.innerHTML=rows.map(r=>{
-    const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
-    const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
-    return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(r.name||r.email||r.uid)}</div><div class=\"assignEmail\">${window.esc(r.email||r.uid)}</div></div><div class=\"assignTag\">${tag}</div></label>`;
+    const checked=window.modalAssignedSet.has(r.uid)?"checked":"";
+    const tag=r.role==="admin"?"MANAGER":"ASSOC";
+    const displayName = r.name || (r.email? r.email.split('@')[0] : '') || window.usernameFromEmail(r.email||'') || ('User '+String(r.uid).slice(0,6));
+    const displayEmail = r.email || '—';
+    return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(displayName)}</div><div class=\"assignEmail\">${window.esc(displayEmail)}</div></div><div class=\"assignTag\">${tag}</div></label>`;
   }).join("");
-}
+};
 
 window.assignNone = function(){window.modalAssignedSet=new Set(); window.renderAssignList();};
 window.handleAssignChange = function(el){const uid = el.getAttribute("data-uid"); if(el.checked) window.modalAssignedSet.add(uid); else window.modalAssignedSet.delete(uid);};
