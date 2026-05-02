@@ -1779,37 +1779,21 @@ window.startRadar = function(){
   if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none";
   if($("panelTitle")) $("panelTitle").textContent="Team Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
-  const renderRadar = ()=>{
-    Promise.all([
-      firebase.database().ref(USER_DIR_PATH).once("value"),
-      firebase.database().ref(PRESENCE_PATH).once("value")
-    ]).then(([dirSnap, presSnap])=>{
-      const dir = dirSnap.val()||{};
-      const pres = presSnap.val()||{};
-      let users = Object.values(dir).filter(u=>{
-        if(!u || !u.uid) return false;
-        if(String(u.uid)===String(window.UID)) return false;
-        if(u.role==="system") return false;
-        return window.isGod || window.isBranchManager || window.isAdminLike();
-      });
-      if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users found.</div>`; return; }
-      users.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
-      let html = "";
-      users.forEach(u=>{
-        const p = pres[u.uid]||{};
-        const online = !!p.online;
-        const portal = p.portal || u.portal || "unknown";
-        const page = p.page || "";
-        const name = u.name || u.email || "User";
-        const dotColor = online ? "var(--good)" : "#5a6b7a";
-        html += `<div class=\"radar-user\" data-uid=\"${window.esc(u.uid)}\" data-name=\"${window.esc(name)}\"> <div style=\"display:flex;gap:10px;align-items:center;min-width:0\"><div class=\"status-dot\" style=\"background:${dotColor};box-shadow:0 0 0 2px rgba(0,0,0,.2)\"></div><div style=\"min-width:0\"><div style=\"font-weight:900\">${window.esc(name)}</div><div style=\"font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px\">${window.esc(portal)}${page?` â€¢ ${window.esc(page)}`:''} â€¢ ${online?'Online':'Offline'}</div></div></div><div class=\"pill\">DM</div> </div>`;
-      });
-      if(list) list.innerHTML = html;
+  firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
+    const v=snap.val()||{}; 
+    let users=Object.values(v).filter(x=>{
+        if(!x||String(x.uid||"")===String(window.UID)) return false;
+        if(window.isGod) return true;
+        if(window.isBranchManager) return true;
+        return false;
     });
-  };
-  renderRadar();
-  firebase.database().ref(PRESENCE_PATH).on("value", renderRadar);
-  firebase.database().ref(USER_DIR_PATH).on("value", renderRadar);
+    if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users found.</div>`; return; }
+    users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+    let html = "";
+    users.forEach(u=>{ html += `<div class=\"radar-user\" data-uid=\"${window.esc(u.uid)}\" data-name=\"${window.esc(u.name||u.email||"User")}\"> <div style=\"display:flex;gap:10px;align-items:center;min-width:0\"><div class=\"status-dot\"></div><div style=\"min-width:0\"><div style=\"font-weight:900\">${window.esc(u.name||u.email||"User")}</div><div style=\"font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px\">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class=\"pill\">DM</div> </div>`;
+    });
+    if(list) list.innerHTML = html;
+  });
 }
 
 window.setupChat = function(path,title,showBack){
