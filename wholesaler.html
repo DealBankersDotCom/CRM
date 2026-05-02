@@ -1773,14 +1773,7 @@ window.closeSupportModal = function(){
 }
 
 window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
-const path=(location.pathname||"").toLowerCase();
-let portal="wholesaler", page="Wholesaler Portal";
-if(path.includes("profile.html")){portal="dashboard"; page="Dashboard";}
-else if(path.includes("wholesaler.html")){portal="wholesaler"; page="Wholesaler Portal";}
-else if(path.includes("contractor.html")){portal="contractor"; page="Contractor";}
-else if(path.includes("network.html")){portal="network"; page="Network";}
-else if(path.includes("investor.html")){portal="investor"; page="Investor";}
-const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:portal, online:true, page:page, ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
+const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
 
 window.startRadar = function(){
   if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none";
@@ -1823,8 +1816,7 @@ window.setupChat = function(path,title,showBack){
 
 window.sendMsg = async function(){
   const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
-  const byName = window.isGod ? "Leadership" : (window.ME?.displayName||window.ME?.email||"User");
-  await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:byName, ts:firebase.database.ServerValue.TIMESTAMP}); 
+  await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:window.ME?.displayName||window.ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP}); 
   if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
 };
 window.listenForUnreadMessages = function(path) {
@@ -2205,7 +2197,7 @@ firebase.auth().onAuthStateChanged(async u=>{
 
   try{
     if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar(); }
-    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership", false); }
+    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
