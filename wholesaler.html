@@ -163,7 +163,7 @@ body{
 .flyout-header { display: flex; justify-content: space-between; align-items:center; margin-bottom: 15px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom:10px; }
 
 /* Assign Lists & Teams */
-.assignTools{display:flex;gap:10px;align-items:center}.assignBtns{display:flex;gap:8px}.assignList{border:1px solid var(--line);border-radius:16px;padding:10px;max-height:240px;overflow:auto;background:rgba(0,0,0,.18)}.assignRow{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-radius:12px}.assignRow:hover{background:rgba(255,255,255,.04)}.assignRow input{margin-top:3px}.assignMeta{display:flex;flex-direction:column;gap:2px;min-width:0}.assignName{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}.assignEmail{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}.assignTag{margin-left:auto;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
+.assignTools{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.assignBtns{display:flex;gap:8px}.assignList{border:1px solid var(--line);border-radius:16px;padding:10px;max-height:240px;overflow:auto;background:rgba(0,0,0,.18)}.assignRow{display:flex;gap:10px;align-items:flex-start;padding:8px 6px;border-radius:12px}.assignRow:hover{background:rgba(255,255,255,.04)}.assignRow input{margin-top:3px}.assignMeta{display:flex;flex-direction:column;gap:2px;min-width:0}.assignName{font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}.assignEmail{color:var(--muted);font-size:12px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:420px}.assignTag{margin-left:auto;font-size:11px;padding:3px 8px;border:1px solid var(--line);border-radius:999px;color:var(--muted)}
 .teamGrid{display:grid;grid-template-columns:1fr;gap:12px;margin-top:10px}.teamRow{display:flex;justify-content:space-between;align-items:center;padding:12px;background:rgba(0,0,0,.2);border:1px solid rgba(255,255,255,.1);border-radius:12px;gap:12px}.teamMeta{display:flex;flex-direction:column;gap:4px;min-width:0}.teamActions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
 
 /* Settings Specific Mods */
@@ -373,6 +373,7 @@ body{
             <div class="assignTools">
                 <input id="assignFilter" class="input" placeholder="Filter users (name / email)..." />
                 <div class="assignBtns">
+                    <button class="btn tiny" id="btnAssignAll" type="button">Assign Active</button>
                     <button class="btn tiny ghost" id="btnAssignNone" type="button">Select None</button>
                 </div>
             </div>
@@ -574,7 +575,6 @@ window.initApprovalListener = function() {
         };
 
         try {
-            // ONLY check leadsMaster to prevent ghost copies from throwing false positives
             const [ms, mb] = await Promise.all([
                 firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value').catch(()=>({val:()=>({})})),
                 firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})}))
@@ -819,18 +819,14 @@ window.requestWarRoom = async function(type) {
     }, 2000);
 }
 
-// FULLY ROBUST DISPO APPROVAL FIX
 window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
         const updates = {};
         
-        // 1. Update the master node
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
         
-        // 2. Fetch all users to see exactly who has a copy of this lead and update them ALL
-        // This completely eradicates the "ghost unapproved copies" bug.
         const usersSnap = await firebase.database().ref(LEADS_BY_USER_PATH).once('value');
         const users = usersSnap.val() || {};
         
@@ -841,13 +837,10 @@ window.approveDispo = async function() {
             }
         });
         
-        // 3. Execute the batch update
         await firebase.database().ref().update(updates);
         
-        // 4. Force local state update so the UI immediately switches to "Approved"
         if (window.currentLead) window.currentLead.dispoApproved = true;
         
-        // 5. Instantly clear the pending badge
         if(window.pendingApprovals) {
             window.pendingApprovals = window.pendingApprovals.filter(l => window.leadIdFor(l) !== window.currentLeadId);
             const badge = $('approvalBadge');
@@ -863,7 +856,7 @@ window.approveDispo = async function() {
         }
 
         alert("Approved for Dispo ✓");
-        window.selectLeadByIndex(window.currentIndex); // This forces the HUD to render the approved UI
+        window.selectLeadByIndex(window.currentIndex); 
 
     } catch(e) { 
         console.error("Dispo Approval Error:", e);
@@ -885,7 +878,7 @@ window.uploadPhotos = function() {
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
 
-// ORIGINAL STABLE DIRECTORY LOADING (Fixes DB Permission Denied errors)
+// ORIGINAL STABLE DIRECTORY CACHE FUNCTIONS
 window.buildUserCache = function(rows){
     const byUid={}, byEmail={}, byUser={};
     rows.forEach(item=>{
@@ -902,22 +895,70 @@ window.buildUserCache = function(rows){
     return {byUid,byEmail,byUser};
 }
 
-// RESTORED STABLE DIRECTORY FUNCTIONS
-window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
-managerAssociates=mSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user"}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
-if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending;
-return cache;}
+window.loadGodDirectoryCache = async function(){
+    let users={}, roles={}, managerAssociates={}, presence={}; 
+    try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} 
+    try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} 
+    try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value"); managerAssociates=mSnap.val()||{};}catch(e){} 
+    try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} 
+    
+    const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); 
+    const cache=window.buildUserCache(allUids.map(uid=>{
+        const row=users[uid]||{}; 
+        const pRow=presence[uid]||{}; 
+        return {
+            uid,
+            row,
+            role:roles[uid]||row.role||"user",
+            email:row.email||pRow.email||"",
+            name:row.name||row.displayName||pRow.name||"",
+            lastActive:pRow.ts||row.updatedAt||0
+        };
+    })); 
+    
+    const pending=[]; 
+    Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
+    if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} 
+    
+    window.userDirCache=cache; 
+    window.pendingRequestCache=pending;
+    return cache;
+}
 
-window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[];
-return cache;}
+window.loadBranchManagerDirectoryCache = async function(){
+    const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); 
+    const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; 
+    const teamMap=teamMapRaw||{}; 
+    const targetUids=Object.keys(teamMap);
+    
+    const details=await Promise.all(targetUids.map(async targetUid=>{
+        const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); 
+        const pRow=await window.readExact(`${PRESENCE_PATH}/${targetUid}`); 
+        return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase(), lastActive:pRow?.ts||row?.updatedAt||0};
+    })); 
+    details.forEach(d=>rows.push(d)); 
+    const cache=window.buildUserCache(rows);
+    
+    Object.keys(teamMap).forEach(targetUid=>{
+        const info=teamMap[targetUid]||{}; 
+        if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; 
+        cache.byUid[targetUid].managerUid=window.UID; 
+        cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); 
+        if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); 
+        if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;
+    }); 
+    window.userDirCache=cache; 
+    window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
+    return cache;
+}
 
-window.loadBranchManagerDirectoryCache = async function(){const [selfRow, selfRoleRaw, teamMapRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`), window.readExact(`${MANAGER_ASSOCIATES_PATH}/${window.UID}`)]); const rows=[{uid:window.UID,row:selfRow||{},role:selfRoleRaw||selfRow?.role||"admin"}]; const teamMap=teamMapRaw||{}; const targetUids=Object.keys(teamMap);
-const details=await Promise.all(targetUids.map(async targetUid=>{const row=await window.readExact(`${USER_DIR_PATH}/${targetUid}`); return {uid:targetUid,row:row||{},role:(row&&row.role)||"user", email:String(teamMap[targetUid]?.targetEmail||row?.email||"").toLowerCase()};})); details.forEach(d=>rows.push(d)); const cache=window.buildUserCache(rows);
-Object.keys(teamMap).forEach(targetUid=>{const info=teamMap[targetUid]||{}; if(!cache.byUid[targetUid]) cache.byUid[targetUid]={uid:targetUid,role:"user",email:String(info.targetEmail||"").toLowerCase(),username:usernameFromEmail(String(info.targetEmail||""))}; cache.byUid[targetUid].managerUid=window.UID; cache.byUid[targetUid].managerStatus=String(info.status||cache.byUid[targetUid].managerStatus||""); if(info.targetEmail && !cache.byUid[targetUid].email) cache.byUid[targetUid].email=String(info.targetEmail).toLowerCase(); if(cache.byUid[targetUid].email) cache.byEmail[cache.byUid[targetUid].email]=targetUid;}); window.userDirCache=cache; window.pendingRequestCache=Object.keys(teamMap).map(targetUid=>({id:`${window.UID}__${targetUid}`, requesterUid:window.UID, requesterEmail:cache.byUid[window.UID]?.email||String(window.ME?.email||"").toLowerCase(), targetUid, targetEmail:String(teamMap[targetUid]?.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status:String(teamMap[targetUid]?.status||"")})).filter(r=>!!r.status);
-return cache;}
+window.loadSelfDirectoryCache = async function(){const [row, roleRaw]=await Promise.all([window.readExact(`${USER_DIR_PATH}/${window.UID}`), window.readExact(`${ROLES_PATH}/${window.UID}`)]); const cache=window.buildUserCache([{uid:window.UID,row:row||{},role:roleRaw||row?.role||"user"}]); window.userDirCache=cache; window.pendingRequestCache=[]; return cache;}
 
-window.loadUserDirectoryCache = async function(){if(window.isGod) return window.loadGodDirectoryCache(); if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
-return window.loadSelfDirectoryCache();}
+window.loadUserDirectoryCache = async function(){
+    if(window.isGod) return window.loadGodDirectoryCache(); 
+    if(window.isBranchManager) return window.loadBranchManagerDirectoryCache();
+    return window.loadSelfDirectoryCache();
+}
 
 window.managedAssociatesFor = function(uid){return Object.values(window.userDirCache.byUid||{}).filter(u=>String(u.managerUid||"")===String(uid)&&String(u.managerStatus||"")==="approved");}
 
@@ -934,6 +975,7 @@ window.resolveMyRole = async function(u){
 
 window.getAssignableRows = function(){
     const rows=[]; 
+    const thirtyDaysAgo=Date.now()-(30*24*60*60*1000);
     Object.values(window.userDirCache.byUid||{}).forEach(u=>{
         if(u.role==="system") return; 
         if(window.isGod){
@@ -950,7 +992,12 @@ window.getAssignableRows = function(){
     }); 
     
     // Sort active users to the top, then alphabetically
-    rows.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})); 
+    rows.sort((a,b)=>{
+        const aActive=a.lastActive>thirtyDaysAgo?1:0; 
+        const bActive=b.lastActive>thirtyDaysAgo?1:0; 
+        if(bActive!==aActive) return bActive-aActive; 
+        return String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"});
+    }); 
     return rows;
 }
 
@@ -1178,12 +1225,12 @@ await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) 
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
 
-// MAP BUG FIXED - RESTORED ORIGINAL HTTPS QUERY STRING (Bypasses mixed content)
+// HTTPS COMPLIANT MAP EMBED
 window.buildMap = function(address){
     const addr=(address||"").trim(); 
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
-    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=...?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=...?q=${q}&output=embed`; 
+    const src=window.mapMode==="street"?`https://maps.google.com/maps?q=...{q}&layer=c&output=embed`:`https://maps.google.com/maps?q=...{q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
     if($("mapHint")) $("mapHint").textContent=window.mapMode==="street"?"Street View":"Area Map";
 }
@@ -1332,10 +1379,12 @@ window.renderAssignList = function(){
   const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
   if(!rows.length){listEl.innerHTML=`<div class=\"help\">No users available for assignment.</div>`;
   return;} 
+  const thirtyDaysAgo=Date.now()-(30*24*60*60*1000);
   listEl.innerHTML=rows.map(r=>{
     const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
     const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
-    return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(r.name||r.email||r.uid)}</div><div class=\"assignEmail\">${window.esc(r.email||r.uid)}</div></div><div class=\"assignTag\">${tag}</div></label>`;
+    const activeStr=r.lastActive>thirtyDaysAgo?"<span style='color:var(--good)'>Active Recently</span>":"<span style='color:var(--muted)'>Unknown/Inactive</span>";
+    return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(r.name||r.email||r.uid)}</div><div class=\"assignEmail\">${window.esc(r.email||r.uid)} • ${activeStr}</div></div><div class=\"assignTag\">${tag}</div></label>`;
   }).join("");
 }
 
@@ -2139,6 +2188,7 @@ firebase.auth().onAuthStateChanged(async u=>{
 
   try{if(typeof window.upsertMyUserDirectory === 'function') await window.upsertMyUserDirectory(u);}catch(e){}
   try{window.trackPresence(u);}catch(e){}
+  try{await window.loadUserDirectoryCache();}catch(e){}
 
   try{
     window.ROLE=await window.resolveMyRole(u);
@@ -2171,7 +2221,6 @@ firebase.auth().onAuthStateChanged(async u=>{
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
-  try{ await window.loadUserDirectoryCache(); }catch(e){}
 
   try{
     if(window.isGod){ window.subscribeGodAllLeads(); }
