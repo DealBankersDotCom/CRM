@@ -219,6 +219,7 @@ body{
       <div>
         <div id="crumb" style="font-weight:1000;letter-spacing:.08em;">Acquisition</div>
         <div class="status" id="status">Loading…</div>
+  
       </div>
       <div class="seg">
         <button id="tabAcq" class="active" type="button">Acq</button>
@@ -237,6 +238,7 @@ body{
               <button class="chip" id="btnImportLegacy" type="button" style="display:none;">⬇ Import Legacy</button>
               <span class="pill" id="queueMeta">—</span>
           </div>
+ 
           <div class="queue-list" id="leadList"></div>
         </div>
       </div>
@@ -246,6 +248,7 @@ body{
         <div class="panel-body">
           <div class="lead-header">
             <div class="lead-title"><h2 id="leadAddress">No lead selected</h2><div class="lead-sub"><span id="leadOwner">Select a lead from the queue.</span></div></div>
+ 
             <div class="lead-actions">
               <button class="chip" id="btnEditLead" type="button" disabled>✎ Edit</button>
             </div>
@@ -259,6 +262,7 @@ body{
           <div class="field">
             <div class="field-label">Active Number</div>
             <div class="callRow">
+         
                 <div style="flex:1;min-width:220px"><select id="phoneSelect" class="select" disabled></select></div>
                 <button id="callBtn" class="callBtn" type="button" disabled>📞 CALL</button>
                 <button id="copyBtn" class="copyBtn" type="button" disabled>Copy</button>
@@ -266,6 +270,7 @@ body{
             <div class="smallHint" id="callHint" style="margin-top:8px;display:none;">Mobile: direct dial. Desktop: copies to clipboard.</div>
           </div>
 
+     
           <button id="btnOpenQuickLog" class="chip primary" style="width:100%; justify-content:center; padding:16px; margin-top:16px; font-size:15px; display:none; background: linear-gradient(180deg, #2b74ff, #0a58ca); box-shadow: 0 5px 15px rgba(43,116,255,0.4);">
             ⚡ QUICK LOG (Status & Notes)
           </button>
@@ -501,9 +506,12 @@ Daughter Lisa | 210-555-2222"></textarea></div>
 
 window.$ = function(id) { return document.getElementById(id); };
 window.UID = ""; window.ME = null; window.ROLE = "associate"; window.isGod = false; window.isBranchManager = false;
-window.sellerList = []; window.sellerView = []; window.currentLead = null; window.currentLeadId = ""; window.currentIndex = -1;
-window.currentPhone = ""; window.currentPhoneLabel = ""; window.activeLogRef = null; window.activeChatRef = null; window.mapMode = "area";
-window.userDirCache = {byUid:{},byEmail:{},byUser:{}}; window.pendingRequestCache = []; window.modalAssignedSet = new Set(); window.filterActive30 = true;
+window.sellerList = [];
+window.sellerView = []; window.currentLead = null; window.currentLeadId = ""; window.currentIndex = -1;
+window.currentPhone = ""; window.currentPhoneLabel = "";
+window.activeLogRef = null; window.activeChatRef = null; window.mapMode = "area";
+window.userDirCache = {byUid:{},byEmail:{},byUser:{}}; window.pendingRequestCache = []; window.modalAssignedSet = new Set();
+window.filterActive30 = true;
 window.modalMode = "new"; window.modalLeadId = null; window.branchLeadRefs = []; window.leadsRef = null; window.legacyRef = null;
 window.userQuotas = { firstTs: 0, analysis: 0, skip: 0 };
 window.currentCategory = "sellers";
@@ -515,16 +523,19 @@ const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; c
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log";
 const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
-window.esc = function(s){ return String(s || "").replace(/&/g, "&"+"amp;").replace(/</g, "&"+"lt;").replace(/>/g, "&"+"gt;").replace(/"/g, "&"+"quot;").replace(/'/g, "&"+"#39;"); }
+window.esc = function(s){ return String(s || "").replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;").replace(/'/g, "&#39;"); }
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
 window.fmtPhoneKey = function(p){return String(p||"").trim().replace(/[^\d+]/g,"")||"unknown";} 
 window.tsToLocal = function(ts){try{const d=new Date(ts); return isNaN(d.getTime())?"":d.toLocaleString();}catch(e){return "";}} 
 window.initialsFromUser = function(u){const base=(u&&(u.displayName||u.email))?(u.displayName||u.email):""; const parts=String(base).split(/[\s._-]+/).filter(Boolean); return (parts.map(p=>p[0]?.toUpperCase()||"").join("").slice(0,2)||"U");} 
-window.usernameFromEmail = function(email){const e=String(email||"").toLowerCase().trim(); const local=e.split("@")[0]||""; return local.replace(/[^a-z0-9_]/g,"").slice(0,24)||"user";}
+window.usernameFromEmail = function(email){const e=String(email||"").toLowerCase().trim();
+const local=e.split("@")[0]||""; return local.replace(/[^a-z0-9_]/g,"").slice(0,24)||"user";}
 window.emailLookupKey = function(email){return String(email||"").trim().toLowerCase().replace(/\./g,",");}
-window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin"; return "user";} 
-window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER"; return "ASSOCIATE";} 
+window.mapRole = function(raw){const r=String(raw||"").trim().toLowerCase(); if(r==="god") return "god"; if(r==="admin"||r==="branchmanager") return "admin";
+return "user";} 
+window.roleLabel = function(role){const r=mapRole(role); if(r==="god") return "GOD MODE"; if(r==="admin") return "BRANCH MANAGER";
+return "ASSOCIATE";} 
 window.isAdminLike = function(){return window.isGod||window.isBranchManager;}
 
 /* --- NOTIFICATION BLIP HANDSHAKE --- */
@@ -544,7 +555,6 @@ window.listenForNotifications = function() {
         }
     });
 };
-
 /* --- NOTIFICATION BELL LOGIC --- */
 window.initApprovalListener = function() {
     if (!window.isGod) return;
@@ -563,7 +573,6 @@ window.initApprovalListener = function() {
             }
         }
     };
-
     const scanForApprovals = async () => {
         let pending = new Map();
         const checkLead = (lead, id, cat) => {
@@ -575,13 +584,13 @@ window.initApprovalListener = function() {
         };
 
         try {
-            // ONLY check leadsMaster to prevent ghost copies from throwing false positives
             const [ms, mb] = await Promise.all([
                 firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value').catch(()=>({val:()=>({})})),
                 firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})}))
             ]);
             const msVal = ms.val() || {}; Object.keys(msVal).forEach(k => checkLead(msVal[k], k, 'sellers'));
-            const mbVal = mb.val() || {}; Object.keys(mbVal).forEach(k => checkLead(mbVal[k], k, 'buyers'));
+            const mbVal = mb.val() || {};
+            Object.keys(mbVal).forEach(k => checkLead(mbVal[k], k, 'buyers'));
 
             window.pendingApprovals = Array.from(pending.values());
             window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
@@ -592,7 +601,6 @@ window.initApprovalListener = function() {
     scanForApprovals();
     setInterval(scanForApprovals, 5000); 
 };
-
 window.openApprovalsModal = function(silent = false) {
     const c = $('approvalsListContent');
     if(!c) return;
@@ -635,29 +643,27 @@ window.openApprovalLead = function(id, cat) {
         window.applySearch();
     }
 };
-
 window.switchCategory = function(cat) {
     if(window.currentCategory === cat && $("panel-acq") && $("panel-acq").style.display !== "none") return;
     window.currentCategory = cat;
-    
     if($("tabAcq")) $("tabAcq").classList.toggle("active", cat === 'sellers');
     if($("tabDispo")) $("tabDispo").classList.toggle("active", cat === 'buyers');
     if($("tabMarket")) $("tabMarket").classList.remove("active");
 
     if($("panel-acq")) $("panel-acq").style.display="block"; 
     if($("panel-console")) $("panel-console").style.display="block";
-    if($("panel-calllog")) $("panel-calllog").style.display="none"; // HIDE UNTIL LEAD SELECTED
+    if($("panel-calllog")) $("panel-calllog").style.display="none";
     if($("panel-market")) $("panel-market").style.display="none";
     
     if($("crumb")) $("crumb").textContent = cat === 'sellers' ? "Acquisition" : "Disposition";
-    
     window.clearConsole();
     window.sellerList = [];
     window.sellerView = [];
     window.renderQueue();
     
     if(window.isGod){ window.subscribeGodAllLeads(); }
-    else if(window.isBranchManager){ window.subscribeBranchScopedLeads(); }
+    else if(window.isBranchManager){ window.subscribeBranchScopedLeads();
+    }
     else{ window.subscribeAssociateAssignedLeads(); }
 };
 
@@ -665,7 +671,6 @@ window.showMarketBoard = function() {
     if($("tabAcq")) $("tabAcq").classList.remove("active");
     if($("tabDispo")) $("tabDispo").classList.remove("active");
     if($("tabMarket")) $("tabMarket").classList.add("active");
-    
     if($("panel-acq")) $("panel-acq").style.display="none"; 
     if($("panel-console")) $("panel-console").style.display="none";
     if($("panel-calllog")) $("panel-calllog").style.display="none";
@@ -675,7 +680,8 @@ window.showMarketBoard = function() {
 };
 
 window.refreshDispo = function(){
-  const f=$("iframeDispo"); if(!f) return;
+  const f=$("iframeDispo");
+  if(!f) return;
   const src=f.getAttribute("src")||"dispo.html";
   f.setAttribute("src", src.split("?")[0]+"?t="+Date.now());
 };
@@ -700,7 +706,8 @@ window.fetchQuotas = async function() {
     if(window.isGod) return;
     try {
         const snap = await firebase.database().ref(`user_quotas/${window.UID}`).once("value");
-        let q = snap.val() || { firstTs: Date.now(), analysis: 0, skip: 0 };
+        let q = snap.val() ||
+        { firstTs: Date.now(), analysis: 0, skip: 0 };
         if (Date.now() - q.firstTs > 7 * 24 * 60 * 60 * 1000) {
             q = { firstTs: Date.now(), analysis: 0, skip: 0 };
             await firebase.database().ref(`user_quotas/${window.UID}`).set(q);
@@ -709,7 +716,6 @@ window.fetchQuotas = async function() {
         window.updateQuotaUI();
     } catch(e) {}
 };
-
 window.updateQuotaUI = function() {
     if(window.isGod || !$("warRoomBlock")) return;
     const aLeft = Math.max(0, 5 - window.userQuotas.analysis);
@@ -720,7 +726,8 @@ window.updateQuotaUI = function() {
     if (btnA) btnA.disabled = aLeft <= 0;
     if (btnS) btnS.disabled = sLeft <= 0;
     
-    if($("quotaWarning")) $("quotaWarning").style.display = (aLeft <= 0 || sLeft <= 0) ? "block" : "none";
+    if($("quotaWarning")) $("quotaWarning").style.display = (aLeft <= 0 || sLeft <= 0) ?
+    "block" : "none";
 };
 
 window.incrementQuota = async function(type) {
@@ -754,17 +761,21 @@ window.requestWarRoomModal = async function(type) {
     const phones = $("m_phones")?.value || "";
     const notes = ($("m_notes")?.value||"").trim() || "";
     const req = {
-        requesterUid: window.UID || "Unknown", 
-        requesterEmail: window.ME?.email || "", 
+        requesterUid: window.UID ||
+        "Unknown", 
+        requesterEmail: window.ME?.email ||
+        "", 
         leadId: leadId,
         address: address,
         owner: owner,
         phones: phones, 
         notes: notes,
-        requestType: type || "unknown", 
+        requestType: type ||
+        "unknown", 
         status: 'pending', 
         ts: Date.now(),
-        category: window.currentCategory || "sellers"
+        category: window.currentCategory ||
+        "sellers"
     };
     
     try {
@@ -789,17 +800,25 @@ window.requestWarRoom = async function(type) {
     if($("btnReqSkip")) $("btnReqSkip").disabled = true;
     
     const req = {
-        requesterUid: window.UID || "Unknown", 
-        requesterEmail: window.ME?.email || "", 
+        requesterUid: window.UID ||
+        "Unknown", 
+        requesterEmail: window.ME?.email ||
+        "", 
         leadId: window.currentLeadId,
-        address: window.currentLead.address || window.currentLead.Address || "Unknown",
-        owner: window.currentLead.owner || window.currentLead.Owner || window.currentLead.name || "",
-        phones: $("m_phones")?.value || "", 
-        notes: window.currentLead.notes || "",
-        requestType: type || "unknown", 
+        address: window.currentLead.address ||
+        window.currentLead.Address || "Unknown",
+        owner: window.currentLead.owner || window.currentLead.Owner || window.currentLead.name ||
+        "",
+        phones: $("m_phones")?.value ||
+        "", 
+        notes: window.currentLead.notes ||
+        "",
+        requestType: type ||
+        "unknown", 
         status: 'pending', 
         ts: Date.now(), 
-        category: window.currentCategory || "sellers"
+        category: window.currentCategory ||
+        "sellers"
     };
     
     try {
@@ -820,35 +839,22 @@ window.requestWarRoom = async function(type) {
     }, 2000);
 }
 
-// FULLY ROBUST DISPO APPROVAL FIX
 window.approveDispo = async function() {
     if (!window.isGod || !window.currentLeadId) return;
     try {
         const updates = {};
-        
-        // 1. Update the master node
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
         updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
-        
-        // 2. Fetch all users to see exactly who has a copy of this lead and update them ALL
-        // This completely eradicates the "ghost unapproved copies" bug.
         const usersSnap = await firebase.database().ref(LEADS_BY_USER_PATH).once('value');
         const users = usersSnap.val() || {};
-        
         Object.keys(users).forEach(uid => {
             if (users[uid] && users[uid][window.currentCategory] && users[uid][window.currentCategory][window.currentLeadId]) {
                 updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.currentLeadId}/dispoApproved`] = true;
                 updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.currentLeadId}/dispoApprovedBy`] = window.ME.email;
             }
         });
-        
-        // 3. Execute the batch update
         await firebase.database().ref().update(updates);
-        
-        // 4. Force local state update so the UI immediately switches to "Approved"
         if (window.currentLead) window.currentLead.dispoApproved = true;
-        
-        // 5. Instantly clear the pending badge
         if(window.pendingApprovals) {
             window.pendingApprovals = window.pendingApprovals.filter(l => window.leadIdFor(l) !== window.currentLeadId);
             const badge = $('approvalBadge');
@@ -864,7 +870,7 @@ window.approveDispo = async function() {
         }
 
         alert("Approved for Dispo ✓");
-        window.selectLeadByIndex(window.currentIndex); // This forces the HUD to render the approved UI
+        window.selectLeadByIndex(window.currentIndex);
 
     } catch(e) { 
         console.error("Dispo Approval Error:", e);
@@ -886,7 +892,6 @@ window.uploadPhotos = function() {
 
 window.readExact = async function(path){try{const snap=await firebase.database().ref(path).once("value"); return snap.val();}catch(e){return null;}}
 
-// ORIGINAL STABLE DIRECTORY LOADING (Fixes DB Permission Denied errors)
 window.buildUserCache = function(rows){
     const byUid={}, byEmail={}, byUser={};
     rows.forEach(item=>{
@@ -899,13 +904,15 @@ window.buildUserCache = function(rows){
         byUid[uid]={...row, uid, email, username, name, role, lastActive:item?.lastActive||0}; 
         if(email) byEmail[email]=uid; 
         if(username) byUser[username]=uid;
+    
     });
     return {byUid,byEmail,byUser};
 }
 
-// RESTORED STABLE DIRECTORY FUNCTIONS
-window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}, presence={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value"); users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
-managerAssociates=mSnap.val()||{};}catch(e){} try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user",lastActive:presence[uid]?.ts||0}))); const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
+window.loadGodDirectoryCache = async function(){let users={}, roles={}, managerAssociates={}, presence={}; try{const uSnap=await firebase.database().ref(USER_DIR_PATH).once("value");
+users=uSnap.val()||{};}catch(e){} try{const rSnap=await firebase.database().ref(ROLES_PATH).once("value"); roles=rSnap.val()||{};}catch(e){} try{const mSnap=await firebase.database().ref(MANAGER_ASSOCIATES_PATH).once("value");
+managerAssociates=mSnap.val()||{};}catch(e){} try{const pSnap=await firebase.database().ref(PRESENCE_PATH).once("value"); presence=pSnap.val()||{};}catch(e){} const allUids=Array.from(new Set([...Object.keys(users), ...Object.keys(roles), ...Object.keys(presence)])); const cache=window.buildUserCache(allUids.map(uid=>({uid,row:users[uid]||{},role:roles[uid]||users[uid]?.role||"user",lastActive:presence[uid]?.ts||0})));
+const pending=[]; Object.keys(managerAssociates||{}).forEach(managerUid=>{const team=managerAssociates[managerUid]||{}; Object.keys(team).forEach(targetUid=>{const info=team[targetUid]||{}; const status=String(info.status||"").trim(); if(!status) return; pending.push({id:`${managerUid}__${targetUid}`, requesterUid:managerUid, requesterEmail:cache.byUid[managerUid]?.email||"", targetUid, targetEmail:String(info.targetEmail||cache.byUid[targetUid]?.email||"").toLowerCase(), status});});});
 if(!pending.length){Object.values(cache.byUid).forEach(u=>{if(String(u.role||"")!=="user") return; if(String(u.managerStatus||"")!=="pending") return; if(!String(u.managerUid||"").trim()) return; pending.push({id:`${u.managerUid}__${u.uid}`, requesterUid:u.managerUid, requesterEmail:cache.byUid[u.managerUid]?.email||"", targetUid:u.uid, targetEmail:u.email||"", status:"pending"});});} window.userDirCache=cache; window.pendingRequestCache=pending;
 return cache;}
 
@@ -934,7 +941,7 @@ window.resolveMyRole = async function(u){
 }
 
 window.getAssignableRows = function(){
-    const rows=[]; 
+    const rows=[];
     Object.values(window.userDirCache.byUid||{}).forEach(u=>{
         if(u.role==="system") return; 
         if(window.isGod){
@@ -942,7 +949,8 @@ window.getAssignableRows = function(){
             if(window.filterActive30){
                 const thirtyDays = 30*24*60*60*1000;
                 const last = Number(u.lastActive||0);
-                if(!last || (Date.now()-last) > thirtyDays) return;
+                if(!last || 
+                (Date.now()-last) > thirtyDays) return;
             }
             rows.push(u);
             return;
@@ -951,11 +959,10 @@ window.getAssignableRows = function(){
             if(u.uid===window.UID){rows.push(u); return;} 
             if(u.role==="user"&&String(u.managerUid||"")===String(window.UID)&&String(u.managerStatus||"")==="approved") {
                 rows.push(u);
+ 
             }
         }
-    }); 
-    
-    // Sort active users to the top, then alphabetically
+    });
     rows.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})); 
     return rows;
 }
@@ -973,7 +980,7 @@ window.isArchivedLead = function(lead){const v=lead?.archived; return v===true||
 
 window.applySearch = function(){
   const sq = $("s_q");
-  const q = (sq?.value||"").toLowerCase().trim(); 
+  const q = (sq?.value||"").toLowerCase().trim();
   let view = window.sellerList.slice();
   
   if (window.currentCategory === 'buyers') {
@@ -997,7 +1004,6 @@ window.applySearch = function(){
   
   window.sellerView = view.filter(l => !window.isArchivedLead(l)); 
   window.renderQueue();
-  
   if (window.pendingSelectId) {
       const idx = window.sellerView.findIndex(x => window.leadIdFor(x) === window.pendingSelectId);
       if (idx >= 0) {
@@ -1060,11 +1066,11 @@ window.clearConsole = function(){
   if($("callBtn")) $("callBtn").disabled=true;
   if($("copyBtn")) $("copyBtn").disabled=true;
   if($("btnEditLead")) $("btnEditLead").disabled=true;
-  if($("panel-calllog")) $("panel-calllog").style.display="none"; // hide log when no lead 
+  if($("panel-calllog")) $("panel-calllog").style.display="none"; 
   if($("btnReqAnalysis")) $("btnReqAnalysis").disabled=true; 
   if($("btnReqSkip")) $("btnReqSkip").disabled=true; 
   if($("btnOpenQuickLog")) $("btnOpenQuickLog").style.display="none";
-  window.currentPhone=""; window.currentPhoneLabel=""; 
+  window.currentPhone=""; window.currentPhoneLabel="";
   if($("noteComposer")) $("noteComposer").value="";
   window.setMapVisibility(false); 
   window.detachCallLog(); window.renderCallLogEmpty(); if($("callHint")) $("callHint").style.display="none";
@@ -1074,7 +1080,7 @@ window.clearConsole = function(){
 
 window.selectLeadByIndex = function(idx){
   if(!window.sellerView.length) return;
-  idx=Math.max(0, Math.min(idx, window.sellerView.length-1)); 
+  idx=Math.max(0, Math.min(idx, window.sellerView.length-1));
   window.currentIndex=idx; window.currentLead=window.sellerView[idx]; window.currentLeadId=window.leadIdFor(window.currentLead); 
   window.updatePager(); window.renderQueue();
   const addr=(window.currentLead.address||window.currentLead.Address||"—").toString(), owner=(window.currentLead.owner||window.currentLead.Owner||window.currentLead.name||"—").toString();
@@ -1086,7 +1092,8 @@ window.selectLeadByIndex = function(idx){
   const dh = $("dispoHubContent");
   const dhw = $("dispoHubWrapper");
   if (dh && dhw) {
-      const isLive = window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === 'true';
+      const isLive = window.currentLead.isLive === true ||
+      String(window.currentLead.isLive).toLowerCase() === 'true';
       const isAppr = window.currentLead.dispoApproved === true || String(window.currentLead.dispoApproved).toLowerCase() === 'true';
       if (!isLive) {
           dhw.style.display="none";
@@ -1096,7 +1103,8 @@ window.selectLeadByIndex = function(idx){
           dh.innerHTML = dhtml;
           dhw.style.display="block";
       } else {
-          dh.innerHTML = `<span style='color:var(--good); font-weight:800;'>Status: Approved for Dispo Board</span><br>
+          dh.innerHTML = `<span style='color:var(--good);
+          font-weight:800;'>Status: Approved for Dispo Board</span><br>
           <button class=\"btn tiny btn-upload-photos\" style=\"margin-top:8px; background:var(--accent); color:#fff;\">📷 Manage Photos</button>`;
           dhw.style.display="block";
       }
@@ -1121,7 +1129,7 @@ window.selectLeadByIndex = function(idx){
         if($("callBtn")) $("callBtn").disabled=false; if($("copyBtn")) $("copyBtn").disabled=false; if($("callHint")) $("callHint").style.display=""; 
         if($("btnOpenQuickLog")) $("btnOpenQuickLog").style.display="flex";
         window.onPhoneChanged();
-        if($("panel-calllog")) $("panel-calllog").style.display="block"; // SHOW ON LEAD SELECT
+        if($("panel-calllog")) $("panel-calllog").style.display="block";
       }
   }
   if(addr.trim()){window.setMapVisibility(true); window.buildMap(addr);} else window.setMapVisibility(false);
@@ -1151,7 +1159,8 @@ window.closeQuickLog = function() {
 };
 window.renderCallLogEmpty = function(msg){if($("callLog")) $("callLog").innerHTML=`<div class=\"log-empty\">${window.esc(msg||"No call history for this number.")}</div>`;
 if($("logCount")) $("logCount").textContent="0 entries";}
-window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;} if(window.activeLogRefs){window.activeLogRefs.forEach(r=>{try{r.off();}catch(e){}}); window.activeLogRefs=null;}}
+window.detachCallLog = function(){if(window.activeLogRef){try{window.activeLogRef.off();}catch(e){} window.activeLogRef=null;} if(window.activeLogRefs){window.activeLogRefs.forEach(r=>{try{r.off();}catch(e){}});
+window.activeLogRefs=null;}}
 window.callLogRefForPhoneKey = function(phoneKey){return firebase.database().ref(`${TEAM_CALLLOG_PATH}/${phoneKey}/entries`);}
 
 window.attachCallLog = function(phoneKey){
@@ -1172,7 +1181,6 @@ window.attachCallLog = function(phoneKey){
     log.innerHTML = html;
     if($("logCount")) $("logCount").textContent=`${sorted.length} entr${sorted.length===1?"y":"ies"}`;
   };
-  // GOD MODE: show entire gamut of notes for this lead across ALL phones (no limit)
   if(window.isGod && window.currentLead){
     const phones = window.normalizePhones(window.currentLead);
     if(!phones.length) return window.renderCallLogEmpty("No phones on this lead yet.");
@@ -1182,7 +1190,6 @@ window.attachCallLog = function(phoneKey){
       const pk = window.fmtPhoneKey(p.phone);
       const ref = window.callLogRefForPhoneKey(pk);
       window.activeLogRefs.push(ref);
-      // No limit for god - entire history
       ref.on("child_added", snap=>{const v=snap.val()||{}; if(v.leadId && v.leadId!==leadId) return; v._key=snap.key+"_"+pk; items.push(v); redraw();}, ()=>window.renderCallLogEmpty("Call log unavailable."));
       ref.on("child_changed", snap=>{const v=snap.val()||{}; if(v.leadId && v.leadId!==leadId) return; const key=snap.key+"_"+pk; const i=items.findIndex(x=>x._key===key); const nv={_key:key, ...(v)}; if(i>=0) items[i]=nv; else items.push(nv); redraw();});
       ref.on("child_removed", snap=>{const key=snap.key+"_"+pk; const i=items.findIndex(x=>x._key===key); if(i>=0) items.splice(i,1); redraw();});
@@ -1190,7 +1197,6 @@ window.attachCallLog = function(phoneKey){
     window.activeLogRef = { off: ()=>{ if(window.activeLogRefs){ window.activeLogRefs.forEach(r=>{try{r.off()}catch(e){}}); window.activeLogRefs=null; } } };
     return;
   }
-  // REGULAR USER: show last 120 for current phone only
   window.activeLogRef=window.callLogRefForPhoneKey(phoneKey);
   window.activeLogRef.limitToLast(120).on("child_added", snap=>{const v=snap.val()||{}; v._key=snap.key; items.push(v); redraw();}, ()=>window.renderCallLogEmpty("Call log unavailable."));
   window.activeLogRef.on("child_changed", snap=>{const i=items.findIndex(x=>x._key===snap.key); const v={_key:snap.key, ...(snap.val()||{})}; if(i>=0) items[i]=v; else items.push(v); redraw();});
@@ -1198,17 +1204,18 @@ window.attachCallLog = function(phoneKey){
 }
 
 
-window.pushLogEntry = async function(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return; await window.callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:window.UID||"", by:window.ME?.email||"", byName:window.ME?.displayName||window.ME?.email||"User", phone:window.currentPhone||"", phoneLabel:window.currentPhoneLabel||"", leadId:window.currentLeadId||"", leadAddress:window.currentLead?.address||window.currentLead?.Address||""});}
+window.pushLogEntry = async function(phoneKey, entry){if(!phoneKey||phoneKey==="unknown") return;
+await window.callLogRefForPhoneKey(phoneKey).push({...entry, ts:Date.now(), uid:window.UID||"", by:window.ME?.email||"", byName:window.ME?.displayName||window.ME?.email||"User", phone:window.currentPhone||"", phoneLabel:window.currentPhoneLabel||"", leadId:window.currentLeadId||"", leadAddress:window.currentLead?.address||window.currentLead?.Address||""});}
 window.logStatus = async function(status, keepOpen){const phoneKey=window.fmtPhoneKey(window.currentPhone);
-if(!window.currentPhone||phoneKey==="unknown") return; await window.pushLogEntry(phoneKey, {type:"status", status}); window.toast("Logged ✓"); if(!keepOpen) window.closeQuickLog();}
+if(!window.currentPhone||phoneKey==="unknown") return;
+await window.pushLogEntry(phoneKey, {type:"status", status}); window.toast("Logged ✓"); if(!keepOpen) window.closeQuickLog();}
 window.saveQuickNote = async function(){const text=($("noteComposer")?.value||"").trim(); const phoneKey=window.fmtPhoneKey(window.currentPhone); if(!text||!window.currentPhone||phoneKey==="unknown") return;
-await window.pushLogEntry(phoneKey, {type:"note", text}); if($("noteComposer")) $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
+await window.pushLogEntry(phoneKey, {type:"note", text});
+if($("noteComposer")) $("noteComposer").value=""; window.toast("Saved ✓"); window.closeQuickLog();};
 
 window.setMapMode = function(mode){window.mapMode=mode; if(window.currentLead) window.buildMap(window.currentLead.address||window.currentLead.Address||"");};
-
-// MAP BUG FIXED - RESTORED ORIGINAL HTTPS QUERY STRING (Bypasses mixed content)
 window.buildMap = function(address){
-    const addr=(address||"").trim(); 
+    const addr=(address||"").trim();
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
     const src=window.mapMode==="street"?`https://maps.google.com/maps?q=...?q=${q}&layer=c&output=embed`:`https://maps.google.com/maps?q=...?q=${q}&output=embed`; 
@@ -1222,14 +1229,16 @@ window.detachLeadRefs = function(){
   if(window.branchLeadRefs.length){ window.branchLeadRefs.forEach(ref=>{ try{ref.off();}catch(e){} });
   window.branchLeadRefs=[]; }
 }
-window.setListFromMap = function(byId){window.sellerList=Array.from(byId.values()); window.sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||""))); window.applySearch();}
+window.setListFromMap = function(byId){window.sellerList=Array.from(byId.values()); window.sellerList.sort((a,b)=>String(a.address||"").localeCompare(String(b.address||"")));
+window.applySearch();}
 
 window.subscribeAssociateAssignedLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading assigned ${window.currentCategory}…`;
   const byId=new Map();
   let queueLoaded=false, masterLoaded=false, flatLoaded=false;
   const updateStatus=()=>{
-    if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Assigned): ${byId.size} items`; return; }
+    if(byId.size){ if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (Assigned): ${byId.size} items`; return;
+    }
     if(queueLoaded&&masterLoaded&&flatLoaded){ window.sellerList=[]; window.sellerView=[]; window.renderQueue(); window.clearConsole(); window.updatePager();
     if($("status")) $("status").textContent=`No ${window.currentCategory} assigned yet.`; }
   };
@@ -1241,7 +1250,8 @@ window.subscribeAssociateAssignedLeads = function(){
   };
   const removeLead=(leadId, source)=>{
     const prior=byId.get(leadId); if(!prior) return;
-    if(source==="queue") delete prior.__fromQueue; if(source==="master") delete prior.__fromMaster; if(source==="flat") delete prior.__fromFlat;
+    if(source==="queue") delete prior.__fromQueue;
+    if(source==="master") delete prior.__fromMaster; if(source==="flat") delete prior.__fromFlat;
     if(prior.__fromQueue||prior.__fromMaster||prior.__fromFlat){ byId.set(leadId, prior); }else{ byId.delete(leadId); }
     window.setListFromMap(byId); updateStatus();
   };
@@ -1250,7 +1260,8 @@ window.subscribeAssociateAssignedLeads = function(){
   window.leadsRef.on("child_changed", snap=>mergeLead(snap.key, snap.val()||{}, "queue")); window.leadsRef.on("child_removed", snap=>removeLead(snap.key, "queue"));
   window.leadsRef.once("value").then(()=>{queueLoaded=true; updateStatus();}).catch(()=>{queueLoaded=true; updateStatus();});
   const masterAssignedRef=firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`); window.branchLeadRefs.push(masterAssignedRef);
-  const handleMaster=(snap)=>{const leadId=snap.key; const val=snap.val()||{};
+  const handleMaster=(snap)=>{const leadId=snap.key;
+  const val=snap.val()||{};
   if(val?.assignedTo && val.assignedTo[window.UID]) mergeLead(leadId, val, "master"); else removeLead(leadId, "master");};
   masterAssignedRef.on("child_added", handleMaster); masterAssignedRef.on("child_changed", handleMaster); masterAssignedRef.on("child_removed", snap=>removeLead(snap.key, "master"));
   masterAssignedRef.once("value").then(()=>{masterLoaded=true; updateStatus();}).catch(()=>{masterLoaded=true; updateStatus();});
@@ -1263,7 +1274,8 @@ window.subscribeAssociateAssignedLeads = function(){
       const hasLeadShape=!!(val.address||val.Address||val.owner||val.Owner||val.notes||val.Notes||val.phone||val.Phone||Array.isArray(val.phones));
       if(hasLeadShape && maybeLeadId) {
         const t = String(val.type||"").toLowerCase();
-        const isBuyer = t.includes('investor') || t.includes('buyer') || t === 'both';
+        const isBuyer = t.includes('investor') ||
+        t.includes('buyer') || t === 'both';
         if (window.currentCategory === 'buyers' && !isBuyer) return;
         if (window.currentCategory === 'sellers' && isBuyer) return;
         mergeLead(maybeLeadId, val, "flat");
@@ -1305,7 +1317,8 @@ window.subscribeGodAllLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading ALL ${window.currentCategory}…`;
   const byId=new Map();
   const checkDone = () => {
-      if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ? 'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
+      if(byId.size) { if($("status")) $("status").textContent=`${window.currentCategory === 'sellers' ?
+      'Acq' : 'Buyers'} (ALL): ${byId.size} items`; }
       else { if($("status")) $("status").textContent=`No ${window.currentCategory} available.`;
       }
   };
@@ -1369,7 +1382,6 @@ window.renderAssignList = function(){
 
 window.assignNone = function(){window.modalAssignedSet=new Set(); window.renderAssignList();};
 window.handleAssignChange = function(el){const uid = el.getAttribute("data-uid"); if(el.checked) window.modalAssignedSet.add(uid); else window.modalAssignedSet.delete(uid);};
-
 window.renderModalPhotos = function() {
     const grid = $("m_photoGrid");
     if(!grid) return;
@@ -1413,7 +1425,6 @@ window.deleteModalPhoto = async function(idx) {
         window.modalToast("Failed to update database.", false);
     }
 };
-
 window.handleDealPhotoUpload = async function(e) {
     if(!window.modalLeadId && window.modalMode === "new") {
         alert("Please Save the lead first before uploading photos.");
@@ -1472,13 +1483,12 @@ window.handleDealPhotoUpload = async function(e) {
 };
 
 window.openLeadModal = function(mode){
-  window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true); 
+  window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true);
   if($("leadModalTitle")) $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)";
   if($("m_delete")) $("m_delete").style.display=isEdit?"block":"none"; 
   if($("assignBlock")) $("assignBlock").style.display=window.isAdminLike()?"":"none";
   if($("assignHintPill")) $("assignHintPill").textContent=window.roleLabel(window.ROLE); 
   window.modalAssignedSet=new Set();
-  
   if ($("warRoomBlock")) {
       $("warRoomBlock").style.display = window.isGod ? "none" : "";
       if (!window.isGod) window.fetchQuotas();
@@ -1520,7 +1530,8 @@ window.openLeadModal = function(mode){
     if($("m_marketingDetails")) $("m_marketingDetails").value = window.currentLead.marketingDetails || window.currentLead.MarketingDetails || "";
 
     if($("m_isLive")) {
-        $("m_isLive").checked = window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === 'true';
+        $("m_isLive").checked = window.currentLead.isLive === true ||
+        String(window.currentLead.isLive).toLowerCase() === 'true';
         $("m_isLive").dispatchEvent(new Event('change'));
     }
     if(window.currentLead.photos) window.modalCurrentPhotos = Array.isArray(window.currentLead.photos) ? [...window.currentLead.photos] : [];
@@ -1533,7 +1544,8 @@ window.openLeadModal = function(mode){
     if($("m_owner")) $("m_owner").value=""; 
     if($("m_mailing")) $("m_mailing").value=""; 
     if($("m_status")) $("m_status").value="New"; 
-    if($("m_type")) $("m_type").value=window.currentCategory === "buyers" ? "wholesale buyer" : "seller"; 
+    if($("m_type")) $("m_type").value=window.currentCategory === "buyers" ?
+    "wholesale buyer" : "seller"; 
     if($("m_source")) $("m_source").value=""; 
     if($("m_phones")) $("m_phones").value=""; 
     if($("m_notes")) $("m_notes").value=""; 
@@ -1556,7 +1568,8 @@ window.openLeadModal = function(mode){
 
 window.closeLeadModal = function(){
     if (document.activeElement) document.activeElement.blur();
-    if($("leadModal")) { $("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true"); }
+    if($("leadModal")) { $("leadModal").classList.remove("show"); $("leadModal").setAttribute("aria-hidden","true");
+    }
 }
 
 window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set();
@@ -1589,10 +1602,12 @@ window.saveLeadFromModal = async function(skipClose){
   const owner=($("m_owner")?.value||"").trim();
   
   if (window.currentCategory === 'buyers') {
-      if(!owner){ window.modalToast("Buyer Name required.", false); return null; }
+      if(!owner){ window.modalToast("Buyer Name required.", false);
+      return null; }
       address = owner;
   } else {
-      if(!address){ window.modalToast("Address required.", false); return null; }
+      if(!address){ window.modalToast("Address required.", false); return null;
+      }
   }
 
   const isLiveVal = $("m_isLive")?.checked || false;
@@ -1600,7 +1615,8 @@ window.saveLeadFromModal = async function(skipClose){
   const marketingPrice = ($("m_marketingPrice")?.value||"").trim();
   const marketingDetails = ($("m_marketingDetails")?.value||"").trim();
 
-  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: isLiveVal, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), marketingTitle: marketingTitle, marketingPrice: marketingPrice, marketingDetails: marketingDetails, phones:window.parsePhonesFromModal(), photos: window.modalCurrentPhotos || [] };
+  const payload={ address, owner, mailing:($("m_mailing")?.value||"").trim(), status:($("m_status")?.value||"New").trim(), type:($("m_type")?.value||(window.currentCategory === "buyers" ? "wholesale buyer" : "seller")).trim().toLowerCase(), isLive: isLiveVal, source:($("m_source")?.value||"").trim(), notes:($("m_notes")?.value||"").trim(), marketingTitle: marketingTitle, marketingPrice: marketingPrice, marketingDetails: marketingDetails, phones:window.parsePhonesFromModal(), photos: window.modalCurrentPhotos ||
+  [] };
   
   if($("m_save")) $("m_save").disabled=true; window.modalToast("Saving…", true);
   if (payload.isLive && (!window.currentLead || (window.currentLead.isLive !== true && String(window.currentLead.isLive).toLowerCase() !== 'true'))) {
@@ -1646,7 +1662,8 @@ window.saveLeadFromModal = async function(skipClose){
 
     if(skipClose !== true) window.closeLeadModal();
     return leadIdToReturn;
-  }catch(e){ window.modalToast("Save failed.", false); return null; } finally { if($("m_save")) $("m_save").disabled=false; }
+  }catch(e){ window.modalToast("Save failed.", false);
+  return null; } finally { if($("m_save")) $("m_save").disabled=false; }
 }
 
 window.deleteLead = async function(){
@@ -1665,7 +1682,6 @@ window.deleteLead = async function(){
         window.closeLeadModal(); window.clearConsole(); window.toast("Deleted ✓");
     }catch(e){ alert("Delete failed"); }
 };
-
 window.changeUserRole = async function(uid, role) {
     if(!window.isGod) return;
     try {
@@ -1680,7 +1696,8 @@ window.renderTeamModalBody = async function(){
   if(window.isGod){
     html+=`<div class=\"lbl\">Pending Associate Requests</div><div class=\"teamGrid\">`;
     const pending=window.pendingRequestCache.filter(r=>String(r.status||"")==="pending");
-    if(!pending.length){ html+=`<div class=\"help\">No pending requests.</div>`; }else{ pending.forEach(r=>{ const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown"; const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(targetName)}</strong><span style=\"font-size:11px;color:var(--warn)\">Requested by Branch Manager: ${window.esc(managerName)}</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(r.targetEmail||"")}</span></div><div class=\"teamActions\"><button class=\"btn primary tiny btn-approve\" data-id=\"${window.esc(r.id)}\">Approve</button><button class=\"btn danger tiny btn-deny\" data-id=\"${window.esc(r.id)}\">Deny</button></div></div>`; });
+    if(!pending.length){ html+=`<div class=\"help\">No pending requests.</div>`;
+    }else{ pending.forEach(r=>{ const managerName=byUid[r.requesterUid]?.name||r.requesterEmail||r.requesterUid||"Unknown"; const targetName=byUid[r.targetUid]?.name||r.targetEmail||r.targetUid||"Unknown"; html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(targetName)}</strong><span style=\"font-size:11px;color:var(--warn)\">Requested by Branch Manager: ${window.esc(managerName)}</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(r.targetEmail||"")}</span></div><div class=\"teamActions\"><button class=\"btn primary tiny btn-approve\" data-id=\"${window.esc(r.id)}\">Approve</button><button class=\"btn danger tiny btn-deny\" data-id=\"${window.esc(r.id)}\">Deny</button></div></div>`; });
     } html+=`</div>`;
     html+=`<div class=\"lbl\" style=\"margin-top:24px;\">All Users (Role Management)</div><div class=\"teamGrid\">`; Object.values(byUid).sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||""),undefined,{sensitivity:"base"})).forEach(u=>{ if(u.role==="system") return; const currentRole=window.roleLabel(u.role); const managerName=u.managerUid&&String(u.managerStatus||"")==="approved" ? (byUid[u.managerUid]?.name||byUid[u.managerUid]?.email||u.managerUid) : ""; html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(u.name||u.email||u.uid)} ${u.uid===window.UID?'<span class=\"pill\">YOU</span>':''}</strong><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(u.email||u.uid)} • ${window.esc(currentRole)}</span>${managerName?`<span style=\"font-size:11px;color:#00ff6a\">Manager: ${window.esc(managerName)}</span>`:''}</div><div class=\"teamActions\">${u.uid!==window.UID?`<select class=\"select role-select\" style=\"padding:4px;font-size:12px;width:auto;\" data-uid=\"${u.uid}\"><option value=\"user\" ${u.role!=='admin'?'selected':''}>Associate</option><option value=\"admin\" ${u.role==='admin'?'selected':''}>Branch Manager</option></select>`:'<span class=\"pill\">God</span>'}</div></div>`;
     }); html+=`</div>`;
@@ -1694,12 +1711,11 @@ window.renderTeamModalBody = async function(){
   }
   if($("teamModalBody")) $("teamModalBody").innerHTML=html;
 }
-window.openTeamModal = async function(){if($("teamModal")) $("teamModal").classList.add("show"); if($("teamModalBody")) $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await window.renderTeamModalBody();}; 
+window.openTeamModal = async function(){if($("teamModal")) $("teamModal").classList.add("show"); if($("teamModalBody")) $("teamModalBody").innerHTML="<div class='help'>Loading team directory...</div>"; await window.renderTeamModalBody();};
 window.closeTeamModal = function(){
     if (document.activeElement) document.activeElement.blur();
     if($("teamModal")) $("teamModal").classList.remove("show");
 };
-
 window.runTeamSearch = async function(){
     const input=$("teamSearch"); const box=$("teamSearchResults");
     if(!input || !box) return;
@@ -1728,7 +1744,8 @@ window.requestAssociate=async function(targetUid,targetEmailEnc){
         const updates={};
         updates[`${MANAGER_ASSOCIATES_PATH}/${window.UID}/${targetUid}`] = {
             status: "pending", 
-            targetEmail: targetEmail || String(window.userDirCache.byUid[targetUid]?.email||"").toLowerCase(), 
+            targetEmail: targetEmail ||
+            String(window.userDirCache.byUid[targetUid]?.email||"").toLowerCase(), 
             requestedAt: Date.now()
         };
         await firebase.database().ref().update(updates); 
@@ -1756,7 +1773,8 @@ window.submitSupportRequest = async function(){
       await firebase.database().ref(`${SUPPORT_REQUESTS_PATH}/${window.UID}`).push({uid:window.UID, email:window.ME?.email||"", name:window.ME?.displayName||window.ME?.email||"User", portal:portal||"wholesaler", priority:priority||"blue", category:category||"General", message:message||"", ts:Date.now(), status:"open"});
       window.triggerLeadershipPing(`Submitted ${priority} support ticket`, message);
       window.closeSupportModal(); alert("Support request sent to Leadership!");
-  } catch(e) { alert("Support request failed"); }
+  } catch(e) { alert("Support request failed");
+  }
 }
 window.openSupportModal = function(priority){
   if($("supportPortal")) $("supportPortal").value="wholesaler";
@@ -1772,13 +1790,15 @@ window.closeSupportModal = function(){
     if($("supportModal")) $("supportModal").style.display="none";
 }
 
-window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
-const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:"wholesaler", online:true, page: "Wholesaler", ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
-
+// === CHAT FIXES: STEP 3 ===
 window.startRadar = function(){
   if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none";
   if($("panelTitle")) $("panelTitle").textContent="Team Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
+  
+  if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r => { try { r.off(); } catch(e){} }); }
+  window.radarUnreadRefs = [];
+
   firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
     const v=snap.val()||{}; 
     let users=Object.values(v).filter(x=>{
@@ -1790,18 +1810,63 @@ window.startRadar = function(){
         }
         return false;
     });
+  
     if(!users.length){ if(list) list.innerHTML=`<div style=\"padding:20px; text-align:center; color:#666;\">No users online.</div>`; return; }
     users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
     let html = "";
-    users.forEach(u=>{ html += `<div class=\"radar-user\" data-uid=\"${window.esc(u.uid)}\" data-name=\"${window.esc(u.name||u.email||"User")}\"> <div style=\"display:flex;gap:10px;align-items:center;min-width:0\"><div class=\"status-dot\"></div><div style=\"min-width:0\"><div style=\"font-weight:900\">${window.esc(u.name||u.email||"User")}</div><div style=\"font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px\">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class=\"pill\">DM</div> </div>`;
+    users.forEach(u=>{ 
+        const safeUid = window.esc(u.uid);
+        html += `<div class=\"radar-user\" data-uid=\"${safeUid}\" data-name=\"${window.esc(u.name||u.email||"User")}\"> <div style=\"display:flex;gap:10px;align-items:center;min-width:0\"><div class=\"status-dot\"></div><div style=\"min-width:0\"><div style=\"font-weight:900\">${window.esc(u.name||u.email||"User")}</div><div style=\"font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px\">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class=\"pill\" id=\"unread-pill-${safeUid}\">DM</div> </div>`;
     });
     if(list) list.innerHTML = html;
+
+    if(window.isGod) {
+        if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r => { try { r.off(); } catch(e){} }); }
+        window.radarUnreadRefs = [];
+        
+        users.forEach(u => {
+            const safeUid = window.esc(u.uid);
+            const ref = firebase.database().ref(`${DMS_PATH}/${u.uid}/messages`);
+            window.radarUnreadRefs.push(ref);
+            ref.on("value", msgs => {
+                let unreadCount = 0;
+                msgs.forEach(m => {
+                    const val = m.val();
+                    if (val.read === false && val.sender !== window.UID) unreadCount++;
+                });
+                const pill = document.getElementById(`unread-pill-${safeUid}`);
+                if (pill) {
+                    if (unreadCount > 0) {
+                        pill.textContent = `DM (${unreadCount})`;
+                        pill.style.background = "#ff5555";
+                        pill.style.color = "#fff";
+                        pill.style.borderColor = "#ff5555";
+                    } else {
+                        pill.textContent = "DM";
+                        pill.style.background = "rgba(0,0,0,.18)";
+                        pill.style.color = "#9ab9d6";
+                        pill.style.borderColor = "rgba(255,255,255,.16)";
+                    }
+                }
+            });
+        });
+    }
   });
 }
 
+// === CHAT FIXES: STEP 2 ===
 window.setupChat = function(path,title,showBack){
   if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML="";
   if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path); 
+  
+  if(window.isGod) {
+      window.activeChatRef.orderByChild("read").equalTo(false).once("value", snap => {
+          const updates = {};
+          snap.forEach(child => { if (child.val().sender !== window.UID) { updates[child.key + "/read"] = true; } });
+          if(Object.keys(updates).length > 0) window.activeChatRef.update(updates);
+      });
+  }
+
   let isInitialLoad = true;
   window.activeChatRef.limitToLast(80).on("child_added", snap=>{
     const m=snap.val()||{}; const mine=String(m.uid||m.byUid||m.sender||"")===String(window.UID); 
@@ -1814,11 +1879,6 @@ window.setupChat = function(path,title,showBack){
   setTimeout(() => { isInitialLoad = false; }, 1500);
 }
 
-window.sendMsg = async function(){
-  const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
-  await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:window.ME?.displayName||window.ME?.email||"User", ts:firebase.database.ServerValue.TIMESTAMP}); 
-  if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
-};
 window.listenForUnreadMessages = function(path) {
     let isInitial = true;
     firebase.database().ref(path).on("child_added", (snap) => {
@@ -1829,6 +1889,7 @@ window.listenForUnreadMessages = function(path) {
                 window.openPanel();
             }
         }
+    
     });
     setTimeout(() => { isInitial = false; }, 1500);
 }
@@ -1844,7 +1905,8 @@ window.listenForGlobalAdminPings = function() {
 }
 
 window.openPanel = function(){
-    if($("sidePanel")) { $("sidePanel").classList.add("open"); $("sidePanel").setAttribute("aria-hidden","false"); }
+    if($("sidePanel")) { $("sidePanel").classList.add("open"); $("sidePanel").setAttribute("aria-hidden","false");
+    }
     if($("chatBadge")) $("chatBadge").style.display = "none";
     if(!window.isGod) {
         const lastPing = sessionStorage.getItem('last_chat_open');
@@ -1856,7 +1918,8 @@ window.openPanel = function(){
 } 
 window.closePanel = function(){
     if (document.activeElement) document.activeElement.blur();
-    if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true"); }
+    if($("sidePanel")) { $("sidePanel").classList.remove("open"); $("sidePanel").setAttribute("aria-hidden","true");
+    }
 }
 
 window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block";
@@ -1885,10 +1948,12 @@ window.loadSettings = async function() {
             if(hiddenUrl) hiddenUrl.value = "";
         }
         
-        const roles = data.roles || {};
+        const roles = data.roles ||
+        {};
         if($("bio_wholesaler")) $("bio_wholesaler").value = roles.wholesaler?.bio || data.bio || "";
         if($("exp_wholesaler")) $("exp_wholesaler").value = roles.wholesaler?.experience || "";
-        if($("bio_contractor")) $("bio_contractor").value = roles.contractor?.bio || "";
+        if($("bio_contractor")) $("bio_contractor").value = roles.contractor?.bio ||
+        "";
         if($("bio_realtor")) $("bio_realtor").value = roles.realtor?.bio || "";
         if($("bio_investor")) $("bio_investor").value = roles.investor?.bio || "";
 
@@ -1896,7 +1961,6 @@ window.loadSettings = async function() {
         if($("set_isContractor")) $("set_isContractor").checked = !!data.isContractor;
         if($("set_isRealtor")) $("set_isRealtor").checked = !!data.isRealtor;
         if($("set_isInvestor")) $("set_isInvestor").checked = !!data.isInvestor;
-
         ['wholesaler', 'contractor', 'realtor', 'investor'].forEach(r => {
             const isChecked = !!data[`is${r.charAt(0).toUpperCase() + r.slice(1)}`];
             const sec = $("sec_" + r);
@@ -1908,7 +1972,8 @@ window.loadSettings = async function() {
 window.handlePhotoUpload = async function(e) {
     const file = e.target.files[0];
     if (!file) return;
-    if (file.size > 15 * 1024 * 1024) { alert("File is too large. Max size is 15MB."); return; }
+    if (file.size > 15 * 1024 * 1024) { alert("File is too large. Max size is 15MB.");
+    return; }
     
     const preview = $("set_photoPreview");
     if(preview) {
@@ -1926,9 +1991,11 @@ window.handlePhotoUpload = async function(e) {
             let width = img.width;
             let height = img.height;
             if (width > height) {
-                if (width > MAX_DIM) { height *= MAX_DIM / width; width = MAX_DIM; }
+                if (width > MAX_DIM) { height *= MAX_DIM / width;
+                width = MAX_DIM; }
             } else {
-                if (height > MAX_DIM) { width *= MAX_DIM / height; height = MAX_DIM; }
+                if (height > MAX_DIM) { width *= MAX_DIM / height;
+                height = MAX_DIM; }
             }
             
             canvas.width = width;
@@ -1945,10 +2012,12 @@ window.handlePhotoUpload = async function(e) {
                     if(preview) {
                         preview.style.backgroundImage = `url('${downloadURL}')`;
                         preview.textContent = "";
+    
                     }
                 } catch(error) {
                     console.error("Upload failed", error);
                     alert("Photo upload failed. Ensure Storage Rules allow uploads. " + error.message);
+              
                     if(preview) preview.textContent = window.initialsFromUser(window.ME);
                 }
             }, 'image/jpeg', 0.85);
@@ -1977,11 +2046,12 @@ window.saveSettings = async function() {
     const cCb = $("set_isContractor")?.checked || false;
     const rCb = $("set_isRealtor")?.checked || false;
     const iCb = $("set_isInvestor")?.checked || false;
-
     const updates = {
         ...currentData,
-        photoURL: $("set_photoUrlHidden")?.value.trim() || currentData.photoURL || "",
-        bio: wBio || cBio || rBio || iBio, 
+        photoURL: $("set_photoUrlHidden")?.value.trim() ||
+        currentData.photoURL || "",
+        bio: wBio || cBio || rBio ||
+        iBio, 
         isWholesaler: wCb,
         isContractor: cCb,
         isRealtor: rCb,
@@ -1990,6 +2060,7 @@ window.saveSettings = async function() {
             ...currentData.roles,
             wholesaler: { ...currentData.roles?.wholesaler, bio: wBio, experience: wExp },
             contractor: { ...currentData.roles?.contractor, bio: cBio },
+      
             realtor: { ...currentData.roles?.realtor, bio: rBio },
             investor: { ...currentData.roles?.investor, bio: iBio }
         },
@@ -2005,13 +2076,15 @@ window.saveSettings = async function() {
         console.error("Save error", e);
         alert("Failed to save settings. Check database rules.");
     } finally {
-        if(btn) { btn.disabled = false; btn.textContent = "Save Changes"; }
+        if(btn) { btn.disabled = false;
+        btn.textContent = "Save Changes"; }
     }
 };
 
 /* --- MASTER EVENT INITIALIZATION --- */
 function initStaticEvents() {
-    const attach = (id, fn) => { const el = $(id); if(el) el.addEventListener('click', fn); };
+    const attach = (id, fn) => { const el = $(id);
+    if(el) el.addEventListener('click', fn); };
 
     attach('logoutBtn', window.logout);
     attach('btnTeam', window.openTeamModal);
@@ -2084,7 +2157,6 @@ function initStaticEvents() {
     attach('chatSend', window.sendMsg);
     const ci = $("chatInput");
     if(ci) ci.addEventListener('keydown', (e) => { if(e.key==='Enter') window.sendMsg(); });
-
     // DYNAMIC EVENT DELEGATION
     const listEl = $("leadList");
     if (listEl) {
@@ -2094,6 +2166,7 @@ function initStaticEvents() {
                 const idx = parseInt(item.getAttribute('data-idx'), 10);
                 if (!isNaN(idx)) window.selectLeadByIndex(idx);
             }
+        
         });
     }
 
@@ -2111,6 +2184,7 @@ function initStaticEvents() {
             const btnDeny = e.target.closest('.btn-deny'); if(btnDeny) return window.denyRequest(btnDeny.dataset.id);
             const btnRemove = e.target.closest('.btn-remove'); if(btnRemove) return window.removeAssociate(btnRemove.dataset.uid);
             const btnSearch = e.target.closest('.btn-team-search'); if(btnSearch) return window.runTeamSearch();
+        
             const btnReq = e.target.closest('.btn-request-assoc'); if(btnReq) return window.requestAssociate(btnReq.dataset.uid, btnReq.dataset.email);
         });
         tmb.addEventListener('change', (e) => {
@@ -2138,6 +2212,7 @@ function initStaticEvents() {
             if (item) {
                 const tUid = item.getAttribute('data-uid');
                 const tName = item.getAttribute('data-name');
+             
                 if(tUid) window.setupChat(`${DMS_PATH}/${tUid}/messages`, tName, true);
             }
         });
@@ -2159,6 +2234,25 @@ function initStaticEvents() {
     window.switchCategory('sellers');
 }
 window.addEventListener("DOMContentLoaded", initStaticEvents);
+
+
+// === CHAT FIXES: STEP 1 ===
+window.trackPresence = function(u){if(!u) return; const presRef=firebase.database().ref(`${PRESENCE_PATH}/${u.uid}`);
+const path=(location.pathname||"").toLowerCase();
+let portal="wholesaler", page="Wholesaler Portal";
+if(path.includes("profile.html")){portal="dashboard"; page="Dashboard";}
+else if(path.includes("wholesaler.html")){portal="wholesaler"; page="Wholesaler Portal";}
+else if(path.includes("contractor.html")){portal="contractor"; page="Contractor";}
+else if(path.includes("network.html")){portal="network"; page="Network";}
+else if(path.includes("investor.html")){portal="investor"; page="Investor";}
+const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:portal, online:true, page:page, ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
+
+window.sendMsg = async function(){
+  const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
+  const byName = window.isGod ? "Leadership" : (window.ME?.displayName||window.ME?.email||"User");
+  await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:byName, ts:firebase.database.ServerValue.TIMESTAMP, read: window.isGod ? true : false}); 
+  if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
+};
 
 firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return location.href="index.html";
@@ -2189,23 +2283,27 @@ firebase.auth().onAuthStateChanged(async u=>{
     }
 
   }catch(e){
-    window.ROLE="user"; window.isGod=false; window.isBranchManager=false;
+    window.ROLE="user"; window.isGod=false;
+    window.isBranchManager=false;
     if($("roleReadout")) $("roleReadout").textContent="ROLE: ASSOCIATE";
     if($("btnTeam")) $("btnTeam").style.display="none"; 
     if($("btnImportLegacy")) $("btnImportLegacy").style.display="none";
   }
 
   try{
-    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar(); }
-    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership Support", false); }
+    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar();
+    }
+    else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership", false); }
   }catch(e){ }
 
   if(window.isGod){ try{if(typeof window.syncManagerAssociatesIndexFromDirectory === 'function') await window.syncManagerAssociatesIndexFromDirectory();}catch(e){} }
-  try{ await window.loadUserDirectoryCache(); }catch(e){}
+  try{ await window.loadUserDirectoryCache();
+  }catch(e){}
 
   try{
     if(window.isGod){ window.subscribeGodAllLeads(); }
-    else if(window.isBranchManager){ window.subscribeBranchScopedLeads(); }
+    else if(window.isBranchManager){ window.subscribeBranchScopedLeads();
+    }
     else{ window.subscribeAssociateAssignedLeads(); }
   }catch(e){ if($("status")) $("status").textContent="Leads subscribe error."; }
 });
