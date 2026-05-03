@@ -15,6 +15,16 @@
   --good:#00ff6a; --warn:#ffd24d; --bad:#ff5555; --hot:#ff2a2a; --batman:#eab308;
   --shadow:0 28px 70px rgba(0,0,0,.55);
 }
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 0 rgba(255,42,42,.7); }
+  70% { box-shadow: 0 0 12px rgba(255,42,42,.8); }
+  100% { box-shadow: 0 0 0 rgba(255,42,42,0); }
+}
+.chip.pulse {
+  animation: pulse-glow 2s infinite;
+  border-color: var(--hot)!important;
+  background: rgba(255,42,42,.25)!important;
+}  
 *{box-sizing:border-box;margin:0;padding:0}
 html,body{height:100%}
 body{
@@ -200,10 +210,6 @@ body{
     <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
   </div>
   <nav class="nav">
-    <button class="icon-btn" id="btnApprovals" type="button" title="Pending Approvals" style="display:none; position:relative; width:auto; padding:0 12px; border-radius:8px;">
-      🔔 <span style="font-size:12px; font-weight:900; margin-left:6px;">Approvals</span>
-      <span id="approvalBadge" style="display:none; position:absolute; top:-6px; right:-6px; background:var(--hot); color:white; font-size:10px; border-radius:10px; padding:2px 6px; font-weight:bold; box-shadow:0 0 8px rgba(255,0,0,0.8);">0</span>
-    </button>
     <a class="chip" href="profile.html">Dashboard</a>
     <button class="chip primary" id="btnTeam" type="button" title="Manage Team" style="display:none;">👥 Team</button>
     <button class="phone-chip blue-phone" id="btnBlueSupport" type="button" title="Blue Phone">☎</button>
@@ -564,50 +570,38 @@ window.listenForNotifications = function() {
 };
 /* --- NOTIFICATION BELL LOGIC --- */
 window.initApprovalListener = function() {
-    if (!window.isGod) return;
-    const btn = $('btnApprovals');
-    if (btn) btn.style.display = 'flex';
+  if (!window.isGod) return;
+  const btn = $('btnTeam');
+  if (btn) btn.style.display = 'flex';
 
-    const updateBadge = () => {
-        const count = window.pendingApprovals.length;
-        const badge = $('approvalBadge');
-        if (badge) {
-            if (count > 0) {
-                badge.style.display = 'inline-block';
-                badge.textContent = count;
-            } else {
-                badge.style.display = 'none';
-            }
-        }
-    };
-    const scanForApprovals = async () => {
-        let pending = new Map();
-        const checkLead = (lead, id, cat) => {
-            const isLive = lead && (lead.isLive === true || String(lead.isLive).toLowerCase() === 'true');
-            const isApproved = lead && (lead.dispoApproved === true || String(lead.dispoApproved).toLowerCase() === 'true');
-            if (isLive && !isApproved) {
-                pending.set(id, { ...lead, id, __cat: cat });
-            }
-        };
+  const updatePulse = () => {
+    const count = (window.pendingRequestCache || []).filter(r => r.status === 'pending').length;
+    if (!btn) return;
+    if (count > 0) {
+      btn.classList.add('pulse');
+      btn.innerHTML = `👥 Team (${count})`;
+    } else {
+      btn.classList.remove('pulse');
+      btn.innerHTML = `👥 Team`;
+    }
+  };
 
-        try {
-            const [ms, mb] = await Promise.all([
-                firebase.database().ref(`${LEADS_MASTER_PATH}/sellers`).once('value').catch(()=>({val:()=>({})})),
-                firebase.database().ref(`${LEADS_MASTER_PATH}/buyers`).once('value').catch(()=>({val:()=>({})}))
-            ]);
-            const msVal = ms.val() || {}; Object.keys(msVal).forEach(k => checkLead(msVal[k], k, 'sellers'));
-            const mbVal = mb.val() || {};
-            Object.keys(mbVal).forEach(k => checkLead(mbVal[k], k, 'buyers'));
+  const scanForRequests = async () => {
+    try {
+      // reload the cache that powers the Team modal
+      if (typeof window.loadGodDirectoryCache === 'function') {
+        await window.loadGodDirectoryCache();
+      }
+      updatePulse();
+    } catch(e) {}
+  };
 
-            window.pendingApprovals = Array.from(pending.values());
-            window.pendingApprovals.sort((a,b) => (b.updatedAt||0) - (a.updatedAt||0));
-            updateBadge();
-        } catch(e) { console.error("Error scanning approvals:", e); }
-    };
+  // run now and every 5 seconds
+  scanForRequests();
+  setInterval(scanForRequests, 5000);
+  // also listen live to Firebase
+ firebase.database().ref(MANAGER_ASSOCIATES_PATH).on('value', scanForRequests);
 
-    scanForApprovals();
-    setInterval(scanForApprovals, 5000); 
-};
 window.openApprovalsModal = function(silent = false) {
     const c = $('approvalsListContent');
     if(!c) return;
@@ -2122,7 +2116,6 @@ function initStaticEvents() {
     attach('btnTeam', window.openTeamModal);
     attach('btnBlueSupport', () => window.openSupportModal('blue'));
     attach('btnRedSupport', () => window.openSupportModal('red'));
-    attach('btnApprovals', () => window.openApprovalsModal(false));
     attach('approvalsCloseBtn', window.closeApprovalsModal);
     
     attach('btnSettings', () => { window.loadSettings(); if($('settingsModal')) $('settingsModal').style.display = 'flex'; });
