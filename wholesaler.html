@@ -1803,64 +1803,72 @@ window.closeSupportModal = function(){
 
 // === CHAT FIXES ===
 window.startRadar = function(){
-  if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none";
+  if($("radarList")) $("radarList").style.display="block"; 
+  if($("chatArea")) $("chatArea").style.display="none";
   if($("panelTitle")) $("panelTitle").textContent="Team Radar";
-  if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
+  if($("backToRadar")) $("backToRadar").style.display="none"; 
+  const list=$("radarList");
 
-  if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r => { try { r.off(); } catch(e){} }); }
+  // kill old listeners
+  if(window.radarPresenceRef){ try{window.radarPresenceRef.off();}catch(e){} }
+  if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r=>{try{r.off();}catch(e){}}); }
   window.radarUnreadRefs = [];
+  window.radarPresenceRef = firebase.database().ref(PRESENCE_PATH);
 
-  firebase.database().ref(PRESENCE_PATH).on("value", snap=>{
+  window.radarPresenceRef.on("value", snap=>{
     const v=snap.val()||{}; 
     let users=Object.values(v).filter(x=>{
         if(!x||!x.online||String(x.uid||"")===String(window.UID)) return false;
         if(window.isGod) return true;
         if(window.isBranchManager) {
+            // BM sees only approved associates - check cache, but don't require name
             const uInfo = window.userDirCache.byUid[x.uid];
-            return uInfo && String(uInfo.managerUid) === String(window.UID) && String(uInfo.managerStatus) === "approved";
+            return uInfo && String(uInfo.managerUid)===String(window.UID) && String(uInfo.managerStatus)==="approved";
         }
         return false;
     });
 
-    if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px; text-align:center; color:#666;">No users online.</div>`; return; }
-    users.sort((a,b)=>String(a.name||"").localeCompare(String(b.name||"")));
+    if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px;text-align:center;color:#666;">No users online.</div>`; return; }
+    
+    users.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
     let html = "";
     users.forEach(u=>{ 
         const safeUid = window.esc(u.uid);
-        const dispName = window.esc(window.userDirCache.byUid[u.uid]?.name || u.name || u.email || "User");
-        html += `<div class="radar-user" data-uid="${safeUid}" data-name="${dispName}"> <div style="display:flex;gap:10px;align-items:center;min-width:0"><div class="status-dot"></div><div style="min-width:0"><div style="font-weight:900">${dispName}</div><div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div></div></div><div class="pill" id="unread-pill-${safeUid}" style="transition:all 0.2s;">DM</div> </div>`;
+        // FIX: prefer presence name/email, then cache, then fallback to "User" - NEVER show raw UID
+        const cacheName = window.userDirCache.byUid[u.uid]?.name;
+        const presenceName = u.name || (u.email ? u.email.split('@')[0] : null);
+        const dispName = window.esc(cacheName || presenceName || "User");
+        
+        html += `<div class="radar-user" data-uid="${safeUid}" data-name="${dispName}"> 
+          <div style="display:flex;gap:10px;align-items:center;min-width:0">
+            <div class="status-dot"></div>
+            <div style="min-width:0">
+              <div style="font-weight:900">${dispName}</div>
+              <div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div>
+            </div>
+          </div>
+          <div class="pill" id="unread-pill-${safeUid}" style="transition:all 0.2s;">DM</div>
+        </div>`;
     });
     if(list) list.innerHTML = html;
 
+    // unread badges...
     if(window.isGod || window.isBranchManager) {
-        if(window.radarUnreadRefs) { window.radarUnreadRefs.forEach(r => { try { r.off(); } catch(e){} }); }
+        window.radarUnreadRefs.forEach(r=>{try{r.off();}catch(e){}});
         window.radarUnreadRefs = [];
-        
         users.forEach(u => {
-            const safeUid = window.esc(u.uid);
             const ref = firebase.database().ref(`${DMS_PATH}/${u.uid}/messages`);
             window.radarUnreadRefs.push(ref);
             ref.on("value", msgs => {
-                let unreadCount = 0;
-                msgs.forEach(m => {
-                    const val = m.val();
-                    if (val.read === false && String(val.sender) !== String(window.UID)) unreadCount++;
-                });
-                const pill = document.getElementById(`unread-pill-${safeUid}`);
-                if (pill) {
-                    if (unreadCount > 0) {
-                        pill.textContent = `DM (${unreadCount})`;
-                        pill.style.background = "#ff5555";
-                        pill.style.color = "#fff";
-                        pill.style.borderColor = "#ff5555";
-                        pill.style.boxShadow = "0 0 10px rgba(255,85,85,0.4)";
-                    } else {
-                        pill.textContent = "DM";
-                        pill.style.background = "rgba(0,0,0,.18)";
-                        pill.style.color = "#9ab9d6";
-                        pill.style.borderColor = "rgba(255,255,255,.16)";
-                        pill.style.boxShadow = "none";
-                    }
+                let unread=0;
+                msgs.forEach(m=>{const v=m.val(); if(v.read===false && String(v.sender)!==String(window.UID)) unread++;});
+                const pill=document.getElementById(`unread-pill-${window.esc(u.uid)}`);
+                if(pill){ pill.textContent=unread>0?`DM (${unread})`:"DM"; pill.style.background=unread>0?"#ff5555":"rgba(0,0,0,.18)"; }
+            });
+        });
+    }
+  });
+}
                 }
             });
         });
@@ -1940,9 +1948,15 @@ window.closePanel = function(){
     }
 }
 
-window.showRadarView = function() { if($("radarList")) $("radarList").style.display="block";
-if($("chatArea")) $("chatArea").style.display="none"; if($("backToRadar")) $("backToRadar").style.display="none"; if($("panelTitle")) $("panelTitle").textContent="Team Radar"; window.currentChatPath=null; if (window.activeChatListener) { window.activeChatListener.off(); window.activeChatListener=null;
-} }
+window.showRadarView = function() { 
+  if($("radarList")) $("radarList").style.display="block";
+  if($("chatArea")) $("chatArea").style.display="none"; 
+  if($("backToRadar")) $("backToRadar").style.display="none"; 
+  if($("panelTitle")) $("panelTitle").textContent="Team Radar"; 
+  if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;}
+  // FIX: re-run radar to refresh the list instead of showing stale HTML
+  window.startRadar();
+} 
 
 /* --- SETTINGS CHAMELEON LOGIC --- */
 window.loadSettings = async function() {
