@@ -523,13 +523,13 @@ const LEADS_MASTER_PATH="leadsMaster"; const LEADS_BY_USER_PATH="leadsByUser"; c
 const LEGACY_LEADS_PATH="leads"; const ROLES_PATH="roles"; const PRESENCE_PATH="presence/global"; const DMS_PATH="direct_messages"; const TEAM_CALLLOG_PATH="team_call_log";
 const SUPPORT_REQUESTS_PATH="supportRequests"; const EMAIL_INDEX_PATH="emailIndex"; const MANAGER_ASSOCIATES_PATH="managerAssociates";
 const pingSound = new Audio('https://freesound.org/data/previews/256/256113_3263906-lq.mp3');
-window.esc = function(s){ 
+window.esc = function(s){
   return String(s || "")
     .replace(/&/g, "&amp;")
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;"); 
+    .replace(/'/g, "&#39;");
 }
 window.modalToast = function(msg,good){const el=$("modalToast"); if(el) {el.style.display=msg?"":"none"; el.textContent=msg||""; el.style.borderColor=good?"rgba(0,255,106,.35)":"rgba(255,85,85,.45)";}}
 window.toast = function(msg){const el=$("noteStatus"); if(el) {el.textContent=msg; el.style.display=""; clearTimeout(window.__toastTimer); window.__toastTimer=setTimeout(()=>{el.style.display="none";},1400);}} 
@@ -1226,8 +1226,8 @@ window.buildMap = function(address){
     if(!addr){window.setMapVisibility(false); return;} 
     const q=encodeURIComponent(addr); 
     const src = window.mapMode==="street"
-      ? `https://www.google.com/maps?q=${q}&layer=c&output=embed`
-      : `https://www.google.com/maps?q=${q}&output=embed`; 
+      ? `https://googleusercontent.com/maps.google.com/${q}&layer=c&output=embed`
+      : `https://googleusercontent.com/maps.google.com/${q}&output=embed`; 
     if($("streetFrame")) $("streetFrame").src=src; 
     if($("mapHint")) $("mapHint").textContent = window.mapMode==="street" ? "Street View" : "Area Map";
 }
@@ -1379,12 +1379,12 @@ window.renderAssignList = function(){
   const listEl=$("assignList"); if(!listEl) return;
   const sq = $("assignFilter");
   const q=(sq?.value||"").toLowerCase().trim();
-  const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return!q||hay.includes(q);});
+  const rows=window.getAssignableRows().filter(r=>{const hay=`${r.name||""} ${r.email||""}`.toLowerCase(); return !q||hay.includes(q);});
   if(!rows.length){listEl.innerHTML=`<div class=\"help\">No users available for assignment.</div>`;
-  return;}
+  return;} 
   listEl.innerHTML=rows.map(r=>{
-    const checked=window.modalAssignedSet.has(r.uid)?"checked":"";
-    const tag=r.role==="admin"?"MANAGER":"ASSOC";
+    const checked=window.modalAssignedSet.has(r.uid)?"checked":""; 
+    const tag=r.role==="admin"?"MANAGER":"ASSOC"; 
     const displayName = r.name || (r.email? r.email.split('@')[0] : '') || window.usernameFromEmail(r.email||'') || ('User '+String(r.uid).slice(0,6));
     const displayEmail = r.email || '—';
     return `<label class=\"assignRow\"><input type=\"checkbox\" class=\"assign-cb\" data-uid=\"${window.esc(r.uid)}\" ${checked} /><div class=\"assignMeta\"><div class=\"assignName\">${window.esc(displayName)}</div><div class=\"assignEmail\">${window.esc(displayEmail)}</div></div><div class=\"assignTag\">${tag}</div></label>`;
@@ -1803,7 +1803,7 @@ window.closeSupportModal = function(){
 
 // === CHAT FIXES ===
 window.startRadar = function(){
-  if($("radarList")) $("radarList").style.display=""; if($("chatArea")) $("chatArea").style.display="none";
+  if($("radarList")) $("radarList").style.display="block"; if($("chatArea")) $("chatArea").style.display="none";
   if($("panelTitle")) $("panelTitle").textContent="Team Radar";
   if($("backToRadar")) $("backToRadar").style.display="none"; const list=$("radarList");
 
@@ -2274,7 +2274,7 @@ firebase.auth().onAuthStateChanged(async u=>{
   if(!u) return location.href="index.html";
   window.UID=u.uid; window.ME=u;
 
-  window.listenForNotifications();
+
 
   try{if(typeof window.upsertMyUserDirectory === 'function') await window.upsertMyUserDirectory(u);}catch(e){}
   try{window.trackPresence(u);}catch(e){}
@@ -2286,7 +2286,11 @@ firebase.auth().onAuthStateChanged(async u=>{
       try{await firebase.database().ref(`${ROLES_PATH}/${window.UID}`).set("god");}catch(e){}
       try{await firebase.database().ref(`${USER_DIR_PATH}/${window.UID}`).update({role:"god"});}catch(e){}
     }
-    window.isGod=window.ROLE==="god"; window.isBranchManager=!window.isGod&&window.ROLE==="admin";
+    window.isGod=window.ROLE==="god"; 
+    
+  if (window.isGod) window.listenForNotifications();
+  
+  window.isBranchManager=!window.isGod&&window.ROLE==="admin";
     if($("roleReadout")) $("roleReadout").textContent="ROLE: "+window.roleLabel(window.ROLE);
     if($("btnTeam")) $("btnTeam").style.display=window.isAdminLike()?"":"none";
     if($("btnImportLegacy")) $("btnImportLegacy").style.display=window.isGod?"":"none";
@@ -2308,7 +2312,7 @@ firebase.auth().onAuthStateChanged(async u=>{
   try{ await window.loadUserDirectoryCache(); }catch(e){}
 
   try{
-    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display=""; window.startRadar(); }
+    if(window.isAdminLike()){ if($("radarList")) $("radarList").style.display="block"; window.startRadar(); }
     else{ window.setupChat(`${DMS_PATH}/${window.UID}/messages`, "Leadership", false); }
   }catch(e){ }
 
