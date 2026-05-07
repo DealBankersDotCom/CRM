@@ -755,6 +755,8 @@ window.requestWarRoomModal = async function(type) {
     const leadId = await window.saveLeadFromModal(true);
     if (!leadId) {
         window.updateQuotaUI();
+        if(document.getElementById("btnReqAnalysisModal")) document.getElementById("btnReqAnalysisModal").disabled = false;
+        if(document.getElementById("btnReqSkipModal")) document.getElementById("btnReqSkipModal").disabled = false;
         return;
     }
     
@@ -1662,7 +1664,7 @@ if(window.modalMode==="edit" && oldPrio !== newPrio && window.currentLead){
       const payloadWithMeta = {...payload, id:leadId, archived:false, updatedAt:Date.now(), updatedBy:window.ME?.email||"", createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: isCurrentlyApproved};
       
       finalUpdates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${leadId}`] = payloadWithMeta;
-      finalUpdates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`] = {...payloadWithMeta, assignedTo:{[window.UID]:true}, assignedUids:[window.UID]};
+
       await firebase.database().ref().update(finalUpdates);
     }
     
@@ -2348,5 +2350,3 @@ firebase.auth().onAuthStateChanged(async u=>{
 </script>
 </body>
 </html>
-
-
