@@ -744,55 +744,21 @@ window.incrementQuota = async function(type) {
     } catch(e) {}
 };
 
-window.requestWarRoomModal = async function(type) {
+window.requestWarRoomModal = function(type) {
+    if(!window.pendingWarRoomRequests) window.pendingWarRoomRequests = [];
     if (type === 'analysis' && window.userQuotas.analysis >= 5) return alert("Deal Report limit reached.");
     if (type === 'skip' && window.userQuotas.skip >= 100) return alert("Contact Search limit reached.");
-    
-    if($("btnReqAnalysisModal")) $("btnReqAnalysisModal").disabled = true;
-    if($("btnReqSkipModal")) $("btnReqSkipModal").disabled = true;
-    
-    window.modalToast("Saving lead before request...", true);
-    const leadId = await window.saveLeadFromModal(true);
-    if (!leadId) {
-        window.updateQuotaUI();
-        if(document.getElementById("btnReqAnalysisModal")) document.getElementById("btnReqAnalysisModal").disabled = false;
-        if(document.getElementById("btnReqSkipModal")) document.getElementById("btnReqSkipModal").disabled = false;
-        return;
+    if (window.pendingWarRoomRequests.includes(type)) return;
+    window.pendingWarRoomRequests.push(type);
+    if(type === 'analysis' && document.getElementById("btnReqAnalysisModal")) {
+        document.getElementById("btnReqAnalysisModal").disabled = true;
+        document.getElementById("btnReqAnalysisModal").textContent = "Report Queued";
     }
-    
-    const address = ($("m_address")?.value||"").trim() || "Unknown";
-    const owner = ($("m_owner")?.value||"").trim() || "";
-    const phones = $("m_phones")?.value || "";
-    const notes = ($("m_notes")?.value||"").trim() || "";
-    const req = {
-        requesterUid: window.UID ||
-        "Unknown", 
-        requesterEmail: window.ME?.email ||
-        "", 
-        leadId: leadId,
-        address: address,
-        owner: owner,
-        phones: phones, 
-        notes: notes,
-        requestType: type ||
-        "unknown", 
-        status: 'pending', 
-        ts: Date.now(),
-        category: window.currentCategory ||
-        "sellers"
-    };
-    
-    try {
-        await firebase.database().ref(`warroom_requests/${window.UID}`).push(req);
-        await window.incrementQuota(type);
-        window.triggerLeadershipPing(`Requested ${type === 'skip' ? 'Contact Search' : 'Deal Report'} for ${address}`, "Sent to War Room.");
-        alert("Your report is being generated. Keep an eye on your notifications for an update.");
-        window.closeLeadModal();
-    } catch(e) {
-        console.error("War Room Request Error:", e);
-        alert("Request failed to send. Please check your network or database rules.");
-        window.updateQuotaUI();
+    if(type === 'skip' && document.getElementById("btnReqSkipModal")) {
+        document.getElementById("btnReqSkipModal").disabled = true;
+        document.getElementById("btnReqSkipModal").textContent = "Search Queued";
     }
+    window.modalToast(type === 'skip' ? "Contact Search queued. Click Save to submit." : "Deal Report queued. Click Save to submit.", true);
 }
 
 window.requestWarRoom = async function(type) {
@@ -1492,7 +1458,7 @@ window.handleDealPhotoUpload = async function(e) {
 };
 
 window.openLeadModal = function(mode){
-  window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true);
+  window.modalMode=mode; const isEdit=mode==="edit"; window.modalToast("", true); window.pendingWarRoomRequests = []; if(document.getElementById("btnReqAnalysisModal")) { document.getElementById("btnReqAnalysisModal").disabled = false; document.getElementById("btnReqAnalysisModal").textContent = "Deal Report"; } if(document.getElementById("btnReqSkipModal")) { document.getElementById("btnReqSkipModal").disabled = false; document.getElementById("btnReqSkipModal").textContent = "Contact Search"; }
   if($("leadModalTitle")) $("leadModalTitle").textContent=isEdit?"Lead Editor (Edit)":"Lead Editor (New)";
   if($("m_delete")) $("m_delete").style.display=isEdit?"block":"none"; 
   if($("assignBlock")) $("assignBlock").style.display=window.isAdminLike()?"":"none";
@@ -1669,7 +1635,33 @@ if(window.modalMode==="edit" && oldPrio !== newPrio && window.currentLead){
     }
     
     window.modalToast("Saved ✓", true);
-    if (isLiveVal && skipClose !== true) {
+    
+    if(window.pendingWarRoomRequests && window.pendingWarRoomRequests.length > 0) {
+        for (let i = 0; i < window.pendingWarRoomRequests.length; i++) {
+            const type = window.pendingWarRoomRequests[i];
+            const req = {
+                requesterUid: window.UID || "Unknown",
+                requesterEmail: window.ME?.email || "",
+                leadId: leadIdToReturn,
+                address: payload.address,
+                owner: payload.owner,
+                phones: document.getElementById("m_phones")?.value || "",
+                notes: payload.notes,
+                requestType: type,
+                status: 'pending',
+                ts: Date.now(),
+                category: window.currentCategory || "sellers"
+            };
+            try {
+                await firebase.database().ref(`warroom_requests/${window.UID}`).push(req);
+                await window.incrementQuota(type);
+                window.triggerLeadershipPing(`Requested ${type === 'skip' ? 'Contact Search' : 'Deal Report'} for ${payload.address}`, "Sent to War Room.");
+            } catch(e) { console.error(e); }
+        }
+        window.pendingWarRoomRequests = [];
+        alert("Your War Room requests have been submitted. Keep an eye on your notifications.");
+    }
+if (isLiveVal && skipClose !== true) {
         if(confirm("Lead saved! Would you like to upload deal photos now?")) {
             if($("m_photoUpload")) $("m_photoUpload").click();
             return leadIdToReturn;
