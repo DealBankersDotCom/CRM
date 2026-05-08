@@ -1562,19 +1562,26 @@ lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",lin
 return out;}
 
 window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
-  await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update({...payload, id:leadId, assignedTo:assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{}), assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:window.ME?.email||""});
-  const updates={}; assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  if(window.modalMode==="edit"&&window.currentLead){ const prev=Object.keys(window.currentLead.assignedTo||{}).filter(uid=>window.currentLead.assignedTo[uid]); prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); }
+  const assignedObj = assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{});
+  const enriched = {...payload, id:leadId, assignedTo:assignedObj, assignedUids:assigneeUids, updatedAt:Date.now(), updatedBy:window.ME?.email||""};
+  await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${leadId}`).update(enriched);
+  const updates={};
+  assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...enriched, assignedBy:window.ME?.email||"", assignedAt:Date.now(), archived:false}; });
+  if(window.modalMode==="edit"&&window.currentLead){
+    const prev = new Set([...Object.keys(window.currentLead.assignedTo||{}).filter(k=>window.currentLead.assignedTo[k]), ...(window.currentLead.assignedUids||[])]);
+    prev.forEach(uid=>{ if(!assigneeUids.includes(String(uid))) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; });
+  }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
 
 window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
+  const assignedObj = assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{});
+  const enriched = {...payload, id:leadId, assignedTo:assignedObj, assignedUids:assigneeUids};
   const updates={};
-  assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...payload,id:leadId,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}; });
-  
-  if(window.modalMode==="edit"&&window.currentLead){ 
-      const prev=((window.currentLead.assignedUids||[]).map(String)).filter(uid=>window.getAssignableRows().some(r=>String(r.uid)===String(uid))); 
-      prev.forEach(uid=>{ if(!assigneeUids.includes(uid)) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; }); 
+  assigneeUids.forEach(uid=>{ updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]={...enriched, assignedBy:window.ME?.email||"", assignedAt:Date.now(), archived:false}; });
+  if(window.modalMode==="edit"&&window.currentLead){
+    const prev = new Set([...Object.keys(window.currentLead.assignedTo||{}).filter(k=>window.currentLead.assignedTo[k]), ...(window.currentLead.assignedUids||[])]);
+    prev.forEach(uid=>{ if(!assigneeUids.includes(String(uid))) updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${leadId}`]=null; });
   }
   if(Object.keys(updates).length) await firebase.database().ref().update(updates);
 }
