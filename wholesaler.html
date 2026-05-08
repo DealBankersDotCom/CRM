@@ -1711,6 +1711,7 @@ window.renderTeamModalBody = async function(){
     }); html+=`</div>`;
   } else if(window.isBranchManager){
     const myTeam=window.managedAssociatesFor(window.UID); const teamChatState = !window.userDirCache.byUid[window.UID]?.teamChatDisabled;
+html+=`<div style=\"margin-bottom:15px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid var(--line);\"><label style=\"color:#cfe3ff;font-size:13px;font-weight:bold;display:flex;align-items:center;gap:8px;cursor:pointer;\"><input type=\"checkbox\" onchange=\"window.toggleUserSetting('${window.UID}', 'teamChatDisabled', !this.checked)\" ${teamChatState?'checked':''}> Allow Team Members to Message Each Other</label></div>`; const teamChatState = !window.userDirCache.byUid[window.UID]?.teamChatDisabled;
 html+=`<div style=\"margin-bottom:15px; padding:10px; background:rgba(0,0,0,0.2); border-radius:8px; border:1px solid var(--line);\"><label style=\"color:#cfe3ff;font-size:13px;font-weight:bold;display:flex;align-items:center;gap:8px;cursor:pointer;\"><input type=\"checkbox\" onchange=\"window.toggleUserSetting('${window.UID}', 'teamChatDisabled', !this.checked)\" ${teamChatState?'checked':''}> Allow Team Members to Message Each Other</label></div>`; html+=`<div class=\"lbl\">My Approved Team (Associates)</div><div class=\"teamGrid\">`;
     if(!myTeam.length){ html+=`<div class=\"help\">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(u.name||u.email||u.uid)}</strong><span style=\"font-size:11px;color:#00ff6a\">Active Team Member</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(u.email||u.uid)}</span></div><div class=\"teamActions\"><button class=\"btn danger tiny btn-remove\" data-uid=\"${u.uid}\">Remove</button></div></div>`; });
     } html+=`</div>`;
@@ -1770,6 +1771,7 @@ window.approveRequest=async function(requestId){const req=window.pendingRequestC
 await window.renderTeamModalBody(); }catch(e){ window.toast("Approve failed"); }};
 window.denyRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null; await firebase.database().ref().update(updates);
 await window.loadUserDirectoryCache(); window.toast("Request denied"); await window.renderTeamModalBody(); }catch(e){ window.toast("Deny failed"); }};
+window.toggleUserSetting = function(uid, key, value){ let updates={}; updates[key]=value; firebase.database().ref(USER_DIR_PATH+'/'+uid).update(updates); window.toast("Setting Saved âœ“"); };
 window.removeAssociate=async function(targetUid){if(!targetUid) return; try{ const managerUid=String(window.userDirCache.byUid[targetUid]?.managerUid||window.UID); const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null;
 updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); if(window.isBranchManager) window.subscribeBranchScopedLeads(); if(window.isGod) window.subscribeGodAllLeads(); window.toast("Associate removed"); await window.renderTeamModalBody(); }catch(e){ window.toast("Remove failed"); }};
 window.supportCategoriesForPortal = function(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"];
@@ -1833,7 +1835,7 @@ window.startRadar = function(){
 
     if(!users.length){ if(list) list.innerHTML=`<div style="padding:20px;text-align:center;color:#666;">No users online.</div>`; return; }
     
-    users.sort((a,b)=>String(a.name||a.email||"").localeCompare(String(b.name||b.email||"")));
+    users.sort((a,b)=>(Number(b.ts)||0) - (Number(a.ts)||0));
     let html = "";
     users.forEach(u=>{ 
         const safeUid = window.esc(u.uid);
@@ -1843,6 +1845,10 @@ window.startRadar = function(){
         const dispName = window.esc(cacheName || presenceName || "User");
         
         const isOnline = u.online;
+const dot = isOnline ? '<div class="status-dot"></div>' : '<div class="status-dot" style="background:#555;box-shadow:none;"></div>';
+const sub = isOnline ? `On: ${window.esc(u.page||u.portal||"")}` : `Offline &bull; Last: ${window.tsToLocal(u.ts)}`;
+const opacity = isOnline ? "1" : "0.4";
+const isOnline = u.online;
 const dot = isOnline ? '<div class="status-dot"></div>' : '<div class="status-dot" style="background:#555;box-shadow:none;"></div>';
 const sub = isOnline ? `On: ${window.esc(u.page||u.portal||"")}` : `Offline &bull; Last: ${window.tsToLocal(u.ts)}`;
 const opacity = isOnline ? "1" : "0.4";
@@ -1892,6 +1898,21 @@ window.sendChatPhoto = async function(e){
   e.target.value = "";
 };
 window.toggleUserSetting = function(uid, key, value){ let updates={}; updates[key]=value; firebase.database().ref(USER_DIR_PATH+'/'+uid).update(updates); window.toast("Setting Saved âœ“"); };
+window.editMsg = function(id){ const newText = prompt("Edit message:"); if(newText && newText.trim()!==""){ window.activeChatRef.child(id).update({text:newText.trim(), edited:true, editTs:Date.now()}); } };
+window.delMsg = function(id){ if(confirm("Delete this message?")){ window.activeChatRef.child(id).update({deleted:true, text:"", delTs:Date.now()}); } };
+window.sendChatPhoto = async function(e){
+  if(window.userDirCache?.byUid?.[window.UID]?.photosDisabled) return alert('Photo sharing disabled by Management.');
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 10*1024*1024) return alert("Image too large (max 10MB)");
+  const sRef = firebase.storage().ref(`chat_photos/${window.UID}_${Date.now()}.jpg`);
+  try {
+    const snap = await sRef.put(file);
+    const url = await snap.ref.getDownloadURL();
+    const byName = window.isGod ? "Leadership" : (window.ME?.displayName||window.ME?.email||"User");
+    await window.activeChatRef.push().set({text:"&#128247; [Photo]", photoUrl:url, uid:window.UID||"", sender:window.UID||"", by:byName, ts:firebase.database.ServerValue.TIMESTAMP, read: window.isGod ? true : false});
+  } catch(err) { alert("Photo upload failed."); }
+  e.target.value = "";
+};
 window.setupChat = function(path,title,showBack){
   if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"inline-block":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML="";
   if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path);
@@ -2304,7 +2325,8 @@ const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User"
 
 window.sendMsg = async function(){
   if(window.userDirCache?.byUid?.[window.UID]?.chatDisabled) return alert("Your chat access has been disabled by Management.");
-const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
+if(window.userDirCache?.byUid?.[window.UID]?.chatDisabled) return alert("Your chat access has been disabled by Management.");
+  const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
   const byName = window.isGod ? "Leadership" : (window.ME?.displayName||window.ME?.email||"User");
   await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:byName, ts:firebase.database.ServerValue.TIMESTAMP, read: window.isGod ? true : false}); 
   if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
@@ -2379,5 +2401,3 @@ firebase.auth().onAuthStateChanged(async u=>{
 </script>
 </body>
 </html>
-
-
