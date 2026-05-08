@@ -1711,7 +1711,7 @@ window.renderTeamModalBody = async function(){
     }); html+=`</div>`;
   } else if(window.isBranchManager){
     const myTeam=window.managedAssociatesFor(window.UID); html+=`<div class=\"lbl\">My Approved Team (Associates)</div><div class=\"teamGrid\">`;
-    if(!myTeam.length){ html+=`<div class=\"help\">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(u.name||u.email||u.uid)}</strong><span style=\"font-size:11px;color:#00ff6a\">Active Team Member</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(u.email||u.uid)}</span></div><div class=\"teamActions\"><button class=\"btn danger tiny btn-remove\" data-uid=\"${u.uid}\">Remove</button></div></div>`; });
+    if(!myTeam.length){ html+=`<div class=\"help\">No approved associates on your team yet.</div>`; }else{ myTeam.forEach(u=>{ html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(u.name||u.email||u.uid)}</strong><span style=\"font-size:11px;color:#00ff6a\">Active Team Member</span><span style=\"font-size:11px;color:#9ab9d6\">${window.esc(u.email||u.uid)}</span></div><div class=\"teamActions\" style=\"display:flex;flex-direction:column;align-items:flex-end;gap:4px;\"><label style=\"color:#cfe3ff;font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer;\"><input type=\"checkbox\" onchange=\"window.toggleUserSetting('${u.uid}', 'chatDisabled', !this.checked)\" ${u.chatDisabled?'':'checked'}> Chat Enabled</label><label style=\"color:#cfe3ff;font-size:11px;display:flex;align-items:center;gap:6px;cursor:pointer;\"><input type=\"checkbox\" onchange=\"window.toggleUserSetting('${u.uid}', 'photosDisabled', !this.checked)\" ${u.photosDisabled?'':'checked'}> Photos Enabled</label><button class=\"btn danger tiny btn-remove\" style=\"margin-top:4px;\" data-uid=\"${u.uid}\">Remove</button></div></div>`; });
     } html+=`</div>`;
     const myPending=window.pendingRequestCache.filter(r=>String(r.requesterUid)===String(window.UID)&&String(r.status||"")==="pending"); html+=`<div class=\"lbl\" style=\"margin-top:24px;\">Pending Requests</div><div class=\"teamGrid\">`; if(!myPending.length){ html+=`<div class=\"help\">No pending requests.</div>`;
     }else{ myPending.forEach(r=>{ html+=`<div class=\"teamRow\"><div class=\"teamMeta\"><strong style=\"color:#cfe3ff\">${window.esc(r.targetEmail||"Associate")}</strong><span style=\"font-size:11px;color:var(--warn)\">Awaiting Leadership Team Approval</span></div><div class=\"teamActions\"><button class=\"btn danger tiny btn-remove\" data-uid=\"${r.targetUid}\">Cancel</button></div></div>`; }); } html+=`</div>`;
@@ -1769,6 +1769,7 @@ window.approveRequest=async function(requestId){const req=window.pendingRequestC
 await window.renderTeamModalBody(); }catch(e){ window.toast("Approve failed"); }};
 window.denyRequest=async function(requestId){const req=window.pendingRequestCache.find(r=>r.id===requestId); if(!req) return; try{ const updates={}; updates[`${USER_DIR_PATH}/${req.targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${req.targetUid}/managerStatus`]=null; updates[`${MANAGER_ASSOCIATES_PATH}/${req.requesterUid}/${req.targetUid}`]=null; await firebase.database().ref().update(updates);
 await window.loadUserDirectoryCache(); window.toast("Request denied"); await window.renderTeamModalBody(); }catch(e){ window.toast("Deny failed"); }};
+window.toggleUserSetting = function(uid, key, value){ let updates={}; updates[key]=value; firebase.database().ref(USER_DIR_PATH+'/'+uid).update(updates); window.toast("Setting Saved âœ“"); };
 window.removeAssociate=async function(targetUid){if(!targetUid) return; try{ const managerUid=String(window.userDirCache.byUid[targetUid]?.managerUid||window.UID); const updates={}; updates[`${USER_DIR_PATH}/${targetUid}/managerUid`]=null; updates[`${USER_DIR_PATH}/${targetUid}/managerStatus`]=null;
 updates[`${MANAGER_ASSOCIATES_PATH}/${managerUid}/${targetUid}`]=null; await firebase.database().ref().update(updates); await window.loadUserDirectoryCache(); if(window.isBranchManager) window.subscribeBranchScopedLeads(); if(window.isGod) window.subscribeGodAllLeads(); window.toast("Associate removed"); await window.renderTeamModalBody(); }catch(e){ window.toast("Remove failed"); }};
 window.supportCategoriesForPortal = function(portal){const p=(portal||"").toLowerCase(); if(p==="contractor") return ["Work order issue","Need pricing help","Need materials approval","Emergency / water","Other"];
@@ -1815,7 +1816,7 @@ window.startRadar = function(){
   window.radarPresenceRef.on("value", snap=>{
     const v=snap.val()||{}; 
     let users=Object.values(v).filter(x=>{
-        if(!x||!x.online||String(x.uid||"")===String(window.UID)) return false;
+        if(!x||String(x.uid||"")===String(window.UID)) return false;
         if(window.isGod) return true;
         if(window.isBranchManager) {
             // BM sees only approved associates - check cache, but don't require name
@@ -1836,16 +1837,18 @@ window.startRadar = function(){
         const presenceName = u.name || (u.email ? u.email.split('@')[0] : null);
         const dispName = window.esc(cacheName || presenceName || "User");
         
-        html += `<div class="radar-user" data-uid="${safeUid}" data-name="${dispName}"> 
-          <div style="display:flex;gap:10px;align-items:center;min-width:0">
-            <div class="status-dot"></div>
-            <div style="min-width:0">
-              <div style="font-weight:900">${dispName}</div>
-              <div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">On: ${window.esc(u.page||u.portal||"")}</div>
-            </div>
-          </div>
-          <div class="pill" id="unread-pill-${safeUid}" style="transition:all 0.2s;">DM</div>
-        </div>`;
+        const dot = u.online ? '<div class="status-dot"></div>' : '<div class="status-dot" style="background:#555;box-shadow:none;"></div>';
+const sub = u.online ? `On: ${window.esc(u.page||u.portal||"")}` : `Offline \u2022 Last: ${window.tsToLocal(u.ts)}`;
+html += `<div class="radar-user" data-uid="${safeUid}" data-name="${dispName}">
+  <div style="display:flex;gap:10px;align-items:center;min-width:0">
+    ${dot}
+    <div style="min-width:0">
+      <div style="font-weight:900">${dispName}</div>
+      <div style="font-size:11px;color:#9ab9d6;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px">${sub}</div>
+    </div>
+  </div>
+  <div class="pill" id="unread-pill-${safeUid}" style="transition:all 0.2s;">DM</div>
+</div>`;
     });
     if(list) list.innerHTML = html;
 
@@ -1866,8 +1869,23 @@ window.startRadar = function(){
     }
   });
 }
+window.editMsg = function(id){ const newText = prompt("Edit message:"); if(newText && newText.trim()!==""){ window.activeChatRef.child(id).update({text:newText.trim(), edited:true, editTs:Date.now()}); } };
+window.delMsg = function(id){ if(confirm("Delete this message?")){ window.activeChatRef.child(id).update({deleted:true, text:"", delTs:Date.now()}); } };
+window.sendChatPhoto = async function(e){
+  if(window.userDirCache?.byUid?.[window.UID]?.photosDisabled) return alert('Photo sharing disabled by Management.');
+  const file = e.target.files[0]; if(!file) return;
+  if(file.size > 10*1024*1024) return alert("Image too large (max 10MB)");
+  const sRef = firebase.storage().ref(`chat_photos/${window.UID}_${Date.now()}.jpg`);
+  try {
+    const snap = await sRef.put(file);
+    const url = await snap.ref.getDownloadURL();
+    const byName = window.isGod ? "Leadership" : (window.ME?.displayName||window.ME?.email||"User");
+    await window.activeChatRef.push().set({text:"\uD83D\uDCF7 [Photo]", photoUrl:url, uid:window.UID||"", sender:window.UID||"", by:byName, ts:firebase.database.ServerValue.TIMESTAMP, read: window.isGod ? true : false});
+  } catch(err) { alert("Photo upload failed."); }
+  e.target.value = "";
+};
 window.setupChat = function(path,title,showBack){
-  if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML="";
+  if($("chatArea")) $("chatArea").style.display="flex"; if($("radarList")) $("radarList").style.display="none"; if($("panelTitle")) $("panelTitle").textContent=title||"Chat"; if($("backToRadar")) $("backToRadar").style.display=showBack?"inline-block":"none"; if($("chatMsgs")) $("chatMsgs").innerHTML="";
   if(window.activeChatRef){try{window.activeChatRef.off();}catch(e){} window.activeChatRef=null;} window.activeChatRef=firebase.database().ref(path);
 
   if(window.isAdminLike()) {
@@ -1887,8 +1905,18 @@ window.setupChat = function(path,title,showBack){
     }
 
     const div=document.createElement("div"); div.className="msg-bubble "+(mine?"msg-me":"msg-them");
-    const timeString = new Date(m.ts || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-    div.innerHTML = `<div>${window.esc(m.text||"")}</div><div class="msg-time">${timeString}</div>`;
+const tsToUse = m.delTs ? m.delTs : (m.editTs ? m.editTs : (m.ts || Date.now()));
+let timeLabel = m.deleted ? "Deleted " : (m.edited ? "Edited " : "");
+const timeString = timeLabel + new Date(tsToUse).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+let cHtml = m.deleted ? '<i style="opacity:0.6">Message deleted</i>' : window.esc(m.text||"");
+if(m.photoUrl && !m.deleted) cHtml = `<img src="${m.photoUrl}" style="max-width:100%; border-radius:8px; margin-bottom:4px; display:block;" />` + cHtml;
+let aHtml = "";
+if (mine && !m.deleted) {
+  aHtml = `<span class="msg-actions" style="display:none; float:right; margin-left:8px;"><button onclick="window.editMsg('${snap.key}')" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0;">âœï¸</button> <button onclick="window.delMsg('${snap.key}')" style="background:none;border:none;cursor:pointer;font-size:12px;padding:0;margin-left:4px;">ðŸ—‘ï¸</button></span>`;
+}
+div.innerHTML = `<div>${aHtml}${cHtml}</div><div class="msg-time" style="clear:both;">${timeString}</div>`;
+div.onmouseenter = function(){ const act = this.querySelector('.msg-actions'); if(act) act.style.display='inline-block'; };
+div.onmouseleave = function(){ const act = this.querySelector('.msg-actions'); if(act) act.style.display='none'; };
     if($("chatMsgs")) { $("chatMsgs").appendChild(div); setTimeout(() => { $("chatMsgs").scrollTop=$("chatMsgs").scrollHeight; }, 50); }
     if(!isInitialLoad && !mine) { pingSound.play().catch(e=>{}); if($("sidePanel") && !$("sidePanel").classList.contains("open")) { if($("chatBadge")) $("chatBadge").style.display = "block"; } }
   });
@@ -2267,7 +2295,8 @@ else if(path.includes("investor.html")){portal="investor"; page="Investor";}
 const payload={uid:u.uid, email:u.email||"", name:u.displayName||u.email||"User", initials:window.initialsFromUser(u), portal:portal, online:true, page:page, ts:firebase.database.ServerValue.TIMESTAMP}; presRef.set(payload); presRef.onDisconnect().update({online:false, ts:firebase.database.ServerValue.TIMESTAMP});}
 
 window.sendMsg = async function(){
-  const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
+  if(window.userDirCache?.byUid?.[window.UID]?.chatDisabled) return alert("Your chat access has been disabled by Management.");
+const text=($("chatInput")?.value||"").trim(); if(!text) return; if($("chatInput")) $("chatInput").value="";
   const byName = window.isGod ? "Leadership" : (window.ME?.displayName||window.ME?.email||"User");
   await window.activeChatRef.push().set({text, uid:window.UID||"", sender:window.UID||"", by:byName, ts:firebase.database.ServerValue.TIMESTAMP, read: window.isGod ? true : false}); 
   if(!window.isGod) window.triggerLeadershipPing("Sent a Message", text); 
