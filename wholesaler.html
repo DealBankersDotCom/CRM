@@ -92,7 +92,9 @@ body{
 .row{display:flex;gap:10px;align-items:center}
 .row.wrap{flex-wrap:wrap}
 .queue{display:flex;flex-direction:column;gap:10px}
-.queue-search{display:flex;gap:10px}
+.queue-search{ display: flex; flex-direction: column; gap: 8px; width: 100%; }
+#s_q { width: 100%; }
+#s_sort { width: auto; max-width: 200px; padding: 6px; font-size: 13px; }
 .queue-list{display:flex;flex-direction:column;gap:10px;max-height:64vh;overflow:auto;padding-right:4px}
 .lead-item{padding:12px;border-radius:14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.10);cursor:pointer;transition:transform .08s ease, background .12s ease, border-color .12s ease;}
 .lead-item:hover{transform:translateY(-1px);background:rgba(255,255,255,.07);border-color:rgba(43,116,255,.35)}
@@ -1068,6 +1070,17 @@ window.selectLeadByIndex = function(idx){
   const notes = (window.currentLead.notes || window.currentLead.Notes || "").toString().trim();
   if(notes) { if($("leadNotesField")) $("leadNotesField").style.display=""; if($("leadNotesText")) $("leadNotesText").textContent=notes;
   } else { if($("leadNotesField")) $("leadNotesField").style.display="none"; }
+  // Render God Mode Audit Log
+  if (window.isGod && window.currentLead.systemLog) {
+      if($("leadNotesField")) $("leadNotesField").style.display="";
+      const logs = Object.values(window.currentLead.systemLog);
+      let logHtml = `<div style=""margin-top: 15px; padding-top: 10px; border-top: 1px dashed red;"">` +
+          `<h6 style=""color: darkred; margin-bottom: 5px; font-weight: bold;"">🛡️ God Mode: Activity Log</h6>` +
+          `<ul style=""color: darkred; font-size: 0.85em; list-style-type: square; padding-left: 20px;"">` +
+          logs.map(l => `<li>${window.esc(l)}</li>`).join("") +
+          `</ul></div>`;
+      if($("leadNotesText")) $("leadNotesText").innerHTML += logHtml;
+  }
 
   const dh = $("dispoHubContent");
   const dhw = $("dispoHubWrapper");
@@ -1701,6 +1714,10 @@ window.deleteLead = async function(){
             Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`]=null); 
             await firebase.database().ref().update(updates); 
         } else {
+            
+            // Fire audit flare to God Mode
+            const dropMsg = `Dropped by ${window.ME?.name || window.ME?.email || window.UID} on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`;
+            await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/systemLog`).push(dropMsg);
             await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
         }
         window.closeLeadModal(); window.clearConsole(); window.toast("Deleted ✓");
@@ -2187,7 +2204,15 @@ function initStaticEvents() {
     const sSort = $("s_sort");
     if(sSort) sSort.addEventListener('change', () => {
         if(window.leadsRef || window.legacyRef || window.branchLeadRefs.length > 0) {
-           const byId = new Map(window.sellerList.map(l => [window.leadIdFor(l), l]));
+           
+        const sortVal = document.getElementById('s_sort').value;
+        if (sortVal === 'recent') window.sellerList.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+        if (sortVal === 'modified') window.sellerList.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+        if (sortVal === 'priority') {
+            const pVals = {High:3, Medium:2, Low:1};
+            window.sellerList.sort((a,b) => (pVals[b.priority] || 0) - (pVals[a.priority] || 0));
+        }
+        const byId = new Map(window.sellerList.map(l => [window.leadIdFor(l), l]));
            window.setListFromMap(byId);
         }
     });
