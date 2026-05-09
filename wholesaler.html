@@ -92,7 +92,11 @@ body{
 .row{display:flex;gap:10px;align-items:center}
 .row.wrap{flex-wrap:wrap}
 .queue{display:flex;flex-direction:column;gap:10px}
-.queue-search{ display: flex; flex-direction: column; gap: 8px; width: 100%; }
+.queue-search{ display: flex; flex-direction: row; flex-wrap: wrap; gap: 8px; width: 100%; align-items: center; }
+#s_q { flex: 1; min-width: 180px; }
+#s_sort { width: auto; max-width: 150px; padding: 6px; font-size: 12px; }
+#s_reload { padding: 0; border-radius: 12px; background: var(--accent); color: white; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; width: 38px; height: 38px; flex-shrink: 0; transition: transform 0.1s; }
+#s_reload:active { transform: scale(0.95); }
 #s_q { width: 100%; }
 #s_sort { width: auto; max-width: 200px; padding: 6px; font-size: 13px; }
 .queue-list{display:flex;flex-direction:column;gap:10px;max-height:64vh;overflow:auto;padding-right:4px}
@@ -248,7 +252,7 @@ body{
   <option value="priority">High to Low Priority</option>
   <option value="modified">Most Recent Modified</option>
 </select>
-            <button class="chip" id="s_reload" type="button">Search</button>
+            <button class="chip" id="s_reload" type="button">🔍</button>
           </div>
           <div class="row wrap">
               <button class="chip primary" id="btnNewLead" type="button">＋ New Lead</button>
@@ -1224,8 +1228,19 @@ window.detachLeadRefs = function(){
   if(window.branchLeadRefs.length){ window.branchLeadRefs.forEach(ref=>{ try{ref.off();}catch(e){} });
   window.branchLeadRefs=[]; }
 }
-window.setListFromMap = function(byId){window.sellerList=Array.from(byId.values()); const order = {High:0, Medium:1, Low:2}; window.sellerList.sort((a,b)=>{ const pa = order[a.priority||"Low"]??2; const pb = order[b.priority||"Low"]??2; if(pa!==pb) return pa-pb; return String(a.address||"").localeCompare(String(b.address||"")); });
-window.applySearch();}
+window.setListFromMap = function(byId){
+  window.sellerList=Array.from(byId.values());
+  const sv = document.getElementById('s_sort')?.value || '';
+  if (sv === 'recent') {
+      window.sellerList.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
+  } else if (sv === 'modified') {
+      window.sellerList.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+  } else {
+      const order = {High:0, Medium:1, Low:2};
+      window.sellerList.sort((a,b)=>{ const pa = order[a.priority||"Low"]??2; const pb = order[b.priority||"Low"]??2; if(pa!==pb) return pa-pb; return String(a.address||"").localeCompare(String(b.address||"")); });
+  }
+  window.applySearch();
+}
 
 window.subscribeAssociateAssignedLeads = function(){
   window.detachLeadRefs(); if($("status")) $("status").textContent=`Loading assigned ${window.currentCategory}…`;
@@ -2204,18 +2219,10 @@ function initStaticEvents() {
     const sSort = $("s_sort");
     if(sSort) sSort.addEventListener('change', () => {
         if(window.leadsRef || window.legacyRef || window.branchLeadRefs.length > 0) {
-           
-        const sortVal = document.getElementById('s_sort').value;
-        if (sortVal === 'recent') window.sellerList.sort((a,b) => (b.createdAt || 0) - (a.createdAt || 0));
-        if (sortVal === 'modified') window.sellerList.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
-        if (sortVal === 'priority') {
-            const pVals = {High:3, Medium:2, Low:1};
-            window.sellerList.sort((a,b) => (pVals[b.priority] || 0) - (pVals[a.priority] || 0));
-        }
-        const byId = new Map(window.sellerList.map(l => [window.leadIdFor(l), l]));
+           const byId = new Map(window.sellerList.map(l => [window.leadIdFor(l), l]));
            window.setListFromMap(byId);
         }
-    });
+});
     
     const sQ = $("s_q");
     if(sQ) sQ.addEventListener('keydown', (e) => { if(e.key==='Enter') window.applySearch(); });
