@@ -1654,20 +1654,20 @@ if(window.modalMode==="edit" && oldPrio !== newPrio && window.currentLead){
       const allowed=new Set(window.getAssignableRows().map(r=>r.uid));
       const uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
-      window.modalLeadId = leadId; 
+      window.modalLeadId = leadId; window.modalMode = "edit"; 
       await window.upsertLeadMasterAndAssignments(leadId,{...payload,createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||"")},uids);
     } else if(window.isBranchManager){
       const allowed=new Set(window.getAssignableRows().map(r=>r.uid));
       let uids=Array.from(window.modalAssignedSet).filter(uid=>allowed.has(uid)); if(!uids.length) uids=[window.UID]; const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
-      window.modalLeadId = leadId;
+      window.modalLeadId = leadId; window.modalMode = "edit";
       const isCurrentlyApproved = window.modalMode === 'edit' ? (window.currentLead?.dispoApproved === true || String(window.currentLead?.dispoApproved).toLowerCase() === 'true') : false;
       const payloadWithMeta = {...payload, createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: isCurrentlyApproved};
       await window.upsertBranchAssignments(leadId, payloadWithMeta, uids);
     } else {
       const leadId=(window.modalMode==="edit"&&window.modalLeadId)?window.modalLeadId:firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}`).push().key;
       leadIdToReturn = leadId;
-      window.modalLeadId = leadId;
+      window.modalLeadId = leadId; window.modalMode = "edit";
       const finalUpdates = {};
       const isCurrentlyApproved = window.modalMode === 'edit' ? (window.currentLead?.dispoApproved === true || String(window.currentLead?.dispoApproved).toLowerCase() === 'true') : false;
       const payloadWithMeta = {...payload, id:leadId, archived:false, updatedAt:Date.now(), updatedBy:window.ME?.email||"", createdAt:(window.modalMode==="edit"&&window.currentLead?.createdAt)?window.currentLead.createdAt:Date.now(),createdBy:(window.modalMode==="edit"&&window.currentLead?.createdBy)?window.currentLead.createdBy:(window.ME?.email||""), dispoApproved: isCurrentlyApproved};
@@ -1719,44 +1719,54 @@ if (isLiveVal && skipClose !== true) {
 
 window.deleteLead = async function(){
     if(!window.modalLeadId) return;
-    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead? This action cannot be undone." : "Remove this lead from your queue?")) return;
+    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead?" : "Remove this lead from your queue?")) return;
     const delBtn = $("m_delete");
-    if(delBtn) { delBtn.disabled = true; delBtn.textContent = window.isGod ? "Deleting..." : "Removing..."; }
+    if(delBtn) { delBtn.disabled = true; delBtn.textContent = "Processing..."; }
     try{
         if(window.isGod) {
-            // God Mode: Full Destruction
             const updates = {};
             const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
             const assignedTo=snap.val()||{}; 
             updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`] = null; 
-            Object.keys(assignedTo).forEach(uid => {
-                updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`] = null;
-            }); 
+            Object.keys(assignedTo).forEach(uid => { updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`] = null; }); 
             updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
+            
+            // NEW: Wipe from all War Room requests globally
+            const wrSnap = await firebase.database().ref('warroom_requests').once('value');
+            const wrData = wrSnap.val() || {};
+            Object.keys(wrData).forEach(uid => {
+                Object.keys(wrData[uid]).forEach(reqId => {
+                    if (wrData[uid][reqId].leadId === window.modalLeadId) {
+                        updates[`warroom_requests/${uid}/${reqId}`] = null;
+                    }
+                });
+            });
+            
             await firebase.database().ref().update(updates); 
         } else {
-            // Associate/Branch Manager: Remove from personal queue and log the action
             await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
             
-            // Drop a note in the lead's call log
+            // NEW: Wipe this specific user's War Room requests for this lead
+            const myWrSnap = await firebase.database().ref(`warroom_requests/${window.UID}`).once('value');
+            const myWrData = myWrSnap.val() || {};
+            Object.keys(myWrData).forEach(reqId => {
+                if(myWrData[reqId].leadId === window.modalLeadId) {
+                    firebase.database().ref(`warroom_requests/${window.UID}/${reqId}`).remove();
+                }
+            });
+
             if(window.currentPhone) {
                 const phoneKey = window.fmtPhoneKey(window.currentPhone);
                 await window.pushLogEntry(phoneKey, {type: "note", text: `Lead removed from queue by ${window.ME?.email || 'User'}`});
             }
-            // Ping Leadership
-            if(typeof window.triggerLeadershipPing === "function") {
-                window.triggerLeadershipPing("Lead Removed", `Lead removed from queue by ${window.ME?.email || 'User'}`);
-            }
+            if(typeof window.triggerLeadershipPing === "function") window.triggerLeadershipPing("Lead Removed", `Lead removed from queue by ${window.ME?.email || 'User'}`);
         }
-        
-        window.closeLeadModal(); 
-        window.clearConsole(); 
+        window.closeLeadModal(); window.clearConsole(); 
         window.sellerView = window.sellerView.filter(l => window.leadIdFor(l) !== window.modalLeadId);
         window.renderQueue();
-        alert(window.isGod ? "Lead successfully deleted." : "Lead removed from your queue.");
+        alert("Success!");
     }catch(e){ 
-        console.error("Deletion Error:", e);
-        alert("Action failed. Check database permissions or network."); 
+        alert("Failed. Check connection/permissions."); 
     } finally {
         if(delBtn) { delBtn.disabled = false; delBtn.textContent = "Delete"; }
     }
@@ -2458,4 +2468,3 @@ firebase.auth().onAuthStateChanged(async u=>{
 </script>
 </body>
 </html>
-
