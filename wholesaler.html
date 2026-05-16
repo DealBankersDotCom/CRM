@@ -244,9 +244,12 @@ body{
         <div class="panel-head"><div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div><div class="pill" id="queueHint">System Online</div></div>
         <div class="panel-body queue">
           <div class="queue-search" style="display:flex; flex-direction:column; gap:10px; width:100%;">
-            <div style="display:flex; gap:8px; width:100%;">
-                <input id="s_q" class="input" placeholder="Search address, name, phone…" style="flex:1; min-width:0;" />
-                <button class="chip" id="s_reload" type="button" style="padding:0 14px; flex-shrink:0;">Search</button>
+            <div style="display:flex; gap:8px; width:100%; align-items:center;">
+                <div style="position:relative; flex:1; display:flex;">
+                    <input id="s_q" class="input" placeholder="Search address, name, phone…" style="flex:1; min-width:0; padding-right:30px;" />
+                    <button id="s_clear" type="button" title="Clear Search" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:4px;">✖</button>
+                </div>
+                <button id="s_reload" type="button" title="Search" style="padding: 0; width: 38px; height: 38px; border-radius: 12px; background: var(--bg3); color: white; border: 1px solid var(--line); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink:0;">🔍</button>
             </div>
             <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; width:100%; align-items:center;">
                 <select id="s_sort" class="select" style="width:100%; padding:8px 10px; font-size:12px; min-width:0;">
@@ -255,7 +258,7 @@ body{
                   <option value="modified">Sort: Updated</option>
                   <option value="priority">Sort: Priority</option>
                 </select>
-                <button class="chip primary" id="btnNewLead" type="button" style="padding:8px 14px; white-space:nowrap; font-size:12px;">＋ New Lead</button>
+                <button id="btnNewLead" type="button" title="Create New Lead" style="padding: 0 16px; height: 38px; border-radius: 12px; background: var(--accent); color: white; border: none; font-size: 13px; font-weight:600; cursor: pointer; display: flex; align-items: center; gap:6px; box-shadow: 0 4px 10px rgba(43,116,255,0.3); flex-shrink:0;">➕ New Lead</button>
             </div>
             <span class='pill' id='queueMeta' style='display:none;'>—</span>
           </div>
@@ -1606,9 +1609,8 @@ window.closeLeadModal = function(){
 
 window.parsePhonesFromModal = function(){
     const val = $("m_phones")?.value || "";
-    const lines = val.split(/
-?
-/).map(x=>x.trim()).filter(Boolean); 
+    const lines = val.split(/[
+]+/).map(x=>x.trim()).filter(Boolean); 
     const out=[], seen=new Set();
     lines.forEach(line=>{
         let label="Phone", phone=line; 
@@ -2285,7 +2287,8 @@ function initStaticEvents() {
     attach('dispoRefreshBtn', window.refreshDispo);
     
     attach('s_reload', window.applySearch);
-    const sSort = $("s_sort");
+      if($("s_clear")) $("s_clear").addEventListener("click", () => { if($("s_q")) $("s_q").value = ""; window.applySearch(); });
+      if($("s_sort")) $("s_sort").addEventListener("change", window.applySearch);
     if(sSort) sSort.addEventListener('change', () => {
         window.applySearch();
         if(window.leadsRef || window.legacyRef || window.branchLeadRefs.length > 0) {
