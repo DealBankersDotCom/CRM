@@ -79,9 +79,8 @@ body{
 .seg button{padding:8px 14px;border:0;background:#0e2332;color:#cfe6ff;cursor:pointer;font-weight:900}
 .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
 .status{font-size:12px;color:#9ab9d6}
-.body{padding:14px;display:grid;grid-template-columns: 320px minmax(0,1fr) 360px;gap:16px;}
-@media(max-width:1050px){ .body{grid-template-columns: 280px minmax(0,1fr)} .col-right{display:none} }
-@media(max-width:768px){ .body{grid-template-columns: 1fr} .col-right{display:block} }
+.body{padding:14px;display:grid;grid-template-columns: 300px minmax(0,1fr) 300px;gap:16px;}
+@media(max-width:900px){ .body{grid-template-columns: 1fr} .col-right{display:block} }
 .panel{border-radius:16px;border:1px solid rgba(255,255,255,.14);background:#0b1825;overflow:hidden;}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
 .panel-title{font-weight:900;letter-spacing:.12em;font-size:12px;color:#cfe3ff;display:flex;align-items:center;gap:10px;text-transform:uppercase;}
@@ -1723,12 +1722,13 @@ if (isLiveVal && skipClose !== true) {
 
 window.deleteLead = async function(){
     if(!window.modalLeadId) return;
-    if(!confirm("Are you sure you want to completely delete this lead? This action cannot be undone.")) return;
+    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead? This action cannot be undone." : "Remove this lead from your queue?")) return;
     const delBtn = $("m_delete");
-    if(delBtn) { delBtn.disabled = true; delBtn.textContent = "Deleting..."; }
+    if(delBtn) { delBtn.disabled = true; delBtn.textContent = window.isGod ? "Deleting..." : "Removing..."; }
     try{
-        const updates = {};
         if(window.isGod) {
+            // God Mode: Full Destruction
+            const updates = {};
             const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
             const assignedTo=snap.val()||{}; 
             updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`] = null; 
@@ -1738,16 +1738,28 @@ window.deleteLead = async function(){
             updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
             await firebase.database().ref().update(updates); 
         } else {
+            // Associate/Branch Manager: Remove from personal queue and log the action
             await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
+            
+            // Drop a note in the lead's call log
+            if(window.currentPhone) {
+                const phoneKey = window.fmtPhoneKey(window.currentPhone);
+                await window.pushLogEntry(phoneKey, {type: "note", text: `Lead removed from queue by ${window.ME?.email || 'User'}`});
+            }
+            // Ping Leadership
+            if(typeof window.triggerLeadershipPing === "function") {
+                window.triggerLeadershipPing("Lead Removed", `Lead removed from queue by ${window.ME?.email || 'User'}`);
+            }
         }
+        
         window.closeLeadModal(); 
         window.clearConsole(); 
         window.sellerView = window.sellerView.filter(l => window.leadIdFor(l) !== window.modalLeadId);
         window.renderQueue();
-        alert("Lead successfully deleted.");
+        alert(window.isGod ? "Lead successfully deleted." : "Lead removed from your queue.");
     }catch(e){ 
         console.error("Deletion Error:", e);
-        alert("Delete failed. Check database permissions or network."); 
+        alert("Action failed. Check database permissions or network."); 
     } finally {
         if(delBtn) { delBtn.disabled = false; delBtn.textContent = "Delete"; }
     }
