@@ -162,7 +162,9 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 <header class="header">
   <div class="logo">DEALBANKERS <span>// COMMAND & CONTROL WAR ROOM</span></div>
   <div class="header-nav">
-    <button class="btn-nav" onclick="location.href='profile.html'">Abort to Hub</button>
+    <span id="activeMarketIndicator" style="color:var(--batman); font-family:\'JetBrains Mono\', monospace; font-size:11px; margin-right:16px; font-weight:700;">[OP AREA: STANDBY]</span>
+    <button class="btn-nav" onclick="openWarRoomSettings()" style="border-color:var(--batman); color:var(--batman);">⚙️ SETUP</button>
+    <button class="btn-nav" onclick="location.href=\'profile.html\'">Abort to Hub</button>
     <button class="btn-nav danger" onclick="firebase.auth().signOut()">Terminate Session</button>
   </div>
 </header>
@@ -242,42 +244,15 @@ Daughter | 210-555-9876"></textarea>
     </div>
     <div class="panel-body">
       
-      <div class="bexar-title">Global Deep Search</div>
-      <div class="tool-grid">
-        <a class="tool-btn" id="btnTps" target="_blank">
-          <i>👤</i> TruePeopleSearch
-        </a>
-        <a class="tool-btn" id="btnFtn" target="_blank">
-          <i>🌳</i> FamilyTreeNow
-        </a>
-        <a class="tool-btn" id="btnZillow" target="_blank">
-          <i>🏠</i> Zillow
-        </a>
-        <a class="tool-btn" id="btnGoogle" target="_blank">
-          <i>🔍</i> Google Query
-        </a>
+      <div class="bexar-title" style="margin-top:16px;">Multi-Intel Interface</div>
+      <div style="display:flex; gap:6px; margin-bottom:8px; overflow-x:auto;">
+          <button class="btn-nav" onclick="popStreetView()" style="color:var(--batman); border-color:var(--batman); box-shadow: 0 0 10px rgba(234,179,8,0.2);">🛣️ POP STREET VIEW</button>
+          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.taxSheet; document.getElementById('satcomOverlay').innerText='TAX ESTATES';">Tax Sheet</button>
+          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.rprHub; document.getElementById('satcomOverlay').innerText='RPR SYSTEM';">RPR</button>
+          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.leadsMap; document.getElementById('satcomOverlay').innerText='LEADS MAP';">Leads Map</button>
       </div>
-
-      <div class="bexar-section">
-        <div class="bexar-title">Bexar County Local Access</div>
-        <div class="tool-grid">
-          <a class="tool-btn" href="https://bexar.trueautomation.com/clientdb/?cid=110" target="_blank">
-            <i>🏛️</i> BCAD Appraisals
-          </a>
-          <a class="tool-btn" href="https://bexar.tx.publicsearch.us/" target="_blank">
-            <i>📜</i> County Clerk
-          </a>
-          <a class="tool-btn" href="https://www.bexar.org/1535/Tax-Assessor-Collector" target="_blank">
-            <i>💰</i> Tax Assessor
-          </a>
-          <a class="tool-btn" href="https://gismaps.bexar.org/public/" target="_blank">
-            <i>🗺️</i> GIS Maps
-          </a>
-        </div>
-      </div>
-
-      <div class="map-view">
-        <div class="map-overlay">SATCOM LINK</div>
+      <div class="map-view" style="height: 380px;">
+        <div class="map-overlay" id="satcomOverlay">STANDBY</div>
         <iframe id="streetViewFrame" src="about:blank"></iframe>
       </div>
 
@@ -286,10 +261,638 @@ Daughter | 210-555-9876"></textarea>
 
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
+<script src="config.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
 
 <script>
 // Init Firebase
@@ -322,7 +925,9 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
   }
   
-  listenForRequests();
+  await loadWarRoomSettings();
+    await loadUserDirectoryCache();
+    listenForRequests();
 });
 
 // Watch for pending requests LIVE
@@ -481,7 +1086,8 @@ function updateOSINTLinks(req, masterLead) {
 
   // Dynamic URLs
   document.getElementById('btnTps').href = req.address ? `https://www.truepeoplesearch.com/results?name=${encodeURIComponent(ownerStr)}&streetaddress=${addrEncoded}` : '#';
-  document.getElementById('btnFtn').href = ownerStr ? `https://www.familytreenow.com/search/genealogy/results?first=${first}&last=${last}` : '#';
+  document.getElementById('btnFtn').href = ownerStr ? `https://www.familytreenow.com/search/genealogy/results?first=${first}&last=${last}&streetaddress=${addrEncoded}` : 'https://www.familytreenow.com/';
+    document.getElementById('btnTps').href = ownerStr ? `https://www.truepeoplesearch.com/results?name=${first}%20${last}&streetaddress=${addrEncoded}` : 'https://www.truepeoplesearch.com/';
   document.getElementById('btnZillow').href = req.address ? `https://www.zillow.com/homes/${addrEncoded}_rb/` : '#';
   document.getElementById('btnGoogle').href = req.address ? `https://www.google.com/search?q=${addrEncoded}` : '#';
 
@@ -609,7 +1215,213 @@ function escapeHtml(unsafe) {
     .replace(/"/g, "&"+"quot;")
     .replace(/'/g, "&"+"#39;");
 }
+
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
 </script>
+
+<div id="settingsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+  <div style="background:var(--bg2); border:1px solid var(--cyan); padding:24px; border-radius:8px; width:480px; box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);">
+    <h2 style="font-family:'Orbitron', sans-serif; color:var(--cyan); margin-bottom:20px;">WAR ROOM SETTINGS</h2>
+    
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">TAX ESTATES SHEET URL</label>
+      <input type="text" id="set_taxSheet" class="input-tactical" placeholder="Paste Google Sheet URL..." />
+    </div>
+    
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">CUSTOM LEADS MAP URL</label>
+      <input type="text" id="set_leadsMap" class="input-tactical" placeholder="Paste Google My Maps URL..." />
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">RPR HUB URL</label>
+      <input type="text" id="set_rprHub" class="input-tactical" placeholder="Paste RPR URL..." />
+    </div>
+
+    <div style="border-top:1px dashed var(--line); padding-top:16px; margin-bottom:16px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">TARGET MARKET PROFILES</label>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <select id="set_marketSelect" class="input-tactical" style="flex:1; cursor:pointer;" onchange="loadSelectedMarket()">
+          </select>
+          <input type="text" id="set_newMarketName" class="input-tactical" placeholder="Or type new (e.g. FL - Miami)" style="flex:1;" />
+      </div>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <div style="flex:1;">
+          <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); margin-bottom:6px;">COUNTY CLERK URL</label>
+          <input type="text" id="set_countyClerk" class="input-tactical" placeholder="Paste URL..." />
+        </div>
+        <div style="flex:1;">
+          <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); margin-bottom:6px;">APPRAISAL DIST URL</label>
+          <input type="text" id="set_appraisalDist" class="input-tactical" placeholder="Paste URL..." />
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); margin-bottom:6px;">TAX ASSESSOR URL</label>
+        <input type="text" id="set_taxAssessor" class="input-tactical" placeholder="Paste URL..." />
+      </div>
+    </div>
+    
+    <div style="display:flex; justify-content:flex-end; gap:12px;">
+      <button class="btn-nav danger" onclick="document.getElementById('settingsModal').style.display='none'">CANCEL</button>
+      <button class="btn-nav" style="border-color:var(--good); color:var(--good);" onclick="saveWarRoomSettings()">SAVE INTEL LINKS</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 <!DOCTYPE html>
@@ -776,7 +1588,9 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 <header class="header">
   <div class="logo">DEALBANKERS <span>// COMMAND & CONTROL WAR ROOM</span></div>
   <div class="header-nav">
-    <button class="btn-nav" onclick="location.href='profile.html'">Abort to Hub</button>
+    <span id="activeMarketIndicator" style="color:var(--batman); font-family:\'JetBrains Mono\', monospace; font-size:11px; margin-right:16px; font-weight:700;">[OP AREA: STANDBY]</span>
+    <button class="btn-nav" onclick="openWarRoomSettings()" style="border-color:var(--batman); color:var(--batman);">⚙️ SETUP</button>
+    <button class="btn-nav" onclick="location.href=\'profile.html\'">Abort to Hub</button>
     <button class="btn-nav danger" onclick="firebase.auth().signOut()">Terminate Session</button>
   </div>
 </header>
@@ -856,42 +1670,15 @@ Daughter | 210-555-9876"></textarea>
     </div>
     <div class="panel-body">
       
-      <div class="bexar-title">Global Deep Search</div>
-      <div class="tool-grid">
-        <a class="tool-btn" id="btnTps" target="_blank">
-          <i>👤</i> TruePeopleSearch
-        </a>
-        <a class="tool-btn" id="btnFtn" target="_blank">
-          <i>🌳</i> FamilyTreeNow
-        </a>
-        <a class="tool-btn" id="btnZillow" target="_blank">
-          <i>🏠</i> Zillow
-        </a>
-        <a class="tool-btn" id="btnGoogle" target="_blank">
-          <i>🔍</i> Google Query
-        </a>
+      <div class="bexar-title" style="margin-top:16px;">Multi-Intel Interface</div>
+      <div style="display:flex; gap:6px; margin-bottom:8px; overflow-x:auto;">
+          <button class="btn-nav" onclick="popStreetView()" style="color:var(--batman); border-color:var(--batman); box-shadow: 0 0 10px rgba(234,179,8,0.2);">🛣️ POP STREET VIEW</button>
+          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.taxSheet; document.getElementById('satcomOverlay').innerText='TAX ESTATES';">Tax Sheet</button>
+          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.rprHub; document.getElementById('satcomOverlay').innerText='RPR SYSTEM';">RPR</button>
+          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.leadsMap; document.getElementById('satcomOverlay').innerText='LEADS MAP';">Leads Map</button>
       </div>
-
-      <div class="bexar-section">
-        <div class="bexar-title">Bexar County Local Access</div>
-        <div class="tool-grid">
-          <a class="tool-btn" href="https://bexar.trueautomation.com/clientdb/?cid=110" target="_blank">
-            <i>🏛️</i> BCAD Appraisals
-          </a>
-          <a class="tool-btn" href="https://bexar.tx.publicsearch.us/" target="_blank">
-            <i>📜</i> County Clerk
-          </a>
-          <a class="tool-btn" href="https://www.bexar.org/1535/Tax-Assessor-Collector" target="_blank">
-            <i>💰</i> Tax Assessor
-          </a>
-          <a class="tool-btn" href="https://gismaps.bexar.org/public/" target="_blank">
-            <i>🗺️</i> GIS Maps
-          </a>
-        </div>
-      </div>
-
-      <div class="map-view">
-        <div class="map-overlay">SATCOM LINK</div>
+      <div class="map-view" style="height: 380px;">
+        <div class="map-overlay" id="satcomOverlay">STANDBY</div>
         <iframe id="streetViewFrame" src="about:blank"></iframe>
       </div>
 
@@ -900,10 +1687,638 @@ Daughter | 210-555-9876"></textarea>
 
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="config.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
+<script src="config.js">
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
+</script>
 
 <script>
 // Init Firebase
@@ -936,7 +2351,9 @@ firebase.auth().onAuthStateChanged(async (user) => {
     }
   }
   
-  listenForRequests();
+  await loadWarRoomSettings();
+    await loadUserDirectoryCache();
+    listenForRequests();
 });
 
 // Watch for pending requests LIVE
@@ -1095,7 +2512,8 @@ function updateOSINTLinks(req, masterLead) {
 
   // Dynamic URLs
   document.getElementById('btnTps').href = req.address ? `https://www.truepeoplesearch.com/results?name=${encodeURIComponent(ownerStr)}&streetaddress=${addrEncoded}` : '#';
-  document.getElementById('btnFtn').href = ownerStr ? `https://www.familytreenow.com/search/genealogy/results?first=${first}&last=${last}` : '#';
+  document.getElementById('btnFtn').href = ownerStr ? `https://www.familytreenow.com/search/genealogy/results?first=${first}&last=${last}&streetaddress=${addrEncoded}` : 'https://www.familytreenow.com/';
+    document.getElementById('btnTps').href = ownerStr ? `https://www.truepeoplesearch.com/results?name=${first}%20${last}&streetaddress=${addrEncoded}` : 'https://www.truepeoplesearch.com/';
   document.getElementById('btnZillow').href = req.address ? `https://www.zillow.com/homes/${addrEncoded}_rb/` : '#';
   document.getElementById('btnGoogle').href = req.address ? `https://www.google.com/search?q=${addrEncoded}` : '#';
 
@@ -1223,7 +2641,213 @@ function escapeHtml(unsafe) {
     .replace(/"/g, "&"+"quot;")
     .replace(/'/g, "&"+"#39;");
 }
+
+// --- WAR ROOM GLOBAL STATES ---
+window.userDirCache = [];
+window.modalAssignedSet = new Set();
+let warRoomSettings = {
+    taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
+    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
+    rprHub: 'https://www.narrpr.com/',
+    activeMarket: 'TX - Bexar County',
+    markets: {
+        'TX - Bexar County': {
+            countyClerk: 'https://bexar.tx.publicsearch.us/',
+            appraisalDist: 'https://bexar.trueautomation.com/clientdb/propertysearch.aspx?cid=110',
+            taxAssessor: 'https://bexar.acttax.com/act_webdev/bexar/index.jsp'
+        }
+    }
+};
+
+async function loadWarRoomSettings() {
+    if(!firebase.auth().currentUser) return;
+    try {
+        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
+        if(snap.exists()) {
+            const data = snap.val();
+            warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
+            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
+            warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
+            warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
+            warRoomSettings.markets = data.markets || warRoomSettings.markets;
+        }
+        applyActiveMarketLinks();
+    } catch(e) { console.error("Settings load error", e); }
+}
+
+function applyActiveMarketLinks() {
+    const market = warRoomSettings.markets[warRoomSettings.activeMarket] || {};
+    document.getElementById('btnClerk').href = market.countyClerk || '#';
+    document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
+    document.getElementById('btnTax').href = market.taxAssessor || '#';
+    
+    const indicator = document.getElementById('activeMarketIndicator');
+    if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
+}
+
+function openWarRoomSettings() {
+    document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
+    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
+    document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
+    
+    const sel = document.getElementById('set_marketSelect');
+    sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
+    
+    document.getElementById('set_newMarketName').value = '';
+    loadSelectedMarket();
+    document.getElementById('settingsModal').style.display = 'flex';
+}
+
+function loadSelectedMarket() {
+    const sel = document.getElementById('set_marketSelect').value;
+    const market = warRoomSettings.markets[sel] || {};
+    document.getElementById('set_countyClerk').value = market.countyClerk || '';
+    document.getElementById('set_appraisalDist').value = market.appraisalDist || '';
+    document.getElementById('set_taxAssessor').value = market.taxAssessor || '';
+}
+
+async function saveWarRoomSettings() {
+    let marketName = document.getElementById('set_newMarketName').value.trim();
+    if(!marketName) marketName = document.getElementById('set_marketSelect').value;
+    if(!marketName) marketName = "Default Market";
+
+    const marketData = {
+        countyClerk: document.getElementById('set_countyClerk').value.trim(),
+        appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
+        taxAssessor: document.getElementById('set_taxAssessor').value.trim()
+    };
+
+    warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
+    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
+    warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
+    warRoomSettings.activeMarket = marketName;
+    if (!warRoomSettings.markets) warRoomSettings.markets = {};
+    warRoomSettings.markets[marketName] = marketData;
+
+    try {
+        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        applyActiveMarketLinks();
+        document.getElementById('settingsModal').style.display = 'none';
+    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+}
+
+async function loadUserDirectoryCache() {
+    try {
+        const snap = await db.ref('userDirectory').once('value');
+        const users = snap.val() || {};
+        const rows = [];
+        Object.keys(users).forEach(uid => {
+            const u = users[uid];
+            if(u.role !== 'system' && u.role !== 'god') {
+                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+            }
+        });
+        rows.sort((a,b) => a.name.localeCompare(b.name));
+        window.userDirCache = rows;
+        renderAssignList();
+    } catch(e) { console.error("Failed to load users", e); }
+}
+
+function renderAssignList() {
+    const list = document.getElementById('assignList');
+    if(!list) return;
+    if(!window.userDirCache || window.userDirCache.length === 0) {
+        list.innerHTML = `<div style="color:var(--muted); font-size:11px;">No associates available.</div>`;
+        return;
+    }
+    list.innerHTML = window.userDirCache.map(r => {
+        const checked = window.modalAssignedSet.has(r.uid) ? "checked" : "";
+        const roleTag = r.role === 'admin' ? '<span style="font-size:9px; background:var(--line); padding:2px 4px; border-radius:2px; margin-left:6px; color:white;">MANAGER</span>' : '';
+        return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
+            <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
+            <div style="display:flex; flex-direction:column; flex:1;">
+                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+            </div>
+        </label>`;
+    }).join('');
+}
+
+function handleAssignChange(el) {
+    if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
+    else window.modalAssignedSet.delete(el.dataset.uid);
+}
+
+function assignNone() {
+    window.modalAssignedSet.clear();
+    renderAssignList();
+}
+
+function startNewDrop() {
+    currentTargetId = null;
+    currentTarget = null;
+    document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
+    document.getElementById('hudOwner').innerText = "Enter raw data below";
+    document.getElementById('hudNotes').innerText = "Source: Raw Database";
+    clearDataExtraction();
+    
+    const status = document.getElementById('targetStatus');
+    status.innerText = "READY FOR MANUAL ENTRY";
+    status.style.color = "var(--batman)";
+}
+
+function popStreetView() {
+    const addr = document.getElementById('hudAddress').innerText;
+    if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
+        const url = `https://www.google.com/maps/search/?api=1&query=$${encodeURIComponent(addr)}`;
+        window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
+    }
+}
 </script>
+
+<div id="settingsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
+  <div style="background:var(--bg2); border:1px solid var(--cyan); padding:24px; border-radius:8px; width:480px; box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);">
+    <h2 style="font-family:'Orbitron', sans-serif; color:var(--cyan); margin-bottom:20px;">WAR ROOM SETTINGS</h2>
+    
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">TAX ESTATES SHEET URL</label>
+      <input type="text" id="set_taxSheet" class="input-tactical" placeholder="Paste Google Sheet URL..." />
+    </div>
+    
+    <div style="margin-bottom:12px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">CUSTOM LEADS MAP URL</label>
+      <input type="text" id="set_leadsMap" class="input-tactical" placeholder="Paste Google My Maps URL..." />
+    </div>
+    
+    <div style="margin-bottom:16px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">RPR HUB URL</label>
+      <input type="text" id="set_rprHub" class="input-tactical" placeholder="Paste RPR URL..." />
+    </div>
+
+    <div style="border-top:1px dashed var(--line); padding-top:16px; margin-bottom:16px;">
+      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">TARGET MARKET PROFILES</label>
+      <div style="display:flex; gap:8px; margin-bottom:12px;">
+          <select id="set_marketSelect" class="input-tactical" style="flex:1; cursor:pointer;" onchange="loadSelectedMarket()">
+          </select>
+          <input type="text" id="set_newMarketName" class="input-tactical" placeholder="Or type new (e.g. FL - Miami)" style="flex:1;" />
+      </div>
+      <div style="display:flex; gap:12px; margin-bottom:12px;">
+        <div style="flex:1;">
+          <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); margin-bottom:6px;">COUNTY CLERK URL</label>
+          <input type="text" id="set_countyClerk" class="input-tactical" placeholder="Paste URL..." />
+        </div>
+        <div style="flex:1;">
+          <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); margin-bottom:6px;">APPRAISAL DIST URL</label>
+          <input type="text" id="set_appraisalDist" class="input-tactical" placeholder="Paste URL..." />
+        </div>
+      </div>
+      <div style="margin-bottom:12px;">
+        <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--muted); margin-bottom:6px;">TAX ASSESSOR URL</label>
+        <input type="text" id="set_taxAssessor" class="input-tactical" placeholder="Paste URL..." />
+      </div>
+    </div>
+    
+    <div style="display:flex; justify-content:flex-end; gap:12px;">
+      <button class="btn-nav danger" onclick="document.getElementById('settingsModal').style.display='none'">CANCEL</button>
+      <button class="btn-nav" style="border-color:var(--good); color:var(--good);" onclick="saveWarRoomSettings()">SAVE INTEL LINKS</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
 
