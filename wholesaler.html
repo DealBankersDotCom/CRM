@@ -243,19 +243,19 @@ body{
       <div id="panel-acq" class="panel">
         <div class="panel-head"><div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div><div class="pill" id="queueHint">System Online</div></div>
         <div class="panel-body queue">
-          <div class="queue-search">
-            <input id="s_q" class="input" placeholder="Search address, name, phone…" />
-            <div style='display: flex; width: 100%; align-items: center; margin-top: 8px;'>
-                <select id="s_sort" class="select" style="width:auto; padding:8px;">
-                  <option value="">Sort By...</option>
-                  <option value="recent">Recent Added</option>
-                  <option value="priority">High to Low Priority</option>
-                  <option value="modified">Most Recent Modified</option>
+          <div class="queue-search" style="flex-direction:column; gap:8px;">
+            <div style="display:flex; gap:8px; width:100%;">
+                <input id="s_q" class="input" placeholder="Search address, name, phone…" style="flex:1;" />
+                <button class="chip" id="s_reload" type="button" style="padding:0 14px; flex-shrink:0;">Search</button>
+            </div>
+            <div style="display:flex; gap:8px; width:100%; align-items:center;">
+                <select id="s_sort" class="select" style="flex:1; padding:8px 10px; font-size:13px;">
+                  <option value="">Sort: A-Z (Default)</option>
+                  <option value="recent">Sort: Newest Added</option>
+                  <option value="modified">Sort: Recently Updated</option>
+                  <option value="priority">Sort: High Priority</option>
                 </select>
-                <div style='margin-left: auto; display: flex; gap: 8px;'>
-                    <button id='s_reload' type='button' title='Search' style='padding: 0; width: 38px; height: 38px; border-radius: 12px; background: var(--bg3); color: white; border: 1px solid var(--line); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: transform 0.1s;' onmousedown='this.style.transform="scale(0.95)"' onmouseup='this.style.transform="scale(1)"' onmouseleave='this.style.transform="scale(1)"'>🔍</button>
-                    <button id='btnNewLead' type='button' title='Create New Lead' style='padding: 0; width: 38px; height: 38px; border-radius: 12px; background: var(--accent); color: white; border: none; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 4px 10px rgba(43,116,255,0.3); transition: transform 0.1s;' onmousedown='this.style.transform="scale(0.95)"' onmouseup='this.style.transform="scale(1)"' onmouseleave='this.style.transform="scale(1)"'>➕</button>
-                </div>
+                <button class="chip primary" id="btnNewLead" type="button" style="padding:8px 16px; flex-shrink:0; white-space:nowrap; font-size:13px;">＋ New Lead</button>
             </div>
             <span class='pill' id='queueMeta' style='display:none;'>—</span>
           </div>
@@ -984,6 +984,25 @@ window.applySearch = function(){
       });
   }
   
+  // NEW SORTING LOGIC
+  const sortVal = $("s_sort")?.value || "";
+  if (sortVal === "recent") {
+      view.sort((a,b) => (b.createdAt||0) - (a.createdAt||0));
+  } else if (sortVal === "modified") {
+      view.sort((a,b) => (b.updatedAt||b.createdAt||0) - (a.updatedAt||a.createdAt||0));
+  } else if (sortVal === "priority") {
+      const pScore = (l) => {
+          const s = String(l.status||l.leadStatus||"").toLowerCase();
+          if(s.includes("hot")) return 3;
+          if(s.includes("work")) return 2;
+          if(s.includes("new")) return 1;
+          return 0;
+      };
+      view.sort((a,b) => pScore(b) - pScore(a));
+  } else {
+      view.sort((a,b) => String(a.address||a.owner||"").localeCompare(String(b.address||b.owner||"")));
+  }
+  
   window.sellerView = view.filter(l => !window.isArchivedLead(l)); 
   window.renderQueue();
   if (window.pendingSelectId) {
@@ -1585,9 +1604,19 @@ window.closeLeadModal = function(){
     }
 }
 
-window.parsePhonesFromModal = function(){const lines=($("m_phones")?.value||"").split("\n").map(x=>x.trim()).filter(Boolean); const out=[], seen=new Set();
-lines.forEach(line=>{const [a,b]=line.includes("|")?line.split("|"):["Phone",line]; const label=(a||"Phone").trim(), phone=(b||"").trim(), k=window.fmtPhoneKey(phone); if(!phone||k==="unknown"||seen.has(k)) return; seen.add(k); out.push({label,phone});});
-return out;}
+window.parsePhonesFromModal = function(){
+    const lines=($("m_phones")?.value||"").split("
+").map(x=>x.trim()).filter(Boolean); 
+    const out=[], seen=new Set();
+    lines.forEach(line=>{
+        let label="Phone", phone=line; 
+        if(line.includes("|")){ const pts=line.split("|"); label=pts[0].trim(); phone=(pts[1]||"").trim(); }
+        const k=window.fmtPhoneKey(phone); 
+        if(!phone||k==="unknown"||seen.has(k)) return; 
+        seen.add(k); out.push({label,phone});
+    });
+    return out;
+}
 
 window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
   const assignedObj = assigneeUids.reduce((acc,uid)=>{acc[uid]=true; return acc;},{});
@@ -1704,7 +1733,8 @@ if(window.modalMode==="edit" && oldPrio !== newPrio && window.currentLead){
         window.pendingWarRoomRequests = [];
         alert("Your War Room requests have been submitted. Keep an eye on your notifications.");
     }
-if (isLiveVal && skipClose !== true) {
+const wasLive = window.modalMode === "edit" && window.currentLead && (window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === "true");
+    if (isLiveVal && !wasLive && skipClose !== true) {
         if(confirm("Lead saved! Would you like to upload deal photos now?")) {
             if($("m_photoUpload")) $("m_photoUpload").click();
             return leadIdToReturn;
@@ -2252,6 +2282,7 @@ function initStaticEvents() {
     attach('dispoRefreshBtn', window.refreshDispo);
     
     attach('s_reload', window.applySearch);
+    const sSort = $("s_sort"); if(sSort) sSort.addEventListener('change', window.applySearch);
     const sSort = $("s_sort");
     if(sSort) sSort.addEventListener('change', () => {
         if(window.leadsRef || window.legacyRef || window.branchLeadRefs.length > 0) {
