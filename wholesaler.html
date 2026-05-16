@@ -243,19 +243,19 @@ body{
       <div id="panel-acq" class="panel">
         <div class="panel-head"><div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div><div class="pill" id="queueHint">System Online</div></div>
         <div class="panel-body queue">
-          <div class="queue-search" style="flex-direction:column; gap:8px;">
+          <div class="queue-search" style="display:flex; flex-direction:column; gap:10px; width:100%;">
             <div style="display:flex; gap:8px; width:100%;">
-                <input id="s_q" class="input" placeholder="Search address, name, phone…" style="flex:1;" />
+                <input id="s_q" class="input" placeholder="Search address, name, phone…" style="flex:1; min-width:0;" />
                 <button class="chip" id="s_reload" type="button" style="padding:0 14px; flex-shrink:0;">Search</button>
             </div>
-            <div style="display:flex; gap:8px; width:100%; align-items:center;">
-                <select id="s_sort" class="select" style="flex:1; padding:8px 10px; font-size:13px;">
-                  <option value="">Sort: A-Z (Default)</option>
-                  <option value="recent">Sort: Newest Added</option>
-                  <option value="modified">Sort: Recently Updated</option>
-                  <option value="priority">Sort: High Priority</option>
+            <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; width:100%; align-items:center;">
+                <select id="s_sort" class="select" style="width:100%; padding:8px 10px; font-size:12px; min-width:0;">
+                  <option value="">Sort: A-Z</option>
+                  <option value="recent">Sort: Newest</option>
+                  <option value="modified">Sort: Updated</option>
+                  <option value="priority">Sort: Priority</option>
                 </select>
-                <button class="chip primary" id="btnNewLead" type="button" style="padding:8px 16px; flex-shrink:0; white-space:nowrap; font-size:13px;">＋ New Lead</button>
+                <button class="chip primary" id="btnNewLead" type="button" style="padding:8px 14px; white-space:nowrap; font-size:12px;">＋ New Lead</button>
             </div>
             <span class='pill' id='queueMeta' style='display:none;'>—</span>
           </div>
@@ -1605,8 +1605,10 @@ window.closeLeadModal = function(){
 }
 
 window.parsePhonesFromModal = function(){
-    const lines=($("m_phones")?.value||"").split("
-").map(x=>x.trim()).filter(Boolean); 
+    const val = $("m_phones")?.value || "";
+    const lines = val.split(/
+?
+/).map(x=>x.trim()).filter(Boolean); 
     const out=[], seen=new Set();
     lines.forEach(line=>{
         let label="Phone", phone=line; 
@@ -1734,7 +1736,8 @@ if(window.modalMode==="edit" && oldPrio !== newPrio && window.currentLead){
         alert("Your War Room requests have been submitted. Keep an eye on your notifications.");
     }
 const wasLive = window.modalMode === "edit" && window.currentLead && (window.currentLead.isLive === true || String(window.currentLead.isLive).toLowerCase() === "true");
-    if (isLiveVal && !wasLive && skipClose !== true) {
+    const hasPhotos = Array.isArray(window.modalCurrentPhotos) && window.modalCurrentPhotos.length > 0;
+    if (isLiveVal && !wasLive && !hasPhotos && skipClose !== true) {
         if(confirm("Lead saved! Would you like to upload deal photos now?")) {
             if($("m_photoUpload")) $("m_photoUpload").click();
             return leadIdToReturn;
@@ -2282,9 +2285,9 @@ function initStaticEvents() {
     attach('dispoRefreshBtn', window.refreshDispo);
     
     attach('s_reload', window.applySearch);
-    const sSort = $("s_sort"); if(sSort) sSort.addEventListener('change', window.applySearch);
     const sSort = $("s_sort");
     if(sSort) sSort.addEventListener('change', () => {
+        window.applySearch();
         if(window.leadsRef || window.legacyRef || window.branchLeadRefs.length > 0) {
            const byId = new Map(window.sellerList.map(l => [window.leadIdFor(l), l]));
            window.setListFromMap(byId);
