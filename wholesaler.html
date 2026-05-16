@@ -243,22 +243,22 @@ body{
       <div id="panel-acq" class="panel">
         <div class="panel-head"><div class="panel-title">● Lead Queue <span class="pill" id="leadCountPill">0 leads</span></div><div class="pill" id="queueHint">System Online</div></div>
         <div class="panel-body queue">
-          <div class="queue-search" style="display:flex; flex-direction:column; gap:10px; width:100%;">
-            <div style="display:flex; gap:8px; width:100%; align-items:center;">
+          <div class="queue-search" style="display:flex; flex-direction:column; gap:8px; width:100%; padding-bottom:4px;">
+            <div style="display:flex; gap:6px; width:100%; align-items:center;">
                 <div style="position:relative; flex:1; display:flex;">
-                    <input id="s_q" class="input" placeholder="Search address, name, phone…" style="flex:1; min-width:0; padding-right:30px;" />
-                    <button id="s_clear" type="button" title="Clear Search" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:14px; padding:4px;">✖</button>
+                    <input id="s_q" class="input" placeholder="Search..." style="flex:1; min-width:0; padding:6px 28px 6px 12px; font-size:13px; height:34px; border-radius:8px;" />
+                    <button id="s_clear" type="button" title="Clear Search" style="position:absolute; right:8px; top:50%; transform:translateY(-50%); background:none; border:none; color:var(--muted); cursor:pointer; font-size:12px; padding:4px; display:none;">✖</button>
                 </div>
-                <button id="s_reload" type="button" title="Search" style="padding: 0; width: 38px; height: 38px; border-radius: 12px; background: var(--bg3); color: white; border: 1px solid var(--line); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink:0;">🔍</button>
+                <button id="s_reload" type="button" title="Search" style="padding: 0; width: 34px; height: 34px; border-radius: 8px; background: var(--bg3); color: var(--cyan); border: 1px solid var(--line); font-size: 14px; cursor: pointer; display: flex; align-items: center; justify-content: center; flex-shrink:0;">🔍</button>
             </div>
-            <div style="display:grid; grid-template-columns: 1fr auto; gap:8px; width:100%; align-items:center;">
-                <select id="s_sort" class="select" style="width:100%; padding:8px 10px; font-size:12px; min-width:0;">
-                  <option value="">Sort: A-Z</option>
-                  <option value="recent">Sort: Newest</option>
-                  <option value="modified">Sort: Updated</option>
-                  <option value="priority">Sort: Priority</option>
+            <div style="display:grid; grid-template-columns: 1fr auto; gap:6px; width:100%; align-items:center;">
+                <select id="s_sort" class="select" style="width:100%; padding:0 10px; font-size:12px; height:34px; min-width:0; border-radius:8px; border:1px solid var(--line); background:var(--bg2); color:var(--text); cursor:pointer;">
+                  <option value="">Sort: A-Z (Default)</option>
+                  <option value="recent">Sort: Newest First</option>
+                  <option value="modified">Sort: Recently Updated</option>
+                  <option value="priority">Sort: High Priority</option>
                 </select>
-                <button id="btnNewLead" type="button" title="Create New Lead" style="padding: 0 16px; height: 38px; border-radius: 12px; background: var(--accent); color: white; border: none; font-size: 13px; font-weight:600; cursor: pointer; display: flex; align-items: center; gap:6px; box-shadow: 0 4px 10px rgba(43,116,255,0.3); flex-shrink:0;">➕ New Lead</button>
+                <button id="btnNewLead" type="button" title="Create New Lead" style="padding: 0; width: 34px; height: 34px; border-radius: 8px; background: var(--accent); color: white; border: none; font-size: 16px; font-weight:bold; cursor: pointer; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 12px rgba(43,116,255,0.25); flex-shrink:0;">➕</button>
             </div>
             <span class='pill' id='queueMeta' style='display:none;'>—</span>
           </div>
@@ -519,12 +519,156 @@ Daughter Lisa | 210-555-2222"></textarea></div>
   </div>
 </div>
 
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
-<script src="config.js"></script>
-<script src="app-auth.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js">
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js">
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
+</script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js">
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
+</script>
+<script src="config.js">
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
+</script>
+<script src="app-auth.js">
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
+</script>
 <script>
 (function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig. Check config.js load order.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){console.error("Firebase init error:", e);}})();
 
@@ -1609,8 +1753,8 @@ window.closeLeadModal = function(){
 
 window.parsePhonesFromModal = function(){
     const val = $("m_phones")?.value || "";
-    const lines = val.split(/[
-]+/).map(x=>x.trim()).filter(Boolean); 
+    const lines = val.split("
+").map(x=>x.trim()).filter(Boolean); 
     const out=[], seen=new Set();
     lines.forEach(line=>{
         let label="Phone", phone=line; 
@@ -2286,9 +2430,9 @@ function initStaticEvents() {
     attach('tabMarket', window.showMarketBoard);
     attach('dispoRefreshBtn', window.refreshDispo);
     
-    attach('s_reload', window.applySearch);
+    
       if($("s_clear")) $("s_clear").addEventListener("click", () => { if($("s_q")) $("s_q").value = ""; window.applySearch(); });
-      if($("s_sort")) $("s_sort").addEventListener("change", window.applySearch);
+      
     if(sSort) sSort.addEventListener('change', () => {
         window.applySearch();
         if(window.leadsRef || window.legacyRef || window.branchLeadRefs.length > 0) {
@@ -2505,6 +2649,30 @@ firebase.auth().onAuthStateChanged(async u=>{
     else{ window.subscribeAssociateAssignedLeads(); }
   }catch(e){ if($("status")) $("status").textContent="Leads subscribe error."; }
 });
+
+setTimeout(() => {
+    if($("s_reload")) $("s_reload").addEventListener("click", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("s_q")) {
+        $("s_q").addEventListener("keyup", (e) => {
+            if(e.key === "Enter" && typeof window.applySearch === 'function') window.applySearch();
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+        $("s_q").addEventListener("input", () => {
+            if($("s_clear")) $("s_clear").style.display = $("s_q").value.length > 0 ? "block" : "none";
+        });
+    }
+    if($("s_clear")) {
+        $("s_clear").addEventListener("click", () => {
+            if($("s_q")) $("s_q").value = "";
+            $("s_clear").style.display = "none";
+            if(typeof window.applySearch === 'function') window.applySearch();
+        });
+    }
+    if($("s_sort")) $("s_sort").addEventListener("change", () => { if(typeof window.applySearch === 'function') window.applySearch(); });
+    if($("btnNewLead") && typeof window.openNewLeadModal === 'function') {
+        $("btnNewLead").addEventListener("click", window.openNewLeadModal);
+    }
+}, 500);
 </script>
 </body>
 </html>
