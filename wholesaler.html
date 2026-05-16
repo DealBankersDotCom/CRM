@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
 <title>DealBankers • Wholesaler</title>
 <link rel="icon" type="image/jpeg" href="icon (1).jpg" />
 <link rel="preconnect" href="https://fonts.googleapis.com" />
@@ -80,8 +80,8 @@ body{
 .seg button.active{background:linear-gradient(180deg,#2b74ff,#0a58ca);color:#fff}
 .status{font-size:12px;color:#9ab9d6}
 .body{padding:14px;display:grid;grid-template-columns: 320px minmax(0,1fr) 360px;gap:16px;}
-@media(max-width:1050px){ .body{grid-template-columns: 280px minmax(0,1fr)} .col-right{display:none} }
-@media(max-width:768px){ .body{grid-template-columns: 1fr} .col-right{display:block} }
+@media(max-width:1180px){ .body{grid-template-columns: 300px minmax(0,1fr)} .col-right{display:none} }
+@media(max-width:960px){ .body{grid-template-columns: 1fr} .col-right{display:block} }
 .panel{border-radius:16px;border:1px solid rgba(255,255,255,.14);background:#0b1825;overflow:hidden;}
 .panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 12px;border-bottom:1px solid rgba(255,255,255,.12);background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.02));}
 .panel-title{font-weight:900;letter-spacing:.12em;font-size:12px;color:#cfe3ff;display:flex;align-items:center;gap:10px;text-transform:uppercase;}
@@ -1723,34 +1723,24 @@ if (isLiveVal && skipClose !== true) {
 
 window.deleteLead = async function(){
     if(!window.modalLeadId) return;
-    if(!confirm("Are you sure you want to completely delete this lead? This action cannot be undone.")) return;
-    const delBtn = $("m_delete");
-    if(delBtn) { delBtn.disabled = true; delBtn.textContent = "Deleting..."; }
+    if(!confirm("Are you sure you want to completely delete this lead?")) return;
     try{
-        const updates = {};
         if(window.isGod) {
             const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
             const assignedTo=snap.val()||{}; 
-            updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`] = null; 
-            Object.keys(assignedTo).forEach(uid => {
-                updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`] = null;
-            }); 
-            updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
+            const updates={[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`]:null}; 
+            Object.keys(assignedTo).forEach(uid=>updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`]=null); 
             await firebase.database().ref().update(updates); 
         } else {
+            // Fire audit flare to God Mode (non-blocking)
+            try {
+                const dropMsg = `Dropped by ${window.ME?.name || window.ME?.email || window.UID} on ${new Date().toLocaleDateString()} at ${new Date().toLocaleTimeString()}`;
+                await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/systemLog`).push(dropMsg);
+            } catch(auditErr) { /* audit log optional - continue with removal */ }
             await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
         }
-        window.closeLeadModal(); 
-        window.clearConsole(); 
-        window.sellerView = window.sellerView.filter(l => window.leadIdFor(l) !== window.modalLeadId);
-        window.renderQueue();
-        alert("Lead successfully deleted.");
-    }catch(e){ 
-        console.error("Deletion Error:", e);
-        alert("Delete failed. Check database permissions or network."); 
-    } finally {
-        if(delBtn) { delBtn.disabled = false; delBtn.textContent = "Delete"; }
-    }
+        window.closeLeadModal(); window.clearConsole(); window.toast("Deleted ✓");
+    }catch(e){ alert("Delete failed"); }
 };
 window.changeUserRole = async function(uid, role) {
     if(!window.isGod) return;
@@ -2449,3 +2439,4 @@ firebase.auth().onAuthStateChanged(async u=>{
 </script>
 </body>
 </html>
+
