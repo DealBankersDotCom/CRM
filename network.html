@@ -130,6 +130,13 @@ body{
 .btn.primary:hover{background:var(--accent);box-shadow:0 0 15px rgba(43,116,255,.4);}
 .btn.danger{border-color:rgba(255,85,85,.55);background:rgba(255,85,85,.16);}
 
+/* Plugin Hub */
+.plugin-btn { display:flex; flex-direction:column; align-items:center; justify-content:center; width:104px; height:100px; background:rgba(255,255,255,.03); border:1px solid rgba(255,255,255,.1); border-radius:16px; color:#cfe3ff; text-decoration:none; font-size:11px; text-align:center; gap:8px; transition:transform .15s, background .15s, border-color .15s; flex-shrink:0; padding:8px; line-height:1.2; font-weight:800; }
+.plugin-btn:hover { transform:translateY(-2px); background:rgba(43,116,255,.1); border-color:rgba(43,116,255,.4); color:#fff; }
+.scroll-row { display:flex; gap:12px; overflow-x:auto; padding-bottom:12px; scrollbar-width: thin; scrollbar-color: var(--line) transparent; }
+.scroll-row::-webkit-scrollbar { height: 6px; }
+.scroll-row::-webkit-scrollbar-thumb { background: var(--line); border-radius: 6px; }
+
 /* Chat Overlay */
 #chatBubble{position:fixed;bottom:24px;right:24px;width:60px;height:60px;border-radius:50%;background:#133e6a;color:white;border:2px solid var(--accent);display:flex;align-items:center;justify-content:center;cursor:pointer;box-shadow:0 0 20px rgba(43,116,255,0.8);z-index:9999;transition:transform .2s, box-shadow 0.2s;font-size:30px;}
 #chatBubble:hover{transform:scale(1.08);box-shadow:0 0 30px rgba(43,116,255,1);}
@@ -223,7 +230,7 @@ body{
       <div class="panel" id="panel-profile">
         <div class="panel-head">
             <div class="panel-title">⌁ Identity & Track Record</div>
-            <div id="viewingStatus" class="pill">Select a profile</div>
+            <button id="viewingStatus" class="pill" style="cursor:pointer; transition:all 0.2s; border:1px solid rgba(255,255,255,.16); background:rgba(0,0,0,.18);">● Plugin Hub Active</button>
         </div>
         <div class="panel-body" id="profileContainer" style="display:none;">
             
@@ -286,10 +293,32 @@ body{
             </div>
 
         </div>
-        <div id="emptyState" style="text-align:center; padding:40px 20px; color:var(--muted); flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;">
-            <div style="font-size:48px; margin-bottom:16px;">📇</div>
-            <div style="font-size:14px; font-weight:800; letter-spacing:0.05em; text-transform:uppercase;">Select a Baseball Card</div>
-            <div style="font-size:12px; margin-top:8px; max-width:280px; line-height:1.5;">View verified track records, buy boxes, and connect with real players.</div>
+        <div id="pluginsContainer" style="padding:16px; flex:1; display:flex; flex-direction:column; gap:24px; overflow-y:auto;">
+            <div>
+                <div class="lbl">In-House Tools</div>
+                <div class="scroll-row">
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">🎓</div><div>Training</div></a>
+                </div>
+            </div>
+            <div>
+                <div class="lbl">Networking & Capital</div>
+                <div class="scroll-row">
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">🏠</div><div>BiggerPockets</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">💼</div><div>LinkedIn</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">🤝</div><div>CiX.com</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">💰</div><div>PrivateMoneyClub</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">📈</div><div>Raising Capital</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">🛒</div><div>OfferMarket</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">🔗</div><div>Alignable</div></a>
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">🤠</div><div>TX Lenders</div></a>
+                </div>
+            </div>
+            <div>
+                <div class="lbl">Marketplaces</div>
+                <div class="scroll-row">
+                    <a href="#" class="plugin-btn"><div style="font-size:32px;">☮️</div><div>Craigslist</div></a>
+                </div>
+            </div>
         </div>
       </div>
 
@@ -456,6 +485,20 @@ function initStaticEvents() {
     attach('btnMessageUser', window.openDirectMessage);
     attach('btnGodSave', window.godSaveProfile);
 
+    // Global Reset to Hub
+    window.showPluginsHub = function() {
+        window.viewingUid = null;
+        if($("pluginsContainer")) $("pluginsContainer").style.display = "flex";
+        if($("profileContainer")) $("profileContainer").style.display = "none";
+        document.querySelectorAll('.dir-item').forEach(i => i.classList.remove('selected'));
+        if($("viewingStatus")) {
+            $("viewingStatus").innerHTML = "● Plugin Hub Active";
+            $("viewingStatus").style.borderColor = "rgba(255,255,255,.16)";
+            $("viewingStatus").style.color = "#9ab9d6";
+        }
+    };
+    attach('viewingStatus', window.showPluginsHub);
+
     attach('chatBubble', () => { if($("sidePanel")) $("sidePanel").classList.add("open"); $("chatBadge").style.display="none"; });
     attach('closePanel', () => { if($("sidePanel")) $("sidePanel").classList.remove("open"); });
     attach('chatSend', window.sendMsg);
@@ -541,18 +584,22 @@ window.openProfile = function(uid) {
     window.viewingUid = uid;
     const user = window.allUsers.find(u => u.uid === uid);
     
-    if($("emptyState")) $("emptyState").style.display = "none";
+    if($("pluginsContainer")) $("pluginsContainer").style.display = "none";
     if($("profileContainer")) $("profileContainer").style.display = "block";
     
     if(!user) {
-        if($("viewingStatus")) $("viewingStatus").textContent = "Profile not found";
+        if($("viewingStatus")) $("viewingStatus").innerHTML = "Profile not found";
         return;
     }
     
     const isMe = (uid === window.UID);
     const name = window.esc(user.name || user.email || "Unknown");
     
-    if($("viewingStatus")) $("viewingStatus").textContent = isMe ? "Editing My Profile" : "Viewing Public Profile";
+    if($("viewingStatus")) {
+        $("viewingStatus").innerHTML = isMe ? "Editing My Profile (Close ✕)" : "◀ Back to Hub";
+        $("viewingStatus").style.borderColor = "var(--accent)";
+        $("viewingStatus").style.color = "#fff";
+    }
     
     const avatarEl = $("p_avatar");
     if(avatarEl) {
@@ -724,3 +771,4 @@ firebase.auth().onAuthStateChanged(async u => {
 </script>
 </body>
 </html>
+
