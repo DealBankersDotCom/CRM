@@ -1753,11 +1753,12 @@ const wasLive = window.modalMode === "edit" && window.currentLead && (window.cur
 
 window.deleteLead = async function(){
     if(!window.modalLeadId) return;
-    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead?" : "Remove this lead from your queue?")) return;
+    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead?" : "Remove this lead from your active queue?")) return;
     const delBtn = $("m_delete");
     if(delBtn) { delBtn.disabled = true; delBtn.textContent = "Processing..."; }
     try{
         if(window.isGod) {
+            // God Mode: Complete Wipe
             const updates = {};
             const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
             const assignedTo=snap.val()||{}; 
@@ -1766,7 +1767,6 @@ window.deleteLead = async function(){
             updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
             await firebase.database().ref().update(updates); 
             
-            // Safe War Room Cleanup
             try {
                 const wrSnap = await firebase.database().ref('warroom_requests').once('value');
                 const wrData = wrSnap.val() || {};
@@ -1780,29 +1780,47 @@ window.deleteLead = async function(){
             } catch(wrErr) { console.log("Global War Room wipe skipped due to DB rules."); }
 
         } else {
-            await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
-            
-            try {
-                const myWrSnap = await firebase.database().ref(`warroom_requests/${window.UID}`).once('value');
-                const myWrData = myWrSnap.val() || {};
-                const myWrUpdates = {};
-                Object.keys(myWrData).forEach(reqId => {
-                    if(myWrData[reqId].leadId === window.modalLeadId) myWrUpdates[`warroom_requests/${window.UID}/${reqId}`] = null;
-                });
-                if(Object.keys(myWrUpdates).length > 0) await firebase.database().ref().update(myWrUpdates);
-            } catch(wrErr) { console.log("Personal War Room wipe skipped."); }
+            // Associate/Manager Mode: Return to bucket, remove from their queue
+            const leadRef = firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`);
+            const leadSnap = await leadRef.once('value');
+            if (leadSnap.exists()) {
+                const updates = {};
+                
+                // Remove the UID from the master assigned list
+                updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo/${window.UID}`] = null;
+                
+                // Get current assignedUids, remove this user, and update
+                const currentData = leadSnap.val();
+                let uids = currentData.assignedUids || [];
+                uids = uids.filter(id => id !== window.UID);
+                updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedUids`] = uids;
+                
+                // Remove from the user's specific queue
+                updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
+                
+                // Create an audit log entry in the master record
+                const logEntry = `[${new Date().toLocaleString()}] Removed from queue by ${window.ME?.email || 'User'}`;
+                const logKey = firebase.database().ref().push().key;
+                updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/systemLog/${logKey}`] = logEntry;
+                
+                await firebase.database().ref().update(updates);
+            } else {
+                // Fallback if not in master for some reason, just delete from their local queue
+                 await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
+            }
 
             if(window.currentPhone) {
                 const phoneKey = window.fmtPhoneKey(window.currentPhone);
-                await window.pushLogEntry(phoneKey, {type: "note", text: `Lead removed from queue by ${window.ME?.email || 'User'}`});
+                await window.pushLogEntry(phoneKey, {type: "note", text: `Lead returned to master bucket by ${window.ME?.email || 'User'}`});
             }
-            if(typeof window.triggerLeadershipPing === "function") window.triggerLeadershipPing("Lead Removed", `Lead removed from queue by ${window.ME?.email || 'User'}`);
+            if(typeof window.triggerLeadershipPing === "function") window.triggerLeadershipPing("Lead Returned", `Lead returned to master bucket by ${window.ME?.email || 'User'}`);
         }
         window.closeLeadModal(); window.clearConsole(); 
         window.sellerView = window.sellerView.filter(l => window.leadIdFor(l) !== window.modalLeadId);
         window.renderQueue();
         alert("Success!");
     }catch(e){ 
+        console.error(e);
         alert("Failed. Check connection/permissions."); 
     } finally {
         if(delBtn) { delBtn.disabled = false; delBtn.textContent = "Delete"; }
