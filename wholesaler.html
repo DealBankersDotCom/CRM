@@ -1753,18 +1753,26 @@ const wasLive = window.modalMode === "edit" && window.currentLead && (window.cur
 
 window.deleteLead = async function(){
     if(!window.modalLeadId) return;
-    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead?" : "Remove this lead from your active queue?")) return;
+    if(!confirm(window.isGod ? "Are you sure you want to completely delete this lead?" : "Return this lead to the master bucket?")) return;
     const delBtn = $("m_delete");
     if(delBtn) { delBtn.disabled = true; delBtn.textContent = "Processing..."; }
     try{
+        const updates = {};
         if(window.isGod) {
-            // God Mode: Complete Wipe
-            const updates = {};
-            const snap=await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
-            const assignedTo=snap.val()||{}; 
+            // God Mode: Nuclear Wipe (Hits Master, Legacy, and Flat paths)
+            const snap = await firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo`).once("value");
+            const assignedTo = snap.val() || {}; 
+            
             updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`] = null; 
-            Object.keys(assignedTo).forEach(uid => { updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`] = null; }); 
+            updates[`${LEGACY_LEADS_PATH}/${window.currentCategory}/${window.modalLeadId}`] = null; // Obliterate legacy ghost
+            
+            Object.keys(assignedTo).forEach(uid => { 
+                updates[`${LEADS_BY_USER_PATH}/${uid}/${window.currentCategory}/${window.modalLeadId}`] = null; 
+                updates[`${LEADS_BY_USER_PATH}/${uid}/${window.modalLeadId}`] = null; // Obliterate flat ghost
+            }); 
             updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
+            updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.modalLeadId}`] = null;
+            
             await firebase.database().ref().update(updates); 
             
             try {
@@ -1777,36 +1785,33 @@ window.deleteLead = async function(){
                     });
                 });
                 if(Object.keys(wrUpdates).length > 0) await firebase.database().ref().update(wrUpdates);
-            } catch(wrErr) { console.log("Global War Room wipe skipped due to DB rules."); }
+            } catch(wrErr) { console.log("War Room wipe skipped."); }
 
         } else {
-            // Associate/Manager Mode: Return to bucket, remove from their queue
-            const leadRef = firebase.database().ref(`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}`);
-            const leadSnap = await leadRef.once('value');
-            if (leadSnap.exists()) {
-                const updates = {};
-                
-                // Remove the UID from the master assigned list
-                updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo/${window.UID}`] = null;
-                
-                // Get current assignedUids, remove this user, and update
-                const currentData = leadSnap.val();
-                let uids = currentData.assignedUids || [];
-                uids = uids.filter(id => id !== window.UID);
-                updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedUids`] = uids;
-                
-                // Remove from the user's specific queue
-                updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
-                
-                // Create an audit log entry in the master record
-                const logEntry = `[${new Date().toLocaleString()}] Removed from queue by ${window.ME?.email || 'User'}`;
-                const logKey = firebase.database().ref().push().key;
-                updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/systemLog/${logKey}`] = logEntry;
-                
+            // Associate/Manager Mode: Blind Multi-Path Return to Bucket
+            updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo/${window.UID}`] = null;
+            updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`] = null;
+            updates[`${LEADS_BY_USER_PATH}/${window.UID}/${window.modalLeadId}`] = null;
+            
+            if(window.isBranchManager) {
+                const team = window.managedAssociatesFor(window.UID);
+                team.forEach(u => {
+                    updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/assignedTo/${u.uid}`] = null;
+                    updates[`${LEADS_BY_USER_PATH}/${u.uid}/${window.currentCategory}/${window.modalLeadId}`] = null;
+                    updates[`${LEADS_BY_USER_PATH}/${u.uid}/${window.modalLeadId}`] = null;
+                });
+            }
+            
+            const logKey = firebase.database().ref().push().key;
+            updates[`${LEADS_MASTER_PATH}/${window.currentCategory}/${window.modalLeadId}/systemLog/${logKey}`] = `[${new Date().toLocaleString()}] Returned to bucket by ${window.ME?.email || 'User'}`;
+            
+            // Try master bucket return. Fallback to local wipe if DB Rules reject it.
+            try {
                 await firebase.database().ref().update(updates);
-            } else {
-                // Fallback if not in master for some reason, just delete from their local queue
-                 await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
+            } catch(ruleErr) {
+                console.warn("Master update rejected by rules, falling back to local queue wipe.", ruleErr);
+                await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.currentCategory}/${window.modalLeadId}`).remove();
+                await firebase.database().ref(`${LEADS_BY_USER_PATH}/${window.UID}/${window.modalLeadId}`).remove();
             }
 
             if(window.currentPhone) {
@@ -1815,6 +1820,7 @@ window.deleteLead = async function(){
             }
             if(typeof window.triggerLeadershipPing === "function") window.triggerLeadershipPing("Lead Returned", `Lead returned to master bucket by ${window.ME?.email || 'User'}`);
         }
+        
         window.closeLeadModal(); window.clearConsole(); 
         window.sellerView = window.sellerView.filter(l => window.leadIdFor(l) !== window.modalLeadId);
         window.renderQueue();
