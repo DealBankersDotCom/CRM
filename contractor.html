@@ -774,6 +774,7 @@ const statusClass = idx < stepIdx ? 'completed' : (idx === stepIdx ? 'active' : 
 stepsHtml += `<div class="tracker-step ${statusClass}" data-step="${s.id}"><div class="tracker-icon">${s.icon}</div><div class="tracker-label">${s.id}</div></div>`;
 });
 let roleBadge = amIAssigned ? '<span class="pill good">ASSIGNED TO ME</span>' : `<span class="pill blue">ASSIGNED TO: ${window.esc(j.assignedSubEmail)}</span>`;
+roleBadge += (amIAssigned || window.isBranchManagerMode() || window.isGodMode()) ? ` <button class="chip danger" style="padding:4px 8px;font-size:11px;cursor:pointer;margin-left:6px;" onclick="window.dropJob('${id}')">Unassign / Drop</button>` : '';
 actionHTML += `<div style="background:rgba(43,116,255,0.05);border:1px solid rgba(43,116,255,0.3);border-radius:16px;padding:16px;margin-bottom:16px;"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px;"><h4 style="margin:0;color:#fff;">${isEnterprise ? 'Bid Fulfillment Tracker' : 'Service Fulfillment Tracker'}</h4>${roleBadge}</div><div style="color:var(--muted);font-size:12px;margin-bottom:16px;">Tap a status icon to instantly update dispatch.</div><div class="tracker-progress"><div class="tracker-progress-bar" style="width:${prog}%"></div>${stepsHtml}</div></div><div class="hr"></div><div class="kv" style="background:transparent;padding:0;border:none;margin-bottom:8px;"><b>Job Comms (Internal Chat)</b></div><div id="jobCommsLog" class="chat-log">Loading comms...</div><div class="chat-input-row"><textarea class="textarea-mini" id="techChatInput" placeholder="Type message..."></textarea><button class="chip primary" id="btnSendTechMsg">Send</button>${window.isGodMode() ?
 `<button class="chip" id="btnSendInternalMsg" style="background:rgba(245,158,11,0.2);border-color:var(--warn);color:var(--warn);">Private Note</button>` : ''}</div>`;
 } else { actionHTML += `<div class="kv" style="border-color:var(--warn);background:rgba(245,158,11,0.1);"><b style="color:var(--warn);">UNAVAILABLE:</b> This job has been assigned to another contractor.</div>`; }
@@ -1079,6 +1080,24 @@ alert("Failed to save: " + e.message);
 } finally {
 if(btn) { btn.disabled = false; btn.textContent = "Save Job"; }
 }
+};
+
+window.dropJob = async function(jobId) {
+    if(!jobId) return;
+    if(!confirm("Confirm action: Are you sure you want to drop/unassign this job? It will be returned to the open market.")) return;
+    try {
+        await firebase.database().ref(`jobs/${jobId}`).update({
+            assignedSubUid: null,
+            assignedSubEmail: null,
+            executionStatus: null
+        });
+        window.logActivity(jobId, `Job was dropped/unassigned and returned to the open market.`);
+        window.renderJobDetail(jobId);
+        alert("Success: The job has been dropped and returned to the queue.");
+    } catch(e) {
+        console.error("Job Drop Failed:", e);
+        alert("Transaction Failed: Unable to drop the job. Check your permissions.");
+    }
 };
 
 window.deleteJob = async function() {
