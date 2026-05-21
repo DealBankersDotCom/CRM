@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,interactive-widget=resizes-content" />
+<title>DealBankers • Strategy Board</title>
+<link rel="icon" type="image/jpeg" href="icon (1).jpg" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;800;900&display=swap" rel="stylesheet" />
+<style>
+:root{
+  --bg1:#0b131b;--bg2:#142838;--bg3:#173c53;
+  --line:#254a63;--text:#f1f7fb;--muted:#c5d3e1;--accent:#2b74ff;
+  --good:#00ff6a; --warn:#ffd24d; --bad:#ff5555; --hot:#ff2a2a;
+  --shadow:0 28px 70px rgba(0,0,0,.55);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;overflow:hidden;}
+body{
+  margin:0;font-family:Inter,system-ui,Arial;color:var(--text);
+  background:
+    radial-gradient(circle at 18% 20%, rgba(43,116,255,.18), transparent 55%),
+    radial-gradient(circle at 85% 25%, rgba(255,42,42,.12), transparent 55%),
+    linear-gradient(135deg,var(--bg1),var(--bg2) 50%,var(--bg3));
+  display:flex;flex-direction:column;
+}
+.header{
+  display:flex;justify-content:space-between;align-items:center;
+  padding:10px 16px;border-bottom:1px solid rgba(255,255,255,.2);
+  background:linear-gradient(180deg,rgba(255,255,255,.10),rgba(255,255,255,.03));
+  z-index:50;backdrop-filter: blur(10px);flex-shrink:0;
+}
+.header .leftTitle{display:flex;align-items:center;gap:10px;font-weight:900;letter-spacing:.04em}
+.nav{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.chip{
+  padding:6px 14px;border-radius:100px;border:1px solid rgba(255,255,255,.22);
+  background:#0d1823;color:var(--text);text-decoration:none;cursor:pointer;font-weight:800;
+  transition:background .2s,transform .2s;user-select:none;
+}
+.chip:hover{background:#14314d;transform:translateY(-1px)}
+
+.board-wrapper{flex:1;overflow:hidden;display:flex;flex-direction:column;padding:16px;}
+.board-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:12px;}
+.board-title{font-size:24px;font-weight:900;letter-spacing:.05em;}
+.board-actions{display:flex;gap:8px;}
+.btn{padding:8px 14px;border-radius:10px;border:1px solid rgba(255,255,255,.16);background:rgba(255,255,255,.06);color:#fff;cursor:pointer;font-weight:800;font-size:13px;transition:all .15s;}
+.btn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px);}
+.btn.primary{background:var(--accent);border-color:var(--accent);}
+.btn.primary:hover{box-shadow:0 0 15px rgba(43,116,255,.4);}
+.btn.tiny{padding:6px 10px;font-size:11px;}
+
+.board-container{flex:1;overflow-x:auto;overflow-y:hidden;display:flex;gap:16px;padding-bottom:16px;}
+.board-list{min-width:300px;max-width:300px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:16px;display:flex;flex-direction:column;max-height:100%;flex-shrink:0;}
+.list-header{padding:12px;border-bottom:1px solid rgba(255,255,255,.1);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+.list-title{font-weight:900;font-size:14px;letter-spacing:.08em;flex:1;background:transparent;border:none;color:#fff;outline:none;}
+.list-title:focus{background:rgba(255,255,255,.08);padding:4px 8px;border-radius:6px;}
+.list-count{font-size:11px;color:var(--muted);background:rgba(0,0,0,.3);padding:2px 8px;border-radius:999px;}
+.list-actions{display:flex;gap:4px;}
+.icon-btn{background:transparent;border:none;color:var(--muted);cursor:pointer;font-size:16px;padding:4px;transition:color .15s;}
+.icon-btn:hover{color:#fff;}
+
+.cards-container{flex:1;overflow-y:auto;padding:8px;display:flex;flex-direction:column;gap:8px;}
+.card{background:rgba(11,24,37,.95);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:12px;cursor:grab;transition:transform .15s, box-shadow .15s;}
+.card:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.4);}
+.card.dragging{opacity:0.5;cursor:grabbing;}
+.card-priority{display:inline-block;width:4px;height:100%;position:absolute;left:0;top:0;border-radius:12px 0 0 12px;}
+.card-priority.high{background:var(--hot);}
+.card-priority.medium{background:var(--warn);}
+.card-priority.low{background:var(--good);}
+.card-content{position:relative;padding-left:12px;}
+.card-title{font-weight:800;margin-bottom:6px;line-height:1.3;word-break:break-word;}
+.card-desc{font-size:12px;color:var(--muted);margin-bottom:8px;line-height:1.4;}
+.card-meta{display:flex;gap:8px;flex-wrap:wrap;font-size:11px;}
+.card-label{padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(0,0,0,.3);color:#cfe3ff;}
+.card-due{color:var(--warn);}
+.card-due.overdue{color:var(--bad);}
+
+.add-card-btn{width:100%;padding:8px;background:rgba(255,255,255,.04);border:1px dashed rgba(255,255,255,.2);border-radius:10px;color:var(--muted);cursor:pointer;font-weight:700;font-size:12px;transition:all .15s;text-align:left;}
+.add-card-btn:hover{background:rgba(255,255,255,.08);color:#fff;border-color:var(--accent);}
+
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;z-index:9999;padding:20px;}
+.modal.show{display:flex;}
+.modal-card{background:rgba(11,24,37,.98);border:1px solid rgba(255,255,255,.14);border-radius:20px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:0 20px 60px rgba(0,0,0,.8);}
+.modal-header{padding:16px;border-bottom:1px solid rgba(255,255,255,.12);display:flex;justify-content:space-between;align-items:center;}
+.modal-title{font-weight:900;font-size:16px;}
+.modal-body{padding:16px;}
+.form-field{margin-bottom:16px;}
+.form-label{font-size:11px;text-transform:uppercase;letter-spacing:.1em;color:var(--muted);font-weight:900;margin-bottom:6px;display:block;}
+.input{width:100%;background:#0d1f2d;border:1px solid #254a63;color:#fff;border-radius:10px;padding:10px;outline:none;font-family:inherit;}
+.input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(43,116,255,.1);}
+textarea.input{min-height:80px;resize:vertical;}
+.select{width:100%;background:#0d1f2d;border:1px solid #254a63;color:#fff;border-radius:10px;padding:10px;outline:none;font-weight:700;}
+.modal-footer{padding:16px;border-top:1px solid rgba(255,255,255,.12);display:flex;gap:10px;justify-content:flex-end;}
+</style>
+</head>
+<body>
+
+<header class="header">
+  <div class="leftTitle">
+    <div>DEALBANKERS • Strategy Board</div>
+  </div>
+  <nav class="nav">
+    <a class="chip" href="profile.html">Dashboard</a>
+    <a class="chip" href="network.html">Network</a>
+    <a class="chip" id="logoutBtn" style="cursor:pointer;">Log Out</a>
+  </nav>
+</header>
+
+<div class="board-wrapper">
+  <div class="board-header">
+    <div class="board-title" id="boardTitle">My Strategy Board</div>
+    <div class="board-actions">
+      <button class="btn" id="btnAddList">+ Add List</button>
+      <button class="btn" id="btnClearBoard">Clear Board</button>
+      <button class="btn primary" id="btnExport">Export</button>
+    </div>
+  </div>
+  
+  <div class="board-container" id="boardContainer">
+    <!-- Lists will be dynamically added here -->
+  </div>
+</div>
+
+<!-- Card Modal -->
+<div class="modal" id="cardModal">
+  <div class="modal-card">
+    <div class="modal-header">
+      <div class="modal-title" id="modalTitle">New Card</div>
+      <button class="icon-btn" id="closeModal" style="font-size:20px;">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-field">
+        <label class="form-label">Title</label>
+        <input type="text" class="input" id="cardTitleInput" placeholder="What needs to be done?" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Description</label>
+        <textarea class="input" id="cardDescInput" placeholder="Add details..."></textarea>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Priority</label>
+        <select class="select" id="cardPriorityInput">
+          <option value="low">Low</option>
+          <option value="medium">Medium</option>
+          <option value="high">High</option>
+        </select>
+      </div>
+      <div class="form-field">
+        <label class="form-label">Due Date</label>
+        <input type="date" class="input" id="cardDueInput" />
+      </div>
+      <div class="form-field">
+        <label class="form-label">Labels (comma separated)</label>
+        <input type="text" class="input" id="cardLabelsInput" placeholder="urgent, follow-up, etc." />
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn" id="btnDeleteCard" style="display:none;background:rgba(255,85,85,.16);border-color:rgba(255,85,85,.55);">Delete</button>
+      <button class="btn" id="btnCancelCard">Cancel</button>
+      <button class="btn primary" id="btnSaveCard">Save Card</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
+<script src="config.js"></script>
+<script>
+(function ensureFirebaseInit(){try{if(!firebase.apps||!firebase.apps.length){if(!window.firebaseConfig){console.error("Missing window.firebaseConfig.");return;}firebase.initializeApp(window.firebaseConfig);}}catch(e){}})();
+
+const $ = (id) => document.getElementById(id);
+
+// Board State
+let board = {
+  lists: [
+    { id: 'list1', title: 'To Do', cards: [] },
+    { id: 'list2', title: 'In Progress', cards: [] },
+    { id: 'list3', title: 'Done', cards: [] }
+  ]
+};
+
+let draggedCard = null;
+let draggedFromList = null;
+let currentEditingCard = null;
+let currentEditingList = null;
+
+// Load board from localStorage
+function loadBoard() {
+  const uid = firebase.auth().currentUser?.uid;
+  if (!uid) return;
+  
+  const saved = localStorage.getItem(`dealbankers_board_${uid}`);
+  if (saved) {
+    try {
+      board = JSON.parse(saved);
+    } catch(e) {
+      console.error('Failed to load board', e);
+    }
+  }
+  renderBoard();
+}
+
+// Save board to localStorage
+function saveBoard() {
+  const uid = firebase.auth().currentUser?.uid;
+  if (!uid) return;
+  
+  localStorage.setItem(`dealbankers_board_${uid}`, JSON.stringify(board));
+}
+
+// Render entire board
+function renderBoard() {
+  const container = $('boardContainer');
+  container.innerHTML = '';
+  
+  board.lists.forEach(list => {
+    const listEl = createListElement(list);
+    container.appendChild(listEl);
+  });
+  
+  saveBoard();
+}
+
+// Create list element
+function createListElement(list) {
+  const div = document.createElement('div');
+  div.className = 'board-list';
+  div.dataset.listId = list.id;
+  
+  div.innerHTML = `
+    <div class="list-header">
+      <input type="text" class="list-title" value="${escapeHtml(list.title)}" data-list-id="${list.id}" />
+      <span class="list-count">${list.cards.length}</span>
+      <div class="list-actions">
+        <button class="icon-btn btn-delete-list" data-list-id="${list.id}" title="Delete List">🗑️</button>
+      </div>
+    </div>
+    <div class="cards-container" data-list-id="${list.id}">
+      ${list.cards.map(card => createCardHTML(card, list.id)).join('')}
+    </div>
+    <button class="add-card-btn" data-list-id="${list.id}">+ Add Card</button>
+  `;
+  
+  // Make cards container droppable
+  const cardsContainer = div.querySelector('.cards-container');
+  cardsContainer.addEventListener('dragover', handleDragOver);
+  cardsContainer.addEventListener('drop', handleDrop);
+  cardsContainer.addEventListener('dragleave', handleDragLeave);
+  
+  return div;
+}
+
+// Create card HTML
+function createCardHTML(card, listId) {
+  const labels = card.labels?.map(l => `<span class="card-label">${escapeHtml(l)}</span>`).join('') || '';
+  const due = card.dueDate ? formatDueDate(card.dueDate) : '';
+  
+  return `
+    <div class="card" draggable="true" data-card-id="${card.id}" data-list-id="${listId}">
+      <div class="card-priority ${card.priority}"></div>
+      <div class="card-content">
+        <div class="card-title">${escapeHtml(card.title)}</div>
+        ${card.description ? `<div class="card-desc">${escapeHtml(card.description)}</div>` : ''}
+        <div class="card-meta">
+          ${labels}
+          ${due ? `<span class="card-due ${isOverdue(card.dueDate) ? 'overdue' : ''}">${due}</span>` : ''}
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+// Utility functions
+function escapeHtml(text) {
+  const div = document.createElement('div');
+  div.textContent = text;
+  return div.innerHTML;
+}
+
+function formatDueDate(dateStr) {
+  const date = new Date(dateStr);
+  const now = new Date();
+  const diffDays = Math.ceil((date - now) / (1000 * 60 * 60 * 24));
+  
+  if (diffDays < 0) return `📅 ${Math.abs(diffDays)}d overdue`;
+  if (diffDays === 0) return '📅 Due today';
+  if (diffDays === 1) return '📅 Due tomorrow';
+  return `📅 ${diffDays}d left`;
+}
+
+function isOverdue(dateStr) {
+  return new Date(dateStr) < new Date();
+}
+
+function generateId() {
+  return 'id_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+}
+
+// Drag and Drop
+function handleDragStart(e) {
+  draggedCard = e.target;
+  draggedFromList = e.target.dataset.listId;
+  e.target.classList.add('dragging');
+  e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+  e.target.classList.remove('dragging');
+  document.querySelectorAll('.cards-container').forEach(c => c.style.background = '');
+}
+
+function handleDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  e.currentTarget.style.background = 'rgba(43,116,255,.1)';
+}
+
+function handleDragLeave(e) {
+  e.currentTarget.style.background = '';
+}
+
+function handleDrop(e) {
+  e.preventDefault();
+  e.currentTarget.style.background = '';
+  
+  const targetListId = e.currentTarget.dataset.listId;
+  if (!draggedCard || !draggedFromList) return;
+  
+  const cardId = draggedCard.dataset.cardId;
+  
+  // Remove from old list
+  const fromList = board.lists.find(l => l.id === draggedFromList);
+  const cardData = fromList.cards.find(c => c.id === cardId);
+  fromList.cards = fromList.cards.filter(c => c.id !== cardId);
+  
+  // Add to new list
+  const toList = board.lists.find(l => l.id === targetListId);
+  toList.cards.push(cardData);
+  
+  draggedCard = null;
+  draggedFromList = null;
+  
+  renderBoard();
+}
+
+// Modal functions
+function openCardModal(listId, cardId = null) {
+  currentEditingList = listId;
+  currentEditingCard = cardId;
+  
+  if (cardId) {
+    const list = board.lists.find(l => l.id === listId);
+    const card = list.cards.find(c => c.id === cardId);
+    
+    $('modalTitle').textContent = 'Edit Card';
+    $('cardTitleInput').value = card.title;
+    $('cardDescInput').value = card.description || '';
+    $('cardPriorityInput').value = card.priority;
+    $('cardDueInput').value = card.dueDate || '';
+    $('cardLabelsInput').value = card.labels?.join(', ') || '';
+    $('btnDeleteCard').style.display = 'inline-block';
+  } else {
+    $('modalTitle').textContent = 'New Card';
+    $('cardTitleInput').value = '';
+    $('cardDescInput').value = '';
+    $('cardPriorityInput').value = 'medium';
+    $('cardDueInput').value = '';
+    $('cardLabelsInput').value = '';
+    $('btnDeleteCard').style.display = 'none';
+  }
+  
+  $('cardModal').classList.add('show');
+  setTimeout(() => $('cardTitleInput').focus(), 100);
+}
+
+function closeCardModal() {
+  $('cardModal').classList.remove('show');
+  currentEditingCard = null;
+  currentEditingList = null;
+}
+
+function saveCard() {
+  const title = $('cardTitleInput').value.trim();
+  if (!title) return alert('Title is required');
+  
+  const cardData = {
+    id: currentEditingCard || generateId(),
+    title,
+    description: $('cardDescInput').value.trim(),
+    priority: $('cardPriorityInput').value,
+    dueDate: $('cardDueInput').value,
+    labels: $('cardLabelsInput').value.split(',').map(l => l.trim()).filter(Boolean),
+    createdAt: Date.now()
+  };
+  
+  const list = board.lists.find(l => l.id === currentEditingList);
+  
+  if (currentEditingCard) {
+    const idx = list.cards.findIndex(c => c.id === currentEditingCard);
+    list.cards[idx] = cardData;
+  } else {
+    list.cards.push(cardData);
+  }
+  
+  closeCardModal();
+  renderBoard();
+}
+
+function deleteCard() {
+  if (!confirm('Delete this card?')) return;
+  
+  const list = board.lists.find(l => l.id === currentEditingList);
+  list.cards = list.cards.filter(c => c.id !== currentEditingCard);
+  
+  closeCardModal();
+  renderBoard();
+}
+
+// List functions
+function addList() {
+  const title = prompt('List name:');
+  if (!title) return;
+  
+  board.lists.push({
+    id: generateId(),
+    title,
+    cards: []
+  });
+  
+  renderBoard();
+}
+
+function deleteList(listId) {
+  const list = board.lists.find(l => l.id === listId);
+  if (list.cards.length > 0) {
+    if (!confirm(`Delete "${list.title}" and its ${list.cards.length} card(s)?`)) return;
+  }
+  
+  board.lists = board.lists.filter(l => l.id !== listId);
+  renderBoard();
+}
+
+function updateListTitle(listId, newTitle) {
+  const list = board.lists.find(l => l.id === listId);
+  list.title = newTitle;
+  saveBoard();
+}
+
+// Export/Import
+function exportBoard() {
+  const dataStr = JSON.stringify(board, null, 2);
+  const blob = new Blob([dataStr], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `dealbankers_board_${new Date().toISOString().split('T')[0]}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function clearBoard() {
+  if (!confirm('Clear entire board? This cannot be undone.')) return;
+  board.lists.forEach(l => l.cards = []);
+  renderBoard();
+}
+
+// Event delegation
+document.addEventListener('click', (e) => {
+  // Add card button
+  if (e.target.classList.contains('add-card-btn')) {
+    openCardModal(e.target.dataset.listId);
+  }
+  
+  // Card click
+  if (e.target.closest('.card')) {
+    const card = e.target.closest('.card');
+    openCardModal(card.dataset.listId, card.dataset.cardId);
+  }
+  
+  // Delete list
+  if (e.target.classList.contains('btn-delete-list')) {
+    deleteList(e.target.dataset.listId);
+  }
+});
+
+// List title editing
+document.addEventListener('blur', (e) => {
+  if (e.target.classList.contains('list-title')) {
+    updateListTitle(e.target.dataset.listId, e.target.value.trim());
+  }
+}, true);
+
+document.addEventListener('keydown', (e) => {
+  if (e.target.classList.contains('list-title') && e.key === 'Enter') {
+    e.target.blur();
+  }
+});
+
+// Drag events
+document.addEventListener('dragstart', (e) => {
+  if (e.target.classList.contains('card')) {
+    handleDragStart(e);
+  }
+});
+
+document.addEventListener('dragend', (e) => {
+  if (e.target.classList.contains('card')) {
+    handleDragEnd(e);
+  }
+});
+
+// Button events
+$('btnAddList').addEventListener('click', addList);
+$('btnClearBoard').addEventListener('click', clearBoard);
+$('btnExport').addEventListener('click', exportBoard);
+$('closeModal').addEventListener('click', closeCardModal);
+$('btnCancelCard').addEventListener('click', closeCardModal);
+$('btnSaveCard').addEventListener('click', saveCard);
+$('btnDeleteCard').addEventListener('click', deleteCard);
+$('logoutBtn').addEventListener('click', () => {
+  firebase.auth().signOut().then(() => location.href = 'index.html');
+});
+
+// Auth
+firebase.auth().onAuthStateChanged(u => {
+  if (!u) return location.href = 'index.html';
+  loadBoard();
+});
+
+// Auto-save on window unload
+window.addEventListener('beforeunload', saveBoard);
+</script>
+</body>
+</html>
