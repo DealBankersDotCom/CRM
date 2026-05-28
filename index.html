@@ -1396,13 +1396,13 @@
       setPersistence, browserLocalPersistence
     } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
     import {
-      getDatabase, ref, push, onChildAdded, serverTimestamp, set, onDisconnect,
-      onValue, get
-    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+      getFirestore, collection, addDoc, onSnapshot, serverTimestamp,
+      doc, setDoc, getDoc, query, orderBy
+    } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
 
     const app = initializeApp(window.firebaseConfig);
     const auth = getAuth(app);
-    const db = getDatabase(app);
+    const db = getFirestore(app);
     const provider = new GoogleAuthProvider();
 
     document.getElementById("year").textContent = new Date().getFullYear();
@@ -1564,15 +1564,21 @@
 
     // --- Chat ---
     function attachChat(){
-      const chatRef = ref(db,"townhall/messages");
-      onChildAdded(chatRef, snap=>{
-        const d=snap.val()||{};
-        const t=new Date(d.ts||Date.now()).toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'});
-        const div=document.createElement("div");
-        div.className="msg";
-        div.innerHTML=`<strong>${esc(d.name||'Anon')}</strong> <small>${t}</small><div>${esc(d.text||'')}</div>`;
-        msgList.appendChild(div);
-        msgList.scrollTop = msgList.scrollHeight;
+      const chatRef = collection(db, "townhall_messages");
+      const q = query(chatRef, orderBy("ts"));
+      onSnapshot(q, snap=>{
+        snap.docChanges().forEach(change => {
+          if(change.type === "added"){
+            const d = change.doc.data() || {};
+            const ts = d.ts && d.ts.toDate ? d.ts.toDate() : new Date(d.ts || Date.now());
+            const t = ts.toLocaleTimeString([], {hour:"2-digit", minute:"2-digit"});
+            const div = document.createElement("div");
+            div.className = "msg";
+            div.innerHTML = "<strong>"+esc(d.name||"Anon")+"</strong> <small>"+t+"</small><div>"+esc(d.text||"")+"</div>";
+            msgList.appendChild(div);
+            msgList.scrollTop = msgList.scrollHeight;
+          }
+        });
       });
     }
     attachChat();
@@ -1581,7 +1587,7 @@
       if(!auth.currentUser) return alert("Please sign in first.");
       const text = msgInput.value.trim();
       if(!text) return;
-      push(ref(db,"townhall/messages"), {
+      addDoc(collection(db, "townhall_messages"), {
         uid: auth.currentUser.uid,
         name: auth.currentUser.displayName || auth.currentUser.email,
         text,
@@ -1595,29 +1601,23 @@
 
     // --- Presence ---
     async function setPresence(user) {
-      const roleSnap = await get(ref(db, `roles/${user.uid}`));
-      const userRole = roleSnap.exists() ? roleSnap.val() : "user";
-
-      const presRef = ref(db, `presence/global/${user.uid}`);
-      const connectedRef = ref(db, ".info/connected");
-
-      onValue(connectedRef, (snap) => {
-        if (snap.val() === true) {
-          onDisconnect(presRef).set({
-            state: "offline",
-            lastOnline: serverTimestamp(),
-          });
-          set(presRef, {
-            state: "online",
-            name: user.displayName || user.email,
-            email: user.email,
-            role: userRole,
-            ts: serverTimestamp(),
-            page: "Overview"
-          });
-        }
+      const roleSnap = await getDoc(doc(db, "roles", user.uid));
+      const userRole = roleSnap.exists() ? (roleSnap.data().role || "user") : "user";
+      const presRef = doc(db, "presence_global", user.uid);
+      await setDoc(presRef, {
+        state: "online",
+        name: user.displayName || user.email,
+        email: user.email,
+        role: typeof userRole === "string" ? userRole : "user",
+        ts: serverTimestamp(),
+        page: "Overview"
+      });
+      window.addEventListener("beforeunload", () => {
+        setDoc(presRef, { state: "offline", lastOnline: serverTimestamp() }, { merge: true });
       });
     }
+
+    
 
     function initials(nameOrEmail){
       const s = (nameOrEmail||"").trim();
@@ -1664,9 +1664,8 @@
     }
 
     function subscribePresence(){
-      onValue(ref(db, "presence/global"), (snap)=>{
-        const obj = snap.val() || {};
-        const list = Object.values(obj);
+      onSnapshot(collection(db, "presence_global"), (snap)=>{
+        const list = snap.docs.map(d => d.data());
         renderPresence(list);
       });
     }
@@ -1674,27 +1673,19 @@
 
     // --- Optional stats ---
     async function tryLoadOptionalStats(){
-      const paths = {
-        leads: "stats/activeLeads",
-        jobs: "stats/openJobs",
-        month: "stats/monthVolume"
-      };
-
       try{
-        const a = await get(ref(db, paths.leads));
-        if(a.exists()) statLeads.textContent = String(a.val());
+        const a = await getDoc(doc(db, "stats", "activeLeads"));
+        if(a.exists()) statLeads.textContent = String(a.data().value ?? "--");
       }catch{}
-
       try{
-        const b = await get(ref(db, paths.jobs));
-        if(b.exists()) statJobs.textContent = String(b.val());
+        const b = await getDoc(doc(db, "stats", "openJobs"));
+        if(b.exists()) statJobs.textContent = String(b.data().value ?? "--");
       }catch{}
-
       try{
-        const c = await get(ref(db, paths.month));
+        const c = await getDoc(doc(db, "stats", "monthVolume"));
         if(c.exists()){
-          const v = c.val();
-          statMonth.textContent = typeof v === "number" ? `$${v.toLocaleString()}` : String(v);
+          const v = c.data().value ?? 0;
+          statMonth.textContent = typeof v === "number" ? "$"+v.toLocaleString() : String(v);
         }
       }catch{}
     }
@@ -1740,4 +1731,3 @@
   </script>
 </body>
 </html>
-
