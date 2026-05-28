@@ -275,7 +275,7 @@ body {
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 
@@ -306,8 +306,8 @@ firebase.auth().onAuthStateChanged(async (user) => {
   setPresence(user);
 
   try {
-    const roleSnap = await firebase.database().ref(`roles/${user.uid}`).once('value');
-    const role = roleSnap.val() || "user";
+    const roleSnap = await firebase.firestore().collection("roles").doc(user.uid).get();
+    const role = roleSnap.exists ? (roleSnap.data().role || "user") : "user";
 
     if (role === 'admin' || role === 'god' || user.email === "dealbankers@gmail.com") {
         isAdmin = true;
@@ -326,13 +326,13 @@ firebase.auth().onAuthStateChanged(async (user) => {
 
 function triggerLeadershipPing(actionType, messageText = "") {
     if (isAdmin) return;
-    firebase.database().ref("leadership_pings").push({
+    firebase.firestore().collection("leadership_pings").add({
         uid: currentUser.uid,
         name: currentUser.displayName || currentUser.email.split('@')[0],
         email: currentUser.email,
         action: actionType,
         message: messageText,
-        ts: firebase.database.ServerValue.TIMESTAMP,
+        ts: firebase.firestore.FieldValue.serverTimestamp(),
         status: "unread"
     });
 }
@@ -341,8 +341,8 @@ function triggerLeadershipPing(actionType, messageText = "") {
 async function loadSettings() {
     if(!currentUser) return;
     try {
-        const snap = await firebase.database().ref(`userDirectory/${currentUser.uid}`).once("value");
-        const data = snap.val() || {};
+        const snap = await firebase.firestore().collection("userDirectory").doc(currentUser.uid).get();
+        const data = snap.exists ? snap.data() : {};
 
         const preview = document.getElementById('set_photoPreview');
         const hiddenUrl = document.getElementById('set_photoUrlHidden');
@@ -412,8 +412,8 @@ async function saveSettings() {
 
     let currentData = {};
     try {
-        const snap = await firebase.database().ref(`userDirectory/${currentUser.uid}`).once("value");
-        if(snap.exists()) currentData = snap.val() || {};
+        const snap = await firebase.firestore().collection("userDirectory").doc(currentUser.uid).get();
+        if(snap.exists) currentData = snap.data() || {};
     } catch(e) {}
 
     const photo = document.getElementById('set_photoUrlHidden').value.trim() || currentData.photoURL || "";
@@ -446,7 +446,7 @@ async function saveSettings() {
     };
 
     try {
-        await firebase.database().ref(`userDirectory/${currentUser.uid}`).update(updates);
+        await firebase.firestore().collection("userDirectory").doc(currentUser.uid).set(updates, { merge: true });
         const statusEl = document.getElementById('settingsStatus');
         statusEl.style.display = 'inline-block';
         setTimeout(() => { statusEl.style.display = 'none'; }, 2000);
@@ -513,37 +513,29 @@ document.addEventListener("DOMContentLoaded", () => {
 /* --- RADAR LOGIC --- */
 function startRadar() {
     const radarList = document.getElementById("radarList");
-    firebase.database().ref("presence/global").on("value", (snap) => {
-        const data = snap.val() || {};
+    firebase.firestore().collection("presence_global").onSnapshot((snap) => {
         radarList.innerHTML = "";
         let count = 0;
-        Object.keys(data).forEach(uid => {
-            if (uid === currentUser.uid) return; 
-            const u = data[uid];
-  
+        snap.docs.forEach(docSnap => {
+            const uid = docSnap.id;
+            if (uid === currentUser.uid) return;
+            const u = docSnap.data();
             if (u.state === "online") {
                 count++;
                 const div = document.createElement("div");
                 div.className = "radar-user";
-           
-                const loc = u.page ? `<br><small style="color:#88a5bf">On: ${esc(u.page)}</small>` : "";
-                div.innerHTML = `
-                    <div>
-                        <div style="font-weight:bold; color:#fff">${esc(u.name) || 'User'}</div>
-                        <small style="color:#666">${esc(u.email)}</small>
-                        ${loc}
-                    </div>
-                    <div class="status-dot"></div>
-                `;
-                div.onclick = () => showChatView(`direct_messages/${uid}/messages`, u.name || 'User');
+                const loc = u.page ? "<br><small style=\"color:#88a5bf\">On: "+esc(u.page)+"</small>" : "";
+                div.innerHTML = "<div><div style=\"font-weight:bold; color:#fff\">"+(esc(u.name)||'User')+"</div><small style=\"color:#666\">"+esc(u.email)+"</small>"+loc+"</div><div class=\"status-dot\"></div>";
+                div.onclick = () => showChatView("direct_messages/"+uid+"/messages", u.name || 'User');
                 radarList.appendChild(div);
-            } 
+            }
         });
         if (count === 0) {
             radarList.innerHTML = "<div style='padding:20px;text-align:center;color:#666'>No users online.</div>";
         }
     });
 }
+
 
 function showRadarView() {
     document.getElementById("radarList").style.display = "block";
@@ -553,7 +545,7 @@ function showRadarView() {
     currentChatPath = null;
     
     if (activeChatListener) {
-        activeChatListener.off();
+        activeChatListener();
         activeChatListener = null;
     }
 }
@@ -569,98 +561,111 @@ function showChatView(path, name) {
 }
 
 /* --- CHAT LOGIC & NOTIFICATIONS --- */
+function getFirestoreChatRef(path) {
+    const parts = path.split('/');
+    if (parts.length === 3) {
+        return firebase.firestore().collection(parts[0]).doc(parts[1]).collection(parts[2]);
+    }
+    return firebase.firestore().collection(path);
+}
+
 function loadMessages(path) {
     const box = document.getElementById("chatMsgs");
-    box.innerHTML = ""; 
-    
-    if (activeChatListener) activeChatListener.off();
-    activeChatListener = firebase.database().ref(path);
-    
+    box.innerHTML = "";
+    if (activeChatListener) activeChatListener();
+    const ref = getFirestoreChatRef(path);
     let isInitialLoad = true;
-    activeChatListener.on("child_added", (snap) => {
-        const msg = snap.val();
-        const div = document.createElement("div");
-        const isMe = (msg.sender === currentUser.uid || msg.uid === currentUser.uid);
-        
-        div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
-        const timeString = new Date(msg.ts || Date.now()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
-        div.innerHTML = `<div>${esc(msg.text)}</div><div class="msg-time">${timeString}</div>`;
-        
-        box.appendChild(div);
-        setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
-
-        if (!isInitialLoad && !isMe) {
-            pingSound.play().catch(e=>{});
-            if (!document.getElementById("sidePanel").classList.contains("open")) {
-                document.getElementById("chatBadge").style.display = "block";
+    activeChatListener = ref.orderBy("ts").onSnapshot((snap) => {
+        snap.docChanges().forEach(change => {
+            if (change.type === "added") {
+                const msg = change.doc.data();
+                const div = document.createElement("div");
+                const isMe = (msg.sender === currentUser.uid || msg.uid === currentUser.uid);
+                div.className = "msg-bubble " + (isMe ? "msg-me" : "msg-them");
+                const ts = msg.ts && msg.ts.toDate ? msg.ts.toDate() : new Date(msg.ts || Date.now());
+                const timeString = ts.toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+                div.innerHTML = "<div>"+esc(msg.text)+"</div><div class=\"msg-time\">"+timeString+"</div>";
+                box.appendChild(div);
+                setTimeout(() => { box.scrollTop = box.scrollHeight; }, 50);
+                if (!isInitialLoad && !isMe) {
+                    pingSound.play().catch(e=>{});
+                    if (!document.getElementById("sidePanel").classList.contains("open")) {
+                        document.getElementById("chatBadge").style.display = "block";
+                    }
+                }
             }
-        }
+        });
     });
     setTimeout(() => { isInitialLoad = false; }, 1500);
 }
 
+
 function listenForUnreadMessages(path) {
     let isInitial = true;
-    firebase.database().ref(path).on("child_added", (snap) => {
-        const msg = snap.val();
-        if (!isInitial && msg.sender !== currentUser.uid && msg.uid !== currentUser.uid && !document.getElementById("sidePanel").classList.contains("open")) {
-            document.getElementById("chatBadge").style.display = "block";
-            pingSound.play().catch(e=>{});
-        }
+    const ref = getFirestoreChatRef(path);
+    ref.orderBy("ts").onSnapshot((snap) => {
+        snap.docChanges().forEach(change => {
+            if (change.type === "added") {
+                const msg = change.doc.data();
+                if (!isInitial && msg.sender !== currentUser.uid && msg.uid !== currentUser.uid && !document.getElementById("sidePanel").classList.contains("open")) {
+                    document.getElementById("chatBadge").style.display = "block";
+                    pingSound.play().catch(e=>{});
+                }
+            }
+        });
     });
     setTimeout(() => { isInitial = false; }, 1500);
 }
 
+
 function listenForGlobalAdminPings() {
     let isInitial = true;
-    firebase.database().ref("leadership_pings").on("child_added", (snap) => {
-        if (!isInitial && !document.getElementById("sidePanel").classList.contains("open")) {
-            document.getElementById("chatBadge").style.display = "block";
-            pingSound.play().catch(e=>{});
-        }
+    firebase.firestore().collection("leadership_pings").orderBy("ts").onSnapshot((snap) => {
+        snap.docChanges().forEach(change => {
+            if (change.type === "added") {
+                if (!isInitial && !document.getElementById("sidePanel").classList.contains("open")) {
+                    document.getElementById("chatBadge").style.display = "block";
+                    pingSound.play().catch(e=>{});
+                }
+            }
+        });
     });
     setTimeout(() => { isInitial = false; }, 1500);
 }
+
 
 function sendMsg() {
     const input = document.getElementById("chatInput");
     const txt = input.value.trim();
     if (!txt || !currentChatPath) return;
-    
-    firebase.database().ref(currentChatPath).push({
+    const chatRef = getFirestoreChatRef(currentChatPath);
+    chatRef.add({
         sender: currentUser.uid,
         text: txt,
-        ts: firebase.database.ServerValue.TIMESTAMP
+        ts: firebase.firestore.FieldValue.serverTimestamp()
     });
-    
     if (!isAdmin) {
         triggerLeadershipPing("Sent a Message", txt);
     }
     input.value = "";
 }
 
+
 /* --- PRESENCE TRACKING --- */
 function setPresence(user) {
-    const globalRef = firebase.database().ref(`presence/global/${user.uid}`);
-    const statusRef = firebase.database().ref(`presence/${user.uid}`); 
-    const conRef = firebase.database().ref(".info/connected");
-    
-    conRef.on("value", (s) => {
-        if (s.val() === true) {
-            globalRef.onDisconnect().set({state:"offline", last: firebase.database.ServerValue.TIMESTAMP});
-            statusRef.onDisconnect().set({state:"offline", ts: firebase.database.ServerValue.TIMESTAMP});
-
-            globalRef.set({
-                state: "online",
-                name: user.displayName || user.email.split('@')[0],
-                email: user.email,
-                ts: firebase.database.ServerValue.TIMESTAMP,
-                page: "Dashboard"
-            });
-            statusRef.set({state:"online", ts: firebase.database.ServerValue.TIMESTAMP});
-        }
+    const presRef = firebase.firestore().collection("presence_global").doc(user.uid);
+    presRef.set({
+        state: "online",
+        name: user.displayName || user.email.split('@')[0],
+        email: user.email,
+        ts: firebase.firestore.FieldValue.serverTimestamp(),
+        page: "Dashboard"
+    });
+    window.addEventListener("beforeunload", () => {
+        presRef.set({ state: "offline", last: firebase.firestore.FieldValue.serverTimestamp() }, { merge: true });
     });
 }
+
 </script>
 </body>
 </html>
