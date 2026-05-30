@@ -2,7 +2,7 @@
 
 window.firebaseConfig = {
   apiKey: "AIzaSyAoidTIHZZwOJ_FrXXMZd_hPAuoxDJJncs",
-authDomain: "deal-bankers.web.app",
+authDomain: "www.dealbankers.com",
   databaseURL: "https://deal-bankers-default-rtdb.firebaseio.com",
   projectId: "deal-bankers",
   storageBucket: "deal-bankers.firebasestorage.app",
