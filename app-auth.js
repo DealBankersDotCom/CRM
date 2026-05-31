@@ -3,7 +3,7 @@
   if (!window.firebaseApp) {
     window.firebaseApp = firebase.initializeApp(window.firebaseConfig);
     window.auth = firebase.auth();
-    window.db = firebase.database();
+    window.db = firebase.firestore(); // Swapped to Firestore
     window.storage = firebase.storage && firebase.storage();
   }
 
@@ -12,23 +12,33 @@
 
   // Track user presence (online/offline)
   function setPresence(uid) {
-    const ref = db.ref('presence/global/' + uid);
-    ref.onDisconnect().set({
-      online: false,
-      ts: firebase.database.ServerValue.TIMESTAMP
-    });
+    const ref = db.collection('presence_global').doc(uid);
+    
+    // Set to Online
     ref.set({
       online: true,
-      ts: firebase.database.ServerValue.TIMESTAMP
+      ts: firebase.firestore.FieldValue.serverTimestamp()
+    }, { merge: true });
+
+    // Firestore Workaround for onDisconnect()
+    window.addEventListener("beforeunload", () => {
+      ref.set({
+        online: false,
+        ts: firebase.firestore.FieldValue.serverTimestamp()
+      }, { merge: true });
     });
   }
 
   // Mirror role into userSettings
   async function ensureRoleMirror(uid) {
     try {
-      const roleSnap = await db.ref('roles/' + uid).get();
-      const role = roleSnap.exists() ? roleSnap.val() : 'member';
-      await db.ref('userSettings/' + uid + '/roles/role').set(role);
+      const roleSnap = await db.collection('roles').doc(uid).get();
+      // Safely extract role, default to 'member' if it doesn't exist
+      const role = roleSnap.exists ? (roleSnap.data().role || 'member') : 'member';
+      
+      await db.collection('userSettings').doc(uid).set({
+        roles: { role: role }
+      }, { merge: true });
     } catch (err) {
       console.warn("Failed to mirror user role:", err);
     }
