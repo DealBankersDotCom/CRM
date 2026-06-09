@@ -8,6 +8,9 @@
 <link rel="preconnect" href="https://fonts.googleapis.com" />
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
 <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@600;900&family=Inter:wght@400;600;900&family=JetBrains+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<!-- Leaflet (free map, no API key) -->
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <style>
 /* --- TACTICAL BATMAN THEME --- */
 :root {
@@ -28,7 +31,6 @@
 * { box-sizing: border-box; margin: 0; padding: 0; }
 html, body { height: 100%; overflow: hidden; background: var(--bg1); color: var(--text); font-family: 'Inter', sans-serif; }
 
-/* Subtle Grid Background */
 body {
   background-color: var(--bg1);
   background-image: 
@@ -37,18 +39,15 @@ body {
   background-size: 30px 30px;
 }
 
-/* CRT Scanline Effect Overlay */
 body::after {
   content: " "; display: block; position: absolute; top: 0; left: 0; bottom: 0; right: 0;
   background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
   z-index: 9999; background-size: 100% 2px, 3px 100%; pointer-events: none; opacity: 0.3;
 }
 
-/* Typography */
 .mono { font-family: 'JetBrains Mono', monospace; }
 h1, .logo { font-family: "Orbitron", sans-serif; }
 
-/* --- TACTICAL HEADER --- */
 .header {
   display: flex; justify-content: space-between; align-items: center; padding: 12px 24px; border-bottom: 1px solid var(--batman);
   background: rgba(0,0,0,0.9); backdrop-filter: blur(10px); position: relative; z-index: 100;
@@ -65,18 +64,17 @@ h1, .logo { font-family: "Orbitron", sans-serif; }
 .btn-nav.danger { border-color: rgba(239, 68, 68, 0.5); color: var(--bad); }
 .btn-nav.danger:hover { box-shadow: 0 0 15px rgba(239, 68, 68, 0.2); background: rgba(239, 68, 68, 0.1); }
 
-/* --- MAIN LAYOUT --- */
 .war-grid {
-  display: grid; grid-template-columns: 360px minmax(0, 1fr) 400px; height: calc(100vh - 54px);
+  display: grid; grid-template-columns: 340px minmax(0, 1fr) 380px; height: calc(100vh - 54px);
   position: relative; z-index: 10; min-height: 0;
 }
 
-/* --- PANELS --- */
 .panel {
   border-right: 1px solid var(--line); display: flex; flex-direction: column; background: rgba(4, 9, 14, 0.85); backdrop-filter: blur(5px); position: relative;
   min-height: 0; overflow: hidden;
 }
 .panel:last-child { border-right: none; border-left: 1px solid var(--line); }
+.panel.center { background: rgba(2,4,6,0.4); }
 .panel-head {
   padding: 12px 16px; border-bottom: 1px solid var(--line); font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 700; color: var(--muted);
   text-transform: uppercase; letter-spacing: 0.1em; display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.5); flex-shrink: 0;
@@ -98,15 +96,83 @@ h1, .logo { font-family: "Orbitron", sans-serif; }
 .req-addr { font-weight: 900; font-size: 14px; margin-bottom: 6px; color: #fff; letter-spacing: -0.02em; }
 .req-user { font-size: 11px; color: var(--muted); display: flex; justify-content: space-between; font-family: 'JetBrains Mono', monospace; }
 
-/* --- CENTER: TARGET CONSOLE --- */
-.target-hud { display: none; flex-direction: column; height: 100%; min-height: 0; }
-.target-hud.active { display: flex; animation: bootUp 0.3s ease-out forwards; }
+/* --- CENTER: MAP --- */
+.map-wrap { flex: 1; position: relative; min-height: 0; display: flex; flex-direction: column; }
+.map-controls { padding: 12px 16px; border-bottom: 1px solid var(--line); background: rgba(0,0,0,0.6); flex-shrink: 0; display: flex; gap: 8px; align-items: center; }
+.map-search-input {
+  flex: 1; background: var(--bg3); border: 1px solid var(--line); border-radius: 4px; color: var(--cyan);
+  font-family: 'JetBrains Mono', monospace; font-size: 13px; padding: 10px 12px; outline: none;
+}
+.map-search-input:focus { border-color: var(--cyan); box-shadow: 0 0 15px rgba(6,182,212,0.2); }
+.map-search-input::placeholder { color: var(--muted); }
+.map-btn {
+  background: var(--cyan); color: #000; border: none; border-radius: 4px; padding: 10px 16px;
+  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase;
+}
+.map-btn:hover { background: #22d3ee; }
+.map-btn.amber { background: var(--batman); }
+.map-btn.amber:hover { background: #fde047; }
+
+#leadMap { flex: 1; min-height: 0; background: #0a141e; }
+
+/* Map legend */
+.map-legend {
+  position: absolute; bottom: 16px; left: 16px; z-index: 500; background: rgba(0,0,0,0.88);
+  border: 1px solid var(--line); border-radius: 6px; padding: 10px 12px; font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.6); backdrop-filter: blur(4px);
+}
+.map-legend .legend-title { color: var(--muted); font-size: 9px; letter-spacing: 0.1em; margin-bottom: 6px; text-transform: uppercase; }
+.legend-row { display: flex; align-items: center; gap: 8px; margin: 4px 0; color: var(--text); }
+.legend-dot { width: 14px; height: 14px; border-radius: 50%; border: 2px solid #fff; box-shadow: 0 0 6px rgba(0,0,0,0.8); flex-shrink: 0; }
+.legend-dot.absentee { background: var(--bad); }
+.legend-dot.owner-occ { background: var(--good); }
+.legend-dot.unknown { background: var(--muted); }
+.legend-dot.buyer { background: var(--cyan); }
+
+/* Map status pill */
+.map-status {
+  position: absolute; top: 70px; right: 16px; z-index: 500; background: rgba(0,0,0,0.88);
+  border: 1px solid var(--cyan); color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  padding: 5px 10px; border-radius: 4px; box-shadow: 0 0 10px rgba(6,182,212,0.2); max-width: 240px;
+}
+
+/* Leaflet marker custom pin */
+.db-pin {
+  width: 18px; height: 18px; border-radius: 50% 50% 50% 0; transform: rotate(-45deg);
+  border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.6);
+}
+.db-pin.absentee { background: #ef4444; }
+.db-pin.owner-occ { background: #10b981; }
+.db-pin.unknown { background: #476282; }
+.db-pin.buyer { background: #06b6d4; }
+
+/* Leaflet popup theming */
+.leaflet-popup-content-wrapper { background: var(--bg2); color: var(--text); border: 1px solid var(--cyan); border-radius: 6px; }
+.leaflet-popup-tip { background: var(--bg2); border: 1px solid var(--cyan); }
+.leaflet-popup-content { margin: 12px 14px; font-family: 'Inter', sans-serif; }
+.popup-addr { font-weight: 900; font-size: 14px; color: #fff; margin-bottom: 4px; }
+.popup-owner { font-size: 12px; color: var(--cyan); font-family: 'JetBrains Mono', monospace; margin-bottom: 6px; }
+.popup-flag { font-size: 10px; font-family: 'JetBrains Mono', monospace; padding: 2px 6px; border-radius: 3px; display: inline-block; margin-bottom: 8px; }
+.popup-flag.absentee { background: rgba(239,68,68,0.2); color: var(--bad); border: 1px solid var(--bad); }
+.popup-flag.owner-occ { background: rgba(16,185,129,0.2); color: var(--good); border: 1px solid var(--good); }
+.popup-btn {
+  display: block; width: 100%; text-align: center; background: var(--batman); color: #000; border: none; border-radius: 4px;
+  padding: 8px; font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 11px; cursor: pointer; text-transform: uppercase; margin-top: 4px;
+}
+.popup-btn:hover { background: #fde047; }
+
+/* --- TARGET HUD (slides over map when a lead is loaded) --- */
+.target-overlay {
+  display: none; position: absolute; inset: 0; z-index: 600; background: rgba(2,4,6,0.97); backdrop-filter: blur(6px);
+  flex-direction: column; min-height: 0;
+}
+.target-overlay.active { display: flex; animation: bootUp 0.3s ease-out forwards; }
 @keyframes bootUp { from { opacity: 0; transform: scale(0.98); } to { opacity: 1; transform: scale(1); } }
+.target-overlay .panel-body { padding: 20px; }
 
-.hud-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--line); flex-shrink: 0; }
-.hud-title { font-size: 26px; font-weight: 900; color: #fff; letter-spacing: -0.02em; margin-bottom: 8px; display: flex; align-items: center; justify-content: space-between;}
+.hud-header { margin-bottom: 20px; padding-bottom: 15px; border-bottom: 1px dashed var(--line); flex-shrink: 0; display:flex; justify-content:space-between; align-items:flex-start; }
+.hud-title { font-size: 22px; font-weight: 900; color: #fff; letter-spacing: -0.02em; margin-bottom: 8px; display: flex; align-items: center; gap: 10px;}
 .hud-meta { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--cyan); text-transform: uppercase;}
-
 .copy-icon { cursor: pointer; font-size: 14px; color: var(--muted); padding: 4px; border: 1px solid transparent; border-radius: 4px; transition: all 0.2s; }
 .copy-icon:hover { color: var(--batman); border-color: var(--batman); background: rgba(234, 179, 8, 0.1); }
 
@@ -140,15 +206,12 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 .tool-btn:hover { border-color: var(--cyan); background: var(--glass); color: var(--cyan); box-shadow: inset 0 0 15px rgba(6, 182, 212, 0.15); transform: translateY(-1px); }
 .tool-btn i { font-size: 22px; font-style: normal; filter: drop-shadow(0 0 4px rgba(255,255,255,0.2)); }
 
-.bexar-section { border-top: 1px dashed var(--line); padding-top: 16px; margin-top: 8px; }
 .bexar-title { font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--batman); margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.15em; text-align: center; }
-
 .map-view { width: 100%; height: 280px; background: #000; border: 1px solid var(--line); border-radius: 6px; margin-top: 16px; position: relative; overflow: hidden; flex-shrink: 0; }
 .map-view iframe { width: 100%; height: 100%; border: none; filter: contrast(1.2) saturate(1.2) brightness(0.8); transition: filter 0.3s; }
 .map-view:hover iframe { filter: contrast(1) saturate(1) brightness(1); }
 .map-overlay { position: absolute; top: 10px; right: 10px; background: rgba(0,0,0,0.9); border: 1px solid var(--cyan); color: var(--cyan); font-family: 'JetBrains Mono', monospace; font-size: 10px; padding: 4px 8px; pointer-events: none; z-index: 10; box-shadow: 0 0 10px rgba(6, 182, 212, 0.2); }
 
-/* Scrollbar */
 ::-webkit-scrollbar { width: 6px; height: 6px; }
 ::-webkit-scrollbar-track { background: var(--bg1); }
 ::-webkit-scrollbar-thumb { background: var(--line); border-radius: 3px; }
@@ -168,7 +231,8 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 </header>
 
 <div class="war-grid">
-  
+
+  <!-- ================= LEFT: INTEL / SKIP TRACE QUEUE (unchanged) ================= -->
   <div class="panel">
     <div class="panel-head">
       <span>Incoming Intel Reqs</span>
@@ -178,85 +242,110 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
       </span>
     </div>
     <div class="panel-body" id="requestQueue">
-      <div style="color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; margin-top: 40px; letter-spacing: 0.2em; animation: pulse 2s infinite;">
+      <div style="color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; margin-top: 40px; letter-spacing: 0.2em;">
           SCANNING NETWORK...
       </div>
     </div>
   </div>
 
-  <div class="panel">
+  <!-- ================= CENTER: SEARCHABLE MAP ================= -->
+  <div class="panel center">
     <div class="panel-head">
       <div style="display:flex; justify-content:space-between; align-items:center; width:100%;">
-        <span style="font-family:'Orbitron', sans-serif; font-size:14px; color:var(--cyan); letter-spacing:1px; margin:0;">DATA EXTRACTION & ENRICHMENT</span>
+        <span style="font-family:'Orbitron', sans-serif; font-size:14px; color:var(--cyan); letter-spacing:1px; margin:0;">TARGET MAP // LEAD GRID</span>
         <button class="btn-nav" onclick="startNewDrop()" style="border-color:var(--batman); color:var(--batman); padding: 4px 8px; font-size: 10px; box-shadow: 0 0 10px rgba(234,179,8,0.2);">➕ NEW MANUAL DROP</button>
       </div>
     </div>
-    
-    <div id="targetHud" class="target-hud">
-      <div class="panel-body">
-        
-        <div class="hud-header">
-          <div class="hud-title">
-            <span id="hudAddress">Select a Target</span>
-            <span class="copy-icon" onclick="copyAddress()" title="Copy Address">📋</span>
-          </div>
-          <div class="hud-meta">REQ BY: <span id="hudRequester" style="color:#fff;">—</span> <span style="color:var(--muted)">//</span> TYPE: <span id="hudType" style="color:#fff;">—</span></div>
-        </div>
 
-        <div class="data-grid" style="margin-bottom: 0;">
-          <div class="data-box" style="grid-column: 1 / -1;">
-             <label>Full Property Address</label>
-             <input type="text" id="t_address" class="input-tactical" placeholder="Address required for Manual Drops..." />
-          </div>
-          <div class="data-box">
-            <label>Property Owner</label>
-            <input type="text" id="t_owner" class="input-tactical" placeholder="Unknown or Unverified..." />
-          </div>
-          <div class="data-box">
-            <label>Mailing Address</label>
-            <input type="text" id="t_mailing" class="input-tactical" placeholder="Mailing Address..." />
-          </div>
-     
-          <div class="data-box" style="grid-column: 1 / -1;">
-            <label>Skip Traced Phones (Format: Label | Number)</label>
-            <textarea id="t_phones" class="input-tactical" placeholder="e.g.&#10;Owner | 210-555-1234&#10;Daughter | 210-555-9876"></textarea>
-          </div>
-          <div class="data-box" style="grid-column: 1 / -1;">
-            <label>Leadership Analysis & Strategic Notes</label>
-            <textarea id="t_notes" class="input-tactical" placeholder="ARV analysis, equity position, tax flags, recommended pitch approach..."></textarea>
-          </div>
-        </div>
-
-        <div style="margin-top:20px; padding-top:16px; border-top:1px dashed var(--line);">
-          <label style="display:flex; justify-content:space-between; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:8px;">
-            <span>ASSIGN TO ACQUISITION MANAGERS</span>
-            <span id="assignHint" style="color:var(--muted); cursor:pointer; text-decoration:underline;" onclick="assignNone()">Clear All</span>
-          </label>
-          <div id="assignList" style="max-height:160px; overflow-y:auto; background:var(--bg3); border:1px solid var(--line); border-radius:4px; padding:8px; display:flex; flex-direction:column; gap:6px; margin-bottom:16px;">
-            <div style="color:var(--muted); font-size:11px;">Loading roster...</div>
-          </div>
-        </div>
-
+    <div class="map-wrap">
+      <div class="map-controls">
+        <input type="text" id="mapSearchInput" class="map-search-input"
+               placeholder="SEARCH ZIP (78207), ADDRESS, OR OWNER — then ENTER"
+               onkeydown="if(event.key==='Enter') runMapSearch()" />
+        <button class="map-btn" onclick="runMapSearch()">🔍 Search</button>
+        <button class="map-btn amber" onclick="locateMe()">📍 Near Me</button>
+        <button class="btn-nav" onclick="loadAllLeadsToMap()" style="padding:8px 12px;">↻ All Leads</button>
       </div>
-      
-      <div class="push-bar">
-        <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.4;">
-          <span style="color:var(--good)">► OVERRIDES ASSOCIATE CRM</span><br>
-          <span style="color:var(--cyan)">► SENDS DIRECT CHAT PING</span>
+
+      <div id="leadMap"></div>
+
+      <div class="map-status" id="mapStatus">INITIALIZING MAP…</div>
+
+      <div class="map-legend">
+        <div class="legend-title">Pin Legend</div>
+        <div class="legend-row"><span class="legend-dot absentee"></span> Absentee (mail ≠ property)</div>
+        <div class="legend-row"><span class="legend-dot owner-occ"></span> Owner-occupied</div>
+        <div class="legend-row"><span class="legend-dot buyer"></span> Buyer</div>
+        <div class="legend-row"><span class="legend-dot unknown"></span> Unknown / no mailing</div>
+      </div>
+
+      <!-- HUD slides over the map when a lead/request is opened -->
+      <div id="targetHud" class="target-overlay">
+        <div class="panel-body">
+          <div class="hud-header">
+            <div>
+              <div class="hud-title">
+                <span id="hudAddress">Select a Target</span>
+                <span class="copy-icon" onclick="copyAddress()" title="Copy Address">📋</span>
+              </div>
+              <div class="hud-meta">REQ BY: <span id="hudRequester" style="color:#fff;">—</span> <span style="color:var(--muted)">//</span> TYPE: <span id="hudType" style="color:#fff;">—</span></div>
+            </div>
+            <button class="btn-nav" onclick="closeTargetHud()" style="border-color:var(--bad); color:var(--bad);">✕ MAP</button>
+          </div>
+
+          <div class="data-grid" style="margin-bottom: 0;">
+            <div class="data-box" style="grid-column: 1 / -1;">
+               <label>Full Property Address</label>
+               <input type="text" id="t_address" class="input-tactical" placeholder="Address required for Manual Drops..." />
+            </div>
+            <div class="data-box">
+              <label>Property Owner</label>
+              <input type="text" id="t_owner" class="input-tactical" placeholder="Unknown or Unverified..." />
+            </div>
+            <div class="data-box">
+              <label>Mailing Address</label>
+              <input type="text" id="t_mailing" class="input-tactical" placeholder="Mailing Address..." />
+            </div>
+            <div class="data-box" style="grid-column: 1 / -1;">
+              <label>Skip Traced Phones (Format: Label | Number)</label>
+              <textarea id="t_phones" class="input-tactical" placeholder="e.g.&#10;Owner | 210-555-1234&#10;Daughter | 210-555-9876"></textarea>
+            </div>
+            <div class="data-box" style="grid-column: 1 / -1;">
+              <label>Leadership Analysis & Strategic Notes</label>
+              <textarea id="t_notes" class="input-tactical" placeholder="ARV analysis, equity position, tax flags, recommended pitch approach..."></textarea>
+            </div>
+          </div>
+
+          <div style="margin-top:20px; padding-top:16px; border-top:1px dashed var(--line);">
+            <label style="display:flex; justify-content:space-between; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:8px;">
+              <span>ASSIGN TO ACQUISITION MANAGERS</span>
+              <span id="assignHint" style="color:var(--muted); cursor:pointer; text-decoration:underline;" onclick="assignNone()">Clear All</span>
+            </label>
+            <div id="assignList" style="max-height:160px; overflow-y:auto; background:var(--bg3); border:1px solid var(--line); border-radius:4px; padding:8px; display:flex; flex-direction:column; gap:6px; margin-bottom:16px;">
+              <div style="color:var(--muted); font-size:11px;">Loading roster...</div>
+            </div>
+          </div>
         </div>
-        <button class="btn-push" id="btnPushData" disabled onclick="pushToUserCRM()">Push Payload</button>
+
+        <div class="push-bar">
+          <div style="font-family: 'JetBrains Mono', monospace; font-size: 10px; color: var(--muted); line-height: 1.4;">
+            <span style="color:var(--good)">► OVERRIDES ASSOCIATE CRM</span><br>
+            <span style="color:var(--cyan)">► SENDS DIRECT CHAT PING</span>
+          </div>
+          <button class="btn-push" id="btnPushData" disabled onclick="pushToUserCRM()">Push Payload</button>
+        </div>
       </div>
 
     </div>
   </div>
 
+  <!-- ================= RIGHT: OSINT TOOLS (unchanged) ================= -->
   <div class="panel">
     <div class="panel-head">
       <span>OSINT Systems</span>
       <span id="targetStatus" style="color: var(--muted);">STANDBY</span>
     </div>
     <div class="panel-body">
-      
       <div class="tool-grid">
         <a class="tool-btn" id="btnAppraisal" href="#" target="_blank"><i>🏛️</i> Appraisal Dist</a>
         <a class="tool-btn" id="btnClerk" href="#" target="_blank"><i>📜</i> County Clerk</a>
@@ -265,43 +354,34 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
         <a class="tool-btn" id="btnTps" href="https://www.truepeoplesearch.com/" target="_blank"><i>👤</i> TruePeople</a>
         <a class="tool-btn" id="btnFtn" href="https://www.familytreenow.com/" target="_blank"><i>🌳</i> FamilyTreeNow</a>
       </div>
-      
+
       <div class="bexar-title" style="margin-top:16px;">Multi-Intel Interface</div>
       <div style="display:flex; gap:6px; margin-bottom:8px; overflow-x:auto;">
           <button class="btn-nav" onclick="popStreetView()" style="color:var(--batman); border-color:var(--batman); box-shadow: 0 0 10px rgba(234,179,8,0.2);">🛣️ POP STREET VIEW</button>
           <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.taxSheet; document.getElementById('satcomOverlay').innerText='TAX ESTATES';">Tax Sheet</button>
           <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.rprHub; document.getElementById('satcomOverlay').innerText='RPR SYSTEM';">RPR</button>
-          <button class="btn-nav" onclick="document.getElementById('streetViewFrame').src=warRoomSettings.leadsMap; document.getElementById('satcomOverlay').innerText='LEADS MAP';">Leads Map</button>
       </div>
       <div class="map-view" style="height: 380px;">
         <div class="map-overlay" id="satcomOverlay">STANDBY</div>
         <iframe id="streetViewFrame" src="about:blank"></iframe>
       </div>
-
     </div>
   </div>
 
 </div>
 
+<!-- ================= SETTINGS MODAL (unchanged) ================= -->
 <div id="settingsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.8); z-index:10000; align-items:center; justify-content:center; backdrop-filter: blur(5px);">
-  <div style="background:var(--bg2); border:1px solid var(--cyan); padding:24px; border-radius:8px; width:480px; box-shadow: 0 0 30px rgba(6, 182, 212, 0.3);">
+  <div style="background:var(--bg2); border:1px solid var(--cyan); padding:24px; border-radius:8px; width:480px; box-shadow: 0 0 30px rgba(6, 182, 212, 0.3); max-height:90vh; overflow-y:auto;">
     <h2 style="font-family:'Orbitron', sans-serif; color:var(--cyan); margin-bottom:20px;">WAR ROOM SETTINGS</h2>
-    
     <div style="margin-bottom:12px;">
       <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">TAX ESTATES SHEET URL</label>
       <input type="text" id="set_taxSheet" class="input-tactical" placeholder="Paste Google Sheet URL..." />
     </div>
-    
-    <div style="margin-bottom:12px;">
-      <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">CUSTOM LEADS MAP URL</label>
-      <input type="text" id="set_leadsMap" class="input-tactical" placeholder="Paste Google My Maps URL..." />
-    </div>
-    
     <div style="margin-bottom:16px;">
       <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">RPR HUB URL</label>
       <input type="text" id="set_rprHub" class="input-tactical" placeholder="Paste RPR URL..." />
     </div>
-
     <div style="border-top:1px dashed var(--line); padding-top:16px; margin-bottom:16px;">
       <label style="display:block; font-family:'JetBrains Mono'; font-size:10px; color:var(--batman); margin-bottom:6px;">TARGET MARKET PROFILES</label>
       <div style="display:flex; gap:8px; margin-bottom:12px;">
@@ -323,7 +403,6 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
         <input type="text" id="set_taxAssessor" class="input-tactical" placeholder="Paste URL..." />
       </div>
     </div>
-    
     <div style="display:flex; justify-content:flex-end; gap:12px;">
       <button class="btn-nav danger" onclick="document.getElementById('settingsModal').style.display='none'">CANCEL</button>
       <button class="btn-nav" style="border-color:var(--good); color:var(--good);" onclick="saveWarRoomSettings()">SAVE INTEL LINKS</button>
@@ -333,16 +412,39 @@ textarea.input-tactical:focus { border-color: var(--cyan); background: rgba(6, 1
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
 <script src="config.js"></script>
 
 <script>
-// --- WAR ROOM GLOBAL STATES ---
+/* =========================================================================
+   DEALBANKERS WAR ROOM — FIRESTORE EDITION
+   - Lead collections: leadsMaster_{category}   (categories: sellers, buyers)
+   - Per-user:         leadsByUser/{uid}/{category}/{leadId}
+   - Requests:         warroom_requests (flat collection, field requesterUid)
+   - Settings:         warroom_settings/{uid}
+   - Directory/roles:  userDirectory/{uid}, roles/{uid}
+   - Notifications:    notifications/{uid}/items/{autoId}
+   Map: Leaflet + OpenStreetMap (no API key). Geocoding via Nominatim,
+        cached back onto each lead doc as lat/lng so it only runs once.
+   ========================================================================= */
+
+// ---- Config: collection + field names (match your portal) ----
+const CATEGORIES = ['sellers', 'buyers'];
+const USER_DIR_PATH = 'userDirectory';
+const ROLES_PATH = 'roles';
+function leadsMasterCol(cat) { return `leadsMaster_${cat}`; }
+
+// ---- Global state ----
 window.userDirCache = [];
 window.modalAssignedSet = new Set();
+let activeRequests = [];
+let currentTargetId = null;
+let currentTarget = null;
+let currentMasterLead = null;
+let isListening = false;
+
 let warRoomSettings = {
     taxSheet: 'https://docs.google.com/spreadsheets/d/1SF1WBEAdh1gaprsmCnvRSR98Mv-oqAL68tiAKOM6weo/edit?widget=true&headers=false',
-    leadsMap: 'https://www.google.com/maps/d/u/0/edit?mid=1Tb9CxOcvA3cfEPCOXXEJ3ePX8TQ7eBc&ll=29.516971460226863%2C-98.51418784379601&z=12',
     rprHub: 'https://www.narrpr.com/',
     activeMarket: 'TX - Bexar County',
     markets: {
@@ -354,14 +456,284 @@ let warRoomSettings = {
     }
 };
 
+// ---- Firebase init ----
+(function(){
+  try { if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig); }
+  catch(e) { console.error("Firebase init err", e); }
+})();
+const fs = firebase.firestore();
+
+// =========================================================================
+//  MAP
+// =========================================================================
+let map = null;
+let markerLayer = null;
+let leadMarkers = [];          // {lead, marker, cat}
+let allLeadsCache = [];        // every lead pulled, with cat
+let meMarker = null;
+
+const SA_CENTER = [29.4241, -98.4936]; // San Antonio default
+
+function setMapStatus(txt, color) {
+  const el = document.getElementById('mapStatus');
+  if (!el) return;
+  el.innerText = txt;
+  el.style.borderColor = color || 'var(--cyan)';
+  el.style.color = color || 'var(--cyan)';
+}
+
+function initMap() {
+  map = L.map('leadMap', { zoomControl: true, attributionControl: true }).setView(SA_CENTER, 11);
+  // Dark tile layer (CARTO dark — free, no key)
+  L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', {
+    attribution: '&copy; OpenStreetMap &copy; CARTO',
+    maxZoom: 19
+  }).addTo(map);
+  markerLayer = L.layerGroup().addTo(map);
+  setMapStatus('MAP ONLINE — load leads to plot');
+}
+
+// Classify a lead for pin color
+function classifyLead(lead, cat) {
+  if (cat === 'buyers') return 'buyer';
+  const addr = (lead.address || '').trim().toLowerCase();
+  const mail = (lead.mailing || '').trim().toLowerCase();
+  if (!mail) return 'unknown';
+  // Normalize: compare first chunk (street number + name) loosely
+  const norm = s => s.replace(/[.,#]/g,'').replace(/\s+/g,' ').trim();
+  if (norm(addr) === norm(mail)) return 'owner-occ';
+  // If mailing street-number differs from property, treat as absentee
+  return 'absentee';
+}
+
+function pinIcon(kind) {
+  return L.divIcon({
+    className: '',
+    html: `<div class="db-pin ${kind}"></div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 18],
+    popupAnchor: [0, -16]
+  });
+}
+
+// ---- Geocoding (Nominatim, free, ~1 req/sec) with cache-back to Firestore ----
+let geocodeQueue = [];
+let geocoding = false;
+
+async function geocodeAddress(addr) {
+  const url = `https://nominatim.openstreetmap.org/search?format=json&limit=1&q=${encodeURIComponent(addr)}`;
+  const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+  if (!res.ok) throw new Error('geocode http ' + res.status);
+  const data = await res.json();
+  if (data && data.length) return { lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) };
+  return null;
+}
+
+async function processGeocodeQueue() {
+  if (geocoding) return;
+  geocoding = true;
+  while (geocodeQueue.length) {
+    const item = geocodeQueue.shift();
+    setMapStatus(`Geocoding ${geocodeQueue.length + 1} address(es)…`, 'var(--batman)');
+    try {
+      const coords = await geocodeAddress(item.lead.address);
+      if (coords) {
+        item.lead.lat = coords.lat;
+        item.lead.lng = coords.lng;
+        plotOneLead(item.lead, item.cat);
+        // cache back to Firestore so we never geocode this lead again
+        try {
+          await fs.collection(leadsMasterCol(item.cat)).doc(item.lead.id).set(
+            { lat: coords.lat, lng: coords.lng, geocodedAt: Date.now() }, { merge: true });
+        } catch(e) { console.warn('Could not cache coords for', item.lead.id, e.message); }
+      }
+    } catch (e) {
+      console.warn('Geocode failed for', item.lead.address, e.message);
+    }
+    await new Promise(r => setTimeout(r, 1100)); // respect Nominatim 1/sec
+  }
+  geocoding = false;
+  setMapStatus(`${leadMarkers.length} leads plotted`);
+}
+
+function plotOneLead(lead, cat) {
+  if (typeof lead.lat !== 'number' || typeof lead.lng !== 'number') return;
+  const kind = classifyLead(lead, cat);
+  const marker = L.marker([lead.lat, lead.lng], { icon: pinIcon(kind) });
+  const flagClass = kind === 'absentee' ? 'absentee' : (kind === 'owner-occ' ? 'owner-occ' : '');
+  const flagText = kind === 'absentee' ? 'ABSENTEE OWNER' : (kind === 'owner-occ' ? 'OWNER-OCCUPIED' : (kind === 'buyer' ? 'BUYER' : 'UNKNOWN'));
+  const safeId = escapeHtml(lead.id || '');
+  const popup = `
+    <div class="popup-addr">${escapeHtml(lead.address || 'No address')}</div>
+    <div class="popup-owner">${escapeHtml(lead.owner || 'Owner unknown')}</div>
+    ${flagClass ? `<span class="popup-flag ${flagClass}">${flagText}</span>` : `<span class="popup-flag" style="color:var(--muted);border:1px solid var(--muted);">${flagText}</span>`}
+    ${lead.mailing ? `<div style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:6px;">MAIL: ${escapeHtml(lead.mailing)}</div>` : ''}
+    <button class="popup-btn" onclick="openLeadFromMap('${cat}','${safeId}')">OPEN INTEL CONSOLE</button>`;
+  marker.bindPopup(popup);
+  marker.addTo(markerLayer);
+  leadMarkers.push({ lead, marker, cat, kind });
+}
+
+function clearMap() {
+  if (markerLayer) markerLayer.clearLayers();
+  leadMarkers = [];
+}
+
+async function loadAllLeadsToMap() {
+  if (!map) return;
+  clearMap();
+  setMapStatus('Pulling leads from Firestore…', 'var(--batman)');
+  allLeadsCache = [];
+  geocodeQueue = [];
+
+  for (const cat of CATEGORIES) {
+    try {
+      const snap = await fs.collection(leadsMasterCol(cat)).get();
+      snap.forEach(doc => {
+        const lead = { id: doc.id, ...doc.data() };
+        allLeadsCache.push({ lead, cat });
+        if (typeof lead.lat === 'number' && typeof lead.lng === 'number') {
+          plotOneLead(lead, cat);
+        } else if (lead.address) {
+          geocodeQueue.push({ lead, cat });
+        }
+      });
+    } catch (e) {
+      console.error('Failed to load', cat, e);
+      setMapStatus('Load error on ' + cat + ' (check rules)', 'var(--bad)');
+    }
+  }
+
+  // Fit to plotted markers
+  if (leadMarkers.length) {
+    const group = L.featureGroup(leadMarkers.map(m => m.marker));
+    try { map.fitBounds(group.getBounds().pad(0.2)); } catch(e) {}
+  }
+
+  if (geocodeQueue.length) {
+    setMapStatus(`${leadMarkers.length} plotted • geocoding ${geocodeQueue.length} new…`, 'var(--batman)');
+    processGeocodeQueue();
+  } else {
+    setMapStatus(`${leadMarkers.length} leads plotted`);
+  }
+}
+
+// Search the map: ZIP, address, or owner. Filters cached leads + recenters.
+function runMapSearch() {
+  const q = (document.getElementById('mapSearchInput').value || '').trim().toLowerCase();
+  if (!q) { loadAllLeadsToMap(); return; }
+
+  // If it's a 5-digit ZIP and we have no matching cached leads, fly the map there via geocode.
+  const isZip = /^\d{5}$/.test(q);
+
+  clearMap();
+  const matches = allLeadsCache.filter(({ lead }) => {
+    return (lead.address || '').toLowerCase().includes(q) ||
+           (lead.owner || '').toLowerCase().includes(q) ||
+           (lead.mailing || '').toLowerCase().includes(q);
+  });
+
+  matches.forEach(({ lead, cat }) => {
+    if (typeof lead.lat === 'number' && typeof lead.lng === 'number') plotOneLead(lead, cat);
+  });
+
+  if (leadMarkers.length) {
+    const group = L.featureGroup(leadMarkers.map(m => m.marker));
+    try { map.fitBounds(group.getBounds().pad(0.2)); } catch(e) {}
+    setMapStatus(`${leadMarkers.length} match "${q}"`);
+  } else if (isZip) {
+    // No cached leads in that ZIP yet — just fly the map there
+    setMapStatus(`No plotted leads in ${q} — centering area…`, 'var(--batman)');
+    geocodeAddress(q + ', TX').then(c => {
+      if (c) { map.setView([c.lat, c.lng], 13); setMapStatus(`Centered on ${q}. Load leads to plot.`); }
+      else setMapStatus(`Could not locate ${q}`, 'var(--bad)');
+    }).catch(() => setMapStatus(`Could not locate ${q}`, 'var(--bad)'));
+  } else {
+    setMapStatus(`No leads match "${q}"`, 'var(--bad)');
+  }
+}
+
+function locateMe() {
+  if (!navigator.geolocation) { setMapStatus('Geolocation not supported', 'var(--bad)'); return; }
+  setMapStatus('Locating you…', 'var(--batman)');
+  navigator.geolocation.getCurrentPosition(pos => {
+    const { latitude, longitude } = pos.coords;
+    map.setView([latitude, longitude], 14);
+    if (meMarker) map.removeLayer(meMarker);
+    meMarker = L.circleMarker([latitude, longitude], {
+      radius: 9, color: '#06b6d4', fillColor: '#06b6d4', fillOpacity: 0.6, weight: 2
+    }).addTo(map).bindPopup('You are here');
+    setMapStatus('Located. Showing leads near you.');
+  }, err => {
+    setMapStatus('Location denied or unavailable', 'var(--bad)');
+  }, { enableHighAccuracy: true, timeout: 8000 });
+}
+
+// Open the intel console for a lead clicked on the map
+async function openLeadFromMap(cat, leadId) {
+  const hud = document.getElementById('targetHud');
+  const statusEl = document.getElementById('targetStatus');
+  const pushBtn = document.getElementById('btnPushData');
+
+  currentTargetId = leadId;
+  currentTarget = { id: leadId, address: "", requestType: "Map Pull", category: cat, leadId: leadId, requesterEmail: "MAP CONSOLE" };
+
+  hud.classList.add('active');
+  statusEl.innerText = "MAP TARGET LOCKED";
+  statusEl.style.color = "var(--cyan)";
+  pushBtn.disabled = true;
+  pushBtn.innerText = "FETCHING INTEL...";
+
+  try {
+    const doc = await fs.collection(leadsMasterCol(cat)).doc(leadId).get();
+    currentMasterLead = doc.exists ? doc.data() : {};
+    currentTarget.address = currentMasterLead.address || "";
+
+    document.getElementById('hudAddress').innerText = currentMasterLead.address || 'Unknown Address';
+    document.getElementById('t_address').value = currentMasterLead.address || '';
+    document.getElementById('hudRequester').innerText = "MAP CONSOLE";
+    document.getElementById('hudType').innerText = cat === 'buyers' ? 'Buyer' : 'Seller';
+    document.getElementById('t_owner').value = currentMasterLead.owner || currentMasterLead.name || '';
+    document.getElementById('t_mailing').value = currentMasterLead.mailing || '';
+    document.getElementById('t_notes').value = currentMasterLead.notes || '';
+    document.getElementById('t_phones').value = fmtPhones(currentMasterLead.phones);
+
+    window.modalAssignedSet.clear();
+    if (Array.isArray(currentMasterLead.assignedUids)) currentMasterLead.assignedUids.forEach(u => window.modalAssignedSet.add(u));
+    renderAssignList();
+
+    pushBtn.disabled = false;
+    pushBtn.innerText = "Update Payload";
+    updateOSINTLinks(currentTarget, currentMasterLead);
+  } catch (e) {
+    console.error('Map lead load error', e);
+    setMapStatus('Could not open lead', 'var(--bad)');
+  }
+}
+
+function closeTargetHud() {
+  document.getElementById('targetHud').classList.remove('active');
+  document.getElementById('targetStatus').innerText = "STANDBY";
+  document.getElementById('targetStatus').style.color = "var(--muted)";
+  currentTargetId = null; currentTarget = null; currentMasterLead = null;
+}
+
+function fmtPhones(phones) {
+  if (Array.isArray(phones)) return phones.map(p => `${p.label || 'Phone'} | ${p.phone || p.number || ''}`).join('\n');
+  if (typeof phones === 'string') return phones;
+  return '';
+}
+
+// =========================================================================
+//  SETTINGS (Firestore: warroom_settings/{uid})
+// =========================================================================
 async function loadWarRoomSettings() {
     if(!firebase.auth().currentUser) return;
     try {
-        const snap = await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).once('value');
-        if(snap.exists()) {
-            const data = snap.val();
+        const doc = await fs.collection('warroom_settings').doc(firebase.auth().currentUser.uid).get();
+        if(doc.exists) {
+            const data = doc.data();
             warRoomSettings.taxSheet = data.taxSheet || warRoomSettings.taxSheet;
-            warRoomSettings.leadsMap = data.leadsMap || warRoomSettings.leadsMap;
             warRoomSettings.rprHub = data.rprHub || warRoomSettings.rprHub;
             warRoomSettings.activeMarket = data.activeMarket || warRoomSettings.activeMarket;
             warRoomSettings.markets = data.markets || warRoomSettings.markets;
@@ -375,19 +747,15 @@ function applyActiveMarketLinks() {
     document.getElementById('btnClerk').href = market.countyClerk || '#';
     document.getElementById('btnAppraisal').href = market.appraisalDist || '#';
     document.getElementById('btnTax').href = market.taxAssessor || '#';
-    
     const indicator = document.getElementById('activeMarketIndicator');
     if(indicator) indicator.innerText = `[OP AREA: ${warRoomSettings.activeMarket.toUpperCase()}]`;
 }
 
 function openWarRoomSettings() {
     document.getElementById('set_taxSheet').value = warRoomSettings.taxSheet || '';
-    document.getElementById('set_leadsMap').value = warRoomSettings.leadsMap || '';
     document.getElementById('set_rprHub').value = warRoomSettings.rprHub || '';
-    
     const sel = document.getElementById('set_marketSelect');
     sel.innerHTML = Object.keys(warRoomSettings.markets).map(m => `<option value="${m}" ${m === warRoomSettings.activeMarket ? 'selected' : ''}>${m}</option>`).join('');
-    
     document.getElementById('set_newMarketName').value = '';
     loadSelectedMarket();
     document.getElementById('settingsModal').style.display = 'flex';
@@ -405,43 +773,42 @@ async function saveWarRoomSettings() {
     let marketName = document.getElementById('set_newMarketName').value.trim();
     if(!marketName) marketName = document.getElementById('set_marketSelect').value;
     if(!marketName) marketName = "Default Market";
-
     const marketData = {
         countyClerk: document.getElementById('set_countyClerk').value.trim(),
         appraisalDist: document.getElementById('set_appraisalDist').value.trim(),
         taxAssessor: document.getElementById('set_taxAssessor').value.trim()
     };
-
     warRoomSettings.taxSheet = document.getElementById('set_taxSheet').value.trim();
-    warRoomSettings.leadsMap = document.getElementById('set_leadsMap').value.trim();
     warRoomSettings.rprHub = document.getElementById('set_rprHub').value.trim();
     warRoomSettings.activeMarket = marketName;
     if (!warRoomSettings.markets) warRoomSettings.markets = {};
     warRoomSettings.markets[marketName] = marketData;
-
     try {
-        await db.ref(`warroom_settings/${firebase.auth().currentUser.uid}`).set(warRoomSettings);
+        await fs.collection('warroom_settings').doc(firebase.auth().currentUser.uid).set(warRoomSettings, { merge: true });
         applyActiveMarketLinks();
         document.getElementById('settingsModal').style.display = 'none';
-        
-        const status = document.getElementById('targetStatus');
-        const oldText = status.innerText;
-        const oldColor = status.style.color;
-        status.innerText = "MARKET INTEL SAVED";
-        status.style.color = "var(--good)";
-        setTimeout(()=>{ status.innerText = oldText; status.style.color = oldColor; }, 2000);
-    } catch(e) { alert("FAILED TO SAVE TO FIREBASE."); }
+        flashStatus("MARKET INTEL SAVED", "var(--good)");
+    } catch(e) { alert("FAILED TO SAVE TO FIRESTORE."); }
 }
 
+function flashStatus(msg, color) {
+    const status = document.getElementById('targetStatus');
+    const oldText = status.innerText, oldColor = status.style.color;
+    status.innerText = msg; status.style.color = color;
+    setTimeout(()=>{ status.innerText = oldText; status.style.color = oldColor; }, 2000);
+}
+
+// =========================================================================
+//  USER DIRECTORY (Firestore: userDirectory)
+// =========================================================================
 async function loadUserDirectoryCache() {
     try {
-        const snap = await db.ref('userDirectory').once('value');
-        const users = snap.val() || {};
+        const snap = await fs.collection(USER_DIR_PATH).get();
         const rows = [];
-        Object.keys(users).forEach(uid => {
-            const u = users[uid];
+        snap.forEach(doc => {
+            const u = doc.data();
             if(u.role !== 'system' && u.role !== 'god') {
-                rows.push({uid: uid, name: u.name||u.email||uid, email: u.email||"", role: u.role||"user"});
+                rows.push({uid: doc.id, name: u.name||u.email||doc.id, email: u.email||"", role: u.role||"user"});
             }
         });
         rows.sort((a,b) => a.name.localeCompare(b.name));
@@ -463,8 +830,8 @@ function renderAssignList() {
         return `<label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-size:12px; color:var(--text); padding:6px; border-radius:4px; border: 1px solid transparent;" onmouseover="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='var(--line)'" onmouseout="this.style.background='transparent'; this.style.borderColor='transparent'">
             <input type="checkbox" class="assign-cb" data-uid="${r.uid}" ${checked} onchange="handleAssignChange(this)" style="accent-color:var(--batman); width:16px; height:16px;" />
             <div style="display:flex; flex-direction:column; flex:1;">
-                <span style="font-weight:bold; color:var(--cyan);">${r.name} ${roleTag}</span>
-                <span style="font-size:10px; color:var(--muted);">${r.email}</span>
+                <span style="font-weight:bold; color:var(--cyan);">${escapeHtml(r.name)} ${roleTag}</span>
+                <span style="font-size:10px; color:var(--muted);">${escapeHtml(r.email)}</span>
             </div>
         </label>`;
     }).join('');
@@ -474,120 +841,94 @@ function handleAssignChange(el) {
     if(el.checked) window.modalAssignedSet.add(el.dataset.uid);
     else window.modalAssignedSet.delete(el.dataset.uid);
 }
-
-function assignNone() {
-    window.modalAssignedSet.clear();
-    renderAssignList();
-}
+function assignNone() { window.modalAssignedSet.clear(); renderAssignList(); }
 
 function startNewDrop() {
-    currentTargetId = null;
-    currentTarget = null;
+    currentTargetId = null; currentTarget = null; currentMasterLead = null;
     document.getElementById('hudAddress').innerText = "MANUAL INTEL DROP";
-    document.getElementById('hudOwner').innerText = "Enter raw data below";
     document.getElementById('hudRequester').innerText = "GOD MODE";
     document.getElementById('hudType').innerText = "MANUAL DROP";
-    
     document.getElementById('t_address').value = "";
     document.getElementById('t_owner').value = "";
     document.getElementById('t_mailing').value = "";
     document.getElementById('t_phones').value = "";
     document.getElementById('t_notes').value = "";
-    
-    if(window.modalAssignedSet) window.modalAssSet = new Set();
-    assignNone(); // Clears all checkboxes visually
-    
-    const hud = document.getElementById('targetHud');
-    hud.classList.remove('active');
-    void hud.offsetWidth;
-    hud.classList.add('active');
-    
+    if(window.modalAssignedSet) window.modalAssignedSet = new Set();
+    assignNone();
+    document.getElementById('targetHud').classList.add('active');
     const status = document.getElementById('targetStatus');
-    status.innerText = "READY FOR MANUAL ENTRY";
-    status.style.color = "var(--batman)";
-    
+    status.innerText = "READY FOR MANUAL ENTRY"; status.style.color = "var(--batman)";
     const pushBtn = document.getElementById('btnPushData');
-    pushBtn.disabled = false;
-    pushBtn.innerText = "Push Payload";
+    pushBtn.disabled = false; pushBtn.innerText = "Push Payload";
 }
 
 function popStreetView() {
     let addr = document.getElementById('hudAddress').innerText;
-    if (addr === "MANUAL INTEL DROP") {
-        addr = document.getElementById('t_address').value.trim();
-    }
+    if (addr === "MANUAL INTEL DROP") addr = document.getElementById('t_address').value.trim();
     if(addr && addr !== "Select a Target") {
-        const url = `https://www.google.com/maps/search/?api=1&query=$$${encodeURIComponent(addr)}`;
+        const url = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addr)}`;
         window.open(url, 'streetview', 'width=1100,height=750,resizable=yes,scrollbars=yes');
-    } else {
-        alert("Please enter a property address first.");
-    }
+    } else { alert("Please enter a property address first."); }
 }
 
-// Init Firebase
-(function(){
-  try {
-    if(!firebase.apps.length) firebase.initializeApp(window.firebaseConfig);
-  } catch(e) { console.error("Firebase init err", e); }
-})();
-const db = firebase.database();
-let activeRequests = [];
-let currentTargetId = null;
-let currentTarget = null;
-let currentMasterLead = null;
-let isListening = false;
-
-// Strict God Mode Gatekeeper
+// =========================================================================
+//  AUTH GATEKEEPER (Firestore: roles/{uid}, userDirectory/{uid})
+// =========================================================================
 firebase.auth().onAuthStateChanged(async (user) => {
   if (!user) return location.href = "index.html";
-  
   if (user.email !== "dealbankers@gmail.com") {
-    const roleSnap = await db.ref(`roles/${user.uid}`).once('value');
-    const udSnap = await db.ref(`userDirectory/${user.uid}/role`).once('value');
-    if (roleSnap.val() !== 'god' && udSnap.val() !== 'god') {
+    let isGod = false;
+    try {
+      const roleDoc = await fs.collection(ROLES_PATH).doc(user.uid).get();
+      const udDoc = await fs.collection(USER_DIR_PATH).doc(user.uid).get();
+      const r1 = roleDoc.exists ? (roleDoc.data().role || roleDoc.data()) : null;
+      const r2 = udDoc.exists ? udDoc.data().role : null;
+      if (r1 === 'god' || r2 === 'god') isGod = true;
+    } catch(e) { console.error('Role check failed', e); }
+    if (!isGod) {
       alert("UNAUTHORIZED ACCESS. CONNECTION SEVERED.");
       location.href = "profile.html";
       return;
     }
   }
-  
   await loadWarRoomSettings();
   await loadUserDirectoryCache();
+  initMap();
+  loadAllLeadsToMap();
   listenForRequests();
 });
 
-// Watch for pending requests LIVE
+// =========================================================================
+//  INTEL REQUEST QUEUE (Firestore: warroom_requests, flat collection)
+// =========================================================================
 function listenForRequests() {
   if (isListening) return;
   isListening = true;
   document.getElementById('queueCount').innerText = `SCANNING...`;
-  
-  db.ref('warroom_requests').on('value', snap => {
-        const data = snap.val();
+
+  fs.collection('warroom_requests').where('status', '==', 'pending')
+    .onSnapshot(snap => {
         activeRequests = [];
-        
-        if (data && typeof data === 'object') {
-            Object.keys(data).forEach(uid => {
-              const userRequests = data[uid];
-              if (userRequests && typeof userRequests === 'object') {
-                  Object.keys(userRequests).forEach(reqId => {
-                    const req = userRequests[reqId];
-                    if (req && req.status === 'pending') {
-                      activeRequests.push({ id: reqId, ...req, requesterUid: uid });
-                    }
-                  });
-              }
-            });
-        }
-        
-        activeRequests.sort((a,b) => (b.ts || 0) - (a.ts || 0));
+        snap.forEach(doc => {
+            const req = doc.data();
+            activeRequests.push({ id: doc.id, ...req, requesterUid: req.requesterUid });
+        });
+        activeRequests.sort((a,b) => (tsVal(b.ts) - tsVal(a.ts)));
         document.getElementById('queueCount').innerText = `${activeRequests.length} PENDING`;
         renderQueue();
     }, err => {
-        console.error("Firebase read error:", err);
+        console.error("Firestore read error:", err);
         document.getElementById('queueCount').innerText = "ERROR";
         document.getElementById('requestQueue').innerHTML = `<div style="color:var(--bad); text-align:center; margin-top:20px; font-family:'JetBrains Mono', monospace;">DATABASE ACCESS DENIED OR FAILED. CHECK RULES.</div>`;
     });
+}
+
+function tsVal(ts) {
+  if (!ts) return 0;
+  if (typeof ts === 'number') return ts;
+  if (ts.toMillis) return ts.toMillis();           // Firestore Timestamp
+  if (ts.seconds) return ts.seconds * 1000;
+  return 0;
 }
 
 function renderQueue() {
@@ -596,79 +937,65 @@ function renderQueue() {
     container.innerHTML = `<div style="color: var(--muted); font-family: 'JetBrains Mono', monospace; font-size: 11px; text-align: center; margin-top: 40px; letter-spacing: 0.1em;">NO ACTIVE INTEL REQS</div>`;
     return;
   }
-
   let html = "";
   activeRequests.forEach(req => {
     const isSkip = (req.requestType === 'skip' || req.requestType === 'Contact Search');
     html += `
       <div class="req-item ${currentTargetId === req.id ? 'active' : ''}" data-id="${escapeHtml(req.id)}">
-        <div class="req-type">>> ${isSkip ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
+        <div class="req-type">&gt;&gt; ${isSkip ? 'SKIP TRACE REQ' : 'DEAL ANALYSIS REQ'}</div>
         <div class="req-addr">${escapeHtml(req.address || 'Unknown Target')}</div>
         <div class="req-user">
-          <span>FR: ${escapeHtml(req.requesterEmail || 'Unknown').split('@')[0]}</span>
-          <span>${new Date(req.ts || Date.now()).toLocaleDateString()}</span>
+          <span>FR: ${escapeHtml((req.requesterEmail || 'Unknown')).split('@')[0]}</span>
+          <span>${new Date(tsVal(req.ts) || Date.now()).toLocaleDateString()}</span>
         </div>
-      </div>
-    `;
+      </div>`;
   });
   container.innerHTML = html;
 }
 
 document.getElementById('requestQueue').addEventListener('click', (e) => {
     const item = e.target.closest('.req-item');
-    if(item) {
-        const reqId = item.getAttribute('data-id');
-        if(reqId) loadTarget(reqId);
-    }
+    if(item) { const reqId = item.getAttribute('data-id'); if(reqId) loadTarget(reqId); }
 });
 
 async function loadTarget(reqId) {
   currentTargetId = reqId;
   currentTarget = activeRequests.find(r => r.id === reqId);
-  renderQueue(); 
-
+  renderQueue();
   if (!currentTarget) return;
+
   const hud = document.getElementById('targetHud');
   const statusEl = document.getElementById('targetStatus');
   const pushBtn = document.getElementById('btnPushData');
 
-  hud.classList.remove('active');
-  void hud.offsetWidth;
   hud.classList.add('active');
-
-  statusEl.innerText = "TARGET LOCKED";
-  statusEl.style.color = "var(--bad)";
-  pushBtn.disabled = true;
-  pushBtn.innerText = "FETCHING INTEL...";
+  statusEl.innerText = "TARGET LOCKED"; statusEl.style.color = "var(--bad)";
+  pushBtn.disabled = true; pushBtn.innerText = "FETCHING INTEL...";
 
   const isSkip = (currentTarget.requestType === 'skip' || currentTarget.requestType === 'Contact Search');
-  
-  // Fill Request Meta
   document.getElementById('hudAddress').innerText = currentTarget.address || 'Unknown Address';
   document.getElementById('t_address').value = currentTarget.address || '';
-  document.getElementById('hudRequester').innerText = currentTarget.requesterEmail;
+  document.getElementById('hudRequester').innerText = currentTarget.requesterEmail || '—';
   document.getElementById('hudType').innerText = isSkip ? 'Skip Trace' : 'Analysis';
 
   try {
-    if(currentTarget.leadId && currentTarget.requesterUid) {
+    if(currentTarget.leadId) {
         const cat = currentTarget.category || 'sellers';
-        let leadSnap = await db.ref(`leadsByUser/${currentTarget.requesterUid}/${cat}/${currentTarget.leadId}`).once('value');
-        if(!leadSnap.exists()) {
-            leadSnap = await db.ref(`leadsMaster/${cat}/${currentTarget.leadId}`).once('value');
+        let data = null;
+        // Try per-user doc first, then master
+        if (currentTarget.requesterUid) {
+          const userDoc = await fs.collection('leadsByUser').doc(currentTarget.requesterUid).collection(cat).doc(currentTarget.leadId).get();
+          if (userDoc.exists) data = userDoc.data();
         }
-        currentMasterLead = leadSnap.val() || {};
-        
+        if (!data) {
+          const masterDoc = await fs.collection(leadsMasterCol(cat)).doc(currentTarget.leadId).get();
+          if (masterDoc.exists) data = masterDoc.data();
+        }
+        currentMasterLead = data || {};
         document.getElementById('t_owner').value = currentMasterLead.owner || currentMasterLead.name || currentTarget.owner || '';
-        document.getElementById('t_mailing').value = currentMasterLead.mailing || currentMasterLead.mailingAddress || '';
+        document.getElementById('t_mailing').value = currentMasterLead.mailing || '';
         document.getElementById('t_notes').value = currentMasterLead.notes || currentTarget.notes || '';
-        
-        if (currentMasterLead.phones && Array.isArray(currentMasterLead.phones)) {
-            document.getElementById('t_phones').value = currentMasterLead.phones.map(p => `${p.label || 'Phone'} | ${p.phone || p.number || ''}`).join('\n');
-        } else if (currentTarget.phones && typeof currentTarget.phones === 'string') {
-            document.getElementById('t_phones').value = currentTarget.phones;
-        } else {
-            document.getElementById('t_phones').value = '';
-        }
+        document.getElementById('t_phones').value = fmtPhones(currentMasterLead.phones) || (typeof currentTarget.phones === 'string' ? currentTarget.phones : '');
     }
   } catch(e) {
       console.warn("Could not fetch backing lead. Using request data directly.", e);
@@ -678,44 +1005,36 @@ async function loadTarget(reqId) {
       document.getElementById('t_phones').value = (typeof currentTarget.phones === 'string') ? currentTarget.phones : '';
   }
 
-  // Pre-select the requester in the assignment list
   window.modalAssignedSet.clear();
   if(currentTarget.requesterUid) window.modalAssignedSet.add(currentTarget.requesterUid);
   renderAssignList();
-
-  pushBtn.disabled = false;
-  pushBtn.innerText = "Push Payload";
-
+  pushBtn.disabled = false; pushBtn.innerText = "Push Payload";
   updateOSINTLinks(currentTarget, currentMasterLead);
 }
 
 function updateOSINTLinks(req, masterLead) {
   let ownerStr = masterLead ? (masterLead.owner || masterLead.name || '') : '';
   if(!ownerStr) ownerStr = req.owner || '';
-  
   const addrEncoded = encodeURIComponent(req.address || '');
   const ownerParts = ownerStr.split(' ');
   const first = encodeURIComponent(ownerParts[0] || '');
   const last = encodeURIComponent(ownerParts[ownerParts.length - 1] || '');
-  
   document.getElementById('btnTps').href = ownerStr ? `https://www.truepeoplesearch.com/results?name=${first}%20${last}&streetaddress=${addrEncoded}` : 'https://www.truepeoplesearch.com/';
   document.getElementById('btnFtn').href = ownerStr ? `https://www.familytreenow.com/search/genealogy/results?first=${first}&last=${last}&streetaddress=${addrEncoded}` : 'https://www.familytreenow.com/';
-  
-  // Auto-map disabled to preserve custom Multi-Intel interface bandwidth.
 }
 
+// =========================================================================
+//  PUSH PAYLOAD (Firestore: leadsMaster_{cat}, leadsByUser, notifications)
+// =========================================================================
 async function pushToUserCRM() {
   const btn = document.getElementById('btnPushData');
-  btn.innerText = "TRANSMITTING...";
-  btn.disabled = true;
-  
+  btn.innerText = "TRANSMITTING..."; btn.disabled = true;
+
   let targetAddress = document.getElementById('t_address').value.trim();
   if(!targetAddress && currentTarget) targetAddress = currentTarget.address;
   if(!targetAddress) {
       alert("Error: Property Address is required to push a payload.");
-      btn.innerText = "Push Payload";
-      btn.disabled = false;
-      return;
+      btn.innerText = "Push Payload"; btn.disabled = false; return;
   }
 
   const payload = {
@@ -726,7 +1045,6 @@ async function pushToUserCRM() {
     updatedAt: Date.now(),
     updatedBy: "Leadership (War Room)"
   };
-
   const phoneRaw = document.getElementById('t_phones').value;
   const phones = phoneRaw.split('\n').filter(p => p.trim()).map(line => {
     const [label, phone] = line.includes('|') ? line.split('|') : ['Phone', line];
@@ -736,48 +1054,51 @@ async function pushToUserCRM() {
 
   try {
     const cat = (currentTarget && currentTarget.category) ? currentTarget.category : 'sellers';
-    const leadId = (currentTarget && currentTarget.leadId) ? currentTarget.leadId : db.ref(`leadsMaster/${cat}`).push().key;
+    const masterCol = leadsMasterCol(cat);
+    const leadId = (currentTarget && currentTarget.leadId) ? currentTarget.leadId : fs.collection(masterCol).doc().id;
     payload.id = leadId;
 
-    const updates = {};
     const uids = Array.from(window.modalAssignedSet || []);
+    if(uids.length === 0 && firebase.auth().currentUser) uids.push(firebase.auth().currentUser.uid);
     const assignedTo = {};
-    if(uids.length === 0 && firebase.auth().currentUser) uids.push(firebase.auth().currentUser.uid); // Fallback to self
     uids.forEach(uid => assignedTo[uid] = true);
-    
     payload.assignedTo = assignedTo;
     payload.assignedUids = uids;
-    
-    updates[`leadsMaster/${cat}/${leadId}`] = payload;
-    
+
+    const batch = fs.batch();
+    // Master lead
+    batch.set(fs.collection(masterCol).doc(leadId), payload, { merge: true });
+    // Per-user copies + notifications
+    const meEmail = firebase.auth().currentUser ? firebase.auth().currentUser.email : "War Room";
     uids.forEach(uid => {
-        updates[`leadsByUser/${uid}/${cat}/${leadId}`] = {
-            ...payload,
-            assignedBy: firebase.auth().currentUser ? firebase.auth().currentUser.email : "War Room",
-            assignedAt: Date.now(),
-            archived: false
-        };
-        
-        // Push notification blip to assigned users
-        updates[`notifications/${uid}/${db.ref().push().key}`] = {
+        batch.set(
+          fs.collection('leadsByUser').doc(uid).collection(cat).doc(leadId),
+          { ...payload, assignedBy: meEmail, assignedAt: Date.now(), archived: false },
+          { merge: true }
+        );
+        const notifRef = fs.collection('notifications').doc(uid).collection('items').doc();
+        batch.set(notifRef, {
             type: "warroom_update",
-            message: currentTargetId ? `Intel for ${payload.address} has been securely processed.` : `A new lead (${payload.address}) has been dropped into your queue.`,
-            ts: firebase.database.ServerValue.TIMESTAMP,
+            message: (currentTarget && currentTarget.leadId)
+              ? `Intel for ${payload.address} has been securely processed.`
+              : `A new lead (${payload.address}) has been dropped into your queue.`,
+            ts: firebase.firestore.FieldValue.serverTimestamp(),
             read: false
-        };
-    });
-
-    await db.ref().update(updates);
-
-    if(currentTargetId && currentTarget) {
-        await db.ref(`warroom_requests/${currentTarget.requesterUid}/${currentTargetId}`).update({ 
-            status: 'completed', 
-            completedAt: Date.now(),
-            processorEmail: firebase.auth().currentUser.email
         });
+    });
+    await batch.commit();
+
+    // Mark the originating request completed
+    if(currentTargetId && currentTarget && currentTarget.requestType !== 'Map Pull') {
+        try {
+          await fs.collection('warroom_requests').doc(currentTargetId).set({
+            status: 'completed', completedAt: Date.now(),
+            processorEmail: firebase.auth().currentUser ? firebase.auth().currentUser.email : ""
+          }, { merge: true });
+        } catch(e) { console.warn('Could not mark request complete', e.message); }
     }
 
-    document.getElementById('targetHud').classList.remove('active');
+    closeTargetHud();
     document.getElementById('targetStatus').innerText = "TRANSMISSION COMPLETE";
     document.getElementById('targetStatus').style.color = "var(--good)";
     setTimeout(() => {
@@ -785,32 +1106,21 @@ async function pushToUserCRM() {
       document.getElementById('targetStatus').style.color = "var(--muted)";
     }, 3000);
 
+    loadAllLeadsToMap(); // refresh pins to include the new/updated lead
+
   } catch(e) {
     console.error("Push failed", e);
-    alert("TRANSMISSION FAILED. CHECK CONSOLE OR DATABASE RULES.");
+    alert("TRANSMISSION FAILED. CHECK CONSOLE OR FIRESTORE RULES.");
   } finally {
-    btn.innerText = "Push Payload";
-    btn.disabled = false;
-    currentTargetId = null;
-    currentTarget = null;
-    startNewDrop(); // Reset the board
+    btn.innerText = "Push Payload"; btn.disabled = false;
+    currentTargetId = null; currentTarget = null;
   }
 }
 
 function copyAddress() {
     const addr = document.getElementById('hudAddress').innerText;
     if(addr && addr !== "Select a Target" && addr !== "MANUAL INTEL DROP") {
-        navigator.clipboard.writeText(addr).then(() => {
-            const status = document.getElementById('targetStatus');
-            const oldText = status.innerText;
-            const oldColor = status.style.color;
-            status.innerText = "ADDRESS COPIED";
-            status.style.color = "var(--cyan)";
-            setTimeout(()=>{
-                status.innerText = oldText;
-                status.style.color = oldColor;
-            }, 1500);
-        });
+        navigator.clipboard.writeText(addr).then(() => flashStatus("ADDRESS COPIED", "var(--cyan)"));
     }
 }
 
