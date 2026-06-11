@@ -170,6 +170,16 @@ body{
 .detail-header{padding:12px 16px;}
 .job-body{padding:16px;}
 }
+
+/* BOOK OF BUSINESS CRM */
+.bob-card { background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px; padding: 16px; cursor: pointer; transition: 0.2s; display:flex; flex-direction:column; justify-content:space-between;}
+.bob-card:hover { background: rgba(255,255,255,0.06); border-color: var(--accent); transform: translateY(-2px); box-shadow: 0 8px 20px rgba(0,0,0,0.3);}
+.bob-card.enterprise { border-top: 4px solid var(--warn); }
+.bob-card.commercial { border-top: 4px solid var(--good); }
+.bob-action-btn { background: rgba(43,116,255,0.1); border: 1px solid rgba(43,116,255,0.3); color: #cfe6ff; padding: 10px; border-radius: 8px; text-align: center; font-weight: 800; cursor: pointer; display:block; text-decoration:none; margin-top:12px; transition:0.2s;}
+.bob-action-btn:hover { background: rgba(43,116,255,0.25); color:#fff; }
+.dossier-chat-log { display:flex;flex-direction:column;gap:8px;max-height:300px;overflow-y:auto;background:rgba(0,0,0,.2);padding:12px;border-radius:8px;border:1px solid rgba(255,255,255,.1);margin-top:12px;}
+
 </style>
 </head>
 <body data-portal="contractor">
@@ -180,6 +190,7 @@ body{
 <div style="opacity:.8"><small id="roleReadout">ROLE: —</small></div>
 </div>
 <nav class="nav">
+<button class="icon-btn" id="btnBookOfBusiness" onclick="window.toggleBookOfBusiness()" title="Book of Business" style="border-color: var(--accent); color: #cfe6ff; margin-right:8px; font-size:16px;">📖</button>
 <a class="chip ghost" href="profile.html">Dashboard</a>
 <button class="chip primary" id="btnTeam" type="button" style="display:none;" onclick="window.openTeamModal()">👥 Team</button>
 <button class="phone-chip blue-phone" type="button" title="Blue Phone Support" onclick="window.openSupportModal('blue')">☎</button>
@@ -197,7 +208,17 @@ body{
 <div class="posture-item" id="godCommsHint" style="display:none"><span class="status-dot dot-good"></span> <span style="color:var(--good)">Uber Comms Active</span></div>
 </div>
 
-<div class="wrap">
+
+<div id="bookWrapper" style="display:none; width:100%; height:calc(100vh - 90px); background:var(--bg1); overflow-y:auto; padding:24px;">
+    <div style="max-width:900px; margin:0 auto; width:100%;">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:16px; margin-bottom:24px;">
+            <h2 style="margin:0; font-size:28px; color:#fff;">📖 Book of Business</h2>
+            <div id="bobStats" style="font-size:13px; color:var(--muted); font-weight:700;">Loading...</div>
+        </div>
+        <div id="bobGrid" style="display:grid; grid-template-columns:repeat(auto-fill, minmax(280px, 1fr)); gap:16px;"></div>
+    </div>
+</div>
+<div class="wrap" id="mainOpsWrapper">
 <aside class="side-panel" id="jobListContainer">
 <div id="listContainer">
 <div class="panel-head">
@@ -256,12 +277,25 @@ body{
 <option value="upcoming">Upcoming</option>
 </select>
 </div>
-<div>
-<label class="small">Job Type</label>
-<select id="jobType">
-<option value="service">Service Order (Pizza Tracker)</option>
-<option value="enterprise">Enterprise (Bid Process)</option>
+<div style="grid-column:1/-1;">
+<label class="small">Lead / Job Classification</label>
+<select id="jobType" onchange="window.togglePostJobFields(this.value)">
+    <option value="service">📋 Service Order / Make-Ready</option>
+    <option value="enterprise">🏢 Fed Procurement Prospect (SAM.gov)</option>
+    <option value="commercial">🏠 Property Management Prospect</option>
 </select>
+</div>
+
+<div id="prospectAssignBox" style="display:none; grid-column:1/-1; background:rgba(43,116,255,0.08); padding:16px; border-radius:8px; border:1px solid rgba(43,116,255,0.25); margin-top:8px;">
+    <h4 style="margin:0 0 12px 0; color:#fff; font-size:14px;">Prospecting Target Details</h4>
+    <label class="small" style="color:#cfe6ff; display:block; margin-bottom:4px;">Assign To Branch Manager</label>
+    <select id="entAssignee" style="width:100%; background:#0d1f2d; color:#fff; border:1px solid #254a63; padding:10px; border-radius:8px; margin-bottom:12px;"></select>
+    
+    <label class="small" style="color:#cfe6ff; display:block; margin-bottom:4px;">Target / Gatekeeper Phone</label>
+    <input id="entTargetPhone" placeholder="(555) 555-5555" style="width:100%; margin-bottom:12px; background:#0d1f2d; color:#fff; border:1px solid #254a63; padding:10px; border-radius:8px;" />
+    
+    <label class="small" style="color:#cfe6ff; display:block; margin-bottom:4px;">Target Script / Pitch</label>
+    <textarea id="entScript" rows="4" placeholder="Paste custom script..." style="width:100%; background:#0d1f2d; color:#fff; border:1px solid #254a63; padding:10px; border-radius:8px;"></textarea>
 </div>
 <div>
 <label class="small">Target Date (YYYY-MM-DD)</label>
@@ -459,7 +493,231 @@ style="width:100%; border-radius:10px; padding:10px; background:#0d1f2d; color:#
 
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js">
+<div class="modal-backdrop" id="dossierModal">
+    <div class="modal" style="max-width:700px; background:#08111a;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="margin:0; color:#fff; font-size:20px;">Prospect Dossier</h3>
+            <button class="chip ghost" onclick="document.getElementById('dossierModal').classList.remove('show')">✕</button>
+        </div>
+        <div id="dossierContent">Loading...</div>
+    </div>
+</div>
+
+<script>
+window.isBobActive = false;
+
+window.toggleBookOfBusiness = function() {
+    const mainWrap = document.getElementById('mainOpsWrapper');
+    const bobWrap = document.getElementById('bookWrapper');
+    const btn = document.getElementById('btnBookOfBusiness');
+    
+    window.isBobActive = !window.isBobActive;
+    
+    if(window.isBobActive) {
+        mainWrap.style.display = 'none';
+        bobWrap.style.display = 'block';
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
+        window.renderBookOfBusiness();
+    } else {
+        bobWrap.style.display = 'none';
+        mainWrap.style.display = 'flex';
+        btn.style.background = 'rgba(255,255,255,0.12)';
+        btn.style.color = '#cfe6ff';
+        if(window.map) google.maps.event.trigger(window.map, "resize");
+    }
+};
+
+window.renderBookOfBusiness = function() {
+    const grid = document.getElementById('bobGrid');
+    const stats = document.getElementById('bobStats');
+    if(!grid) return;
+    
+    let leads = [];
+    Object.keys(window.jobsCache || {}).forEach(id => {
+        const j = { ...window.jobsCache[id], id };
+        if(j.jobType === 'enterprise' || j.jobType === 'commercial') {
+            if(window.isGodMode() || j.assignedSubUid === window.UID) {
+                leads.push(j);
+            }
+        }
+    });
+    
+    leads.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    stats.innerText = `${leads.length} Active Prospects`;
+    
+    if(leads.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--muted); font-size:16px;">📭 Your Book is Empty. No prospects assigned yet.</div>`;
+        return;
+    }
+    
+    let html = '';
+    leads.forEach(j => {
+        const typeClass = j.jobType === 'enterprise' ? 'enterprise' : 'commercial';
+        const typeLabel = j.jobType === 'enterprise' ? '🏢 Fed Procurement' : '🏠 Prop Mgmt';
+        const callLink = `tel:${window.sanitizeTel(j.targetPhone)}`;
+        
+        html += `
+        <div class="bob-card ${typeClass}" onclick="window.openDossier('${j.id}')">
+            <div>
+                <div style="font-size:11px; color:var(--muted); font-weight:800; margin-bottom:8px; text-transform:uppercase;">${typeLabel}</div>
+                <div style="font-size:18px; font-weight:900; color:#fff; margin-bottom:4px; line-height:1.2;">${window.esc(j.title || '(Untitled)')}</div>
+                <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${window.esc(j.trade || 'Target Portfolio')}</div>
+                <div style="font-size:16px; font-weight:800; color:#cfe6ff; margin-bottom:12px; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">📞 ${window.esc(j.targetPhone || 'No Phone')}</div>
+                ${window.isGodMode() ? `<div style="font-size:11px; margin-bottom:12px;"><span class="pill blue">Assigned: ${window.esc(j.assignedSubEmail || 'None')}</span></div>` : ''}
+            </div>
+            <a href="${callLink}" class="bob-action-btn" onclick="event.stopPropagation()">Dial Prospect</a>
+        </div>`;
+    });
+    grid.innerHTML = html;
+};
+
+// Hook into Firebase to live-update the Book of Business
+const originalSubscribeBob = window.subscribeJobs;
+window.subscribeJobs = function() {
+    if(originalSubscribeBob) originalSubscribeBob();
+    if(window.isBobActive) window.renderBookOfBusiness();
+};
+
+window.togglePostJobFields = async function(val) {
+    const box = document.getElementById('prospectAssignBox');
+    if(val === 'enterprise' || val === 'commercial') {
+        box.style.display = 'block';
+        if(window.loadUserDirectoryCache) {
+            await window.loadUserDirectoryCache();
+            let opts = '<option value="">-- Open Market (Unassigned) --</option>';
+            if(window.userDirCache && window.userDirCache.byUid) {
+                Object.values(window.userDirCache.byUid).forEach(u => {
+                    if(u.role === 'admin' || u.role === 'god') {
+                        opts += `<option value="${u.uid}|${window.esc(u.name || u.email)}">${window.esc(u.name || u.email)}</option>`;
+                    }
+                });
+            }
+            document.getElementById('entAssignee').innerHTML = opts;
+        }
+    } else {
+        box.style.display = 'none';
+    }
+};
+
+window.openDossier = async function(id) {
+    const j = window.jobsCache[id];
+    if(!j) return;
+    
+    // War Room Quick Assign feature
+    let assignDropdown = '';
+    if(window.isGodMode()) {
+        let opts = '<option value="">-- Unassigned --</option>';
+        if(window.userDirCache && window.userDirCache.byUid) {
+            Object.values(window.userDirCache.byUid).forEach(u => {
+                if(u.role === 'admin' || u.role === 'god') {
+                    const isSel = j.assignedSubUid === u.uid ? 'selected' : '';
+                    opts += `<option value="${u.uid}|${window.esc(u.name || u.email)}" ${isSel}>${window.esc(u.name || u.email)}</option>`;
+                }
+            });
+        }
+        assignDropdown = `<div style="margin-top:16px; display:flex; align-items:center; gap:8px;">
+            <select class="chip ghost tiny" style="height:auto; background:rgba(0,0,0,0.3); border-color:var(--accent); color:#fff; cursor:pointer; padding:6px 12px;" onchange="window.quickAssignProspect('${id}', this.value)">${opts}</select>
+            <button class="chip ghost tiny" style="padding:6px 12px;" onclick="window.openJobModal('edit', '${id}'); document.getElementById('dossierModal').classList.remove('show');">✎ Edit</button>
+            <button class="chip danger tiny" style="padding:6px 12px;" onclick="window.modalLeadId='${id}'; window.deleteJob(); document.getElementById('dossierModal').classList.remove('show');">✕ Delete</button>
+        </div>`;
+    }
+
+    const html = `
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:16px;">
+            <h2 style="margin:0; font-size:24px; color:#fff;">${window.esc(j.title)}</h2>
+            <div style="color:var(--muted); font-size:14px; margin-top:6px; font-weight:600;">${window.esc(j.trade)}</div>
+            ${assignDropdown}
+        </div>
+        
+        <div style="display:flex; align-items:center; gap:12px; padding:16px; background:rgba(43,116,255,0.1); border-radius:8px; border:1px solid rgba(43,116,255,0.2);">
+            <span style="font-size:20px;">📞</span>
+            <a href="tel:${window.sanitizeTel(j.targetPhone)}" style="font-weight:800; color:#cfe6ff; text-decoration:none; flex:1; font-size:18px;">${window.esc(j.targetPhone || 'No Phone')}</a>
+        </div>
+        
+        <div>
+            <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">Target Script / Pitch:</h4>
+            <div style="background:rgba(255,255,255,0.03); border-left:4px solid var(--accent); padding:16px; border-radius:6px; color:var(--muted); font-size:14px; font-style:italic; line-height:1.6;">
+                ${window.esc(j.godNotes || j.desc || 'No script provided').replace(/\n/g, '<br/>')}
+            </div>
+        </div>
+        
+        <div>
+            <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">Call Notes:</h4>
+            <textarea id="dossierNoteInput" placeholder="Log call results, gatekeeper info, next steps..." style="width:100%; background:#0d1f2d; border:1px solid #254a63; color:#fff; border-radius:8px; padding:12px; min-height:80px; font-family:inherit; outline:none; resize:vertical; margin-bottom:8px; font-size:13px;"></textarea>
+            <button class="bob-action-btn" style="width:100%; margin:0; background:rgba(19,185,129,0.15); border-color:rgba(19,185,129,0.5); color:#c9ffe2; font-size:14px;" onclick="window.saveDossierNote('${id}')">Save CRM Note</button>
+        </div>
+        
+        <div id="dossierNotesLog" class="dossier-chat-log">
+            <div style="text-align:center; color:var(--muted); font-size:12px; padding:10px;">Loading notes...</div>
+        </div>
+    </div>`;
+    
+    document.getElementById('dossierContent').innerHTML = html;
+    document.getElementById('dossierModal').classList.add('show');
+    window.loadDossierNotes(id);
+};
+
+window.quickAssignProspect = async function(jobId, assignVal) {
+    const updates = {};
+    if(assignVal) {
+        updates.assignedSubUid = assignVal.split('|')[0];
+        updates.assignedSubEmail = assignVal.split('|')[1];
+    } else {
+        updates.assignedSubUid = null;
+        updates.assignedSubEmail = null;
+    }
+    try {
+        await firebase.database().ref(`jobs/${jobId}`).update(updates);
+        window.renderBookOfBusiness();
+        
+        // Visual confirmation flash on the book icon
+        const btn = document.getElementById('btnBookOfBusiness');
+        if(btn) {
+            btn.style.background = 'var(--good)';
+            setTimeout(() => { btn.style.background = 'transparent'; }, 400);
+        }
+    } catch(e) { alert("Failed to assign prospect."); }
+};
+
+window.saveDossierNote = async function(jobId) {
+    const input = document.getElementById('dossierNoteInput');
+    const text = input.value.trim();
+    if(!text) return;
+    try {
+        await firebase.database().ref(`jobs/${jobId}/activity`).push({
+            text: text, uid: window.UID, byName: window.ME?.email || 'System', ts: Date.now()
+        });
+        input.value = '';
+    } catch(e) { alert('Failed to save note.'); }
+};
+
+window.loadDossierNotes = function(jobId) {
+    firebase.database().ref(`jobs/${jobId}/activity`).on('value', snap => {
+        const logs = snap.val() || {};
+        const box = document.getElementById('dossierNotesLog');
+        if(!box) return;
+        if(!Object.keys(logs).length) {
+            box.innerHTML = '<div style="color:var(--muted); text-align:center; font-size:12px; font-style:italic;">No notes logged. Be the first to dial.</div>';
+            return;
+        }
+        let html = '';
+        Object.values(logs).sort((a,b) => b.ts - a.ts).forEach(l => {
+            const time = new Date(l.ts).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            html += `
+            <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border-left:2px solid var(--accent); margin-bottom:8px;">
+                <div style="font-size:11px; color:var(--muted); margin-bottom:6px;"><b>${window.esc(l.byName)}</b> • ${time}</div>
+                <div style="color:#fff; font-size:13px; line-height:1.5;">${window.esc(l.text).replace(/\n/g, '<br/>')}</div>
+            </div>`;
+        });
+        box.innerHTML = html;
+    });
+};
+</script>
+    
+</script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 <script src="config.js"></script>
 <script src="app-auth.js"></script>
@@ -939,7 +1197,7 @@ window.subscribeJobs = function(){
 if(!window.jobsView.length && $('leadList')) $('leadList').innerHTML = "<div class='empty-state' style='padding:16px;text-align:center;color:var(--muted);'>Loading...</div>";
 firebase.database().ref('jobs').on('value', snap => {
 window.jobsCache = snap.val() || {}; window.jobsView = [];
-Object.keys(window.jobsCache).forEach(id => { const j = {...window.jobsCache[id], id}; if((j.status||'active') === window.currentTab) window.jobsView.push(j); });
+Object.keys(window.jobsCache).forEach(id => { const j = {...window.jobsCache[id], id}; if((j.status||'active') === window.currentTab) if(j.jobType !== "enterprise" && j.jobType !== "commercial") { window.jobsView.push(j); } });
 const searchQ = ($('jobSearch')?.value||"").toLowerCase();
 if(searchQ) { window.jobsView = window.jobsView.filter(j => { const hay = `${j.title||''} ${j.trade||''} ${j.city||''} ${j.zip||''}`.toLowerCase(); return hay.includes(searchQ); }); }
 window.renderJobsList(); window.renderMarkers();
@@ -1014,6 +1272,14 @@ if($('godPostFields')) $('godPostFields').style.display = window.isGodMode() ? "
 if(isEdit && id){
 const j = window.jobsCache[id]; $('jobTitle').value = j.title||""; $('jobTrade').value = j.trade||""; $('jobCity').value = j.city||""; $('jobZip').value = j.zip||""; $('jobDate').value = j.date||"";
 $('jobBudget').value = j.budget||""; $('jobStatus').value = j.status||"active"; $('jobType').value = j.jobType||"service"; $('jobDesc').value = j.desc||""; if($('jobLicensedReq')) $('jobLicensedReq').checked = !!j.licensedRequired;
+    if(j.jobType === 'enterprise' || j.jobType === 'commercial') {
+        window.togglePostJobFields(j.jobType);
+        setTimeout(() => {
+            if($('entAssignee') && j.assignedSubUid) $('entAssignee').value = j.assignedSubUid + '|' + (j.assignedSubEmail||'');
+            if($('entTargetPhone')) $('entTargetPhone').value = j.targetPhone || '';
+            if($('entScript')) $('entScript').value = j.godNotes || '';
+        }, 100);
+    } else { window.togglePostJobFields('service'); }
 if(window.isGodMode()){ $('jobAddressExact').value = j.addressExact||""; $('vendorPhones').value = j.vendorPhones||""; $('godNotes').value = j.godNotes||""; if($('btnGodDeleteJob')) $('btnGodDeleteJob').style.display="flex"; }
 } else {
 $('jobTitle').value=""; $('jobTrade').value=""; $('jobCity').value=""; $('jobZip').value=""; $('jobDate').value=""; $('jobBudget').value=""; $('jobStatus').value="active"; $('jobType').value="service"; $('jobDesc').value=""; if($('jobLicensedReq')) $('jobLicensedReq').checked=false;
@@ -1039,6 +1305,16 @@ desc: ($('jobDesc')?.value||"").trim(),
 licensedRequired: $('jobLicensedReq')?.checked || false,
 updatedAt: firebase.database.ServerValue.TIMESTAMP
 };
+if(payload.jobType === 'enterprise' || payload.jobType === 'commercial') {
+    const targetAssign = document.getElementById('entAssignee')?.value;
+    if(targetAssign) {
+        payload.assignedSubUid = targetAssign.split('|')[0];
+        payload.assignedSubEmail = targetAssign.split('|')[1];
+    }
+    payload.targetPhone = document.getElementById('entTargetPhone')?.value || '';
+    payload.godNotes = document.getElementById('entScript')?.value || ''; // Map script to godNotes to hide from techs
+    payload.executionStatus = 'Prospecting';
+}
 
 const btn = $('btnJobSave');
 if(btn) { btn.disabled = true; btn.textContent = "Saving..."; }
@@ -1398,6 +1674,230 @@ window.hydrateRoleFlags("user");
 window.subscribeJobs();
 window.subscribeSelfDir();
 });
+
+<div class="modal-backdrop" id="dossierModal">
+    <div class="modal" style="max-width:700px; background:#08111a;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <h3 style="margin:0; color:#fff; font-size:20px;">Prospect Dossier</h3>
+            <button class="chip ghost" onclick="document.getElementById('dossierModal').classList.remove('show')">✕</button>
+        </div>
+        <div id="dossierContent">Loading...</div>
+    </div>
+</div>
+
+<script>
+window.isBobActive = false;
+
+window.toggleBookOfBusiness = function() {
+    const mainWrap = document.getElementById('mainOpsWrapper');
+    const bobWrap = document.getElementById('bookWrapper');
+    const btn = document.getElementById('btnBookOfBusiness');
+    
+    window.isBobActive = !window.isBobActive;
+    
+    if(window.isBobActive) {
+        mainWrap.style.display = 'none';
+        bobWrap.style.display = 'block';
+        btn.style.background = 'var(--accent)';
+        btn.style.color = '#fff';
+        window.renderBookOfBusiness();
+    } else {
+        bobWrap.style.display = 'none';
+        mainWrap.style.display = 'flex';
+        btn.style.background = 'rgba(255,255,255,0.12)';
+        btn.style.color = '#cfe6ff';
+        if(window.map) google.maps.event.trigger(window.map, "resize");
+    }
+};
+
+window.renderBookOfBusiness = function() {
+    const grid = document.getElementById('bobGrid');
+    const stats = document.getElementById('bobStats');
+    if(!grid) return;
+    
+    let leads = [];
+    Object.keys(window.jobsCache || {}).forEach(id => {
+        const j = { ...window.jobsCache[id], id };
+        if(j.jobType === 'enterprise' || j.jobType === 'commercial') {
+            if(window.isGodMode() || j.assignedSubUid === window.UID) {
+                leads.push(j);
+            }
+        }
+    });
+    
+    leads.sort((a,b) => (b.updatedAt || 0) - (a.updatedAt || 0));
+    stats.innerText = `${leads.length} Active Prospects`;
+    
+    if(leads.length === 0) {
+        grid.innerHTML = `<div style="grid-column:1/-1; padding:40px; text-align:center; color:var(--muted); font-size:16px;">📭 Your Book is Empty. No prospects assigned yet.</div>`;
+        return;
+    }
+    
+    let html = '';
+    leads.forEach(j => {
+        const typeClass = j.jobType === 'enterprise' ? 'enterprise' : 'commercial';
+        const typeLabel = j.jobType === 'enterprise' ? '🏢 Fed Procurement' : '🏠 Prop Mgmt';
+        const callLink = `tel:${window.sanitizeTel(j.targetPhone)}`;
+        
+        html += `
+        <div class="bob-card ${typeClass}" onclick="window.openDossier('${j.id}')">
+            <div>
+                <div style="font-size:11px; color:var(--muted); font-weight:800; margin-bottom:8px; text-transform:uppercase;">${typeLabel}</div>
+                <div style="font-size:18px; font-weight:900; color:#fff; margin-bottom:4px; line-height:1.2;">${window.esc(j.title || '(Untitled)')}</div>
+                <div style="font-size:13px; color:var(--muted); margin-bottom:16px;">${window.esc(j.trade || 'Target Portfolio')}</div>
+                <div style="font-size:16px; font-weight:800; color:#cfe6ff; margin-bottom:12px; background:rgba(0,0,0,0.3); padding:8px 12px; border-radius:8px;">📞 ${window.esc(j.targetPhone || 'No Phone')}</div>
+                ${window.isGodMode() ? `<div style="font-size:11px; margin-bottom:12px;"><span class="pill blue">Assigned: ${window.esc(j.assignedSubEmail || 'None')}</span></div>` : ''}
+            </div>
+            <a href="${callLink}" class="bob-action-btn" onclick="event.stopPropagation()">Dial Prospect</a>
+        </div>`;
+    });
+    grid.innerHTML = html;
+};
+
+// Hook into Firebase to live-update the Book of Business
+const originalSubscribeBob = window.subscribeJobs;
+window.subscribeJobs = function() {
+    if(originalSubscribeBob) originalSubscribeBob();
+    if(window.isBobActive) window.renderBookOfBusiness();
+};
+
+window.togglePostJobFields = async function(val) {
+    const box = document.getElementById('prospectAssignBox');
+    if(val === 'enterprise' || val === 'commercial') {
+        box.style.display = 'block';
+        if(window.loadUserDirectoryCache) {
+            await window.loadUserDirectoryCache();
+            let opts = '<option value="">-- Open Market (Unassigned) --</option>';
+            if(window.userDirCache && window.userDirCache.byUid) {
+                Object.values(window.userDirCache.byUid).forEach(u => {
+                    if(u.role === 'admin' || u.role === 'god') {
+                        opts += `<option value="${u.uid}|${window.esc(u.name || u.email)}">${window.esc(u.name || u.email)}</option>`;
+                    }
+                });
+            }
+            document.getElementById('entAssignee').innerHTML = opts;
+        }
+    } else {
+        box.style.display = 'none';
+    }
+};
+
+window.openDossier = async function(id) {
+    const j = window.jobsCache[id];
+    if(!j) return;
+    
+    // War Room Quick Assign feature
+    let assignDropdown = '';
+    if(window.isGodMode()) {
+        let opts = '<option value="">-- Unassigned --</option>';
+        if(window.userDirCache && window.userDirCache.byUid) {
+            Object.values(window.userDirCache.byUid).forEach(u => {
+                if(u.role === 'admin' || u.role === 'god') {
+                    const isSel = j.assignedSubUid === u.uid ? 'selected' : '';
+                    opts += `<option value="${u.uid}|${window.esc(u.name || u.email)}" ${isSel}>${window.esc(u.name || u.email)}</option>`;
+                }
+            });
+        }
+        assignDropdown = `<div style="margin-top:16px; display:flex; align-items:center; gap:8px;">
+            <select class="chip ghost tiny" style="height:auto; background:rgba(0,0,0,0.3); border-color:var(--accent); color:#fff; cursor:pointer; padding:6px 12px;" onchange="window.quickAssignProspect('${id}', this.value)">${opts}</select>
+            <button class="chip ghost tiny" style="padding:6px 12px;" onclick="window.openJobModal('edit', '${id}'); document.getElementById('dossierModal').classList.remove('show');">✎ Edit</button>
+            <button class="chip danger tiny" style="padding:6px 12px;" onclick="window.modalLeadId='${id}'; window.deleteJob(); document.getElementById('dossierModal').classList.remove('show');">✕ Delete</button>
+        </div>`;
+    }
+
+    const html = `
+    <div style="display:flex; flex-direction:column; gap:16px;">
+        <div style="border-bottom:1px solid rgba(255,255,255,0.1); padding-bottom:16px;">
+            <h2 style="margin:0; font-size:24px; color:#fff;">${window.esc(j.title)}</h2>
+            <div style="color:var(--muted); font-size:14px; margin-top:6px; font-weight:600;">${window.esc(j.trade)}</div>
+            ${assignDropdown}
+        </div>
+        
+        <div style="display:flex; align-items:center; gap:12px; padding:16px; background:rgba(43,116,255,0.1); border-radius:8px; border:1px solid rgba(43,116,255,0.2);">
+            <span style="font-size:20px;">📞</span>
+            <a href="tel:${window.sanitizeTel(j.targetPhone)}" style="font-weight:800; color:#cfe6ff; text-decoration:none; flex:1; font-size:18px;">${window.esc(j.targetPhone || 'No Phone')}</a>
+        </div>
+        
+        <div>
+            <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">Target Script / Pitch:</h4>
+            <div style="background:rgba(255,255,255,0.03); border-left:4px solid var(--accent); padding:16px; border-radius:6px; color:var(--muted); font-size:14px; font-style:italic; line-height:1.6;">
+                ${window.esc(j.godNotes || j.desc || 'No script provided').replace(/\n/g, '<br/>')}
+            </div>
+        </div>
+        
+        <div>
+            <h4 style="color:#fff; margin-bottom:8px; font-size:15px;">Call Notes:</h4>
+            <textarea id="dossierNoteInput" placeholder="Log call results, gatekeeper info, next steps..." style="width:100%; background:#0d1f2d; border:1px solid #254a63; color:#fff; border-radius:8px; padding:12px; min-height:80px; font-family:inherit; outline:none; resize:vertical; margin-bottom:8px; font-size:13px;"></textarea>
+            <button class="bob-action-btn" style="width:100%; margin:0; background:rgba(19,185,129,0.15); border-color:rgba(19,185,129,0.5); color:#c9ffe2; font-size:14px;" onclick="window.saveDossierNote('${id}')">Save CRM Note</button>
+        </div>
+        
+        <div id="dossierNotesLog" class="dossier-chat-log">
+            <div style="text-align:center; color:var(--muted); font-size:12px; padding:10px;">Loading notes...</div>
+        </div>
+    </div>`;
+    
+    document.getElementById('dossierContent').innerHTML = html;
+    document.getElementById('dossierModal').classList.add('show');
+    window.loadDossierNotes(id);
+};
+
+window.quickAssignProspect = async function(jobId, assignVal) {
+    const updates = {};
+    if(assignVal) {
+        updates.assignedSubUid = assignVal.split('|')[0];
+        updates.assignedSubEmail = assignVal.split('|')[1];
+    } else {
+        updates.assignedSubUid = null;
+        updates.assignedSubEmail = null;
+    }
+    try {
+        await firebase.database().ref(`jobs/${jobId}`).update(updates);
+        window.renderBookOfBusiness();
+        
+        // Visual confirmation flash on the book icon
+        const btn = document.getElementById('btnBookOfBusiness');
+        if(btn) {
+            btn.style.background = 'var(--good)';
+            setTimeout(() => { btn.style.background = 'transparent'; }, 400);
+        }
+    } catch(e) { alert("Failed to assign prospect."); }
+};
+
+window.saveDossierNote = async function(jobId) {
+    const input = document.getElementById('dossierNoteInput');
+    const text = input.value.trim();
+    if(!text) return;
+    try {
+        await firebase.database().ref(`jobs/${jobId}/activity`).push({
+            text: text, uid: window.UID, byName: window.ME?.email || 'System', ts: Date.now()
+        });
+        input.value = '';
+    } catch(e) { alert('Failed to save note.'); }
+};
+
+window.loadDossierNotes = function(jobId) {
+    firebase.database().ref(`jobs/${jobId}/activity`).on('value', snap => {
+        const logs = snap.val() || {};
+        const box = document.getElementById('dossierNotesLog');
+        if(!box) return;
+        if(!Object.keys(logs).length) {
+            box.innerHTML = '<div style="color:var(--muted); text-align:center; font-size:12px; font-style:italic;">No notes logged. Be the first to dial.</div>';
+            return;
+        }
+        let html = '';
+        Object.values(logs).sort((a,b) => b.ts - a.ts).forEach(l => {
+            const time = new Date(l.ts).toLocaleString('en-US', { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
+            html += `
+            <div style="background:rgba(255,255,255,0.03); padding:12px; border-radius:8px; border-left:2px solid var(--accent); margin-bottom:8px;">
+                <div style="font-size:11px; color:var(--muted); margin-bottom:6px;"><b>${window.esc(l.byName)}</b> • ${time}</div>
+                <div style="color:#fff; font-size:13px; line-height:1.5;">${window.esc(l.text).replace(/\n/g, '<br/>')}</div>
+            </div>`;
+        });
+        box.innerHTML = html;
+    });
+};
+</script>
+    
 </script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-storage-compat.js"></script>
 </body>
