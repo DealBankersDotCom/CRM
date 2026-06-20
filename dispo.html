@@ -130,7 +130,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-app.js";
-    import { getDatabase, ref, onValue, push, onChildAdded, serverTimestamp, set, onDisconnect } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-database.js";
+    import { getFirestore, collection, onSnapshot, addDoc, serverTimestamp, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-firestore.js";
     import { getAuth, onAuthStateChanged, signInAnonymously } from "https://www.gstatic.com/firebasejs/10.14.0/firebase-auth.js";
 
     const firebaseConfig = {
@@ -144,7 +144,7 @@
     };
 
     const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+    const db = getFirestore(app);
     const auth = getAuth(app);
     const dealsContainer = document.getElementById('dealsContainer');
     
@@ -152,7 +152,7 @@
         document.getElementById('chatBubble').style.display = 'flex';
     }
 
-    const dealsRef = ref(db, 'leadsMaster/sellers');
+    const dealsRef = collection(db, 'leadsMaster_sellers');
     window.dealPhotos = {};
     
     // Privacy Function: Strips the street address and only returns City, State, Zip
@@ -166,17 +166,17 @@
     }
 
     function loadDeals() {
-        onValue(dealsRef, (snapshot) => {
+        onSnapshot(dealsRef, (snapshot) => {
           dealsContainer.innerHTML = '';
-          if (!snapshot.exists()) {
+          if (snapshot.empty) {
             dealsContainer.innerHTML = `<p style="padding:20px; text-align:center;">No active deals found.</p>`;
             return;
           }
 
           let hasDeals = false;
 
-          snapshot.forEach(dealSnap => {
-            const deal = dealSnap.val();
+          snapshot.docs.forEach(dealSnap => {
+            const deal = dealSnap.data();
             if (!deal) return;
             
             // BULLETPROOF FLAG CHECKS: Checks both boolean and string variants safely
@@ -186,7 +186,7 @@
             if (!isLive || !isApproved) return; 
             
             hasDeals = true;
-            const dealId = dealSnap.key;
+            const dealId = dealSnap.id;
             
             // FIREBASE PHOTO SAFETY: Safely parse photos
             let photos = [];
@@ -284,15 +284,17 @@
             loadDeals(); 
             
             if (window.self === window.top) {
-                const presenceRef = ref(db, `presence/global/${user.uid}`);
-                onDisconnect(presenceRef).set({state: "offline", last: serverTimestamp()});
-                set(presenceRef, {
-                    state: "online",
+                const presenceRef = doc(db, 'presence_global', user.uid);
+                setDoc(presenceRef, {
+                    uid: user.uid,
+                    online: true,
                     name: user.isAnonymous ? "Guest Visitor" : (user.displayName || user.email),
                     email: user.isAnonymous ? "N/A" : user.email,
                     ts: serverTimestamp(),
+                    portal: "dispo",
                     page: "Dispo Portal (Public)"
-                });
+                }, { merge: true });
+                window.addEventListener("beforeunload", () => setDoc(presenceRef, { online: false }, { merge: true }));
             }
         } else {
             signInAnonymously(auth).catch(console.error);
@@ -300,16 +302,20 @@
     });
     
     function setupChat(uid) {
-        chatPath = `direct_messages/${uid}`;
-        const chatRef = ref(db, chatPath);
-        onChildAdded(chatRef, (snap) => {
-            const msg = snap.val();
-            const div = document.createElement('div');
-            const isMe = (msg.sender === uid);
-            div.className = "msg " + (isMe ? "me" : "them");
-            div.innerText = msg.text;
-            chatBody.appendChild(div);
-            chatBody.scrollTop = chatBody.scrollHeight;
+        chatPath = `direct_messages/${uid}/messages`;
+        const chatRef = collection(db, chatPath);
+        onSnapshot(chatRef, (snap) => {
+            snap.docChanges().forEach(change => {
+                if (change.type === 'added') {
+                    const msg = change.doc.data();
+                    const div = document.createElement('div');
+                    const isMe = (msg.sender === uid || msg.uid === uid);
+                    div.className = "msg " + (isMe ? "me" : "them");
+                    div.innerText = msg.text;
+                    chatBody.appendChild(div);
+                    chatBody.scrollTop = chatBody.scrollHeight;
+                }
+            });
         });
     }
 
@@ -319,7 +325,7 @@
     function sendMessage() {
         const text = chatInput.value.trim();
         if (!text || !currentUser) return;
-        push(ref(db, chatPath), { text: text, sender: currentUser.uid, ts: serverTimestamp() });
+        addDoc(collection(db, chatPath), { text: text, sender: currentUser.uid, uid: currentUser.uid, by: currentUser.isAnonymous ? "Guest" : (currentUser.displayName || currentUser.email), ts: serverTimestamp(), read: false });
         chatInput.value = "";
     }
   </script>
