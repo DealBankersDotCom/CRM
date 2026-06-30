@@ -1608,46 +1608,35 @@ window.parsePhonesFromModal = function(){
     return out;
 }
 
-window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
-  const cat=window.currentCategory;
-  const assignedObj=assigneeUids.reduce((acc,uid)=>{acc[uid]=true;return acc;},{});
-  // Force full replacement of assignedTo to enable unchecking
-  const enriched={...payload,id:leadId,assignedTo:assignedObj,assignedUids:assigneeUids,updatedAt:Date.now(),updatedBy:window.ME?.email||""};
-  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched);
-  const batch=firebase.firestore().batch();
-  assigneeUids.forEach(uid=>{ batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId),{...enriched,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}); });
-  if(window.modalMode==="edit"&&window.currentLead){
-    const prev=new Set([...Object.keys(window.currentLead.assignedTo||{}).filter(k=>window.currentLead.assignedTo[k]),...(window.currentLead.assignedUids||[])]);
-    prev.forEach(uid=>{ if(!assigneeUids.includes(String(uid))) batch.delete(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId)); });
-  }
-  await batch.commit();
-}
-
-window.upsertBranchAssignments = async function(leadId,payload,assigneeUids){
-  const cat=window.currentCategory;
-  const assignedObj=assigneeUids.reduce((acc,uid)=>{acc[uid]=true;return acc;},{});
-  const enriched={...payload,id:leadId,assignedTo:assignedObj,assignedUids:assigneeUids};
-  const batch=firebase.firestore().batch();
-  assigneeUids.forEach(uid=>{ batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId),{...enriched,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}); });
-  if(window.modalMode==="edit"&&window.currentLead){
-    const prev=new Set([...Object.keys(window.currentLead.assignedTo||{}).filter(k=>window.currentLead.assignedTo[k]),...(window.currentLead.assignedUids||[])]);
-    prev.forEach(uid=>{ if(!assigneeUids.includes(String(uid))) batch.delete(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId)); });
-  }
-  await batch.commit();
-}
-
-window.saveLeadFromModal = async function(skipClose){
-  let address=($("m_address")?.value||"").trim(); 
-  const owner=($("m_owner")?.value||"").trim();
+window.upsertLeadMasterAndAssignments = async function(leadId, payload, assigneeUids) {
+  const cat = window.currentCategory;
+  const assignedObj = assigneeUids.reduce((acc, uid) => { acc[uid] = true; return acc; }, {});
   
-  if (window.currentCategory === 'buyers') {
-      if(!owner){ window.modalToast("Buyer Name required.", false);
-      return null; }
-      address = owner;
-  } else {
-      if(!address){ window.modalToast("Address required.", false); return null;
+  const enriched = { ...payload, id: leadId, assignedTo: assignedObj, assignedUids: assigneeUids, updatedAt: Date.now(), updatedBy: window.ME?.email || "" };
+  
+  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched);
+  const batch = firebase.firestore().batch();
+  
+  // 1. Add/Set for assigned users
+  assigneeUids.forEach(uid => {
+    batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId), { ...enriched, assignedBy: window.ME?.email || "", assignedAt: Date.now(), archived: false });
+  });
+  
+  // 2. Remove for unassigned users
+  if (window.modalMode === "edit" && window.currentLead) {
+    const currentAssignments = Object.keys(window.currentLead.assignedTo || {}).filter(k => window.currentLead.assignedTo[k]);
+    const previousUsers = new Set([...currentAssignments, ...(window.currentLead.assignedUids || [])]);
+    
+    previousUsers.forEach(uid => {
+      if (!assigneeUids.includes(String(uid))) {
+        console.log("CLEANUP: Removing lead from associate:", uid);
+        batch.delete(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId));
       }
+    });
   }
+  
+  await batch.commit().then(() => console.log("Batch sync successful")).catch(err => console.error("Batch error:", err));
+}
 
   const isLiveVal = $("m_isLive")?.checked || false;
   const marketingTitle = ($("m_marketingTitle")?.value||"").trim();
