@@ -1,3 +1,4 @@
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -1016,7 +1017,8 @@ window.applySearch = function(){
   
   if (window.currentCategory === 'buyers') {
       view = view.filter(l => {
-          return true; // Fixed: Show all leads
+          const t = String(l.type||"").toLowerCase();
+          return t === "private wealth investor" || t === "wholesale buyer" || t === "both" || t.includes("buyer") || t.includes("investor");
       });
   } else if (window.currentCategory === 'sellers') {
       view = view.filter(l => {
@@ -1608,8 +1610,11 @@ window.parsePhonesFromModal = function(){
     return out;
 }
 
-
-  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched);
+window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
+  const cat=window.currentCategory;
+  const assignedObj=assigneeUids.reduce((acc,uid)=>{acc[uid]=true;return acc;},{});
+  const enriched={...payload,id:leadId,assignedTo:assignedObj,assignedUids:assigneeUids,updatedAt:Date.now(),updatedBy:window.ME?.email||""};
+  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched,{merge:true});
   const batch=firebase.firestore().batch();
   assigneeUids.forEach(uid=>{ batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId),{...enriched,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}); });
   if(window.modalMode==="edit"&&window.currentLead){
@@ -1734,7 +1739,54 @@ const wasLive = window.modalMode === "edit" && window.currentLead && (window.cur
   return null; } finally { if($("m_save")) $("m_save").disabled=false; }
 }
 
-
+window.deleteLead = async function(){
+  if(!window.modalLeadId) return;
+  if(!confirm(window.isGod?"Are you sure you want to completely delete this lead?":"Return this lead to the master bucket?")) return;
+  const delBtn=$("m_delete"); if(delBtn){delBtn.disabled=true;delBtn.textContent="Processing...";}
+  try{
+    const cat=window.currentCategory; const leadId=window.modalLeadId;
+    if(window.isGod){
+      const masterRef=firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId);
+      const legacyRef=firebase.firestore().collection(`leads_legacy_${cat}`).doc(leadId);
+      const leadDoc=await masterRef.get();
+      const assignedTo=leadDoc.exists?(leadDoc.data().assignedTo||{}):{};
+      const batch=firebase.firestore().batch();
+      batch.delete(masterRef); batch.delete(legacyRef);
+      Object.keys(assignedTo).forEach(uid=>{
+        if(assignedTo[uid]) batch.delete(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId));
+      });
+      await batch.commit();
+      try{
+        const wrSnap=await firebase.firestore().collection('warroom_requests').where('leadId','==',leadId).get();
+        const wb=firebase.firestore().batch();
+        wrSnap.docs.forEach(d=>wb.delete(d.ref));
+        if(!wrSnap.empty) await wb.commit();
+      }catch(wrErr){console.log("War Room wipe skipped.");}
+    } else {
+      const batch=firebase.firestore().batch();
+      const myUserRef=firebase.firestore().collection('leadsByUser').doc(window.UID).collection(cat).doc(leadId);
+      batch.delete(myUserRef);
+      if(window.isBranchManager){
+        window.managedAssociatesFor(window.UID).forEach(u=>{
+          batch.delete(firebase.firestore().collection('leadsByUser').doc(u.uid).collection(cat).doc(leadId));
+        });
+      }
+      try{ await batch.commit(); }catch(ruleErr){
+        console.warn("Batch rejected, local wipe only.", ruleErr);
+        await myUserRef.delete().catch(()=>{});
+      }
+      try{
+        await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).update({[`assignedTo.${window.UID}`]: firebase.firestore.FieldValue.delete()});
+      }catch(e){}
+      if(window.currentPhone) await window.pushLogEntry(window.fmtPhoneKey(window.currentPhone),{type:"note",text:`Lead returned to master bucket by ${window.ME?.email||'User'}`});
+      if(typeof window.triggerLeadershipPing==="function") window.triggerLeadershipPing("Lead Returned",`Lead returned to master bucket by ${window.ME?.email||'User'}`);
+    }
+    window.closeLeadModal(); window.clearConsole();
+    window.sellerView=window.sellerView.filter(l=>window.leadIdFor(l)!==window.modalLeadId);
+    window.renderQueue(); alert("Success!");
+  }catch(e){ console.error(e); alert("Failed. Check connection/permissions."); }
+  finally{ if(delBtn){delBtn.disabled=false;delBtn.textContent="Delete";} }
+};
 window.changeUserRole = async function(uid, role) {
   if(!window.isGod) return;
   try {
@@ -2477,47 +2529,7 @@ firebase.auth().onAuthStateChanged(async u=>{
     else{ window.subscribeAssociateAssignedLeads(); }
   }catch(e){ if($("status")) $("status").textContent="Leads subscribe error."; }
 });
-
-
-window.upsertLeadMasterAndAssignments = async function(leadId, payload, assigneeUids) {
-  const cat = window.currentCategory;
-  const assignedObj = assigneeUids.reduce((acc, uid) => { acc[uid] = true; return acc; }, {});
-  const enriched = { ...payload, id: leadId, assignedTo: assignedObj, assignedUids: assigneeUids, updatedAt: Date.now(), updatedBy: window.ME?.email || "" };
-  
-  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched);
-  const batch = firebase.firestore().batch();
-  
-  assigneeUids.forEach(uid => {
-    batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId), { ...enriched, assignedBy: window.ME?.email || "", assignedAt: Date.now(), archived: false });
-  });
-  
-  if (window.modalMode === "edit" && window.currentLead) {
-    const currentAssignments = Object.keys(window.currentLead.assignedTo || {}).filter(k => window.currentLead.assignedTo[k]);
-    const previousUsers = new Set([...currentAssignments, ...(window.currentLead.assignedUids || [])]);
-    previousUsers.forEach(uid => {
-      if (!assigneeUids.includes(String(uid))) {
-        batch.delete(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId));
-      }
-    });
-  }
-  await batch.commit().then(() => console.log("Batch sync success")).catch(err => console.error("Batch error:", err));
-};
-
-window.deleteLead = async function(){
-  if(!window.modalLeadId) return;
-  if(!confirm("Return lead to master bucket?")) return;
-  try{
-    const cat = window.currentCategory; const leadId = window.modalLeadId;
-    const batch = firebase.firestore().batch();
-    batch.delete(firebase.firestore().collection('leadsByUser').doc(window.UID).collection(cat).doc(leadId));
-    batch.update(firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId), {[`assignedTo.${window.UID}`]: firebase.firestore.FieldValue.delete()});
-    await batch.commit();
-    window.closeLeadModal(); window.clearConsole();
-    window.sellerView = window.sellerView.filter(l => window.leadIdFor(l) !== leadId);
-    window.renderQueue(); alert("Lead returned to master.");
-  } catch(e) { console.error("Delete Error:", e); alert("Delete failed: " + e.message); }
-};
-
 </script>
 </body>
 </html>
+
