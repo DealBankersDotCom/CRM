@@ -1615,6 +1615,16 @@ window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUi
   const assignedObj=assigneeUids.reduce((acc,uid)=>{acc[uid]=true;return acc;},{});
   const enriched={...payload,id:leadId,assignedTo:assignedObj,assignedUids:assigneeUids,updatedAt:Date.now(),updatedBy:window.ME?.email||""};
   await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched,{merge:true});
+      // BOMB DEFUSED: Explicitly assassinate removed UIDs from the Firebase Map to kill the ghost listener
+      if(window.modalMode==="edit" && window.currentLead && window.currentLead.assignedTo){
+        const removals = {};
+        Object.keys(window.currentLead.assignedTo).forEach(u => {
+          if(!assigneeUids.includes(String(u))) removals[`assignedTo.${u}`] = firebase.firestore.FieldValue.delete();
+        });
+        if(Object.keys(removals).length > 0) {
+          await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).update(removals);
+        }
+      }
   const batch=firebase.firestore().batch();
   assigneeUids.forEach(uid=>{ batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId),{...enriched,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}); });
   if(window.modalMode==="edit"&&window.currentLead){
@@ -2532,4 +2542,3 @@ firebase.auth().onAuthStateChanged(async u=>{
 </script>
 </body>
 </html>
-
