@@ -1016,7 +1016,7 @@ window.applySearch = function(){
   
   if (window.currentCategory === 'buyers') {
       view = view.filter(l => {
-          return true; // Fixed: Show all leads assigned to this user
+          return true; // Fixed: Show all leads
       });
   } else if (window.currentCategory === 'sellers') {
       view = view.filter(l => {
@@ -1611,8 +1611,9 @@ window.parsePhonesFromModal = function(){
 window.upsertLeadMasterAndAssignments = async function(leadId,payload,assigneeUids){
   const cat=window.currentCategory;
   const assignedObj=assigneeUids.reduce((acc,uid)=>{acc[uid]=true;return acc;},{});
+  // Force full replacement of assignedTo to enable unchecking
   const enriched={...payload,id:leadId,assignedTo:assignedObj,assignedUids:assigneeUids,updatedAt:Date.now(),updatedBy:window.ME?.email||""};
-  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched,{merge:true});
+  await firebase.firestore().collection(`leadsMaster_${cat}`).doc(leadId).set(enriched);
   const batch=firebase.firestore().batch();
   assigneeUids.forEach(uid=>{ batch.set(firebase.firestore().collection('leadsByUser').doc(uid).collection(cat).doc(leadId),{...enriched,assignedBy:window.ME?.email||"",assignedAt:Date.now(),archived:false}); });
   if(window.modalMode==="edit"&&window.currentLead){
